@@ -1,8 +1,8 @@
 import { Trans } from '@grafana/i18n';
 import { Text } from '@grafana/ui';
-import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
+import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
-import { MatcherFormatter } from '../../../utils/matchers';
+import { type MatcherFormatter } from '../../../utils/matchers';
 import { Matchers } from '../../notification-policies/Matchers';
 
 interface Props {

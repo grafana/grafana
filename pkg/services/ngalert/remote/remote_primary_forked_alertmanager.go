@@ -146,10 +146,6 @@ func (fam *RemotePrimaryForkedAlertmanager) GetReceivers(ctx context.Context) ([
 	return fam.remote.GetReceivers(ctx)
 }
 
-func (fam *RemotePrimaryForkedAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
-	return fam.remote.TestReceivers(ctx, c)
-}
-
 func (fam *RemotePrimaryForkedAlertmanager) TestIntegration(ctx context.Context, receiverName string, integrationConfig models.Integration, alert alertingModels.TestReceiversConfigAlertParams) (alertingModels.IntegrationStatus, error) {
 	return fam.remote.TestIntegration(ctx, receiverName, integrationConfig, alert)
 }

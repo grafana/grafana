@@ -1,6 +1,6 @@
-import { PropsWithChildren, ReactElement, useMemo } from 'react';
+import { type PropsWithChildren, type ReactElement, useMemo } from 'react';
 
-import { TypedVariableModel, VariableHide } from '@grafana/data';
+import { type TypedVariableModel, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { Stack, Tooltip } from '@grafana/ui';

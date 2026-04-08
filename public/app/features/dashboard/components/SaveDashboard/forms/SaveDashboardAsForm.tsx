@@ -1,15 +1,15 @@
-import { ChangeEvent } from 'react';
+import { type ChangeEvent } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Input, Switch, Form, Field, InputControl, Label, TextArea, Stack } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
 import { GenAIDashDescriptionButton } from '../../GenAI/GenAIDashDescriptionButton';
 import { GenAIDashTitleButton } from '../../GenAI/GenAIDashTitleButton';
-import { SaveDashboardFormProps } from '../types';
+import { type SaveDashboardFormProps } from '../types';
 
 interface SaveDashboardAsFormDTO {
   title: string;

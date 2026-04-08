@@ -11,7 +11,7 @@ import (
 )
 
 func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagDisabled(t *testing.T) {
-	helper := sharedGitHelper(t) // no withProvisioningFolderMetadata
+	helper := sharedGitHelper(t)
 
 	const repoName = "incr-missing-meta-disabled"
 

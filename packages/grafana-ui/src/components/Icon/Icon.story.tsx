@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { Meta } from '@storybook/react';
-import { ChangeEvent, useState } from 'react';
+import { type Meta } from '@storybook/react';
+import { type ChangeEvent, useState } from 'react';
 
-import { toIconName, IconName } from '@grafana/data';
+import { toIconName, type IconName } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { getAvailableIcons } from '../../types/icon';

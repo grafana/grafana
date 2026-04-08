@@ -192,22 +192,13 @@
   {
     "action": "alert.notifications.routes:read",
     "roles": [
-      "fixed:alerting.notifications:reader",
-      "fixed:alerting.notifications:writer",
-      "fixed:alerting.routes:reader",
-      "fixed:alerting.routes:writer",
-      "fixed:alerting:admin",
-      "fixed:alerting:reader",
-      "fixed:alerting:writer"
+      "fixed:alerting.legacy:writer"
     ]
   },
   {
     "action": "alert.notifications.routes:write",
     "roles": [
-      "fixed:alerting.notifications:writer",
-      "fixed:alerting.routes:writer",
-      "fixed:alerting:admin",
-      "fixed:alerting:writer"
+      "fixed:alerting.legacy:writer"
     ]
   },
   {
@@ -284,22 +275,13 @@
   {
     "action": "alert.notifications:read",
     "roles": [
-      "fixed:alerting.legacy:reader",
-      "fixed:alerting.legacy:writer",
-      "fixed:alerting.notifications:reader",
-      "fixed:alerting.notifications:writer",
-      "fixed:alerting:admin",
-      "fixed:alerting:reader",
-      "fixed:alerting:writer"
+      "fixed:alerting.legacy:writer"
     ]
   },
   {
     "action": "alert.notifications:write",
     "roles": [
-      "fixed:alerting.legacy:writer",
-      "fixed:alerting.notifications:writer",
-      "fixed:alerting:admin",
-      "fixed:alerting:writer"
+      "fixed:alerting.legacy:writer"
     ]
   },
   {
@@ -414,6 +396,58 @@
     "action": "alert.silences:write",
     "roles": [
       "fixed:alerting.rules:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "notifications.alerting.grafana.app/routingtrees:create",
+    "roles": [
+      "fixed:alerting.managed-routes:creator",
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.routes:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "notifications.alerting.grafana.app/routingtrees:delete",
+    "roles": [
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.routes:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "notifications.alerting.grafana.app/routingtrees:get",
+    "roles": [
+      "fixed:alerting.notifications:reader",
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.routes:reader",
+      "fixed:alerting.routes:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:reader",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "notifications.alerting.grafana.app/routingtrees:get_permissions",
+    "roles": [
+      "fixed:alerting:admin"
+    ]
+  },
+  {
+    "action": "notifications.alerting.grafana.app/routingtrees:set_permissions",
+    "roles": [
+      "fixed:alerting:admin"
+    ]
+  },
+  {
+    "action": "notifications.alerting.grafana.app/routingtrees:update",
+    "roles": [
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.routes:writer",
       "fixed:alerting:admin",
       "fixed:alerting:writer"
     ]

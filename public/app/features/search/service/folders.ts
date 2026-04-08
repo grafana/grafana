@@ -1,6 +1,6 @@
 import { listFolders } from 'app/features/browse-dashboards/api/services';
 
-import { DashboardViewItem } from '../types';
+import { type DashboardViewItem } from '../types';
 
 import { getGrafanaSearcher } from './searcher';
 import { queryResultToViewItem } from './utils';

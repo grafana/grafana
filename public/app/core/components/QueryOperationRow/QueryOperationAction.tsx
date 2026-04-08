@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { IconButton, IconName, useStyles2 } from '@grafana/ui';
+import { IconButton, type IconName, useStyles2 } from '@grafana/ui';
 
 interface BaseQueryOperationActionProps {
   icon: IconName;

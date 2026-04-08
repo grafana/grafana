@@ -3,7 +3,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { invalidateCache, setLogger } from '../../utils/getCachedPromise';
 import { type MonitoringLogger } from '../../utils/logging';
 
-import { initPluginMetas, refetchPluginMetas } from './plugins';
+import { initPluginMetas, installPluginMeta, refetchPluginMetas, uninstallPluginMeta } from './plugins';
 import { v0alpha1Meta } from './test-fixtures/v0alpha1Response';
 
 const originalFetch = global.fetch;
@@ -137,6 +137,89 @@ describe('when useMTPlugins flag is enabled', () => {
       });
     });
   });
+
+  describe('installPluginMeta', () => {
+    it('should post correct body, headers and method to the correct url', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+      });
+
+      await installPluginMeta('myorg-test-panel', '1.5.0');
+
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/plugins', {
+        body: JSON.stringify({
+          apiVersion: 'plugins.grafana.app/v0alpha1',
+          kind: 'Plugin',
+          metadata: {
+            name: 'myorg-test-panel',
+            namespace: 'default',
+          },
+          spec: {
+            id: 'myorg-test-panel',
+            version: '1.5.0',
+          },
+          status: {},
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      });
+    });
+
+    it('should throw an error if response is not ok', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        statusText: 'Internal Server Error',
+        status: 500,
+      });
+
+      await expect(installPluginMeta('myorg-test-panel', '1.5.0')).rejects.toThrow(
+        'Failed to install plugin myorg-test-panel 500:Internal Server Error'
+      );
+    });
+
+    it('should throw an error if fetch throws', async () => {
+      global.fetch = jest.fn().mockRejectedValueOnce(new Error('Network Error'));
+
+      await expect(installPluginMeta('myorg-test-panel', '1.5.0')).rejects.toThrow('Network Error');
+    });
+  });
+
+  describe('uninstallPluginMeta', () => {
+    it('should post correct body, headers and method to the correct url', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+      });
+
+      await uninstallPluginMeta('myorg-test-panel');
+
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith(
+        'apis/plugins.grafana.app/v0alpha1/namespaces/default/plugins/myorg-test-panel',
+        { method: 'DELETE' }
+      );
+    });
+
+    it('should throw an error if response is not ok', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        statusText: 'Internal Server Error',
+        status: 500,
+      });
+
+      await expect(uninstallPluginMeta('myorg-test-panel')).rejects.toThrow(
+        'Failed to uninstall plugin myorg-test-panel 500:Internal Server Error'
+      );
+    });
+
+    it('should throw an error if fetch throws', async () => {
+      global.fetch = jest.fn().mockRejectedValueOnce(new Error('Network Error'));
+
+      await expect(uninstallPluginMeta('myorg-test-panel')).rejects.toThrow('Network Error');
+    });
+  });
 });
 
 describe('when useMTPlugins flag is disabled', () => {
@@ -171,6 +254,32 @@ describe('when useMTPlugins flag is disabled', () => {
       const cached = await initPluginMetas();
 
       expect(original).toBe(cached);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('installPluginMeta', () => {
+    it('should not call fetch when useMTPlugins is disabled', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+      });
+
+      await installPluginMeta('myorg-test-panel', '1.5.0');
+
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('uninstallPluginMeta', () => {
+    it('should not call fetch when useMTPlugins is disabled', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+      });
+
+      await uninstallPluginMeta('myorg-test-panel');
+
       expect(global.fetch).not.toHaveBeenCalled();
     });
   });

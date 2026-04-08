@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
-import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { PermissionLevel } from 'app/types/acl';
+import { type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { type PermissionLevel } from 'app/types/acl';
 
 import { useFoldersQueryAppPlatform } from './useFoldersQueryAppPlatform';
 import { useFoldersQueryLegacy } from './useFoldersQueryLegacy';

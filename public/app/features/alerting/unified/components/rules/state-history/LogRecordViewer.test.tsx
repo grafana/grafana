@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import { byRole } from 'testing-library-selector';
 
 import { LogRecordViewerByTimestamp } from './LogRecordViewer';
-import { LogRecord } from './common';
+import { type LogRecord } from './common';
 
 const ui = {
   log: byRole('list', { name: 'State history by timestamp' }),

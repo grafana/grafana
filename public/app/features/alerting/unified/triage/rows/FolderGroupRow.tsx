@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import { isString } from 'lodash';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { MetaText } from '../../components/MetaText';
-import { GenericGroupedRow } from '../types';
+import { type GenericGroupedRow } from '../types';
 
 import { GenericRow } from './GenericRow';
 import { RowActions } from './InstanceCountBadges';

@@ -2,17 +2,17 @@ import { css, cx, keyframes } from '@emotion/css';
 import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { LibraryPanel } from '@grafana/schema';
+import { type LibraryPanel } from '@grafana/schema';
 import { IconButton, useStyles2 } from '@grafana/ui';
 
 import {
   LibraryPanelsSearch,
   LibraryPanelsSearchVariant,
 } from '../../../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
-import { DashboardModel } from '../../state/DashboardModel';
-import { PanelModel } from '../../state/PanelModel';
+import { type DashboardModel } from '../../state/DashboardModel';
+import { type PanelModel } from '../../state/PanelModel';
 
 interface Props {
   panel: PanelModel;

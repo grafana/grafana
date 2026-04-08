@@ -93,7 +93,7 @@ To export a dashboard as a JSON file it must follow this CRD structure:
 
 ```yaml
 {
-  'apiVersion': 'dashboard.grafana.app/v1beta1',
+  'apiVersion': 'dashboard.grafana.app/v1',
   'kind': 'Dashboard',
   'metadata': { 'name': 'dcf2lve9akj8xsd' },
   'spec': { /* Original dashboard JSON goes here */ },
@@ -102,7 +102,7 @@ To export a dashboard as a JSON file it must follow this CRD structure:
 
 The structure includes:
 
-- `apiVersion`: Specifies the API version (currently `v1beta1`)
+- `apiVersion`: Specifies the API version (currently `v1`)
 - `kind`: Identifies the resource type (Dashboard)
 - `metadata`: Contains the dashboard identifier `uid`. You can find the identifier in the dahsboard's URL or in the exported JSON
 - `spec`: Wraps your original dashboard JSON

@@ -1,24 +1,24 @@
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
-import Tree, { TreeNodeProps } from '@rc-component/tree';
-import { Key, useEffect, useMemo, useState } from 'react';
+import Tree, { type TreeNodeProps } from '@rc-component/tree';
+import { type Key, useEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
+import { type GrafanaTheme2, type StandardEditorProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Icon, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
-import { ElementState } from 'app/features/canvas/runtime/element';
+import { type ElementState } from 'app/features/canvas/runtime/element';
 import { frameSelection, reorderElements } from 'app/features/canvas/runtime/sceneElementManagement';
 
 import { getGlobalStyles } from '../../globalStyles';
-import { Options } from '../../panelcfg.gen';
-import { DragNode, DropNode } from '../../types';
+import { type Options } from '../../panelcfg.gen';
+import { type DragNode, type DropNode } from '../../types';
 import { doSelect, getElementTypes, onAddItem } from '../../utils';
-import { TreeViewEditorProps } from '../element/elementEditor';
+import { type TreeViewEditorProps } from '../element/elementEditor';
 
 import { TreeNodeTitle } from './TreeNodeTitle';
-import { getTreeData, onNodeDrop, TreeElement } from './tree';
+import { getTreeData, onNodeDrop, type TreeElement } from './tree';
 
 let allowSelection = true;
 

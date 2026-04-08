@@ -54,7 +54,7 @@ func TestTeamSearchFallback(t *testing.T) {
 					"teams.iam.grafana.app": {DualWriterMode: testCase.mode},
 				},
 			}
-			dual := dualwrite.ProvideStaticServiceForTests(cfg)
+			dual := dualwrite.ProvideServiceForTests(cfg)
 			searchHandler := NewTeamSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil, nil)
 
 			rr := httptest.NewRecorder()
@@ -191,7 +191,7 @@ func TestTeamSearchHandler(t *testing.T) {
 					"teams.iam.grafana.app": {DualWriterMode: rest.Mode0},
 				},
 			}
-			dual := dualwrite.ProvideStaticServiceForTests(cfg)
+			dual := dualwrite.ProvideServiceForTests(cfg)
 			searchHandler := NewTeamSearchHandler(tracing.NewNoopTracerService(), dual, mockClient, mockClient, nil, nil)
 
 			rr := httptest.NewRecorder()

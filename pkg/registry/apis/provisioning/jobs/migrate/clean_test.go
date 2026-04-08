@@ -39,13 +39,13 @@ func (m *mockClients) ForKind(ctx context.Context, gvk schema.GroupVersionKind) 
 	return ri, args.Get(1).(schema.GroupVersionResource), args.Error(2)
 }
 
-func (m *mockClients) Folder(ctx context.Context) (dynamic.ResourceInterface, error) {
-	args := m.Called(ctx)
+func (m *mockClients) Folder(ctx context.Context, folderAPIVersion string) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
+	args := m.Called(ctx, folderAPIVersion)
 	var ri dynamic.ResourceInterface
 	if args.Get(0) != nil {
 		ri = args.Get(0).(dynamic.ResourceInterface)
 	}
-	return ri, args.Error(1)
+	return ri, args.Get(1).(schema.GroupVersionKind), args.Error(2)
 }
 
 func (m *mockClients) User(ctx context.Context) (dynamic.ResourceInterface, error) {

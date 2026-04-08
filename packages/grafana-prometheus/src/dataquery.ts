@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/dataquery.ts
-import { Scope, ScopeSpec, ScopeSpecFilter } from '@grafana/data';
-import * as common from '@grafana/schema';
+import { type Scope, type ScopeSpec, type ScopeSpecFilter } from '@grafana/data';
+import type * as common from '@grafana/schema';
 
 export enum QueryEditorMode {
   Builder = 'builder',

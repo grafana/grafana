@@ -1,16 +1,16 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/ResultsTable.tsx
-import { ReactElement, useMemo } from 'react';
+import { type ReactElement, useMemo } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { t, Trans } from '@grafana/i18n';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { docsTip } from '../../../configuration/shared/utils';
-import { PromVisualQuery } from '../../types';
+import { type PromVisualQuery } from '../../types';
 
 import { useMetricsModal } from './MetricsModalContext';
 import { getResultsTableStyles } from './styles';
-import { MetricData } from './types';
+import { type MetricData } from './types';
 
 type ResultsTableProps = {
   onChange: (query: PromVisualQuery) => void;

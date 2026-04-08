@@ -1,4 +1,4 @@
-import { ActionImpl, Priority, useKBar } from 'kbar';
+import { type ActionImpl, Priority, useKBar } from 'kbar';
 import { useThrottledValue } from 'kbar/lib/utils';
 import * as React from 'react';
 

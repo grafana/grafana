@@ -1,4 +1,4 @@
-import { BaseQueryFn } from '@reduxjs/toolkit/query';
+import { type BaseQueryFn } from '@reduxjs/toolkit/query';
 import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { isFetchError } from '@grafana/runtime';

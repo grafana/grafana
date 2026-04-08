@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Droppable, BeforeCapture, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, type BeforeCapture, type DropResult } from '@hello-pangea/dnd';
 import { useCallback } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
+import { MultiValueVariable, type SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
@@ -15,9 +15,9 @@ import { getLayoutControlsStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
-import { RowItem } from './RowItem';
+import { type RowItem } from './RowItem';
 import { RowItemRepeater } from './RowItemRepeater';
-import { RowsLayoutManager } from './RowsLayoutManager';
+import { type RowsLayoutManager } from './RowsLayoutManager';
 
 export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayoutManager>) {
   const { rows, key } = model.useState();

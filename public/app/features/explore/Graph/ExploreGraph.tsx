@@ -3,36 +3,36 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   applyFieldOverrides,
   createFieldConfigRegistry,
   DashboardCursorSync,
-  DataFrame,
+  type DataFrame,
   DataLinksContext,
-  EventBus,
+  type EventBus,
   FieldColorModeId,
-  FieldConfigSource,
+  type FieldConfigSource,
   getFrameDisplayName,
-  LoadingState,
-  SplitOpen,
-  ThresholdsConfig,
-  TimeRange,
+  type LoadingState,
+  type SplitOpen,
+  type ThresholdsConfig,
+  type TimeRange,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import {
   GraphDrawStyle,
-  GraphFieldConfig,
-  GraphThresholdsStyleConfig,
+  type GraphFieldConfig,
+  type GraphThresholdsStyleConfig,
   LegendDisplayMode,
   SortOrder,
-  TimeZone,
+  type TimeZone,
   TooltipDisplayMode,
-  VizLegendOptions,
+  type VizLegendOptions,
 } from '@grafana/schema';
-import { PanelContext, PanelContextProvider, SeriesVisibilityChangeMode, useTheme2 } from '@grafana/ui';
+import { type PanelContext, PanelContextProvider, type SeriesVisibilityChangeMode, useTheme2 } from '@grafana/ui';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
-import { Options as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
-import { ExploreGraphStyle } from 'app/types/explore';
+import { type Options as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
+import { type ExploreGraphStyle } from 'app/types/explore';
 
 import {
   isHideSeriesOverride,

@@ -1,8 +1,8 @@
 import {
-  ConfigOverrideRule,
-  DynamicConfigValue,
+  type ConfigOverrideRule,
+  type DynamicConfigValue,
   FieldColorModeId,
-  FieldConfigSource,
+  type FieldConfigSource,
   FieldMatcherID,
 } from '@grafana/data';
 

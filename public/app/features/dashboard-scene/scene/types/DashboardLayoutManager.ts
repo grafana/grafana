@@ -1,10 +1,10 @@
-import { SceneObject, VizPanel } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { type SceneObject, type VizPanel } from '@grafana/scenes';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { PanelIdGenerator } from '../../utils/dashboardSceneGraph';
+import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 
-import { LayoutRegistryItem } from './LayoutRegistryItem';
+import { type LayoutRegistryItem } from './LayoutRegistryItem';
 
 /**
  * A scene object that usually wraps an underlying layout

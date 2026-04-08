@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/loki/components/monaco-query-field/monaco-completion-provider/validation.ts
-import { SyntaxNode } from '@lezer/common';
-import { LRParser } from '@lezer/lr';
+import { type SyntaxNode } from '@lezer/common';
+import { type LRParser } from '@lezer/lr';
 
 // Although 0 isn't explicitly provided in the @grafana/lezer-logql library as the error node ID, it does appear to be the ID of error nodes within lezer.
 const ErrorId = 0;

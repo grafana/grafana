@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import {
-  CellProps,
-  Column,
+  type CellProps,
+  type Column,
   FilterInput,
   Icon,
   InteractiveTable,
@@ -18,12 +18,12 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import {
-  Repository,
+  type Repository,
   useGetRepositoryFilesQuery,
   useGetRepositoryResourcesQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 
-import { FlatTreeItem, TreeItem } from '../types';
+import { type FlatTreeItem, type TreeItem } from '../types';
 import { getRepoFileUrl } from '../utils/git';
 import { buildTree, filterTree, flattenTree, getIconName, mergeFilesAndResources } from '../utils/treeUtils';
 
@@ -53,6 +53,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   const resourcesQuery = useGetRepositoryResourcesQuery({ name });
 
   const [searchQuery, setSearchQuery] = useState('');
+  const provisioningFolderMetadataEnabled = useBooleanFlagValue('provisioningFolderMetadata', false);
 
   const isLoading = filesQuery.isLoading || resourcesQuery.isLoading;
 
@@ -100,7 +101,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         header: t('provisioning.resource-tree.header-status', 'Status'),
         cell: ({ row: { original } }: TreeCell) => {
           const { status, missingFolderMetadata } = original.item;
-          if (config.featureToggles.provisioningFolderMetadata && missingFolderMetadata) {
+          if (provisioningFolderMetadataEnabled && missingFolderMetadata) {
             return (
               <Tooltip
                 content={t('provisioning.resource-tree.missing-folder-metadata', 'Missing folder metadata file')}
@@ -191,7 +192,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         },
       },
     ],
-    [repo.spec, styles]
+    [provisioningFolderMetadataEnabled, repo.spec, styles]
   );
 
   if (isLoading) {

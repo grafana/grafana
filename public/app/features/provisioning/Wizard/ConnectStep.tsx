@@ -10,7 +10,7 @@ import { useGetRepositoryRefs } from '../hooks/useGetRepositoryRefs';
 import { isGitProvider } from '../utils/repositoryTypes';
 
 import { getGitProviderFields, getLocalProviderFields } from './fields';
-import { WizardFormData } from './types';
+import { type WizardFormData } from './types';
 
 export const ConnectStep = memo(function ConnectStep() {
   const {

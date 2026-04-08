@@ -43,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
+	legacystars "github.com/grafana/grafana/pkg/registry/apis/collections/legacy"
 	dashboardmigration "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	dashboardlegacy "github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
@@ -87,7 +88,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	dashboardimportservice "github.com/grafana/grafana/pkg/services/dashboardimport/service"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	dashboardclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -196,7 +196,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
-	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	postgres "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
 	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
@@ -252,6 +251,7 @@ var wireBasicSet = wire.NewSet(
 	dashboardmigrator.ProvideFoldersDashboardsMigrator,
 	playlistmigrator.ProvidePlaylistMigrator,
 	shorturlmigrator.ProvideShortURLMigrator,
+	legacystars.ProvideStarsMigrator,
 	dsmigrator.ProvideDataSourceMigrator,
 	provideMigrationRegistry,
 	unifiedmigrations.ProvideUnifiedMigrator,
@@ -264,7 +264,6 @@ var wireBasicSet = wire.NewSet(
 	postgres.ProvideService,
 	mysql.ProvideService,
 	mssql.ProvideService,
-	store.ProvideEntityEventsService,
 	legacydualwrite.ProvideService,
 	httpclientprovider.New,
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
@@ -323,7 +322,6 @@ var wireBasicSet = wire.NewSet(
 	loki.ProvideService,
 	graphite.ProvideService,
 	prometheus.ProvideService,
-	elasticsearch.ProvideService,
 	pyroscope.ProvideService,
 	parca.ProvideService,
 	zipkin.ProvideService,
@@ -363,12 +361,8 @@ var wireBasicSet = wire.NewSet(
 	dashboardservice.ProvideDashboardProvisioningService,
 	dashboardservice.ProvideDashboardPluginService,
 	dashboardservice.ProvideDashboardAccessService,
-	dashboardstore.ProvideDashboardStore,
 	folderimpl.ProvideService,
 	wire.Bind(new(folder.Service), new(*folderimpl.Service)),
-	wire.Bind(new(folder.LegacyService), new(*folderimpl.Service)),
-	folderimpl.ProvideStore,
-	wire.Bind(new(folder.Store), new(*folderimpl.FolderStoreImpl)),
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
 	plugindashboardsservice.ProvideService,
@@ -600,11 +594,13 @@ func provideMigrationRegistry(
 	playlistMigrator playlistmigrator.PlaylistMigrator,
 	shortURLMigrator shorturlmigrator.ShortURLMigrator,
 	dataSourceMigrator dsmigrator.DataSourceMigrator,
+	starsMigrator legacystars.StarsMigrator,
 ) *unifiedmigrations.MigrationRegistry {
 	r := unifiedmigrations.NewMigrationRegistry()
 	r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
 	r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
 	r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
 	r.Register(dsmigrator.DataSourceMigration(dataSourceMigrator))
+	r.Register(legacystars.StarsMigrationDefinition(starsMigrator))
 	return r
 }

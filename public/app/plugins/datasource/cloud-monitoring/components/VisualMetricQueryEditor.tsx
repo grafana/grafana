@@ -4,16 +4,16 @@ import { startCase, uniqBy } from 'lodash';
 import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, SelectableValue, TimeRange } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue, type TimeRange } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 import { getSelectStyles, Select, AsyncSelect, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { PreprocessorType, TimeSeriesList, MetricKind, ValueTypes } from '../dataquery.gen';
-import CloudMonitoringDatasource from '../datasource';
+import { PreprocessorType, type TimeSeriesList, MetricKind, ValueTypes } from '../dataquery.gen';
+import type CloudMonitoringDatasource from '../datasource';
 import { selectors } from '../e2e/selectors';
 import { getAlignmentPickerData, getMetricType, setMetricType } from '../functions';
-import { CustomMetaData, MetricDescriptor } from '../types/types';
+import { type CustomMetaData, type MetricDescriptor } from '../types/types';
 
 import { AliasBy } from './AliasBy';
 import { Alignment } from './Alignment';

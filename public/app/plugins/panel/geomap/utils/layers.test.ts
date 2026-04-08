@@ -1,17 +1,17 @@
 jest.mock('ol-mapbox-style', () => ({}));
 jest.mock('geotiff', () => ({}));
 
-import BaseLayer from 'ol/layer/Base';
+import type BaseLayer from 'ol/layer/Base';
 
 import {
-  DataFrame,
-  DataQueryRequest,
+  type DataFrame,
+  type DataQueryRequest,
   FieldType,
   LoadingState,
-  MapLayerHandler,
-  MapLayerOptions,
-  PanelData,
-  TimeRange,
+  type MapLayerHandler,
+  type MapLayerOptions,
+  type PanelData,
+  type TimeRange,
 } from '@grafana/data';
 
 import { applyLayerFilter } from './layers';

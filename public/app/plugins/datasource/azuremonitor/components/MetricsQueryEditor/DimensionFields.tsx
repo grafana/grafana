@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { SelectableValue, DataFrame, PanelData, Labels } from '@grafana/data';
+import { type SelectableValue, type DataFrame, type PanelData, type Labels } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { EditorList, AccessoryButton } from '@grafana/plugin-ui';
 import { Select, Stack, MultiSelect } from '@grafana/ui';
 
-import { AzureMetricDimension } from '../../dataquery.gen';
-import { AzureMonitorQuery } from '../../types/query';
-import { AzureMonitorOption, AzureQueryEditorFieldProps } from '../../types/types';
+import { type AzureMetricDimension } from '../../dataquery.gen';
+import { type AzureMonitorQuery } from '../../types/query';
+import { type AzureMonitorOption, type AzureQueryEditorFieldProps } from '../../types/types';
 import { Field } from '../shared/Field';
 
 import { setDimensionFilters } from './setQueryValue';

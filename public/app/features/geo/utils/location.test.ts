@@ -1,4 +1,4 @@
-import { Point } from 'ol/geom';
+import { type Point } from 'ol/geom';
 import { toLonLat } from 'ol/proj';
 
 import { toDataFrame, FieldType } from '@grafana/data';

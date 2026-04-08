@@ -1,8 +1,8 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/query_hints.test.ts
-import { QueryHint } from '@grafana/data';
-import { QueryBuilderLabelFilter } from '@grafana/plugin-ui';
+import { type QueryHint } from '@grafana/data';
+import { type QueryBuilderLabelFilter } from '@grafana/plugin-ui';
 
-import { PrometheusDatasource } from './datasource';
+import { type PrometheusDatasource } from './datasource';
 import {
   getExpandRulesHints,
   getQueryHints,
@@ -12,7 +12,7 @@ import {
   SUM_HINT_THRESHOLD_COUNT,
 } from './query_hints';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
-import { RuleQueryMapping } from './types';
+import { type RuleQueryMapping } from './types';
 
 describe('getQueryHints()', () => {
   it('returns no hints for no series', () => {

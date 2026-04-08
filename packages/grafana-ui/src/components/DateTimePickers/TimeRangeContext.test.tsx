@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 
 import { makeTimeRange } from '@grafana/data';
 
-import { TimeRangeContextHookValue, TimeRangeProvider, useTimeRangeContext } from './TimeRangeContext';
+import { type TimeRangeContextHookValue, TimeRangeProvider, useTimeRangeContext } from './TimeRangeContext';
 
 // Should be fine to have this globally as single file should not be parallelized
 let context: TimeRangeContextHookValue | undefined = undefined;

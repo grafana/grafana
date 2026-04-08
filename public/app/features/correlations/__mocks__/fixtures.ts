@@ -1,4 +1,4 @@
-import { Correlation, CorrelationSpec } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
+import { type Correlation, type CorrelationSpec } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 
 export const generateCorrMetadata = (uid: string, correlation: CorrelationSpec) => {
   let labels: Record<string, string> = {

@@ -1,5 +1,5 @@
-import { DataFrame, FieldType, getFieldDisplayName, LogsSortOrder } from '@grafana/data';
-import { TableSortByFieldState } from '@grafana/schema/dist/esm/common/common.gen';
+import { type DataFrame, FieldType, getFieldDisplayName, LogsSortOrder } from '@grafana/data';
+import { type TableSortByFieldState } from '@grafana/schema/dist/esm/common/common.gen';
 import { LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
 
 function getDefaultSortBy(dataFrame: DataFrame | undefined, logsSortOrder: LogsSortOrder): TableSortByFieldState[] {

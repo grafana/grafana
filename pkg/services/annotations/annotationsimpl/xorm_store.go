@@ -6,13 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -41,8 +39,6 @@ func validateTimeRange(item *annotations.Item) error {
 	return nil
 }
 
-var xormMigrationTrigger sync.Once
-
 type xormRepositoryImpl struct {
 	cfg                *setting.Cfg
 	db                 db.DB
@@ -54,10 +50,6 @@ type xormRepositoryImpl struct {
 }
 
 func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Service, reg prometheus.Registerer) *xormRepositoryImpl {
-	xormMigrationTrigger.Do(func() {
-		triggerAlwaysOnMigrations(cfg, l, db)
-	})
-
 	repo := &xormRepositoryImpl{
 		cfg:        cfg,
 		db:         db,
@@ -96,25 +88,6 @@ func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Servi
 		reg.MustRegister(repo.queryRangeStart, repo.queryRangeDuration, repo.queryResultsCount)
 	}
 	return repo
-}
-
-func triggerAlwaysOnMigrations(cfg *setting.Cfg, l log.Logger, db db.DB) {
-	sec := cfg.Raw.Section("database")
-	skipDashboardUIDMigration := sec.Key("skip_dashboard_uid_migration_on_startup").MustBool(false)
-	if skipDashboardUIDMigration {
-		l.Debug("skipped dashboard UID startup migration")
-		return
-	}
-	// Run migration in a background goroutine to avoid blocking service startup
-	go func() {
-		l.Info("Starting annotation dashboard_uid migration in background")
-		err := migrations.RunDashboardUIDMigrations(db.GetEngine().NewSession(), db.GetDialect().DriverName(), l)
-		if err != nil {
-			l.Error("failed to populate dashboard_uid for annotations", "error", err)
-		} else {
-			l.Info("Annotation dashboard_uid migration completed successfully")
-		}
-	}()
 }
 
 func (r *xormRepositoryImpl) Type() string {

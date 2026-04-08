@@ -3,7 +3,7 @@ import type { AxeResults } from 'axe-core';
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { AxeA11yReport, AxeA11yReportViolation } from './types';
+import { type AxeA11yReport, type AxeA11yReportViolation } from './types';
 
 class AxeA11yReporter implements Reporter {
   private violations: AxeA11yReportViolation[] = [];

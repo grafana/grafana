@@ -3,7 +3,7 @@ import { useMeasure } from 'react-use';
 
 import { measureText } from '../../utils/measureText';
 
-import { ComboboxOption } from './types';
+import { type ComboboxOption } from './types';
 
 const FONT_SIZE = 12;
 const EXTRA_PILL_SIZE = 50;

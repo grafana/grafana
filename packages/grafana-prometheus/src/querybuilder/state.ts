@@ -1,7 +1,7 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/state.ts
 import { CoreApp, store } from '@grafana/data';
 
-import { LegendFormatMode, PromQuery } from '../types';
+import { LegendFormatMode, type PromQuery } from '../types';
 
 import { QueryEditorMode } from './shared/types';
 

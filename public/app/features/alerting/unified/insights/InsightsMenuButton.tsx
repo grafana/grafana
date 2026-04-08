@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { ExploreUrlState, GrafanaTheme2, serializeStateToUrlParam, toURLRange } from '@grafana/data';
+import { type ExploreUrlState, type GrafanaTheme2, serializeStateToUrlParam, toURLRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneObjectBase,
-  SceneObjectState,
-  SceneTimeRangeState,
-  SceneVariableSetState,
+  type SceneObjectState,
+  type SceneTimeRangeState,
+  type SceneVariableSetState,
   sceneGraph,
 } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Button, Dropdown, Icon, IconButton, Menu, Modal, useStyles2 } from '@grafana/ui';
 
 import { trackInsightsFeedback } from '../Analytics';

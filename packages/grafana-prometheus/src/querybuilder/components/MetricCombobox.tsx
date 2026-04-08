@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue, TimeRange } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue, type TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup } from '@grafana/plugin-ui';
-import { Button, InlineField, InlineFieldRow, Combobox, ComboboxOption, useTheme2 } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, Combobox, type ComboboxOption, useTheme2 } from '@grafana/ui';
 
 import { METRIC_LABEL } from '../../constants';
-import { PrometheusDatasource } from '../../datasource';
-import { QueryBuilderLabelFilter } from '../shared/types';
-import { PromVisualQuery } from '../types';
+import { type PrometheusDatasource } from '../../datasource';
+import { type QueryBuilderLabelFilter } from '../shared/types';
+import { type PromVisualQuery } from '../types';
 
 import { formatKeyValueStrings } from './formatter';
 import { MetricsModal } from './metrics-modal/MetricsModal';

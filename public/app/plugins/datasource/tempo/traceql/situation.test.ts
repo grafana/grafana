@@ -1,4 +1,4 @@
-import { getSituation, SituationType } from './situation';
+import { getSituation, type SituationType } from './situation';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

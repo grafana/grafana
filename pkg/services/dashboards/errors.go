@@ -14,20 +14,6 @@ var (
 		StatusCode: 404,
 		Status:     "not-found",
 	}
-	ErrDashboardCorrupt = dashboardaccess.DashboardErr{
-		Reason:     "Dashboard data is missing or corrupt",
-		StatusCode: 500,
-		Status:     "not-found",
-	}
-	ErrDashboardPanelNotFound = dashboardaccess.DashboardErr{
-		Reason:     "Dashboard panel not found",
-		StatusCode: 404,
-		Status:     "not-found",
-	}
-	ErrDashboardFolderNotFound = dashboardaccess.DashboardErr{
-		Reason:     "Folder not found",
-		StatusCode: 404,
-	}
 	ErrDashboardWithSameUIDExists = dashboardaccess.DashboardErr{
 		Reason:     "A dashboard with the same uid already exists",
 		StatusCode: 400,
@@ -50,10 +36,6 @@ var (
 	ErrDashboardFolderCannotHaveParent = dashboardaccess.DashboardErr{
 		Reason:     "A Dashboard Folder cannot be added to another folder",
 		StatusCode: 400,
-	}
-	ErrDashboardsWithSameSlugExists = dashboardaccess.DashboardErr{
-		Reason:     "Multiple dashboards with the same slug exists",
-		StatusCode: 412,
 	}
 	ErrDashboardTypeMismatch = dashboardaccess.DashboardErr{
 		Reason:     "Dashboard cannot be changed to a folder",
@@ -100,18 +82,6 @@ var (
 		Reason:     "Unique identifier needed to be able to get a dashboard",
 		StatusCode: 400,
 	}
-	ErrDashboardIdentifierInvalid = dashboardaccess.DashboardErr{
-		Reason:     "Dashboard ID not a number",
-		StatusCode: 400,
-	}
-	ErrDashboardPanelIdentifierInvalid = dashboardaccess.DashboardErr{
-		Reason:     "Dashboard panel ID not a number",
-		StatusCode: 400,
-	}
-	ErrDashboardOrPanelIdentifierNotSet = dashboardaccess.DashboardErr{
-		Reason:     "Unique identifier needed to be able to get a dashboard panel",
-		StatusCode: 400,
-	}
 	ErrDashboardRestoreIdenticalVersion = dashboardaccess.DashboardErr{
 		Reason:     "Current dashboard is identical to the specified version",
 		StatusCode: 400,
@@ -120,11 +90,6 @@ var (
 		Reason:     "Dashboard is not provisioned",
 		StatusCode: 404,
 		Status:     "not-found",
-	}
-	ErrFolderRestoreNotFound = dashboardaccess.DashboardErr{
-		Reason:     "Restoring folder not found",
-		StatusCode: 400,
-		Status:     "bad-request",
 	}
 	ErrQuotaReached = dashboardaccess.DashboardErr{
 		Reason:     "Dashboard quota reached",
@@ -138,7 +103,6 @@ var (
 	ErrFolderWithSameUIDExists    = errors.New("a folder/dashboard with the same uid already exists")
 	ErrFolderInvalidUID           = errors.New("invalid uid for folder provided")
 	ErrFolderAccessDenied         = errors.New("access denied to folder")
-	ErrUserIsNotSignedInToOrg     = errors.New("user is not signed in to organization")
 	ErrMoveAccessDenied           = errutil.Forbidden("folders.forbiddenMove", errutil.WithPublicMessage("Access denied to the destination folder"))
 	ErrFolderAccessEscalation     = errutil.Forbidden("folders.accessEscalation", errutil.WithPublicMessage("Cannot move a folder to a folder where you have higher permissions"))
 	ErrFolderCreationAccessDenied = errutil.Forbidden("folders.forbiddenCreation", errutil.WithPublicMessage("not enough permissions to create a folder in the selected location"))

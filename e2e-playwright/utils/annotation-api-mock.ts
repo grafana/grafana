@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
 /**
  * Annotation item shape matching the Grafana API response format.

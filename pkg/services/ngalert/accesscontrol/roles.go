@@ -2,9 +2,9 @@ package accesscontrol
 
 import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -19,7 +19,7 @@ var (
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingRuleRead,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 				{
 					Action: accesscontrol.ActionAlertingRuleExternalRead,
@@ -27,7 +27,7 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingSilencesRead,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 				// Following are needed for simplified notification policies
 				{
@@ -50,15 +50,15 @@ var (
 			Permissions: accesscontrol.ConcatPermissions(rulesReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingRuleCreate,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 				{
 					Action: accesscontrol.ActionAlertingRuleUpdate,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 				{
 					Action: accesscontrol.ActionAlertingRuleDelete,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 				{
 					Action: accesscontrol.ActionAlertingRuleExternalWrite,
@@ -66,11 +66,11 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingSilencesWrite,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 				{
 					Action: accesscontrol.ActionAlertingSilencesCreate,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 			}),
 		},
@@ -215,6 +215,19 @@ var (
 		Grants: []string{string(org.RoleEditor)},
 	}
 
+	routesCreatorRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting.managed-routes:creator",
+			DisplayName: "Notification Policies Creator",
+			Description: "Create notification policies in Grafana alerting",
+			Group:       models.AlertRolesGroup,
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAlertingManagedRoutesCreate},
+			},
+		},
+		Grants: []string{string(org.RoleEditor)},
+	}
+
 	routesReaderRole = accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        accesscontrol.FixedRolePrefix + "alerting.routes:reader",
@@ -222,23 +235,25 @@ var (
 			Description: "Read all notification policies in Grafana alerting",
 			Group:       models.AlertRolesGroup,
 			Permissions: accesscontrol.ConcatPermissions([]accesscontrol.Permission{
-				{Action: accesscontrol.ActionAlertingRoutesRead},
+				{Action: accesscontrol.ActionAlertingManagedRoutesRead, Scope: models.ScopeRoutesAll},
 			}),
 		},
-		Grants: []string{string(org.RoleViewer)},
+		Grants: []string{string(org.RoleAdmin)}, // Read permissions are granted to Editor as a managed role
 	}
 
 	routesWriterRole = accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        accesscontrol.FixedRolePrefix + "alerting.routes:writer",
 			DisplayName: "Notification Policies Writer",
-			Description: "Update and reset notification policies in Grafana alerting",
+			Description: "Create, update and delete notification policies in Grafana alerting",
 			Group:       models.AlertRolesGroup,
 			Permissions: accesscontrol.ConcatPermissions(routesReaderRole.Role.Permissions, []accesscontrol.Permission{
-				{Action: accesscontrol.ActionAlertingRoutesWrite},
+				{Action: accesscontrol.ActionAlertingManagedRoutesCreate},
+				{Action: accesscontrol.ActionAlertingManagedRoutesWrite, Scope: models.ScopeRoutesAll},
+				{Action: accesscontrol.ActionAlertingManagedRoutesDelete, Scope: models.ScopeRoutesAll},
 			}),
 		},
-		Grants: []string{string(org.RoleEditor)},
+		Grants: []string{string(org.RoleAdmin)}, // Write permissions are granted to Editor as a managed role
 	}
 
 	inhibitionRulesReaderRole = accesscontrol.RoleRegistration{
@@ -281,11 +296,7 @@ var (
 				routesReaderRole.Role.Permissions,
 				inhibitionRulesReaderRole.Role.Permissions,
 				externalNotificationsReaderRole.Role.Permissions,
-				[]accesscontrol.Permission{
-					{
-						Action: accesscontrol.ActionAlertingNotificationsRead, // TODO remove when we decide tò limit access to raw config API
-					},
-				}),
+			),
 		},
 	}
 
@@ -303,11 +314,7 @@ var (
 				routesWriterRole.Role.Permissions,
 				inhibitionRulesWriterRole.Role.Permissions,
 				externalNotificationsWriterRole.Role.Permissions,
-				[]accesscontrol.Permission{
-					{
-						Action: accesscontrol.ActionAlertingNotificationsWrite, // TODO remove when we decide tò limit access to raw config API
-					},
-				}),
+			),
 		},
 	}
 
@@ -343,6 +350,8 @@ var (
 				{Action: accesscontrol.ActionAlertingReceiversReadSecrets, Scope: models.ScopeReceiversAll},
 				{Action: accesscontrol.ActionAlertingReceiversUpdateProtected, Scope: models.ScopeReceiversAll},
 				{Action: accesscontrol.ActionAlertingNotificationSystemStatus},
+				{Action: accesscontrol.ActionAlertingRoutesPermissionsRead, Scope: models.ScopeRoutesAll},
+				{Action: accesscontrol.ActionAlertingRoutesPermissionsWrite, Scope: models.ScopeRoutesAll},
 			}),
 		},
 		Grants: []string{string(org.RoleAdmin)},
@@ -374,8 +383,8 @@ var (
 					Action: accesscontrol.ActionAlertingNotificationsProvisioningWrite, // organization scope
 				},
 				{
-					Action: dashboards.ActionFoldersRead,
-					Scope:  dashboards.ScopeFoldersAll,
+					Action: folder.ActionFoldersRead,
+					Scope:  folder.ScopeFoldersAll,
 				},
 			},
 		},
@@ -452,72 +461,33 @@ var (
 		Grants: []string{string(org.RoleEditor)},
 	}
 
-	// Add legacy permissions that we keep for backward compatibility but do not want in the fixed roles.
-	legacyReaderRole = accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
-			Name:        accesscontrol.FixedRolePrefix + "alerting.legacy:reader",
-			Hidden:      true,
-			DisplayName: "Alerting legacy read permissions (DO NOT USE)",
-			Group:       models.AlertRolesGroup,
-			Permissions: []accesscontrol.Permission{
-				{
-					Action: accesscontrol.ActionAlertingNotificationsRead,
-				},
-			},
-		},
-		Grants: []string{string(org.RoleViewer)}, // TODO remove when we decide tò limit access to raw config API
-	}
-
-	// Add legacy permissions that we keep for backward compatibility but do not want in the fixed roles.
-	legacyWriteRole = accesscontrol.RoleRegistration{
+	// deprecatedActionsRole contains deprecated actions just to keep the actions in the registry. The actions are granted to Admin just to make sure we do not accidentally completely lose access to an API or feature that happen to use only legacy
+	deprecatedActionsRole = accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        accesscontrol.FixedRolePrefix + "alerting.legacy:writer",
 			Hidden:      true,
-			DisplayName: "Alerting legacy write permissions (DO NOT USE)",
-			Group:       models.AlertRolesGroup,
-			Permissions: accesscontrol.ConcatPermissions(legacyReaderRole.Role.Permissions, []accesscontrol.Permission{
-				{
-					Action: accesscontrol.ActionAlertingNotificationsWrite,
-				},
-			}),
-		},
-		Grants: []string{string(org.RoleEditor)}, // TODO remove when we decide tò limit access to raw config API
-	}
-
-	// legacyAdminReaderRole grants read access to the raw Alertmanager config endpoints:
-	// GET /config/api/v1/alerts and GET /config/history. Admin-only in v13; removed in v14.
-	// Deprecated: do not use this role in new code, it is only kept for backward compatibility and will be removed in a
-	// future release.
-	legacyAdminReaderRole = accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
-			Name:        accesscontrol.FixedRolePrefix + "alerting.legacy.config:reader",
-			Hidden:      true,
-			DisplayName: "Alerting legacy config read permission (deprecated, admin only)",
+			DisplayName: "Alerting legacy permissions (deprecated, admin only)",
 			Group:       models.AlertRolesGroup,
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingNotificationsConfigHistoryRead,
 				},
-			},
-		},
-		Grants: []string{string(org.RoleAdmin)},
-	}
-
-	// legacyAdminWriterRole grants write access to the raw Alertmanager config history endpoint:
-	// POST /config/history/{id}/_activate. Admin-only in v13; removed in v14.
-	// Deprecated: do not use this role in new code, it is only kept for backward compatibility and will be removed in a
-	// future release.
-	legacyAdminWriterRole = accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
-			Name:        accesscontrol.FixedRolePrefix + "alerting.legacy.config:writer",
-			Hidden:      true,
-			DisplayName: "Alerting legacy config write permission (deprecated, admin only)",
-			Group:       models.AlertRolesGroup,
-			Permissions: accesscontrol.ConcatPermissions(legacyAdminReaderRole.Role.Permissions, []accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionAlertingRoutesRead,
+				},
+				{
+					Action: accesscontrol.ActionAlertingNotificationsRead,
+				},
 				{
 					Action: accesscontrol.ActionAlertingNotificationsConfigHistoryWrite,
 				},
-			}),
+				{
+					Action: accesscontrol.ActionAlertingRoutesWrite,
+				},
+				{
+					Action: accesscontrol.ActionAlertingNotificationsWrite,
+				},
+			},
 		},
 		Grants: []string{string(org.RoleAdmin)},
 	}
@@ -529,10 +499,13 @@ func DeclareFixedRoles(service accesscontrol.Service, features featuremgmt.Featu
 		instancesReaderRole, instancesWriterRole,
 		notificationsReaderRole, notificationsWriterRole,
 		alertingReaderRole, alertingWriterRole, alertingAdminRole, alertingProvisionerRole, alertingProvisioningReaderWithSecretsRole, alertingProvisioningStatus,
-		externalNotificationsReaderRole, externalNotificationsWriterRole, legacyReaderRole, legacyWriteRole, legacyAdminReaderRole, legacyAdminWriterRole,
+		externalNotificationsReaderRole, externalNotificationsWriterRole, deprecatedActionsRole,
 		// k8s roles
-		receiversReaderRole, receiversCreatorRole, receiversWriterRole, templatesReaderRole, templatesWriterRole,
-		timeIntervalsReaderRole, timeIntervalsWriterRole, routesReaderRole, routesWriterRole, inhibitionRulesReaderRole, inhibitionRulesWriterRole,
+		receiversReaderRole, receiversCreatorRole, receiversWriterRole,
+		templatesReaderRole, templatesWriterRole,
+		timeIntervalsReaderRole, timeIntervalsWriterRole,
+		routesCreatorRole, routesReaderRole, routesWriterRole,
+		inhibitionRulesReaderRole, inhibitionRulesWriterRole,
 	}
 
 	return service.DeclareFixedRoles(fixedRoles...)

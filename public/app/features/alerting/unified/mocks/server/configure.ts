@@ -1,4 +1,4 @@
-import { type DefaultBodyType, HttpResponse, HttpResponseResolver, PathParams, http } from 'msw';
+import { type DefaultBodyType, HttpResponse, type HttpResponseResolver, type PathParams, http } from 'msw';
 
 import server from '@grafana/test-utils/server';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
@@ -15,16 +15,24 @@ import {
   getK8sResponse,
   paginatedHandlerFor,
 } from 'app/features/alerting/unified/mocks/server/utils';
-import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
+import { type SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
-import { AlertmanagerAlert, AlertmanagerChoice, Silence } from 'app/plugins/datasource/alertmanager/types';
-import { FolderDTO } from 'app/types/folders';
-import { RulerDataSourceConfig } from 'app/types/unified-alerting';
-import { GrafanaPromRuleGroupDTO, PromRuleGroupDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import {
+  type AlertmanagerAlert,
+  type AlertmanagerChoice,
+  type Silence,
+} from 'app/plugins/datasource/alertmanager/types';
+import { type FolderDTO } from 'app/types/folders';
+import { type RulerDataSourceConfig } from 'app/types/unified-alerting';
+import {
+  type GrafanaPromRuleGroupDTO,
+  type PromRuleGroupDTO,
+  type RulerRuleGroupDTO,
+} from 'app/types/unified-alerting-dto';
 
 import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType } from '../../utils/datasource';
-import { ApiMachineryError } from '../../utils/k8s/errors';
+import { type ApiMachineryError } from '../../utils/k8s/errors';
 
 import { MIMIR_DATASOURCE_UID } from './constants';
 import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from './handlers/grafanaRuler';

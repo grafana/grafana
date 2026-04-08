@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
+import type * as React from 'react';
 
-import TNil from '../../types/TNil';
+import type TNil from '../../types/TNil';
 
-import DraggableManager from './DraggableManager';
-import EUpdateTypes from './EUpdateTypes';
+import type DraggableManager from './DraggableManager';
+import type EUpdateTypes from './EUpdateTypes';
 
 export type DraggableBounds = {
   clientXLeft: number;

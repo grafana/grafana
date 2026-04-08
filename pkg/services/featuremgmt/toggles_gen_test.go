@@ -383,7 +383,7 @@ func generateCSV(lookup map[string]featuretoggleapi.Feature) string {
 	for _, flag := range standardFeatureFlags {
 		info := lookup[flag.Name]
 		write([]string{
-			info.GetCreationTimestamp().Format("2006-01-02"),
+			info.GetCreationTimestamp().UTC().Format("2006-01-02"),
 			flag.Name,
 			flag.Stage.String(),
 			string(flag.Owner),

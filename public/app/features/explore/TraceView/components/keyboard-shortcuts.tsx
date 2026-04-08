@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import Combokeys from 'combokeys';
-import * as React from 'react';
+import type * as React from 'react';
 
 import keyboardMappings from './keyboard-mappings';
 

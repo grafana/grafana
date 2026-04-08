@@ -1,15 +1,15 @@
 import saveAs from 'file-saver';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   FieldType,
-  Labels,
+  type Labels,
   LogLevel,
-  LogRowModel,
-  LogsModel,
+  type LogRowModel,
+  type LogsModel,
   LogsSortOrder,
   MutableDataFrame,
-  DataFrame,
+  type DataFrame,
   standardTransformers,
   toDataFrame,
   DataFrameType,

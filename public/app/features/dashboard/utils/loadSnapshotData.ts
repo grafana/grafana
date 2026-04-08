@@ -4,14 +4,14 @@ import {
   getDefaultTimeRange,
   getProcessedDataFrames,
   LoadingState,
-  PanelData,
+  type PanelData,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { SnapshotWorker } from '../../query/state/DashboardQueryRunner/SnapshotWorker';
 import { getTimeSrv } from '../services/TimeSrv';
-import { DashboardModel } from '../state/DashboardModel';
-import { PanelModel } from '../state/PanelModel';
+import { type DashboardModel } from '../state/DashboardModel';
+import { type PanelModel } from '../state/PanelModel';
 
 import { applyPanelTimeOverrides } from './panel';
 

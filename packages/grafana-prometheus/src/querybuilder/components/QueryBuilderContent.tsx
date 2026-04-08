@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { memo, useState } from 'react';
 
-import { DataSourceApi, getDefaultTimeRange, PanelData } from '@grafana/data';
+import { type DataSourceApi, getDefaultTimeRange, type PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EditorRow } from '@grafana/plugin-ui';
 
-import { PrometheusDatasource } from '../../datasource';
+import { type PrometheusDatasource } from '../../datasource';
 import { promqlGrammar } from '../../promql';
 import { getInitHints } from '../../query_hints';
 import { buildVisualQueryFromString } from '../parsing';
@@ -16,8 +16,8 @@ import { OperationsEditorRow } from '../shared/OperationsEditorRow';
 import { QueryBuilderHints } from '../shared/QueryBuilderHints';
 import { RawQuery } from '../shared/RawQuery';
 import { promQueryModeller } from '../shared/modeller_instance';
-import { QueryBuilderOperation } from '../shared/types';
-import { PromVisualQuery } from '../types';
+import { type QueryBuilderOperation } from '../shared/types';
+import { type PromVisualQuery } from '../types';
 
 import { MetricsLabelsSection } from './MetricsLabelsSection';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';

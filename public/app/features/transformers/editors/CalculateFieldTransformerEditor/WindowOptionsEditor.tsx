@@ -1,9 +1,9 @@
-import { ReducerID, SelectableValue } from '@grafana/data';
+import { ReducerID, type SelectableValue } from '@grafana/data';
 import {
   CalculateFieldMode,
   WindowAlignment,
-  CalculateFieldTransformerOptions,
-  WindowOptions,
+  type CalculateFieldTransformerOptions,
+  type WindowOptions,
   WindowSizeMode,
 } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';

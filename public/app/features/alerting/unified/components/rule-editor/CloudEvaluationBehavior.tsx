@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, Input, Select, useStyles2 } from '@grafana/ui';
 
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { RuleFormType, type RuleFormValues } from '../../types/rule-form';
 import { timeOptions } from '../../utils/time';
 
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';

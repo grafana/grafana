@@ -3,10 +3,10 @@ import { render, screen, waitFor } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import {
-  FieldConfigSource,
+  type FieldConfigSource,
   getDefaultTimeRange,
   LoadingState,
-  PanelProps,
+  type PanelProps,
   PluginExtensionTypes,
   ThresholdsMode,
 } from '@grafana/data';
@@ -16,8 +16,12 @@ import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { mockPromRulesApiResponse } from 'app/features/alerting/unified/mocks/grafanaRulerApi';
 import { mockRulerRulesApiResponse } from 'app/features/alerting/unified/mocks/rulerApi';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
-import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { PromRuleGroupDTO, PromRulesResponse, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { type DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import {
+  type PromRuleGroupDTO,
+  type PromRulesResponse,
+  type RulerGrafanaRuleDTO,
+} from 'app/types/unified-alerting-dto';
 
 import { contextSrv } from '../../../core/services/context_srv';
 import {
@@ -33,7 +37,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../../features/alerting/unified/ut
 import { AccessControlAction } from '../../../types/accessControl';
 
 import { UnifiedAlertListPanel } from './UnifiedAlertList';
-import { GroupMode, SortOrder, STAT_THRESHOLDS_DEFAULT, UnifiedAlertListOptions, ViewMode } from './types';
+import { GroupMode, SortOrder, STAT_THRESHOLDS_DEFAULT, type UnifiedAlertListOptions, ViewMode } from './types';
 import * as utils from './util';
 
 const grafanaRuleMock = {

@@ -9,7 +9,7 @@ import { DashboardEditActionEvent } from '../../edit-pane/shared';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../../utils/test-utils';
 import { DashboardScene } from '../DashboardScene';
 
-import { DashboardGridItem, DashboardGridItemState } from './DashboardGridItem';
+import { DashboardGridItem, type DashboardGridItemState } from './DashboardGridItem';
 import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
 
 jest.mock('@grafana/runtime', () => ({

@@ -336,4 +336,75 @@ func TestProvideService(t *testing.T) {
 		_, err := ProvideService(cfg, featuremgmt.WithFeatures(), nil, &dummyPluginManager{})
 		require.Error(t, err)
 	})
+
+	t.Run("renderAuthJWT", func(t *testing.T) {
+		t.Run("with an empty renderer auth token", func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.AppURL = "http://app-url"
+			cfg.RendererServerUrl = "https://public-grafana.com/"
+			cfg.ImagesDir = filepath.Join(t.TempDir(), "images")
+			cfg.CSVsDir = filepath.Join(t.TempDir(), "csvs")
+			cfg.PDFsDir = filepath.Join(t.TempDir(), "pdfs")
+			cfg.RendererAuthToken = "   "
+
+			t.Run("in dev mode returns an error", func(t *testing.T) {
+				cfg.Env = setting.Dev
+				_, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil, &dummyPluginManager{})
+				require.Error(t, err)
+			})
+
+			t.Run("in prod mode returns an error", func(t *testing.T) {
+				cfg.Env = setting.Prod
+				_, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil, &dummyPluginManager{})
+				require.Error(t, err)
+			})
+		})
+
+		t.Run("with the default renderer auth token", func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.AppURL = "http://app-url"
+			cfg.RendererServerUrl = "https://public-grafana.com/"
+			cfg.ImagesDir = filepath.Join(t.TempDir(), "images")
+			cfg.CSVsDir = filepath.Join(t.TempDir(), "csvs")
+			cfg.PDFsDir = filepath.Join(t.TempDir(), "pdfs")
+			cfg.RendererAuthToken = setting.DefaultRendererAuthToken
+
+			t.Run("in dev mode does not return an error", func(t *testing.T) {
+				cfg.Env = setting.Dev
+				rs, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil, &dummyPluginManager{})
+				require.NoError(t, err)
+				require.NotNil(t, rs)
+			})
+
+			t.Run("in prod mode returns an error", func(t *testing.T) {
+				cfg.Env = setting.Prod
+				_, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil, &dummyPluginManager{})
+				require.Error(t, err)
+			})
+		})
+
+		t.Run("with non-default renderer auth token", func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.AppURL = "http://app-url"
+			cfg.RendererServerUrl = "https://public-grafana.com/"
+			cfg.ImagesDir = filepath.Join(t.TempDir(), "images")
+			cfg.CSVsDir = filepath.Join(t.TempDir(), "csvs")
+			cfg.PDFsDir = filepath.Join(t.TempDir(), "pdfs")
+			cfg.RendererAuthToken = "some-value"
+
+			t.Run("in dev mode does not return an error", func(t *testing.T) {
+				cfg.Env = setting.Env
+				rs, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil, &dummyPluginManager{})
+				require.NoError(t, err)
+				require.NotNil(t, rs)
+			})
+
+			t.Run("in prod mode does not return an error", func(t *testing.T) {
+				cfg.Env = setting.Prod
+				rs, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagRenderAuthJWT), nil, &dummyPluginManager{})
+				require.NoError(t, err)
+				require.NotNil(t, rs)
+			})
+		})
+	})
 }

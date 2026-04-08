@@ -5,10 +5,10 @@ import { render } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { GenAIButton, GenAIButtonProps } from './GenAIButton';
+import { GenAIButton, type GenAIButtonProps } from './GenAIButton';
 import { StreamStatus, useLLMStream } from './hooks';
 import { EventTrackingSrc } from './tracking';
-import { Role } from './utils';
+import { type Role } from './utils';
 
 const mockedUseLLMStreamState = {
   messages: [],

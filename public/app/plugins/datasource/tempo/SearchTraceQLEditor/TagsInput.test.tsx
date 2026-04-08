@@ -1,11 +1,11 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
-import { TempoDatasource } from '../datasource';
+import { type TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
+import { type TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { initTemplateSrv } from '../test/test_utils';
-import { Scope } from '../types';
+import { type Scope } from '../types';
 
 import TagsInput from './TagsInput';
 import { v2Tags } from './mocks';

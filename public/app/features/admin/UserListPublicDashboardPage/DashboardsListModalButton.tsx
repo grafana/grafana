@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, LoadingPlaceholder, Modal, ModalsController, useStyles2 } from '@grafana/ui';

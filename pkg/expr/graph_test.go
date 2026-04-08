@@ -2,13 +2,38 @@ package expr
 
 import (
 	"encoding/json"
+	"sync"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var openfeatureTestMutex sync.Mutex
+
+func setupOpenFeatureFlag(t *testing.T, flag string, value bool) {
+	t.Helper()
+	openfeatureTestMutex.Lock()
+
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+		flag: setting.NewInMemoryFlag(flag, value),
+	})
+	require.NoError(t, err)
+
+	err = openfeature.SetProviderAndWait(provider)
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+		openfeatureTestMutex.Unlock()
+	})
+}
 
 func TestServicebuildPipeLine(t *testing.T) {
 	var tests = []struct {
@@ -291,4 +316,132 @@ func getRefIDOrder(nodes []Node) []string {
 		ids = append(ids, n.RefID())
 	}
 	return ids
+}
+
+func TestBuildPipelineDegraded(t *testing.T) {
+	t.Run("missing dep marks node disabled when toggle ON", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagSseExpressionErrorIsolation, true)
+		s := Service{
+			cfg:    setting.NewCfg(),
+			tracer: &testTracer{},
+		}
+		req := &Request{
+			Queries: []Query{
+				{
+					RefID: "A",
+					DataSource: &datasources.DataSource{
+						UID: "Fake",
+					},
+					TimeRange: AbsoluteTimeRange{},
+				},
+				{
+					RefID:      "B",
+					DataSource: dataSourceModel(),
+					JSON: json.RawMessage(`{
+						"expression": "$NONEXISTENT",
+						"type": "math"
+					}`),
+				},
+			},
+		}
+
+		pipeline, err := s.buildPipeline(t.Context(), req)
+		require.NoError(t, err)
+		require.Len(t, pipeline, 2, "both nodes should be in pipeline (B is disabled, not removed)")
+		nodeByRefID := make(map[string]Node, len(pipeline))
+		for _, n := range pipeline {
+			nodeByRefID[n.RefID()] = n
+		}
+		require.Nil(t, nodeByRefID["A"].DisabledErr(), "node A should be enabled")
+		require.Error(t, nodeByRefID["B"].DisabledErr(), "node B should be disabled")
+		require.Contains(t, nodeByRefID["B"].DisabledErr().Error(), "NONEXISTENT")
+	})
+
+	t.Run("missing dep still hard-fails when toggle OFF", func(t *testing.T) {
+		s := Service{
+			cfg:    setting.NewCfg(),
+			tracer: &testTracer{},
+		}
+		req := &Request{
+			Queries: []Query{
+				{
+					RefID: "A",
+					DataSource: &datasources.DataSource{
+						UID: "Fake",
+					},
+					TimeRange: AbsoluteTimeRange{},
+				},
+				{
+					RefID:      "B",
+					DataSource: dataSourceModel(),
+					JSON: json.RawMessage(`{
+						"expression": "$NONEXISTENT",
+						"type": "math"
+					}`),
+				},
+			},
+		}
+
+		_, err := s.buildPipeline(t.Context(), req)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "find dependent")
+	})
+
+	t.Run("structural errors remain fatal even with toggle ON", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagSseExpressionErrorIsolation, true)
+		s := Service{
+			cfg:    setting.NewCfg(),
+			tracer: &testTracer{},
+		}
+		req := &Request{
+			Queries: []Query{
+				{
+					RefID:      "A",
+					DataSource: dataSourceModel(),
+					JSON: json.RawMessage(`{
+						"expression": "$A",
+						"type": "math"
+					}`),
+				},
+			},
+		}
+
+		_, err := s.buildPipeline(t.Context(), req)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "cannot reference itself")
+	})
+}
+
+func TestBuildPipelinePublicRejectsDegraded(t *testing.T) {
+	t.Run("BuildPipeline returns error for broken nodes even with toggle ON", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagSseExpressionErrorIsolation, true)
+		s := Service{
+			cfg:     setting.NewCfg(),
+			tracer:  &testTracer{},
+			metrics: metrics.NewSSEMetrics(nil),
+		}
+		req := &Request{
+			Queries: []Query{
+				{
+					RefID: "A",
+					DataSource: &datasources.DataSource{
+						UID: "Fake",
+					},
+					TimeRange: AbsoluteTimeRange{},
+				},
+				{
+					RefID:      "B",
+					DataSource: dataSourceModel(),
+					JSON: json.RawMessage(`{
+						"expression": "$NONEXISTENT",
+						"type": "math"
+					}`),
+				},
+			},
+		}
+
+		_, err := s.BuildPipeline(t.Context(), req)
+		require.Error(t, err, "BuildPipeline should reject degraded pipelines")
+		require.Contains(t, err.Error(), "NONEXISTENT")
+	})
 }

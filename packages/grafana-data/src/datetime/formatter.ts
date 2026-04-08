@@ -1,14 +1,14 @@
 /* eslint-disable id-blacklist, no-restricted-imports */
-import moment, { Moment } from 'moment-timezone';
+import moment, { type Moment } from 'moment-timezone';
 
 import { formatDate } from '@grafana/i18n';
 
-import { TimeZone } from '../types/time';
+import { type TimeZone } from '../types/time';
 import { getFeatureToggle } from '../utils/featureToggles';
 
-import { DateTimeOptions, getTimeZone } from './common';
+import { type DateTimeOptions, getTimeZone } from './common';
 import { systemDateFormats } from './formats';
-import { DateTimeInput, toUtc, dateTimeAsMoment } from './moment_wrapper';
+import { type DateTimeInput, toUtc, dateTimeAsMoment } from './moment_wrapper';
 
 /**
  * Converts a Grafana DateTimeInput to a plain Javascript Date object.

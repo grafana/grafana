@@ -11,3 +11,10 @@ reportRenderBinding:
     disabled: false
   defaultRule:
     variation: enabled
+
+compiledBootScript:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled

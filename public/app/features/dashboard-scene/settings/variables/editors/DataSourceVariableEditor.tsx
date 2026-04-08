@@ -1,11 +1,11 @@
-import React, { FormEvent } from 'react';
+import React, { type FormEvent } from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { DataSourceVariable, SceneVariable } from '@grafana/scenes';
-import { Combobox, ComboboxOption, Input } from '@grafana/ui';
+import { DataSourceVariable, type SceneVariable } from '@grafana/scenes';
+import { Combobox, type ComboboxOption, Input } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DataSourceVariableForm } from '../components/DataSourceVariableForm';

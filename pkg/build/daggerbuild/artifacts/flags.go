@@ -31,6 +31,11 @@ func ArtifactFlags(r Registerer) []cli.Flag {
 		Usage: "If true, then the artifacts that are built will be verified with e2e tests or similar after being exported, depending on the artifact",
 		Value: false,
 	}
+	noHostDistFlag := &cli.BoolFlag{
+		Name:  "no-host-dist",
+		Usage: "If set, do not reuse pre-built artifacts already present under --destination; always build inside Dagger.",
+		Value: false,
+	}
 	cacheBuildersFlag := &cli.BoolFlag{
 		Name:  "cache-builders",
 		Value: false,
@@ -46,6 +51,7 @@ func ArtifactFlags(r Registerer) []cli.Flag {
 			buildFlag,
 			publishFlag,
 			verifyFlag,
+			noHostDistFlag,
 			flags.Platform,
 			cacheBuildersFlag,
 			cacheBuildersRegistryFlag,

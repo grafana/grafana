@@ -4,16 +4,30 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
+	"k8s.io/apimachinery/pkg/selection"
 
+	"github.com/grafana/grafana/pkg/tests/testsuite"
+
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 var orgID = int64(1)
 var noPermUsr = &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
@@ -132,50 +146,69 @@ func TestSplitFullpath(t *testing.T) {
 	}
 }
 
-func TestNestedFolderDeleteUsesCorrectStorage(t *testing.T) {
-	// This is a regression test for a bug where nestedFolderDelete was calling s.Get()
-	// (which goes through the API server/unified storage) instead of s.store.Get()
+func TestGetUIDFromLegacyID(t *testing.T) {
+	const orgID int64 = 1
 
-	ctx := context.Background()
-	tracer := noop.NewTracerProvider().Tracer("TestNestedFolderDeleteUsesCorrectStorage")
+	user := &user.SignedInUser{OrgID: orgID, UserID: 1}
+	ctx := identity.WithRequester(context.Background(), user)
 
-	testUID := "test-folder-uid"
-	testOrgID := int64(1)
-	testUser := &user.SignedInUser{UserID: 1, OrgID: testOrgID}
-
-	testFolder := &folder.Folder{
-		UID:   testUID,
-		OrgID: testOrgID,
-		Title: "Test Folder",
-	}
-
-	// Create fake stores - the direct store will have the folder, unified store will not
+	fakeK8s := new(client.MockK8sHandler)
 	store := folder.NewFakeStore()
-	store.ExpectedFolder = testFolder          // Get will return the folder
-	store.ExpectedFolders = []*folder.Folder{} // GetDescendants returns empty list
-	store.ExpectedError = nil                  // No errors
-
-	unifiedStore := folder.NewFakeStore()
-	unifiedStore.ExpectedFolder = nil                     // This store doesn't have the folder
-	unifiedStore.ExpectedError = folder.ErrFolderNotFound // Would return not found
-
-	// Set up the service with both stores
-	service := &Service{
-		store:        store,
-		unifiedStore: unifiedStore,
-		tracer:       tracer,
-		log:          slog.Default(),
+	store.ExpectedFolder = &folder.Folder{
+		UID:   "resolved-uid",
+		OrgID: orgID,
+		Title: "Resolved",
 	}
 
-	cmd := &folder.DeleteFolderCommand{
-		UID:          testUID,
-		OrgID:        testOrgID,
-		SignedInUser: testUser,
+	svc := &Service{
+		k8sclient:     fakeK8s,
+		unifiedStore:  store,
+		accessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
+		tracer:        noop.NewTracerProvider().Tracer("test"),
 	}
 
-	descendants, err := service.nestedFolderDelete(ctx, cmd)
+	gvr := folderv1.FolderResourceInfo.GroupVersionResource()
+	searchReq := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     gvr.Group,
+				Resource:  gvr.Resource,
+			},
+			Fields: []*resourcepb.Requirement{},
+			Labels: []*resourcepb.Requirement{
+				{
+					Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
+					Operator: string(selection.In),
+					Values:   []string{"42"},
+				},
+			},
+		},
+		Limit: folderSearchLimit,
+	}
+	searchRes := &resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{
+			Columns: []*resourcepb.ResourceTableColumnDefinition{
+				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+			},
+			Rows: []*resourcepb.ResourceTableRow{
+				{
+					Key: &resourcepb.ResourceKey{
+						Name:     "resolved-uid",
+						Resource: "folders",
+					},
+					Cells: [][]byte{[]byte("")},
+				},
+			},
+		},
+		TotalHits: 1,
+	}
 
-	require.NoError(t, err, "nestedFolderDelete should succeed")
-	assert.Empty(t, descendants, "Expected no descendants for this test")
-	assert.True(t, store.DeleteCalled, "store Delete should have been called")
+	fakeK8s.On("GetNamespace", orgID).Return("default").Maybe()
+	fakeK8s.On("Search", mock.Anything, orgID, searchReq).Return(searchRes, nil).Once()
+
+	uid, err := svc.getUIDFromLegacyID(ctx, orgID, 42)
+	require.NoError(t, err)
+	require.Equal(t, "resolved-uid", uid)
+	fakeK8s.AssertExpectations(t)
 }

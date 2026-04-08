@@ -1,13 +1,13 @@
 import { validate as uuidValidate } from 'uuid';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { ServerDiscoveryField } from './components/ServerDiscoveryField';
-import { FieldData, SSOProvider, SSOSettingsField } from './types';
+import { type FieldData, type SSOProvider, type SSOSettingsField } from './types';
 import { isSelectableValue, isSelectableValueArray } from './utils/guards';
 import { isUrlValid, isValidDomain } from './utils/url';
 

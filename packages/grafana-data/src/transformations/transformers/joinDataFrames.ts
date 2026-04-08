@@ -1,6 +1,6 @@
 import { getTimeField, sortDataFrame } from '../../dataframe/processDataFrame';
-import { DataFrame, Field, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types/dataFrame';
-import { FieldMatcher } from '../../types/transformations';
+import { type DataFrame, type Field, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types/dataFrame';
+import { type FieldMatcher } from '../../types/transformations';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -243,6 +243,13 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
   }
 
   let joined: Array<Array<number | string | null | undefined>> = [];
+
+  if (allData.length === 0) {
+    return {
+      length: 0,
+      fields: originalFields,
+    };
+  }
 
   if (options.mode === JoinMode.outerTabular) {
     joined = joinTabular(allData, true);

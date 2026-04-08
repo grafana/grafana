@@ -4,13 +4,13 @@ import { FieldMatcherID, fieldMatchers } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { Combobox } from '../Combobox/Combobox';
-import { ComboboxOption } from '../Combobox/types';
+import { type ComboboxOption } from '../Combobox/types';
 
-import { FieldMatcherUIRegistryItem, MatcherUIProps } from './types';
+import { type FieldMatcherUIRegistryItem, type MatcherUIProps } from './types';
 import { frameHasName, useFieldDisplayNames, useMatcherSelectOptions } from './utils';
 
 export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>((props) => {
-  const { data, options, onChange: onChangeFromProps, id, scope } = props;
+  const { data, options, onChange: onChangeFromProps, id, scope = 'series' } = props;
   const names = useFieldDisplayNames(data);
   const selectOptions = useMatcherSelectOptions(names, options, { scope });
 

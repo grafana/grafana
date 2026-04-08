@@ -1,10 +1,10 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 
-import { TimeRange } from '@grafana/data';
+import { type TimeRange } from '@grafana/data';
 
 import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, LAST_USED_LABELS_KEY, METRIC_LABEL } from '../../constants';
-import { PrometheusDatasource } from '../../datasource';
-import { PrometheusLanguageProvider, PrometheusLanguageProviderInterface } from '../../language_provider';
+import { type PrometheusDatasource } from '../../datasource';
+import { PrometheusLanguageProvider, type PrometheusLanguageProviderInterface } from '../../language_provider';
 import { getMockTimeRange } from '../../test/mocks/datasource';
 
 import * as selectorBuilderModule from './selectorBuilder';

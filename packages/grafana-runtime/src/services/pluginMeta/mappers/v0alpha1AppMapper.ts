@@ -1,7 +1,7 @@
 import { type AppPluginConfig, type PluginDependencies, type PluginExtensions, type PluginType } from '@grafana/data';
 
 import type { AppPluginMetas, AppPluginMetasMapper, PluginMetasResponse } from '../types';
-import type { Spec as v0alpha1Spec } from '../types/types.spec.gen';
+import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 
 import { angularMapper, loadingStrategyMapper } from './shared';
 

@@ -1,7 +1,7 @@
-import { DataFrame, Field } from '@grafana/data';
-import { ConnectionDirection, DirectionDimensionConfig, DirectionDimensionMode } from '@grafana/schema';
+import { type DataFrame, type Field } from '@grafana/data';
+import { ConnectionDirection, type DirectionDimensionConfig, DirectionDimensionMode } from '@grafana/schema';
 
-import { DimensionSupplier } from './types';
+import { type DimensionSupplier } from './types';
 import { findField, getLastNotNullFieldValue } from './utils';
 
 //---------------------------------------------------------

@@ -371,18 +371,6 @@ func RVFromSnowflake(snowflakeID int64) int64 {
 	return ((snowflakeID>>(snowflake.NodeBits+snowflake.StepBits))+snowflake.Epoch)*1000 + microSecFraction
 }
 
-// RVFromBulkSnowflake is like RVFromSnowflake but preserves the full low-order
-// (NodeBits + StepBits) bits as the sub-millisecond fraction. Bulk-import
-// snowflake IDs are produced by snowflakeFromTime (which zeroes the low 22
-// bits) plus a monotonic counter, so the counter can spill past StepBits into
-// NodeBits. Using only StepBits (12) would wrap at 4096 entries per
-// millisecond; using all 22 low bits pushes that limit to ~4 million.
-func RVFromBulkSnowflake(snowflakeID int64) int64 {
-	totalLowBits := snowflake.NodeBits + snowflake.StepBits
-	subMilliFraction := snowflakeID & ((1 << totalLowBits) - 1)
-	return ((snowflakeID>>totalLowBits)+snowflake.Epoch)*1000 + subMilliFraction
-}
-
 // helper utility to compare two RVs. The first RV must be in snowflake format. Will convert rv2 to snowflake and retry
 // if comparison fails
 func IsRvEqual(rv1, rv2 int64) bool {

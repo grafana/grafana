@@ -3,11 +3,11 @@ import { useId } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import {
-  DynamicConfigValue,
-  FieldConfigOptionsRegistry,
+  type DynamicConfigValue,
+  type FieldConfigOptionsRegistry,
   FieldConfigProperty,
-  FieldOverrideContext,
-  GrafanaTheme2,
+  type FieldOverrideContext,
+  type GrafanaTheme2,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Counter, Field, Stack, IconButton, Label, useStyles2 } from '@grafana/ui';

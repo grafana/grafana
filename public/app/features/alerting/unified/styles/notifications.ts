@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { AlertState } from 'app/plugins/datasource/alertmanager/types';
 
 export const getNotificationsTextColors = (theme: GrafanaTheme2) => ({

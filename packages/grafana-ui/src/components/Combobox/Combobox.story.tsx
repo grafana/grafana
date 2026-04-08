@@ -1,14 +1,14 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/preview-api';
-import { Meta, StoryFn, StoryObj } from '@storybook/react';
+import { type Meta, type StoryFn, type StoryObj } from '@storybook/react';
 import { useEffect, useState } from 'react';
 
 import { Field } from '../Forms/Field';
 
-import { Combobox, ComboboxProps } from './Combobox';
+import { Combobox, type ComboboxProps } from './Combobox';
 import mdx from './Combobox.mdx';
 import { fakeSearchAPI, generateGroupingOptions, generateOptions } from './storyUtils';
-import { ComboboxOption } from './types';
+import { type ComboboxOption } from './types';
 
 type PropsAndCustomArgs<T extends string | number = string> = ComboboxProps<T> & {
   numberOfOptions: number;

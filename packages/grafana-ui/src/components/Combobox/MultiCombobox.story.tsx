@@ -1,14 +1,14 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs, useEffect, useState } from '@storybook/preview-api';
 import type { Meta, StoryFn, StoryObj } from '@storybook/react';
-import { ComponentProps, useId } from 'react';
+import { type ComponentProps, useId } from 'react';
 
 import { Field } from '../Forms/Field';
 
 import { MultiCombobox } from './MultiCombobox';
 import mdx from './MultiCombobox.mdx';
 import { generateOptions, fakeSearchAPI, generateGroupingOptions } from './storyUtils';
-import { ComboboxOption } from './types';
+import { type ComboboxOption } from './types';
 
 const meta: Meta<typeof MultiCombobox> = {
   title: 'Inputs/MultiCombobox',

@@ -15,7 +15,7 @@
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import type { JSX } from 'react';
 
-import Scrubber, { ScrubberProps } from './Scrubber';
+import Scrubber, { type ScrubberProps } from './Scrubber';
 
 describe('<Scrubber>', () => {
   const defaultProps = {

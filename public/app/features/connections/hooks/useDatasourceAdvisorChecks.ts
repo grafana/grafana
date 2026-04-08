@@ -1,6 +1,11 @@
 import { useMemo } from 'react';
 
-import { Check, CheckType, useGetCheckTypeQuery, useListCheckQuery } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
+import {
+  type Check,
+  type CheckType,
+  useGetCheckTypeQuery,
+  useListCheckQuery,
+} from '@grafana/api-clients/rtkq/advisor/v0alpha1';
 import { config } from '@grafana/runtime';
 
 export type FailureSeverity = 'high' | 'low';

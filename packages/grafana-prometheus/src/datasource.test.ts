@@ -3,23 +3,23 @@ import { cloneDeep } from 'lodash';
 import { lastValueFrom, of } from 'rxjs';
 
 import {
-  AdHocVariableFilter,
+  type AdHocVariableFilter,
   CoreApp,
-  CustomVariableModel,
-  DataQueryRequest,
-  DataSourceInstanceSettings,
+  type CustomVariableModel,
+  type DataQueryRequest,
+  type DataSourceInstanceSettings,
   dateTime,
   LoadingState,
-  ScopeSpecFilter,
-  TimeRange,
+  type ScopeSpecFilter,
+  type TimeRange,
   VariableHide,
 } from '@grafana/data';
-import { config, getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
+import { config, getBackendSrv, setBackendSrv, type TemplateSrv } from '@grafana/runtime';
 
 import { extractResourceMatcher, extractRuleMappingFromGroups, PrometheusDatasource } from './datasource';
 import { prometheusRegularEscape, prometheusSpecialRegexEscape } from './escaping';
-import { PrometheusLanguageProviderInterface } from './language_provider';
-import { CacheRequestInfo } from './querycache/QueryCache';
+import { type PrometheusLanguageProviderInterface } from './language_provider';
+import { type CacheRequestInfo } from './querycache/QueryCache';
 import {
   createDataRequest,
   createDefaultPromResponse,
@@ -29,10 +29,10 @@ import {
 import {
   PromApplication,
   PrometheusCacheLevel,
-  PromOptions,
-  PromQuery,
-  PromQueryRequest,
-  RawRecordingRules,
+  type PromOptions,
+  type PromQuery,
+  type PromQueryRequest,
+  type RawRecordingRules,
 } from './types';
 
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));

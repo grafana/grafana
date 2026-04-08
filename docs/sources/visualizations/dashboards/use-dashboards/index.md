@@ -129,6 +129,12 @@ image_maps:
           **Dashboard insights**
 
           View [dashboard analytics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/assess-dashboard-usage/) including information about users, activity, query counts.
+      - x_coord: 93.5
+        y_coord: 75
+        content: |
+          **Toolbar**
+
+          A dashboard toolbar.
       - x_coord: 11.5
         y_coord: 30
         content: |

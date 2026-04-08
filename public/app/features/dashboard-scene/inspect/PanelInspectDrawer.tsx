@@ -1,11 +1,11 @@
 import { Trans, t } from '@grafana/i18n';
 import {
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   sceneGraph,
-  VizPanel,
-  SceneObjectRef,
+  type VizPanel,
+  type SceneObjectRef,
 } from '@grafana/scenes';
 import { Alert, Drawer, Tab, TabsBar } from '@grafana/ui';
 import { getDataSourceWithInspector } from 'app/features/dashboard/components/Inspector/hooks';
@@ -20,7 +20,7 @@ import { InspectJsonTab } from './InspectJsonTab';
 import { InspectMetaDataTab } from './InspectMetaDataTab';
 import { InspectQueryTab } from './InspectQueryTab';
 import { InspectStatsTab } from './InspectStatsTab';
-import { SceneInspectTab } from './types';
+import { type SceneInspectTab } from './types';
 
 interface PanelInspectDrawerState extends SceneObjectState {
   tabs?: SceneInspectTab[];

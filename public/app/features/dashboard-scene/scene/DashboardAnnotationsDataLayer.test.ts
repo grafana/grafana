@@ -1,6 +1,13 @@
 import { map, of } from 'rxjs';
 
-import { DataSourceApi, DataQueryRequest, DataTopic, PanelData, LoadingState, toDataFrame } from '@grafana/data';
+import {
+  type DataSourceApi,
+  type DataQueryRequest,
+  DataTopic,
+  type PanelData,
+  LoadingState,
+  toDataFrame,
+} from '@grafana/data';
 import { PublicAnnotationsDataSource } from 'app/features/query/state/DashboardQueryRunner/PublicAnnotationsDataSource';
 
 import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';

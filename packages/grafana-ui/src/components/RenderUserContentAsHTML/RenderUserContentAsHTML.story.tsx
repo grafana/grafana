@@ -1,4 +1,4 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { RenderUserContentAsHTML } from './RenderUserContentAsHTML';
 import mdx from './RenderUserContentAsHTML.mdx';

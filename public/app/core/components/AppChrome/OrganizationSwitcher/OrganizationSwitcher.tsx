@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Text } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getUserOrganizations, setUserOrganization } from 'app/features/org/state/actions';
 import { useDispatch, useSelector } from 'app/types/store';
-import { UserOrg } from 'app/types/user';
+import { type UserOrg } from 'app/types/user';
 
 import { Branding } from '../../Branding/Branding';
 

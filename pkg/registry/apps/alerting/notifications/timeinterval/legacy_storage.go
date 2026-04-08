@@ -110,11 +110,11 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if p.Name != "" { // TODO remove when metadata.name can be defined by user
 		return nil, errors.NewBadRequest("object's metadata.name should be empty")
 	}
-	model, err := convertToDomainModel(p)
+	mt, err := convertToDomainModel(p)
 	if err != nil {
 		return nil, err
 	}
-	out, err := s.service.CreateMuteTiming(ctx, model, info.OrgID)
+	out, err := s.service.CreateMuteTiming(ctx, mt, info.OrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -193,8 +193,12 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 		return nil, false, fmt.Errorf("expected time-interval but got %s", old.GetObjectKind().GroupVersionKind())
 	}
 
-	err = s.service.DeleteMuteTiming(ctx, p.Name, info.OrgID, definitions.Provenance(ngmodels.ProvenanceNone), version) // TODO add support for dry-run option
-	return old, false, err                                                                                              // false - will be deleted async
+	prov, err := ngmodels.ProvenanceFromString(p.GetProvenanceStatus())
+	if err != nil {
+		return nil, false, errors.NewBadRequest(err.Error())
+	}
+	err = s.service.DeleteMuteTiming(ctx, p.Name, info.OrgID, definitions.Provenance(prov), version) // TODO add support for dry-run option
+	return old, false, err                                                                           // false - will be deleted async
 }
 
 func (s *legacyStorage) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *internalversion.ListOptions) (runtime.Object, error) {

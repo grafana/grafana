@@ -3,14 +3,14 @@ import { omit } from 'lodash';
 import moment from 'moment';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   Badge,
   Button,
-  CellProps,
-  Column,
+  type CellProps,
+  type Column,
   ConfirmModal,
   InteractiveTable,
   Stack,
@@ -18,7 +18,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { computeVersionDiff } from '../../utils/diff';

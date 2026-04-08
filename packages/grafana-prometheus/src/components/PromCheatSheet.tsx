@@ -1,11 +1,11 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromCheatSheet.tsx
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, QueryEditorHelpProps } from '@grafana/data';
+import { type GrafanaTheme2, type QueryEditorHelpProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
-import { PromQuery } from '../types';
+import { type PromQuery } from '../types';
 
 const CHEAT_SHEET_ITEMS = [
   {

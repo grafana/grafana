@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import { type MouseEvent, useCallback, useContext, useEffect } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   isSceneObject,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneObjectBase,
-  SceneObjectState,
-  SceneObject,
+  type SceneObjectState,
+  type SceneObject,
   VizPanel,
   sceneGraph,
 } from '@grafana/scenes';

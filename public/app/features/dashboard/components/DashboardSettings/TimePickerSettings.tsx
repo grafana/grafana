@@ -1,10 +1,10 @@
 import { isEmpty } from 'lodash';
-import { FormEvent, memo, useState } from 'react';
+import { type FormEvent, memo, useState } from 'react';
 
-import { rangeUtil, TimeZone } from '@grafana/data';
+import { rangeUtil, type TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { CollapsableSection, Field, Input, Switch, TimeZonePicker, WeekStart, WeekStartPicker } from '@grafana/ui';
+import { CollapsableSection, Field, Input, Switch, TimeZonePicker, type WeekStart, WeekStartPicker } from '@grafana/ui';
 
 import { AutoRefreshIntervals } from './AutoRefreshIntervals';
 

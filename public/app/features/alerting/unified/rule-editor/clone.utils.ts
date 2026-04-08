@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 
-import { RuleWithLocation } from 'app/types/unified-alerting';
-import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { type RuleWithLocation } from 'app/types/unified-alerting';
+import { type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { generateCopiedName } from '../utils/duplicate';
 import { GRAFANA_ORIGIN_LABEL } from '../utils/labels';

@@ -1,9 +1,9 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/state/helpers.ts
 import { t } from '@grafana/i18n';
 
-import { PrometheusLanguageProviderInterface } from '../../../language_provider';
+import { type PrometheusLanguageProviderInterface } from '../../../language_provider';
 
-import { MetricData, MetricsData, PromFilterOption } from './types';
+import { type MetricData, type MetricsData, type PromFilterOption } from './types';
 
 // Constants
 const HISTOGRAM_TYPES = ['histogram', 'summary'] as const;

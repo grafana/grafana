@@ -352,6 +352,7 @@ func TestIntegrationDashboardQuota(t *testing.T) {
 		DisableAnonymous:  true,
 		EnableQuota:       true,
 		DashboardOrgQuota: &dashboardQuota,
+		DBMaxConns:        10,
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)

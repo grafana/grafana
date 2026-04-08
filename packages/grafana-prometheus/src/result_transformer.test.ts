@@ -15,7 +15,7 @@ import {
   transformToHistogramOverTime,
   transformV2,
 } from './result_transformer';
-import { PromQuery } from './types';
+import { type PromQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   getTemplateSrv: () => ({

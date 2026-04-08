@@ -1,8 +1,8 @@
 import { cx } from '@emotion/css';
 
 import {
-  DataFrame,
-  TransformerRegistryItem,
+  type DataFrame,
+  type TransformerRegistryItem,
   TransformationApplicabilityLevels,
   standardTransformersRegistry,
 } from '@grafana/data';

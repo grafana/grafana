@@ -1,7 +1,7 @@
 import React from 'react';
 
 import {
-  ComponentTypeWithExtensionMeta,
+  type ComponentTypeWithExtensionMeta,
   type PluginExtension,
   type PluginExtensionComponent,
   type PluginExtensionLink,

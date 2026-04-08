@@ -1,5 +1,5 @@
 import { logMeasurement, reportInteraction } from '@grafana/runtime';
-import { performanceUtils } from '@grafana/scenes';
+import { type performanceUtils } from '@grafana/scenes';
 
 import { SLOW_OPERATION_THRESHOLD_MS } from './performanceConstants';
 import {

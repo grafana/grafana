@@ -1,17 +1,17 @@
 import {
   DataLinkBuiltInVars,
   FieldType,
-  GrafanaConfig,
+  type GrafanaConfig,
   locationUtil,
   toDataFrame,
   VariableOrigin,
 } from '@grafana/data';
 import { setTemplateSrv } from '@grafana/runtime';
-import { DashboardLink } from '@grafana/schema';
-import { ContextSrv } from 'app/core/services/context_srv';
+import { type DashboardLink } from '@grafana/schema';
+import { type ContextSrv } from 'app/core/services/context_srv';
 import { getTimeSrv, setTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { TimeModel } from 'app/features/dashboard/state/TimeModel';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { type TimeModel } from 'app/features/dashboard/state/TimeModel';
+import { type TemplateSrv } from 'app/features/templating/template_srv';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createQueryVariableAdapter } from 'app/features/variables/query/adapter';
 

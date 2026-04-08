@@ -1,7 +1,7 @@
 import { act, render, waitFor, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { MetricFindValue, VariableSupportType } from '@grafana/data';
+import { type MetricFindValue, VariableSupportType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { GroupByVariable } from '@grafana/scenes';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';

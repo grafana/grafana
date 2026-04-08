@@ -1,7 +1,7 @@
-import { DataFrame, FieldConfigSource, PanelData, PanelPlugin } from '@grafana/data';
+import { type DataFrame, type FieldConfigSource, type PanelData, type PanelPlugin } from '@grafana/data';
 
-import { DashboardModel } from '../../state/DashboardModel';
-import { PanelModel } from '../../state/PanelModel';
+import { type DashboardModel } from '../../state/DashboardModel';
+import { type PanelModel } from '../../state/PanelModel';
 
 export interface PanelEditorTab {
   id: string;

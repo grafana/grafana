@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { FieldSet, Stack, useStyles2 } from '@grafana/ui';
 
 import { CancelButton } from './CancelButton';
 import { NextButton } from './NextButton';
 import { PreviousButton } from './PreviousButton';
 import { useStepperState } from './StepperState';
-import { StepKey } from './types';
+import { type StepKey } from './types';
 
 interface WizardStepProps {
   /** Step identifier */

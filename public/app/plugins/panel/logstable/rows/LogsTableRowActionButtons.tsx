@@ -1,19 +1,19 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   ClipboardButton,
-  CustomCellRendererProps,
+  type CustomCellRendererProps,
   IconButton,
   TableCellInspector,
   TableCellInspectorMode,
   useTheme2,
 } from '@grafana/ui';
-import { LogsFrame } from 'app/features/logs/logsFrame';
+import { type LogsFrame } from 'app/features/logs/logsFrame';
 
-import { BuildLinkToLogLine } from '../types';
+import { type BuildLinkToLogLine } from '../types';
 
 interface Props extends CustomCellRendererProps {
   buildLinkToLog?: BuildLinkToLogLine;

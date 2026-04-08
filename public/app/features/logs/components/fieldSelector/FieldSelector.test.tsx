@@ -1,24 +1,37 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataFrame, FieldType, store, toDataFrame } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
+import { type DataFrame, FieldType, store, toDataFrame } from '@grafana/data';
+import { type FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 
 import { createLogLine } from '../mocks/logRow';
 import { LogListContext } from '../panel/LogListContext';
 import { defaultValue } from '../panel/__mocks__/LogListContext';
-import { LogListModel } from '../panel/processing';
+import { type LogListModel } from '../panel/processing';
 
 import { FIELD_SELECTOR_MIN_WIDTH } from './FieldSelector';
 import { LogListFieldSelector } from './LogListFieldSelector';
 import { LogsTableFieldSelector } from './LogsTableFieldSelector';
+
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
+    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+  });
+};
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+}));
 
 let containerElement: HTMLDivElement;
 let logs: LogListModel[];
 let dataFrames: DataFrame[];
 
 beforeEach(() => {
+  setBooleanFlags({});
   containerElement = document.createElement('div');
   containerElement.style.height = '500px';
   containerElement.style.width = '1000px';
@@ -166,57 +179,52 @@ describe('LogListFieldSelector', () => {
   });
 
   test('should show suggested fields for any logging source when feature toggle is on', () => {
-    const originalToggle = config.featureToggles.otelLogsFormatting;
-    try {
-      config.featureToggles.otelLogsFormatting = true;
+    setBooleanFlags({ otelLogsFormatting: true });
 
-      const logsWithGenericFields: LogListModel[] = [
-        createLogLine({
-          uid: '1',
-          entry: 'log 1',
-          labels: { service_name: 'frontend', message: 'hello', app: 'web' },
-        }),
-        createLogLine({
-          uid: '2',
-          entry: 'log 2',
-          labels: { service_name: 'backend', message: 'world' },
-        }),
-      ];
+    const logsWithGenericFields: LogListModel[] = [
+      createLogLine({
+        uid: '1',
+        entry: 'log 1',
+        labels: { service_name: 'frontend', message: 'hello', app: 'web' },
+      }),
+      createLogLine({
+        uid: '2',
+        entry: 'log 2',
+        labels: { service_name: 'backend', message: 'world' },
+      }),
+    ];
 
-      const dataFramesWithGenericFields: DataFrame[] = [
-        toDataFrame({
-          fields: [
-            { name: 'timestamp', type: FieldType.time, values: [1, 2] },
-            { name: 'body', type: FieldType.string, values: ['log 1', 'log 2'] },
-            {
-              name: 'labels',
-              type: FieldType.other,
-              values: [
-                { service_name: 'frontend', message: 'hello', app: 'web' },
-                { service_name: 'backend', message: 'world' },
-              ],
-            },
-          ],
-        }),
-      ];
+    const dataFramesWithGenericFields: DataFrame[] = [
+      toDataFrame({
+        fields: [
+          { name: 'timestamp', type: FieldType.time, values: [1, 2] },
+          { name: 'body', type: FieldType.string, values: ['log 1', 'log 2'] },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            values: [
+              { service_name: 'frontend', message: 'hello', app: 'web' },
+              { service_name: 'backend', message: 'world' },
+            ],
+          },
+        ],
+      }),
+    ];
 
-      render(
-        <LogListContext.Provider value={{ ...defaultContextValue, displayedFields: [] }}>
-          <LogListFieldSelector
-            containerElement={containerElement}
-            logs={logsWithGenericFields}
-            dataFrames={dataFramesWithGenericFields}
-          />
-        </LogListContext.Provider>
-      );
+    render(
+      <LogListContext.Provider value={{ ...defaultContextValue, displayedFields: [] }}>
+        <LogListFieldSelector
+          containerElement={containerElement}
+          logs={logsWithGenericFields}
+          dataFrames={dataFramesWithGenericFields}
+        />
+      </LogListContext.Provider>
+    );
 
-      expect(screen.getByText('Suggested')).toBeInTheDocument();
-      expect(screen.getAllByText('service_name').length).toBeGreaterThan(0);
-      expect(screen.getAllByText('message').length).toBeGreaterThan(0);
-      expect(screen.getAllByText('app').length).toBeGreaterThan(0);
-    } finally {
-      config.featureToggles.otelLogsFormatting = originalToggle;
-    }
+    expect(screen.getByText('Suggested')).toBeInTheDocument();
+    expect(screen.getAllByText('service_name').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('message').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('app').length).toBeGreaterThan(0);
   });
 });
 

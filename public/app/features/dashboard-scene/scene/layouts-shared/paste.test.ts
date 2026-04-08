@@ -2,7 +2,10 @@ import { store } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
-import { AutoGridLayoutItemKind, GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2beta1';
+import {
+  type AutoGridLayoutItemKind,
+  type GridLayoutItemKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2beta1';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 
 import { ConditionalRenderingVariable } from '../../conditional-rendering/conditions/ConditionalRenderingVariable';
@@ -11,7 +14,7 @@ import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 
-import { PanelStore, getAutoGridItemFromClipboard, getDashboardGridItemFromClipboard } from './paste';
+import { type PanelStore, getAutoGridItemFromClipboard, getDashboardGridItemFromClipboard } from './paste';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),

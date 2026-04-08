@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,81 +11,25 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/loki/pkg/push"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/loki/pkg/push"
 )
-
-func Test_subscribeToFolderChanges(t *testing.T) {
-	getRecordedCommand := func(ruleStore *fakes.RuleStore) []fakes.GenericRecordedQuery {
-		results := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
-			c, ok := cmd.(fakes.GenericRecordedQuery)
-			if !ok || c.Name != "IncreaseVersionForAllRulesInNamespaces" {
-				return nil, false
-			}
-			return c, ok
-		})
-		result := make([]fakes.GenericRecordedQuery, 0, len(results))
-		for _, cmd := range results {
-			result = append(result, cmd.(fakes.GenericRecordedQuery))
-		}
-		return result
-	}
-
-	orgID := rand.Int63()
-	folder1 := &folder.Folder{
-		UID:   util.GenerateShortUID(),
-		Title: "Folder" + util.GenerateShortUID(),
-	}
-	folder2 := &folder.Folder{
-		UID:   util.GenerateShortUID(),
-		Title: "Folder" + util.GenerateShortUID(),
-	}
-	gen := models.RuleGen
-	rules := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder1.ToFolderReference())).GenerateManyRef(5)
-
-	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
-	db := fakes.NewRuleStore(t)
-	db.Folders[orgID] = append(db.Folders[orgID], folder1)
-	db.PutRule(context.Background(), rules...)
-
-	subscribeToFolderChanges(log.New("test"), bus, db)
-
-	err := bus.Publish(context.Background(), &events.FolderFullPathUpdated{
-		Timestamp: time.Now(),
-		UIDs:      []string{folder1.UID, folder2.UID},
-		OrgID:     orgID,
-	})
-	require.NoError(t, err)
-
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		recordedCommands := getRecordedCommand(db)
-		require.Len(c, recordedCommands, 1)
-		require.Equal(c, recordedCommands[0].Params[0].(int64), orgID)
-		require.ElementsMatch(c, recordedCommands[0].Params[1].([]string), []string{folder1.UID, folder2.UID})
-	}, time.Second, 10*time.Millisecond, "expected to call db store method but nothing was called")
-}
 
 func TestConfigureHistorianBackend(t *testing.T) {
 	t.Run("fail initialization if invalid backend", func(t *testing.T) {

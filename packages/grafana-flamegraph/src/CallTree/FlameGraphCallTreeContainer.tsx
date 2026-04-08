@@ -1,21 +1,21 @@
 import { css } from '@emotion/css';
 import { memo, useMemo, useState, useRef, useEffect, useCallback } from 'react';
-import { useTable, useSortBy, useExpanded, Column, Row, UseExpandedRowProps } from 'react-table';
+import { useTable, useSortBy, useExpanded, type Column, type Row, type UseExpandedRowProps } from 'react-table';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, IconButton, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { GetExtraContextMenuButtonsFunction } from '../FlameGraph/FlameGraphContextMenu';
-import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
-import { ColorScheme, ColorSchemeDiff, PaneView, ViewMode } from '../types';
+import { type GetExtraContextMenuButtonsFunction } from '../FlameGraph/FlameGraphContextMenu';
+import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';
+import { ColorScheme, ColorSchemeDiff, type PaneView, type ViewMode } from '../types';
 
 import { ActionsCell } from './ActionsCell';
 import { CallTreeTable } from './CallTreeTable';
 import { ColorBarCell } from './ColorBarCell';
 import { DiffCell } from './DiffCell';
 import { FunctionCellWithExpander } from './FunctionCellWithExpander';
-import { buildAllCallTreeNodes, buildCallersTree, CallTreeNode, getInitialExpandedState } from './utils';
+import { buildAllCallTreeNodes, buildCallersTree, type CallTreeNode, getInitialExpandedState } from './utils';
 
 type Props = {
   data: FlameGraphDataContainer;

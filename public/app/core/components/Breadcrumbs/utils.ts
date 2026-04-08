@@ -1,6 +1,6 @@
-import { NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
 
-import { Breadcrumb } from './types';
+import { type Breadcrumb } from './types';
 
 export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelItem, homeNav?: NavModelItem) {
   const crumbs: Breadcrumb[] = [];

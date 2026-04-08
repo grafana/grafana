@@ -1,8 +1,8 @@
-import { AnnotationQueryRequest, DataSourceInstanceSettings, dateTime } from '@grafana/data';
+import { type AnnotationQueryRequest, type DataSourceInstanceSettings, dateTime } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 import { GrafanaDatasource } from './datasource';
-import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery } from './types';
+import { type GrafanaAnnotationQuery, GrafanaAnnotationType, type GrafanaQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

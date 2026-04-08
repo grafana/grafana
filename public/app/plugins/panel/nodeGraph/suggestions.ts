@@ -1,6 +1,11 @@
-import { DataFrame, FieldType, VisualizationSuggestionScore, VisualizationSuggestionsSupplier } from '@grafana/data';
+import {
+  type DataFrame,
+  FieldType,
+  VisualizationSuggestionScore,
+  type VisualizationSuggestionsSupplier,
+} from '@grafana/data';
 
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 function checkFields(fields: Array<[string, FieldType]>, frame: DataFrame): boolean {
   let hasCorrectFields = true;

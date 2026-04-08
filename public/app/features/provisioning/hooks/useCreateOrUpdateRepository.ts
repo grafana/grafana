@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import {
-  RepositorySpec,
+  type RepositorySpec,
   useCreateRepositoryMutation,
   useCreateRepositoryTestMutation,
   useReplaceRepositoryMutation,

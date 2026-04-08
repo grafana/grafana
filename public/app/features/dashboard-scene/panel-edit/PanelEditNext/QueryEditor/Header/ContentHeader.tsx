@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
 import { upperFirst } from 'lodash';
-import { RefObject, useRef } from 'react';
+import { type RefObject, useRef } from 'react';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Button, Icon, Text, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
-import { ExpressionQuery } from 'app/features/expressions/types';
+import { type ExpressionQuery } from 'app/features/expressions/types';
 
 import { getQueryEditorColors, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
-import { AlertRule, Transformation } from '../types';
+import { type AlertRule, type Transformation } from '../types';
 import { getEditorBorderColor } from '../utils';
 
 import { EditableQueryName } from './EditableQueryName';
@@ -73,6 +73,7 @@ export interface ContentHeaderProps {
   onCancelPendingTransformation?: () => void;
   onChangeDataSource: (ds: DataSourceInstanceSettings, refId: string) => void;
   onUpdateQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
+  isMultiSelection?: boolean;
   /**
    * Optional callback to render additional elements in the header's left section.
    *
@@ -111,6 +112,7 @@ export function ContentHeader({
   onCancelPendingTransformation,
   onChangeDataSource,
   onUpdateQuery,
+  isMultiSelection,
   renderHeaderExtras,
   containerRef: externalContainerRef,
 }: ContentHeaderProps) {
@@ -203,6 +205,7 @@ export function ContentHeader({
               query={selectedQuery}
               queries={queries}
               onQueryUpdate={onUpdateQuery}
+              readOnly={isMultiSelection}
             />
             {renderHeaderExtras && <div className={styles.headerExtras}>{renderHeaderExtras()}</div>}
           </>
@@ -230,6 +233,7 @@ export function ContentHeaderSceneWrapper({
     selectedAlert,
     selectedQuery,
     selectedTransformation,
+    selectedQueryRefIds,
     cardType,
     pendingExpression,
     setPendingExpression,
@@ -252,6 +256,7 @@ export function ContentHeaderSceneWrapper({
       onCancelPendingTransformation={() => setPendingTransformation(null)}
       onChangeDataSource={changeDataSource}
       onUpdateQuery={updateSelectedQuery}
+      isMultiSelection={selectedQueryRefIds.length > 1}
       renderHeaderExtras={renderHeaderExtras}
     />
   );

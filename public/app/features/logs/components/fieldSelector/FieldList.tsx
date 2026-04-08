@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useTheme2 } from '@grafana/ui';
 
 import { ActiveFields } from './ActiveFields';
 import { AvailableFields } from './AvailableFields';
-import { FieldWithStats } from './FieldSelector';
+import { type FieldWithStats } from './FieldSelector';
 
 interface Props {
   activeFields: string[];

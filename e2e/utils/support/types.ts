@@ -1,4 +1,10 @@
-import { CssSelector, FunctionSelector, Selectors, StringSelector, UrlSelector } from '@grafana/e2e-selectors';
+import {
+  type CssSelector,
+  type FunctionSelector,
+  type Selectors,
+  type StringSelector,
+  type UrlSelector,
+} from '@grafana/e2e-selectors';
 
 import { Selector } from './selector';
 import { fromBaseUrl } from './url';

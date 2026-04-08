@@ -25,6 +25,9 @@ type FSRequestConfig struct {
 	// AllowEmbeddingHosts is the list of hostnames allowed to embed Grafana in an iframe via CSP frame-ancestors.
 	// Use ["*"] to allow all hosts. Empty means embedding is not allowed.
 	AllowEmbeddingHosts []string
+	// FormActionAdditionalHosts is the list of additional hostnames for the CSP form-action directive.
+	// These are appended to the template; 'self' should be in the template itself.
+	FormActionAdditionalHosts []string
 }
 
 // NewFSRequestConfig creates a new FSRequestConfig from the global configuration.
@@ -64,16 +67,18 @@ func NewFSRequestConfig(cfg *setting.Cfg, license licensing.Licensing) FSRequest
 	}
 
 	securitySection := cfg.SectionWithEnvOverrides("security")
-	allowEmbeddingHosts := securitySection.Key("allow_embedding_hosts").Strings(",")
+	allowEmbeddingHosts := securitySection.Key("allow_embedding_hosts").Strings(" ")
+	formActionHosts := securitySection.Key("form_action_additional_hosts").Strings(" ")
 
 	return FSRequestConfig{
-		FSFrontendSettings:    frontendSettings,
-		CSPEnabled:            cfg.CSPEnabled,
-		CSPTemplate:           cfg.CSPTemplate,
-		CSPReportOnlyEnabled:  cfg.CSPReportOnlyEnabled,
-		CSPReportOnlyTemplate: cfg.CSPReportOnlyTemplate,
-		AppURL:                cfg.AppURL,
-		AllowEmbeddingHosts:   allowEmbeddingHosts,
+		FSFrontendSettings:        frontendSettings,
+		CSPEnabled:                cfg.CSPEnabled,
+		CSPTemplate:               cfg.CSPTemplate,
+		CSPReportOnlyEnabled:      cfg.CSPReportOnlyEnabled,
+		CSPReportOnlyTemplate:     cfg.CSPReportOnlyTemplate,
+		AppURL:                    cfg.AppURL,
+		AllowEmbeddingHosts:       allowEmbeddingHosts,
+		FormActionAdditionalHosts: formActionHosts,
 	}
 }
 
@@ -126,11 +131,8 @@ func (c *FSRequestConfig) ApplyOverrides(settings *ini.File, logger log.Logger) 
 	// because we only want overrides, and not default values, we need to manually get them out of the ini structure.
 
 	// TODO: We should apply all overrides for values in FSRequestConfig
-	applyBool(settings, "security", "content_security_policy", &c.CSPEnabled, logger)
-	applyString(settings, "security", "content_security_policy_template", &c.CSPTemplate, logger)
-	applyBool(settings, "security", "content_security_policy_report_only", &c.CSPReportOnlyEnabled, logger)
-	applyString(settings, "security", "content_security_policy_report_only_template", &c.CSPReportOnlyTemplate, logger)
 	applyStringSlice(settings, "security", "allow_embedding_hosts", &c.AllowEmbeddingHosts, logger)
+	applyStringSlice(settings, "security", "form_action_additional_hosts", &c.FormActionAdditionalHosts, logger)
 
 	applyString(settings, "analytics", "rudderstack_write_key", &c.RudderstackWriteKey, logger)
 	applyString(settings, "analytics", "rudderstack_data_plane_url", &c.RudderstackDataPlaneUrl, logger)
@@ -167,19 +169,7 @@ func applyString(settings *ini.File, sectionName, keyName string, target *string
 // applyStringSlice applies a space-separated string value from ini settings to a target []string field if it exists.
 func applyStringSlice(settings *ini.File, sectionName, keyName string, target *[]string, logger log.Logger) {
 	if key := getValue(settings, sectionName, keyName); key != nil {
-		*target = strings.Fields(key.String())
-
-		logger.Debug("applying request config override",
-			"section", sectionName,
-			"key", keyName,
-			"value", *target)
-	}
-}
-
-// applyBool applies a boolean value from ini settings to a target field if it exists.
-func applyBool(settings *ini.File, sectionName, keyName string, target *bool, logger log.Logger) {
-	if key := getValue(settings, sectionName, keyName); key != nil {
-		*target = key.MustBool(false)
+		*target = key.Strings(" ")
 
 		logger.Debug("applying request config override",
 			"section", sectionName,

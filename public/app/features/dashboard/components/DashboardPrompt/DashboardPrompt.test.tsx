@@ -1,6 +1,6 @@
 import { getPanelPlugin } from '@grafana/data/test';
 
-import { ContextSrv, setContextSrv } from '../../../../core/services/context_srv';
+import { type ContextSrv, setContextSrv } from '../../../../core/services/context_srv';
 import { PanelModel } from '../../state/PanelModel';
 import { createDashboardModelFixture, createPanelSaveModel } from '../../state/__fixtures__/dashboardFixtures';
 

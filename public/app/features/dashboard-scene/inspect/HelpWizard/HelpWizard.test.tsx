@@ -2,9 +2,9 @@ import userEvent from '@testing-library/user-event';
 import { render, screen } from 'test/test-utils';
 
 import {
-  DataSourceInstanceSettings,
-  DataSourcePluginMeta,
-  DataSourceRef,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
+  type DataSourceRef,
   FieldType,
   getDefaultTimeRange,
   LoadingState,

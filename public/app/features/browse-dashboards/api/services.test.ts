@@ -1,8 +1,8 @@
-import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
-import { BackendSrv, config, getBackendSrv, setBackendSrv } from '@grafana/runtime';
+import { type DataFrame, DataFrameView, FieldType } from '@grafana/data';
+import { type BackendSrv, config, getBackendSrv, setBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { DashboardQueryResult, QueryResponse } from 'app/features/search/service/types';
+import { type DashboardQueryResult, type QueryResponse } from 'app/features/search/service/types';
 
 import { listDashboards, listFolders } from './services';
 

@@ -1,45 +1,45 @@
 import { groupBy } from 'lodash';
-import { EMPTY, from, merge, Observable, of } from 'rxjs';
+import { EMPTY, from, merge, type Observable, of } from 'rxjs';
 import { catchError, concatMap, finalize, map, mergeMap, toArray } from 'rxjs/operators';
 
 import {
   CoreApp,
-  DataFrame,
-  DataFrameDTO,
-  DataFrameJSON,
-  DataLink,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataQueryResponseData,
-  DataSourceGetTagKeysOptions,
-  DataSourceGetTagValuesOptions,
-  DataSourceInstanceSettings,
+  type DataFrame,
+  type DataFrameDTO,
+  type DataFrameJSON,
+  type DataLink,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataQueryResponseData,
+  type DataSourceGetTagKeysOptions,
+  type DataSourceGetTagValuesOptions,
+  type DataSourceInstanceSettings,
   dateTime,
   FieldType,
   LoadingState,
   NodeGraphDataFrameFieldNames,
   rangeUtil,
-  ScopedVars,
-  SelectableValue,
-  TestDataSourceResponse,
-  TimeRange,
+  type ScopedVars,
+  type SelectableValue,
+  type TestDataSourceResponse,
+  type TimeRange,
 } from '@grafana/data';
-import { NodeGraphOptions, SpanBarOptions, TraceToLogsOptions } from '@grafana/o11y-ds-frontend';
+import { type NodeGraphOptions, type SpanBarOptions, type TraceToLogsOptions } from '@grafana/o11y-ds-frontend';
 import {
   config,
   DataSourceWithBackend,
   getDataSourceSrv,
   getTemplateSrv,
   reportInteraction,
-  TemplateSrv,
+  type TemplateSrv,
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
 
 import { interpolateFilters } from './SearchTraceQLEditor/utils';
-import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
-import { PrometheusDatasource, PromQuery } from './_importedDependencies/datasources/prometheus/types';
-import { TagLimitOptions } from './configuration/TagLimitSettings';
-import { SearchTableType, TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
+import { type TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
+import { type PrometheusDatasource, type PromQuery } from './_importedDependencies/datasources/prometheus/types';
+import { type TagLimitOptions } from './configuration/TagLimitSettings';
+import { SearchTableType, type TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
   defaultTableFilter,
   durationMetric,
@@ -60,7 +60,7 @@ import {
   transformTrace,
 } from './resultTransformer';
 import { doTempoMetricsStreaming, doTempoSearchStreaming } from './streaming';
-import { TempoJsonData, TempoQuery } from './types';
+import { type TempoJsonData, type TempoQuery } from './types';
 import { getErrorMessage, mapErrorMessage, migrateFromSearchToTraceQLSearch } from './utils';
 import { TempoVariableSupport } from './variables';
 

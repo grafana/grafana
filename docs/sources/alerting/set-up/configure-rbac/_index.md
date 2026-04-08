@@ -123,10 +123,10 @@ Permissions for managing contact points (notification receivers).
 
 Permissions for managing notification policies (routing rules).
 
-| Action                             | Applicable scope | Description                                           |
-| ---------------------------------- | ---------------- | ----------------------------------------------------- |
-| `alert.notifications.routes:read`  | n/a              | Read notification policies.                           |
-| `alert.notifications.routes:write` | n/a              | Create new, update, and delete notification policies. |
+| Action                             | Applicable scope | Description                                                                                                                                                                                                                        |
+| ---------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `alert.notifications.routes:read`  | n/a              | **Deprecated.** Read notification policies. Use `notifications.alerting.grafana.app/routingtrees:get` with an appropriate scope instead.                                                                                           |
+| `alert.notifications.routes:write` | n/a              | **Deprecated.** Create new, update, and delete notification policies. Use `notifications.alerting.grafana.app/routingtrees:update` and `notifications.alerting.grafana.app/routingtrees:delete` with an appropriate scope instead. |
 
 ### Time intervals
 
@@ -151,12 +151,12 @@ Permissions for managing notification templates.
 
 ### General notifications
 
-Legacy permissions for managing all notification resources.
+Legacy permissions for managing all notification resources. These actions are deprecated; use the granular per-resource actions above instead.
 
-| Action                      | Applicable scope | Description                                                                                              |
-| --------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------- |
-| `alert.notifications:read`  | n/a              | Read all templates, contact points, notification policies, and mute timings in the current organization. |
-| `alert.notifications:write` | n/a              | Manage templates, contact points, notification policies, and mute timings in the current organization.   |
+| Action                      | Applicable scope | Description                                                                                                                                                                                                                                   |
+| --------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `alert.notifications:read`  | n/a              | **Deprecated.** Read all templates, contact points, notification policies, and mute timings in the current organization. Use the granular actions (`alert.notifications.templates:read`, `alert.notifications.receivers:read`, etc.) instead. |
+| `alert.notifications:write` | n/a              | **Deprecated.** Manage templates, contact points, notification policies, and mute timings in the current organization. Use the granular actions (`alert.notifications.templates:write`, `alert.notifications.receivers:write`, etc.) instead. |
 
 ### External notifications
 

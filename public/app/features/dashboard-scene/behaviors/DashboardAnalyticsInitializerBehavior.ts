@@ -1,7 +1,7 @@
 import { writePerformanceLog } from '@grafana/scenes';
 
 import { getDashboardAnalyticsAggregator } from '../../dashboard/services/DashboardAnalyticsAggregator';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 
 /**
  * Scene behavior function that manages the dashboard-specific initialization

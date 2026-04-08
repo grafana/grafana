@@ -1,6 +1,6 @@
 import { isNumber } from 'lodash';
-import Feature, { FeatureLike } from 'ol/Feature';
-import OpenLayersMap from 'ol/Map';
+import Feature, { type FeatureLike } from 'ol/Feature';
+import type OpenLayersMap from 'ol/Map';
 import { LineString, Point, SimpleGeometry } from 'ol/geom';
 import { Group as LayerGroup } from 'ol/layer';
 import VectorImage from 'ol/layer/VectorImage';
@@ -11,16 +11,16 @@ import { Subscription, throttleTime } from 'rxjs';
 import tinycolor from 'tinycolor2';
 
 import {
-  MapLayerRegistryItem,
-  PanelData,
-  GrafanaTheme2,
-  EventBus,
+  type MapLayerRegistryItem,
+  type PanelData,
+  type GrafanaTheme2,
+  type EventBus,
   DataHoverEvent,
   DataHoverClearEvent,
-  DataFrame,
+  type DataFrame,
   FieldType,
   colorManipulator,
-  MapLayerOptions,
+  type MapLayerOptions,
 } from '@grafana/data';
 import { FrameGeometrySourceMode } from '@grafana/schema';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
@@ -28,7 +28,7 @@ import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/lo
 
 import { StyleEditor } from '../../editor/StyleEditor';
 import { routeStyle } from '../../style/markers';
-import { defaultStyleConfig, StyleConfig } from '../../style/types';
+import { defaultStyleConfig, type StyleConfig } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
 import { getStyleDimension, isSegmentVisible } from '../../utils/utils';
 

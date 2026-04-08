@@ -1,8 +1,8 @@
-import { Playlist } from '../../api/clients/playlist/v1';
+import { type Playlist } from '../../api/clients/playlist/v1';
 import { getGrafanaSearcher } from '../search/service/searcher';
-import { SearchQuery } from '../search/service/types';
+import { type SearchQuery } from '../search/service/types';
 
-import { PlaylistItemUI } from './types';
+import { type PlaylistItemUI } from './types';
 
 /** Returns a copy with the dashboards loaded */
 export async function loadDashboards(items: PlaylistItemUI[]): Promise<PlaylistItemUI[]> {

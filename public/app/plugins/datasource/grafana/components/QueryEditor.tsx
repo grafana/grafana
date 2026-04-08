@@ -1,7 +1,13 @@
 import pluralize from 'pluralize';
 import * as React from 'react';
 
-import { QueryEditorProps, SelectableValue, rangeUtil, DataQueryRequest, Field } from '@grafana/data';
+import {
+  type QueryEditorProps,
+  type SelectableValue,
+  rangeUtil,
+  type DataQueryRequest,
+  type Field,
+} from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   InlineField,
@@ -9,16 +15,16 @@ import {
   Alert,
   Input,
   InlineFieldRow,
-  Themeable2,
+  type Themeable2,
   withTheme2,
   Stack,
   InlineLabel,
 } from '@grafana/ui';
 import { getManagedChannelInfo } from 'app/features/live/info';
-import { SearchQuery } from 'app/features/search/service/types';
+import { type SearchQuery } from 'app/features/search/service/types';
 
-import { GrafanaDatasource } from '../datasource';
-import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
+import { type GrafanaDatasource } from '../datasource';
+import { defaultQuery, type GrafanaQuery, GrafanaQueryType } from '../types';
 
 import { RandomWalkEditor } from './RandomWalkEditor';
 

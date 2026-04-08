@@ -6,7 +6,7 @@ import { transformPluginSourceForCDN } from '../cdn/utils';
 import { resolvePluginUrlWithCache } from '../loader/pluginInfoCache';
 import { isHostedOnCDN, resolveModulePath } from '../loader/utils';
 
-import { SandboxEnvironment, SandboxPluginMeta } from './types';
+import { type SandboxEnvironment, type SandboxPluginMeta } from './types';
 
 function isSameDomainAsHost(url: string): boolean {
   const locationUrl = new URL(window.location.href);

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, renderMarkdown } from '@grafana/data';
+import { type GrafanaTheme2, renderMarkdown } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { CodeEditor, Drawer, useStyles2, Stack, Button, Card, Text, ClipboardButton } from '@grafana/ui';
 

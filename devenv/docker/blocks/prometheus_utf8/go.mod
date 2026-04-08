@@ -1,6 +1,6 @@
 module utf8-support
 
-go 1.25.8
+go 1.25.9
 
 require (
 	github.com/prometheus/client_golang v1.23.2

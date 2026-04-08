@@ -1,11 +1,11 @@
-import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 
 import { AuthTypeStep } from '../AuthTypeStep';
 import { BootstrapStep } from '../BootstrapStep';
 import { ConnectStep } from '../ConnectStep';
 import { FinishStep } from '../FinishStep';
 import { SynchronizeStep } from '../SynchronizeStep';
-import { ConnectionCreationResult, WizardStep } from '../types';
+import { type ConnectionCreationResult, type WizardStep } from '../types';
 
 export interface WizardStepContentProps {
   activeStep: WizardStep;

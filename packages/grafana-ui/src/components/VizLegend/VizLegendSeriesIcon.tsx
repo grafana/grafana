@@ -1,7 +1,7 @@
 import { memo, useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
-import { LineStyle } from '@grafana/schema';
+import { type LineStyle } from '@grafana/schema';
 
 import { SeriesColorPicker } from '../ColorPicker/ColorPicker';
 import { usePanelContext } from '../PanelChrome';

@@ -1,7 +1,7 @@
 import { isEmpty, uniq } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, MultiSelect } from '@grafana/ui';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
@@ -11,7 +11,7 @@ import {
   isAsyncRequestMapSliceSettled,
 } from 'app/features/alerting/unified/utils/redux';
 import { useDispatch } from 'app/types/store';
-import { AlertingRule } from 'app/types/unified-alerting';
+import { type AlertingRule } from 'app/types/unified-alerting';
 import { PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { fetchPromRulesAction } from '../../../features/alerting/unified/state/actions';

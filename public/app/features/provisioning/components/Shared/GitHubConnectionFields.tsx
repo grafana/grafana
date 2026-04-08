@@ -4,7 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Field, Input, SecretTextArea, Stack } from '@grafana/ui';
 
-import { ConnectionFormData } from '../../types';
+import { type ConnectionFormData } from '../../types';
 import { validateNoHiddenCharacters } from '../../utils/validators';
 
 export interface GitHubConnectionFieldsProps {

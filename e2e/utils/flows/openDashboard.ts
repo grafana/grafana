@@ -1,7 +1,7 @@
 import { e2e } from '../index';
 import { getScenarioContext } from '../support/scenarioContext';
 
-import { setDashboardTimeRange, TimeRangeConfig } from './setDashboardTimeRange';
+import { setDashboardTimeRange, type TimeRangeConfig } from './setDashboardTimeRange';
 
 interface OpenDashboardDefault {
   uid: string;

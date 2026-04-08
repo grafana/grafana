@@ -1,15 +1,24 @@
-import { CSSProperties, ReactElement, useMemo, useState, useRef, useEffect, memo, RefObject } from 'react';
-import { DataGridHandle } from 'react-data-grid';
+import {
+  type CSSProperties,
+  type ReactElement,
+  useMemo,
+  useState,
+  useRef,
+  useEffect,
+  memo,
+  type RefObject,
+} from 'react';
+import { type DataGridHandle } from 'react-data-grid';
 
-import { ActionModel, DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
+import { type ActionModel, type DataFrame, type Field, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { TableCellTooltipPlacement } from '@grafana/schema';
+import { type TableCellTooltipPlacement } from '@grafana/schema';
 
 import { Popover } from '../../../Tooltip/Popover';
-import { TableCellOptions } from '../../types';
-import { getTooltipStyles } from '../styles';
-import { TableCellRenderer, TableCellRendererProps } from '../types';
+import { type TableCellOptions } from '../../types';
+import { type getTooltipStyles } from '../styles';
+import { type TableCellRenderer, type TableCellRendererProps } from '../types';
 
 export interface TableCellTooltipProps {
   cellOptions: TableCellOptions;

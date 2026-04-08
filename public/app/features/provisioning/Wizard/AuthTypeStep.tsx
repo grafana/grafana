@@ -9,7 +9,7 @@ import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { GitHubAppFields } from './GitHubAppFields';
 import { RepositoryField } from './components/RepositoryField';
 import { RepositoryTokenInput } from './components/RepositoryTokenInput';
-import { ConnectionCreationResult, GitHubAuthType, WizardFormData } from './types';
+import { type ConnectionCreationResult, type GitHubAuthType, type WizardFormData } from './types';
 
 interface AuthTypeOption {
   id: GitHubAuthType;

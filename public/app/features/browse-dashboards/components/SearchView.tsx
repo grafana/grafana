@@ -1,18 +1,18 @@
-import { ReactNode, useCallback } from 'react';
+import { type ReactNode, useCallback } from 'react';
 
 import { DataFrameView, toDataFrame } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, EmptyState } from '@grafana/ui';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
-import { SearchResultsProps, SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
-import { SearchStateManager } from 'app/features/search/state/SearchStateManager';
-import { DashboardViewItemKind, SearchState } from 'app/features/search/types';
+import { type SearchResultsProps, SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
+import { type SearchStateManager } from 'app/features/search/state/SearchStateManager';
+import { type DashboardViewItemKind, type SearchState } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { canEditItemType, canSelectItems } from '../permissions';
 import { useHasSelection } from '../state/hooks';
 import { setAllSelection, setItemSelectionState } from '../state/slice';
-import { BrowseDashboardsPermissions } from '../types';
+import { type BrowseDashboardsPermissions } from '../types';
 
 interface SearchViewProps {
   height: number;

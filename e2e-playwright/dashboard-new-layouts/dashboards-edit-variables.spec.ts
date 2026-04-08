@@ -110,7 +110,7 @@ test.describe(
         selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label)
       );
       const nextElement = variableDropdown.locator('+ *');
-      await expect(nextElement).toHaveText('1m');
+      await expect(nextElement).toContainText('1m');
       await nextElement.click();
 
       await dashboardPage.getByGrafanaSelector(selectors.components.Select.option).filter({ hasText: 'Auto' }).click();
@@ -122,7 +122,7 @@ test.describe(
     test('can make a hidden variable visible', async ({ dashboardPage, selectors, page }) => {
       const variable = variableWithDefaults({ display: 'Hidden' });
 
-      await saveDashboard(dashboardPage, page, selectors, 'can make a hidden variable visible');
+      await saveDashboard(dashboardPage, page, selectors, `can make a hidden variable visible (${Math.random()})`);
       await flows.addNewTextBoxVariable(dashboardPage, variable);
 
       // check the variable is hidden in the dashboard
@@ -163,7 +163,7 @@ test.describe(
     test('can hide variable under the controls menu', async ({ dashboardPage, selectors, page }) => {
       const variable = variableWithDefaults();
 
-      await saveDashboard(dashboardPage, page, selectors, 'can hide a variable in controls menu');
+      await saveDashboard(dashboardPage, page, selectors, `can hide a variable in controls menu - (${Math.random()})`);
 
       await flows.addNewTextBoxVariable(dashboardPage, variable);
 

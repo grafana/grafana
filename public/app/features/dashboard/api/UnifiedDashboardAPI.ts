@@ -1,18 +1,18 @@
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isResource } from 'app/features/apiserver/guards';
-import { Resource, ResourceList } from 'app/features/apiserver/types';
-import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
+import { type Resource, type ResourceList } from 'app/features/apiserver/types';
+import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
-import { SaveDashboardCommand } from '../components/SaveDashboard/types';
+import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
 import { VERSIONS_FETCH_LIMIT } from '../types/revisionModels';
 
 import {
-  DashboardAPI,
+  type DashboardAPI,
   DashboardVersionError,
-  DashboardWithAccessInfo,
-  ListDashboardHistoryOptions,
-  ListDeletedDashboardsOptions,
+  type DashboardWithAccessInfo,
+  type ListDashboardHistoryOptions,
+  type ListDeletedDashboardsOptions,
 } from './types';
 import {
   failedFromVersion,

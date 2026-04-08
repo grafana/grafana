@@ -1,6 +1,6 @@
 import { IconButton } from '../IconButton/IconButton';
-import { TooltipProps } from '../Tooltip/Tooltip';
-import { PopoverContent } from '../Tooltip/types';
+import { type TooltipProps } from '../Tooltip/Tooltip';
+import { type PopoverContent } from '../Tooltip/types';
 
 interface InfoTooltipProps extends Omit<TooltipProps, 'children' | 'content'> {
   children: PopoverContent;

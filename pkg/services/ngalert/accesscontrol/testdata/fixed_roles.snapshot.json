@@ -146,16 +146,14 @@
         "scope": "receivers:*"
       },
       {
-        "action": "alert.notifications.routes:read"
-      },
-      {
         "action": "alert.notifications.templates:read"
       },
       {
         "action": "alert.notifications.time-intervals:read"
       },
       {
-        "action": "alert.notifications:read"
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
       }
     ]
   },
@@ -224,15 +222,6 @@
         "scope": "receivers:*"
       },
       {
-        "action": "alert.notifications.routes:read"
-      },
-      {
-        "action": "alert.notifications.routes:read"
-      },
-      {
-        "action": "alert.notifications.routes:write"
-      },
-      {
         "action": "alert.notifications.templates.test:write"
       },
       {
@@ -260,10 +249,23 @@
         "action": "alert.notifications.time-intervals:write"
       },
       {
-        "action": "alert.notifications:read"
+        "action": "notifications.alerting.grafana.app/routingtrees:create"
       },
       {
-        "action": "alert.notifications:write"
+        "action": "notifications.alerting.grafana.app/routingtrees:delete",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:update",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
       }
     ]
   },
@@ -296,9 +298,6 @@
         "scope": "receivers:*"
       },
       {
-        "action": "alert.notifications.routes:read"
-      },
-      {
         "action": "alert.notifications.templates:read"
       },
       {
@@ -306,9 +305,6 @@
       },
       {
         "action": "alert.notifications.time-intervals:read"
-      },
-      {
-        "action": "alert.notifications:read"
       },
       {
         "action": "alert.rules.external:read",
@@ -321,6 +317,10 @@
       {
         "action": "alert.silences:read",
         "scope": "folders:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
       }
     ]
   },
@@ -409,15 +409,6 @@
         "scope": "receivers:*"
       },
       {
-        "action": "alert.notifications.routes:read"
-      },
-      {
-        "action": "alert.notifications.routes:read"
-      },
-      {
-        "action": "alert.notifications.routes:write"
-      },
-      {
         "action": "alert.notifications.templates.test:write"
       },
       {
@@ -446,12 +437,6 @@
       },
       {
         "action": "alert.notifications.time-intervals:write"
-      },
-      {
-        "action": "alert.notifications:read"
-      },
-      {
-        "action": "alert.notifications:write"
       },
       {
         "action": "alert.rules.external:read",
@@ -488,6 +473,25 @@
       {
         "action": "alert.silences:write",
         "scope": "folders:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:create"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:delete",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:update",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
       }
     ]
   },
@@ -584,15 +588,6 @@
         "scope": "receivers:*"
       },
       {
-        "action": "alert.notifications.routes:read"
-      },
-      {
-        "action": "alert.notifications.routes:read"
-      },
-      {
-        "action": "alert.notifications.routes:write"
-      },
-      {
         "action": "alert.notifications.system-status:read"
       },
       {
@@ -624,12 +619,6 @@
       },
       {
         "action": "alert.notifications.time-intervals:write"
-      },
-      {
-        "action": "alert.notifications:read"
-      },
-      {
-        "action": "alert.notifications:write"
       },
       {
         "action": "alert.rules.external:read",
@@ -666,6 +655,33 @@
       {
         "action": "alert.silences:write",
         "scope": "folders:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:create"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:delete",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get_permissions",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:set_permissions",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:update",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
       },
       {
         "action": "receivers.permissions:read",
@@ -786,56 +802,8 @@
     ]
   },
   {
-    "name": "fixed:alerting.legacy:reader",
-    "displayName": "Alerting legacy read permissions (DO NOT USE)",
-    "description": "",
-    "group": "Alerting",
-    "hidden": true,
-    "permissions": [
-      {
-        "action": "alert.notifications:read"
-      }
-    ],
-    "grants": [
-      "Viewer"
-    ]
-  },
-  {
     "name": "fixed:alerting.legacy:writer",
-    "displayName": "Alerting legacy write permissions (DO NOT USE)",
-    "description": "",
-    "group": "Alerting",
-    "hidden": true,
-    "permissions": [
-      {
-        "action": "alert.notifications:read"
-      },
-      {
-        "action": "alert.notifications:write"
-      }
-    ],
-    "grants": [
-      "Editor"
-    ]
-  },
-  {
-    "name": "fixed:alerting.legacy.config:reader",
-    "displayName": "Alerting legacy config read permission (deprecated, admin only)",
-    "description": "",
-    "group": "Alerting",
-    "hidden": true,
-    "permissions": [
-      {
-        "action": "alert.notifications.config-history:read"
-      }
-    ],
-    "grants": [
-      "Admin"
-    ]
-  },
-  {
-    "name": "fixed:alerting.legacy.config:writer",
-    "displayName": "Alerting legacy config write permission (deprecated, admin only)",
+    "displayName": "Alerting legacy permissions (deprecated, admin only)",
     "description": "",
     "group": "Alerting",
     "hidden": true,
@@ -845,6 +813,18 @@
       },
       {
         "action": "alert.notifications.config-history:write"
+      },
+      {
+        "action": "alert.notifications.routes:read"
+      },
+      {
+        "action": "alert.notifications.routes:write"
+      },
+      {
+        "action": "alert.notifications:read"
+      },
+      {
+        "action": "alert.notifications:write"
       }
     ],
     "grants": [
@@ -993,34 +973,58 @@
     ]
   },
   {
+    "name": "fixed:alerting.managed-routes:creator",
+    "displayName": "Notification Policies Creator",
+    "description": "Create notification policies in Grafana alerting",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:create"
+      }
+    ],
+    "grants": [
+      "Editor"
+    ]
+  },
+  {
     "name": "fixed:alerting.routes:reader",
     "displayName": "Notification Policies Reader",
     "description": "Read all notification policies in Grafana alerting",
     "group": "Alerting",
     "permissions": [
       {
-        "action": "alert.notifications.routes:read"
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
       }
     ],
     "grants": [
-      "Viewer"
+      "Admin"
     ]
   },
   {
     "name": "fixed:alerting.routes:writer",
     "displayName": "Notification Policies Writer",
-    "description": "Update and reset notification policies in Grafana alerting",
+    "description": "Create, update and delete notification policies in Grafana alerting",
     "group": "Alerting",
     "permissions": [
       {
-        "action": "alert.notifications.routes:read"
+        "action": "notifications.alerting.grafana.app/routingtrees:create"
       },
       {
-        "action": "alert.notifications.routes:write"
+        "action": "notifications.alerting.grafana.app/routingtrees:delete",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:get",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/routingtrees:update",
+        "scope": "notifications.alerting.grafana.app/routingtrees:*"
       }
     ],
     "grants": [
-      "Editor"
+      "Admin"
     ]
   },
   {

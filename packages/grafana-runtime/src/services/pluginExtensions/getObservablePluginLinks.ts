@@ -1,6 +1,6 @@
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
-import { PluginExtensionLink } from '@grafana/data';
+import { type PluginExtensionLink } from '@grafana/data';
 
 type GetObservablePluginLinksOptions = {
   context?: object | Record<string | symbol, unknown>;

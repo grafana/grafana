@@ -6,17 +6,17 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from '@grafana/ui';
-import { ObjectMeta } from 'app/features/apiserver/types';
+import { type ObjectMeta } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
+import { type DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
@@ -24,7 +24,7 @@ import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor, hasLibraryPanelsInV1Dashboard } from '../utils/utils';
 
 import { ResourceExport } from './ExportButton/ResourceExport';
-import { SceneShareTabState, ShareView } from './types';
+import { type SceneShareTabState, type ShareView } from './types';
 
 export interface ExportableResource {
   apiVersion: string;

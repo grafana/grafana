@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
-import { components, ContainerProps as BaseContainerProps, GroupBase } from 'react-select';
+import { components, type ContainerProps as BaseContainerProps, type GroupBase } from 'react-select';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { sharedInputStyle } from '../Forms/commonStyles';
 import { getInputStyles } from '../Input/Input';
 
-import { CustomComponentProps } from './types';
+import { type CustomComponentProps } from './types';
 
 // prettier-ignore
 export type SelectContainerProps<Option, isMulti extends boolean, Group extends GroupBase<Option>> =

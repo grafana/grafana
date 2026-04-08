@@ -2,13 +2,13 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { CoreApp, GrafanaTheme, GrafanaTheme2, toUtc } from '@grafana/data';
-import { config, reportInteraction, TemplateSrv } from '@grafana/runtime';
-import { Themeable } from '@grafana/ui';
+import { CoreApp, type GrafanaTheme, type GrafanaTheme2, toUtc } from '@grafana/data';
+import { config, reportInteraction, type TemplateSrv } from '@grafana/runtime';
+import { type Themeable } from '@grafana/ui';
 
 import QueryField from './QueryField';
 import { createTempoDatasource } from './test/mocks';
-import { TempoQuery } from './types';
+import { type TempoQuery } from './types';
 
 jest.mock('@grafana/assistant', () => ({
   QueryWithAssistantButton: () => <div data-testid="query-with-assistant-button" />,

@@ -95,7 +95,7 @@ func main() {
 	}
 
 	dashboardWrapper := DashboardWrapper{
-		APIVersion: "dashboard.grafana.app/v1beta1",
+		APIVersion: "dashboard.grafana.app/v1",
 		Kind:       "Dashboard",
 		Metadata: Metadata{
 			Name: *dashboard.Uid,
@@ -133,7 +133,7 @@ const dashboard = new DashboardBuilder('My Dashboard')
 
 // Convert to Kubernetes-style format
 const dashboardWrapper = {
-  apiVersion: "dashboard.grafana.app/v1beta1",
+  apiVersion: "dashboard.grafana.app/v1",
   kind: "Dashboard",
   metadata: {
     name: dashboard.uid!

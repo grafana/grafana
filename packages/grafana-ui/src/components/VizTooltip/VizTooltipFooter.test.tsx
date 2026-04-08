@@ -2,10 +2,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
-import { Field, FieldType, LinkModel } from '@grafana/data';
+import { type Field, FieldType, type LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { VizTooltipFooter, AdHocFilterModel } from './VizTooltipFooter';
+import { VizTooltipFooter, type AdHocFilterModel } from './VizTooltipFooter';
 
 describe('VizTooltipFooter', () => {
   it('should fire onclick', async () => {

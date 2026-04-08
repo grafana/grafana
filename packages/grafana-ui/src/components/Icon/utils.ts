@@ -1,4 +1,4 @@
-import { IconName, IconSize, IconType } from '../../types/icon';
+import { type IconName, type IconSize, type IconType } from '../../types/icon';
 
 const alwaysMonoIcons: IconName[] = [
   'grafana',

@@ -1,5 +1,5 @@
 import { getCachedPromise, invalidateCache, MAX_CACHE_SIZE, setLogger } from './getCachedPromise';
-import { MonitoringLogger } from './logging';
+import { type MonitoringLogger } from './logging';
 
 const TEST_ASYNC_DELAY = 10;
 

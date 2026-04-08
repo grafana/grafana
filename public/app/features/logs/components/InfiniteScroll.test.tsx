@@ -2,10 +2,10 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useEffect, useRef, useState } from 'react';
 
-import { CoreApp, LogRowModel, dateTimeForTimeZone, rangeUtil } from '@grafana/data';
+import { CoreApp, type LogRowModel, dateTimeForTimeZone, rangeUtil } from '@grafana/data';
 import { LogsSortOrder } from '@grafana/schema';
 
-import { InfiniteScroll, Props, SCROLLING_THRESHOLD } from './InfiniteScroll';
+import { InfiniteScroll, type Props, SCROLLING_THRESHOLD } from './InfiniteScroll';
 import { createLogRow } from './mocks/logRow';
 
 const defaultTz = 'browser';

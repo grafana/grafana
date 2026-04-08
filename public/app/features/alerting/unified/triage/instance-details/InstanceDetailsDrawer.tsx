@@ -3,7 +3,7 @@ import { orderBy } from 'lodash';
 import { Fragment, useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2, Labels } from '@grafana/data';
+import { type GrafanaTheme2, type Labels } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
 import { TimeRangePicker, useTimeRange } from '@grafana/scenes-react';
@@ -19,13 +19,13 @@ import {
   TextLink,
   useStyles2,
 } from '@grafana/ui';
-import { AlertQuery, GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
+import { type AlertQuery, GrafanaAlertState, type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { stateHistoryApi } from '../../api/stateHistoryApi';
 import { getThresholdsForQueries } from '../../components/rule-editor/util';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
-import { LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
+import { type LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { labelsToMatchersParam } from '../../utils/matchers';
@@ -54,10 +54,11 @@ function calculateDrawerWidth(rightColumnWidth: number): number {
 interface InstanceDetailsDrawerProps {
   ruleUID: string;
   instanceLabels: Labels;
+  commonLabels?: Labels;
   onClose: () => void;
 }
 
-export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: InstanceDetailsDrawerProps) {
+export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, onClose }: InstanceDetailsDrawerProps) {
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
   const [timeRange] = useTimeRange();
   const { rightColumnWidth } = useWorkbenchContext();
@@ -108,7 +109,13 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
   if (error) {
     return (
       <Drawer
-        title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} />}
+        title={
+          <InstanceDetailsDrawerTitle
+            instanceLabels={instanceLabels}
+            commonLabels={commonLabels}
+            alertState={instanceState}
+          />
+        }
         onClose={onClose}
         width={drawerWidth}
       >
@@ -120,7 +127,13 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
   if (loading || !rule) {
     return (
       <Drawer
-        title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} />}
+        title={
+          <InstanceDetailsDrawerTitle
+            instanceLabels={instanceLabels}
+            commonLabels={commonLabels}
+            alertState={instanceState}
+          />
+        }
         onClose={onClose}
         width={drawerWidth}
       >
@@ -131,7 +144,14 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
 
   return (
     <Drawer
-      title={<InstanceDetailsDrawerTitle instanceLabels={instanceLabels} rule={rule.grafana_alert} />}
+      title={
+        <InstanceDetailsDrawerTitle
+          instanceLabels={instanceLabels}
+          commonLabels={commonLabels}
+          alertState={instanceState}
+          rule={rule.grafana_alert}
+        />
+      }
       onClose={onClose}
       width={drawerWidth}
     >
@@ -140,7 +160,9 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
           <TimeRangePicker />
         </Stack>
         {showDrawerTimeRangeBanner && !instanceState && <DrawerTimeRangeInfoBanner />}
-        {instanceState && <InstanceStateInfoBanner state={instanceState} />}
+        {(instanceState === GrafanaAlertState.NoData || instanceState === GrafanaAlertState.Error) && (
+          <InstanceStateInfoBanner state={instanceState === GrafanaAlertState.NoData ? 'nodata' : 'error'} />
+        )}
         {dataQueries.length > 0 && (
           <Box>
             <Stack direction="column" gap={2}>

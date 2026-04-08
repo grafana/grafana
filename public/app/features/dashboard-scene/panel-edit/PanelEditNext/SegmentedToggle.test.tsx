@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { SegmentedToggle, SegmentedToggleOption } from './SegmentedToggle';
+import { SegmentedToggle, type SegmentedToggleOption } from './SegmentedToggle';
 
 type View = 'data' | 'alerts' | 'transforms';
 

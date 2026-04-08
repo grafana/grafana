@@ -4,7 +4,7 @@ import { t } from '@grafana/i18n';
 import { useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
-import { StepStatusInfo } from '../types';
+import { type StepStatusInfo } from '../types';
 
 export interface UseCreateSyncJobParams {
   repoName: string;

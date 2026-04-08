@@ -1,10 +1,10 @@
 import { action } from '@storybook/addon-actions';
-import { StoryFn, Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react';
 import type { JSX } from 'react';
 
 import { Button } from '../Button/Button';
 
-import { CallToActionCard, CallToActionCardProps } from './CallToActionCard';
+import { CallToActionCard, type CallToActionCardProps } from './CallToActionCard';
 
 const meta: Meta = {
   title: 'Information/Deprecated/CallToActionCard',

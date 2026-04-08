@@ -1,7 +1,7 @@
-import * as React from 'react';
+import type * as React from 'react';
 
 import { LoadingIndicator } from './LoadingIndicator';
-import { PanelChrome as PanelChromeComponent, PanelChromeProps } from './PanelChrome';
+import { PanelChrome as PanelChromeComponent, type PanelChromeProps } from './PanelChrome';
 import { TitleItem } from './TitleItem';
 
 /**

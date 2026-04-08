@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -29,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashService "github.com/grafana/grafana/pkg/services/dashboards/service"
 	dashclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -55,12 +55,13 @@ import (
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	storesrv "github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -502,18 +503,24 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 	require.NoError(t, err)
 	_, err = authimpl.ProvideUserAuthTokenService(sqlStore, nil, quotaService, fakes.NewFakeSecretsService(), cfg, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures())
 	require.NoError(t, err)
-	fStore := folderimpl.ProvideStore(sqlStore, cfg)
-	dashStore, err := dashboardStore.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
-	require.NoError(t, err)
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-	folderSvc := folderimpl.ProvideService(
-		fStore, acmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
-		nil, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
+	emptySearchResponse := &resourcepb.ResourceSearchResponse{TotalHits: 0}
+	emptyStatsResponse := &resourcepb.ResourceStatsResponse{
+		Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 0}},
+	}
+	folderSearchMock := resource.NewMockResourceClient(t)
+	folderSearchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(emptySearchResponse, nil).Maybe()
+	folderSearchMock.On("GetStats", mock.Anything, mock.Anything, mock.Anything).Return(emptyStatsResponse, nil).Maybe()
+	folderSvc := folderimpl.ProvideService(acmock.New(),
+		nil, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), folderSearchMock, sort.ProvideService(), apiserver.WithoutRestConfig)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
+	dashSearchMock := resource.NewMockResourceClient(t)
+	dashSearchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(emptySearchResponse, nil).Maybe()
+	dashSearchMock.On("GetStats", mock.Anything, mock.Anything, mock.Anything).Return(emptyStatsResponse, nil).Maybe()
 	dashService, err := dashService.ProvideDashboardServiceImpl(
 		cfg,
-		dashStore,
+		sqlStore,
 		featuremgmt.WithFeatures(),
 		acmock.NewMockedPermissionsService(),
 		ac,
@@ -529,9 +536,8 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 		dashclient.NewK8sClientWithFallback(
 			cfg,
 			client.MockTestRestConfig{},
-			dashStore,
 			nil,
-			nil,
+			dashSearchMock,
 			sort.ProvideService(),
 			dualwrite.ProvideTestService(),
 			nil,

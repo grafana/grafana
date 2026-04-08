@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataFrame, DataFrameType, FieldType, toDataFrame } from '@grafana/data';
+import { type DataFrame, DataFrameType, FieldType, toDataFrame } from '@grafana/data';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME, parseLogsFrame } from 'app/features/logs/logsFrame';
 
 import { LogsTableCustomCellRenderer } from './LogsTableCustomCellRenderer';

@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 
-import { RepoType } from './types';
+import { type RepoType } from './types';
 
 export interface FieldConfig {
   label: string;

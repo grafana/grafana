@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import { FC, Suspense, lazy, useCallback, useState } from 'react';
+import { type FC, Suspense, lazy, useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import {
   CoreApp,
-  DataFrame,
-  GrafanaTheme2,
+  type DataFrame,
+  type GrafanaTheme2,
   LoadingState,
-  PanelData,
+  type PanelData,
   dateTimeFormat,
   isTimeSeriesFrames,
 } from '@grafana/data';
@@ -20,15 +20,15 @@ import { Reduce } from 'app/features/expressions/components/Reduce';
 import { Resample } from 'app/features/expressions/components/Resample';
 import { Threshold } from 'app/features/expressions/components/Threshold';
 import {
-  ExpressionQuery,
+  type ExpressionQuery,
   ExpressionQueryType,
   expressionTypes,
   getExpressionLabel,
 } from 'app/features/expressions/types';
-import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { type AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { usePagination } from '../../hooks/usePagination';
-import { RuleFormValues } from '../../types/rule-form';
+import { type RuleFormValues } from '../../types/rule-form';
 import { isGrafanaRecordingRuleByType } from '../../utils/rules';
 import { PopupCard } from '../HoverCard';
 import { Spacer } from '../Spacer';

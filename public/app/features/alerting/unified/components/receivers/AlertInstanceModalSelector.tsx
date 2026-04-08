@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, useCallback, useMemo, useState } from 'react';
+import { type CSSProperties, useCallback, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Button,
@@ -16,7 +16,7 @@ import {
   clearButtonStyles,
   useStyles2,
 } from '@grafana/ui';
-import { AlertmanagerAlert, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertmanagerAlert, type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';

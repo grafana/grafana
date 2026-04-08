@@ -1,18 +1,18 @@
-import { from, Observable, of } from 'rxjs';
+import { from, type Observable, of } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
 import {
-  DataQuery,
-  DataQueryRequest,
-  DataSourceApi,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataSourceApi,
   getDefaultTimeRange,
   LoadingState,
-  PanelData,
-  QueryVariableModel,
+  type PanelData,
+  type QueryVariableModel,
   VariableSupportType,
 } from '@grafana/data';
 
-import { TimeSrv } from '../../dashboard/services/TimeSrv';
+import { type TimeSrv } from '../../dashboard/services/TimeSrv';
 import {
   hasCustomVariableSupport,
   hasDatasourceVariableSupport,

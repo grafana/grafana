@@ -1,11 +1,11 @@
-import { PromRuleDTO, RulerCloudRuleDTO } from 'app/types/unified-alerting-dto';
+import { type PromRuleDTO, type RulerCloudRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { mockPromRecordingRule } from '../mocks';
 import { alertingFactory } from '../mocks/server/db';
 
-import { PromRuleWithOrigin } from './hooks/useFilteredRulesIterator';
+import { type PromRuleWithOrigin } from './hooks/useFilteredRulesIterator';
 import { getMatchingPromRule, getMatchingRulerRule, matchRulesGroup } from './ruleMatching';
-import { RulePositionHash, createRulePositionHash } from './rulePositionHash';
+import { type RulePositionHash, createRulePositionHash } from './rulePositionHash';
 
 // Helper to create PromRuleWithOrigin mock
 function createPromRuleWithOrigin(rule: PromRuleDTO, ruleIndex: number, totalRules: number): PromRuleWithOrigin {

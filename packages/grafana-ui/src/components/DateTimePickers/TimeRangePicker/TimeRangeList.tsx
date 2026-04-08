@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { useRef, ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 
-import { GrafanaTheme2, TimeOption } from '@grafana/data';
+import { type GrafanaTheme2, type TimeOption } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';

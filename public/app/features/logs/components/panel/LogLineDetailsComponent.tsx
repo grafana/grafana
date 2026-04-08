@@ -2,7 +2,14 @@ import { css } from '@emotion/css';
 import { camelCase, groupBy } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { DataFrameType, DataSourceApi, GrafanaTheme2, hasLogsLabelTypesSupport, store, TimeRange } from '@grafana/data';
+import {
+  DataFrameType,
+  type DataSourceApi,
+  type GrafanaTheme2,
+  hasLogsLabelTypesSupport,
+  store,
+  type TimeRange,
+} from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Box, ControlledCollapse, useStyles2 } from '@grafana/ui';
@@ -12,14 +19,14 @@ import { useAttributesExtensionLinks } from '../LogDetails';
 import { createLogLineLinks } from '../logParser';
 
 import { LogLineDetailsDisplayedFields } from './LogLineDetailsDisplayedFields';
-import { LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } from './LogLineDetailsFields';
+import { type LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } from './LogLineDetailsFields';
 import { LogLineDetailsLinks } from './LogLineDetailsLinks';
 import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { LogLineDetailsTrace } from './LogLineDetailsTrace';
 import { useLogListContext } from './LogListContext';
 import { reportInteractionOnce } from './analytics';
 import { getTempoTraceFromLinks } from './links';
-import { LogListModel } from './processing';
+import { type LogListModel } from './processing';
 
 interface LogLineDetailsComponentProps {
   log: LogListModel;

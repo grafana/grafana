@@ -1,4 +1,4 @@
-import { AdHocFilterWithLabels } from '@grafana/scenes';
+import { type AdHocFilterWithLabels } from '@grafana/scenes';
 
 import { AdHocOriginFiltersController } from './AdHocOriginFiltersController';
 
@@ -51,6 +51,7 @@ describe('AdHocOriginFiltersController', () => {
     expect(state.allowCustomValue).toBe(false);
     expect(state.supportsMultiValueOperators).toBe(true);
     expect(state.inputPlaceholder).toBe('Add a default filter...');
+    expect(state.enableGroupBy).toBe(false);
   });
 
   it('should delegate getKeys, getValuesFor, and getOperators', async () => {

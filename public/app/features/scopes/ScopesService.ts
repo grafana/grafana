@@ -1,12 +1,12 @@
 import { isEqual } from 'lodash';
-import { BehaviorSubject, Observable, combineLatest, Subscription } from 'rxjs';
+import { BehaviorSubject, type Observable, combineLatest, type Subscription } from 'rxjs';
 import { map, distinctUntilChanged } from 'rxjs/operators';
 
-import { LocationService, ScopesContextValue, ScopesContextValueState } from '@grafana/runtime';
+import { type LocationService, type ScopesContextValue, type ScopesContextValueState } from '@grafana/runtime';
 
-import { ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
+import { type ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
 import { deserializeFolderPath, serializeFolderPath } from './dashboards/scopeNavgiationUtils';
-import { ScopesSelectorService } from './selector/ScopesSelectorService';
+import { type ScopesSelectorService } from './selector/ScopesSelectorService';
 
 export interface State {
   enabled: boolean;

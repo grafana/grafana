@@ -2,26 +2,26 @@ import { cx } from '@emotion/css';
 import { memo, useMemo } from 'react';
 
 import {
-  TimeRange,
-  CoreApp,
-  DataFrame,
+  type TimeRange,
+  type CoreApp,
+  type DataFrame,
   DataFrameType,
-  IconName,
-  LinkModel,
-  LogRowModel,
+  type IconName,
+  type LinkModel,
+  type LogRowModel,
   PluginExtensionPoints,
-  PluginExtensionResourceAttributesContext,
+  type PluginExtensionResourceAttributesContext,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
-import { PopoverContent, useTheme2 } from '@grafana/ui';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { type PopoverContent, useTheme2 } from '@grafana/ui';
+import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { calculateLogsLabelStats, calculateStats } from '../utils';
 
 import { LogDetailsBody } from './LogDetailsBody';
 import { LogDetailsRow } from './LogDetailsRow';
-import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
+import { getLogLevelStyles, type LogRowStyles } from './getLogRowStyles';
 import { getAllFields, createLogLineLinks } from './logParser';
 
 export interface Props {

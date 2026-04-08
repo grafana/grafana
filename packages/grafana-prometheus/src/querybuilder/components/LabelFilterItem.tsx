@@ -2,14 +2,14 @@
 import debounce from 'debounce-promise';
 import { useState } from 'react';
 
-import { SelectableValue, toOption } from '@grafana/data';
+import { type SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
 import { AsyncSelect, Select } from '@grafana/ui';
 
 import { truncateResult } from '../../language_utils';
-import { QueryBuilderLabelFilter } from '../shared/types';
+import { type QueryBuilderLabelFilter } from '../shared/types';
 
 interface LabelFilterItemProps {
   defaultOp: string;

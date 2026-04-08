@@ -22,15 +22,10 @@ import (
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards" // TODO: Check if we can remove this import
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -45,7 +40,6 @@ func TestMain(m *testing.M) {
 // TestContext holds common test resources
 type TestContext struct {
 	Helper                    *apis.K8sTestHelper
-	DualWriterMode            rest.DualWriterMode
 	AdminUser                 apis.User
 	EditorUser                apis.User
 	ViewerUser                apis.User
@@ -63,49 +57,28 @@ type TestContext struct {
 func TestIntegrationDashboardAPIValidation(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
-	for _, dualWriterMode := range dualWriterModes {
-		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
-			var disableFlags []string
-			if dualWriterMode < rest.Mode5 {
-				disableFlags = append(disableFlags, featuremgmt.FlagProvisioning)
-			}
+	// Create a K8sTestHelper which will set up a real API server
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableAnonymous:     true,
+		EnableFeatureToggles: []string{},
+	})
 
-			// Create a K8sTestHelper which will set up a real API server
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous:      true,
-				DisableFeatureToggles: disableFlags,
-				EnableFeatureToggles:  []string{},
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: dualWriterMode,
-					},
-					"folders.folder.grafana.app": {
-						DualWriterMode: dualWriterMode,
-					},
-				},
-			})
+	t.Cleanup(func() {
+		helper.Shutdown()
+	})
 
-			t.Cleanup(func() {
-				helper.Shutdown()
-			})
+	org1Ctx := createTestContext(t, helper, helper.Org1)
 
-			org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+	// trash is supported through unified storage only
+	runDashboardTrashTests(t, org1Ctx)
 
-			// trash is supported through unified storage only
-			if dualWriterMode == rest.Mode5 {
-				runDashboardTrashTests(t, org1Ctx)
-			}
+	t.Run("Dashboard validation tests", func(t *testing.T) {
+		runDashboardValidationTests(t, org1Ctx)
+	})
 
-			t.Run("Dashboard validation tests", func(t *testing.T) {
-				runDashboardValidationTests(t, org1Ctx)
-			})
-
-			t.Run("Dashboard quota tests", func(t *testing.T) {
-				runQuotaTests(t, org1Ctx)
-			})
-		})
-	}
+	t.Run("Dashboard quota tests", func(t *testing.T) {
+		runQuotaTests(t, org1Ctx)
+	})
 }
 
 func TestIntegrationDashboardAPIZanzana(t *testing.T) {
@@ -120,14 +93,6 @@ func TestIntegrationDashboardAPIZanzana(t *testing.T) {
 		ZanzanaReconciliationInterval:       1 * time.Second,
 		APIServerStorageType:                "unified",
 		DBMaxConns:                          10,
-		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			"dashboards.dashboard.grafana.app": {
-				DualWriterMode: rest.Mode5,
-			},
-			"folders.folder.grafana.app": {
-				DualWriterMode: rest.Mode5,
-			},
-		},
 		EnableFeatureToggles: []string{
 			"zanzana",
 			"zanzanaNoLegacyClient",
@@ -139,8 +104,8 @@ func TestIntegrationDashboardAPIZanzana(t *testing.T) {
 		helper.Shutdown()
 	})
 
-	org1Ctx := createTestContext(t, helper, helper.Org1, rest.Mode5)
-	org2Ctx := createTestContext(t, helper, helper.OrgB, rest.Mode5)
+	org1Ctx := createTestContext(t, helper, helper.Org1)
+	org2Ctx := createTestContext(t, helper, helper.OrgB)
 
 	t.Run("Dashboard permission tests", func(t *testing.T) {
 		runDashboardPermissionTests(t, org1Ctx)
@@ -167,14 +132,6 @@ func TestIntegrationDashboardAPIZanzanaList(t *testing.T) {
 		DisableAnonymous:     true,
 		APIServerStorageType: "unified",
 		DBMaxConns:           50,
-		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			"dashboards.dashboard.grafana.app": {
-				DualWriterMode: rest.Mode5,
-			},
-			"folders.folder.grafana.app": {
-				DualWriterMode: rest.Mode5,
-			},
-		},
 		EnableFeatureToggles: []string{
 			"zanzana",
 			"zanzanaNoLegacyClient",
@@ -187,7 +144,7 @@ func TestIntegrationDashboardAPIZanzanaList(t *testing.T) {
 		helper.Shutdown()
 	})
 
-	org1Ctx := createTestContext(t, helper, helper.Org1, rest.Mode5)
+	org1Ctx := createTestContext(t, helper, helper.Org1)
 
 	runDashboardListTests(t, org1Ctx)
 }
@@ -196,57 +153,37 @@ func TestIntegrationDashboardAPIZanzanaList(t *testing.T) {
 func TestIntegrationDashboardAPI(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
-	for _, dualWriterMode := range dualWriterModes {
-		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
-			var disableFlags []string
-			if dualWriterMode < rest.Mode5 {
-				disableFlags = append(disableFlags, featuremgmt.FlagProvisioning)
-			}
+	// Create a K8sTestHelper which will set up a real API server
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+	})
 
-			// Create a K8sTestHelper which will set up a real API server
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous:      true,
-				DisableFeatureToggles: disableFlags,
-				EnableFeatureToggles:  []string{},
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: dualWriterMode,
-					},
-					"folders.folder.grafana.app": {
-						DualWriterMode: dualWriterMode,
-					},
-				},
-			})
+	t.Cleanup(func() {
+		helper.Shutdown()
+	})
 
-			t.Cleanup(func() {
-				helper.Shutdown()
-			})
+	org1Ctx := createTestContext(t, helper, helper.Org1)
+	org2Ctx := createTestContext(t, helper, helper.OrgB)
 
-			org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
-			org2Ctx := createTestContext(t, helper, helper.OrgB, dualWriterMode)
+	t.Run("Dashboard LIST API test", func(t *testing.T) {
+		runDashboardListTests(t, org1Ctx)
+	})
 
-			t.Run("Dashboard LIST API test", func(t *testing.T) {
-				runDashboardListTests(t, org1Ctx)
-			})
+	t.Run("Authorization tests for all identity types", func(t *testing.T) {
+		runAuthorizationTests(t, org1Ctx)
+	})
 
-			t.Run("Authorization tests for all identity types", func(t *testing.T) {
-				runAuthorizationTests(t, org1Ctx)
-			})
+	t.Run("Dashboard permission tests", func(t *testing.T) {
+		runDashboardPermissionTests(t, org1Ctx)
+	})
 
-			t.Run("Dashboard permission tests", func(t *testing.T) {
-				runDashboardPermissionTests(t, org1Ctx)
-			})
+	t.Run("Dashboard HTTP API test", func(t *testing.T) {
+		runDashboardHttpTest(t, org1Ctx, org2Ctx)
+	})
 
-			t.Run("Dashboard HTTP API test", func(t *testing.T) {
-				runDashboardHttpTest(t, org1Ctx, org2Ctx)
-			})
-
-			t.Run("Cross-organization tests", func(t *testing.T) {
-				runCrossOrgTests(t, org1Ctx, org2Ctx)
-			})
-		})
-	}
+	t.Run("Cross-organization tests", func(t *testing.T) {
+		runCrossOrgTests(t, org1Ctx, org2Ctx)
+	})
 }
 
 // Auth identity types (user or token) with resource client
@@ -860,76 +797,6 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			require.NoError(t, err)
 		})
 	})
-
-	t.Run("Dashboard upsert propagates legacy id", func(t *testing.T) {
-		// ensures that the internal ID is propagated from legacy to unified on upsert even in mode 1
-		if ctx.DualWriterMode != rest.Mode1 {
-			t.Skip("Skipping upsert metadata test")
-		}
-
-		// create via the service, so that upsert is used
-		specificUID := "upsert-metadata-test"
-		dashboardService := ctx.Helper.GetEnv().Server.HTTPServer.DashboardService
-		require.NotNil(t, dashboardService)
-		provisioningService, ok := dashboardService.(dashboards.DashboardProvisioningService)
-		require.True(t, ok, "DashboardService should also implement DashboardProvisioningService")
-		dashboardData := simplejson.NewFromAny(map[string]interface{}{
-			"title": "Dashboard for Upsert Metadata Test",
-			"uid":   specificUID,
-		})
-		result, err := provisioningService.SaveProvisionedDashboard(context.Background(), &dashboards.SaveDashboardDTO{
-			OrgID: ctx.OrgID,
-			Dashboard: &dashboards.Dashboard{
-				Title: "Dashboard for Upsert Metadata Test",
-				UID:   specificUID,
-				Data:  dashboardData,
-			},
-		}, &dashboards.DashboardProvisioning{
-			Name:       "test-provisioner",
-			ExternalID: "/test/path/dashboard.json",
-			CheckSum:   "abc123",
-		})
-		require.NoError(t, err)
-		require.NotNil(t, result)
-
-		// get the internal id from legacy directly from the db
-		sqlStore := ctx.Helper.GetEnv().Server.HTTPServer.SQLStore
-		require.NotNil(t, sqlStore)
-
-		var legacyID int64
-		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			has, innerErr := sess.Table("dashboard").
-				Where("uid = ? AND org_id = ?", specificUID, ctx.OrgID).
-				Cols("id").
-				Get(&legacyID)
-			if innerErr != nil {
-				return innerErr
-			}
-			if !has {
-				return fmt.Errorf("dashboard not found in legacy storage")
-			}
-			return nil
-		})
-		require.NoError(t, err)
-		require.NotZero(t, legacyID)
-
-		// then compare what unistore returns
-		dashboardObj, err := adminClient.Resource.Get(context.Background(), specificUID, v1.GetOptions{})
-		require.NoError(t, err)
-		require.NotNil(t, dashboardObj)
-		labels := dashboardObj.GetLabels()
-		require.NotNil(t, labels)
-		deprecatedIDStr, exists := labels[utils.LabelKeyDeprecatedInternalID]
-		require.True(t, exists)
-
-		legacyIDStr := strconv.FormatInt(legacyID, 10)
-		require.Equal(t, legacyIDStr, deprecatedIDStr)
-
-		// clean up - with force so the provisioned dashboard deletion check is skipped
-		zeroPtr := int64(0)
-		err = adminClient.Resource.Delete(context.Background(), specificUID, v1.DeleteOptions{GracePeriodSeconds: &zeroPtr})
-		require.NoError(t, err)
-	})
 }
 
 // Run tests for quota validation
@@ -1032,7 +899,7 @@ func runQuotaTests(t *testing.T, ctx TestContext) {
 }
 
 // Helper function to create test context for an organization
-func createTestContext(t *testing.T, helper *apis.K8sTestHelper, orgUsers apis.OrgUsers, dualWriterMode rest.DualWriterMode) TestContext {
+func createTestContext(t *testing.T, helper *apis.K8sTestHelper, orgUsers apis.OrgUsers) TestContext {
 	apis.AwaitZanzanaReconcileNext(t, helper)
 
 	// Create test folder
@@ -1043,7 +910,6 @@ func createTestContext(t *testing.T, helper *apis.K8sTestHelper, orgUsers apis.O
 	// Create test context
 	return TestContext{
 		Helper:                    helper,
-		DualWriterMode:            dualWriterMode,
 		AdminUser:                 orgUsers.Admin,
 		EditorUser:                orgUsers.Editor,
 		ViewerUser:                orgUsers.Viewer,
@@ -1457,7 +1323,7 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 				}
 			})
 
-			// TODO: Check if vieweing permission can be revoked as well.
+			// TODO: Check if viewing permission can be revoked as well.
 			// Test dashboard viewing for all roles
 			t.Run("dashboard viewing", func(t *testing.T) {
 				// Create a dashboard with admin
@@ -1891,7 +1757,7 @@ func runCrossOrgTests(t *testing.T, org1Ctx, org2Ctx TestContext) {
 		_, err = updateDashboard(t, org1FolderClient, createdFolder1, "Updated folder in org1", nil)
 		require.NoError(t, err, "Failed to update folder in org1")
 
-		_, err = updateDashboard(t, org2FolderClient, createdFolder2, "Updated folderin org2", nil)
+		_, err = updateDashboard(t, org2FolderClient, createdFolder2, "Updated folder in org2", nil)
 		require.NoError(t, err, "Failed to update folder in org2")
 
 		folder1updated, err := org1FolderClient.Resource.Get(context.Background(), folderUID, v1.GetOptions{})
@@ -1902,7 +1768,7 @@ func runCrossOrgTests(t *testing.T, org1Ctx, org2Ctx TestContext) {
 		folder2updated, err := org2FolderClient.Resource.Get(context.Background(), folderUID, v1.GetOptions{})
 		require.NoError(t, err, "Failed to get updated folder in org2")
 		meta2, _ = utils.MetaAccessor(folder2updated)
-		require.Equal(t, "Updated folderin org2", meta2.FindTitle(""), "Folder title in org2 should be updated")
+		require.Equal(t, "Updated folder in org2", meta2.FindTitle(""), "Folder title in org2 should be updated")
 
 		// Clean up
 		err = org1FolderClient.Resource.Delete(context.Background(), folderUID, v1.DeleteOptions{})

@@ -2,10 +2,10 @@
 import { lowerCase } from 'lodash';
 import moment from 'moment-timezone';
 
-import { DateTimeOptions, getTimeZone } from './common';
+import { type DateTimeOptions, getTimeZone } from './common';
 import { parse, isValid } from './datemath';
 import { systemDateFormats } from './formats';
-import { DateTimeInput, DateTime, isDateTime, dateTime, toUtc, dateTimeForTimeZone } from './moment_wrapper';
+import { type DateTimeInput, type DateTime, isDateTime, dateTime, toUtc, dateTimeForTimeZone } from './moment_wrapper';
 
 /**
  * The type that describes options that can be passed when parsing a date and time value.

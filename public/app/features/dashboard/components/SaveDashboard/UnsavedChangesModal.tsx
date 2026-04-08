@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Modal } from '@grafana/ui';
 
-import { DashboardModel } from '../../state/DashboardModel';
+import { type DashboardModel } from '../../state/DashboardModel';
 
 import { SaveDashboardButton } from './SaveDashboardButton';
 

@@ -1,4 +1,4 @@
-import { importDashboard, Dashboard } from './importDashboard';
+import { importDashboard, type Dashboard } from './importDashboard';
 
 /**
  * Smoke test several dashboard json files from a test directory

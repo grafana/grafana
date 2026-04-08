@@ -3,10 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
 import { TraceqlSearchScope } from '../dataquery.gen';
-import { TempoDatasource } from '../datasource';
+import { type TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { initTemplateSrv } from '../test/test_utils';
-import { TempoQuery } from '../types';
+import { type TempoQuery } from '../types';
 
 import TraceQLSearch from './TraceQLSearch';
 

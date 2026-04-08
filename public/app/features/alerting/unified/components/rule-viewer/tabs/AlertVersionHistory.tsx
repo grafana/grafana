@@ -3,8 +3,8 @@ import { useCallback, useMemo, useState } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Button, EmptyState, LoadingPlaceholder, Stack, Text, Tooltip } from '@grafana/ui';
-import { RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
-import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { type RuleGroupIdentifierV2, type RuleIdentifier } from 'app/types/unified-alerting';
+import { type GrafanaRuleDefinition, type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
   LogMessages,
@@ -19,7 +19,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 
 import { ComparisonDrawer } from './version-history/ComparisonDrawer';
-import { Origin } from './version-history/ConfirmVersionRestoreModal';
+import { type Origin } from './version-history/ConfirmVersionRestoreModal';
 import { VersionHistoryTable } from './version-history/VersionHistoryTable';
 
 const { useGetAlertVersionHistoryQuery } = alertRuleApi;

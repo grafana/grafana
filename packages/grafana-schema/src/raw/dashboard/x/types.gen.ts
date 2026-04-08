@@ -151,6 +151,10 @@ export interface VariableModel {
    */
   description?: string;
   /**
+   * Whether the group-by operator is enabled in the ad hoc filter combobox.
+   */
+  enableGroupBy?: boolean;
+  /**
    * Visibility configuration for the variable
    */
   hide?: VariableHide;
@@ -219,6 +223,7 @@ export interface VariableModel {
 
 export const defaultVariableModel: Partial<VariableModel> = {
   allowCustomValue: true,
+  enableGroupBy: false,
   includeAll: false,
   multi: false,
   options: [],

@@ -1,7 +1,7 @@
 import { config } from '@grafana/runtime';
 
 import { SQLSearcher } from './sql';
-import { GrafanaSearcher } from './types';
+import { type GrafanaSearcher } from './types';
 import { UnifiedSearcher } from './unified';
 
 let searcher: GrafanaSearcher | undefined = undefined;

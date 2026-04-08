@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Field, IconButton, Input, useStyles2, Text } from '@grafana/ui';

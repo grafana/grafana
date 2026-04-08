@@ -1,4 +1,4 @@
-import { createDataFrame, dateTime, DateTimeInput, EventBus, FieldType } from '@grafana/data';
+import { createDataFrame, dateTime, type DateTimeInput, type EventBus, FieldType } from '@grafana/data';
 import { getTheme } from '@grafana/ui';
 
 import { getXAxisConfig, preparePlotConfigBuilder, UPLOT_DEFAULT_AXIS_GAP } from './utils';

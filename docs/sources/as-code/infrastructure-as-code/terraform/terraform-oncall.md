@@ -27,7 +27,7 @@ These resources use the `grafana_oncall_` naming convention in Terraform. Additi
 
 ## Before you begin
 
-Before you begin, you should have the following:
+Before you begin, ensure you have the following:
 
 - A Grafana Cloud account, as shown in [Get started](https://grafana.com/docs/grafana-cloud/get-started/)
 - [Terraform](https://www.terraform.io/downloads) installed on your machine
@@ -288,7 +288,7 @@ It also adds the `Devs` escalation chain as the default route for alerts.
    }
    ```
 
-1. To configure Alertmanager, refer to [Alertmanager integration for Grafana OnCall](https://grafana.com/docs/grafana-cloud/alerting-and-irm/oncall/integrations/alertmanager/)
+1. To configure Alertmanager, refer to the [Alertmanager integration for Grafana OnCall](https://grafana.com/docs/grafana-cloud/alerting-and-irm/oncall/integrations/alertmanager/) documentation.
 
 ## Set up a route to configure escalation behavior for alert group notifications
 
@@ -350,8 +350,8 @@ After you apply the changes in the Terraform configurations, you can verify the 
 
   ![Alertmanager integration for SREs escalation](/media/docs/grafana-cloud/alerting-and-irm/screenshot-oncall-alertmanager-tf.png)
 
-## Conclusion
+## Summary
 
 In this guide, you learned how to use Terraform to manage Grafana IRM by connecting an integration, configuring escalation policies, and setting up on-call schedules.
 
-To learn more about managing Grafana Cloud using Terraform, refer to [Grafana provider's documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+To learn more about managing Grafana Cloud using Terraform, refer to the [Grafana provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs).

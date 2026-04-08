@@ -1,15 +1,16 @@
 import {
   FieldColorModeId,
+  FieldType,
   ThresholdsMode,
-  VisualizationPresetsSupplier,
-  VisualizationSuggestion,
+  type VisualizationPresetsSupplier,
+  type VisualizationSuggestion,
   VizOrientation,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { BarGaugeSizing } from '@grafana/schema';
-import { GraphFieldConfig } from '@grafana/ui';
+import { type GraphFieldConfig } from '@grafana/ui';
 
-import { defaultOptions, Options } from './panelcfg.gen';
+import { defaultOptions, type Options } from './panelcfg.gen';
 
 /**
  * Standard preset - gauge shape with thresholds
@@ -272,6 +273,10 @@ const neonSegmentedPreset = (): VisualizationSuggestion<Options, GraphFieldConfi
   };
 };
 
-export const gaugePresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = () => {
+export const gaugePresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = ({ dataSummary }) => {
+  if (!dataSummary?.hasData || !dataSummary.hasFieldType(FieldType.number)) {
+    return [];
+  }
+
   return [defaultPreset(), segmentedPreset(), gradientPreset(), circlePreset(), neonPreset(), neonSegmentedPreset()];
 };

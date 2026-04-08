@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { ReactNode, useCallback, useEffect, useState, useRef } from 'react';
+import { type ReactNode, useCallback, useEffect, useState, useRef } from 'react';
 import * as React from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Counter, Icon, Tooltip, useStyles2 } from '@grafana/ui';

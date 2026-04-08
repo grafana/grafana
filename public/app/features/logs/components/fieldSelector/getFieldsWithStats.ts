@@ -1,8 +1,8 @@
-import { DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data';
 
 import { parseLogsFrame } from '../../logsFrame';
 
-import { FieldWithStats } from './FieldSelector';
+import { type FieldWithStats } from './FieldSelector';
 
 export function getFieldsWithStats(dataFrames: DataFrame[]): FieldWithStats[] {
   const cardinality = new Map<string, number>();

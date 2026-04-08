@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -35,24 +34,18 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func disableProvisioningForLegacyModes(mode rest.DualWriterMode) []string {
-	if mode < rest.Mode5 {
-		return []string{featuremgmt.FlagProvisioning}
-	}
-	return nil
-}
+func runDashboardTest(t *testing.T, gvr schema.GroupVersionResource) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
-func runDashboardTest(t *testing.T, mode rest.DualWriterMode, gvr schema.GroupVersionResource) {
 	t.Run("simple crud+list", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			DisableAnonymous:      true,
-			DisableFeatureToggles: disableProvisioningForLegacyModes(mode),
+			DisableAnonymous: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
-					DualWriterMode: mode,
+					DualWriterMode: rest.Mode5,
 				},
 				"folders.folder.grafana.app": {
-					DualWriterMode: mode,
+					DualWriterMode: rest.Mode5,
 				},
 			},
 		})
@@ -139,64 +132,34 @@ func runDashboardTest(t *testing.T, mode rest.DualWriterMode, gvr schema.GroupVe
 }
 
 func TestIntegrationDashboardsAppV0Alpha1(t *testing.T) {
-	gvr := schema.GroupVersionResource{
+	runDashboardTest(t, schema.GroupVersionResource{
 		Group:    dashboardV0.GROUP,
 		Version:  dashboardV0.VERSION,
 		Resource: "dashboards",
-	}
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
-	for _, mode := range modes {
-		t.Run(fmt.Sprintf("v0alpha1 with dual writer mode %d", mode), func(t *testing.T) {
-			runDashboardTest(t, mode, gvr)
-		})
-	}
+	})
 }
 
 func TestIntegrationDashboardsAppV1(t *testing.T) {
-	gvr := schema.GroupVersionResource{
+	runDashboardTest(t, schema.GroupVersionResource{
 		Group:    dashboardV1.GROUP,
 		Version:  dashboardV1.VERSION,
 		Resource: "dashboards",
-	}
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
-	for _, mode := range modes {
-		t.Run(fmt.Sprintf("v1beta1 with dual writer mode %d", mode), func(t *testing.T) {
-			runDashboardTest(t, mode, gvr)
-		})
-	}
+	})
 }
 
 func TestIntegrationDashboardsAppV2beta1(t *testing.T) {
-	gvr := schema.GroupVersionResource{
+	runDashboardTest(t, schema.GroupVersionResource{
 		Group:    dashboardV2beta1.GROUP,
 		Version:  dashboardV2beta1.VERSION,
 		Resource: "dashboards",
-	}
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
-	for _, mode := range modes {
-		t.Run(fmt.Sprintf("v1alpha2 with dual writer mode %d", mode), func(t *testing.T) {
-			runDashboardTest(t, mode, gvr)
-		})
-	}
+	})
 }
 
 func TestIntegrationLegacySupport(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableFeatureToggles: []string{featuremgmt.FlagProvisioning},
-		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			"dashboards.dashboard.grafana.app": {EnableMigration: false},
-			"folders.folder.grafana.app":       {EnableMigration: false},
-		},
-	})
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 
 	clientV0 := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: helper.Org1.Admin,
@@ -500,12 +463,11 @@ func TestIntegrationListPagination(t *testing.T) {
 	}
 
 	// Test on modes with legacy
-	modes := []rest.DualWriterMode{rest.Mode1}
+	modes := []rest.DualWriterMode{rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("pagination with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous:      true,
-				DisableFeatureToggles: disableProvisioningForLegacyModes(mode),
+				DisableAnonymous: true,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 					"folders.folder.grafana.app":       {DualWriterMode: mode},
@@ -592,8 +554,7 @@ func TestIntegrationListPagination(t *testing.T) {
 
 		t.Run(fmt.Sprintf("history pagination with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous:      true,
-				DisableFeatureToggles: disableProvisioningForLegacyModes(mode),
+				DisableAnonymous: true,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 					"folders.folder.grafana.app":       {DualWriterMode: mode},
@@ -684,171 +645,160 @@ func TestIntegrationListPagination(t *testing.T) {
 func TestIntegrationSearchTypeFiltering(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
-	for _, mode := range modes {
-		runDashboardSearchTest(t, mode)
+	ctx := context.Background()
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
+			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
+		},
+	})
+	defer helper.Shutdown()
+
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  dashboardV0.DashboardResourceInfo.GroupVersionResource(),
+	})
+
+	// Create one folder via legacy API
+	{
+		cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+		cfg.GroupVersion = &schema.GroupVersion{Group: "folder.grafana.app", Version: "v1beta1"}
+		restClient, err := k8srest.RESTClientFor(cfg)
+		require.NoError(t, err)
+
+		var statusCode int
+		body := []byte(`{"uid":"sfolder","title":"Sample Folder"}`)
+		result := restClient.Post().AbsPath("api", "folders").
+			Body(body).
+			SetHeader("Content-type", "application/json").
+			Do(ctx).
+			StatusCode(&statusCode)
+		require.NoError(t, result.Error())
+		require.Equal(t, int(http.StatusOK), statusCode)
 	}
-}
 
-func runDashboardSearchTest(t *testing.T, mode rest.DualWriterMode) {
-	t.Run(fmt.Sprintf("search types with dual writer mode %d", mode), func(t *testing.T) {
-		ctx := context.Background()
-
-		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:     true,
-			DisableAnonymous:      true,
-			APIServerStorageType:  "unified",
-			DisableFeatureToggles: disableProvisioningForLegacyModes(mode),
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
-				"folders.folder.grafana.app":       {DualWriterMode: mode},
-			},
-			UnifiedStorageDisableSearch: mode < rest.Mode4,
-		})
-		defer helper.Shutdown()
-
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Admin,
-			GVR:  dashboardV0.DashboardResourceInfo.GroupVersionResource(),
-		})
-
-		// Create one folder via legacy API
-		{
-			cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
-			cfg.GroupVersion = &schema.GroupVersion{Group: "folder.grafana.app", Version: "v1beta1"}
-			restClient, err := k8srest.RESTClientFor(cfg)
-			require.NoError(t, err)
-
-			var statusCode int
-			body := []byte(`{"uid":"sfolder","title":"Sample Folder"}`)
-			result := restClient.Post().AbsPath("api", "folders").
-				Body(body).
-				SetHeader("Content-type", "application/json").
-				Do(ctx).
-				StatusCode(&statusCode)
-			require.NoError(t, result.Error())
-			require.Equal(t, int(http.StatusOK), statusCode)
-		}
-
-		// Create one dashboard in root
-		{
-			obj := &unstructured.Unstructured{
-				Object: map[string]any{
-					"spec": map[string]any{
-						"title":         "X",
-						"schemaVersion": 1,
-					},
+	// Create one dashboard in root
+	{
+		obj := &unstructured.Unstructured{
+			Object: map[string]any{
+				"spec": map[string]any{
+					"title":         "X",
+					"schemaVersion": 1,
 				},
-			}
-			obj.SetGenerateName("x-")
-			obj.SetAPIVersion(dashboardV0.GroupVersion.String())
-			obj.SetKind("Dashboard")
-			_, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
-			require.NoError(t, err)
+			},
 		}
+		obj.SetGenerateName("x-")
+		obj.SetAPIVersion(dashboardV0.GroupVersion.String())
+		obj.SetKind("Dashboard")
+		_, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+	}
 
-		// Also create a dashboard via legacy API to ensure legacy search sees it in modes < 3
-		{
-			cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
-			cfg.GroupVersion = &schema.GroupVersion{Group: "dashboard.grafana.app", Version: "v0alpha1"}
-			restClient, err := k8srest.RESTClientFor(cfg)
-			require.NoError(t, err)
-			var statusCode int
-			body := []byte(`{"dashboard":{"title":"Legacy X"},"overwrite":true}`)
-			result := restClient.Post().AbsPath("api", "dashboards", "db").
-				Body(body).
-				SetHeader("Content-type", "application/json").
-				Do(ctx).
-				StatusCode(&statusCode)
-			require.NoError(t, result.Error())
-			require.Equal(t, int(http.StatusOK), statusCode)
-		}
-
-		ns := helper.Org1.Admin.Identity.GetNamespace()
+	// Also create a dashboard via legacy API to ensure legacy search sees it in modes < 3
+	{
 		cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
 		cfg.GroupVersion = &schema.GroupVersion{Group: "dashboard.grafana.app", Version: "v0alpha1"}
 		restClient, err := k8srest.RESTClientFor(cfg)
 		require.NoError(t, err)
+		var statusCode int
+		body := []byte(`{"dashboard":{"title":"Legacy X"},"overwrite":true}`)
+		result := restClient.Post().AbsPath("api", "dashboards", "db").
+			Body(body).
+			SetHeader("Content-type", "application/json").
+			Do(ctx).
+			StatusCode(&statusCode)
+		require.NoError(t, result.Error())
+		require.Equal(t, int(http.StatusOK), statusCode)
+	}
 
-		call := func(params string) dashboardV0.SearchResults {
-			var statusCode int
-			req := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
-				Param("limit", "1000")
-			for _, kv := range strings.Split(params, "&") {
-				if kv == "" {
-					continue
-				}
-				parts := strings.SplitN(kv, "=", 2)
-				if len(parts) == 2 {
-					req = req.Param(parts[0], parts[1])
-				}
-			}
-			res := req.Do(ctx).StatusCode(&statusCode)
-			require.NoError(t, res.Error())
-			require.Equal(t, int(http.StatusOK), statusCode)
-			var sr dashboardV0.SearchResults
-			raw, err := res.Raw()
-			require.NoError(t, err)
-			require.NoError(t, json.Unmarshal(raw, &sr))
-			return sr
-		}
+	ns := helper.Org1.Admin.Identity.GetNamespace()
+	cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+	cfg.GroupVersion = &schema.GroupVersion{Group: "dashboard.grafana.app", Version: "v0alpha1"}
+	restClient, err := k8srest.RESTClientFor(cfg)
+	require.NoError(t, err)
 
-		// No type => defaults to both
-		resAny := call("")
-		folders := 0
-		dashboards := 0
-		for _, h := range resAny.Hits {
-			if strings.HasPrefix(h.Resource, "folder") {
-				folders++
+	call := func(params string) dashboardV0.SearchResults {
+		var statusCode int
+		req := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
+			Param("limit", "1000")
+		for _, kv := range strings.Split(params, "&") {
+			if kv == "" {
+				continue
 			}
-			if strings.HasPrefix(h.Resource, "dash") {
-				dashboards++
+			parts := strings.SplitN(kv, "=", 2)
+			if len(parts) == 2 {
+				req = req.Param(parts[0], parts[1])
 			}
 		}
-		require.GreaterOrEqual(t, dashboards, 1)
-		require.GreaterOrEqual(t, folders, 1)
+		res := req.Do(ctx).StatusCode(&statusCode)
+		require.NoError(t, res.Error())
+		require.Equal(t, int(http.StatusOK), statusCode)
+		var sr dashboardV0.SearchResults
+		raw, err := res.Raw()
+		require.NoError(t, err)
+		require.NoError(t, json.Unmarshal(raw, &sr))
+		return sr
+	}
 
-		// Only folder
-		resFolder := call("type=folder")
-		for _, h := range resFolder.Hits {
-			require.True(t, strings.HasPrefix(h.Resource, "folder"))
+	// No type => defaults to both
+	resAny := call("")
+	folders := 0
+	dashboards := 0
+	for _, h := range resAny.Hits {
+		if strings.HasPrefix(h.Resource, "folder") {
+			folders++
 		}
+		if strings.HasPrefix(h.Resource, "dash") {
+			dashboards++
+		}
+	}
+	require.GreaterOrEqual(t, dashboards, 1)
+	require.GreaterOrEqual(t, folders, 1)
 
-		// Only dashboard
-		resDash := call("type=dashboard")
-		require.GreaterOrEqual(t, len(resDash.Hits), 1)
-		for _, h := range resDash.Hits {
-			require.True(t, strings.HasPrefix(h.Resource, "dash"))
-		}
+	// Only folder
+	resFolder := call("type=folder")
+	for _, h := range resFolder.Hits {
+		require.True(t, strings.HasPrefix(h.Resource, "folder"))
+	}
 
-		// Both via repetition
-		resBoth := call("type=folder&type=dashboard")
-		folders, dashboards = 0, 0
-		for _, h := range resBoth.Hits {
-			if strings.HasPrefix(h.Resource, "folder") {
-				folders++
-			}
-			if strings.HasPrefix(h.Resource, "dash") {
-				dashboards++
-			}
-		}
-		require.GreaterOrEqual(t, dashboards, 1)
-		require.GreaterOrEqual(t, folders, 1)
+	// Only dashboard
+	resDash := call("type=dashboard")
+	require.GreaterOrEqual(t, len(resDash.Hits), 1)
+	for _, h := range resDash.Hits {
+		require.True(t, strings.HasPrefix(h.Resource, "dash"))
+	}
 
-		// Invalid => defaults to both
-		resInvalid := call("type=invalid")
-		folders, dashboards = 0, 0
-		for _, h := range resInvalid.Hits {
-			if strings.HasPrefix(h.Resource, "folder") {
-				folders++
-			}
-			if strings.HasPrefix(h.Resource, "dash") {
-				dashboards++
-			}
+	// Both via repetition
+	resBoth := call("type=folder&type=dashboard")
+	folders, dashboards = 0, 0
+	for _, h := range resBoth.Hits {
+		if strings.HasPrefix(h.Resource, "folder") {
+			folders++
 		}
-		require.GreaterOrEqual(t, dashboards, 1)
-		require.GreaterOrEqual(t, folders, 1)
-	})
+		if strings.HasPrefix(h.Resource, "dash") {
+			dashboards++
+		}
+	}
+	require.GreaterOrEqual(t, dashboards, 1)
+	require.GreaterOrEqual(t, folders, 1)
+
+	// Invalid => defaults to both
+	resInvalid := call("type=invalid")
+	folders, dashboards = 0, 0
+	for _, h := range resInvalid.Hits {
+		if strings.HasPrefix(h.Resource, "folder") {
+			folders++
+		}
+		if strings.HasPrefix(h.Resource, "dash") {
+			dashboards++
+		}
+	}
+	require.GreaterOrEqual(t, dashboards, 1)
+	require.GreaterOrEqual(t, folders, 1)
 }
 
 func TestIntegrationDashboardDeleteGracefulDegradation(t *testing.T) {

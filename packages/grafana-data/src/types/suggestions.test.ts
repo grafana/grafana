@@ -1,4 +1,4 @@
-import { getSuggestionHash, PanelPluginVisualizationSuggestion } from './suggestions';
+import { getSuggestionHash, type PanelPluginVisualizationSuggestion } from './suggestions';
 
 interface FakeOptions {
   foo?: number;

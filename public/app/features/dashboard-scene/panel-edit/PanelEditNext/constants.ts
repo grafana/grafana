@@ -1,4 +1,4 @@
-import { AlertState, GrafanaTheme2, IconName } from '@grafana/data';
+import { AlertState, type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import classicConditionDarkImage from 'app/features/expressions/images/dark/classicCondition.svg';
 import mathDarkImage from 'app/features/expressions/images/dark/math.svg';
@@ -43,7 +43,6 @@ export const QUERY_EDITOR_COLORS = {
   query: '#FF8904',
   expression: '#C27AFF',
   transformation: '#00D492',
-  error: '#E7000B',
 };
 
 // TODO: Remove this once all the new colors are finalized
@@ -55,6 +54,7 @@ export function getQueryEditorColors(theme: GrafanaTheme2) {
     footerBackground: USE_THEME_COLORS ? theme.colors.background.primary : '#1e2939',
     sidebarFooterBackground: USE_THEME_COLORS ? theme.colors.background.primary : '#141820',
     sidebarHeaderBackground: USE_THEME_COLORS ? theme.colors.background.secondary : '#20262F',
+    error: USE_THEME_COLORS ? theme.colors.error.main : '#E7000B',
     card: {
       activeBg: theme.isDark ? '#314158' : 'oklch(92.9% 0.013 255.508)',
       hoverBg: theme.isDark ? '#1D293D' : 'oklch(96.8% 0.007 247.896)',

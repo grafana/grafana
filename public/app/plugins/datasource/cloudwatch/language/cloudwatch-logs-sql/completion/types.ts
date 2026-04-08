@@ -1,4 +1,4 @@
-import { TokenTypes } from '../../monarch/types';
+import { type TokenTypes } from '../../monarch/types';
 import { CLOUDWATCH_LOGS_SQL_LANGUAGE_DEFINITION_ID } from '../definition';
 
 export const SQLTokenTypes: TokenTypes = {

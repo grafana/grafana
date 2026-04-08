@@ -1,21 +1,21 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querycache/QueryCache.ts
 import {
   amendTable,
-  DataFrame,
-  DataQueryRequest,
+  type DataFrame,
+  type DataQueryRequest,
   dateTime,
   durationToMilliseconds,
-  Field,
+  type Field,
   incrRoundDn,
   isValidDuration,
   parseDuration,
   rangeUtil,
-  ScopedVars,
-  Table,
+  type ScopedVars,
+  type Table,
   trimTable,
 } from '@grafana/data';
 
-import { PromQuery } from '../types';
+import { type PromQuery } from '../types';
 
 // dashboardUID + panelId + refId
 // (must be stable across query changes, time range changes / interval changes / panel resizes / template variable changes)

@@ -80,7 +80,10 @@ func createRemoteProvider(cfg *setting.Cfg) (openfeature.FeatureProvider, error)
 	httpcli, err := features.CreateHTTPClientForProvider(
 		cfg.OpenFeature.ProviderType,
 		authConfig,
-		features.HTTPClientOptions{InsecureSkipVerify: true},
+		features.HTTPClientOptions{
+			InsecureSkipVerify: true,
+			CacheTTL:           cfg.OpenFeature.CacheTTL,
+		},
 	)
 	if err != nil {
 		return nil, err

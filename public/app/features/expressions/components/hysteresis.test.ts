@@ -1,6 +1,6 @@
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
-import { ClassicCondition, ExpressionQueryType, ThresholdExpressionQuery } from '../types';
+import { type ClassicCondition, ExpressionQueryType, type ThresholdExpressionQuery } from '../types';
 
 import {
   isInvalid,

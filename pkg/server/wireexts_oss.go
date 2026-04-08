@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
 	"github.com/grafana/grafana/pkg/services/auth/idimpl"
+	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	"github.com/grafana/grafana/pkg/services/encryption"
@@ -159,6 +160,7 @@ var wireExtsBasicSet = wire.NewSet(
 	provisioningExtras,
 	configProviderExtras,
 	advisor.ProvideAppInstaller,
+	zStore.ProvideDefaultStoreProvider,
 )
 
 var wireExtsSet = wire.NewSet(
@@ -205,6 +207,8 @@ var wireExtsModuleServerSet = wire.NewSet(
 	// Overridden by enterprise
 	ProvideNoopModuleRegisterer,
 	sql.ProvideStorageBackend,
+	// Zanzana store provider
+	zStore.ProvideDefaultStoreProvider,
 )
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(

@@ -1,6 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
-import { DataSourceSettings, DataSourceJsonData } from '@grafana/data';
+import { type DataSourceSettings, type DataSourceJsonData } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getBackendSrv } from 'app/core/services/backend_srv';

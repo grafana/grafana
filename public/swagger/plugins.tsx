@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-import { CodeEditor, Monaco } from '@grafana/ui';
+import { CodeEditor, type Monaco } from '@grafana/ui';
 
 import { K8sNameLookup } from './K8sNameLookup';
 

@@ -8,9 +8,9 @@
  */
 
 import { mergeWith, cloneDeep, isArray } from 'lodash';
-import { z } from 'zod';
+import { type z } from 'zod';
 
-import { FieldConfigSource } from '@grafana/data';
+import { type FieldConfigSource } from '@grafana/data';
 
 import { getUpdatedHoverHeader } from '../../panel-edit/getPanelFrameOptions';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
@@ -163,8 +163,10 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
 
         if (dataSpec.transformations !== undefined && isDataTransformer(dataPipeline)) {
           const transformations = dataSpec.transformations.map((t: TransformationKind) => ({
-            id: t.spec.id,
+            id: t.group,
             disabled: t.spec.disabled,
+            filter: t.spec.filter,
+            topic: t.spec.topic,
             options: t.spec.options,
           }));
           dataPipeline.setState({ transformations });

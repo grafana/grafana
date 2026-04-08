@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import RCCascader from '@rc-component/cascader';
 import { memo, useCallback, useMemo, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';

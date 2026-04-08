@@ -14,7 +14,6 @@ type FakeService struct {
 	ExpectedHitList          model.HitList
 	ExpectedError            error
 	ExpectedDescendantCounts map[string]int64
-	LastQuery                folder.GetFoldersQuery
 	foldersByUID             map[string]*folder.Folder
 }
 
@@ -65,9 +64,6 @@ func (s *FakeService) GetParents(ctx context.Context, q folder.GetParentsQuery) 
 func (s *FakeService) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
-func (s *FakeService) CreateLegacy(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
-	return s.ExpectedFolder, s.ExpectedError
-}
 
 func (s *FakeService) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
 	if q.UID != nil && s.foldersByUID != nil {
@@ -77,31 +73,18 @@ func (s *FakeService) Get(ctx context.Context, q *folder.GetFolderQuery) (*folde
 	}
 	return s.ExpectedFolder, s.ExpectedError
 }
-func (s *FakeService) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
-	return s.ExpectedFolder, s.ExpectedError
-}
 
 func (s *FakeService) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
-	return s.ExpectedFolder, s.ExpectedError
-}
-func (s *FakeService) UpdateLegacy(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
 
 func (s *FakeService) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
 	return s.ExpectedError
 }
-func (s *FakeService) DeleteLegacy(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
-	return s.ExpectedError
-}
 
 func (s *FakeService) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
-func (s *FakeService) MoveLegacy(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
-	return s.ExpectedFolder, s.ExpectedError
-}
-
 func (s *FakeService) RegisterService(service folder.RegistryService) error {
 	return s.ExpectedError
 }
@@ -132,11 +115,6 @@ func (s *FakeService) GetFolders(ctx context.Context, q folder.GetFoldersQuery) 
 
 func (s *FakeService) SearchFolders(ctx context.Context, q folder.SearchFoldersQuery) (model.HitList, error) {
 	return s.ExpectedHitList, s.ExpectedError
-}
-
-func (s *FakeService) GetFoldersLegacy(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
-	s.LastQuery = q
-	return s.ExpectedFolders, s.ExpectedError
 }
 
 func (s *FakeService) CountFoldersInOrg(ctx context.Context, orgID int64) (int64, error) {

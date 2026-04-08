@@ -1,6 +1,6 @@
 import { groupBy } from 'lodash';
 
-import { LevelItem } from './dataTransform';
+import { type LevelItem } from './dataTransform';
 
 type DataInterface = {
   getLabel: (index: number) => string;

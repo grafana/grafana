@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data';
 
 import { TableInputCSV } from './TableInputCSV';
 

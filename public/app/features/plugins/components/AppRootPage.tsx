@@ -1,15 +1,15 @@
 // Libraries
-import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { type AnyAction, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { useCallback, useEffect, useMemo, useReducer } from 'react';
 import * as React from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import {
   AppEvents,
-  AppPlugin,
-  AppPluginMeta,
-  NavModel,
-  NavModelItem,
+  type AppPlugin,
+  type AppPluginMeta,
+  type NavModel,
+  type NavModelItem,
   OrgRole,
   PluginType,
   PluginContextProvider,

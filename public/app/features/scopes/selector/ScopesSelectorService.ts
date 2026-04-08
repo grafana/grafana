@@ -1,11 +1,11 @@
-import { Scope, ScopeNode, store as storeImpl } from '@grafana/data';
+import { type Scope, type ScopeNode, store as storeImpl } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { performanceUtils } from '@grafana/scenes';
+import { type performanceUtils } from '@grafana/scenes';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 
-import { ScopesApiClient } from '../ScopesApiClient';
+import { type ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
-import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
+import { type ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
 import { isCurrentPath } from '../dashboards/scopeNavgiationUtils';
 
 import {
@@ -18,7 +18,15 @@ import {
   modifyTreeNodeAtPath,
   treeNodeAtPath,
 } from './scopesTreeUtils';
-import { NodesMap, RecentScope, RecentScopeSchema, ScopeSchema, ScopesMap, SelectedScope, TreeNode } from './types';
+import {
+  type NodesMap,
+  type RecentScope,
+  RecentScopeSchema,
+  ScopeSchema,
+  type ScopesMap,
+  type SelectedScope,
+  type TreeNode,
+} from './types';
 
 export const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
 

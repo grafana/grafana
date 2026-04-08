@@ -1668,6 +1668,9 @@ func convertAdhocVariableToV1(variable *dashv2alpha1.DashboardAdhocVariableKind)
 	}
 	// Always include allowCustomValue for adhoc variables, including false values
 	varMap["allowCustomValue"] = spec.AllowCustomValue
+	if spec.EnableGroupBy != nil {
+		varMap["enableGroupBy"] = *spec.EnableGroupBy
+	}
 
 	// Resolve datasource - Adhoc variables don't have a query kind, so use empty string (will fall back to default)
 	datasource := getDataSourceForQuery(spec.Datasource, "")

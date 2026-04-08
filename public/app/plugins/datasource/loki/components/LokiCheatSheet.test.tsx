@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
-import { LokiDatasource } from '../datasource';
-import { LokiQuery } from '../types';
+import { type LokiDatasource } from '../datasource';
+import { type LokiQuery } from '../types';
 
 import LokiCheatSheet from './LokiCheatSheet';
 

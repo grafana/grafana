@@ -46,7 +46,7 @@ func TestHTTPServer_DeleteDashboardSnapshot(t *testing.T) {
 
 	allowedUser := userWithPermissions(1, []accesscontrol.Permission{
 		{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:1"},
-		{Action: dashboards.ActionSnapshotsDelete},
+		{Action: dashboardsnapshots.ActionSnapshotsDelete},
 	})
 
 	t.Run("User should not be able to delete snapshot without permissions", func(t *testing.T) {

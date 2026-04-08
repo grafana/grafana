@@ -1,4 +1,4 @@
-import { TimeOption, TimeRange, TimeZone, rangeUtil, dateTimeFormat } from '@grafana/data';
+import { type TimeOption, type TimeRange, type TimeZone, rangeUtil, dateTimeFormat } from '@grafana/data';
 
 import { getFeatureToggle } from '../../../utils/featureToggle';
 import { commonFormat } from '../commonFormat';

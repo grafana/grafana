@@ -3,14 +3,14 @@ import type { JSX } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { hasCredentials } from '@grafana/azure-sdk';
-import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
+import { type DataSourcePluginOptionsEditorProps, type GrafanaTheme2 } from '@grafana/data';
 import { AdvancedHttpSettings, ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
-import { AlertingSettingsOverhaul, PromOptions, PromSettings } from '@grafana/prometheus';
+import { AlertingSettingsOverhaul, type PromOptions, PromSettings } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
 import { Alert, FieldValidationMessage, TextLink, useTheme2 } from '@grafana/ui';
 
 import { AzureAuthSettings } from './AzureAuthSettings';
-import { AzurePromDataSourceSettings, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
+import { type AzurePromDataSourceSettings, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
 import { DataSourcehttpSettingsOverhaul } from './DataSourceHttpSettingsOverhaulPackage';
 
 export const PROM_CONFIG_LABEL_WIDTH = 30;

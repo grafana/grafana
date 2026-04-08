@@ -1,6 +1,6 @@
 import { kebabCase } from 'lodash';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 
 export const generateOptions = (desc = false) => {
   const values = [

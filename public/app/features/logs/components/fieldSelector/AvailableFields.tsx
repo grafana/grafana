@@ -6,7 +6,7 @@ import { useStyles2 } from '@grafana/ui';
 import { getLogsFieldsStyles } from './ActiveFields';
 import { EmptyFields } from './EmptyFields';
 import { Field } from './Field';
-import { FieldWithStats } from './FieldSelector';
+import { type FieldWithStats } from './FieldSelector';
 
 interface Props {
   activeFields: string[];

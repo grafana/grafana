@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	foldersV1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
@@ -35,7 +35,7 @@ func TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadataEnabled(t *test
 	// ownership-conflict check that the provisioning files API performs on unmanaged resources.
 	data := helper.GitReadFile(t, ctx, repoName, folderTitle+"/_folder.json")
 
-	var manifest foldersV1beta1.Folder
+	var manifest foldersV1.Folder
 	require.NoError(t, json.Unmarshal(data, &manifest), "_folder.json must be valid JSON")
 	require.Equal(t, folderUID, manifest.Name, "_folder.json must carry the folder's stable UID")
 	require.Equal(t, folderTitle, manifest.Spec.Title, "_folder.json must carry the folder's title")

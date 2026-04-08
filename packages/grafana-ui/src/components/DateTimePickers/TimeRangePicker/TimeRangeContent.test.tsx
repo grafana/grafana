@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { dateTimeParse, FeatureToggles, systemDateFormats, TimeRange } from '@grafana/data';
+import { dateTimeParse, type FeatureToggles, systemDateFormats, type TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import * as commonFormatModule from '../commonFormat';

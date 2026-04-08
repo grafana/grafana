@@ -1,0 +1,87 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Docs Overview/Accessibility" parameters={{ options: { isToolshown: false }, id: 1 }} />
+
+# Accessibility
+
+At Grafana we pay special attention to accessibility and that's why it's important that all components are written with it in
+mind. You can read our general <a href="https://grafana.com/accessibility/" target="_blank" rel="noopener noreferrer">accessibility statement</a> for more information.
+
+The goal of this document is to list best practices and recommendations when it comes to writing accessible components.
+
+## Grafana/UI components
+
+Some grafana/ui components have specific mechanisms built-in that make it easier to write accessible components.
+
+### Form elements
+
+One of the important accessibility considerations when working with form elements is to make sure form controls are
+properly labelled. For that a `label` element has to be associated with the respective form control. One way to
+do that is to provide `for` attribute to the label that matches the `id` attribute of the form control.
+
+The form components from grafana/ui provide an easier way to achieve that. The form elements, used inside `Field`
+components, will get the `label` properly associated with them given that the element has `id` (in case of `Select` the prop is `inputId`) specified.
+
+As an example, this code
+
+```tsx
+<Field label="Name">
+  <Input id="name" placeholder="Enter a name" />
+</Field>
+```
+
+will be rendered as (simplified)
+
+```html
+<div>
+  <label for="name"> Name </label>
+  <input name="name" type="text" id="name" placeholder="Enter a name" value="" />
+</div>
+```
+
+As long as the form element has a unique `id` attribute specified, it will be automatically accessible when rendered.
+
+### `aria-live` guidelines
+
+`aria-live` should be used sparingly, as it may result in an overflow of announcements for screen reader users. The main responsibility for handling `aria-live` should be with the consumers, where the correct tools should be provided by grafana/ui.
+
+- Grafana/ui components should not contain `aria-live="assertive"` or `role="alert"`
+- `aria-live` and `role` props may be exposed where appropriate in grafana/ui components
+- Only use `aria-live="assertive"` or `role="alert"` to provide critical feedback to a direct user action (e.g. user typing in search and there are no further results from the query)
+- Use `aria-live="polite"` for areas that are updated by a user action not directly related to the element
+
+## Writing tests with accessibility in mind
+
+We use [React Testing Library](https://testing-library.com/docs/react-testing-library/intro) (RTL) for writing unit tests.
+The library is built with accessibility in mind and makes it easier to ensure the written code is accessible to all users.
+When querying DOM elements with RTL prefer using `*ByRole` queries as they resemble closely how the users interact
+with the page - both using mouse/visual display and assistive technologies.
+As a rule of thumb, if code is written with the accessibility concerns in
+mind, `*ByRole` queries will be sufficient in most of the cases. There are certainly exceptions here, as not all the elements have defined [ARIA role](https://www.w3.org/TR/html-aria/#docconformance).
+
+As an example, for this code
+
+```tsx
+<Field label="Username">
+  <Input id="username" placeholder="Enter a name" value={'Test'} />
+</Field>
+```
+
+the test case could be as follows
+
+```tsx
+it('has username set', () => {
+  expect(screen.getByRole('textbox', { name: 'Username' })).toHaveValue('Test');
+});
+```
+
+Input with type `text` (default type value) has a role of `textbox` and the `name` option is not the name attribute
+given to the input elements but their [accessible name](https://www.tpgi.com/what-is-an-accessible-name/), which in this case is the text content of the associated with input label.
+
+## Pull requests that introduce accessibility(a11y) errors:
+
+We use [playwright](https://playwright.dev/docs/accessibility-testing) to collect accessibility errors on some URLs in the project, threshold errors are specified per URL.
+
+If the contribution introduces new a11y errors, our continuous integration will fail, preventing you to merge to the main branch.
+
+You can also prevent introducing a11y errors by installing an a11y plugin in your browser, for example, axe DevTools, Accessibility Insights for Web among others.

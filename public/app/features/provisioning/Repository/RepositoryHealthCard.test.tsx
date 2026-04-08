@@ -1,6 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
-import { Connection, Repository, useListConnectionQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { type Connection, type Repository, useListConnectionQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
 

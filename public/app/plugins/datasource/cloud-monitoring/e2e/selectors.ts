@@ -1,4 +1,4 @@
-import { E2ESelectors } from '@grafana/e2e-selectors';
+import { type E2ESelectors } from '@grafana/e2e-selectors';
 
 export const components = {
   queryEditor: {

@@ -1,4 +1,4 @@
-import { Panel } from './dashboard.types';
+import { type Panel } from './dashboard.types';
 
 export interface LibraryElementDTOMetaUser {
   avatarUrl: string;

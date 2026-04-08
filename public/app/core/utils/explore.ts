@@ -1,33 +1,33 @@
 import { customAlphabet } from 'nanoid';
-import { Unsubscribable } from 'rxjs';
+import { type Unsubscribable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  AdHocVariableFilter,
+  type AdHocVariableFilter,
   CoreApp,
-  DataQuery,
-  DataQueryRequest,
-  DataSourceApi,
-  DataSourceRef,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataSourceApi,
+  type DataSourceRef,
   DefaultTimeZone,
   getNextRefId,
-  IntervalValues,
+  type IntervalValues,
   locationUtil,
   LogsDedupStrategy,
   LogsSortOrder,
   rangeUtil,
-  RawTimeRange,
-  ScopedVars,
+  type RawTimeRange,
+  type ScopedVars,
   store,
-  TimeRange,
-  TimeZone,
+  type TimeRange,
+  type TimeZone,
   toURLRange,
   urlUtil,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
-import { QueryOptions, QueryTransaction } from 'app/types/explore';
+import { type QueryOptions, type QueryTransaction } from 'app/types/explore';
 
 export const DEFAULT_UI_STATE = {
   dedupStrategy: LogsDedupStrategy.none,

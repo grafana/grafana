@@ -1,12 +1,12 @@
 import { config } from '@grafana/runtime';
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { DashboardDTO } from 'app/types/dashboard';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardDTO } from 'app/types/dashboard';
 
 import { validateUid } from './validation';
 

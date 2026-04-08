@@ -1,6 +1,6 @@
-import { CSSProperties, HTMLProps } from 'react';
+import { type CSSProperties, type HTMLProps } from 'react';
 
-import { FormattedValue } from '@grafana/data';
+import { type FormattedValue } from '@grafana/data';
 
 export interface Props extends Omit<HTMLProps<HTMLDivElement>, 'className' | 'value' | 'style'> {
   value: FormattedValue;

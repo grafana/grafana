@@ -2,8 +2,8 @@ import { isNumber } from 'lodash';
 import uPlot from 'uplot';
 
 import {
-  DataFrame,
-  FieldConfig,
+  type DataFrame,
+  type FieldConfig,
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
@@ -11,13 +11,13 @@ import {
   getFieldDisplayName,
   getDisplayProcessor,
   FieldColorModeId,
-  DecimalCount,
+  type DecimalCount,
 } from '@grafana/data';
 // eslint-disable-next-line import/order
 import {
   AxisPlacement,
   GraphDrawStyle,
-  GraphFieldConfig,
+  type GraphFieldConfig,
   GraphThresholdsStyleMode,
   VisibilityMode,
   ScaleDirection,
@@ -27,7 +27,7 @@ import {
   AxisColorMode,
   GraphGradientMode,
   VizOrientation,
-  ScaleDistributionConfig,
+  type ScaleDistributionConfig,
 } from '@grafana/schema';
 
 // unit lookup needed to determine if we want power-of-2 or power-of-10 axis ticks
@@ -63,12 +63,12 @@ for (let i = 0; i < BIN_INCRS.length; i++) {
 import { DrawStyle } from '@grafana/ui';
 import {
   UPlotConfigBuilder,
-  UPlotConfigPrepFn,
+  type UPlotConfigPrepFn,
   getScaleGradientFn,
   buildScaleKey,
   getStackingGroups,
   preparePlotData2,
-  AxisProps,
+  type AxisProps,
 } from '@grafana/ui/internal';
 
 import { ANNOTATION_LANE_SIZE } from '../../../plugins/panel/timeseries/plugins/utils';

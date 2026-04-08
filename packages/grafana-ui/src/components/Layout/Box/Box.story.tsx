@@ -1,10 +1,17 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
 import { Text } from '../../Text/Text';
 import { Stack } from '../Stack/Stack';
 
-import { Box, BackgroundColor, BorderColor, BorderStyle, BorderRadius, BoxShadow } from './Box';
+import {
+  Box,
+  type BackgroundColor,
+  type BorderColor,
+  type BorderStyle,
+  type BorderRadius,
+  type BoxShadow,
+} from './Box';
 import mdx from './Box.mdx';
 
 const backgroundOptions: BackgroundColor[] = ['primary', 'secondary', 'canvas', 'error', 'success', 'warning', 'info'];

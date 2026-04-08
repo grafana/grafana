@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { cloneDeep } from 'lodash';
 import { useEffect, useState } from 'react';
 
-import { Action, DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
+import { type Action, type DataFrame, type DataLink, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';

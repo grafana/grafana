@@ -167,7 +167,7 @@ func (s *Manager) stopStream(sr streamRequest, cancelFn func()) {
 	delete(s.streams, sr.Channel)
 	if sr.PluginContext.DataSourceInstanceSettings != nil {
 		dsUID := sr.PluginContext.DataSourceInstanceSettings.UID
-		dsKey := datasourceKey(sr.PluginContext.OrgID, dsUID)
+		dsKey := datasourceKey(sr.PluginContext.OrgID, dsUID) // nolint:staticcheck
 		delete(s.datasourceStreams[dsKey], sr.Channel)
 	}
 	cancelFn()
@@ -198,7 +198,7 @@ func (s *Manager) watchStream(ctx context.Context, cancelFn func(), sr streamReq
 				}
 				if pCtx.DataSourceInstanceSettings.Updated != sr.PluginContext.DataSourceInstanceSettings.Updated {
 					logger.Debug("Datasource changed, re-establish stream", "channel", sr.Channel, "path", sr.Path)
-					err := s.HandleDatasourceUpdate(pCtx.OrgID, dsUID)
+					err := s.HandleDatasourceUpdate(pCtx.OrgID, dsUID) // nolint:staticcheck
 					if err != nil {
 						logger.Error("Error re-establishing stream", "channel", sr.Channel, "path", sr.Path, "error", err)
 						continue
@@ -351,7 +351,7 @@ func (s *Manager) registerStream(ctx context.Context, sr submitRequest) {
 	}
 	if sr.streamRequest.PluginContext.DataSourceInstanceSettings != nil {
 		dsUID := sr.streamRequest.PluginContext.DataSourceInstanceSettings.UID
-		dsKey := datasourceKey(sr.streamRequest.PluginContext.OrgID, dsUID)
+		dsKey := datasourceKey(sr.streamRequest.PluginContext.OrgID, dsUID) // nolint:staticcheck
 		if _, ok := s.datasourceStreams[dsKey]; !ok {
 			s.datasourceStreams[dsKey] = map[string]struct{}{}
 		}

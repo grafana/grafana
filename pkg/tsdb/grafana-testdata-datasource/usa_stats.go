@@ -11,6 +11,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+// maxUSAResults caps the total number of data points (maxDataPoints × states × fields)
+// to prevent unbounded memory allocation from client-controlled maxDataPoints.
+const maxUSAResults = int64(10_000)
+
 var modeValueAsRow = "values-as-rows"
 var modeValueAsFields = "values-as-fields"
 var modeValueAsLabeledFields = "values-as-labeled-fields"
@@ -67,6 +71,17 @@ func (s *Service) handleUSAScenario(ctx context.Context, req *backend.QueryDataR
 		usa.maxDataPoints = q.MaxDataPoints * 2
 		usa.timeRange = q.TimeRange
 		usa.interval = q.Interval
+
+		totalFactor := int64(len(usa.States)) * int64(len(usa.Fields))
+		if totalFactor > 0 {
+			maxAllowed := maxUSAResults / totalFactor
+			if maxAllowed < 1 {
+				maxAllowed = 1
+			}
+			if usa.maxDataPoints > maxAllowed {
+				usa.maxDataPoints = maxAllowed
+			}
+		}
 
 		resp.Responses[q.RefID] = doStateQuery(usa)
 	}

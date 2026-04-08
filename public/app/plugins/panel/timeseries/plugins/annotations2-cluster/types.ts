@@ -1,21 +1,27 @@
 type NullableString = null | string;
 type NullableNumber = null | number;
 export type AnnotationVals = {
+  // layout
   time: number[];
+  timeEnd?: NullableNumber[];
   isRegion?: boolean[];
+  isCluster?: boolean[];
   color?: string[];
 
+  // meta
   id?: NullableNumber[];
-  clusterIdx?: NullableNumber[];
-  timeEnd?: NullableNumber[];
   alertId?: NullableNumber[];
 
+  // tooltip
   text?: NullableString[];
   title?: NullableString[];
   dashboardUID?: NullableString[];
   newState?: NullableString[];
   login?: NullableString[];
   avatarUrl?: NullableString[];
+
+  // only added in clustered annos
+  clusterIdx?: NullableNumber[];
 
   /** Alert payload per row (e.g. evalMatches, error) for getAlertAnnotationText */
   data?: unknown[];

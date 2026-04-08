@@ -1,4 +1,4 @@
-import { performanceUtils, writePerformanceLog } from '@grafana/scenes';
+import { type performanceUtils, writePerformanceLog } from '@grafana/scenes';
 
 import { PERFORMANCE_MARKS, PERFORMANCE_MEASURES, SLOW_OPERATION_THRESHOLD_MS } from './performanceConstants';
 import { registerPerformanceObserver, createPerformanceMark, createPerformanceMeasure } from './performanceUtils';

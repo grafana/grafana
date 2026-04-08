@@ -2,16 +2,16 @@ import { isArray } from 'lodash';
 
 import {
   anyToNumber,
-  DataFrame,
+  type DataFrame,
   FieldColorModeId,
-  FieldConfig,
+  type FieldConfig,
   getFieldDisplayName,
   MappingType,
   ReducerID,
   ThresholdsMode,
-  ValueMapping,
-  ValueMap,
-  Field,
+  type ValueMapping,
+  type ValueMap,
+  type Field,
   FieldType,
 } from '@grafana/data';
 

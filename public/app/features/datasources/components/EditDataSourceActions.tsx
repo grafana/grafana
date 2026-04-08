@@ -6,9 +6,10 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
 import { useDataSource } from '../state/hooks';
-import { trackCreateDashboardClicked, trackDsConfigClicked, trackExploreClicked } from '../tracking';
+import { trackDsConfigClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
+import { BuildDashboardButton } from './BuildDashboardButton';
 import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './picker/DataSourcePicker';
 
 interface Props {
@@ -125,22 +126,7 @@ export function EditDataSourceActions({ uid }: Props) {
           )}
         </>
       )}
-      <LinkButton
-        size="sm"
-        variant="secondary"
-        href={`dashboard/new-with-ds/${dataSource.uid}`}
-        onClick={() => {
-          trackDsConfigClicked('build_a_dashboard');
-          trackCreateDashboardClicked({
-            grafana_version: config.buildInfo.version,
-            datasource_uid: dataSource.uid,
-            plugin_name: dataSource.typeName,
-            path: window.location.pathname,
-          });
-        }}
-      >
-        <Trans i18nKey="datasources.edit-data-source-actions.build-a-dashboard">Build a dashboard</Trans>
-      </LinkButton>
+      <BuildDashboardButton dataSource={dataSource} size="sm" fill="solid" context="datasource_page" />
     </>
   );
 }

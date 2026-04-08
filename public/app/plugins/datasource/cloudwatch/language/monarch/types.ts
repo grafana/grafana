@@ -1,6 +1,6 @@
-import { monacoTypes } from '@grafana/ui';
+import { type monacoTypes } from '@grafana/ui';
 
-import { LanguageDefinition } from './register';
+import { type LanguageDefinition } from './register';
 
 export type CompletionItem = monacoTypes.languages.CompletionItem;
 

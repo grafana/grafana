@@ -1,7 +1,7 @@
-import { SyntaxNode } from '@lezer/common';
+import { type SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
-import { DataQueryRequest } from '@grafana/data';
+import { type DataQueryRequest } from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -27,12 +27,12 @@ import {
   VectorOp,
   BinOpExpr,
 } from '@grafana/lezer-logql';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 import { LokiQueryType, LokiQueryDirection } from './dataquery.gen';
 import { addDropToQuery, addLabelToQuery, getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { ErrorId } from './querybuilder/parsingUtils';
-import { LabelType, LokiQuery } from './types';
+import { LabelType, type LokiQuery } from './types';
 
 /**
  * Returns search terms from a LogQL query.

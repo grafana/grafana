@@ -1,4 +1,4 @@
-import { QueryBuilderOperationDefinition, QueryBuilderOperationParamValue } from '@grafana/plugin-ui';
+import { type QueryBuilderOperationDefinition, type QueryBuilderOperationParamValue } from '@grafana/plugin-ui';
 
 import { binaryScalarOperations } from './binaryScalarOperations';
 import { UnwrapParamEditor } from './components/UnwrapParamEditor';

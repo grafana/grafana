@@ -1,9 +1,9 @@
 import { of } from 'rxjs';
 import { first } from 'rxjs/operators';
 
-import { BackendSrvRequest } from '@grafana/runtime';
+import { type BackendSrvRequest } from '@grafana/runtime';
 
-import { FetchQueue, FetchQueueUpdate } from './FetchQueue';
+import { type FetchQueue, type FetchQueueUpdate } from './FetchQueue';
 import { ResponseQueue } from './ResponseQueue';
 import { subscribeTester } from './mocks/subscribeTester';
 

@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
 
-import { DataTransformerID, DataTransformerConfig, DataFrame } from '@grafana/data';
+import { DataTransformerID, type DataTransformerConfig, type DataFrame } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { NoOptionsIndicator } from './NoOptionsIndicator';
-import { Transformation } from './types';
+import { type Transformation } from './types';
 
 interface TransformationEditorProps {
   transformation: Transformation;

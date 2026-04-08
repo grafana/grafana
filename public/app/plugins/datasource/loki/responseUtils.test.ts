@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { DataFrame, FieldType } from '@grafana/data';
+import { type DataFrame, FieldType } from '@grafana/data';
 
 import {
   dataFrameHasLevelLabel,

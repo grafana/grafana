@@ -1,15 +1,15 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
-import { LanguageDefinition } from '@grafana/plugin-ui';
-import { TemplateSrv } from '@grafana/runtime';
+import { type DataSourceInstanceSettings, type ScopedVars } from '@grafana/data';
+import { type LanguageDefinition } from '@grafana/plugin-ui';
+import { type TemplateSrv } from '@grafana/runtime';
 import {
   COMMON_FNS,
-  DB,
-  FuncParameter,
+  type DB,
+  type FuncParameter,
   MACRO_FUNCTIONS,
-  SQLQuery,
-  SQLSelectableValue,
+  type SQLQuery,
+  type SQLSelectableValue,
   SqlDatasource,
   formatSQL,
 } from '@grafana/sql';
@@ -18,7 +18,7 @@ import { getSchema, getSchemaAndName, showDatabases } from './MSSqlMetaQuery';
 import { MSSqlQueryModel } from './MSSqlQueryModel';
 import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
 import { getIcon, getRAQBType, toRawSql } from './sqlUtil';
-import { MssqlOptions } from './types';
+import { type MssqlOptions } from './types';
 
 export class MssqlDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined = undefined;

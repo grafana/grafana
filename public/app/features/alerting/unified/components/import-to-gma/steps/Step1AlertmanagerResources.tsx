@@ -2,16 +2,16 @@ import { kebabCase } from 'lodash';
 import { useCallback, useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Divider, Field, FileUpload, Input, RadioButtonList, Select, Stack, Text } from '@grafana/ui';
 
 import { getAlertManagerDataSources } from '../../../utils/datasource';
-import { ImportFormValues } from '../ImportToGMA';
+import { type ImportFormValues } from '../ImportToGMA';
 import { PolicyTreeNameHelp } from '../PolicyTreeNameHelp';
 import { ValidationStatus } from '../ValidationStatus';
 import { getNotificationsSourceOptions } from '../Wizard/constants';
-import { DryRunValidationResult } from '../types';
+import { type DryRunValidationResult } from '../types';
 
 import { hasValidSourceSelection, isStep1Valid, validatePolicyTreeName } from './utils';
 

@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, useFavoriteDatasources, FavoriteDatasources } from '@grafana/runtime';
+import { config, useFavoriteDatasources, type FavoriteDatasources } from '@grafana/runtime';
 import { EmptyState, LinkButton, TextLink, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
-import { StoreState, useSelector } from 'app/types/store';
+import { type StoreState, useSelector } from 'app/types/store';
 
 import { ROUTES } from '../../connections/constants';
 import { useDatasourceFailureByUID } from '../../connections/hooks/useDatasourceAdvisorChecks';

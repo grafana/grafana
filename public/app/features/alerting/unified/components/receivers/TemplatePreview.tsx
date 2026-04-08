@@ -4,11 +4,15 @@ import * as React from 'react';
 import type { JSX } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Button, CodeEditor, useStyles2 } from '@grafana/ui';
 
-import { TemplatePreviewErrors, TemplatePreviewResponse, TemplatePreviewResult } from '../../api/templateApi';
+import {
+  type TemplatePreviewErrors,
+  type TemplatePreviewResponse,
+  type TemplatePreviewResult,
+} from '../../api/templateApi';
 import { AIFeedbackButtonComponent } from '../../enterprise-components/AI/addAIFeedbackButton';
 import { stringifyErrorLike } from '../../utils/misc';
 import { EditorColumnHeader } from '../EditorColumnHeader';

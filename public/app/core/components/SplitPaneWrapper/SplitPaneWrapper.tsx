@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
-import SplitPane, { Split } from 'react-split-pane';
+import SplitPane, { type Split } from 'react-split-pane';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getDragStyles } from '@grafana/ui';
 

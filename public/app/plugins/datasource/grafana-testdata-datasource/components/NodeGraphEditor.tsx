@@ -1,6 +1,6 @@
 import { Input, InlineFieldRow, InlineField, Select } from '@grafana/ui';
 
-import { NodesQuery, TestDataDataQuery } from '../dataquery';
+import { type NodesQuery, type TestDataDataQuery } from '../dataquery';
 
 export interface Props {
   onChange: (value: NodesQuery) => void;

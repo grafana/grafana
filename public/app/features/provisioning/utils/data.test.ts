@@ -1,6 +1,6 @@
-import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
-import { RepositoryFormData } from '../types';
+import { type RepositoryFormData } from '../types';
 
 import { dataToSpec, generateRepositoryTitle, specToData } from './data';
 

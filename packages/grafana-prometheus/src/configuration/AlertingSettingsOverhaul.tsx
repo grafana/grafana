@@ -2,7 +2,7 @@
 import { cx } from '@emotion/css';
 import type { JSX } from 'react';
 
-import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { type DataSourceJsonData, type DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { ConfigSubSection } from '@grafana/plugin-ui';

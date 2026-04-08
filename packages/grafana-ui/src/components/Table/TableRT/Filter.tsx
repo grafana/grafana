@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 
 import { Popover } from '../../../components/Tooltip/Popover';
 import { useStyles2 } from '../../../themes/ThemeContext';
@@ -9,7 +9,7 @@ import { Icon } from '../../Icon/Icon';
 
 import { REGEX_OPERATOR } from './FilterList';
 import { FilterPopup } from './FilterPopup';
-import { TableStyles } from './styles';
+import { type TableStyles } from './styles';
 
 interface Props {
   column: any;

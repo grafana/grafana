@@ -5,7 +5,7 @@ import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { ReducerID, toDataFrame, FieldType } from '@grafana/data';
 
-import { Props, FieldToConfigMappingEditor } from './FieldToConfigMappingEditor';
+import { type Props, FieldToConfigMappingEditor } from './FieldToConfigMappingEditor';
 
 beforeAll(() => {
   comboboxTestSetup();

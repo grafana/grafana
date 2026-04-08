@@ -3,13 +3,13 @@ import { isEqual } from 'lodash';
 import {
   MultiValueVariable,
   sceneGraph,
-  SceneGridItemLike,
+  type SceneGridItemLike,
   SceneGridLayout,
   SceneGridRow,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   VariableDependencyConfig,
-  VariableValueSingle,
+  type VariableValueSingle,
 } from '@grafana/scenes';
 
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';

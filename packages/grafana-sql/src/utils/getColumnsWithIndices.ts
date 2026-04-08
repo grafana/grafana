@@ -1,7 +1,7 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { SQLQuery } from '../types';
+import { type SQLQuery } from '../types';
 
 export function getColumnsWithIndices(query: SQLQuery, fields: SelectableValue[]): SelectableValue[] {
   if (!fields || !query.sql?.columns) {

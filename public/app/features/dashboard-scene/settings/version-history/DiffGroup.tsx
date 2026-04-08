@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { last } from 'lodash';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { DiffTitle } from './DiffTitle';
 import { DiffValues } from './DiffValues';
-import { Diff, getDiffText } from './utils';
+import { type Diff, getDiffText } from './utils';
 
 type DiffGroupProps = {
   diffs: Diff[];

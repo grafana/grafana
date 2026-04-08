@@ -1,9 +1,9 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/types.ts
-import { DataSourceJsonData } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { type DataSourceJsonData } from '@grafana/data';
+import { type DataQuery } from '@grafana/schema';
 
-import { Prometheus as GenPromQuery } from './dataquery';
-import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
+import { type Prometheus as GenPromQuery } from './dataquery';
+import { type QueryBuilderLabelFilter, type QueryEditorMode } from './querybuilder/shared/types';
 
 export interface PromQuery extends GenPromQuery, DataQuery {
   /**

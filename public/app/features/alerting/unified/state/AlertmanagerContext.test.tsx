@@ -8,7 +8,7 @@ import { AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/
 import { configureStore } from 'app/store/configureStore';
 
 import * as useAlertManagerSources from '../hooks/useAlertManagerSources';
-import { AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { type AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import {
   AlertmanagerProvider,

@@ -1,7 +1,7 @@
-import { SelectableValue, DataFrame, DataFrameView } from '@grafana/data';
-import { TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { type SelectableValue, type DataFrame, DataFrameView } from '@grafana/data';
+import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 
-import { GrafanaSearcher, LocationInfo, QueryResponse, SearchQuery } from './types';
+import { type GrafanaSearcher, type LocationInfo, type QueryResponse, type SearchQuery } from './types';
 
 // This is a dummy search useful for tests
 export class DummySearcher implements GrafanaSearcher {

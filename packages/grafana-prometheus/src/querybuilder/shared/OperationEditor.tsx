@@ -4,7 +4,7 @@ import { Draggable } from '@hello-pangea/dnd';
 import { useEffect, useId, useState } from 'react';
 import * as React from 'react';
 
-import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { type DataSourceApi, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -12,11 +12,11 @@ import { OperationHeader } from './OperationHeader';
 import { getOperationParamEditor } from './OperationParamEditorRegistry';
 import { getOperationParamId } from './param_utils';
 import {
-  QueryBuilderOperation,
-  QueryBuilderOperationDef,
-  QueryBuilderOperationParamDef,
-  QueryBuilderOperationParamValue,
-  VisualQueryModeller,
+  type QueryBuilderOperation,
+  type QueryBuilderOperationDef,
+  type QueryBuilderOperationParamDef,
+  type QueryBuilderOperationParamValue,
+  type VisualQueryModeller,
 } from './types';
 
 interface Props {

@@ -1,12 +1,12 @@
 import { render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import type { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useBranchDropdownOptions } from '../../hooks/useBranchDropdownOptions';
-import { ProvisionedDashboardFormData } from '../../types/form';
+import { type ProvisionedDashboardFormData } from '../../types/form';
 
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 // Mock RTK Query hook used inside ResourceEditFormSharedFields to avoid requiring a Redux Provider

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Button, CodeEditor, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -9,7 +9,7 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
 
-import { SettingsPageProps } from './types';
+import { type SettingsPageProps } from './types';
 
 export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps) {
   const dashboardSaveModel = dashboard.getSaveModelClone();

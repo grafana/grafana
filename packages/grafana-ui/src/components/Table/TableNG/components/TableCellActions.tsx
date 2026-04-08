@@ -3,7 +3,7 @@ import { memo } from 'react';
 import { t } from '@grafana/i18n';
 
 import { IconButton } from '../../../IconButton/IconButton';
-import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellActionsProps } from '../types';
+import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, type TableCellActionsProps } from '../types';
 import { buildInspectValue } from '../utils';
 
 export const TableCellActions = memo(

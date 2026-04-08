@@ -5,7 +5,7 @@ import { config } from '@grafana/runtime';
 
 import { getMockDataSources } from '../mocks/dataSourcesMocks';
 
-import { DataSourcesListView, ViewProps } from './DataSourcesList';
+import { DataSourcesListView, type ViewProps } from './DataSourcesList';
 
 // Mock the useFavoriteDatasources hook
 const mockIsFavoriteDatasource = jest.fn();

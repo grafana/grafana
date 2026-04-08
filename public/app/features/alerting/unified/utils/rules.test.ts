@@ -1,6 +1,6 @@
 import { PluginLoadingStrategy } from '@grafana/data';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
-import { RuleGroupIdentifier } from 'app/types/unified-alerting';
+import { type RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import {
   mockCombinedCloudRuleNamespace,

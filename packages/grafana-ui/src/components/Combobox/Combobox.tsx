@@ -1,21 +1,21 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import React, { ComponentProps, useCallback, useId, useMemo } from 'react';
+import React, { type ComponentProps, useCallback, useId, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
-import { Input, Props as InputProps } from '../Input/Input';
+import { Input, type Props as InputProps } from '../Input/Input';
 import { Portal } from '../Portal/Portal';
 
 import { ComboboxList } from './ComboboxList';
 import { SuffixIcon } from './SuffixIcon';
 import { itemToString } from './filter';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
-import { ComboboxOption } from './types';
+import { type ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useOptions } from './useOptions';
 import { isNewGroup } from './utils';

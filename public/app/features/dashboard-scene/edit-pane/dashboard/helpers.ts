@@ -1,4 +1,4 @@
-import { SceneObject } from '@grafana/scenes';
+import { type SceneObject } from '@grafana/scenes';
 
 // groups objects into named buckets
 // items whose getPartitionKey callback returns null are excluded

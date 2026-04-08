@@ -1,4 +1,4 @@
-import { Fragment, PropsWithChildren } from 'react';
+import { Fragment, type PropsWithChildren } from 'react';
 import { render, screen } from 'test/test-utils';
 
 import { isOnPrem } from '../utils/isOnPrem';

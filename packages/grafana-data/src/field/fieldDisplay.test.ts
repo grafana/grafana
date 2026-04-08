@@ -4,15 +4,15 @@ import { toDataFrame } from '../dataframe/processDataFrame';
 import { createTheme } from '../themes/createTheme';
 import { ReducerID } from '../transformations/fieldReducer';
 import { FieldType } from '../types/dataFrame';
-import { FieldConfigPropertyItem } from '../types/fieldOverrides';
-import { MappingType, SpecialValueMatch, ValueMapping } from '../types/valueMapping';
+import { type FieldConfigPropertyItem } from '../types/fieldOverrides';
+import { MappingType, SpecialValueMatch, type ValueMapping } from '../types/valueMapping';
 
 import { getDisplayProcessor } from './displayProcessor';
 import {
-  FieldSparkline,
+  type FieldSparkline,
   fixCellTemplateExpressions,
   getFieldDisplayValues,
-  GetFieldDisplayValuesOptions,
+  type GetFieldDisplayValuesOptions,
   getSparklineHighlight,
 } from './fieldDisplay';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';

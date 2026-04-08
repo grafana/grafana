@@ -1,6 +1,6 @@
 import { createTheme } from '../themes/createTheme';
 import { FieldType } from '../types/dataFrame';
-import { TimeRange } from '../types/time';
+import { type TimeRange } from '../types/time';
 
 import { createDataFrame, toDataFrame } from './processDataFrame';
 import { anySeriesWithTimeField, addRow, alignTimeRangeCompareData, shouldAlignTimeCompare } from './utils';

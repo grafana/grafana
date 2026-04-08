@@ -1,11 +1,11 @@
 import {
-  Action,
+  type Action,
   ActionType,
-  ActionVariableInput,
+  type ActionVariableInput,
   ActionVariableType,
   HttpRequestMethod,
-  DataFrame,
-  Field,
+  type DataFrame,
+  type Field,
   FieldType,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';

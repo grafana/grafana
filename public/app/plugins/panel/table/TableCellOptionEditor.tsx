@@ -2,8 +2,8 @@ import { merge } from 'lodash';
 import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { TableCellOptions } from '@grafana/schema';
-import { Combobox, ComboboxOption, Field, Stack, TableCellDisplayMode } from '@grafana/ui';
+import { type TableCellOptions } from '@grafana/schema';
+import { Combobox, type ComboboxOption, Field, Stack, TableCellDisplayMode } from '@grafana/ui';
 
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';

@@ -1,12 +1,12 @@
 import { screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { Job, RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
 
 import { BulkDeleteProvisionedResource } from './BulkDeleteProvisionedResource';
-import { ResponseType } from './useBulkActionJob';
+import { type ResponseType } from './useBulkActionJob';
 
 jest.mock('app/features/browse-dashboards/components/BrowseActions/DescendantCount', () => ({
   DescendantCount: jest.fn(({ selectedItems }) => (

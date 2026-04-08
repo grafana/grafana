@@ -1,9 +1,9 @@
 import { of } from 'rxjs';
 
-import { CustomVariableModel, DataQueryRequest } from '@grafana/data';
+import { type CustomVariableModel, type DataQueryRequest } from '@grafana/data';
 
 import { CloudWatchAnnotationQueryRunner } from '../query-runner/CloudWatchAnnotationQueryRunner';
-import { CloudWatchQuery } from '../types';
+import { type CloudWatchQuery } from '../types';
 
 import { CloudWatchSettings, setupMockedTemplateService } from './CloudWatchDataSource';
 import { TimeRangeMock } from './timeRange';

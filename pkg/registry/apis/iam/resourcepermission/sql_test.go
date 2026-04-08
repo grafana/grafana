@@ -634,16 +634,24 @@ type fakeIdentityStore struct {
 	users           map[string]int64
 	serviceAccounts map[string]int64
 	teams           map[string]int64
-	expectedNs      types.NamespaceInfo
+
+	usersByID           map[int64]string
+	serviceAccountsByID map[int64]string
+	teamsByID           map[int64]string
+
+	expectedNs types.NamespaceInfo
 }
 
 func NewFakeIdentityStore(t *testing.T) *fakeIdentityStore {
 	return &fakeIdentityStore{
-		t:               t,
-		users:           map[string]int64{"captain": 101, "user-1": 1, "user-2": 2},
-		serviceAccounts: map[string]int64{"robot": 201, "sa-1": 3},
-		teams:           map[string]int64{"devs": 301},
-		expectedNs:      types.NamespaceInfo{Value: "default"},
+		t:                   t,
+		users:               map[string]int64{"captain": 101, "user-1": 1, "user-2": 2},
+		serviceAccounts:     map[string]int64{"robot": 201, "sa-1": 3},
+		teams:               map[string]int64{"devs": 301},
+		usersByID:           map[int64]string{101: "captain", 1: "user-1", 2: "user-2"},
+		serviceAccountsByID: map[int64]string{201: "robot", 3: "sa-1"},
+		teamsByID:           map[int64]string{301: "devs"},
+		expectedNs:          types.NamespaceInfo{Value: "default"},
 	}
 }
 
@@ -678,6 +686,30 @@ func (f *fakeIdentityStore) GetUserInternalID(ctx context.Context, ns types.Name
 		return nil, errors.New("not found")
 	}
 	return &legacy.GetUserInternalIDResult{ID: id}, nil
+}
+
+func (f *fakeIdentityStore) GetTeamUIDByID(ctx context.Context, ns types.NamespaceInfo, query legacy.GetTeamUIDByIDQuery) (*legacy.GetTeamUIDByIDResult, error) {
+	uid, ok := f.teamsByID[query.ID]
+	if !ok {
+		return nil, errors.New("not found")
+	}
+	return &legacy.GetTeamUIDByIDResult{UID: uid}, nil
+}
+
+func (f *fakeIdentityStore) GetUserUIDByID(ctx context.Context, ns types.NamespaceInfo, query legacy.GetUserUIDByIDQuery) (*legacy.GetUserUIDByIDResult, error) {
+	uid, ok := f.usersByID[query.ID]
+	if !ok {
+		return nil, errors.New("not found")
+	}
+	return &legacy.GetUserUIDByIDResult{UID: uid}, nil
+}
+
+func (f *fakeIdentityStore) GetServiceAccountUIDByID(ctx context.Context, ns types.NamespaceInfo, query legacy.GetUserUIDByIDQuery) (*legacy.GetUserUIDByIDResult, error) {
+	uid, ok := f.serviceAccountsByID[query.ID]
+	if !ok {
+		return nil, errors.New("not found")
+	}
+	return &legacy.GetUserUIDByIDResult{UID: uid}, nil
 }
 
 func TestIntegration_ResourcePermSqlBackend_ListDirectPermissionsForSubject(t *testing.T) {
@@ -840,11 +872,11 @@ func TestIntegration_UpdateResourcePermission_VerbChange(t *testing.T) {
 	})
 }
 
-// TestDatasource_WriteAndReadBackUnknown demonstrates that:
+// TestDatasource_WriteAndReadBackConcreteGroup demonstrates that:
 //  1. We can write a resource permission with a concrete datasource group (loki.datasource.grafana.app)
-//  2. When reading it back, it returns with ApiGroup as "unknown.datasource.grafana.app"
-//     because the mapper uses a wildcard key and ParseScope cannot determine the original concrete group
-func TestIntegration_Datasource_WriteAndReadBackUnknown(t *testing.T) {
+//  2. When reading it back, it returns with ApiGroup as "loki.datasource.grafana.app"
+//     because datasource_type is stored in the permission row and resolved via resolveGroup
+func TestIntegration_Datasource_WriteAndReadBackConcreteGroup(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	backend := setupBackend(t)
@@ -892,7 +924,7 @@ func TestIntegration_Datasource_WriteAndReadBackUnknown(t *testing.T) {
 	_, err = backend.createResourcePermission(ctx, sql, types.NamespaceInfo{Value: "default", OrgID: 1}, mapper, grn, resourcePerm)
 	require.NoError(t, err, "should write loki.datasource.grafana.app permission")
 
-	// Read: Get the resource permission back - it should show unknown.datasource.grafana.app
+	// Read: Get the resource permission back - it should show loki.datasource.grafana.app
 	var got *v0alpha1.ResourcePermission
 	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
 		got, err = backend.getResourcePermission(ctx, sql, tx, types.NamespaceInfo{Value: "default", OrgID: 1}, "loki.datasource.grafana.app-datasources-loki-ds")
@@ -901,10 +933,10 @@ func TestIntegration_Datasource_WriteAndReadBackUnknown(t *testing.T) {
 	require.NoError(t, err, "should read back the permission")
 	require.NotNil(t, got)
 
-	// Assert: ApiGroup should be unknown.datasource.grafana.app because ParseScope
-	// uses the wildcard mapper and cannot determine the original concrete group
-	assert.Equal(t, "unknown.datasource.grafana.app-datasources-loki-ds", got.Name)
-	assert.Equal(t, "unknown.datasource.grafana.app", got.Spec.Resource.ApiGroup)
+	// Assert: ApiGroup should be loki.datasource.grafana.app because datasource_type
+	// is stored in the permission row and used by ParseScope to resolve the concrete group
+	assert.Equal(t, "loki.datasource.grafana.app-datasources-loki-ds", got.Name)
+	assert.Equal(t, "loki.datasource.grafana.app", got.Spec.Resource.ApiGroup)
 	assert.Equal(t, "datasources", got.Spec.Resource.Resource)
 	assert.Equal(t, "loki-ds", got.Spec.Resource.Name)
 }

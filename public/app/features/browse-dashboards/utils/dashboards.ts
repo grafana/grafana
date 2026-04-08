@@ -1,9 +1,9 @@
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { ResourceRef } from 'app/features/provisioning/components/BulkActions/useBulkActionJob';
+import { type ResourceRef } from 'app/features/provisioning/components/BulkActions/useBulkActionJob';
 import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 
-import { DashboardTreeSelection, DashboardViewItemWithUIItems } from '../types';
+import { type DashboardTreeSelection, type DashboardViewItemWithUIItems } from '../types';
 
 export function makeRowID(baseId: string, item: DashboardViewItemWithUIItems) {
   return baseId + item.uid;

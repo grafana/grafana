@@ -2,12 +2,12 @@ import { isEmpty } from 'lodash';
 import { useEffect, useState } from 'react';
 
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { DashboardQueryResult } from 'app/features/search/service/types';
-import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { type DashboardQueryResult } from 'app/features/search/service/types';
+import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
-import { Folder } from '../../types/rule-form';
+import { type Folder } from '../../types/rule-form';
 import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
 
 function useGetNestedFolders(folderUID: string, skip = false) {

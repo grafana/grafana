@@ -2,7 +2,7 @@ import { render } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { AccessControlAction } from 'app/types/accessControl';
-import { RuleGroupIdentifier } from 'app/types/unified-alerting';
+import { type RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
@@ -11,7 +11,7 @@ import { GROUP_1, NAMESPACE_1, NAMESPACE_2, namespace2 } from '../../mocks/mimir
 import { mimirDataSource } from '../../mocks/server/configure';
 import { MIMIR_DATASOURCE_UID } from '../../mocks/server/constants';
 import { captureRequests, serializeRequests } from '../../mocks/server/events';
-import { SwapOperation } from '../../reducers/ruler/ruleGroups';
+import { type SwapOperation } from '../../reducers/ruler/ruleGroups';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { SerializeState } from '../useAsync';
 

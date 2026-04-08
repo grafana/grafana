@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Button, FilterPill, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { getModKey } from '../../../core/utils/browser';
-import { NodesMap, ScopesMap, SelectedScope } from '../../scopes/selector/types';
+import { type NodesMap, type ScopesMap, type SelectedScope } from '../../scopes/selector/types';
 
 type Props = {
   selectedScopes: SelectedScope[];

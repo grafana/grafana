@@ -1,5 +1,5 @@
-import { DeleteDashboardConfig } from '../flows/deleteDashboard';
-import { DeleteDataSourceConfig } from '../flows/deleteDataSource';
+import { type DeleteDashboardConfig } from '../flows/deleteDashboard';
+import { type DeleteDataSourceConfig } from '../flows/deleteDataSource';
 
 export interface ScenarioContext {
   addedDashboards: DeleteDashboardConfig[];

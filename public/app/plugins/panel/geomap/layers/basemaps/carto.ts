@@ -1,8 +1,8 @@
-import OpenLayersMap from 'ol/Map';
+import type OpenLayersMap from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 
-import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, EventBus } from '@grafana/data';
+import { type MapLayerRegistryItem, type MapLayerOptions, type GrafanaTheme2, type EventBus } from '@grafana/data';
 
 // https://carto.com/help/building-maps/basemap-list/
 

@@ -7,7 +7,7 @@ import { InfluxFluxDBConnection } from './InfluxFluxDBConnection';
 import { InfluxInfluxQLDBConnection } from './InfluxInfluxQLDBConnection';
 import { InfluxSQLDBConnection } from './InfluxSQLDBConnection';
 import { CONFIG_SECTION_HEADERS, CONTAINER_MIN_WIDTH } from './constants';
-import { Props } from './types';
+import { type Props } from './types';
 
 export const DatabaseConnectionSection = ({ options, onOptionsChange }: Props) => (
   <>

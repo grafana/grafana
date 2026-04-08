@@ -1,7 +1,7 @@
 import { clamp } from 'lodash';
 
-import { DecimalCount } from '../types/displayValue';
-import { TimeZone } from '../types/time';
+import { type DecimalCount } from '../types/displayValue';
+import { type TimeZone } from '../types/time';
 
 import { getCategories } from './categories';
 import { toDateTimeValueFormatter } from './dateTimeFormatters';

@@ -9,7 +9,7 @@ import {
   trackInfluxDBConfigV2SQLDBDetailsDatabaseInputField,
   trackInfluxDBConfigV2SQLDBDetailsTokenInputField,
 } from './tracking';
-import { Props } from './types';
+import { type Props } from './types';
 
 export const InfluxSQLDBConnection = (props: Props) => {
   const { options } = props;

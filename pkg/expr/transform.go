@@ -88,18 +88,20 @@ func (s *Service) TransformData(ctx context.Context, now time.Time, req *Request
 
 	// Build the pipeline from the request, checking for ordering issues (e.g. loops)
 	// and parsing graph nodes from the queries.
-	pipeline, err := s.BuildPipeline(ctx, req)
+	pipeline, err := s.buildPipeline(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	// Execute the pipeline
+	// Execute the pipeline. Disabled nodes (e.g. those with missing dependencies)
+	// inject their errors into the result vars during execution; downstream nodes
+	// fail via the existing Mode 1 dependency-error path.
 	responses, err := s.ExecutePipeline(ctx, now, pipeline)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get which queries have the Hide property so they those queries' results
+	// Get which queries have the Hide property so those queries' results
 	// can be excluded from the response.
 	hidden, err := hiddenRefIDs(req.Queries)
 	if err != nil {

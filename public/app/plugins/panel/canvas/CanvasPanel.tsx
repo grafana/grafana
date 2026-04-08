@@ -2,18 +2,18 @@ import * as React from 'react';
 import { Component } from 'react';
 import { ReplaySubject, Subscription } from 'rxjs';
 
-import { PanelProps } from '@grafana/data';
+import { type PanelProps } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { PanelContext, PanelContextRoot } from '@grafana/ui';
-import { CanvasFrameOptions } from 'app/features/canvas/frame';
-import { ElementState } from 'app/features/canvas/runtime/element';
+import { type PanelContext, PanelContextRoot } from '@grafana/ui';
+import { type CanvasFrameOptions } from 'app/features/canvas/frame';
+import { type ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
 import { SetBackground } from './components/SetBackground';
 import { InlineEdit } from './editor/inline/InlineEdit';
-import { Options } from './panelcfg.gen';
-import { AnchorPoint, CanvasTooltipPayload, ConnectionState } from './types';
+import { type Options } from './panelcfg.gen';
+import { type AnchorPoint, type CanvasTooltipPayload, type ConnectionState } from './types';
 
 interface Props extends PanelProps<Options> {}
 

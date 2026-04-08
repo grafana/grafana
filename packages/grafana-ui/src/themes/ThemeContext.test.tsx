@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { render, renderHook } from '@testing-library/react';
 
-import { createTheme, GrafanaTheme2 } from '@grafana/data';
+import { createTheme, type GrafanaTheme2 } from '@grafana/data';
 
 import { mockThemeContext, useStyles2 } from './ThemeContext';
 

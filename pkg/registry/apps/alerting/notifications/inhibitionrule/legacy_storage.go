@@ -186,7 +186,11 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 		return nil, false, fmt.Errorf("expected inhibition-rule but got %s", old.GetObjectKind().GroupVersionKind())
 	}
 
-	err = s.service.DeleteInhibitionRule(ctx, p.Name, info.OrgID, ngmodels.ProvenanceNone, version)
+	prov, err := ngmodels.ProvenanceFromString(p.GetProvenanceStatus())
+	if err != nil {
+		return nil, false, errors.NewBadRequest(err.Error())
+	}
+	err = s.service.DeleteInhibitionRule(ctx, p.Name, info.OrgID, prov, version)
 	return old, false, err // false - will be deleted async
 }
 

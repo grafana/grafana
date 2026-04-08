@@ -28,10 +28,10 @@ type FolderPermissionsService struct {
 
 var ErrFolderUnhandledError = errutil.Internal("folder.unhandled-error", errutil.WithPublicMessage("Unhandled folder error"))
 
-var FolderViewActions = []string{dashboards.ActionFoldersRead, accesscontrol.ActionAlertingRuleRead, libraryelements.ActionLibraryPanelsRead, accesscontrol.ActionAlertingSilencesRead}
+var FolderViewActions = []string{folder.ActionFoldersRead, accesscontrol.ActionAlertingRuleRead, libraryelements.ActionLibraryPanelsRead, accesscontrol.ActionAlertingSilencesRead}
 var FolderEditActions = append(FolderViewActions, []string{
-	dashboards.ActionFoldersWrite,
-	dashboards.ActionFoldersDelete,
+	folder.ActionFoldersWrite,
+	folder.ActionFoldersDelete,
 	dashboards.ActionDashboardsCreate,
 	accesscontrol.ActionAlertingRuleCreate,
 	accesscontrol.ActionAlertingRuleUpdate,
@@ -42,7 +42,7 @@ var FolderEditActions = append(FolderViewActions, []string{
 	libraryelements.ActionLibraryPanelsWrite,
 	libraryelements.ActionLibraryPanelsDelete,
 }...)
-var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFoldersPermissionsRead, dashboards.ActionFoldersPermissionsWrite}...)
+var FolderAdminActions = append(FolderEditActions, []string{folder.ActionFoldersPermissionsRead, folder.ActionFoldersPermissionsWrite}...)
 
 func registerFolderRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service accesscontrol.Service) error {
 	if !cfg.RBAC.PermissionsWildcardSeed("folder") {
@@ -55,7 +55,7 @@ func registerFolderRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service
 			DisplayName: "Viewer",
 			Description: "View all folders and dashboards.",
 			Group:       "Folders",
-			Permissions: accesscontrol.PermissionsForActions(append(DashboardViewActions, FolderViewActions...), dashboards.ScopeFoldersAll),
+			Permissions: accesscontrol.PermissionsForActions(append(DashboardViewActions, FolderViewActions...), folder.ScopeFoldersAll),
 			Hidden:      true,
 		},
 		Grants: []string{"Viewer"},
@@ -67,7 +67,7 @@ func registerFolderRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service
 			DisplayName: "Editor",
 			Description: "Edit all folders and dashboards.",
 			Group:       "Folders",
-			Permissions: accesscontrol.PermissionsForActions(append(DashboardEditActions, FolderEditActions...), dashboards.ScopeFoldersAll),
+			Permissions: accesscontrol.PermissionsForActions(append(DashboardEditActions, FolderEditActions...), folder.ScopeFoldersAll),
 			Hidden:      true,
 		},
 		Grants: []string{"Editor"},
@@ -79,7 +79,7 @@ func registerFolderRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service
 			DisplayName: "Admin",
 			Description: "Administer all folders and dashboards",
 			Group:       "folders",
-			Permissions: accesscontrol.PermissionsForActions(append(DashboardAdminActions, FolderAdminActions...), dashboards.ScopeFoldersAll),
+			Permissions: accesscontrol.PermissionsForActions(append(DashboardAdminActions, FolderAdminActions...), folder.ScopeFoldersAll),
 			Hidden:      true,
 		},
 		Grants: []string{"Admin"},
@@ -130,7 +130,7 @@ func ProvideFolderPermissions(
 		},
 		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
 			ctx, _ = identity.WithServiceIdentity(ctx, orgID)
-			return dashboards.GetInheritedScopes(ctx, orgID, resourceID, folderService)
+			return folder.GetInheritedScopes(ctx, orgID, resourceID, folderService)
 		},
 		Assignments: resourcepermissions.Assignments{
 			Users:           true,

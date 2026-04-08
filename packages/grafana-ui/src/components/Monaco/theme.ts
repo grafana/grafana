@@ -1,8 +1,8 @@
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
-import { Monaco, monacoTypes } from './types';
+import { type Monaco, type monacoTypes } from './types';
 
 function getColors(theme?: GrafanaTheme2): monacoTypes.editor.IColors {
   if (theme === undefined) {

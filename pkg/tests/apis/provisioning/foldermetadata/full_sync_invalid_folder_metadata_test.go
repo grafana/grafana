@@ -210,7 +210,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 func invalidFolderMetadataMissingNameJSON(title string) []byte {
 	return []byte(`{
-		"apiVersion": "folder.grafana.app/v1beta1",
+		"apiVersion": "folder.grafana.app/v1",
 		"kind": "Folder",
 		"metadata": {
 			"name": ""

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { OrgRole } from '@grafana/data';
+import { type OrgRole } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -8,10 +8,10 @@ import {
   Avatar,
   Box,
   Button,
-  CellProps,
-  Column,
+  type CellProps,
+  type Column,
   ConfirmModal,
-  FetchDataFunc,
+  type FetchDataFunc,
   Icon,
   InteractiveTable,
   Pagination,
@@ -26,8 +26,8 @@ import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicke
 import { RolePickerBadges } from 'app/core/components/RolePickerDrawer/RolePickerBadges';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, Role } from 'app/types/accessControl';
-import { OrgUser } from 'app/types/user';
+import { AccessControlAction, type Role } from 'app/types/accessControl';
+import { type OrgUser } from 'app/types/user';
 
 import { OrgRolePicker } from '../OrgRolePicker';
 

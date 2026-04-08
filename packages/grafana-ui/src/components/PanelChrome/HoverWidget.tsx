@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { ReactElement, useCallback, useRef } from 'react';
+import { type ReactElement, useCallback, useRef } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';

@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { CoreApp, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2, RadioButtonGroup, MultiSelect, Input, InlineSwitch } from '@grafana/ui';
 
-import { Query } from '../types';
+import { type Query } from '../types';
 
 import { EditorField } from './EditorField';
 import { QueryOptionGroup } from './QueryOptionGroup';

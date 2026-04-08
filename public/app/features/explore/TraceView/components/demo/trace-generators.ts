@@ -14,8 +14,12 @@
 
 import Chance from 'chance';
 
-import { TraceKeyValuePair } from '@grafana/data';
-import { TraceSpanData, TraceProcess, TraceResponse } from 'app/features/explore/TraceView/components/types/trace';
+import { type TraceKeyValuePair } from '@grafana/data';
+import {
+  type TraceSpanData,
+  type TraceProcess,
+  type TraceResponse,
+} from 'app/features/explore/TraceView/components/types/trace';
 
 import { getSpanId } from '../selectors/span';
 

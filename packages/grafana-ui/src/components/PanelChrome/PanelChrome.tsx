@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, ReactElement, ReactNode, useId, useState } from 'react';
+import { type CSSProperties, type ReactElement, type ReactNode, useId, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
-import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { type GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
@@ -244,10 +244,14 @@ export function PanelChrome({
     (evt: React.PointerEvent) => {
       // Ignore clicks inside buttons, links, canvas and svg elments
       // This does prevent a clicks inside a graphs from selecting panel as there is normal div above the canvas element that intercepts the click
+      // '[role="columnheader"]' targets table column headers (e.g. react-data-grid), preventing sort clicks
+      // and column resize drags from selecting the panel in edit mode.
+      // '.u-axis' targets uPlot axis elements, preventing axis interactions from selecting the panel.
       if (
         evt.target instanceof Element &&
-        (evt.target.closest('button,a,canvas,svg,[role="button"],#grafana-portal-container') ||
-          evt.target.classList.contains('u-over'))
+        (evt.target.closest('button,a,canvas,svg,[role="button"],#grafana-portal-container,[role="columnheader"]') ||
+          evt.target.classList.contains('u-over') ||
+          evt.target.classList.contains('u-axis'))
       ) {
         // Stop propagation otherwise row config editor will get selected
         evt.stopPropagation();

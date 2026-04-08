@@ -1,4 +1,4 @@
-import { SQLExpression, QueryEditorExpressionType } from '../../dataquery.gen';
+import { type SQLExpression, QueryEditorExpressionType } from '../../dataquery.gen';
 import {
   aggregationvariable,
   labelsVariable,

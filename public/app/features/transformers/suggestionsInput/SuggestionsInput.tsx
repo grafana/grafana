@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { autoUpdate, useFloating } from '@floating-ui/react';
-import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
+import { type GrafanaTheme2, type VariableSuggestion } from '@grafana/data';
 import {
   FieldValidationMessage,
   floatingUtils,

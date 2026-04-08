@@ -2,8 +2,15 @@ import { render, screen } from '@testing-library/react';
 import { defaultsDeep } from 'lodash';
 import { Provider } from 'react-redux';
 
-import { CoreApp, DataQueryRequest, EventBusSrv, FieldType, getDefaultTimeRange, LoadingState } from '@grafana/data';
-import { config, PanelDataErrorViewProps } from '@grafana/runtime';
+import {
+  CoreApp,
+  type DataQueryRequest,
+  EventBusSrv,
+  FieldType,
+  getDefaultTimeRange,
+  LoadingState,
+} from '@grafana/data';
+import { config, type PanelDataErrorViewProps } from '@grafana/runtime';
 import { usePanelContext } from '@grafana/ui';
 import { configureStore } from 'app/store/configureStore';
 

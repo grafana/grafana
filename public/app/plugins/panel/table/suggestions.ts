@@ -1,8 +1,12 @@
-import { PanelDataSummary, VisualizationSuggestionScore, VisualizationSuggestionsSupplier } from '@grafana/data';
+import {
+  type PanelDataSummary,
+  VisualizationSuggestionScore,
+  type VisualizationSuggestionsSupplier,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 import icnTablePanelSvg from 'app/plugins/panel/table/img/icn-table-panel.svg';
 
-import { Options, FieldConfig } from './panelcfg.gen';
+import { type Options, type FieldConfig } from './panelcfg.gen';
 
 function getTableSuggestionScore(dataSummary: PanelDataSummary): VisualizationSuggestionScore {
   if (dataSummary.hasPreferredVisualisationType('table')) {

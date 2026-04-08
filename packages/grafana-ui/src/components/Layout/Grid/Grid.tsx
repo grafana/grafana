@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { forwardRef, HTMLAttributes } from 'react';
+import { forwardRef, type HTMLAttributes } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
+import { type GrafanaTheme2, type ThemeSpacingTokens } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
-import { AlignItems } from '../types';
-import { getResponsiveStyle, ResponsiveProp } from '../utils/responsiveness';
+import { type AlignItems } from '../types';
+import { getResponsiveStyle, type ResponsiveProp } from '../utils/responsiveness';
 
 interface GridPropsBase extends Omit<HTMLAttributes<HTMLDivElement>, 'className' | 'style'> {
   children: NonNullable<React.ReactNode>;

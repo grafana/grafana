@@ -26,7 +26,7 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *contextmodel.ReqContext) respons
 
 	userQuery := user.GetUserByLoginQuery{LoginOrEmail: form.UserOrEmail}
 
-	usr, err := hs.userService.GetByLogin(c.Req.Context(), &userQuery)
+	usr, err := hs.userService.GetByLoginWithPassword(c.Req.Context(), &userQuery)
 	if err != nil {
 		c.Logger.Info("Requested password reset for user that was not found", "user", userQuery.LoginOrEmail, "error", err)
 		return response.Error(http.StatusOK, "Email sent", nil)
@@ -76,7 +76,7 @@ func (hs *HTTPServer) ResetPassword(c *contextmodel.ReqContext) response.Respons
 	getUserByLogin := func(ctx context.Context, login string) (*user.User, error) {
 		username = login
 		userQuery := user.GetUserByLoginQuery{LoginOrEmail: login}
-		usr, err := hs.userService.GetByLogin(ctx, &userQuery)
+		usr, err := hs.userService.GetByLoginWithPassword(ctx, &userQuery)
 		return usr, err
 	}
 

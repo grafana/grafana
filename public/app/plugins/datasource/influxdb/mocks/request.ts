@@ -1,7 +1,7 @@
-import { AdHocVariableFilter, DataQueryRequest, dateTime } from '@grafana/data';
-import { SQLQuery } from '@grafana/sql';
+import { type AdHocVariableFilter, type DataQueryRequest, dateTime } from '@grafana/data';
+import { type SQLQuery } from '@grafana/sql';
 
-import { InfluxQuery } from '../types';
+import { type InfluxQuery } from '../types';
 
 type QueryType = InfluxQuery & SQLQuery;
 

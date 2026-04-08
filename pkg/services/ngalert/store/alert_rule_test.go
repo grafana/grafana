@@ -583,7 +583,7 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 
 	t.Run("should be able to delete folder with permissions to delete rules", func(t *testing.T) {
 		store.AccessControl = acmock.New().WithPermissions([]accesscontrol.Permission{
-			{Action: accesscontrol.ActionAlertingRuleDelete, Scope: dashboards.ScopeFoldersAll},
+			{Action: accesscontrol.ActionAlertingRuleDelete, Scope: folder.ScopeFoldersAll},
 		})
 		err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
 		require.NoError(t, err)
@@ -1947,9 +1947,8 @@ func createRule(tb testing.TB, store *DBstore, generator *models.AlertRuleGenera
 func setupFolderService(t testing.TB, sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) folder.Service {
 	tracer := tracing.InitializeTracerForTest()
 	inProcBus := bus.ProvideBus(tracer)
-	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, cfg)
 
-	return testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, inProcBus, features, &actest.FakeAccessControl{ExpectedEvaluate: true})
+	return testutil.SetupFolderService(t, cfg, sqlStore, inProcBus, features, &actest.FakeAccessControl{ExpectedEvaluate: true})
 }
 
 func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {

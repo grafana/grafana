@@ -1,0 +1,39 @@
+# Require some statuses to pass only if certain files are modified. This is a
+# template file. You can edit it and the generated contents (to enforce that
+# conditional workflows pass when they are triggered) will be inserted where
+# `MERGE_WITH_GENERATED` is.
+
+policy:
+  approval:
+    - or:
+        - MERGE_WITH_GENERATED
+        - override policies
+    - policy bot config is valid when modified
+
+approval_rules:
+  - name: policy bot config is valid when modified
+    if:
+      changed_files:
+        paths:
+          - ^\.policy\.yml
+    requires:
+      conditions:
+        has_successful_status:
+          - Check .policy.yml is valid
+
+  - name: override policies
+    description: |
+      Policy-bot can be overridden in emergency situations.
+      **Only use this when absolutely neccesary, as it allows PRs with unfinished/unvalidated CI jobs to be merged.**
+      Note that a reason is required, IE: `policy-bot disable: We need to deploy this fix to resolve [this ongoing incident with policy-bot](...).`
+    requires:
+      count: 1
+      permissions:
+        - write
+    options:
+      methods:
+        comment_patterns:
+          - "(?s)policy[- ]bot:? (?:approve|disable)d?(?::?(?<reason>.*))"
+        github_review: false
+
+# vim: set ft=yaml et ts=2 sw=2 :

@@ -2,15 +2,15 @@ import { useCallback, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Stack } from '@grafana/ui';
-import { Job } from 'app/api/clients/provisioning/v0alpha1';
+import { type Job } from 'app/api/clients/provisioning/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { JobStatus } from '../../Job/JobStatus';
-import { StepStatusInfo } from '../../Wizard/types';
+import { type StepStatusInfo } from '../../Wizard/types';
 import { useOrphanedResourceActions } from '../../hooks/useOrphanedResourceActions';
 import { getJobResultAlertByStatus } from '../utils/orphanedResource';
 
-import { OrphanedResourceActionConfirmModal, OrphanedResourceAction } from './OrphanedResourceActionConfirmModal';
+import { OrphanedResourceActionConfirmModal, type OrphanedResourceAction } from './OrphanedResourceActionConfirmModal';
 
 interface Props {
   repositoryName: string;

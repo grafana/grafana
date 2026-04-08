@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
-import Map from 'ol/Map';
+import type Map from 'ol/Map';
 import { useMemo, useRef, useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, IconButton, RadioButtonGroup, Select } from '@grafana/ui';
 
-import { MapMeasure, MapMeasureOptions, measures } from '../utils/measure';
+import { type MapMeasure, type MapMeasureOptions, measures } from '../utils/measure';
 
 import { MeasureVectorLayer } from './MeasureVectorLayer';
 

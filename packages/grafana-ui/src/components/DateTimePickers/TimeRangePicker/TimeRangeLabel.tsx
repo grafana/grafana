@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
-import { TimePickerButtonLabel, TimeRangePickerProps } from '../TimeRangePicker';
+import { TimePickerButtonLabel, type TimeRangePickerProps } from '../TimeRangePicker';
 import { isValidTimeRange } from '../utils';
 
 type LabelProps = Pick<TimeRangePickerProps, 'hideText' | 'value' | 'timeZone'> & {

@@ -32,10 +32,6 @@ func (f *FakeDashboardVersionService) Get(ctx context.Context, query *dashver.Ge
 	return f.ExpectedDashboardVersions[f.counter-1], f.ExpectedError
 }
 
-func (f *FakeDashboardVersionService) DeleteExpired(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand) error {
-	return f.ExpectedError
-}
-
 func (f *FakeDashboardVersionService) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) (*dashver.DashboardVersionResponse, error) {
 	return &dashver.DashboardVersionResponse{
 		ContinueToken: f.ExpectedContinueToken,

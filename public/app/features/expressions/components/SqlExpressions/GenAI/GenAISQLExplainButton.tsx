@@ -4,9 +4,9 @@ import { t } from '@grafana/i18n';
 
 import { GenAIButton } from '../../../../dashboard/components/GenAI/GenAIButton';
 import { EventTrackingSrc } from '../../../../dashboard/components/GenAI/tracking';
-import { Message, Role } from '../../../../dashboard/components/GenAI/utils';
+import { type Message, Role } from '../../../../dashboard/components/GenAI/utils';
 
-import { getSQLExplanationSystemPrompt, QueryUsageContext } from './sqlPromptConfig';
+import { getSQLExplanationSystemPrompt, type QueryUsageContext } from './sqlPromptConfig';
 
 interface GenAISQLExplainButtonProps {
   currentQuery: string;

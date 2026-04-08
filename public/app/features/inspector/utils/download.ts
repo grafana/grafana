@@ -1,12 +1,12 @@
 import saveAs from 'file-saver';
 
 import {
-  CSVConfig,
-  DataFrame,
+  type CSVConfig,
+  type DataFrame,
   DataTransformerID,
   dateTime,
   dateTimeFormat,
-  LogsModel,
+  type LogsModel,
   MutableDataFrame,
   toCSV,
 } from '@grafana/data';

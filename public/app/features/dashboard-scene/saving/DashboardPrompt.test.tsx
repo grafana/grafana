@@ -1,11 +1,11 @@
 import { SceneQueryRunner, SceneTimeRange, VizPanel, behaviors } from '@grafana/scenes';
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
-import { ObjectMeta } from 'app/features/apiserver/types';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type ContextSrv, setContextSrv } from 'app/core/services/context_srv';
+import { type ObjectMeta } from 'app/features/apiserver/types';
 
 import { DashboardControls } from '../scene/DashboardControls';
-import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 

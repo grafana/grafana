@@ -1,6 +1,6 @@
-import { StoryFn, Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react';
 
-import { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder';
+import { LoadingPlaceholder, type LoadingPlaceholderProps } from './LoadingPlaceholder';
 import mdx from './LoadingPlaceholder.mdx';
 
 const meta: Meta<typeof LoadingPlaceholder> = {

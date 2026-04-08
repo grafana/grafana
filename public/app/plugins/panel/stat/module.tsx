@@ -12,7 +12,7 @@ import { commonOptionsBuilder, sharedSingleStatMigrationHandler } from '@grafana
 import { statPanelChangedHandler } from './StatMigrations';
 import { StatPanel } from './StatPanel';
 import { addStandardDataReduceOptions, addOrientationOption } from './common';
-import { defaultOptions, Options } from './panelcfg.gen';
+import { defaultOptions, type Options } from './panelcfg.gen';
 import { statPresetsSupplier } from './presets';
 import { statSuggestionsSupplier } from './suggestions';
 

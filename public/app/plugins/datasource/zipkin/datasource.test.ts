@@ -2,17 +2,17 @@ import { lastValueFrom, of } from 'rxjs';
 
 import {
   DataFrameView,
-  DataQueryRequest,
-  DataSourceInstanceSettings,
-  DataSourcePluginMeta,
+  type DataQueryRequest,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
   FieldType,
 } from '@grafana/data';
-import { BackendSrv, getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
+import { type BackendSrv, getBackendSrv, setBackendSrv, type TemplateSrv } from '@grafana/runtime';
 
 import { addNodeGraphFramesToResponse, ZipkinDatasource } from './datasource';
 import mockJson from './mocks/mockJsonResponse.json';
 import { mockTraceDataFrame } from './mocks/mockTraceDataFrame';
-import { ZipkinQuery } from './types';
+import { type ZipkinQuery } from './types';
 
 const templateSrv: TemplateSrv = {
   replace: jest.fn().mockImplementation((value) => value),

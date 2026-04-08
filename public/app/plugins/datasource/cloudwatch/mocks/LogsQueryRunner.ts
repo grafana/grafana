@@ -1,10 +1,10 @@
 import { of } from 'rxjs';
 
-import { CustomVariableModel, DataFrame, DataSourceInstanceSettings } from '@grafana/data';
-import { BackendDataSourceResponse, toDataQueryResponse } from '@grafana/runtime';
+import { type CustomVariableModel, type DataFrame, type DataSourceInstanceSettings } from '@grafana/data';
+import { type BackendDataSourceResponse, toDataQueryResponse } from '@grafana/runtime';
 
 import { CloudWatchLogsQueryRunner } from '../query-runner/CloudWatchLogsQueryRunner';
-import { CloudWatchJsonData, CloudWatchLogsQueryStatus } from '../types';
+import { type CloudWatchJsonData, CloudWatchLogsQueryStatus } from '../types';
 
 import { CloudWatchSettings, setupMockedTemplateService } from './CloudWatchDataSource';
 

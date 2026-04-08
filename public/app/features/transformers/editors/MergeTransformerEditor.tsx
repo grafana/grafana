@@ -1,15 +1,14 @@
 import {
   DataTransformerID,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { MergeTransformerOptions } from '@grafana/data/internal';
+import { type MergeTransformerOptions } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
 import { FieldValidationMessage } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/merge.svg';
 import lightImage from '../images/light/merge.svg';
 
@@ -37,7 +36,6 @@ export const getMergeTransformerRegistryItem: () => TransformerRegistryItem<Merg
     'Merge multiple series. Values will be combined into one row.'
   ),
   categories: new Set([TransformerCategory.Combine]),
-  help: getTransformationContent(DataTransformerID.merge).helperDocs,
   imageDark: darkImage,
   imageLight: lightImage,
 });

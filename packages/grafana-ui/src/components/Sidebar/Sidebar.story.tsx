@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { useState } from 'react';
 
 import { Button } from '../Button/Button';
 import { Box } from '../Layout/Box/Box';
 
-import { Sidebar, SidebarPosition, useSidebar } from './Sidebar';
+import { Sidebar, type SidebarPosition, useSidebar } from './Sidebar';
 import mdx from './Sidebar.mdx';
 
 interface StoryProps {

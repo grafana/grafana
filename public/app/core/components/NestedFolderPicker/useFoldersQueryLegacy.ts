@@ -1,16 +1,16 @@
 import { createSelector } from '@reduxjs/toolkit';
-import { QueryDefinition, BaseQueryFn, QueryActionCreatorResult } from '@reduxjs/toolkit/query';
-import { RequestOptions } from 'http';
+import { type QueryDefinition, type BaseQueryFn, type QueryActionCreatorResult } from '@reduxjs/toolkit/query';
+import { type RequestOptions } from 'http';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { ListFolderQueryArgs, browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { type ListFolderQueryArgs, browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { getPaginationPlaceholders } from 'app/features/browse-dashboards/state/utils';
-import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { FolderListItemDTO } from 'app/types/folders';
+import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { type FolderListItemDTO } from 'app/types/folders';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { UseFoldersQueryProps } from './useFoldersQuery';
+import { type UseFoldersQueryProps } from './useFoldersQuery';
 import { getRootFolderItem } from './utils';
 
 type ListFoldersQuery = ReturnType<ReturnType<typeof browseDashboardsAPI.endpoints.listFolders.select>>;

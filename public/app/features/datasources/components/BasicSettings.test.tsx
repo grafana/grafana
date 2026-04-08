@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { BasicSettings, Props } from './BasicSettings';
+import { BasicSettings, type Props } from './BasicSettings';
 
 const setup = () => {
   const props: Props = {

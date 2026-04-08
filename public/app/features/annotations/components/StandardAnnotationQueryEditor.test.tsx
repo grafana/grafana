@@ -1,13 +1,13 @@
 import { render, act } from '@testing-library/react';
 import { createRef } from 'react';
 
-import { AnnotationQuery, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
-import { PromQuery } from '@grafana/prometheus';
-import { DataQuery } from '@grafana/schema';
+import { type AnnotationQuery, type DataSourceApi, type DataSourceInstanceSettings } from '@grafana/data';
+import { type PromQuery } from '@grafana/prometheus';
+import { type DataQuery } from '@grafana/schema';
 
 import { updateAnnotationFromSavedQuery, getDataQueryFromAnnotationForSavedQueries } from '../utils/savedQueryUtils';
 
-import StandardAnnotationQueryEditor, { Props as EditorProps } from './StandardAnnotationQueryEditor';
+import StandardAnnotationQueryEditor, { type Props as EditorProps } from './StandardAnnotationQueryEditor';
 
 const setup = (customProps: Partial<EditorProps>) => {
   const props: EditorProps = {

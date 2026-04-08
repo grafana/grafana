@@ -59,6 +59,8 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.frontend-strict == 'true' && needs.detect-changes.outputs.backend-strict == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
     steps:
       - name: Check for exception label
         run: |

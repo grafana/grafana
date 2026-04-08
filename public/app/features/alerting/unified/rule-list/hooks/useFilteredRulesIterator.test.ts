@@ -1,4 +1,4 @@
-import { DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
+import { type DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
 
 import { getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
 

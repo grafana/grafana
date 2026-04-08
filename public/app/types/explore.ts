@@ -1,26 +1,26 @@
-import { Observable, SubscriptionLike, Unsubscribable } from 'rxjs';
+import { type Observable, type SubscriptionLike, type Unsubscribable } from 'rxjs';
 
 import {
-  AbsoluteTimeRange,
-  DataFrame,
-  DataQuery,
-  DataQueryRequest,
-  DataSourceApi,
-  HistoryItem,
-  LogsModel,
-  PanelData,
-  RawTimeRange,
-  TimeRange,
-  EventBusExtended,
-  DataQueryResponse,
-  ExplorePanelsState,
-  SupplementaryQueryType,
-  UrlQueryMap,
-  ExploreCorrelationHelperData,
-  DataLinkTransformationConfig,
+  type AbsoluteTimeRange,
+  type DataFrame,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataSourceApi,
+  type HistoryItem,
+  type LogsModel,
+  type PanelData,
+  type RawTimeRange,
+  type TimeRange,
+  type EventBusExtended,
+  type DataQueryResponse,
+  type ExplorePanelsState,
+  type SupplementaryQueryType,
+  type UrlQueryMap,
+  type ExploreCorrelationHelperData,
+  type DataLinkTransformationConfig,
 } from '@grafana/data';
-import { CorrelationData } from '@grafana/runtime';
-import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
+import { type CorrelationData } from '@grafana/runtime';
+import { type RichHistorySearchFilters, type RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
 export type ExploreQueryParams = UrlQueryMap;
 

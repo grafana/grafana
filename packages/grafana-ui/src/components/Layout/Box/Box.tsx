@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
-import { Property } from 'csstype';
-import { ElementType, forwardRef, PropsWithChildren } from 'react';
+import { type Property } from 'csstype';
+import { type ElementType, forwardRef, type PropsWithChildren } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, ThemeSpacingTokens, ThemeShape, ThemeShadows } from '@grafana/data';
+import { type GrafanaTheme2, type ThemeSpacingTokens, type ThemeShape, type ThemeShadows } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
-import { AlignItems, Direction, FlexProps, JustifyContent } from '../types';
-import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
-import { getSizeStyles, SizeProps } from '../utils/styles';
+import { type AlignItems, type Direction, type FlexProps, type JustifyContent } from '../types';
+import { type ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
+import { getSizeStyles, type SizeProps } from '../utils/styles';
 
 type Display = 'flex' | 'block' | 'inline' | 'inline-block' | 'none';
 export type BackgroundColor = keyof GrafanaTheme2['colors']['background'] | 'error' | 'success' | 'warning' | 'info';

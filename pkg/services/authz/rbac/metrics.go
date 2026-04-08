@@ -24,7 +24,7 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 				Name:      "invalid_request_count",
 				Help:      "AuthZ service invalid request count",
 			},
-			[]string{"is_error", "valid", "verb", "group", "resource"},
+			[]string{"is_error", "valid", "verb", "group", "resource", "subresource"},
 		),
 		permissionCacheUsage: promauto.With(reg).NewCounterVec(
 			prometheus.CounterOpts{

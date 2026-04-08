@@ -1,4 +1,4 @@
-import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
 import { getRepoFileUrl, getRepoHrefForProvider } from './git';
 

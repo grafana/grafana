@@ -1,16 +1,16 @@
 import { memo } from 'react';
 
 import {
-  DisplayValue,
-  DisplayValueAlignmentFactors,
-  FieldSparkline,
+  type DisplayValue,
+  type DisplayValueAlignmentFactors,
+  type FieldSparkline,
   formattedValueToString,
-  GrafanaTheme2,
+  type GrafanaTheme2,
 } from '@grafana/data';
 
 import { calculateFontSize } from '../../utils/measureText';
 
-import { RadialShape, RadialTextMode, RadialGaugeDimensions } from './types';
+import { type RadialShape, type RadialTextMode, type RadialGaugeDimensions } from './types';
 
 interface RadialTextProps {
   displayValue: DisplayValue;

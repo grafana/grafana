@@ -9,7 +9,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import { getPanelProps } from '../test-utils';
 
 import { DashList } from './DashList';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 const [_, { folderA, folderA_dashbdD, dashbdE }] = getFolderFixtures();
 

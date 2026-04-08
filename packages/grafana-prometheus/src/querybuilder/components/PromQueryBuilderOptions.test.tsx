@@ -5,7 +5,7 @@ import { select } from 'react-select-event';
 
 import { CoreApp } from '@grafana/data';
 
-import { PromQuery } from '../../types';
+import { type PromQuery } from '../../types';
 import { getQueryWithDefaults } from '../state';
 
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';

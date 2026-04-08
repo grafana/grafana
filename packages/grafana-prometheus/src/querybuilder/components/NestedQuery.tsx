@@ -2,14 +2,14 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { GrafanaTheme2, toOption } from '@grafana/data';
+import { type GrafanaTheme2, toOption } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { EditorRows, FlexItem } from '@grafana/plugin-ui';
 import { AutoSizeInput, IconButton, Select, useStyles2 } from '@grafana/ui';
 
-import { PrometheusDatasource } from '../../datasource';
+import { type PrometheusDatasource } from '../../datasource';
 import { binaryScalarDefs } from '../binaryScalarOperations';
-import { PromVisualQueryBinary } from '../types';
+import { type PromVisualQueryBinary } from '../types';
 
 import { QueryBuilderContent } from './QueryBuilderContent';
 

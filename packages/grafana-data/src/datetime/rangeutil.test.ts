@@ -1,6 +1,6 @@
 import { initRegionalFormatForTests } from '@grafana/i18n';
 
-import { RawTimeRange, TimeOption, TimeRange } from '../types/time';
+import { type RawTimeRange, type TimeOption, type TimeRange } from '../types/time';
 import * as featureToggles from '../utils/featureToggles';
 
 import { dateTime } from './moment_wrapper';

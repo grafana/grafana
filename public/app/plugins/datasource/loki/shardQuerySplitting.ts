@@ -1,11 +1,11 @@
 import { groupBy, partition } from 'lodash';
-import { Observable, Subscriber, Subscription } from 'rxjs';
+import { Observable, type Subscriber, type Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { DataQueryRequest, DataQueryResponse, LoadingState, QueryResultMetaStat } from '@grafana/data';
+import { type DataQueryRequest, type DataQueryResponse, LoadingState, type QueryResultMetaStat } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { LokiDatasource } from './datasource';
+import { type LokiDatasource } from './datasource';
 import { combineResponses, replaceResponses } from './mergeResponses';
 import { adjustTargetsFromResponseState, runSplitQuery } from './querySplitting';
 import {
@@ -15,7 +15,7 @@ import {
   requestSupportsSharding,
 } from './queryUtils';
 import { isRetriableError } from './responseUtils';
-import { LokiQuery } from './types';
+import { type LokiQuery } from './types';
 /**
  * Query splitting by stream shards.
  * Query splitting was introduced in Loki to optimize querying for long intervals and high volume of data,

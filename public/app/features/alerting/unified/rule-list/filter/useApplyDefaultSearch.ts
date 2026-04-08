@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 
-import { shouldUseSavedSearches } from '../../featureToggles';
 import { useAsync } from '../../hooks/useAsync';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { getSearchFilterFromQuery } from '../../search/rulesSearchParser';
@@ -25,7 +24,6 @@ const SESSION_VISITED_KEY = 'grafana.alerting.ruleList.visited';
  * @returns Object with isApplying boolean indicating if the default search is being loaded/applied
  */
 export function useApplyDefaultSearch(): { isApplying: boolean } {
-  const savedSearchesEnabled = shouldUseSavedSearches();
   const { updateFilters, hasActiveFilters } = useRulesFilter();
 
   // Use the internal useAsync hook which doesn't auto-execute
@@ -45,7 +43,7 @@ export function useApplyDefaultSearch(): { isApplying: boolean } {
   }, []);
 
   const isFirstVisit = isFirstVisitInSession();
-  const shouldLoadDefault = savedSearchesEnabled && !hasActiveFilters && isFirstVisit;
+  const shouldLoadDefault = !hasActiveFilters && isFirstVisit;
 
   // Mark as visited on first visit, regardless of whether we load defaults
   if (isFirstVisit && state.status === 'not-executed') {

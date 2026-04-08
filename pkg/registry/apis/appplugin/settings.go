@@ -2,6 +2,8 @@ package appplugin
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 
@@ -19,6 +21,38 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 )
+
+// legacyPluginSecureValueNamePrefix identifies secure value names generated from
+// legacy plugin settings stored in SQL. Must not be used when saving to unified storage.
+const legacyPluginSecureValueNamePrefix = "lps-sv-"
+
+// getLegacySecureValueName produces a deterministic, opaque reference name for a
+// legacy plugin setting secure field, mirroring the datasource converter pattern.
+func getLegacySecureValueName(pluginID string, key string) string {
+	h := sha256.New()
+	h.Write([]byte(pluginID))
+	h.Write([]byte("|"))
+	h.Write([]byte(key))
+	return legacyPluginSecureValueNamePrefix + hex.EncodeToString(h.Sum(nil))
+}
+
+// toSecureJSONData translates InlineSecureValues from a write request into the
+// plaintext map expected by UpdateArgs. Name-only entries (keep-existing) are skipped.
+func toSecureJSONData(secure common.InlineSecureValues) map[string]string {
+	if len(secure) == 0 {
+		return nil
+	}
+	result := map[string]string{}
+	for k, v := range secure {
+		if !v.Create.IsZero() {
+			result[k] = v.Create.DangerouslyExposeAndConsumeValue()
+		}
+		if v.Remove {
+			result[k] = "" // best effort with the legacy API
+		}
+	}
+	return result
+}
 
 type settingsStorage struct {
 	pluginID       string
@@ -79,11 +113,13 @@ func (s *settingsStorage) Get(ctx context.Context, name string, _ *metav1.GetOpt
 		obj.Spec.Pinned = ps.Pinned
 		obj.Spec.JsonData = common.Unstructured{Object: ps.JSONData}
 
-		secureFields := make(map[string]bool, len(ps.SecureJSONData))
+		secureValues := make(common.InlineSecureValues, len(ps.SecureJSONData))
 		for k, v := range ps.SecureJSONData {
-			secureFields[k] = len(v) > 0
+			if len(v) > 0 {
+				secureValues[k] = common.InlineSecureValue{Name: getLegacySecureValueName(s.pluginID, k)}
+			}
 		}
-		obj.Spec.SecureJsonFields = secureFields
+		obj.Secure = secureValues
 	}
 
 	return obj, nil
@@ -151,11 +187,12 @@ func (s *settingsStorage) save(ctx context.Context, obj runtime.Object) (runtime
 	}
 
 	if err := s.pluginSettings.UpdatePluginSetting(ctx, &pluginsettings.UpdateArgs{
-		PluginID: s.pluginID,
-		OrgID:    nsInfo.OrgID,
-		Enabled:  p.Spec.Enabled,
-		Pinned:   p.Spec.Pinned,
-		JSONData: p.Spec.JsonData.Object,
+		PluginID:       s.pluginID,
+		OrgID:          nsInfo.OrgID,
+		Enabled:        p.Spec.Enabled,
+		Pinned:         p.Spec.Pinned,
+		JSONData:       p.Spec.JsonData.Object,
+		SecureJSONData: toSecureJSONData(p.Secure),
 	}); err != nil {
 		return nil, fmt.Errorf("failed to save plugin settings: %w", err)
 	}

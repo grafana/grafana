@@ -1,13 +1,13 @@
 import { render, screen } from '@testing-library/react';
 
-import { ExtensionInfo, PluginExtensionTypes } from '@grafana/data';
+import { type ExtensionInfo, PluginExtensionTypes } from '@grafana/data';
 import { config, usePluginComponents } from '@grafana/runtime';
-import { AddedComponentRegistryItem } from 'app/features/plugins/extensions/registry/AddedComponentsRegistry';
+import { type AddedComponentRegistryItem } from 'app/features/plugins/extensions/registry/AddedComponentsRegistry';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
 import { ExtensionSidebar } from './ExtensionSidebar';
 import {
-  ExtensionSidebarContextType,
+  type ExtensionSidebarContextType,
   getComponentIdFromComponentMeta,
   useExtensionSidebarContext,
 } from './ExtensionSidebarProvider';

@@ -1,9 +1,9 @@
-import { HistoryItem, TimeRange } from '@grafana/data';
+import { type HistoryItem, type TimeRange } from '@grafana/data';
 
 import { DEFAULT_COMPLETION_LIMIT, METRIC_LABEL } from '../../../constants';
 import { type PrometheusLanguageProviderInterface } from '../../../language_provider';
 import { removeQuotesIfExist } from '../../../language_utils';
-import { PromQuery } from '../../../types';
+import { type PromQuery } from '../../../types';
 import { escapeForUtf8Support, isValidLegacyName } from '../../../utf8_support';
 
 export const CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT = 'codeModeSuggestionsIncomplete';

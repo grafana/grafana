@@ -182,14 +182,8 @@ func schema_pkg_apis_dashboard_v2_AnnotationPermission(ref common.ReferenceCallb
 							Ref:     ref(AnnotationActions{}.OpenAPIModelName()),
 						},
 					},
-					"organization": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(AnnotationActions{}.OpenAPIModelName()),
-						},
-					},
 				},
-				Required: []string{"dashboard", "organization"},
+				Required: []string{"dashboard"},
 			},
 		},
 		Dependencies: []string{

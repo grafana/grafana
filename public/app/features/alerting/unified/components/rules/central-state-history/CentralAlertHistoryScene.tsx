@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
 
-import { CentralAlertHistorySceneV1Props, GrafanaTheme2, VariableHide } from '@grafana/data';
+import { type CentralAlertHistorySceneV1Props, type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   CustomVariable,
   EmbeddedScene,
   PanelBuilders,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneControlsSpacer,
   SceneFlexItem,
   SceneFlexLayout,

@@ -1,0 +1,39 @@
+name: Policybot
+on:
+  push:
+    paths:
+      - .policy.yml
+      - .policy.yml.tmpl
+      - justfile
+      - .github/workflows/*
+    branches:
+      - main
+  pull_request:
+    paths:
+      - .policy.yml
+      - .policy.yml.tmpl
+      - justfile
+      - .github/workflows/*
+    branches:
+      - main
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Check .policy.yml is valid
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - run: make .policy.yml
+      - run: git diff --exit-code
+      - name: Check valid against API
+        run: curl --silent --fail-with-body -XPUT --upload-file .policy.yml https://github-policy-bot.grafana-ops.net/api/validate

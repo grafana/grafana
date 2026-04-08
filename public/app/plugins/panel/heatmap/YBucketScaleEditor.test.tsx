@@ -2,8 +2,8 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 
-import { StandardEditorContext, StandardEditorsRegistryItem } from '@grafana/data';
-import { ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
+import { type StandardEditorContext, type StandardEditorsRegistryItem } from '@grafana/data';
+import { ScaleDistribution, type ScaleDistributionConfig } from '@grafana/schema';
 
 import { YBucketScaleEditor } from './YBucketScaleEditor';
 

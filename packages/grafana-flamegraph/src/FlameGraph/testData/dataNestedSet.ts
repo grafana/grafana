@@ -1,4 +1,4 @@
-import { DataFrameDTO } from '@grafana/data';
+import { type DataFrameDTO } from '@grafana/data';
 
 export const data: DataFrameDTO = {
   name: 'response',

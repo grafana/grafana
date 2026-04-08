@@ -2,24 +2,24 @@ import { css } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import { CoreApp, getDefaultTimeRange, SelectableValue, TimeRange } from '@grafana/data';
+import { CoreApp, getDefaultTimeRange, type SelectableValue, type TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
-import { Button, ComboboxOption, Label, useStyles2 } from '@grafana/ui';
+import { Button, type ComboboxOption, Label, useStyles2 } from '@grafana/ui';
 
 import {
   AzureQueryType,
   BuilderQueryEditorExpressionType,
   BuilderQueryEditorPropertyType,
-  BuilderQueryEditorWhereExpression,
-  BuilderQueryEditorWhereExpressionItems,
+  type BuilderQueryEditorWhereExpression,
+  type BuilderQueryEditorWhereExpressionItems,
 } from '../../dataquery.gen';
-import Datasource from '../../datasource';
-import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
-import { AzureMonitorQuery } from '../../types/query';
+import type Datasource from '../../datasource';
+import { type AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { type AzureMonitorQuery } from '../../types/query';
 
 import { FilterItem } from './FilterItem';
-import { BuildAndUpdateOptions } from './utils';
+import { type BuildAndUpdateOptions } from './utils';
 
 interface FilterSectionProps {
   query: AzureMonitorQuery;

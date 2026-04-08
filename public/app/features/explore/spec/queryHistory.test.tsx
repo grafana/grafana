@@ -1,10 +1,10 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { ReactNode } from 'react';
-import { Props } from 'react-virtualized-auto-sizer';
+import { type ReactNode } from 'react';
+import { type Props } from 'react-virtualized-auto-sizer';
 
 import { EventBusSrv, serializeStateToUrlParam, store } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';

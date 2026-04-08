@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 import { useCallback, useMemo } from 'react';
 import * as React from 'react';
-import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
+import { FixedSizeList as List, type ListChildComponentProps } from 'react-window';
 
-import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, formattedValueToString, getValueFormat, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 

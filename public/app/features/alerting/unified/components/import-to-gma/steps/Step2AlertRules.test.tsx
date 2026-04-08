@@ -7,11 +7,11 @@ import { render, screen, waitFor } from 'test/test-utils';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { SupportedRulesSourceType } from 'app/features/alerting/unified/utils/datasource';
+import { type SupportedRulesSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { AccessControlAction } from 'app/types/accessControl';
-import { PromRulesResponse, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { type PromRulesResponse, type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { ImportFormValues } from '../ImportToGMA';
+import { type ImportFormValues } from '../ImportToGMA';
 
 import { Step2Content, useStep2Validation } from './Step2AlertRules';
 

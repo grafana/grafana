@@ -4,18 +4,18 @@ import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import {
-  AnnotationQuery,
-  DataSourceInstanceSettings,
+  type AnnotationQuery,
+  type DataSourceInstanceSettings,
   getDataSourceRef,
-  GrafanaTheme2,
-  SelectableValue,
+  type GrafanaTheme2,
+  type SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
-import { VizPanel } from '@grafana/scenes';
-import { AnnotationPanelFilter } from '@grafana/schema';
+import { type VizPanel } from '@grafana/scenes';
+import { type AnnotationPanelFilter } from '@grafana/schema';
 import {
   Button,
   Checkbox,
@@ -27,7 +27,7 @@ import {
   useStyles2,
   Stack,
   Alert,
-  ComboboxOption,
+  type ComboboxOption,
   Combobox,
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';

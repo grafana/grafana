@@ -1,7 +1,7 @@
-import { PluginContextType } from '@grafana/data';
+import { type PluginContextType } from '@grafana/data';
 
 import * as errors from './errors';
-import { ExtensionsLog, log } from './logs/log';
+import { type ExtensionsLog, log } from './logs/log';
 import { isGrafanaDevMode } from './utils';
 import { isExtensionPointIdValid, isExtensionPointMetaInfoMissing } from './validators';
 

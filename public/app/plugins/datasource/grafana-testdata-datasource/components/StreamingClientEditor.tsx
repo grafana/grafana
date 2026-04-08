@@ -1,9 +1,9 @@
-import { ChangeEvent } from 'react';
+import { type ChangeEvent } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 
-import { EditorProps } from '../QueryEditor';
+import { type EditorProps } from '../QueryEditor';
 
 const streamingClientFields = [
   { label: 'Speed (ms)', id: 'speed', placeholder: 'value', min: 10, step: 10 },

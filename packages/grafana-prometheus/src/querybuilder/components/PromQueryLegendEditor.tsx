@@ -2,7 +2,7 @@
 import { useRef } from 'react';
 import * as React from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';

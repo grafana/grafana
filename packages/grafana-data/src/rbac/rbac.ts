@@ -1,5 +1,5 @@
-import { WithAccessControlMetadata } from '../types/accesscontrol';
-import { CurrentUserDTO } from '../types/config';
+import { type WithAccessControlMetadata } from '../types/accesscontrol';
+import { type CurrentUserDTO } from '../types/config';
 
 export interface CurrentUser extends Omit<CurrentUserDTO, 'lightTheme'> {}
 

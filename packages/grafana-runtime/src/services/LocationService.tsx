@@ -1,13 +1,13 @@
 import * as H from 'history';
 import React, { useContext } from 'react';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, type Observable } from 'rxjs';
 
-import { deprecationWarning, UrlQueryMap, urlUtil } from '@grafana/data';
+import { deprecationWarning, type UrlQueryMap, urlUtil } from '@grafana/data';
 import { attachDebugger, createLogger } from '@grafana/ui';
 
 import { config } from '../config';
 
-import { LocationUpdate } from './LocationSrv';
+import { type LocationUpdate } from './LocationSrv';
 
 /**
  * @public

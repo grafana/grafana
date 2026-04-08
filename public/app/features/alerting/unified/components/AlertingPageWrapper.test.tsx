@@ -1,8 +1,8 @@
 import { render, screen } from 'test/test-utils';
 
-import { NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useId, useState } from 'react';
 
-import { createTheme, GrafanaTheme2, NewThemeOptions } from '@grafana/data';
+import { createTheme, type GrafanaTheme2, type NewThemeOptions } from '@grafana/data';
 import { NewThemeOptionsSchema } from '@grafana/data/internal';
 import aubergine from '@grafana/data/themes/definitions/aubergine.json';
 import debug from '@grafana/data/themes/definitions/debug.json';

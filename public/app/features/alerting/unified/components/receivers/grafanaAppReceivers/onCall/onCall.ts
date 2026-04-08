@@ -1,6 +1,6 @@
-import { Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { type Receiver } from 'app/plugins/datasource/alertmanager/types';
 
-import { OnCallIntegrationDTO } from '../../../../api/onCallApi';
+import { type OnCallIntegrationDTO } from '../../../../api/onCallApi';
 
 // TODO This value needs to be changed to grafana_alerting when the OnCall team introduces the necessary changes
 export const GRAFANA_ONCALL_INTEGRATION_TYPE = 'grafana_alerting';

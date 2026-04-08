@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Dropdown, EmptyState, LinkButton, Menu, MenuItem, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { RuleFormType, type RuleFormValues } from '../../types/rule-form';
 import { useRulesAccess } from '../../utils/accessControlHooks';
 import { DOCS_URL_PROVISION_ALERTING } from '../../utils/docs';
 import { createRelativeUrl } from '../../utils/url';

@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { Fragment } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { PageInfoItem } from '../Page/types';
+import { type PageInfoItem } from '../Page/types';
 
 export interface Props {
   info: PageInfoItem[];

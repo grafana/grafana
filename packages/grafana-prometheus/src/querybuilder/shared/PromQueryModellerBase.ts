@@ -5,12 +5,12 @@ import { renderLabels } from './rendering/labels';
 import { hasBinaryOp, renderOperations } from './rendering/operations';
 import { renderQuery, renderBinaryQueries } from './rendering/query';
 import {
-  PrometheusVisualQuery,
-  QueryBuilderLabelFilter,
-  QueryBuilderOperation,
-  QueryBuilderOperationDef,
-  VisualQueryBinary,
-  VisualQueryModeller,
+  type PrometheusVisualQuery,
+  type QueryBuilderLabelFilter,
+  type QueryBuilderOperation,
+  type QueryBuilderOperationDef,
+  type VisualQueryBinary,
+  type VisualQueryModeller,
 } from './types';
 
 export abstract class PromQueryModellerBase implements VisualQueryModeller {

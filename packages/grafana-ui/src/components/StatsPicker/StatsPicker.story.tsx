@@ -1,10 +1,10 @@
 import { action } from '@storybook/addon-actions';
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { memo, useState } from 'react';
 
 import { Field } from '../Forms/Field';
 
-import { StatsPickerProps, StatsPicker } from './StatsPicker';
+import { type StatsPickerProps, StatsPicker } from './StatsPicker';
 
 const WrapperWithState = memo<StatsPickerProps>(({ placeholder, allowMultiple, width }) => {
   const [stats, setStats] = useState<string[]>([]);

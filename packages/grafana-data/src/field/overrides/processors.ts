@@ -1,11 +1,11 @@
-import { Action } from '../../types/action';
-import { Field } from '../../types/dataFrame';
-import { DataLink } from '../../types/dataLink';
-import { FieldOverrideContext } from '../../types/fieldOverrides';
-import { SelectableValue } from '../../types/select';
-import { SliderMarks } from '../../types/slider';
-import { ThresholdsConfig } from '../../types/thresholds';
-import { ValueMapping } from '../../types/valueMapping';
+import { type Action } from '../../types/action';
+import { type Field } from '../../types/dataFrame';
+import { type DataLink } from '../../types/dataLink';
+import { type FieldOverrideContext } from '../../types/fieldOverrides';
+import { type SelectableValue } from '../../types/select';
+import { type SliderMarks } from '../../types/slider';
+import { type ThresholdsConfig } from '../../types/thresholds';
+import { type ValueMapping } from '../../types/valueMapping';
 
 export const identityOverrideProcessor = <T>(value: T) => {
   return value;

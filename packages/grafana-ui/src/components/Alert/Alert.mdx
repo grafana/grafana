@@ -5,23 +5,39 @@ import { Alert } from './Alert';
 
 # Alert
 
-An alert displays an important message in a way that attracts the user's attention without interrupting the user's task.
+Alert is a fundamental element used for displaying important messages or notifications to users.
 
 ---
 
 About Alert component:
 
-1. [Behaviors](#behaviors)
-2. [Types](#types)
-3. [Message type](#message-type)
-4. [Main elements](#main-elements)
-5. [Usage:](#usage)\
-   5.1. [Inline banner](#alert-inline)\
-   5.2. [Toast](#alert-toast)
+1. [When to use](#when-to-use)
+2. [Behaviors](#behaviors)
+3. [Types](#types)
+4. [Message type](#message-type)
+5. [Content](#content)
+6. [Main elements](#main-elements)
+7. [Usage:](#usage)\
+   7.1. [Inline banner](#alert-inline)\
+   7.2. [Toast](#alert-toast)
+8. [Further Reading](#further-reading)
 
 <br />
 <br />
 <br />
+
+## <a name="when-to-use" /> When to use
+
+Use Alerts to inform users of updates, changes, or issues. Providing users feedback, keeping them informed, and keeping disruptions to a minimum is important. There are two different use-cases for Alerts: task-generated and system-generated Alerts.
+
+### Task-Generated
+
+Task-generated Alerts are triggered based on the behaviours of the user and provide quick, direct feedback. This type of Alert should be placed closely to the area the user is actively working in.
+
+### System-Generated
+
+System-generated Alerts are triggered by the system, unconnected to the actions of a user. Use these Alerts to provide explanation of system status or other events that have occurred elsewhere.
+
 ## <a name="behaviors" /> Behaviors
 
 1. **Persistent**: They are usually urgent and intrusive, require immediate attention and require action to be dismissed.
@@ -59,6 +75,24 @@ Within Grafana, we have two different types of alerts and they can be used depen
    - Always persists until the user has taken steps to remedy the issue that triggered the notification
    - Shows red color on background and uses the `exclamation-triangle` icon
      <br />
+
+## <a name="content"/>Content
+
+### Title
+
+Titles in Alerts are required, always. They should be concise, human-focused and jargon free so users can easily understand them.
+
+### Description
+
+Description copy is optional and should be used sparingly. Keep the description copy short and focused on the reason for the Alert and include possible solutions or paths forward to prevent users from being blocked.
+
+### Content guidelines (how to write)
+
+It is important to always use simple and concise language when crafting messaging for Alerts. Avoid using jargon or system errors in the content of the Alerts. Provide users with a path forward or possible solution. For more recommendations on writing, view the [UX writing guidelines](https://grafana.com/docs/writers-toolkit/write/style-guide/ux-writing/).
+
+### Calls to Action
+
+Alerts (Inline Alerts specifically) can contain calls to action (CTAs), especially if there is an action a user can take to remedy or correct the reason the Alert is being shown. When providing a CTA within an Alert be sure to keep the label concise and ensure the action the user can take is clear, and try to keep the labels short (a few words at most). See Grafana's [UX Writing guidelines](https://grafana.com/docs/writers-toolkit/write/style-guide/ux-writing/).
 
 ## <a name="main-elements"/>Main elements
 
@@ -104,7 +138,7 @@ Inline Banners are task-oriented alerts that notify users of the status of an ac
 
 ```jsx
 <Alert title={title} severity={severity} buttonContent={buttonContent} onRemove={onRemove}>
-  Child content that includes some alert details, like maybe what actually happened.</div>
+  Child content that includes some alert details, like maybe what actually happened.
 </Alert>
 ```
 
@@ -150,5 +184,12 @@ appEvents.publish({
   Child content that includes some alert details, like maybe what actually happened.
 </Alert>
 ```
+
+## Further Reading
+
+- [NNG -- Indicators, Validations, and Notifications: Pick the Correct Communication Option](https://www.nngroup.com/articles/indicators-validations-notifications/)
+- [NNG -- How to Report Errors in Forms: 10 Design Guidelines](https://www.nngroup.com/articles/errors-forms-design-guidelines/)
+- [NNG -- 10 Usability Heuristics for Users](https://www.nngroup.com/articles/ten-usability-heuristics/)
+- [NNG -- Plain Language is for Everyone](https://www.nngroup.com/articles/plain-language-experts/)
 
 <ArgTypes of={Alert} />

@@ -443,7 +443,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 
 func invalidFolderMetadataJSON(title string) []byte {
 	folder := map[string]any{
-		"apiVersion": "folder.grafana.app/v1beta1",
+		"apiVersion": "folder.grafana.app/v1",
 		"kind":       "Folder",
 		"metadata":   map[string]any{},
 		"spec": map[string]any{

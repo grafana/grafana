@@ -1,4 +1,4 @@
-import { Unsubscribable, Observable } from 'rxjs';
+import { type Unsubscribable, type Observable } from 'rxjs';
 
 /**
  * @alpha

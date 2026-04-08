@@ -6,7 +6,7 @@ import { Button, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
 
 import { getConnectedDashboards } from '../../state/api';
 import { getModalStyles } from '../../styles';
-import { PanelModelWithLibraryPanel } from '../../types';
+import { type PanelModelWithLibraryPanel } from '../../types';
 import { usePanelSave } from '../../utils/usePanelSave';
 
 interface Props {

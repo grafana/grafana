@@ -1,4 +1,4 @@
-import { LanguageDefinition } from '../monarch/register';
+import { type LanguageDefinition } from '../monarch/register';
 
 export const CLOUDWATCH_LOGS_SQL_LANGUAGE_DEFINITION_ID = 'cloudwatch-logs-sql';
 

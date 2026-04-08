@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { AwsAuthType } from '@grafana/aws-sdk';
-import { PluginContextProvider, PluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
+import { PluginContextProvider, type PluginMeta, type PluginMetaInfo, PluginType } from '@grafana/data';
 
 import { CloudWatchDatasource } from '../../datasource';
 import {
@@ -13,7 +13,7 @@ import {
 
 import {
   ConfigEditor,
-  Props,
+  type Props,
   ARN_DEPRECATION_WARNING_MESSAGE,
   CREDENTIALS_AUTHENTICATION_WARNING_MESSAGE,
 } from './ConfigEditor';

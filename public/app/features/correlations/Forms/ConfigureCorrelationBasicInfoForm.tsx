@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Field, FieldSet, Input, TextArea, useStyles2 } from '@grafana/ui';
 
 import { useCorrelationsFormContext } from './correlationsFormContext';
-import { FormDTO } from './types';
+import { type FormDTO } from './types';
 import { getInputId } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({

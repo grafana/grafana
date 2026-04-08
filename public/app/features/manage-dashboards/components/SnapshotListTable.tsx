@@ -4,7 +4,7 @@ import useAsync from 'react-use/lib/useAsync';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { ConfirmModal, EmptyState, ScrollContainer, TextLink } from '@grafana/ui';
-import { getDashboardSnapshotSrv, Snapshot } from 'app/features/dashboard/services/SnapshotSrv';
+import { getDashboardSnapshotSrv, type Snapshot } from 'app/features/dashboard/services/SnapshotSrv';
 
 import { SnapshotListTableRow } from './SnapshotListTableRow';
 

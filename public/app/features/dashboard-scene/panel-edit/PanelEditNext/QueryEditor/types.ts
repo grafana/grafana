@@ -1,5 +1,5 @@
-import { AlertState, DataTransformerConfig, TransformerRegistryItem } from '@grafana/data';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { type AlertState, type DataTransformerConfig, type TransformerRegistryItem } from '@grafana/data';
+import { type CombinedRule } from 'app/types/unified-alerting';
 
 export type Transformation = {
   registryItem: TransformerRegistryItem | undefined;

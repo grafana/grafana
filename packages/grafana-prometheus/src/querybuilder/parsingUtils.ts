@@ -1,8 +1,8 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/parsingUtils.ts
-import { SyntaxNode, TreeCursor } from '@lezer/common';
+import { type SyntaxNode, type TreeCursor } from '@lezer/common';
 import { AggregateExpr, FunctionCallBody } from '@prometheus-io/lezer-promql';
 
-import { QueryBuilderOperation, QueryBuilderOperationParamValue } from './shared/types';
+import { type QueryBuilderOperation, type QueryBuilderOperationParamValue } from './shared/types';
 
 // Although 0 isn't explicitly provided in the lezer-promql library as the error node ID, it does appear to be the ID of error nodes within lezer.
 export const ErrorId = 0;

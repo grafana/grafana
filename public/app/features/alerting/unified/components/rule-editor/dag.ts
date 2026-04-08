@@ -1,9 +1,9 @@
 import { compact, memoize, reject, uniq } from 'lodash';
 
-import { Edge, Graph, Node } from 'app/core/utils/dag';
+import { type Edge, Graph, type Node } from 'app/core/utils/dag';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 /**
  * Turn the array of alert queries (this means data queries and expressions)

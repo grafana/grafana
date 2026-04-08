@@ -1,5 +1,5 @@
 import { AGGREGATIONS, SYSTEM_LABELS } from './constants';
-import { AlignmentTypes, TimeSeriesList, MetricKind, ValueTypes } from './dataquery.gen';
+import { AlignmentTypes, type TimeSeriesList, MetricKind, ValueTypes } from './dataquery.gen';
 import {
   extractServicesFromMetricDescriptors,
   getAggregationOptionsByMetric,
@@ -15,7 +15,7 @@ import {
   setMetricType,
 } from './functions';
 import { newMockDatasource } from './specs/testData';
-import { MetricDescriptor } from './types/types';
+import { type MetricDescriptor } from './types/types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

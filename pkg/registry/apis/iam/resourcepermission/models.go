@@ -39,11 +39,9 @@ var (
 	allowedBasicRoles = map[string]bool{"Viewer": true, "Editor": true, "Admin": true}
 )
 
-type IdentityStore interface {
-	GetServiceAccountInternalID(ctx context.Context, ns types.NamespaceInfo, query idStore.GetServiceAccountInternalIDQuery) (*idStore.GetServiceAccountInternalIDResult, error)
-	GetTeamInternalID(ctx context.Context, ns types.NamespaceInfo, query idStore.GetTeamInternalIDQuery) (*idStore.GetTeamInternalIDResult, error)
-	GetUserInternalID(ctx context.Context, ns types.NamespaceInfo, query idStore.GetUserInternalIDQuery) (*idStore.GetUserInternalIDResult, error)
-}
+// IdentityStore is a type alias for legacy.ScopeResolverStore — the minimal
+// identity-lookup interface for resolving uid↔id scopes.
+type IdentityStore = idStore.ScopeResolverStore
 
 type PageQuery struct {
 	ScopePatterns []string
@@ -72,12 +70,14 @@ type rbacAssignmentCreate struct {
 	SubjectID        any    // int64 for user/team, string for builtin_role
 	AssignmentTable  string // "user_role", "team_role", or "builtin_role"
 	AssignmentColumn string // "user_id", "team_id", or "role"
+	DatasourceType   string // e.g. "loki"
 }
 
 func (g *rbacAssignmentCreate) permission() accesscontrol.Permission {
 	p := accesscontrol.Permission{
-		Action: g.Action,
-		Scope:  g.Scope,
+		Action:         g.Action,
+		Scope:          g.Scope,
+		DatasourceType: g.DatasourceType,
 	}
 	p.Kind, p.Attribute, p.Identifier = accesscontrol.SplitScope(p.Scope)
 	return p
@@ -93,6 +93,7 @@ type rbacAssignment struct {
 	SubjectUID       string    `xorm:"subject_uid"`
 	SubjectType      string    `xorm:"subject_type"` // 'user', 'team', or 'builtin_role'
 	IsServiceAccount bool      `xorm:"is_service_account"`
+	DatasourceType   string    `xorm:"datasource_type"`
 }
 
 // newV0ResourcePermission creates a new v0alpha1.ResourcePermission from the given groupResourceName and permission specs.
@@ -128,8 +129,8 @@ func newV0ResourcePermission(grn *groupResourceName, specs []v0alpha1.ResourcePe
 }
 
 // toV0ResourcePermissions translates a list of rbacAssignments into a list of v0alpha1.ResourcePermissions.
-// it is assumed that assignments are sorted by scope
-func (s *ResourcePermSqlBackend) toV0ResourcePermissions(assignments []rbacAssignment, namespace string) ([]v0alpha1.ResourcePermission, error) {
+// it is assumed that assignments are sorted by scope. it translates id-scoped permissions back to uid-scoped permissions.
+func (s *ResourcePermSqlBackend) toV0ResourcePermissions(ctx context.Context, ns types.NamespaceInfo, assignments []rbacAssignment) ([]v0alpha1.ResourcePermission, error) {
 	if len(assignments) == 0 {
 		return nil, nil
 	}
@@ -141,25 +142,59 @@ func (s *ResourcePermSqlBackend) toV0ResourcePermissions(assignments []rbacAssig
 
 		resourcePermissions = make([]v0alpha1.ResourcePermission, 0, 8)
 		specs               = make([]v0alpha1.ResourcePermissionspecPermission, 0, 4)
+		// scopeCache avoids repeated DB lookups for the same id-scoped scope within a single list response.
+		scopeCache = make(map[string]*groupResourceName, len(assignments))
 	)
 
-	grn, err := s.ParseScope(assignments[0].Scope)
+	logger := s.logger.FromContext(ctx)
+
+	// parseScopeCtxCached resolves and caches scope→GRN lookups.
+	// Returns (nil, nil) for orphaned id-scoped rows so callers can skip them.
+	parseScopeCtxCached := func(scope, datasourceType string) (*groupResourceName, error) {
+		key := scope + ":" + datasourceType
+		if grn, ok := scopeCache[key]; ok {
+			return grn, nil
+		}
+		grn, err := s.mappers.ParseScopeCtx(ctx, ns, s.identityStore, scope, datasourceType)
+		if err != nil {
+			if idStore.IsNotFoundError(err) {
+				logger.Warn("Dropping permission with orphaned scope", "scope", scope, "error", err)
+				scopeCache[key] = nil
+				return nil, nil
+			}
+			return nil, err
+		}
+		scopeCache[key] = grn
+		return grn, nil
+	}
+
+	grn, err := parseScopeCtxCached(assignments[0].Scope, assignments[0].DatasourceType)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, assign := range assignments {
 		// Ensure all assignments belong to the same resource
-		parsedGrn, err := s.ParseScope(assign.Scope)
+		parsedGrn, err := parseScopeCtxCached(assign.Scope, assign.DatasourceType)
 		if err != nil {
 			return nil, err
 		}
+		if parsedGrn == nil {
+			continue
+		}
+		if grn == nil {
+			grn = parsedGrn
+			created = assign.Created
+			updated = assign.Updated
+		}
 		// If it's a new resource, flush the current specs to a ResourcePermission and start a new one
 		if *parsedGrn != *grn {
-			resourcePermissions = append(
-				resourcePermissions,
-				newV0ResourcePermission(grn, specs, created, updated, namespace),
-			)
+			if len(specs) > 0 {
+				resourcePermissions = append(
+					resourcePermissions,
+					newV0ResourcePermission(grn, specs, created, updated, ns.Value),
+				)
+			}
 
 			// Reset for the new resource
 			grn = parsedGrn
@@ -208,11 +243,13 @@ func (s *ResourcePermSqlBackend) toV0ResourcePermissions(assignments []rbacAssig
 		})
 	}
 
-	// Flush the final resource
-	resourcePermissions = append(
-		resourcePermissions,
-		newV0ResourcePermission(grn, specs, created, updated, namespace),
-	)
+	// Flush the final resource (grn may be nil if all assignments were orphaned)
+	if grn != nil && len(specs) > 0 {
+		resourcePermissions = append(
+			resourcePermissions,
+			newV0ResourcePermission(grn, specs, created, updated, ns.Value),
+		)
+	}
 
 	return resourcePermissions, nil
 }
@@ -236,8 +273,9 @@ func (g *groupResourceName) v0alpha1() v0alpha1.ResourcePermissionspecResource {
 }
 
 // ParseScope parses a scope string (e.g. folders:uid:1) into a groupResourceName (e.g. {folder.grafana.app, folders, fold1}).
-func (s *ResourcePermSqlBackend) ParseScope(scope string) (*groupResourceName, error) {
-	return s.mappers.ParseScope(scope)
+// If the scope is a datasource scope, the datasourceType is used to resolve the concrete group.
+func (s *ResourcePermSqlBackend) ParseScope(scope, datasourceType string) (*groupResourceName, error) {
+	return s.mappers.ParseScope(scope, datasourceType)
 }
 
 // splitResourceName splits a resource name in the format <group>-<resource>-<name>

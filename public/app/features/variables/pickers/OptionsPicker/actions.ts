@@ -1,21 +1,21 @@
 import { debounce, trim } from 'lodash';
 
-import { isEmptyObject, containsSearchFilter, VariableWithOptions, VariableOption } from '@grafana/data';
-import { StoreState, ThunkDispatch, ThunkResult } from 'app/types/store';
+import { isEmptyObject, containsSearchFilter, type VariableWithOptions, type VariableOption } from '@grafana/data';
+import { type StoreState, type ThunkDispatch, type ThunkResult } from 'app/types/store';
 
 import { variableAdapters } from '../../adapters';
 import { hasOptions } from '../../guard';
 import { toKeyedAction } from '../../state/keyedVariablesReducer';
 import { getVariable, getVariablesState } from '../../state/selectors';
 import { changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
-import { KeyedVariableIdentifier } from '../../state/types';
+import { type KeyedVariableIdentifier } from '../../state/types';
 import { getCurrentValue, toVariablePayload } from '../../utils';
 import { NavigationKey } from '../types';
 
 import {
   hideOptions,
   moveOptionsHighlight,
-  OptionsPickerState,
+  type OptionsPickerState,
   showOptions,
   toggleOption,
   updateOptionsAndFilter,

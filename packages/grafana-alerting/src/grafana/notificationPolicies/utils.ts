@@ -1,11 +1,11 @@
 import { groupBy, isArray, pick, reduce, uniqueId } from 'lodash';
 
-import { RoutingTree, RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type RoutingTree, type RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 
-import { Label } from '../matchers/types';
-import { LabelMatchDetails, matchLabels } from '../matchers/utils';
+import { type Label } from '../matchers/types';
+import { type LabelMatchDetails, matchLabels } from '../matchers/utils';
 
-import { Route, RouteWithID } from './types';
+import { type Route, type RouteWithID } from './types';
 
 export const INHERITABLE_KEYS = ['receiver', 'group_by', 'group_wait', 'group_interval', 'repeat_interval'] as const;
 export type InheritableKeys = typeof INHERITABLE_KEYS;

@@ -1,10 +1,10 @@
-import { ChangeEvent, ReactElement, useCallback } from 'react';
+import { type ChangeEvent, type ReactElement, useCallback } from 'react';
 
-import { SwitchVariableModel } from '@grafana/data';
+import { type SwitchVariableModel } from '@grafana/data';
 import { Switch } from '@grafana/ui';
 
 import { variableAdapters } from '../adapters';
-import { VariablePickerProps } from '../pickers/types';
+import { type VariablePickerProps } from '../pickers/types';
 
 export interface Props extends VariablePickerProps<SwitchVariableModel> {}
 

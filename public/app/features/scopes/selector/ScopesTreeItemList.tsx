@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { ScopesTreeItem } from './ScopesTreeItem';
 import { isNodeSelectable } from './scopesTreeUtils';
-import { NodesMap, SelectedScope, TreeNode } from './types';
+import { type NodesMap, type SelectedScope, type TreeNode } from './types';
 
 type Props = {
   anyChildExpanded: boolean;

@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, VirtualizedSelect, useStyles2 } from '@grafana/ui';
 
-import { RuleFormValues } from '../../types/rule-form';
+import { type RuleFormValues } from '../../types/rule-form';
 
 import { useGetNameSpacesByDatasourceName } from './useAlertRuleSuggestions';
 

@@ -1,56 +1,56 @@
 import { map as _map, each, indexOf, isArray, isString } from 'lodash';
 import moment from 'moment';
-import { lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
+import { lastValueFrom, merge, Observable, of, type OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { coerce, gte, SemVer, valid } from 'semver';
 
 import {
-  AbstractLabelMatcher,
+  type AbstractLabelMatcher,
   AbstractLabelOperator,
-  AbstractQuery,
-  DataFrame,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceWithQueryExportSupport,
+  type AbstractQuery,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceWithQueryExportSupport,
   dateMath,
-  DateTime,
+  type DateTime,
   dateTime,
   getSearchFilterScopedVar,
-  MetricFindValue,
-  QueryResultMetaStat,
-  ScopedVars,
-  TimeRange,
+  type MetricFindValue,
+  type QueryResultMetaStat,
+  type ScopedVars,
+  type TimeRange,
   toDataFrame,
 } from '@grafana/data';
 import {
-  BackendSrvRequest,
+  type BackendSrvRequest,
   config,
   DataSourceWithBackend,
-  FetchResponse,
+  type FetchResponse,
   getBackendSrv,
   getTemplateSrv,
-  TemplateSrv,
+  type TemplateSrv,
 } from '@grafana/runtime';
-import { TimeZone } from '@grafana/schema';
+import { type TimeZone } from '@grafana/schema';
 
 import { AnnotationEditor } from './components/AnnotationsEditor';
 import { convertToGraphiteQueryObject } from './components/helpers';
-import gfunc, { FuncDef, FuncDefs, FuncInstance } from './gfunc';
+import gfunc, { type FuncDef, type FuncDefs, type FuncInstance } from './gfunc';
 import GraphiteQueryModel from './graphite_query';
 import { getRollupNotice, getRuntimeConsolidationNotice } from './meta';
 import { prepareAnnotation } from './migrations';
 // Types
 import {
-  GraphiteEvents,
-  GraphiteLokiMapping,
-  GraphiteMetricLokiMatcher,
-  GraphiteOptions,
-  GraphiteQuery,
-  GraphiteQueryImportConfiguration,
+  type GraphiteEvents,
+  type GraphiteLokiMapping,
+  type GraphiteMetricLokiMatcher,
+  type GraphiteOptions,
+  type GraphiteQuery,
+  type GraphiteQueryImportConfiguration,
   GraphiteQueryType,
   GraphiteType,
-  MetricTankRequestMeta,
-  MetricTankSeriesMeta,
+  type MetricTankRequestMeta,
+  type MetricTankSeriesMeta,
 } from './types';
 import { reduceError } from './utils';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';

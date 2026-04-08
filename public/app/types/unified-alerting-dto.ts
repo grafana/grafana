@@ -2,10 +2,10 @@
 
 import { type MergeExclusive } from 'type-fest';
 
-import { DataQuery, RelativeTimeRange } from '@grafana/data';
-import { ExpressionQuery } from 'app/features/expressions/types';
+import { type DataQuery, type RelativeTimeRange } from '@grafana/data';
+import { type ExpressionQuery } from 'app/features/expressions/types';
 
-import { AlertGroupTotals, AlertInstanceTotals } from './unified-alerting';
+import { type AlertGroupTotals, type AlertInstanceTotals } from './unified-alerting';
 
 export type Labels = Record<string, string>;
 export type Annotations = Record<string, string>;

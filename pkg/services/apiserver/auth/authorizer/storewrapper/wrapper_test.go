@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -303,7 +304,7 @@ func TestWrapper_DeleteCollection(t *testing.T) {
 	result, err := setup.wrapper.DeleteCollection(setup.ctx, nil, &metaV1.DeleteOptions{}, &internalversion.ListOptions{})
 
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "bulk delete operations are not supported")
+	assert.True(t, k8serrors.IsMethodNotSupported(err), "expected MethodNotSupported error, got: %v", err)
 	assert.Nil(t, result)
 }
 

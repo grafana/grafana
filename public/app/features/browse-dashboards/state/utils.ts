@@ -1,6 +1,6 @@
-import { DashboardViewItem } from 'app/features/search/types';
+import { type DashboardViewItem } from 'app/features/search/types';
 
-import { BrowseDashboardsState } from '../types';
+import { type BrowseDashboardsState } from '../types';
 
 export function findItem(
   rootItems: DashboardViewItem[],

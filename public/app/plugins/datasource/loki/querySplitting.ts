@@ -1,22 +1,22 @@
 import { groupBy, partition } from 'lodash';
-import { Observable, Subscriber, Subscription, tap } from 'rxjs';
+import { Observable, type Subscriber, type Subscription, tap } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
   arrayToDataFrame,
-  DataQueryRequest,
-  DataQueryResponse,
+  type DataQueryRequest,
+  type DataQueryResponse,
   DataTopic,
   dateTime,
   LoadingState,
   rangeUtil,
   store,
-  TimeRange,
+  type TimeRange,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { LokiQueryType, LokiQueryDirection } from './dataquery.gen';
-import { LokiDatasource } from './datasource';
+import { type LokiDatasource } from './datasource';
 import {
   splitTimeRange as splitLogsTimeRange,
   splitTimeRangeAligned as splitLogsTimeRangeAligned,
@@ -29,7 +29,7 @@ import {
 import { addQueryLimitsContext, isLogsQuery, isQueryWithRangeVariable } from './queryUtils';
 import { isRetriableError } from './responseUtils';
 import { trackGroupedQueries } from './tracking';
-import { LokiGroupedRequest, LokiQuery } from './types';
+import { type LokiGroupedRequest, type LokiQuery } from './types';
 
 export function partitionTimeRange(
   isLogsQuery: boolean,

@@ -1,8 +1,0 @@
-{
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "types": ["node", "jest", "@testing-library/jest-dom"]
-  },
-  "extends": "@grafana/plugin-configs/tsconfig.json",
-  "include": ["."]
-}

@@ -18,7 +18,7 @@ func createUnmanagedFolder(t *testing.T, helper *common.ProvisioningTestHelper, 
 	t.Helper()
 	obj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": "folder.grafana.app/v1beta1",
+			"apiVersion": "folder.grafana.app/v1",
 			"kind":       "Folder",
 			"metadata": map[string]interface{}{
 				"name":      name,
@@ -37,7 +37,7 @@ func createUnmanagedFolderWithParent(t *testing.T, helper *common.ProvisioningTe
 	t.Helper()
 	obj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": "folder.grafana.app/v1beta1",
+			"apiVersion": "folder.grafana.app/v1",
 			"kind":       "Folder",
 			"metadata": map[string]interface{}{
 				"name":      name,

@@ -1,10 +1,10 @@
 import { createTheme, MappingType, ThresholdsMode } from '@grafana/data';
 import { BigValueColorMode } from '@grafana/ui';
 import { mockAlertWithState as withState } from 'app/features/alerting/unified/mocks';
-import { Alert } from 'app/types/unified-alerting';
+import { type Alert } from 'app/types/unified-alerting';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
-import { GroupMode, SortOrder, STAT_THRESHOLDS_DEFAULT, UnifiedAlertListOptions, ViewMode } from './types';
+import { GroupMode, SortOrder, STAT_THRESHOLDS_DEFAULT, type UnifiedAlertListOptions, ViewMode } from './types';
 import { buildAlertingListUrl, filterAlerts, getStatDisplayValue } from './util';
 
 const defaultOption: UnifiedAlertListOptions = {

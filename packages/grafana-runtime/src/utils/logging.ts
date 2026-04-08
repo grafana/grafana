@@ -1,4 +1,4 @@
-import { faro, LogContext, LogLevel } from '@grafana/faro-web-sdk';
+import { faro, type LogContext, LogLevel } from '@grafana/faro-web-sdk';
 
 import { config } from '../config';
 

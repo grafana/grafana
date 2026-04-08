@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
 import { Button, Icon } from '@grafana/ui';
 
-import { ToolbarActionProps } from '../types';
+import { type ToolbarActionProps } from '../types';
 
 export const EditSchemaV2Button = ({ dashboard }: ToolbarActionProps) => {
   return (

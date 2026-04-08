@@ -1,13 +1,13 @@
 import { screen } from '@testing-library/react';
-import { lazy, ComponentType } from 'react';
+import { lazy, type ComponentType } from 'react';
 import { render } from 'test/test-utils';
 
 import { setEchoSrv } from '@grafana/runtime';
 
 import { Echo } from '../services/echo/Echo';
 
-import { GrafanaRoute, Props } from './GrafanaRoute';
-import { GrafanaRouteComponentProps } from './types';
+import { GrafanaRoute, type Props } from './GrafanaRoute';
+import { type GrafanaRouteComponentProps } from './types';
 
 const mockLocation = {
   search: '?query=hello&test=asd',

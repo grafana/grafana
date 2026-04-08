@@ -1,4 +1,4 @@
-import { HttpHandler } from 'msw';
+import { type HttpHandler } from 'msw';
 
 import accessControlHandlers from './api/access-control/handlers';
 import dashboardsHandlers from './api/dashboards/handlers';

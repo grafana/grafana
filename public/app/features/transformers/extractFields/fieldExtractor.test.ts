@@ -2,7 +2,7 @@ import { FieldType, toDataFrame } from '@grafana/data';
 
 import { addExtractedFields } from './extractFields';
 import { fieldExtractors } from './fieldExtractors';
-import { ExtractFieldsOptions, FieldExtractorID } from './types';
+import { type ExtractFieldsOptions, FieldExtractorID } from './types';
 
 describe('Extract fields from text', () => {
   it('JSON extractor', async () => {

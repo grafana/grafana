@@ -80,7 +80,7 @@ module.exports = {
   coverageReporters: ['none'],
   coverageDirectory: '/tmp/jest-coverage-ignore',
 
-  coverageProvider: 'v8',
+  coverageProvider: 'babel',
   reporters: [
     'default',
     [
@@ -88,7 +88,7 @@ module.exports = {
       {
         name: `Coverage Report - ${codeownerName} owned files`,
         outputDir: outputDir,
-        reports: ['console-summary', 'v8', 'json', 'lcov'],
+        reports: ['console-summary', 'json', 'lcov', ['html-spa', { subdir: 'html' }]],
         sourceFilter: (coveredFile) => sourceFiles.includes(coveredFile),
         all: {
           dir: ['./packages', './public'],

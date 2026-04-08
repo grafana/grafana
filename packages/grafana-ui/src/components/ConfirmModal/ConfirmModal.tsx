@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { JSX } from 'react';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { ButtonVariant } from '../Button/Button';
+import { type ButtonVariant } from '../Button/Button';
 import { Modal } from '../Modal/Modal';
 
 import { ConfirmContent } from './ConfirmContent';

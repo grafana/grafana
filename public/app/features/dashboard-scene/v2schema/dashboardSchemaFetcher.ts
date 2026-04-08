@@ -1,4 +1,5 @@
 import { getBackendSrv } from '@grafana/runtime';
+import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { getK8sV2DashboardApiConfig } from 'app/features/dashboard/api/v2';
 
 interface OpenAPISchema {
@@ -52,6 +53,7 @@ export async function fetchDashboardSchema(): Promise<JSONSchema> {
 }
 
 async function doFetchSchema(): Promise<JSONSchema> {
+  await dashboardAPIVersionResolver.resolve();
   const { group, version } = getK8sV2DashboardApiConfig();
   const endpoint = getOpenAPIEndpoint(group, version);
   const schemaKey = getDashboardSpecSchemaKey(version);
@@ -114,6 +116,7 @@ function fixOpenAPIMismatches(definitions: Record<string, JSONSchema>): void {
   fixKindConstraints(definitions);
   fixScalarUnions(definitions);
   fixOpaqueMaps(definitions);
+  fixAnyValueProperties(definitions);
   fixDiscriminatedUnions(definitions);
 }
 
@@ -186,6 +189,30 @@ function fixOpaqueMaps(definitions: Record<string, JSONSchema>): void {
         for (const p of props) {
           if (schema.properties?.[p]) {
             schema.properties[p] = { type: 'object', additionalProperties: true };
+          }
+        }
+      }
+    }
+  }
+}
+
+// interface{} properties that accept any JSON type (string, number, boolean, array, object, null).
+// The generator emits { type: "object" } which incorrectly rejects non-object values.
+// Unlike opaque maps (which are always objects with arbitrary keys), these can be any type.
+const ANY_VALUE_PROPERTIES: Record<string, string[]> = {
+  DashboardDynamicConfigValue: ['value'],
+  DashboardMatcherConfig: ['options'],
+  DashboardDataTransformerConfig: ['options'],
+};
+
+function fixAnyValueProperties(definitions: Record<string, JSONSchema>): void {
+  for (const [key, schema] of Object.entries(definitions)) {
+    for (const [suffix, props] of Object.entries(ANY_VALUE_PROPERTIES)) {
+      if (key.endsWith(`_${suffix}`)) {
+        for (const p of props) {
+          if (schema.properties?.[p]) {
+            // Remove type constraint entirely — accept any JSON value
+            schema.properties[p] = {};
           }
         }
       }

@@ -1,13 +1,13 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromQueryField.tsx
 import { css, cx } from '@emotion/css';
-import { ReactNode, useCallback, useEffect, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
 
 import {
-  DataFrame,
+  type DataFrame,
   getDefaultTimeRange,
   isDataFrame,
-  QueryEditorProps,
-  QueryHint,
+  type QueryEditorProps,
+  type QueryHint,
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -15,9 +15,9 @@ import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { clearButtonStyles, Icon, useTheme2 } from '@grafana/ui';
 
-import { PrometheusDatasource } from '../datasource';
+import { type PrometheusDatasource } from '../datasource';
 import { getInitHints } from '../query_hints';
-import { PromOptions, PromQuery } from '../types';
+import { type PromOptions, type PromQuery } from '../types';
 
 import { MetricsBrowser } from './metrics-browser/MetricsBrowser';
 import { MetricsBrowserProvider } from './metrics-browser/MetricsBrowserContext';

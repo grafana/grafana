@@ -1,7 +1,7 @@
 import { fireEvent, render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DashboardLink, DashboardLinkPlacement } from '@grafana/schema';
+import { type DashboardLink, type DashboardLinkPlacement } from '@grafana/schema';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { createDefaultLink, openLinkEditPane } from '../../settings/links/LinkAddEditableElement';

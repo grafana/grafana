@@ -1,6 +1,6 @@
-import { LogContext } from '@grafana/faro-web-sdk';
+import { type LogContext } from '@grafana/faro-web-sdk';
 
-import { createMonitoringLogger, MonitoringLogger } from './logging';
+import { createMonitoringLogger, type MonitoringLogger } from './logging';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const cache: Map<string, Promise<any>> = new Map();

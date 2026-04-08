@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState } from 'react';
 
-import { SceneQueryRunner } from '@grafana/scenes';
+import { type SceneQueryRunner } from '@grafana/scenes';
 
-import { Domain } from './types';
+import { type Domain } from './types';
 
 interface WorkbenchContextValue {
   leftColumnWidth: number;

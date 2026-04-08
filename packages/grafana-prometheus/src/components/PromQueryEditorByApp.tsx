@@ -6,7 +6,7 @@ import { CoreApp } from '@grafana/data';
 import { PromQueryEditorSelector } from '../querybuilder/components/PromQueryEditorSelector';
 
 import { PromQueryEditorForAlerting } from './PromQueryEditorForAlerting';
-import { PromQueryEditorProps } from './types';
+import { type PromQueryEditorProps } from './types';
 
 function PromQueryEditorByAppBase(props: PromQueryEditorProps) {
   const { app } = props;

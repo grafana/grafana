@@ -1,13 +1,13 @@
 import { readFileSync } from 'fs';
 import { load } from 'js-yaml';
-import { Page } from 'playwright-core';
+import { type Page } from 'playwright-core';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  CreateDataSourcePageArgs,
-  DashboardPage,
-  DataSourceConfigPage,
-  E2ESelectorGroups,
+  type CreateDataSourcePageArgs,
+  type DashboardPage,
+  type DataSourceConfigPage,
+  type E2ESelectorGroups,
   expect,
   test,
 } from '@grafana/plugin-e2e';
@@ -15,8 +15,8 @@ import {
 import { AzureQueryType } from '../../public/app/plugins/datasource/azuremonitor/dataquery.gen';
 import { selectors as azMonSelectors } from '../../public/app/plugins/datasource/azuremonitor/e2e/selectors';
 import {
-  AzureMonitorDataSourceJsonData,
-  AzureMonitorDataSourceSecureJsonData,
+  type AzureMonitorDataSourceJsonData,
+  type AzureMonitorDataSourceSecureJsonData,
 } from '../../public/app/plugins/datasource/azuremonitor/types/types';
 
 const provisioningPath = 'provisioning/datasources/azmonitor-ds.yaml';

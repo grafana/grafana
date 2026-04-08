@@ -1,13 +1,13 @@
 import { css, cx } from '@emotion/css';
-import { useMemo, PropsWithChildren } from 'react';
+import { useMemo, type PropsWithChildren } from 'react';
 
-import { dateTime, DateTimeInput, GrafanaTheme2 } from '@grafana/data';
+import { dateTime, type DateTimeInput, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Tooltip } from '../Tooltip/Tooltip';
 
-import { UserView } from './types';
+import { type UserView } from './types';
 
 export interface UserIconProps {
   /** An object that contains the user's details and an optional 'lastActiveAt' status */

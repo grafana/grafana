@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 import { useMedia } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -29,7 +29,7 @@ import {
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { PublicDashboardListResponse } from '../../types';
+import { type PublicDashboardListResponse } from '../../types';
 
 import { DeletePublicDashboardButton } from './DeletePublicDashboardButton';
 

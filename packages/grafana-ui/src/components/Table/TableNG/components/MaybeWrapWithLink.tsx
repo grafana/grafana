@@ -1,6 +1,6 @@
-import { memo, ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 
-import { Field } from '@grafana/data';
+import { type Field } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { renderSingleLink } from '../../DataLinksActionsTooltip';

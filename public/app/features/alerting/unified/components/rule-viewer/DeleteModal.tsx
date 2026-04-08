@@ -4,7 +4,7 @@ import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 import { dispatch } from 'app/store/store';
-import { EditableRuleIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import { type EditableRuleIdentifier, type RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 
 import { shouldAllowRecoveringDeletedRules, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../hooks/ruleGroup/useDeleteRuleFromGroup';

@@ -1,7 +1,7 @@
-import { Dispatch, SetStateAction } from 'react';
+import { type Dispatch, type SetStateAction } from 'react';
 
 import { Tab, TabsBar } from '@grafana/ui';
-import { GeomapLayerHover } from 'app/plugins/panel/geomap/event';
+import { type GeomapLayerHover } from 'app/plugins/panel/geomap/event';
 
 type Props = {
   layers?: GeomapLayerHover[];

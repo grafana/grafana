@@ -5,24 +5,24 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   FALLBACK_COLOR,
-  FieldDisplay,
+  type FieldDisplay,
   formattedValueToString,
   getFieldDisplayValues,
-  PanelProps,
+  type PanelProps,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { HideSeriesConfig, SortOrder, LegendDisplayMode } from '@grafana/schema';
+import { type HideSeriesConfig, SortOrder, LegendDisplayMode } from '@grafana/schema';
 import {
   SeriesVisibilityChangeBehavior,
   usePanelContext,
   useTheme2,
   VizLayout,
   VizLegend,
-  VizLegendItem,
+  type VizLegendItem,
 } from '@grafana/ui';
 
 import { PieChart } from './PieChart';
-import { PieChartLegendOptions, PieChartLegendValues, Options } from './panelcfg.gen';
+import { type PieChartLegendOptions, PieChartLegendValues, type Options } from './panelcfg.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 const defaultLegendOptions: PieChartLegendOptions = {

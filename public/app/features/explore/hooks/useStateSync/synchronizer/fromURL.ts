@@ -8,12 +8,12 @@ import { cancelQueries, runQueries, setQueriesAction } from 'app/features/explor
 import { updateTime } from 'app/features/explore/state/time';
 import { fromURLRange } from 'app/features/explore/state/utils';
 import { withUniqueRefIds } from 'app/features/explore/utils/queries';
-import { ExploreItemState } from 'app/types/explore';
-import { ThunkDispatch } from 'app/types/store';
+import { type ExploreItemState } from 'app/types/explore';
+import { type ThunkDispatch } from 'app/types/store';
 
 import { getUrlStateFromPaneState } from '../external.utils';
 import { urlDiff } from '../internal.utils';
-import { ExploreURLV1 } from '../migrators/v1';
+import { type ExploreURLV1 } from '../migrators/v1';
 
 export function syncFromURL(
   urlState: ExploreURLV1,

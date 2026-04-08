@@ -3,7 +3,7 @@ import { renderHook } from '@testing-library/react';
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin } from '../types';
 
 import { usePluginDetailsTabs } from './usePluginDetailsTabs';
 

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { type JSX } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Dropdown, Icon, IconButton, Tooltip, useStyles2 } from '@grafana/ui';
 
 interface LogControlOptionProps {

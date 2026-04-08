@@ -1,14 +1,14 @@
 import { useCallback, useMemo } from 'react';
 
 import {
-  RoutingTree,
+  type RoutingTree,
   generatedAPI as notificationsAPIv0alpha1,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 
-import { Label } from '../../matchers/types';
+import { type Label } from '../../matchers/types';
 import { USER_DEFINED_TREE_NAME } from '../consts';
-import { Route, RouteWithID } from '../types';
-import { RouteMatchResult, TreeMatch, convertRoutingTreeToRoute, matchInstancesToRoute } from '../utils';
+import { type Route, type RouteWithID } from '../types';
+import { type RouteMatchResult, type TreeMatch, convertRoutingTreeToRoute, matchInstancesToRoute } from '../utils';
 
 export type RouteMatch = {
   route: Route;

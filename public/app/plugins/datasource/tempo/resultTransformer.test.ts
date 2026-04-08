@@ -1,6 +1,6 @@
-import { collectorTypes } from '@opentelemetry/exporter-collector';
+import { type collectorTypes } from '@opentelemetry/exporter-collector';
 
-import { Field, PluginType, DataSourceInstanceSettings, PluginMetaInfo } from '@grafana/data';
+import { type Field, PluginType, type DataSourceInstanceSettings, type PluginMetaInfo } from '@grafana/data';
 
 import {
   transformToOTLP,
@@ -15,7 +15,7 @@ import {
   otlpResponse,
   traceQlResponse,
 } from './test/testResponse';
-import { TraceSearchMetadata } from './types';
+import { type TraceSearchMetadata } from './types';
 
 const defaultSettings: DataSourceInstanceSettings = {
   uid: '0',

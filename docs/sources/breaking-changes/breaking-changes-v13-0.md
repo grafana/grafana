@@ -51,12 +51,14 @@ You use any of the following endpoints directly, for example in automation scrip
 - `GET /api/alertmanager/grafana/config/api/v1/alerts`
 - `GET /api/alertmanager/grafana/config/history`
 - `POST /api/alertmanager/grafana/config/history/{id}/_activate`
+- `POST /api/alertmanager/grafana/config/api/v1/receivers/test`
 
 #### Description
 
 These endpoints were deprecated in Grafana v12 and rely on legacy single-tenant Alertmanager configuration semantics.
 
 - `DELETE /api/alertmanager/grafana/config/api/v1/alerts` has been removed entirely.
+- `POST /api/alertmanager/grafana/config/api/v1/receivers/test` has been removed entirely.
 - `GET /api/alertmanager/grafana/config/api/v1/alerts` is now restricted to admin users. A `Warning: 299` response header is included to help identify any remaining automated consumers. The endpoint will be fully removed in Grafana v14.
 - `GET /api/alertmanager/grafana/config/history` is now restricted to admin users. The endpoint will be fully removed in Grafana v14.
 - `POST /api/alertmanager/grafana/config/history/{id}/_activate` is now restricted to admin users. The endpoint will be fully removed in Grafana v14.
@@ -65,13 +67,14 @@ These endpoints were deprecated in Grafana v12 and rely on legacy single-tenant 
 
 Use the Kubernetes-style resource APIs under `notifications.alerting.grafana.app/v1beta1`:
 
-| Resource              | API path                                                                                  |
-| --------------------- | ----------------------------------------------------------------------------------------- |
-| Receivers             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers`       |
-| Notification policies | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees`    |
-| Templates             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups`  |
-| Mute timings          | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals`   |
-| Inhibition rules      | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules` |
+| Resource              | API path                                                                                       |
+| --------------------- | ---------------------------------------------------------------------------------------------- |
+| Receivers             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers`            |
+| Notification policies | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees`         |
+| Templates             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups`       |
+| Mute timings          | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals`        |
+| Inhibition rules      | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules`      |
+| Receiver testing      | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{uid}/test` |
 
 ### Alertmanager status endpoint requires a new permission
 

@@ -1,16 +1,16 @@
 import EventEmitter from 'eventemitter3';
-import { Unsubscribable, Observable, Subscriber } from 'rxjs';
+import { type Unsubscribable, Observable, type Subscriber } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
 import {
-  EventBus,
-  LegacyEmitter,
-  BusEventHandler,
-  BusEventType,
-  LegacyEventHandler,
-  BusEvent,
-  AppEvent,
-  EventFilterOptions,
+  type EventBus,
+  type LegacyEmitter,
+  type BusEventHandler,
+  type BusEventType,
+  type LegacyEventHandler,
+  type BusEvent,
+  type AppEvent,
+  type EventFilterOptions,
 } from './types';
 
 /**

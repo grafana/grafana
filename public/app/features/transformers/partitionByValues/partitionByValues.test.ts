@@ -1,6 +1,6 @@
 import { toDataFrame, FieldType } from '@grafana/data';
 
-import { getPartitionByValuesTransformer, PartitionByValuesTransformerOptions } from './partitionByValues';
+import { getPartitionByValuesTransformer, type PartitionByValuesTransformerOptions } from './partitionByValues';
 
 const ctx = {
   interpolate: (v: string) => v,

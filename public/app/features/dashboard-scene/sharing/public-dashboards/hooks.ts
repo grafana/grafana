@@ -1,6 +1,6 @@
 import { useAsync } from 'react-use';
 
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 
 import { getPanelDatasourceTypes, getUnsupportedDashboardDatasources } from './utils';
 

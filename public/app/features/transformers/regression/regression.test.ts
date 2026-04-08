@@ -1,14 +1,14 @@
 import {
-  DataFrame,
-  DataFrameDTO,
-  DataTransformContext,
-  Field,
+  type DataFrame,
+  type DataFrameDTO,
+  type DataTransformContext,
+  type Field,
   FieldType,
   toDataFrame,
   toDataFrameDTO,
 } from '@grafana/data';
 
-import { ModelType, getRegressionTransformer, RegressionTransformerOptions } from './regression';
+import { ModelType, getRegressionTransformer, type RegressionTransformerOptions } from './regression';
 
 describe('Trendline transformation', () => {
   const RegressionTransformer = getRegressionTransformer();

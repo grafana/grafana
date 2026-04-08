@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 
-import { StandardEditorProps, SelectableValue } from '@grafana/data';
+import { type StandardEditorProps, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { LineStyle } from '@grafana/schema';
+import { type LineStyle } from '@grafana/schema';
 import { IconButton, RadioButtonGroup, Select, Stack } from '@grafana/ui';
 
 type LineFill = 'solid' | 'dash' | 'dot';

@@ -1,8 +1,8 @@
-import { PrometheusLanguageProviderInterface } from '../../../language_provider';
-import { PromMetricsMetadata } from '../../../types';
+import { type PrometheusLanguageProviderInterface } from '../../../language_provider';
+import { type PromMetricsMetadata } from '../../../types';
 
 import { calculatePageList, generateMetricData, getPlaceholders, getPromTypes } from './helpers';
-import { MetricsData } from './types';
+import { type MetricsData } from './types';
 
 // Mock the language provider
 const createMockLanguageProvider = (metadata: PromMetricsMetadata = {}): PrometheusLanguageProviderInterface =>

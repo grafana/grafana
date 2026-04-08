@@ -7,7 +7,7 @@ import config from 'app/core/config';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ThemePicker } from './ThemePicker';
-import { ShareModalTabProps } from './types';
+import { type ShareModalTabProps } from './types';
 import { buildImageUrl, buildShareUrl, getTrackingSource } from './utils';
 
 export interface Props extends ShareModalTabProps {}

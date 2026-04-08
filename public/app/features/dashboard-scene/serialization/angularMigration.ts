@@ -1,7 +1,7 @@
 import { defaults, cloneDeep } from 'lodash';
 
-import { PanelModel as PanelModelFromData, PanelPlugin } from '@grafana/data';
-import { autoMigrateAngular, PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type PanelModel as PanelModelFromData, type PanelPlugin } from '@grafana/data';
+import { autoMigrateAngular, type PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 /**
  * Data structure for Angular migration information stored in v2 schema options.

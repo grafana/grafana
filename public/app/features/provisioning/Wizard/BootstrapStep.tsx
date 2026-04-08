@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { memo, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
-import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
 import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
@@ -18,7 +18,7 @@ import { useStepStatus } from './StepStatusContext';
 import { useModeOptions } from './hooks/useModeOptions';
 import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
-import { WizardFormData } from './types';
+import { type WizardFormData } from './types';
 
 export interface Props {
   settingsData?: RepositoryViewList;
@@ -55,15 +55,15 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   const {
     resourceCountString,
     fileCountString,
-    resourceCount,
+    fileCount,
     isLoading: isResourceStatsLoading,
   } = useResourceStats(repoName, selectedTarget, undefined, { isHealthy, healthStatusNotReady });
 
   const maxResourcesPerRepository = quota?.maxResourcesPerRepository ?? 0;
-  const isQuotaExceeded = maxResourcesPerRepository > 0 && resourceCount > maxResourcesPerRepository;
   const styles = useStyles2(getStyles);
 
   const isLoading = isRepositoryStatusLoading || isResourceStatsLoading || !isRepositoryReady;
+  const isQuotaExceeded = !isLoading && maxResourcesPerRepository > 0 && fileCount > maxResourcesPerRepository;
 
   useEffect(() => {
     // Pick a nice name based on type+settings, but only if user hasn't modified it
@@ -104,13 +104,13 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
           message: onPrem
             ? t(
                 'provisioning.bootstrap-step.error-quota-exceeded-message-onprem',
-                'This repository contains {{resourceCount}} resources, which exceeds your instance limit of {{limit}}. To sync this repository, update your Grafana configuration or reduce the number of resources to sync.',
-                { resourceCount, limit: maxResourcesPerRepository }
+                'This repository folder contains {{fileCount}} resources, which exceeds your instance limit of {{limit}}. To sync this repository, update your Grafana configuration or reduce the number of resources to sync.',
+                { fileCount, limit: maxResourcesPerRepository }
               )
             : t(
                 'provisioning.bootstrap-step.error-quota-exceeded-message',
-                'This repository contains {{resourceCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.',
-                { resourceCount, limit: maxResourcesPerRepository }
+                'This repository folder contains {{fileCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.',
+                { fileCount, limit: maxResourcesPerRepository }
               ),
         },
         action: onPrem
@@ -135,7 +135,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     retryRepositoryStatus,
     maxResourcesPerRepository,
     isQuotaExceeded,
-    resourceCount,
+    fileCount,
     isUnhealthy,
   ]);
 

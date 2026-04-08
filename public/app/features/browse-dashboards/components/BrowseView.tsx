@@ -7,7 +7,7 @@ import { CallToActionCard, EmptyState, LinkButton, TextLink } from '@grafana/ui'
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
-import { DashboardViewItem } from 'app/features/search/types';
+import { type DashboardViewItem } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/services';
@@ -22,7 +22,12 @@ import {
   useLoadNextChildrenPage,
 } from '../state/hooks';
 import { setAllSelection, setFolderOpenState, setItemSelectionState } from '../state/slice';
-import { BrowseDashboardsPermissions, BrowseDashboardsState, DashboardTreeSelection, SelectionState } from '../types';
+import {
+  type BrowseDashboardsPermissions,
+  type BrowseDashboardsState,
+  type DashboardTreeSelection,
+  SelectionState,
+} from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
 

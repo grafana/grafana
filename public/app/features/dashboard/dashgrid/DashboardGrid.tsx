@@ -1,7 +1,7 @@
 import classNames from 'classnames';
-import { PureComponent, CSSProperties } from 'react';
+import { PureComponent, type CSSProperties } from 'react';
 import * as React from 'react';
-import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
+import ReactGridLayout, { type ItemCallback } from 'react-grid-layout';
 import { Subscription } from 'rxjs';
 
 import { config } from '@grafana/runtime';
@@ -13,8 +13,8 @@ import { DashboardPanelsChangedEvent } from 'app/types/events';
 
 import { AddLibraryPanelWidget } from '../components/AddLibraryPanelWidget/AddLibraryPanelWidget';
 import { DashboardRow } from '../components/DashboardRow/DashboardRow';
-import { DashboardModel } from '../state/DashboardModel';
-import { GridPos, PanelModel } from '../state/PanelModel';
+import { type DashboardModel } from '../state/DashboardModel';
+import { type GridPos, type PanelModel } from '../state/PanelModel';
 
 import DashboardEmpty from './DashboardEmpty/DashboardEmpty';
 import { DashboardPanel } from './DashboardPanel';

@@ -8,10 +8,10 @@ import { MatcherOperator } from '../../../../../../plugins/datasource/alertmanag
 import { getMockConfig, setupMswServer } from '../../../mockApi';
 import { grantUserPermissions, mockAlertQuery, mockAlertmanagerAlert } from '../../../mocks';
 import { mockPreviewApiResponse } from '../../../mocks/grafanaRulerApi';
-import { Folder } from '../../../types/rule-form';
+import { type Folder } from '../../../types/rule-form';
 import * as dataSource from '../../../utils/datasource';
 import {
-  AlertManagerDataSource,
+  type AlertManagerDataSource,
   GRAFANA_RULES_SOURCE_NAME,
   useGetAlertManagerDataSourcesByPermissionAndConfig,
 } from '../../../utils/datasource';

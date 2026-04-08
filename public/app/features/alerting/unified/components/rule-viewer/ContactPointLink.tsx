@@ -1,4 +1,4 @@
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { base64UrlEncode } from '@grafana/alerting';

@@ -5,11 +5,11 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
+import { type Dashboard } from '@grafana/schema';
 import { Button, Field, Input, Stack, TextArea, Switch } from '@grafana/ui';
-import { RepositoryView, Unstructured } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView, type Unstructured } from 'app/api/clients/provisioning/v0alpha1';
 import kbn from 'app/core/utils/kbn';
-import { Resource } from 'app/features/apiserver/types';
+import { type Resource } from 'app/features/apiserver/types';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -17,13 +17,13 @@ import { validationSrv } from 'app/features/manage-dashboards/services/Validatio
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 import {
-  ProvisionedOperationInfo,
+  type ProvisionedOperationInfo,
   useProvisionedRequestHandler,
 } from 'app/features/provisioning/hooks/useProvisionedRequestHandler';
-import { SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { ProvisionedDashboardFormData } from '../../types/form';
+import { type ProvisionedDashboardFormData } from '../../types/form';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
@@ -31,7 +31,7 @@ import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFi
 import { getProvisionedRequestError } from '../utils/errors';
 import { getProvisionedMeta } from '../utils/getProvisionedMeta';
 
-import { SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
+import { type SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 
 export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;

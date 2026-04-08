@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 
-import { TraceSearchProps } from '@grafana/data';
+import { type TraceSearchProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FilterPill, Stack, Tooltip } from '@grafana/ui';
 
-import { Trace } from '../types/trace';
+import { type Trace } from '../types/trace';
 
 export interface TraceFilterPillsProps {
   trace: Trace;

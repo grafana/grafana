@@ -1,15 +1,17 @@
 import {
   FieldColorModeId,
-  FieldConfigSource,
+  type FieldConfigSource,
   FieldType,
-  VisualizationPresetsSupplier,
-  VisualizationSuggestion,
+  type VisualizationPresetsSupplier,
+  type VisualizationSuggestion,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { AxisPlacement, GraphGradientMode, StackingMode } from '@grafana/schema';
 import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
-import { FieldConfig, Options } from './panelcfg.gen';
+import { type FieldConfig, type Options } from './panelcfg.gen';
+
+const MAX_PREVIEW_ROWS = 20;
 
 const previewModifier = (s: VisualizationSuggestion<Options, FieldConfig>) => {
   s.options!.legend = SUGGESTIONS_LEGEND_OPTIONS;
@@ -18,9 +20,10 @@ const previewModifier = (s: VisualizationSuggestion<Options, FieldConfig>) => {
 };
 
 function makePreset(
-  preset: Omit<VisualizationSuggestion<Options, FieldConfig>, 'cardOptions'>
+  preset: Omit<VisualizationSuggestion<Options, FieldConfig>, 'cardOptions'>,
+  maxRows?: number
 ): VisualizationSuggestion<Options, FieldConfig> {
-  return { ...preset, cardOptions: { previewModifier } };
+  return { ...preset, cardOptions: { previewModifier, maxRows } };
 }
 
 const CLASSIC_CUSTOM: Partial<FieldConfig> = {
@@ -82,40 +85,59 @@ const FC_VIRIDIS_HUE: FieldConfigSource<Partial<FieldConfig>> = {
   overrides: [],
 };
 
-const paletteClassicPreset = () =>
-  makePreset({
-    name: t('barchart.presets.palette-classic', 'Palette classic'),
-    options: CLASSIC_OPTIONS,
-    fieldConfig: FC_PALETTE_CLASSIC,
-  });
+const paletteClassicPreset = (maxRows?: number) =>
+  makePreset(
+    {
+      name: t('barchart.presets.palette-classic', 'Palette classic'),
+      options: CLASSIC_OPTIONS,
+      fieldConfig: FC_PALETTE_CLASSIC,
+    },
+    maxRows
+  );
 
-const paletteClassicStackedPreset = () =>
-  makePreset({
-    name: t('barchart.presets.palette-classic-stacked', 'Palette classic stacked'),
-    options: CLASSIC_STACKED_OPTIONS,
-    fieldConfig: FC_PALETTE_CLASSIC,
-  });
+const paletteClassicStackedPreset = (maxRows?: number) =>
+  makePreset(
+    {
+      name: t('barchart.presets.palette-classic-stacked', 'Palette classic stacked'),
+      options: CLASSIC_STACKED_OPTIONS,
+      fieldConfig: FC_PALETTE_CLASSIC,
+    },
+    maxRows
+  );
 
-const fixedPurpleHuePreset = () =>
-  makePreset({
-    name: t('barchart.presets.fixed-purple-hue', 'Fixed purple hue'),
-    options: HUE_OPTIONS,
-    fieldConfig: FC_FIXED_PURPLE_HUE,
-  });
+const fixedPurpleHuePreset = (maxRows?: number) =>
+  makePreset(
+    {
+      name: t('barchart.presets.fixed-purple-hue', 'Fixed purple hue'),
+      options: HUE_OPTIONS,
+      fieldConfig: FC_FIXED_PURPLE_HUE,
+    },
+    maxRows
+  );
 
-const viridisHuePreset = () =>
-  makePreset({
-    name: t('barchart.presets.viridis-hue', 'Viridis hue'),
-    options: HUE_OPTIONS,
-    fieldConfig: FC_VIRIDIS_HUE,
-  });
+const viridisHuePreset = (maxRows?: number) =>
+  makePreset(
+    {
+      name: t('barchart.presets.viridis-hue', 'Viridis hue'),
+      options: HUE_OPTIONS,
+      fieldConfig: FC_VIRIDIS_HUE,
+    },
+    maxRows
+  );
 
 export const barchartPresetsSupplier: VisualizationPresetsSupplier<Options, FieldConfig> = ({ dataSummary }) => {
-  const hasMultipleNumberFields = (dataSummary?.fieldCountByType(FieldType.number) ?? 0) > 1;
-  const presets = [paletteClassicPreset(), fixedPurpleHuePreset(), viridisHuePreset()];
+  if (!dataSummary?.hasData || !dataSummary.hasFieldType(FieldType.number)) {
+    return [];
+  }
+
+  const hasMultipleNumberFields = dataSummary.fieldCountByType(FieldType.number) > 1;
+  const rowCountMax = dataSummary.rowCountMax;
+  const maxRows = rowCountMax > MAX_PREVIEW_ROWS ? MAX_PREVIEW_ROWS : undefined;
+
+  const presets = [paletteClassicPreset(maxRows), fixedPurpleHuePreset(maxRows), viridisHuePreset(maxRows)];
 
   if (hasMultipleNumberFields) {
-    presets.push(paletteClassicStackedPreset());
+    presets.push(paletteClassicStackedPreset(maxRows));
   }
 
   return presets;

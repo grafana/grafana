@@ -1,8 +1,13 @@
 import { css } from '@emotion/css';
-import { Fragment, ReactNode, useMemo } from 'react';
+import { Fragment, type ReactNode, useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2, PanelData, PanelPluginMeta, PanelPluginVisualizationSuggestion } from '@grafana/data';
+import {
+  type GrafanaTheme2,
+  type PanelData,
+  type PanelPluginMeta,
+  type PanelPluginVisualizationSuggestion,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Text, useStyles2 } from '@grafana/ui';
 import { MIN_MULTI_COLUMN_SIZE } from 'app/features/panel/suggestions/constants';

@@ -380,8 +380,6 @@ func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("Post dashboard response tests", func(t *testing.T) {
-		dashboardStore := &dashboards.FakeDashboardStore{}
-		defer dashboardStore.AssertExpectations(t)
 		// This tests that a valid request returns correct response
 		t.Run("Given a correct request for creating a dashboard", func(t *testing.T) {
 			folderUID := "Folder"

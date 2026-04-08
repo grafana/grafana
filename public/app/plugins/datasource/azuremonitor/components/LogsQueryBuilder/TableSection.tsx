@@ -1,16 +1,19 @@
 import React from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
 import { Button, Select } from '@grafana/ui';
 
 import { BuilderQueryEditorExpressionType, BuilderQueryEditorPropertyType } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn, AzureLogAnalyticsMetadataTable } from '../../types/logAnalyticsMetadata';
-import { AzureMonitorQuery } from '../../types/query';
+import {
+  type AzureLogAnalyticsMetadataColumn,
+  type AzureLogAnalyticsMetadataTable,
+} from '../../types/logAnalyticsMetadata';
+import { type AzureMonitorQuery } from '../../types/query';
 import { TablePlan } from '../../types/types';
 
-import { BuildAndUpdateOptions, inputFieldSize } from './utils';
+import { type BuildAndUpdateOptions, inputFieldSize } from './utils';
 
 interface TableSectionProps {
   allColumns: AzureLogAnalyticsMetadataColumn[];

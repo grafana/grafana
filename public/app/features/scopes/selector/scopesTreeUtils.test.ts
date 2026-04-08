@@ -1,4 +1,4 @@
-import { ScopeNode } from '@grafana/data';
+import { type ScopeNode } from '@grafana/data';
 
 import {
   closeNodes,
@@ -10,7 +10,7 @@ import {
   treeNodeAtPath,
   insertPathNodesIntoTree,
 } from './scopesTreeUtils';
-import { TreeNode, NodesMap } from './types';
+import { type TreeNode, type NodesMap } from './types';
 
 describe('scopesTreeUtils', () => {
   describe('closeNodes', () => {

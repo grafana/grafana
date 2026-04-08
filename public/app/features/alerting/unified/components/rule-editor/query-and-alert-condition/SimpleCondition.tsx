@@ -1,19 +1,24 @@
 import { css } from '@emotion/css';
 import { produce } from 'immer';
-import { Dispatch, FormEvent } from 'react';
-import { UnknownAction } from 'redux';
+import { type Dispatch, type FormEvent } from 'react';
+import { type UnknownAction } from 'redux';
 
-import { GrafanaTheme2, PanelData, ReducerID, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type PanelData, ReducerID, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Input, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { ThresholdSelect } from 'app/features/expressions/components/ThresholdSelect';
-import { ExpressionQuery, ExpressionQueryType, reducerTypes, thresholdFunctions } from 'app/features/expressions/types';
+import {
+  type ExpressionQuery,
+  ExpressionQueryType,
+  reducerTypes,
+  thresholdFunctions,
+} from 'app/features/expressions/types';
 import { getReducerType, isRangeEvaluator } from 'app/features/expressions/utils/expressionTypes';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { ToLabel } from '../../../../../expressions/components/ToLabel';
-import { SimpleCondition } from '../../../types/rule-form';
+import { type SimpleCondition } from '../../../types/rule-form';
 import { ExpressionResult } from '../../expressions/Expression';
 
 import { updateExpression } from './reducer';

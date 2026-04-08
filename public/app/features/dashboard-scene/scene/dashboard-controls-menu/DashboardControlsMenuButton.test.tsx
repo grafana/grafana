@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
-import { SceneVariableSet, TextBoxVariable, QueryVariable, CustomVariable, SceneVariable } from '@grafana/scenes';
+import { SceneVariableSet, TextBoxVariable, QueryVariable, CustomVariable, type SceneVariable } from '@grafana/scenes';
 
 import { DashboardScene } from '../DashboardScene';
 

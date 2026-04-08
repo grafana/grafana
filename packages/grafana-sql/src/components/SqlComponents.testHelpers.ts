@@ -1,9 +1,9 @@
-import { TimeRange, PluginType } from '@grafana/data';
+import { type TimeRange, PluginType } from '@grafana/data';
 
-import { DB, SQLQuery, SQLSelectableValue, ValidationResults } from '../types';
+import { type DB, type SQLQuery, type SQLSelectableValue, type ValidationResults } from '../types';
 
-import { DatasetSelectorProps } from './DatasetSelector';
-import { TableSelectorProps } from './TableSelector';
+import { type DatasetSelectorProps } from './DatasetSelector';
+import { type TableSelectorProps } from './TableSelector';
 
 export const buildMockDB = (): DB => ({
   datasets: jest.fn(() => Promise.resolve(['dataset1', 'dataset2'])),

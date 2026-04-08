@@ -1,4 +1,4 @@
-import { marked, MarkedOptions } from 'marked';
+import { marked, type MarkedOptions } from 'marked';
 import { mangle } from 'marked-mangle';
 
 import { sanitizeTextPanelContent } from './sanitize';

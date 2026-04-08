@@ -4,11 +4,11 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
 
-import { GrafanaRouteComponentProps } from '../../core/navigation/types';
+import { type GrafanaRouteComponentProps } from '../../core/navigation/types';
 import { buildNavModel, getLibraryPanelsTabID } from '../folders/state/navModel';
 import { LibraryPanelsSearch } from '../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 import { OpenLibraryPanelModal } from '../library-panels/components/OpenLibraryPanelModal/OpenLibraryPanelModal';
-import { LibraryElementDTO } from '../library-panels/types';
+import { type LibraryElementDTO } from '../library-panels/types';
 
 import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDetailsActions';
 

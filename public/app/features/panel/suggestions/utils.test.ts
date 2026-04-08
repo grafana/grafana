@@ -2,8 +2,8 @@ import {
   createDataFrame,
   FieldType,
   getPanelDataSummary,
-  PanelDataSummary,
-  PanelData,
+  type PanelDataSummary,
+  type PanelData,
   LoadingState,
   getDefaultTimeRange,
 } from '@grafana/data';

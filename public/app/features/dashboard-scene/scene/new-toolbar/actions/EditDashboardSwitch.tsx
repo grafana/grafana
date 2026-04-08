@@ -5,7 +5,7 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 import { trackDashboardSceneEditButtonClicked } from 'app/features/dashboard-scene/utils/tracking';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
-import { ToolbarActionProps } from '../types';
+import { type ToolbarActionProps } from '../types';
 
 export const EditDashboardSwitch = ({ dashboard }: ToolbarActionProps) => {
   const tooltip = dashboard.state.isEditing

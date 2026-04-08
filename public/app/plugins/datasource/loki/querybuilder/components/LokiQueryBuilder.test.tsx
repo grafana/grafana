@@ -4,9 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { dateTime } from '@grafana/data';
 
 import { createLokiDatasource } from '../../mocks/datasource';
-import { LokiOperationId, LokiVisualQuery } from '../types';
+import { LokiOperationId, type LokiVisualQuery } from '../types';
 
-import { LokiQueryBuilder, Props, TIME_SPAN_TO_TRIGGER_SAMPLES } from './LokiQueryBuilder';
+import { LokiQueryBuilder, type Props, TIME_SPAN_TO_TRIGGER_SAMPLES } from './LokiQueryBuilder';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 
 const MISSING_LABEL_FILTER_ERROR_MESSAGE = 'Select at least 1 label filter (label and value)';

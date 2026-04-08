@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-import { VizPanel } from '@grafana/scenes';
+import { type VizPanel } from '@grafana/scenes';
 
 export interface PopoverTarget {
   panel: VizPanel;

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { MenuItem, MenuItemProps } from './MenuItem';
+import { MenuItem, type MenuItemProps } from './MenuItem';
 
 describe('MenuItem', () => {
   let user: ReturnType<typeof userEvent.setup>;

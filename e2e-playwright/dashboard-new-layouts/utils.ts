@@ -1,7 +1,7 @@
-import { Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { DashboardPage, E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
+import { type DashboardPage, type E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
@@ -127,7 +127,12 @@ export async function saveDashboard(
     await page.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput).fill(title);
   }
   await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
-  await expect(page.getByText('Dashboard saved')).toBeVisible();
+
+  // wait for the toast
+  const toast = page.getByRole('status', { name: 'Dashboard saved' });
+  await expect(toast).toBeVisible();
+  // close toast, we do this to prevent any incorrect assertion when several saves occur fast. i.e. the 1st toast is still visible but the 2nd save has not occurred yet
+  await toast.getByRole('button', { name: 'Close alert' }).click();
 }
 
 export async function checkRepeatedPanelTitles(

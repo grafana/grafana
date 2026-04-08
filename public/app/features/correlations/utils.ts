@@ -3,29 +3,29 @@ import { lastValueFrom } from 'rxjs';
 
 import {
   generatedAPI as correlationsAPIv0alpha1,
-  CorrelationSpec,
+  type CorrelationSpec,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
+import { type DataFrame, DataLinkConfigOrigin } from '@grafana/data';
 import {
   config,
-  CorrelationData,
-  CorrelationsData,
+  type CorrelationData,
+  type CorrelationsData,
   createMonitoringLogger,
   getBackendSrv,
   getDataSourceSrv,
 } from '@grafana/runtime';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { ExploreItemState } from 'app/types/explore';
-import { ThunkDispatch } from 'app/types/store';
+import { type ExploreItemState } from 'app/types/explore';
+import { type ThunkDispatch } from 'app/types/store';
 
 import { formatValueName } from '../explore/PrometheusListView/ItemLabels';
 import { getDatasourceUIDs } from '../explore/state/utils';
 import { parseLogsFrame } from '../logs/logsFrame';
 
-import { EditFormDTO, FormDTO } from './Forms/types';
-import { Correlation, CreateCorrelationParams, CreateCorrelationResponse } from './types';
-import { CorrelationsResponse, getData, toEnrichedCorrelationsData } from './useCorrelations';
+import { type EditFormDTO, type FormDTO } from './Forms/types';
+import { type Correlation, type CreateCorrelationParams, type CreateCorrelationResponse } from './types';
+import { type CorrelationsResponse, getData, toEnrichedCorrelationsData } from './useCorrelations';
 import { toEnrichedCorrelationDataK8s } from './useCorrelationsK8s';
 
 type DataFrameRefIdToDataSourceUid = Record<string, string>;

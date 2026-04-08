@@ -1,13 +1,13 @@
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { render, screen } from 'test/test-utils';
 
-import { NavModel } from '@grafana/data';
+import { type NavModel } from '@grafana/data';
 import { ModalRoot } from '@grafana/ui';
-import { Organization } from 'app/types/organization';
+import { type Organization } from 'app/types/organization';
 
 import { backendSrv } from '../../core/services/backend_srv';
 
-import { OrgDetailsPage, Props } from './OrgDetailsPage';
+import { OrgDetailsPage, type Props } from './OrgDetailsPage';
 import { setOrganizationName } from './state/reducers';
 
 jest.mock('app/core/services/context_srv', () => {

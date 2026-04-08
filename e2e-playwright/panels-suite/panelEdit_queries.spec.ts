@@ -1,6 +1,6 @@
-import { Locator, Page } from 'playwright-core';
+import { type Locator, type Page } from 'playwright-core';
 
-import { test, expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 test.describe(
   'Panels test: Queries',

@@ -170,7 +170,7 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Default Logs Table Panel'))
       ).toBeVisible();
 
-      const optionWrapper = page.getByLabel('Logs Table Show inspect button field property editor');
+      const optionWrapper = page.getByTestId('data-testid Logs Table Show inspect button field property editor');
       const option = optionWrapper.getByLabel(/Show inspect button/);
       const inspectLogLineButton = page.getByLabel('View log line');
       await expect(option, 'Inspect button panel option is in the document').toHaveCount(1);
@@ -190,7 +190,7 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Default Logs Table Panel'))
       ).toBeVisible();
 
-      const optionWrapper = page.getByLabel('Logs Table Show copy log link button field property editor');
+      const optionWrapper = page.getByTestId('data-testid Logs Table Show copy log link button field property editor');
       const option = optionWrapper.getByLabel(/Show copy log link button/);
       const copyLogLineButton = page.getByLabel('Copy link to log line');
 
@@ -224,7 +224,7 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Default Logs Table Panel'))
       ).toBeVisible();
 
-      const optionWrapper = page.getByLabel('Logs Table Show controls field property editor');
+      const optionWrapper = page.getByTestId('data-testid Logs Table Show controls field property editor');
       const optionLabel = optionWrapper.getByText(/Show controls/);
       const option = optionWrapper.getByLabel(/Show controls/);
       const controlsExpandButtonDefault = page.getByLabel('Collapse', { exact: true });

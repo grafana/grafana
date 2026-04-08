@@ -1,9 +1,9 @@
-import { BaseQueryFn, createApi, defaultSerializeQueryArgs } from '@reduxjs/toolkit/query/react';
+import { type BaseQueryFn, createApi, defaultSerializeQueryArgs } from '@reduxjs/toolkit/query/react';
 import { isBoolean, omit } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import { type BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 
 import { logMeasurement } from '../Analytics';

@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { FetchError } from '@grafana/runtime';
+import { type FetchError } from '@grafana/runtime';
 
 import { EditableTitle } from './EditableTitle';
 

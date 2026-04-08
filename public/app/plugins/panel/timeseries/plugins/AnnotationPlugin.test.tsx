@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 
 import { config } from '@grafana/runtime';
-import { UPlotConfigBuilder } from '@grafana/ui';
+import { type UPlotConfigBuilder } from '@grafana/ui';
 
 import { AnnotationsPlugin } from './AnnotationPlugin';
 import { AnnotationsPlugin2 } from './AnnotationsPlugin2';

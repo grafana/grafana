@@ -2,18 +2,18 @@
 import { capitalize } from 'lodash';
 import pluralize from 'pluralize';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { utf8Support } from '../utf8_support';
 
 import {
-  QueryBuilderLabelFilter,
-  QueryBuilderOperation,
-  QueryBuilderOperationDef,
-  QueryBuilderOperationParamDef,
-  QueryBuilderOperationParamValue,
-  QueryWithOperations,
+  type QueryBuilderLabelFilter,
+  type QueryBuilderOperation,
+  type QueryBuilderOperationDef,
+  type QueryBuilderOperationParamDef,
+  type QueryBuilderOperationParamValue,
+  type QueryWithOperations,
 } from './shared/types';
 import { PromVisualQueryOperationCategory } from './types';
 

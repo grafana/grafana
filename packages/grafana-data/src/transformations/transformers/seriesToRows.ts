@@ -6,13 +6,13 @@ import { sortDataFrame } from '../../dataframe/processDataFrame';
 import { isTimeSeriesFrames } from '../../dataframe/utils';
 import { getFrameDisplayName } from '../../field/fieldState';
 import {
-  Field,
+  type Field,
   FieldType,
   TIME_SERIES_METRIC_FIELD_NAME,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '../../types/dataFrame';
-import { DataTransformerInfo } from '../../types/transformations';
+import { type DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 

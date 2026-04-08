@@ -1,11 +1,11 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/PromSettings.tsx
-import { SyntheticEvent, useState } from 'react';
+import { type SyntheticEvent, useState } from 'react';
 
 import {
-  DataSourcePluginOptionsEditorProps,
-  DataSourceSettings,
+  type DataSourcePluginOptionsEditorProps,
+  type DataSourceSettings,
   onUpdateDatasourceJsonDataOptionChecked,
-  SelectableValue,
+  type SelectableValue,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -24,7 +24,7 @@ import {
 } from '../constants';
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { defaultPrometheusQueryOverlapWindow } from '../querycache/QueryCache';
-import { PromApplication, PrometheusCacheLevel, PromOptions } from '../types';
+import { PromApplication, PrometheusCacheLevel, type PromOptions } from '../types';
 
 import { ExemplarsSettings } from './ExemplarsSettings';
 import { PromFlavorVersions } from './PromFlavorVersions';

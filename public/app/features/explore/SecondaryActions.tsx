@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { CoreApp, GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, type GrafanaTheme2 } from '@grafana/data';
 import { Components, selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';

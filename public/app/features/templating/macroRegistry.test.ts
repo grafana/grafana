@@ -3,8 +3,8 @@ import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 import { DataLinkBuiltInVars } from '@grafana/data';
 import { getTemplateSrv, setTemplateSrv } from '@grafana/runtime';
 
-import { setTimeSrv, TimeSrv } from '../dashboard/services/TimeSrv';
-import { TimeModel } from '../dashboard/state/TimeModel';
+import { setTimeSrv, type TimeSrv } from '../dashboard/services/TimeSrv';
+import { type TimeModel } from '../dashboard/state/TimeModel';
 import { variableAdapters } from '../variables/adapters';
 import { createQueryVariableAdapter } from '../variables/query/adapter';
 

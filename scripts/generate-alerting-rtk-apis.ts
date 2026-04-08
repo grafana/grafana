@@ -3,7 +3,7 @@
  * `npx rtk-query-codegen-openapi ./scripts/generate-alerting-rtk-apis.ts`
  */
 
-import { ConfigFile } from '@rtk-query/codegen-openapi';
+import { type ConfigFile } from '@rtk-query/codegen-openapi';
 import { accessSync } from 'fs';
 
 const schemaFile = '../data/alerting/openapi.json';

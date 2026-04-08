@@ -1,4 +1,4 @@
-import { AdHocVariableFilter, LanguageProvider, SelectableValue, TimeRange } from '@grafana/data';
+import { type AdHocVariableFilter, LanguageProvider, type SelectableValue, type TimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 
@@ -10,10 +10,10 @@ import {
   getUnscopedTags,
 } from './SearchTraceQLEditor/utils';
 import { DEFAULT_TIME_RANGE_FOR_TAGS } from './configuration/TagsTimeRangeSettings';
-import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
-import { TempoDatasource } from './datasource';
+import { type TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
+import { type TempoDatasource } from './datasource';
 import { enumIntrinsics, intrinsicsV1 } from './traceql/traceql';
-import { Scope } from './types';
+import { type Scope } from './types';
 
 // Limit maximum tags retrieved from the backend
 export const TAGS_LIMIT = 5000;

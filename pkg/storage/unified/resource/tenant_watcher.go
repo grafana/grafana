@@ -365,7 +365,7 @@ func (tw *TenantWatcher) editResourceLabel(dataKey DataKey, addLabel bool) error
 	}
 
 	if _, err := tw.writeEvent(tw.ctx, event); err != nil {
-		if !isConflictError(err) {
+		if !apierrors.IsConflict(err) {
 			return fmt.Errorf("writing event: %w", err)
 		}
 		// Another pod may have already modified this resource. Re-read the
@@ -413,12 +413,6 @@ func (tw *TenantWatcher) verifyLabelState(dataKey DataKey, wantLabel bool) error
 		return fmt.Errorf("label state mismatch: want=%v, got=%v", wantLabel, hasLabel)
 	}
 	return nil
-}
-
-// isConflictError returns true if the error indicates an optimistic locking /
-// resource version conflict.
-func isConflictError(err error) bool {
-	return apierrors.IsConflict(err) || strings.Contains(err.Error(), "optimistic locking failed")
 }
 
 // clearTenantPendingDelete removes the pending-delete record for a tenant from the

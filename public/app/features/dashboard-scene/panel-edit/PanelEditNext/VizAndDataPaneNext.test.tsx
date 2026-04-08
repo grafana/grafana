@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { VizPanel } from '@grafana/scenes';
 
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
-import { PanelDataPane } from '../PanelDataPane/PanelDataPane';
+import { type PanelDataPane } from '../PanelDataPane/PanelDataPane';
 import { buildPanelEditScene } from '../PanelEditor';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';

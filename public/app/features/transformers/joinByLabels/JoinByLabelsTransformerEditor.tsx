@@ -3,20 +3,19 @@ import * as React from 'react';
 
 import {
   PluginState,
-  SelectableValue,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type SelectableValue,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Stack, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/joinByLabels.svg';
 import lightImage from '../images/light/joinByLabels.svg';
 import { getDistinctLabels } from '../utils';
 
-import { getJoinByLabelsTransformer, JoinByLabelsTransformOptions } from './joinByLabels';
+import { getJoinByLabelsTransformer, type JoinByLabelsTransformOptions } from './joinByLabels';
 
 export interface Props extends TransformerUIProps<JoinByLabelsTransformOptions> {}
 
@@ -190,7 +189,6 @@ export const getJoinByLabelsTransformRegistryItem: () => TransformerRegistryItem
     description: joinByLabelsTransformer.description,
     state: PluginState.beta,
     categories: new Set([TransformerCategory.Combine]),
-    help: getTransformationContent(joinByLabelsTransformer.id).helperDocs,
     imageDark: darkImage,
     imageLight: lightImage,
   };

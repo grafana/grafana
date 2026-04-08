@@ -1,13 +1,13 @@
 // Core Grafana testing pattern
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { AnnotationQuery } from '@grafana/data';
+import { type AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { PrometheusDatasource } from '../datasource';
-import { PrometheusLanguageProviderInterface } from '../language_provider';
+import { type PrometheusDatasource } from '../datasource';
+import { type PrometheusLanguageProviderInterface } from '../language_provider';
 import { EmptyLanguageProviderMock } from '../language_provider.mock';
-import { PromQuery } from '../types';
+import { type PromQuery } from '../types';
 
 import { AnnotationQueryEditor } from './AnnotationQueryEditor';
 

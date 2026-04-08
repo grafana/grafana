@@ -27,6 +27,12 @@ describe('TraceQL grammar', () => {
       expect(withParameters).toContain('most_recent');
     });
 
+    it('should configure line comment for Ctrl+/ toggle support', () => {
+      const { languageConfiguration } = languageDefinition.def;
+      expect(languageConfiguration.comments).toBeDefined();
+      expect(languageConfiguration.comments?.lineComment).toBe('//');
+    });
+
     it('should include compare function in the functions list', () => {
       const { functions } = languageDefinition.def.language;
       expect(functions).toContain('compare');

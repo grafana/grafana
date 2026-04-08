@@ -2,27 +2,27 @@ import { css } from '@emotion/css';
 import { localPoint } from '@visx/event';
 import { RadialGradient } from '@visx/gradient';
 import { Group } from '@visx/group';
-import Pie, { PieArcDatum, ProvidedProps } from '@visx/shape/lib/shapes/Pie';
+import Pie, { type PieArcDatum, type ProvidedProps } from '@visx/shape/lib/shapes/Pie';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
-import { UseTooltipParams } from '@visx/tooltip/lib/hooks/useTooltip';
+import { type UseTooltipParams } from '@visx/tooltip/lib/hooks/useTooltip';
 import { useCallback } from 'react';
 import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
 import {
-  FieldDisplay,
+  type FieldDisplay,
   FALLBACK_COLOR,
   formattedValueToString,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   DataHoverClearEvent,
   DataHoverEvent,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SortOrder, VizTooltipOptions } from '@grafana/schema';
+import { type SortOrder, type VizTooltipOptions } from '@grafana/schema';
 import {
   useTheme2,
   useStyles2,
-  SeriesTableRowProps,
+  type SeriesTableRowProps,
   DataLinksContextMenu,
   SeriesTable,
   usePanelContext,

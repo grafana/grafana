@@ -5,9 +5,9 @@
  * (via /api/alert-notifiers?version=2)
  */
 
-import { GrafanaManagedContactPoint } from 'app/plugins/datasource/alertmanager/types';
+import { type GrafanaManagedContactPoint } from 'app/plugins/datasource/alertmanager/types';
 
-import { NotificationChannelOption, NotifierDTO } from '../types/alerting';
+import { type NotificationChannelOption, type NotifierDTO } from '../types/alerting';
 
 /**
  * Checks if a notifier can be used to create new integrations.

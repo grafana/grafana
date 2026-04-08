@@ -2,9 +2,9 @@ import { render, screen } from '@testing-library/react';
 import { openMenu } from 'react-select-event';
 
 import { MetricKind, ValueTypes } from '../dataquery.gen';
-import { MetricDescriptor } from '../types/types';
+import { type MetricDescriptor } from '../types/types';
 
-import { Aggregation, Props } from './Aggregation';
+import { Aggregation, type Props } from './Aggregation';
 
 const props: Props = {
   onChange: () => {},

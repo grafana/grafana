@@ -1,10 +1,10 @@
 import { useRegisterActions } from 'kbar';
 import { last } from 'lodash';
-import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { config } from '@grafana/runtime';
 
-import { CommandPaletteAction } from '../types';
+import { type CommandPaletteAction } from '../types';
 
 import { ScopesRow } from './ScopesRow';
 import { useRecentScopesActions } from './recentScopesActions';

@@ -1,12 +1,12 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { FormEvent } from 'react';
+import { type FormEvent } from 'react';
 import * as React from 'react';
 import { of } from 'rxjs';
 
 import {
   LoadingState,
-  PanelData,
+  type PanelData,
   getDefaultTimeRange,
   toDataFrame,
   FieldType,

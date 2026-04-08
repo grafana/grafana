@@ -1,4 +1,4 @@
-import { Plugin } from 'slate-react';
+import { type Plugin } from 'slate-react';
 
 function getIndent(text: string) {
   let offset = text.length - text.trimLeft().length;

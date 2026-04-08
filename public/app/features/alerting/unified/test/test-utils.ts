@@ -1,6 +1,6 @@
 import { act } from '@testing-library/react';
 
-import { AccessControlAction } from 'app/types/accessControl';
+import { type AccessControlAction } from 'app/types/accessControl';
 
 import { grantUserPermissions } from '../mocks';
 import { setFolderAccessControl } from '../mocks/server/configure';

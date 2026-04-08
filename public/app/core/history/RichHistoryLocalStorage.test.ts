@@ -1,10 +1,10 @@
-import { DataQuery, store } from '@grafana/data';
-import { createMonitoringLogger, MonitoringLogger } from '@grafana/runtime';
-import { RichHistoryQuery } from 'app/types/explore';
+import { type DataQuery, store } from '@grafana/data';
+import { createMonitoringLogger, type MonitoringLogger } from '@grafana/runtime';
+import { type RichHistoryQuery } from 'app/types/explore';
 
 import { DatasourceSrv } from '../../features/plugins/datasource_srv';
 import { backendSrv } from '../services/backend_srv';
-import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from '../utils/richHistoryTypes';
+import { type RichHistorySearchFilters, type RichHistorySettings, SortOrder } from '../utils/richHistoryTypes';
 
 import RichHistoryLocalStorage, { MAX_HISTORY_ITEMS } from './RichHistoryLocalStorage';
 import { RichHistoryStorageWarning } from './RichHistoryStorage';

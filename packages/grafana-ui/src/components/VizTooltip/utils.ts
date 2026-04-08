@@ -1,8 +1,14 @@
-import { FALLBACK_COLOR, Field, FieldType, formattedValueToString, getFieldColorModeForField } from '@grafana/data';
+import {
+  FALLBACK_COLOR,
+  type Field,
+  FieldType,
+  formattedValueToString,
+  getFieldColorModeForField,
+} from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
-import { ColorIndicatorStyles } from './VizTooltipColorIndicator';
-import { ColorIndicator, ColorPlacement, VizTooltipItem } from './types';
+import { type ColorIndicatorStyles } from './VizTooltipColorIndicator';
+import { ColorIndicator, ColorPlacement, type VizTooltipItem } from './types';
 
 export const calculateTooltipPosition = (
   xPos = 0,

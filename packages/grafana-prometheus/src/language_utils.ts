@@ -3,20 +3,25 @@ import { invert } from 'lodash';
 import { Token } from 'prismjs';
 
 import {
-  AbstractLabelMatcher,
+  type AbstractLabelMatcher,
   AbstractLabelOperator,
-  AbstractQuery,
-  DataQuery,
+  type AbstractQuery,
+  type DataQuery,
   dateMath,
-  DateTime,
+  type DateTime,
   incrRoundDn,
-  TimeRange,
+  type TimeRange,
 } from '@grafana/data';
 
 import { addLabelToQuery } from './add_label_to_query';
 import { getCacheDurationInMinutes } from './caching';
 import { PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './constants';
-import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem, RecordingRuleIdentifier } from './types';
+import {
+  PrometheusCacheLevel,
+  type PromMetricsMetadata,
+  type PromMetricsMetadataItem,
+  type RecordingRuleIdentifier,
+} from './types';
 
 export const processHistogramMetrics = (metrics: string[]) => {
   const resultSet: Set<string> = new Set();

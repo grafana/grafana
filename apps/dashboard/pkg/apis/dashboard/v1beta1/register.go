@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	v1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -36,22 +37,25 @@ type (
 	DashboardAccess           = v1.DashboardAccess
 	AnnotationPermission      = v1.AnnotationPermission
 	AnnotationActions         = v1.AnnotationActions
-	DashboardClient           = v1.DashboardClient
 	DashboardJSONCodec        = v1.DashboardJSONCodec
 )
 
 var (
-	NewDashboard                    = v1.NewDashboard
-	NewDashboardSpec                = v1.NewDashboardSpec
-	NewDashboardStatus              = v1.NewDashboardStatus
-	NewDashboardClient              = v1.NewDashboardClient
-	NewDashboardClientFromGenerator = v1.NewDashboardClientFromGenerator
+	NewDashboard       = v1.NewDashboard
+	NewDashboardSpec   = v1.NewDashboardSpec
+	NewDashboardStatus = v1.NewDashboardStatus
 
-	DashboardKind         = v1.DashboardKind
-	DashboardSchema       = v1.DashboardSchema
 	GetOpenAPIDefinitions = v1.GetOpenAPIDefinitions
 	ValidateDashboardSpec = v1.ValidateDashboardSpec
 )
+
+var (
+	schemaDashboard *resource.SimpleSchema
+	kindDashboard   resource.Kind
+)
+
+func DashboardKind() resource.Kind            { return kindDashboard }
+func DashboardSchema() *resource.SimpleSchema { return schemaDashboard }
 
 var DashboardResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"dashboards", "dashboard", "Dashboard",
@@ -87,6 +91,10 @@ var (
 )
 
 func init() {
+	k := v1.DashboardKind()
+	schemaDashboard = resource.NewSimpleSchema(GROUP, VERSION, k.ZeroValue(), k.ZeroListValue(),
+		resource.WithKind(k.Kind()), resource.WithPlural(k.Plural()), resource.WithScope(k.Scope()))
+	kindDashboard = resource.Kind{Codecs: k.Codecs, Schema: schemaDashboard}
 	localSchemeBuilder.Register(addKnownTypes)
 }
 

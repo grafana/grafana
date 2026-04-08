@@ -1,6 +1,6 @@
 import { defaultsDeep } from 'lodash';
 
-import { createTheme, Field, FieldDisplay, FieldType, ThresholdsMode } from '@grafana/data';
+import { createTheme, type Field, type FieldDisplay, FieldType, ThresholdsMode } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
 import {

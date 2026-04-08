@@ -1,4 +1,4 @@
-import { add, Duration, intervalToDuration, Interval, isAfter } from 'date-fns';
+import { add, type Duration, intervalToDuration, type Interval, isAfter } from 'date-fns';
 
 const durationMap: Record<string, string[]> = {
   years: ['y', 'Y', 'years'],

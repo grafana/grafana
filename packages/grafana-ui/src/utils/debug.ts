@@ -1,4 +1,4 @@
-import { Logger } from './logger';
+import { type Logger } from './logger';
 
 /**
  * Allows debug helpers attachement to the window object

@@ -1,7 +1,7 @@
-import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { ConfirmModal as ConfirmModalComponent, ConfirmModalProps } from '@grafana/ui';
+import { type SceneComponentProps, SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
+import { ConfirmModal as ConfirmModalComponent, type ConfirmModalProps } from '@grafana/ui';
 
-import { ModalSceneObjectLike } from '../types';
+import { type ModalSceneObjectLike } from '../types';
 
 interface ConfirmModalState extends ConfirmModalProps, SceneObjectState {}
 

@@ -1,14 +1,21 @@
-import { DataFrame, DataFrameView, FieldType, getDisplayProcessor, SelectableValue } from '@grafana/data';
+import { type DataFrame, DataFrameView, FieldType, getDisplayProcessor, type SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { PermissionLevel } from 'app/types/acl';
+import { type PermissionLevel } from 'app/types/acl';
 
 import { DEFAULT_MAX_VALUES, GENERAL_FOLDER_UID, TYPE_KIND_MAP } from '../constants';
-import { DashboardSearchHit, DashboardSearchItemType } from '../types';
+import { type DashboardSearchHit, type DashboardSearchItemType } from '../types';
 
 import { deletedDashboardsCache } from './deletedDashboardsCache';
-import { DashboardQueryResult, GrafanaSearcher, LocationInfo, QueryResponse, SearchQuery, SortOptions } from './types';
+import {
+  type DashboardQueryResult,
+  type GrafanaSearcher,
+  type LocationInfo,
+  type QueryResponse,
+  type SearchQuery,
+  type SortOptions,
+} from './types';
 import { filterSearchResults, replaceCurrentFolderQuery, searchHitsToDashboardSearchHits } from './utils';
 
 interface APIQuery {

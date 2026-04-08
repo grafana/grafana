@@ -1,6 +1,12 @@
 import { invert } from 'lodash';
 
-import { AbstractLabelMatcher, AbstractLabelOperator, AbstractQuery, DataFrame, TimeRange } from '@grafana/data';
+import {
+  type AbstractLabelMatcher,
+  AbstractLabelOperator,
+  type AbstractQuery,
+  type DataFrame,
+  type TimeRange,
+} from '@grafana/data';
 
 import { DATAPLANE_LABEL_TYPES_NAME, LabelType } from './types';
 

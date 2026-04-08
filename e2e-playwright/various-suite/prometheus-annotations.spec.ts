@@ -1,6 +1,6 @@
-import { Page } from 'playwright-core';
+import { type Page } from 'playwright-core';
 
-import { test, expect, E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import { addDashboard } from '../utils/dashboard-helpers';
 import { getResources } from '../utils/prometheus-helpers';

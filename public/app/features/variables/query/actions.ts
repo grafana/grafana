@@ -1,8 +1,8 @@
 import { Subscription } from 'rxjs';
 
-import { DataSourceRef } from '@grafana/data';
+import { type DataSourceRef } from '@grafana/data';
 import { getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
-import { ThunkResult } from 'app/types/store';
+import { type ThunkResult } from 'app/types/store';
 
 import { getVariableQueryEditor } from '../editor/getVariableQueryEditor';
 import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
@@ -11,7 +11,7 @@ import { updateOptions } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getVariable, getVariablesState } from '../state/selectors';
 import { changeVariableProp } from '../state/sharedReducer';
-import { KeyedVariableIdentifier } from '../state/types';
+import { type KeyedVariableIdentifier } from '../state/types';
 import { hasOngoingTransaction, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { getVariableQueryRunner } from './VariableQueryRunner';

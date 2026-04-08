@@ -157,6 +157,13 @@ func deduplicateTupleKeys(writeTuples []*openfgav1.TupleKey, deleteTuples []*ope
 // This is used internally by mutate operations and the reconciler.
 // Tuples are automatically deduplicated before writing.
 func (s *Server) WriteTuples(ctx context.Context, store *zanzana.StoreInfo, writeTuples []*openfgav1.TupleKey, deleteTuples []*openfgav1.TupleKeyWithoutCondition) error {
+	ctx, span := s.tracer.Start(ctx, "server.WriteTuples")
+	defer span.End()
+
+	defer func(t time.Time) {
+		s.metrics.requestDurationSeconds.WithLabelValues("WriteTuples").Observe(time.Since(t).Seconds())
+	}(time.Now())
+
 	return s.writeTuples(ctx, store, writeTuples, deleteTuples)
 }
 

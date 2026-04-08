@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import type { Grammar } from 'prismjs';
 
 import { CoreApp, createTheme, getDefaultTimeRange, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { createTempoDatasource } from '@grafana-plugins/tempo/test/mocks';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
@@ -11,16 +10,25 @@ import { createLogLine } from '../mocks/logRow';
 import { getDisplayedFieldsForLogs, OTEL_PROBE_FIELD } from '../otel/formats';
 
 import { emptyContextData, LogDetailsContext } from './LogDetailsContext';
-import { getGridTemplateColumns, getStyles, LogLine, Props } from './LogLine';
-import { LogListFontSize } from './LogList';
+import { getGridTemplateColumns, getStyles, LogLine, type Props } from './LogLine';
+import { type LogListFontSize } from './LogList';
 import { LogListContextProvider, LogListContext } from './LogListContext';
 import { LogListSearchContext } from './LogListSearchContext';
 import { defaultProps, defaultValue } from './__mocks__/LogListContext';
-import { LogListModel } from './processing';
+import { type LogListModel } from './processing';
 import { LogLineVirtualization } from './virtualization';
 
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
+    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+  });
+};
+
 jest.mock('@openfeature/react-sdk', () => ({
-  useBooleanFlagValue: jest.fn().mockReturnValue(false),
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
 }));
 
 jest.mock('@grafana/assistant', () => ({
@@ -62,6 +70,7 @@ const fontSizes: LogListFontSize[] = ['default', 'small'];
 describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
   let log: LogListModel, defaultProps: Props;
   beforeEach(() => {
+    setBooleanFlags({});
     log = createLogLine(
       { labels: { place: 'luna' }, entry: `log message 1` },
       { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization, wrapLogMessage: true }
@@ -348,12 +357,20 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
     });
 
     test('Highlights the OTel attributes field when rendered', () => {
-      const originalState = config.featureToggles.otelLogsFormatting;
-      config.featureToggles.otelLogsFormatting = true;
-      log = createLogLine({
-        labels: { [OTEL_PROBE_FIELD]: '1', service: 'some service' },
-        entry: `place="luna" 1ms 3 KB`,
-      });
+      log = createLogLine(
+        {
+          labels: { [OTEL_PROBE_FIELD]: '1', service: 'some service' },
+          entry: `place="luna" 1ms 3 KB`,
+        },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          virtualization,
+          wrapLogMessage: true,
+          otelLogsFormattingEnabled: true,
+        }
+      );
       const displayedFields = getDisplayedFieldsForLogs([log]);
 
       render(
@@ -368,17 +385,23 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       expect(screen.getByText('1ms')).toBeInTheDocument();
       expect(screen.getByText('3 KB')).toBeInTheDocument();
       expect(screen.queryByText(`place="luna" 1ms 3 KB`)).not.toBeInTheDocument();
-
-      config.featureToggles.otelLogsFormatting = originalState;
     });
 
     test('OTel attributes field is not present when the flag is disabled', () => {
-      const originalState = config.featureToggles.otelLogsFormatting;
-      config.featureToggles.otelLogsFormatting = false;
-      log = createLogLine({
-        labels: { [OTEL_PROBE_FIELD]: '1', service: 'some service' },
-        entry: `place="luna" 1ms 3 KB`,
-      });
+      log = createLogLine(
+        {
+          labels: { [OTEL_PROBE_FIELD]: '1', service: 'some service' },
+          entry: `place="luna" 1ms 3 KB`,
+        },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          virtualization,
+          wrapLogMessage: true,
+          otelLogsFormattingEnabled: false,
+        }
+      );
 
       render(
         <LogListContextProvider {...contextProps}>
@@ -392,8 +415,6 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       expect(screen.getByText('1ms')).toBeInTheDocument();
       expect(screen.getByText('3 KB')).toBeInTheDocument();
       expect(screen.queryByText(`place="luna" 1ms 3 KB`)).not.toBeInTheDocument();
-
-      config.featureToggles.otelLogsFormatting = originalState;
     });
   });
 

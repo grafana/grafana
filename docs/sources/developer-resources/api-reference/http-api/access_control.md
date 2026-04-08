@@ -247,7 +247,6 @@ Accept: application/json
 Content-Type: application/json
 
 {
-    "version": 1,
     "uid": "jZrmlLCGka",
     "name": "custom:delete:roles",
     "displayName": "custom delete roles",
@@ -266,17 +265,17 @@ Content-Type: application/json
 
 #### JSON body schema
 
-| Field Name  | Date Type  | Required | Description                                                                                                                                                                                                                                         |
-| ----------- | ---------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| uid         | string     | No       | UID of the role. If not present, the UID will be automatically created for you and returned in response. Refer to the [Custom roles](/docs/grafana/latest/administration/roles-and-permissions/access-control/#custom-roles) for more information.  |
-| global      | boolean    | No       | A flag indicating if the role is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request.                                                                                                      |
-| version     | number     | No       | Version of the role. If not present, version 0 will be assigned to the role and returned in the response. Refer to the [Custom roles](/docs/grafana/latest/administration/roles-and-permissions/access-control/#custom-roles) for more information. |
-| name        | string     | Yes      | Name of the role. Refer to [Custom roles](/docs/grafana/latest/administration/roles-and-permissions/access-control/#custom-roles) for more information.                                                                                             |
-| description | string     | No       | Description of the role.                                                                                                                                                                                                                            |
-| displayName | string     | No       | Display name of the role, visible in the UI.                                                                                                                                                                                                        |
-| group       | string     | No       | The group name the role belongs to.                                                                                                                                                                                                                 |
-| hidden      | boolean    | No       | Specify whether the role is hidden or not. If set to `true`, then the role does not show in the role picker. It will not be listed by API endpoints unless explicitly specified.                                                                    |
-| permissions | Permission | No       | If not present, the role will be created without any permissions.                                                                                                                                                                                   |
+| Field Name  | Date Type  | Required | Description                                                                                                                                                                                                                               |
+| ----------- | ---------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| uid         | string     | No       | UID of the role. If not present, the UID is automatically created for you and returned in response. Refer to [Custom roles](/docs/grafana/latest/administration/roles-and-permissions/access-control/#custom-roles) for more information. |
+| global      | boolean    | No       | A flag indicating if the role is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request.                                                                                            |
+| version     | number     | No       | **Deprecated.** Ignored on create; the server always assigns version 1 to new roles. The response returns the assigned version.                                                                                                           |
+| name        | string     | Yes      | Name of the role. Refer to [Custom roles](/docs/grafana/latest/administration/roles-and-permissions/access-control/#custom-roles) for more information.                                                                                   |
+| description | string     | No       | Description of the role.                                                                                                                                                                                                                  |
+| displayName | string     | No       | Display name of the role, visible in the UI.                                                                                                                                                                                              |
+| group       | string     | No       | The group name the role belongs to.                                                                                                                                                                                                       |
+| hidden      | boolean    | No       | Specify whether the role is hidden or not. If set to `true`, then the role does not show in the role picker. It will not be listed by API endpoints unless explicitly specified.                                                          |
+| permissions | Permission | No       | If not present, the role will be created without any permissions.                                                                                                                                                                         |
 
 **Permission**
 
@@ -396,7 +395,7 @@ Content-Type: application/json
 
 `PUT /api/access-control/roles/:uid`
 
-Update the role with the given UID, and its permissions. The operation is idempotent and all permissions of the role will be replaced based on the request content. You need to increment the version of the role with each update, otherwise the request will fail.
+Update the role with the given UID, and its permissions. The operation is idempotent and all permissions of the role will be replaced based on the request content. Send the current `version` of the role (from the last GET or list response) for optimistic locking; the request fails if the role was updated elsewhere. The server auto-increments the stored version on each update.
 
 You can update `custom` roles and `basic` roles permissions. However `fixed` roles cannot be updated.
 
@@ -439,15 +438,15 @@ Content-Type: application/json
 
 #### JSON body schema
 
-| Field Name  | Data Type           | Required | Description                                                                                                                                                                      |
-| ----------- | ------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| version     | number              | Yes      | Version of the role. Must be incremented for update to work.                                                                                                                     |
-| name        | string              | Yes      | Name of the role.                                                                                                                                                                |
-| description | string              | No       | Description of the role.                                                                                                                                                         |
-| displayName | string              | No       | Display name of the role, visible in the UI.                                                                                                                                     |
-| group       | string              | No       | The group name the role belongs to.                                                                                                                                              |
-| hidden      | boolean             | No       | Specify whether the role is hidden or not. If set to `true`, then the role does not show in the role picker. It will not be listed by API endpoints unless explicitly specified. |
-| permissions | List of Permissions | No       | The full list of permissions for the role after the update.                                                                                                                      |
+| Field Name  | Data Type           | Required | Description                                                                                                                                                                                                                                      |
+| ----------- | ------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| version     | number              | Yes      | Current version of the role (from the last GET or list). Required for optimistic locking; the request fails if the stored version is greater. **Deprecated** as an input to set a value—the server auto-increments the stored version on update. |
+| name        | string              | Yes      | Name of the role.                                                                                                                                                                                                                                |
+| description | string              | No       | Description of the role.                                                                                                                                                                                                                         |
+| displayName | string              | No       | Display name of the role, visible in the UI.                                                                                                                                                                                                     |
+| group       | string              | No       | The group name the role belongs to.                                                                                                                                                                                                              |
+| hidden      | boolean             | No       | Specifies whether the role is hidden or not. If set to `true`, then the role does not show in the role picker. It will not be listed by API endpoints unless explicitly specified.                                                               |
+| permissions | List of Permissions | No       | The full list of permissions for the role after the update.                                                                                                                                                                                      |
 
 **Permission**
 

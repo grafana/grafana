@@ -2,18 +2,18 @@ import { cloneDeep, defaultsDeep, isArray, isEqual } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  DataConfigSource,
-  DataFrameDTO,
-  DataLink,
-  DataQuery,
-  DataTransformerConfig,
+  type DataConfigSource,
+  type DataFrameDTO,
+  type DataLink,
+  type DataQuery,
+  type DataTransformerConfig,
   EventBusSrv,
-  FieldConfigSource,
-  PanelPlugin,
-  PanelPluginDataSupport,
-  ScopedVars,
-  PanelModel as IPanelModel,
-  DataSourceRef,
+  type FieldConfigSource,
+  type PanelPlugin,
+  type PanelPluginDataSupport,
+  type ScopedVars,
+  type PanelModel as IPanelModel,
+  type DataSourceRef,
   CoreApp,
   filterFieldConfigOverrides,
   getPanelOptionsWithDefaults,
@@ -22,7 +22,7 @@ import {
   getNextRefId,
 } from '@grafana/data';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
-import { LibraryPanel, LibraryPanelRef } from '@grafana/schema';
+import { type LibraryPanel, type LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import {
@@ -31,10 +31,10 @@ import {
   PanelTransformationsChangedEvent,
   RenderEvent,
 } from 'app/types/events';
-import { QueryGroupOptions } from 'app/types/query';
+import { type QueryGroupOptions } from 'app/types/query';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-import { TimeOverrideResult } from '../utils/panel';
+import { type TimeOverrideResult } from '../utils/panel';
 
 import { getPanelPluginToMigrateTo } from './getPanelPluginToMigrateTo';
 

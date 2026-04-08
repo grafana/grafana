@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/data';
+import { type DataQuery } from '@grafana/data';
 
 import { queryIsEmpty } from './query';
 

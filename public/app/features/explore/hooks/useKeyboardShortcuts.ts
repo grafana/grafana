@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Unsubscribable } from 'rxjs';
+import { type Unsubscribable } from 'rxjs';
 
 import { getAppEvents } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';

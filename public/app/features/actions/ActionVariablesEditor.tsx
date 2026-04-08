@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
-import { ActionVariable, ActionVariableType } from '@grafana/data';
+import { type ActionVariable, ActionVariableType } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { IconButton, Input, Stack, Combobox, ComboboxOption } from '@grafana/ui';
+import { IconButton, Input, Stack, Combobox, type ComboboxOption } from '@grafana/ui';
 
 interface Props {
   onChange: (v: ActionVariable[]) => void;

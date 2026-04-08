@@ -2,19 +2,19 @@ import { capitalize } from 'lodash';
 import pluralize from 'pluralize';
 
 import {
-  QueryBuilderOperation,
-  QueryBuilderOperationDefinition,
-  QueryBuilderOperationParamDef,
-  QueryBuilderOperationParamValue,
-  VisualQuery,
-  VisualQueryModeller,
+  type QueryBuilderOperation,
+  type QueryBuilderOperationDefinition,
+  type QueryBuilderOperationParamDef,
+  type QueryBuilderOperationParamValue,
+  type VisualQuery,
+  type VisualQueryModeller,
 } from '@grafana/plugin-ui';
 
 import { escapeLabelValueInExactSelector } from '../languageUtils';
 import { FUNCTIONS } from '../syntax';
 
 import { LabelParamEditor } from './components/LabelParamEditor';
-import { LokiOperationId, LokiOperationOrder, LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
+import { LokiOperationId, LokiOperationOrder, type LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
 
 export function createRangeOperation(
   name: string,

@@ -1,4 +1,4 @@
-import { setTimeRange, TimeRangeConfig } from './setTimeRange';
+import { setTimeRange, type TimeRangeConfig } from './setTimeRange';
 
 export type { TimeRangeConfig };
 

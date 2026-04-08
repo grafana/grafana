@@ -1,14 +1,21 @@
-import { ReactElement, useCallback, useMemo } from 'react';
+import { type ReactElement, useCallback, useMemo } from 'react';
 
-import { PluginExtensionPoints, RawTimeRange, getDefaultTimeRange, getTimeZone, locationUtil } from '@grafana/data';
+import {
+  PluginExtensionPoints,
+  type RawTimeRange,
+  getDefaultTimeRange,
+  getTimeZone,
+  locationUtil,
+} from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
-import { DataQuery, TimeZone } from '@grafana/schema';
+import { type DataQuery, type TimeZone } from '@grafana/schema';
 import { Button } from '@grafana/ui';
 
 type Props = {
   queries: DataQuery[];
   onExtensionClick?: () => void;
+  compact?: boolean;
 };
 
 const QUERYLESS_APPS = [
@@ -23,7 +30,7 @@ const QUERYLESS_APPS = [
  * Only displays when at least one queryless app extension is available.
  */
 export function DrilldownExtensionPoint(props: Props): ReactElement | null {
-  const { onExtensionClick } = props;
+  const { onExtensionClick, compact } = props;
   const context = useExtensionPointContext(props);
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
@@ -45,7 +52,7 @@ export function DrilldownExtensionPoint(props: Props): ReactElement | null {
   }
 
   return (
-    <Button variant="secondary" onClick={onClick}>
+    <Button variant="secondary" size={compact ? 'sm' : 'md'} type="button" onClick={onClick}>
       <Trans i18nKey="explore.queryless-apps-extensions.drilldown">Drilldown</Trans>
     </Button>
   );

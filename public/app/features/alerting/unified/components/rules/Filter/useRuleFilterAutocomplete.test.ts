@@ -1,6 +1,6 @@
 import { renderHook } from 'test/test-utils';
 
-import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { prometheusApi } from '../../../api/prometheusApi';
 import { setupMswServer } from '../../../mockApi';

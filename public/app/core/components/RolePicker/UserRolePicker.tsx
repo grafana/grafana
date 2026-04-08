@@ -1,10 +1,10 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
-import { OrgRole } from '@grafana/data';
+import { type OrgRole } from '@grafana/data';
 import { useListUserRolesQuery, useSetUserRolesMutation } from 'app/api/clients/roles';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, Role } from 'app/types/accessControl';
+import { AccessControlAction, type Role } from 'app/types/accessControl';
 
 import { RolePicker } from './RolePicker';
 

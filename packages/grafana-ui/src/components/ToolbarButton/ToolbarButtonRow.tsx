@@ -2,9 +2,9 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { Children, forwardRef, HTMLAttributes, useState, useRef, useLayoutEffect, createRef } from 'react';
+import { Children, forwardRef, type HTMLAttributes, useState, useRef, useLayoutEffect, createRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';

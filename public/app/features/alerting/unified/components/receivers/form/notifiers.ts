@@ -1,6 +1,6 @@
-import { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 
-import { NotifierDTO } from 'app/features/alerting/unified/types/alerting';
+import { type NotifierDTO } from 'app/features/alerting/unified/types/alerting';
 
 export interface NotifierMetadata {
   enabled: boolean;

@@ -1,14 +1,14 @@
-import { FeatureLike } from 'ol/Feature';
-import OpenLayersMap from 'ol/Map';
+import { type FeatureLike } from 'ol/Feature';
+import type OpenLayersMap from 'ol/Map';
 import { unByKey } from 'ol/Observable';
 import GeoJSON from 'ol/format/GeoJSON';
 import VectorImage from 'ol/layer/VectorImage';
 import VectorSource from 'ol/source/Vector';
-import { Style } from 'ol/style';
+import { type Style } from 'ol/style';
 import { ReplaySubject } from 'rxjs';
 import { map as rxjsmap, first } from 'rxjs/operators';
 
-import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, EventBus } from '@grafana/data';
+import { type MapLayerRegistryItem, type MapLayerOptions, type GrafanaTheme2, type EventBus } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { ComparisonOperation } from '@grafana/schema';
 
@@ -20,12 +20,12 @@ import {
   GeoJSONLineStyles,
   GeoJSONPointStyles,
   GeoJSONPolyStyles,
-  StyleConfig,
-  StyleConfigState,
-  StyleConfigValues,
+  type StyleConfig,
+  type StyleConfigState,
+  type StyleConfigValues,
 } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
-import { FeatureRuleConfig, FeatureStyleConfig } from '../../types';
+import { type FeatureRuleConfig, type FeatureStyleConfig } from '../../types';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
 import { getPublicGeoJSONFiles } from '../../utils/utils';

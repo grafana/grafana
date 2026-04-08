@@ -3,20 +3,20 @@ import { useCallback, useId } from 'react';
 
 import {
   DataTransformerID,
-  ReducerID,
-  SelectableValue,
+  type ReducerID,
+  type SelectableValue,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   PluginState,
 } from '@grafana/data';
 import {
-  GroupByFieldOptions,
+  type GroupByFieldOptions,
   GroupByOperationID,
-  GroupByTransformerOptions,
-  GroupToNestedTableTransformerOptions,
+  type GroupByTransformerOptions,
+  type GroupToNestedTableTransformerOptions,
   SHOW_NESTED_HEADERS_DEFAULT,
 } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';

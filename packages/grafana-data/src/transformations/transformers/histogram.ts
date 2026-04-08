@@ -3,14 +3,14 @@ import { map } from 'rxjs/operators';
 import { outerJoinDataFrames } from '../..';
 import { getDisplayProcessor } from '../../field/displayProcessor';
 import { createTheme } from '../../themes/createTheme';
-import { GrafanaTheme2 } from '../../themes/types';
-import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
+import { type GrafanaTheme2 } from '../../themes/types';
+import { type DataFrame, type Field, type FieldConfig, FieldType } from '../../types/dataFrame';
 import { DataFrameType } from '../../types/dataFrameTypes';
-import { DataTransformContext, SynchronousDataTransformerInfo } from '../../types/transformations';
+import { type DataTransformContext, type SynchronousDataTransformerInfo } from '../../types/transformations';
 import { roundDecimals } from '../../utils/numbers';
 
 import { DataTransformerID } from './ids';
-import { AlignedData, join } from './joinDataFrames';
+import { type AlignedData, join } from './joinDataFrames';
 import { nullToValueField } from './nulls/nullToValue';
 
 /**

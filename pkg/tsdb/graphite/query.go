@@ -13,12 +13,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/net/html"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 type queryModel struct {
@@ -78,7 +79,7 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 			attribute.String("from", graphiteReq.formData["from"][0]),
 			attribute.String("until", graphiteReq.formData["until"][0]),
 			attribute.Int64("datasource_id", dsInfo.Id),
-			attribute.Int64("org_id", req.PluginContext.OrgID),
+			attribute.Int64("org_id", req.PluginContext.OrgID), // nolint:staticcheck
 		)
 		res, err := dsInfo.HTTPClient.Do(graphiteReq.req)
 		if res != nil {

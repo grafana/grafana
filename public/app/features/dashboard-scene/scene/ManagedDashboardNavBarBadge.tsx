@@ -2,12 +2,12 @@ import { skipToken } from '@reduxjs/toolkit/query';
 
 import { t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
-import { Badge, BadgeColor, IconName } from '@grafana/ui';
+import { Badge, type BadgeColor, type IconName } from '@grafana/ui';
 import { useGetRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { getManagedByRepositoryTooltip, getOrphanedRepositoryTooltip } from 'app/features/provisioning/utils/tooltip';
 
-import { DashboardScene } from './DashboardScene';
+import { type DashboardScene } from './DashboardScene';
 
 export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: DashboardScene }) => {
   const kind = dashboard.getManagerKind();

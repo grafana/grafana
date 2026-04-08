@@ -12,6 +12,10 @@ For more information on the differences between Grafana-managed and data source-
 
 > If you are running Grafana Enterprise, you need to add specific permissions for some endpoints. For more information, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
 
+{{< admonition type="warning" >}}
+The contact points, notification policies, notification template groups, and mute timings endpoints in this API are deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead.
+{{< /admonition >}}
+
 ## Grafana-managed endpoints
 
 {{< admonition type="note" >}}
@@ -706,6 +710,10 @@ Status: Not Found
 DELETE /api/v1/provisioning/contact-points/:uid
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}` for receivers.
+{{< /admonition >}}
+
 #### Parameters
 
 | Name  | Source | Type   | Go type | Required | Default | Description                                |
@@ -731,6 +739,10 @@ Status: No Content
 ```
 DELETE /api/v1/provisioning/mute-timings/:name
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}` for mute timings.
+{{< /admonition >}}
 
 #### Parameters
 
@@ -767,6 +779,10 @@ Status: Conflict
 ```
 DELETE /api/v1/provisioning/templates/:name
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}` for notification template groups.
+{{< /admonition >}}
 
 #### Parameters
 
@@ -1026,6 +1042,10 @@ Status: Not Found
 GET /api/v1/provisioning/contact-points
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers` for receivers.
+{{< /admonition >}}
+
 #### Parameters
 
 | Name   | Source | Type   | Go type | Required | Default | Description    |
@@ -1264,6 +1284,10 @@ Status: Forbidden
 GET /api/v1/provisioning/mute-timings/:name
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}` for mute timings.
+{{< /admonition >}}
+
 #### Parameters
 
 | Name   | Source | Type   | Go type | Required | Default | Description      |
@@ -1298,6 +1322,10 @@ Status: Not Found
 ```
 GET /api/v1/provisioning/mute-timings
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals` for mute timings.
+{{< /admonition >}}
 
 #### All responses
 
@@ -1402,6 +1430,10 @@ Status: Forbidden
 GET /api/v1/provisioning/policies
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees` for notification policies.
+{{< /admonition >}}
+
 #### All responses
 
 | Code                              | Status | Description | Has headers | Schema                                      |
@@ -1464,6 +1496,10 @@ Status: Not Found
 GET /api/v1/provisioning/templates/:name
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}` for notification template groups.
+{{< /admonition >}}
+
 #### Parameters
 
 | Name   | Source | Type   | Go type | Required | Default | Description                |
@@ -1498,6 +1534,10 @@ Status: OK
 ```
 GET /api/v1/provisioning/templates
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups` for notification template groups.
+{{< /admonition >}}
 
 #### All responses
 
@@ -1571,6 +1611,10 @@ Status: Bad Request
 POST /api/v1/provisioning/contact-points
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers` for receivers.
+{{< /admonition >}}
+
 When creating a contact point, the `EmbeddedContactPoint.name` property determines if the new contact point is added to an existing one. In the UI, contact points with the same name are grouped together under a single contact point.
 
 #### Parameters
@@ -1614,6 +1658,10 @@ Status: Bad Request
 ```
 POST /api/v1/provisioning/mute-timings
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals` for mute timings.
+{{< /admonition >}}
 
 #### Parameters
 
@@ -1754,6 +1802,10 @@ Status: Bad Request
 PUT /api/v1/provisioning/contact-points/:uid
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}` for receivers.
+{{< /admonition >}}
+
 #### Parameters
 
 {{% responsive-table %}}
@@ -1796,6 +1848,10 @@ Status: Bad Request
 ```
 PUT /api/v1/provisioning/mute-timings/:name
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}` for mute timings.
+{{< /admonition >}}
 
 #### Parameters
 
@@ -1851,6 +1907,10 @@ Status: Conflict
 PUT /api/v1/provisioning/policies
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees` for notification policies.
+{{< /admonition >}}
+
 #### Parameters
 
 {{% responsive-table %}}
@@ -1892,6 +1952,10 @@ Status: Bad Request
 ```
 PUT /api/v1/provisioning/templates/:name
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}` for notification template groups.
+{{< /admonition >}}
 
 {{% responsive-table %}}
 
@@ -1944,6 +2008,10 @@ Status: Conflict
 ```
 DELETE /api/v1/provisioning/policies
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead: `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees` for notification policies.
+{{< /admonition >}}
 
 #### All responses
 

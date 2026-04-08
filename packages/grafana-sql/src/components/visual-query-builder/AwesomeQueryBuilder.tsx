@@ -1,17 +1,17 @@
 import {
-  BaseOperator,
+  type BaseOperator,
   BasicConfig,
-  Config,
-  Field,
-  ImmutableList,
-  JsonTree,
-  Operator,
-  OperatorOptionsI,
-  Settings,
+  type Config,
+  type Field,
+  type ImmutableList,
+  type JsonTree,
+  type Operator,
+  type OperatorOptionsI,
+  type Settings,
   Utils,
-  ValueSource,
-  WidgetProps,
-  Widgets,
+  type ValueSource,
+  type WidgetProps,
+  type Widgets,
 } from '@react-awesome-query-builder/ui';
 import { isString } from 'lodash';
 

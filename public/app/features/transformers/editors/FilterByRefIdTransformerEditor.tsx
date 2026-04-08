@@ -1,16 +1,15 @@
 import {
   DataTransformerID,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
   FrameMatcherID,
 } from '@grafana/data';
-import { FilterFramesByRefIdTransformerOptions } from '@grafana/data/internal';
+import { type FilterFramesByRefIdTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/filterByRefId.svg';
 import lightImage from '../images/light/filterByRefId.svg';
 
@@ -43,7 +42,6 @@ export const getFilterFramesByRefIdTransformRegistryItem: () => TransformerRegis
       'Remove rows from the data based on origin query'
     ),
     categories: new Set([TransformerCategory.Filter]),
-    help: getTransformationContent(DataTransformerID.filterByRefId).helperDocs,
     imageDark: darkImage,
     imageLight: lightImage,
   });

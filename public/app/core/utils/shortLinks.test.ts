@@ -1,10 +1,10 @@
-import { LogRowModel } from '@grafana/data';
+import { type LogRowModel } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { createLogRow } from 'app/features/logs/components/mocks/logRow';
 
-import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/shorturl_object_gen';
+import { type ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/shorturl_object_gen';
 import { defaultSpec } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/types.spec.gen';
 import { defaultStatus } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/types.status.gen';
 

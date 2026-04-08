@@ -1,6 +1,6 @@
-import { StoryFn } from '@storybook/react';
+import { type StoryFn } from '@storybook/react';
 import { useId } from 'react';
-import { ValidateResult } from 'react-hook-form';
+import { type ValidateResult } from 'react-hook-form';
 
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 import { Button } from '../Button/Button';
@@ -18,7 +18,7 @@ import { Legend } from './Legend';
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
 
 export default {
-  title: 'Forms/Form',
+  title: 'Forms/Deprecated/Form',
   decorators: [withStoryContainer],
   parameters: {
     docs: {

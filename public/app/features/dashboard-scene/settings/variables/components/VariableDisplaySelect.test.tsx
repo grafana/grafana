@@ -36,6 +36,27 @@ describe('VariableDisplaySelect', () => {
     expect(screen.getByText('Hidden')).toBeInTheDocument();
   });
 
+  it('should hide "Controls menu" when hideControlsMenuOption is true', async () => {
+    const onChange = jest.fn();
+    const user = userEvent.setup();
+    render(
+      <VariableDisplaySelect
+        onChange={onChange}
+        display={VariableHide.dontHide}
+        type="query"
+        hideControlsMenuOption={true}
+      />
+    );
+
+    const combobox = screen.getByRole('combobox');
+    await user.click(combobox);
+
+    expect(await screen.findByText('Above dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Above dashboard, label hidden')).toBeInTheDocument();
+    expect(screen.queryByText('Controls menu')).not.toBeInTheDocument();
+    expect(screen.getByText('Hidden')).toBeInTheDocument();
+  });
+
   it('should call onChange() with the selected value', async () => {
     const onChange = jest.fn();
     const user = userEvent.setup();

@@ -203,14 +203,8 @@ func (v *RolePermissionValidator) parsePermission(act, sc string) (*permission, 
 		return &perm, nil
 	}
 
-	scopeResource, attribute, name := accesscontrol.SplitScope(sc)
+	scopeResource, _, name := accesscontrol.SplitScope(sc)
 	perm.scope.name = name
-
-	// k8s roles should only use UID-based scopes for teams, users, and service accounts
-	// reject ID-based scopes (attribute == "id") for these resources
-	if attribute == "id" {
-		return nil, fmt.Errorf("roles no longer support ID-based scopes for %s. Use uid-based scopes instead", scopeResource)
-	}
 
 	if scopeResource == "folders" || scopeResource == "folder.grafana.app" {
 		perm.scope.folder = true

@@ -6,7 +6,7 @@ import { getFieldNamesMatcherItem } from './FieldNamesMatcherEditor';
 import { getFieldTypeMatcherItem } from './FieldTypeMatcherEditor';
 import { getFieldValueMatcherItem } from './FieldValueMatcher';
 import { getFieldsByFrameRefIdItem } from './FieldsByFrameRefIdMatcher';
-import { FieldMatcherUIRegistryItem } from './types';
+import { type FieldMatcherUIRegistryItem } from './types';
 
 export const fieldMatchersUI = new Registry<FieldMatcherUIRegistryItem<any>>(() => [
   getFieldNameMatcherItem(),

@@ -1,9 +1,9 @@
 import { merge } from 'lodash';
 
-import { DataSourceSettings, DataSourcePluginMeta, DataSourceJsonData } from '@grafana/data';
+import { type DataSourceSettings, type DataSourcePluginMeta, type DataSourceJsonData } from '@grafana/data';
 import amazonWebServicesPng from 'app/plugins/datasource/cloudwatch/img/amazon-web-services.png';
-import { DataSourceSettingsState } from 'app/types/datasources';
-import { PluginDashboard } from 'app/types/plugins';
+import { type DataSourceSettingsState } from 'app/types/datasources';
+import { type PluginDashboard } from 'app/types/plugins';
 
 export const getMockDashboard = (override?: Partial<PluginDashboard>) => ({
   uid: 'G1btqkgkK',

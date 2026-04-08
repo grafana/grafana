@@ -1,19 +1,19 @@
 import { css } from '@emotion/css';
-import { Resizable, ResizeCallback } from 're-resizable';
+import { Resizable, type ResizeCallback } from 're-resizable';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
-  AbsoluteTimeRange,
-  DataFrame,
-  ExploreLogsPanelState,
-  GrafanaTheme2,
-  Labels,
-  LogRowModel,
-  LogsSortOrder,
-  SelectableValue,
-  SplitOpen,
+  type AbsoluteTimeRange,
+  type DataFrame,
+  type ExploreLogsPanelState,
+  type GrafanaTheme2,
+  type Labels,
+  type LogRowModel,
+  type LogsSortOrder,
+  type SelectableValue,
+  type SplitOpen,
   store,
-  TimeRange,
+  type TimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';

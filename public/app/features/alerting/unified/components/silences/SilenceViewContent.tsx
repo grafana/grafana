@@ -1,6 +1,6 @@
 import { Trans } from '@grafana/i18n';
 import { Stack, Text, TextLink } from '@grafana/ui';
-import { AlertmanagerAlert, Silence } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertmanagerAlert, type Silence } from 'app/plugins/datasource/alertmanager/types';
 
 import { createReturnTo } from '../../hooks/useReturnTo';
 import { MATCHER_ALERT_RULE_UID } from '../../utils/constants';

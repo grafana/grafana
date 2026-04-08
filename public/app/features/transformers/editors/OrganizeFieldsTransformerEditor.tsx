@@ -1,22 +1,22 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useId, useMemo } from 'react';
 
 import {
   DataTransformerID,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
 import {
   createOrderFieldsComparer,
   Order,
-  OrderByItem,
+  type OrderByItem,
   OrderByMode,
   OrderByType,
-  OrganizeFieldsTransformerOptions,
+  type OrganizeFieldsTransformerOptions,
 } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -35,7 +35,6 @@ import {
 } from '@grafana/ui';
 
 import { createFieldsOrdererAuto } from '../../../../../packages/grafana-data/src/transformations/transformers/order';
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/organize.svg';
 import lightImage from '../images/light/organize.svg';
 import { getAllFieldNamesFromDataFrames, getDistinctLabels, useAllFieldNamesFromDataFrames } from '../utils';
@@ -367,8 +366,8 @@ const DraggableFieldName = ({
   return (
     <Draggable draggableId={fieldName} index={index} isDragDisabled={isDragDisabled}>
       {(provided) => (
-        <Box display="flex" gap={0} ref={provided.innerRef} {...provided.draggableProps}>
-          <InlineLabel width={60} as="div">
+        <Box display="flex" gap={0} marginBottom={0.5} ref={provided.innerRef} {...provided.draggableProps}>
+          <InlineLabel as="div" className={styles.flexLabel}>
             <Stack gap={0} justifyContent="flex-start" alignItems="center" width="100%">
               {!isDragDisabled && (
                 <span {...provided.dragHandleProps}>
@@ -400,6 +399,7 @@ const DraggableFieldName = ({
             </Stack>
           </InlineLabel>
           <Input
+            className={styles.flexInput}
             defaultValue={renamedFieldName || ''}
             placeholder={t('transformers.draggable-field-name.rename-placeholder', 'Rename {{fieldName}}', {
               fieldName,
@@ -429,7 +429,7 @@ const DraggableUIOrderByItem = ({ index, item, onChangeSort }: DraggableUIOrderB
     <Draggable draggableId={draggableId} index={index} isDragDisabled={item.order === Order.Off}>
       {(provided) => (
         <Box marginBottom={0.5} display="flex" gap={0} ref={provided.innerRef} {...provided.draggableProps}>
-          <InlineLabel width={60} as="div">
+          <InlineLabel as="div" className={styles.flexLabel}>
             <Stack gap={3} justifyContent="flex-start" alignItems="center" width="100%">
               <span {...provided.dragHandleProps}>
                 <Icon
@@ -467,6 +467,15 @@ const DraggableUIOrderByItem = ({ index, item, onChangeSort }: DraggableUIOrderB
 DraggableUIOrderByItem.displayName = 'DraggableUIOrderByItem';
 
 const getFieldNameStyles = (theme: GrafanaTheme2) => ({
+  flexLabel: css({
+    flex: '1 1 0',
+    width: 'auto',
+    overflow: 'hidden',
+  }),
+  flexInput: css({
+    flex: '1 1 0',
+    width: 'auto',
+  }),
   toggle: css({
     margin: theme.spacing(0, 1),
     color: theme.colors.text.secondary,
@@ -513,7 +522,6 @@ export const getOrganizeFieldsTransformRegistryItem: () => TransformerRegistryIt
       'Re-order, hide, or rename fields.'
     ),
     categories: new Set([TransformerCategory.ReorderAndRename]),
-    help: getTransformationContent(DataTransformerID.organize).helperDocs,
     imageDark: darkImage,
     imageLight: lightImage,
   });

@@ -1,10 +1,10 @@
 import { logWarning } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { AnnoKeyDashboardSnapshotOriginalUrl, ObjectMeta } from 'app/features/apiserver/types';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { AnnoKeyDashboardSnapshotOriginalUrl, type ObjectMeta } from 'app/features/apiserver/types';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
-import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
+import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
@@ -12,12 +12,12 @@ import {
   getV1SchemaVariables,
   getV2SchemaVariables,
 } from 'app/features/dashboard/utils/tracking';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
-import { DashboardMeta, SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { type DashboardJson } from 'app/features/manage-dashboards/types';
+import { type DashboardMeta, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { getRawDashboardChanges, getRawDashboardV2Changes } from '../saving/getDashboardChanges';
-import { DashboardChangeInfo } from '../saving/shared';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardChangeInfo } from '../saving/shared';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { getVizPanelKeyForPanelId } from '../utils/utils';

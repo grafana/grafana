@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { GrafanaTheme2, LinkTarget } from '@grafana/data';
+import { type GrafanaTheme2, type LinkTarget } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Icon, IconName, useStyles2 } from '@grafana/ui';
+import { Icon, type IconName, useStyles2 } from '@grafana/ui';
 
 export interface FooterLink {
   target: LinkTarget;

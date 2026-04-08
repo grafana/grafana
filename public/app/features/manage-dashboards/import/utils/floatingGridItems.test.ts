@@ -1,7 +1,7 @@
 import {
-  GridLayoutKind,
-  RowsLayoutKind,
-  TabsLayoutKind,
+  type GridLayoutKind,
+  type RowsLayoutKind,
+  type TabsLayoutKind,
   defaultGridLayoutKind,
   defaultRowsLayoutKind,
   defaultTabsLayoutKind,

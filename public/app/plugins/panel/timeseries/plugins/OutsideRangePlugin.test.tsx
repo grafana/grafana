@@ -1,8 +1,8 @@
 import { act, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
-import { UPlotConfigBuilder } from '@grafana/ui';
+import { type UPlotConfigBuilder } from '@grafana/ui';
 
 import { OutsideRangePlugin } from './OutsideRangePlugin';
 

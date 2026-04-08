@@ -19,7 +19,7 @@ import (
 )
 
 //go:generate mockery --name ExportFn --structname MockExportFn --inpackage --filename mock_export_fn.go --with-expecter
-type ExportFn func(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error
+type ExportFn func(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, folderAPIVersion string) error
 
 //go:generate mockery --name WrapWithStageFn --structname MockWrapWithStageFn --inpackage --filename mock_wrap_with_stage_fn.go --with-expecter
 type WrapWithStageFn func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repo repository.Repository, staged bool) error) error
@@ -32,6 +32,7 @@ type ExportWorker struct {
 	wrapWithStageFn     WrapWithStageFn
 	metrics             jobs.JobMetrics
 	enabled             bool
+	folderAPIVersion    string
 }
 
 func NewExportWorker(
@@ -42,6 +43,7 @@ func NewExportWorker(
 	wrapWithStageFn WrapWithStageFn,
 	metrics jobs.JobMetrics,
 	enabled bool,
+	folderAPIVersion string,
 ) *ExportWorker {
 	return &ExportWorker{
 		clientFactory:       clientFactory,
@@ -51,6 +53,7 @@ func NewExportWorker(
 		wrapWithStageFn:     wrapWithStageFn,
 		metrics:             metrics,
 		enabled:             enabled,
+		folderAPIVersion:    folderAPIVersion,
 	}
 }
 
@@ -133,7 +136,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			return fmt.Errorf("create repository resource client: %w", err)
 		}
 
-		return r.exportFn(ctx, cfg.Name, *options, clients, repositoryResources, progress)
+		return r.exportFn(ctx, cfg.Name, *options, clients, repositoryResources, progress, r.folderAPIVersion)
 	}
 
 	err := r.wrapWithStageFn(ctx, repo, cloneOptions, fn)

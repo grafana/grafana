@@ -3,6 +3,7 @@ package loki
 import (
 	"context"
 	"encoding/json"
+	"maps"
 	"math/rand"
 	"net/url"
 	"slices"
@@ -13,7 +14,6 @@ import (
 	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/maps"
 
 	alertingInstrument "github.com/grafana/alerting/http/instrument"
 	"github.com/grafana/alerting/http/instrument/instrumenttest"
@@ -25,7 +25,6 @@ import (
 	annotation_ac "github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -46,9 +45,11 @@ func TestMain(m *testing.M) {
 func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
-	sql, cfg := db.InitTestDBWithCfg(t)
+	sql := db.InitTestDB(t)
 
-	dashboard1 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
+	mockDashSvc := testutil.NewMockDashboardService(t)
+
+	dashboard1 := testutil.CreateDashboard(t, mockDashSvc, dashboards.SaveDashboardCommand{
 		UserID: 1,
 		OrgID:  1,
 		Dashboard: simplejson.NewFromAny(map[string]any{
@@ -56,7 +57,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		}),
 	})
 
-	dashboard2 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
+	dashboard2 := testutil.CreateDashboard(t, mockDashSvc, dashboards.SaveDashboardCommand{
 		UserID: 1,
 		OrgID:  1,
 		Dashboard: simplejson.NewFromAny(map[string]any{
@@ -136,7 +137,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		})
 
 		t.Run("should return ErrLokiStoreNotFound if rule is not found by ID", func(t *testing.T) {
-			var rules = slices.Concat(maps.Values(dashboardRules)...)
+			rules := slices.Concat(slices.Collect(maps.Values(dashboardRules))...)
 			id := rand.Int63n(1000) // in Postgres ID is integer, so limit range
 			// make sure id is not known
 			for slices.IndexFunc(rules, func(rule *ngmodels.AlertRule) bool {

@@ -1,19 +1,19 @@
 import { cx } from '@emotion/css';
-import { isObject } from 'lodash';
-import { HTMLProps } from 'react';
+import { type HTMLProps } from 'react';
 import * as React from 'react';
 import { useAsyncFn } from 'react-use';
 import { type AsyncState } from 'react-use/lib/useAsync';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineLabel } from '../Forms/InlineLabel';
+import { getLabelFromValue } from '../Select/utils';
 
 import { SegmentSelect } from './SegmentSelect';
 import { getSegmentStyles } from './styles';
-import { SegmentProps } from './types';
+import { type SegmentProps } from './types';
 import { useExpandableLabel } from './useExpandableLabel';
 
 export interface SegmentAsyncProps<T> extends SegmentProps, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
@@ -56,8 +56,7 @@ export function SegmentAsync<T>({
   const styles = useStyles2(getSegmentStyles);
 
   if (!expanded) {
-    const label = isObject(value) ? value.label : value;
-    const labelAsString = label != null ? String(label) : undefined;
+    const label = getLabelFromValue(value);
 
     return (
       <Label
@@ -75,7 +74,7 @@ export function SegmentAsync<T>({
                 className
               )}
             >
-              {labelAsString || placeholder}
+              {label || placeholder}
             </InlineLabel>
           )
         }
@@ -86,7 +85,7 @@ export function SegmentAsync<T>({
   return (
     <SegmentSelect
       {...rest}
-      value={value && !isObject(value) ? { value } : value}
+      value={value && typeof value !== 'object' ? { value } : value}
       placeholder={inputPlaceholder}
       options={state.value ?? []}
       loadOptions={reloadOptionsOnChange ? fetchOptions : undefined}

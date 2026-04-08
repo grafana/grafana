@@ -8,6 +8,8 @@ import (
 //
 // Get the notification policy tree.
 //
+// Deprecated: true
+//
 //     Responses:
 //       200: Route
 //         description: The currently active notification routing tree
@@ -16,6 +18,8 @@ import (
 // swagger:route PUT /v1/provisioning/policies provisioning stable RoutePutPolicyTree
 //
 // Sets the notification policy tree.
+//
+// Deprecated: true
 //
 //     Consumes:
 //     - application/json
@@ -28,6 +32,8 @@ import (
 // swagger:route DELETE /v1/provisioning/policies provisioning stable RouteResetPolicyTree
 //
 // Clears the notification policy tree.
+//
+// Deprecated: true
 //
 //     Consumes:
 //     - application/json

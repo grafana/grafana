@@ -1,7 +1,7 @@
-import { FormEvent, useMemo } from 'react';
+import { type FormEvent, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { type QueryEditorProps, type SelectableValue } from '@grafana/data';
 import { selectors as editorSelectors } from '@grafana/e2e-selectors';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Icon, TextArea } from '@grafana/ui';
 
@@ -19,8 +19,8 @@ import { SimulationQueryEditor } from './components/SimulationQueryEditor';
 import { StreamingClientEditor } from './components/StreamingClientEditor';
 import { USAQueryEditor, usaQueryModes } from './components/USAQueryEditor';
 import { defaultCSVWaveQuery, defaultPulseQuery, defaultQuery } from './constants';
-import { CSVWave, NodesQuery, TestDataDataQuery, TestDataQueryType, USAQuery } from './dataquery';
-import { TestDataDataSource } from './datasource';
+import { type CSVWave, type NodesQuery, type TestDataDataQuery, TestDataQueryType, type USAQuery } from './dataquery';
+import { type TestDataDataSource } from './datasource';
 import { defaultStreamQuery } from './runStreams';
 
 const endpoints = [

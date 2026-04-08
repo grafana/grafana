@@ -4,7 +4,7 @@
 
 import { reportInteraction } from '../../analytics/utils';
 
-import { Event, EventProperty } from './types';
+import { type Event, type EventProperty } from './types';
 
 export const defineFeatureEvents = (
   repo: Event['repo'] = 'grafana',

@@ -1,15 +1,20 @@
-import { ManagedBy } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { DataFrame, DataFrameView, IconName, fuzzySearch } from '@grafana/data';
-import { DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
+import { type ManagedBy } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { type DataFrame, type DataFrameView, type IconName, fuzzySearch } from '@grafana/data';
+import { type DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
 import { isSharedWithMe, isVirtualTeamFolder } from 'app/features/browse-dashboards/utils/dashboards';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
-import { AnnoKeyFolder, ManagerKind, ResourceList } from '../../apiserver/types';
-import { DashboardSearchHit, DashboardSearchItemType, DashboardViewItem, DashboardViewItemKind } from '../types';
+import { AnnoKeyFolder, type ManagerKind, type ResourceList } from '../../apiserver/types';
+import {
+  type DashboardSearchHit,
+  DashboardSearchItemType,
+  type DashboardViewItem,
+  type DashboardViewItemKind,
+} from '../types';
 
-import { DashboardQueryResult, SearchQuery, SearchResultMeta } from './types';
-import { SearchHit } from './unified';
+import { type DashboardQueryResult, type SearchQuery, type SearchResultMeta } from './types';
+import { type SearchHit } from './unified';
 
 /** prepare the query replacing folder:current */
 export async function replaceCurrentFolderQuery(query: SearchQuery): Promise<SearchQuery> {

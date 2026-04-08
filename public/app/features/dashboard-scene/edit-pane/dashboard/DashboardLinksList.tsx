@@ -1,12 +1,12 @@
-import { DragDropContext, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { DashboardLink, DashboardLinkPlacement } from '@grafana/schema/dist/esm/index.gen';
+import { type DashboardLink, type DashboardLinkPlacement } from '@grafana/schema/dist/esm/index.gen';
 import { Box, Button } from '@grafana/ui';
 
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { openAddLinkPane, openLinkEditPane } from '../../settings/links/LinkAddEditableElement';
 import { DashboardInteractions } from '../../utils/interactions';
 import { dashboardEditActions } from '../shared';

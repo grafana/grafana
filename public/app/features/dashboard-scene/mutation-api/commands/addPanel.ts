@@ -6,7 +6,7 @@
  * to match the target layout (warning emitted if converted).
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';

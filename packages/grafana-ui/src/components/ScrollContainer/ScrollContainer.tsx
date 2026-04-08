@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { Property } from 'csstype';
-import { forwardRef, PropsWithChildren, UIEventHandler } from 'react';
+import { type Property } from 'csstype';
+import { forwardRef, type PropsWithChildren, type UIEventHandler } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { Box, BoxProps } from '../Layout/Box/Box';
+import { Box, type BoxProps } from '../Layout/Box/Box';
 
 import { ScrollIndicators } from './ScrollIndicators';
 

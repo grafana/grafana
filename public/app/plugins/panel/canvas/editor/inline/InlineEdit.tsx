@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { SyntheticEvent, useEffect, useRef, useState } from 'react';
-import Draggable, { DraggableEventHandler } from 'react-draggable';
-import { Resizable, ResizeCallbackData } from 'react-resizable';
+import { type SyntheticEvent, useEffect, useRef, useState } from 'react';
+import Draggable, { type DraggableEventHandler } from 'react-draggable';
+import { Resizable, type ResizeCallbackData } from 'react-resizable';
 
-import { Dimensions2D, GrafanaTheme2, store } from '@grafana/data';
+import { type Dimensions2D, type GrafanaTheme2, store } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { IconButton, Portal, useStyles2 } from '@grafana/ui';
-import { Scene } from 'app/features/canvas/runtime/scene';
+import { type Scene } from 'app/features/canvas/runtime/scene';
 
 import { InlineEditBody } from './InlineEditBody';
 

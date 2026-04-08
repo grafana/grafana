@@ -1,18 +1,18 @@
 import { of } from 'rxjs';
 
 import {
-  CustomVariableModel,
-  DataSourceInstanceSettings,
-  DataSourcePluginMeta,
-  PluginMetaInfo,
+  type CustomVariableModel,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
+  type PluginMetaInfo,
   PluginType,
-  ScopedVars,
+  type ScopedVars,
   VariableHide,
 } from '@grafana/data';
-import { getBackendSrv, setBackendSrv, DataSourceWithBackend, TemplateSrv } from '@grafana/runtime';
+import { getBackendSrv, setBackendSrv, DataSourceWithBackend, type TemplateSrv } from '@grafana/runtime';
 
 import { CloudWatchDatasource } from '../datasource';
-import { CloudWatchJsonData } from '../types';
+import { type CloudWatchJsonData } from '../types';
 import { getVariableName } from '../utils/templateVariableUtils';
 
 import { initialCustomVariableModelState } from './CloudWatchVariables';

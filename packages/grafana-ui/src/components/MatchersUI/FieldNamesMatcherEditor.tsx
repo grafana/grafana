@@ -1,12 +1,12 @@
 import { memo, useCallback } from 'react';
 
-import { FieldMatcherID, fieldMatchers, SelectableValue, ByNamesMatcherOptions } from '@grafana/data';
+import { FieldMatcherID, fieldMatchers, type SelectableValue, type ByNamesMatcherOptions } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { Input } from '../Input/Input';
 import { MultiSelect } from '../Select/Select';
 
-import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
+import { type MatcherUIProps, type FieldMatcherUIRegistryItem } from './types';
 import { useFieldDisplayNames, useMatcherSelectOptions, frameHasName } from './utils';
 
 export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions>>((props) => {

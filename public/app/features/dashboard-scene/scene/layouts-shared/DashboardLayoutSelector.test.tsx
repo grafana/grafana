@@ -15,7 +15,7 @@ import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
-import { LayoutParent } from '../types/LayoutParent';
+import { type LayoutParent } from '../types/LayoutParent';
 
 import { DashboardLayoutSelector } from './DashboardLayoutSelector';
 

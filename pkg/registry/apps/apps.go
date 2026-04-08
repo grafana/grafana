@@ -64,8 +64,7 @@ func ProvideAppInstallers(
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
 		installers = append(installers, shorturlAppInstaller)
 	}
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAlertingRules) && rulesAppInstaller != nil {
+	if rulesAppInstaller != nil {
 		installers = append(installers, rulesAppInstaller)
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature

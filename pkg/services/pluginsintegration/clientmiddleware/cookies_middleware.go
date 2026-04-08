@@ -47,7 +47,7 @@ func (m *CookiesMiddleware) applyCookies(ctx context.Context, pCtx backend.Plugi
 
 		ds := &datasources.DataSource{
 			ID:       settings.ID,
-			OrgID:    pCtx.OrgID,
+			OrgID:    pCtx.OrgID, // nolint:staticcheck
 			JsonData: jsonDataBytes,
 			Updated:  settings.Updated,
 		}

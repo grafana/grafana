@@ -7,9 +7,9 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
-import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
-import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
+import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { containsTabsLayout } from './findAllGridTypes';
 import { layoutRegistry } from './layoutRegistry';

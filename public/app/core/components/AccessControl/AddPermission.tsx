@@ -8,7 +8,7 @@ import { ServiceAccountPicker } from 'app/core/components/Select/ServiceAccountP
 import { TeamPicker } from 'app/core/components/Select/TeamPicker';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 
-import { Assignments, PermissionTarget, SetPermission } from './types';
+import { type Assignments, PermissionTarget, type SetPermission } from './types';
 
 export interface Props {
   title?: string;

@@ -188,7 +188,10 @@ Then link it to the grafana client. Default stack id is `11` and token is `ThisI
       GF_DEFAULT_APP_MODE: development
       GF_LOG_LEVEL: debug
       GF_ENVIRONMENT_STACK_ID: 11
-      GF_FEATURE_TOGGLES_ENABLE: zanzana authZGRPCServer unifiedStorage unifiedStorageSearch
+      GF_FEATURE_TOGGLES_zanzana: true
+      GF_FEATURE_TOGGLES_authZGRPCServer: true
+      GF_FEATURE_TOGGLES_unifiedStorage: true
+      GF_FEATURE_TOGGLES_unifiedStorageSearch: true
       GF_ZANZANA_CLIENT_MODE: client
       GF_ZANZANA_CLIENT_ADDRESS: host.docker.internal:10000
       GF_ZANZANA_CLIENT_TOKEN: ThisIsMySecretToken

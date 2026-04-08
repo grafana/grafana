@@ -1,9 +1,9 @@
 import {
-  DataFrame,
-  DataLinkPostProcessor,
-  DataLinkTransformationConfig,
-  DataSourceInstanceSettings,
-  TimeRange,
+  type DataFrame,
+  type DataLinkPostProcessor,
+  type DataLinkTransformationConfig,
+  type DataSourceInstanceSettings,
+  type TimeRange,
 } from '@grafana/data';
 
 export type CorrelationConfigQuery = {

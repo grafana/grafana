@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2, TimeZoneInfo } from '@grafana/data';
+import { type GrafanaTheme2, type TimeZoneInfo } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 

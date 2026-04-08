@@ -1,4 +1,4 @@
-import { CreateReceiverTestApiArg, generatedAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type CreateReceiverTestApiArg, generatedAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 
 interface TestReceiverIntegrationBody {
   integration: {

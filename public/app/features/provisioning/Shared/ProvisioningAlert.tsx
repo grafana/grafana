@@ -2,7 +2,7 @@ import { textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, Icon, Stack } from '@grafana/ui';
 
-import { StatusInfo } from '../types';
+import { type StatusInfo } from '../types';
 
 import { MessageList } from './MessageList';
 

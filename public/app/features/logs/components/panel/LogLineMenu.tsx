@@ -1,16 +1,16 @@
-import { MouseEvent, useCallback, useMemo, useRef } from 'react';
+import { type MouseEvent, useCallback, useMemo, useRef } from 'react';
 
-import { LogRowContextOptions, LogRowModel } from '@grafana/data';
+import { type LogRowContextOptions, type LogRowModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Dropdown, IconButton, Menu } from '@grafana/ui';
 
 import { copyText, handleOpenLogsContextClick } from '../../utils';
 
 import { useLogDetailsContext } from './LogDetailsContext';
-import { LogLineStyles } from './LogLine';
+import { type LogLineStyles } from './LogLine';
 import { useLogIsPinned, useLogListContext } from './LogListContext';
-import { LogListModel } from './processing';
+import { type LogListModel } from './processing';
 
 export type GetRowContextQueryFn = (
   row: LogRowModel,

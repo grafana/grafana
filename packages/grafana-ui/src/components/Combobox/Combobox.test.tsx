@@ -5,7 +5,7 @@ import React from 'react';
 import { Field } from '../Forms/Field';
 
 import { Combobox } from './Combobox';
-import { ComboboxOption } from './types';
+import { type ComboboxOption } from './types';
 import { DEBOUNCE_TIME_MS } from './useOptions';
 
 // Mock data for the Combobox options

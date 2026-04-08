@@ -3,7 +3,7 @@ import * as React from 'react';
 import { t } from '@grafana/i18n';
 import { Icon, ModalsController } from '@grafana/ui';
 
-import { OnRowOptionsUpdate } from './RowOptionsForm';
+import { type OnRowOptionsUpdate } from './RowOptionsForm';
 import { RowOptionsModal } from './RowOptionsModal';
 
 export interface RowOptionsButtonProps {

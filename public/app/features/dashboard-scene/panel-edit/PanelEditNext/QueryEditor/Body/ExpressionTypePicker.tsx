@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Card, Text, useStyles2, useTheme2 } from '@grafana/ui';
-import { ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
+import { type ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
 
 import { EXPRESSION_IMAGE_MAP } from '../../constants';
 import { useQueryEditorUIContext } from '../QueryEditorContext';

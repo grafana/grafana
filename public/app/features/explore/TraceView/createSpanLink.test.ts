@@ -1,21 +1,21 @@
 import {
-  DataSourceInstanceSettings,
-  LinkModel,
+  type DataSourceInstanceSettings,
+  type LinkModel,
   createDataFrame,
   SupportedTransformationType,
   DataLinkConfigOrigin,
   FieldType,
-  DataFrame,
+  type DataFrame,
 } from '@grafana/data';
-import { TraceToLogsOptionsV2, TraceToMetricsOptions } from '@grafana/o11y-ds-frontend';
-import { DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
+import { type TraceToLogsOptionsV2, type TraceToMetricsOptions } from '@grafana/o11y-ds-frontend';
+import { type DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { LinkSrv, setLinkSrv } from '../../panel/panellinks/link_srv';
 import { TemplateSrv } from '../../templating/template_srv';
 
 import { SpanLinkType } from './components/types/links';
-import { Trace, TraceSpan } from './components/types/trace';
+import { type Trace, type TraceSpan } from './components/types/trace';
 import { createSpanLinkFactory, pyroscopeProfileIdTagKey } from './createSpanLink';
 
 const dummyTraceData = { duration: 10, traceID: 'trace1', traceName: 'test trace' } as unknown as Trace;

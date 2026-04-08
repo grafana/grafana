@@ -3,16 +3,16 @@ import { saveAs } from 'file-saver';
 import { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
+import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Alert, Button, TextLink, useStyles2 } from '@grafana/ui';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
 import { ImagePreview } from '../components/ImagePreview';
-import { SceneShareTabState, ShareView } from '../types';
+import { type SceneShareTabState, type ShareView } from '../types';
 
 import { generateDashboardImage } from './utils';
 

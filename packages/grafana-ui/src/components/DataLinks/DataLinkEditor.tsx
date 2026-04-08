@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { memo, ChangeEvent } from 'react';
+import { memo, type ChangeEvent } from 'react';
 
-import { VariableSuggestion, GrafanaTheme2, DataLink } from '@grafana/data';
+import { type VariableSuggestion, type GrafanaTheme2, type DataLink } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';

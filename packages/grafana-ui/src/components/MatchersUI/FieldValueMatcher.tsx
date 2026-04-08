@@ -3,20 +3,20 @@ import { useMemo, useCallback, type FormEvent } from 'react';
 import {
   FieldMatcherID,
   fieldMatchers,
-  FieldValueMatcherConfig,
+  type FieldValueMatcherConfig,
   fieldReducers,
   ReducerID,
-  SelectableValue,
+  type SelectableValue,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ComparisonOperation } from '@grafana/schema';
 
 import { Combobox } from '../Combobox/Combobox';
-import { ComboboxOption } from '../Combobox/types';
+import { type ComboboxOption } from '../Combobox/types';
 import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
 
-import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
+import { type MatcherUIProps, type FieldMatcherUIRegistryItem } from './types';
 
 type Props = MatcherUIProps<FieldValueMatcherConfig>;
 

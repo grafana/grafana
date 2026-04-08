@@ -1,10 +1,10 @@
 import { isObject } from 'lodash';
-import { FormEvent, useCallback, useState } from 'react';
+import { type FormEvent, useCallback, useState } from 'react';
 
-import { CustomVariableModel, shallowCompare } from '@grafana/data';
+import { type CustomVariableModel, shallowCompare } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { CustomVariable, SceneVariable } from '@grafana/scenes';
+import { CustomVariable, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { CustomVariableForm } from '../../components/CustomVariableForm';

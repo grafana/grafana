@@ -1,11 +1,11 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { useId, useState } from 'react';
 
 import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 
-import { InlineToast as InlineToastImpl, InlineToastProps } from './InlineToast';
+import { InlineToast as InlineToastImpl, type InlineToastProps } from './InlineToast';
 import mdx from './InlineToast.mdx';
 
 const story: Meta = {

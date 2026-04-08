@@ -1,29 +1,29 @@
-import { RefObject } from 'react';
-import uPlot, { Cursor } from 'uplot';
+import { type RefObject } from 'react';
+import uPlot, { type Cursor } from 'uplot';
 
 import {
   DataFrameType,
   formattedValueToString,
   getValueFormat,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   incrRoundDn,
   incrRoundUp,
-  TimeRange,
+  type TimeRange,
   FieldType,
   getDisplayProcessor,
 } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, HeatmapCellLayout } from '@grafana/schema';
-import { UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui';
+import { UPlotConfigBuilder, type UPlotConfigPrepFn } from '@grafana/ui';
 import {
   calculateBucketFactor,
   isHeatmapCellsDense,
   readHeatmapRowsCustomMeta,
 } from 'app/features/transformers/calculateHeatmap/heatmap';
 
-import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
+import { pointWithin, Quadtree, type Rect } from '../barchart/quadtree';
 
-import { HeatmapData } from './fields';
-import { FieldConfig, HeatmapSelectionMode, YAxisConfig } from './panelcfg.gen';
+import { type HeatmapData } from './fields';
+import { type FieldConfig, HeatmapSelectionMode, type YAxisConfig } from './panelcfg.gen';
 
 /** Validates and returns a safe log base (2 or 10), defaults to 2 if invalid */
 export function toLogBase(value: number | undefined): 2 | 10 {

@@ -38,6 +38,7 @@ var (
 		"grafana-pyroscope-app":        {ID: "grafana-pyroscope-app"},
 		"grafana-exploretraces-app":    {ID: "grafana-exploretraces-app"},
 		"grafana-metricsdrilldown-app": {ID: "grafana-metricsdrilldown-app"},
+		"elasticsearch":                {ID: "elasticsearch"},
 	}
 )
 

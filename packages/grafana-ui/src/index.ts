@@ -464,7 +464,13 @@ export { RunnerPlugin } from './slate-plugins/runner';
 export { SelectionShortcutsPlugin } from './slate-plugins/selection_shortcuts';
 export { SlatePrism, type Token } from './slate-plugins/slate-prism';
 export { SuggestionsPlugin } from './slate-plugins/suggestions';
-export { Sidebar, useSidebar, type SidebarPosition, type SidebarContextValue } from './components/Sidebar/Sidebar';
+export {
+  Sidebar,
+  useSidebar,
+  type SidebarPosition,
+  type SidebarContextValue,
+  useSidebarContext,
+} from './components/Sidebar/Sidebar';
 
 // @deprecated import from @grafana/schema
 export {

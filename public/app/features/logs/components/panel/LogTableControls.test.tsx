@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { LogsSortOrder } from '@grafana/data';
 
-import { DownloadFormat, downloadLogs } from '../../utils';
+import { type DownloadFormat, downloadLogs } from '../../utils';
 
 import { LogTableControls } from './LogTableControls';
 

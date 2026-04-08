@@ -1,22 +1,22 @@
-import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings, type DataSourceJsonData, type DataSourceSettings } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PERMISSIONS_TIME_INTERVALS } from 'app/features/alerting/unified/components/mute-timings/permissions';
 import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/components/notification-policies/permissions';
 import {
-  AlertManagerDataSourceJsonData,
+  type AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
   AlertmanagerChoice,
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import {
-  DataSourceRulesSourceIdentifier as DataSourceRulesSourceIdentifier,
-  GrafanaRulesSourceIdentifier,
+  type DataSourceRulesSourceIdentifier as DataSourceRulesSourceIdentifier,
+  type GrafanaRulesSourceIdentifier,
   GrafanaRulesSourceSymbol,
-  RuleIdentifier,
-  RulesSource,
-  RulesSourceIdentifier,
-  RulesSourceUid,
+  type RuleIdentifier,
+  type RulesSource,
+  type RulesSourceIdentifier,
+  type RulesSourceUid,
 } from 'app/types/unified-alerting';
 import grafanaIconSvg from 'img/grafana_icon.svg';
 

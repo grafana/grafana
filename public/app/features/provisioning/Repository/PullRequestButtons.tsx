@@ -1,8 +1,8 @@
 import { Trans } from '@grafana/i18n';
 import { LinkButton, Stack } from '@grafana/ui';
-import { RepositoryUrLs } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryUrLs } from 'app/api/clients/provisioning/v0alpha1';
 
-import { JobType } from '../types';
+import { type JobType } from '../types';
 
 interface Props {
   jobType?: JobType;

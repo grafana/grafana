@@ -1,4 +1,4 @@
-import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
+import { type DataSourceInstanceSettings, type DataSourceRef } from '@grafana/data';
 
 import { isDataSourceMatch, getDataSourceCompareFn, matchDataSourceWithSearch } from './utils';
 

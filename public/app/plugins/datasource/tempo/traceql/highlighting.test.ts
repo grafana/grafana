@@ -1,4 +1,4 @@
-import { monacoTypes } from '@grafana/ui';
+import { type monacoTypes } from '@grafana/ui';
 
 import { computeErrorMessage, getErrorMarkers, getErrorNodes, getMarker, getWarningMarkers } from './highlighting';
 

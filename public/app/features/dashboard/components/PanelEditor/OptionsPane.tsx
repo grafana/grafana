@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
 import { useSelector } from 'app/types/store';
@@ -8,7 +8,7 @@ import { useSelector } from 'app/types/store';
 import { OptionsPaneOptions } from './OptionsPaneOptions';
 import { VisualizationButton } from './VisualizationButton';
 import { VisualizationSelectPane } from './VisualizationSelectPane';
-import { OptionPaneRenderProps } from './types';
+import { type OptionPaneRenderProps } from './types';
 import { usePanelLatestData } from './usePanelLatestData';
 
 export const OptionsPane = ({

@@ -1,7 +1,7 @@
-import { dateTime, DataQuery, store } from '@grafana/data';
-import { RichHistoryQuery } from 'app/types/explore';
+import { dateTime, type DataQuery, store } from '@grafana/data';
+import { type RichHistoryQuery } from 'app/types/explore';
 
-import RichHistoryStorage, { RichHistoryStorageWarning } from '../history/RichHistoryStorage';
+import { type default as RichHistoryStorage, RichHistoryStorageWarning } from '../history/RichHistoryStorage';
 
 import {
   addToRichHistory,

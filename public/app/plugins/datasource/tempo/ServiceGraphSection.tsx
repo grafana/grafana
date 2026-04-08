@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Alert, InlineField, InlineFieldRow, TextLink, useStyles2 } from '@grafana/ui';
 
 import { AdHocFilter } from './_importedDependencies/components/AdHocFilter/AdHocFilter';
-import { AdHocVariableFilter } from './_importedDependencies/components/AdHocFilter/types';
-import { PrometheusDatasource } from './_importedDependencies/datasources/prometheus/types';
-import { TempoQuery } from './types';
+import { type AdHocVariableFilter } from './_importedDependencies/components/AdHocFilter/types';
+import { type PrometheusDatasource } from './_importedDependencies/datasources/prometheus/types';
+import { type TempoQuery } from './types';
 import { getDS } from './utils';
 
 export function ServiceGraphSection({

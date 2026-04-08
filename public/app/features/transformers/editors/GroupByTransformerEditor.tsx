@@ -5,16 +5,15 @@ import {
   DataTransformerID,
   ReducerID,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
-  GrafanaTheme2,
+  type GrafanaTheme2,
 } from '@grafana/data';
-import { GroupByFieldOptions, GroupByOperationID, GroupByTransformerOptions } from '@grafana/data/internal';
+import { type GroupByFieldOptions, GroupByOperationID, type GroupByTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { useTheme2, StatsPicker, InlineField, Stack, Alert, Combobox, ComboboxOption } from '@grafana/ui';
+import { useTheme2, StatsPicker, InlineField, Stack, Alert, Combobox, type ComboboxOption } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/groupBy.svg';
 import lightImage from '../images/light/groupBy.svg';
 import { DataFieldsErrorWrapper } from '../utils';
@@ -175,7 +174,6 @@ export const getGroupByTransformRegistryItem: () => TransformerRegistryItem<Grou
     TransformerCategory.CalculateNewFields,
     TransformerCategory.Reformat,
   ]),
-  help: getTransformationContent(DataTransformerID.groupBy).helperDocs,
   imageDark: darkImage,
   imageLight: lightImage,
 });

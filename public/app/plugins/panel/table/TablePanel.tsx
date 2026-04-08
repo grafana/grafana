@@ -2,26 +2,26 @@ import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
 import {
-  ActionModel,
+  type ActionModel,
   DashboardCursorSync,
-  DataFrame,
+  type DataFrame,
   FieldMatcherID,
   getFrameDisplayName,
-  InterpolateFunction,
-  PanelProps,
-  SelectableValue,
-  Field,
+  type InterpolateFunction,
+  type PanelProps,
+  type SelectableValue,
+  type Field,
   cacheFieldDisplayNames,
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { Select, usePanelContext, useTheme2 } from '@grafana/ui';
-import { TableSortByFieldState } from '@grafana/ui/internal';
+import { type TableSortByFieldState } from '@grafana/ui/internal';
 import { TableNG } from '@grafana/ui/unstable';
 import { getConfig } from 'app/core/config';
 import { getActions } from 'app/features/actions/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 interface Props extends PanelProps<Options> {
   initialRowIndex?: number;

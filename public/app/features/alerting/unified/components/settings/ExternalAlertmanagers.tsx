@@ -2,7 +2,7 @@ import { Stack } from '@grafana/ui';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
-import { ExternalAlertmanagerDataSourceWithStatus } from '../../hooks/useExternalAmSelector';
+import { type ExternalAlertmanagerDataSourceWithStatus } from '../../hooks/useExternalAmSelector';
 import {
   isAlertmanagerDataSourceInterestedInAlerts,
   isProvisionedDataSource,

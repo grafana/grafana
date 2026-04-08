@@ -1,6 +1,6 @@
-import { Location } from 'history';
+import { type Location } from 'history';
 
-import { locationService, setBackendSrv, BackendSrv } from '@grafana/runtime';
+import { locationService, setBackendSrv, type BackendSrv } from '@grafana/runtime';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { NewFrontendAssetsChecker } from './NewFrontendAssetsChecker';

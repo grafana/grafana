@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { GrafanaTheme2, QueryEditorProps, textUtil } from '@grafana/data';
+import { type GrafanaTheme2, type QueryEditorProps, textUtil } from '@grafana/data';
 import { useStyles2, Stack } from '@grafana/ui';
 
-import OpenTsDatasource from '../datasource';
-import { OpenTsdbOptions, OpenTsdbQuery } from '../types';
+import type OpenTsDatasource from '../datasource';
+import { type OpenTsdbOptions, type OpenTsdbQuery } from '../types';
 
 import { DownSample } from './DownSample';
 import { FilterSection } from './FilterSection';

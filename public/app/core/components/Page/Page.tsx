@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useLayoutEffect } from 'react';
 
-import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
@@ -10,7 +10,7 @@ import NativeScrollbar from '../NativeScrollbar';
 import { PageContents } from './PageContents';
 import { PageHeader } from './PageHeader';
 import { PageTabs } from './PageTabs';
-import { PageType } from './types';
+import { type PageType } from './types';
 import { usePageNav } from './usePageNav';
 import { usePageTitle } from './usePageTitle';
 

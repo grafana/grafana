@@ -2,10 +2,10 @@ import { css, cx } from '@emotion/css';
 import * as React from 'react';
 import Highlighter from 'react-highlight-words';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { CompletionItem, CompletionItemKind } from '../../types/completion';
+import { type CompletionItem, CompletionItemKind } from '../../types/completion';
 
 import { PartialHighlighter } from './PartialHighlighter';
 

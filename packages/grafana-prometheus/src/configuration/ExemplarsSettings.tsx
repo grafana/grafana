@@ -6,7 +6,7 @@ import { t, Trans } from '@grafana/i18n';
 import { ConfigSubSection } from '@grafana/plugin-ui';
 import { Button, useTheme2 } from '@grafana/ui';
 
-import { ExemplarTraceIdDestination } from '../types';
+import { type ExemplarTraceIdDestination } from '../types';
 
 import { ExemplarSetting } from './ExemplarSetting';
 import { overhaulStyles } from './shared/utils';

@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 
-import { PanelProps, VizOrientation } from '@grafana/data';
+import { type PanelProps, VizOrientation } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import {
-  AdHocFilterItem,
+  type AdHocFilterItem,
   TooltipDisplayMode,
   TooltipPlugin2,
   UPLOT_AXIS_FONT_SIZE,
@@ -13,12 +13,12 @@ import {
   usePanelContext,
   useTheme2,
 } from '@grafana/ui';
-import { AdHocFilterModel, FILTER_FOR_OPERATOR, TooltipHoverMode } from '@grafana/ui/internal';
+import { type AdHocFilterModel, FILTER_FOR_OPERATOR, TooltipHoverMode } from '@grafana/ui/internal';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
 import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 import { prepConfig, prepSeries } from './utils';
 
 const charWidth = measureText('M', UPLOT_AXIS_FONT_SIZE).width;

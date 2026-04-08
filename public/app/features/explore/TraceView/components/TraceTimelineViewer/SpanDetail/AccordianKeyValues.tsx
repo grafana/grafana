@@ -16,14 +16,14 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import * as React from 'react';
 
-import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
+import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
 import { Counter, Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import TNil from '../../types/TNil';
+import type TNil from '../../types/TNil';
 
 import * as markers from './AccordianKeyValues.markers';
-import KeyValuesTable, { KeyValuesTableLink } from './KeyValuesTable';
+import KeyValuesTable, { type KeyValuesTableLink } from './KeyValuesTable';
 
 import { alignIcon } from '.';
 

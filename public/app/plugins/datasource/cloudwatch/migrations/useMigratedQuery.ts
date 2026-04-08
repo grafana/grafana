@@ -1,7 +1,7 @@
 import deepEqual from 'fast-deep-equal';
 import { useEffect, useMemo } from 'react';
 
-import { CloudWatchQuery } from '../types';
+import { type CloudWatchQuery } from '../types';
 
 /**
  * Returns queries with migrations, and calls onChange function to notify if it changes

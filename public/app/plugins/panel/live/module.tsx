@@ -2,7 +2,7 @@ import { PanelPlugin } from '@grafana/data';
 
 import { LiveChannelEditor } from './LiveChannelEditor';
 import { LivePanel } from './LivePanel';
-import { LivePanelOptions, MessageDisplayMode, MessagePublishMode } from './types';
+import { type LivePanelOptions, MessageDisplayMode, MessagePublishMode } from './types';
 
 export const plugin = new PanelPlugin<LivePanelOptions>(LivePanel).setPanelOptions((builder) => {
   builder.addCustomEditor({

@@ -1,4 +1,4 @@
-import { render, waitFor, screen, within, Matcher, getByRole } from '@testing-library/react';
+import { render, waitFor, screen, within, type Matcher, getByRole } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { merge, uniqueId } from 'lodash';
 import { openMenu } from 'react-select-event';
@@ -10,10 +10,10 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { SupportedTransformationType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
-  BackendSrv,
-  BackendSrvRequest,
-  DataSourceSrv,
-  reportInteraction,
+  type BackendSrv,
+  type BackendSrvRequest,
+  type DataSourceSrv,
+  type reportInteraction,
   setAppEvents,
   setDataSourceSrv,
 } from '@grafana/runtime';
@@ -32,7 +32,7 @@ import {
   createUpdateCorrelationResponse,
   MockDataSourceSrv,
 } from './__mocks__/useCorrelations.mocks';
-import { Correlation, CreateCorrelationParams, OmitUnion } from './types';
+import { type Correlation, type CreateCorrelationParams, type OmitUnion } from './types';
 
 // Set app events up, otherwise plugin modules will fail to load
 setAppEvents(appEvents);

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { FIELD_NAME_FACET_KEY } from '@grafana/data';
 
-import { FacetedLabelsFilter, FacetedLabelsFilterProps } from './FacetedLabelsFilter';
+import { FacetedLabelsFilter, type FacetedLabelsFilterProps } from './FacetedLabelsFilter';
 
 function renderFilter(overrides: Partial<FacetedLabelsFilterProps> = {}) {
   const props: FacetedLabelsFilterProps = {

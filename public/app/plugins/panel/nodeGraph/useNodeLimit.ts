@@ -1,8 +1,8 @@
 import { fromPairs, uniq } from 'lodash';
 import { useMemo } from 'react';
 
-import { Config } from './layout';
-import { EdgeDatumLayout, NodeDatum, NodesMarker } from './types';
+import { type Config } from './layout';
+import { type EdgeDatumLayout, type NodeDatum, type NodesMarker } from './types';
 
 type NodesMap = Record<string, NodeDatum>;
 type EdgesMap = Record<string, EdgeDatumLayout[]>;

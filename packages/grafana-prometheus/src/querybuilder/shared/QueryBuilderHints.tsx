@@ -2,13 +2,13 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { GrafanaTheme2, PanelData, QueryHint } from '@grafana/data';
+import { type GrafanaTheme2, type PanelData, type QueryHint } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { PrometheusDatasource } from '../../datasource';
-import { PromQueryModellerInterface, PromVisualQuery } from '../types';
+import { type PrometheusDatasource } from '../../datasource';
+import { type PromQueryModellerInterface, type PromVisualQuery } from '../types';
 
 interface Props {
   query: PromVisualQuery;

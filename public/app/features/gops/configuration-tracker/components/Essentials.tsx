@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Drawer, Dropdown, Icon, LinkButton, Menu, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
+import { type RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
-import { SectionDto, SectionDtoStep, SectionsDto, StepButtonDto } from '../irmHooks';
+import { type SectionDto, type SectionDtoStep, type SectionsDto, type StepButtonDto } from '../irmHooks';
 
 import { ProgressBar, StepsStatus } from './ProgressBar';
 

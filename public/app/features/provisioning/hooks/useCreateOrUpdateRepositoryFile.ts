@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import {
-  ReplaceRepositoryFilesWithPathApiArg,
+  type ReplaceRepositoryFilesWithPathApiArg,
   useCreateRepositoryFilesWithPathMutation,
   useReplaceRepositoryFilesWithPathMutation,
 } from 'app/api/clients/provisioning/v0alpha1';

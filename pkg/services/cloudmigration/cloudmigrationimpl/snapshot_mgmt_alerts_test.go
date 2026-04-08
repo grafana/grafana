@@ -28,7 +28,7 @@ var alertRulesPermissions = map[string][]string{
 	accesscontrol.ActionAlertingRuleRead:   {"*"},
 	accesscontrol.ActionAlertingRuleCreate: {"*"},
 	accesscontrol.ActionAlertingRuleUpdate: {"*"},
-	dashboards.ActionFoldersRead:           {"*"},
+	folder.ActionFoldersRead:               {"*"},
 	datasources.ActionQuery:                {"*"},
 }
 

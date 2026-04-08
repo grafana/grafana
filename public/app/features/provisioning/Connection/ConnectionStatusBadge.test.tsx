@@ -1,6 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
-import { ConnectionStatus } from 'app/api/clients/provisioning/v0alpha1';
+import { type ConnectionStatus } from 'app/api/clients/provisioning/v0alpha1';
 
 import { ConnectionStatusBadge } from './ConnectionStatusBadge';
 

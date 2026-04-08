@@ -1,9 +1,9 @@
 import { debounce } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
-import PageActionBar, { FilterCheckbox } from 'app/core/components/PageActionBar/PageActionBar';
-import { StoreState, useSelector, useDispatch } from 'app/types/store';
+import { type SelectableValue } from '@grafana/data';
+import PageActionBar, { type FilterCheckbox } from 'app/core/components/PageActionBar/PageActionBar';
+import { type StoreState, useSelector, useDispatch } from 'app/types/store';
 
 import { setDataSourcesSearchQuery, setIsSortAscending } from '../state/reducers';
 import { getDataSourcesSearchQuery, getDataSourcesSort } from '../state/selectors';

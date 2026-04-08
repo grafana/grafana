@@ -1,7 +1,7 @@
 import { useCallback, useState, type JSX } from 'react';
 
 import { t } from '@grafana/i18n';
-import { ComboboxOption, MultiCombobox } from '@grafana/ui';
+import { type ComboboxOption, MultiCombobox } from '@grafana/ui';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 export interface FolderFilterProps {

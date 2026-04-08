@@ -1,6 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
-import { SqlExprContextValue, SqlExprProvider, useSqlExprContext } from './SqlExprContext';
+import { type SqlExprContextValue, SqlExprProvider, useSqlExprContext } from './SqlExprContext';
 
 describe('SqlExprContext', () => {
   const mockContextValue: SqlExprContextValue = {

@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { DataSourceApi, DataSourceOptionsType, DataSourceQueryType, QueryEditorProps } from '@grafana/data';
-import { DataQuery, DataSourceJsonData } from '@grafana/schema';
+import {
+  type DataSourceApi,
+  type DataSourceOptionsType,
+  type DataSourceQueryType,
+  type QueryEditorProps,
+} from '@grafana/data';
+import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 
 import { isMigrationHandler, migrateQuery } from '../utils/migrationHandler';
 

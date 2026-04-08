@@ -2,9 +2,9 @@ import { DataSourceWithBackend, reportInteraction } from '@grafana/runtime';
 
 import { logsResourceTypes } from '../azureMetadata/logsResourceTypes';
 import { resourceTypeDisplayNames, resourceTypes } from '../azureMetadata/resourceTypes';
-import AzureMonitorDatasource from '../azure_monitor/azure_monitor_datasource';
-import AzureResourceGraphDatasource from '../azure_resource_graph/azure_resource_graph_datasource';
-import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
+import type AzureMonitorDatasource from '../azure_monitor/azure_monitor_datasource';
+import type AzureResourceGraphDatasource from '../azure_resource_graph/azure_resource_graph_datasource';
+import { type ResourceRow, type ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
 import {
   addResources,
   findRow,
@@ -13,14 +13,14 @@ import {
   parseResourceURI,
   resourceToString,
 } from '../components/ResourcePicker/utils';
-import { AzureMonitorResource } from '../dataquery.gen';
-import { AzureMonitorQuery } from '../types/query';
+import { type AzureMonitorResource } from '../dataquery.gen';
+import { type AzureMonitorQuery } from '../types/query';
 import {
-  AzureMonitorDataSourceInstanceSettings,
-  AzureMonitorDataSourceJsonData,
-  AzureResourceSummaryItem,
-  RawAzureResourceItem,
-  ResourceGraphFilters,
+  type AzureMonitorDataSourceInstanceSettings,
+  type AzureMonitorDataSourceJsonData,
+  type AzureResourceSummaryItem,
+  type RawAzureResourceItem,
+  type ResourceGraphFilters,
 } from '../types/types';
 
 const logsSupportedResourceTypesKusto = logsResourceTypes.map((v) => `"${v}"`).join(',');

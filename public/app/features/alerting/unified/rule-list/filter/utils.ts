@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
 
 import { useAlertingHomePageExtensions } from '../../plugins/useAlertingHomePageExtensions';
-import { RulesFilter } from '../../search/rulesSearchParser';
+import { type RulesFilter, buildRoutingFilter } from '../../search/rulesSearchParser';
 
-import { AdvancedFilters } from './types';
+import { type AdvancedFilters } from './types';
 
 export function formAdvancedFiltersToRuleFilter(
   values: AdvancedFilters,
@@ -11,15 +11,18 @@ export function formAdvancedFiltersToRuleFilter(
 ): RulesFilter {
   return {
     freeFormWords: existingFreeFormWords,
-    ...values,
+    ruleName: values.ruleName || undefined,
     namespace: values.namespace || undefined,
     groupName: values.groupName || undefined,
-    contactPoint: values.contactPoint || undefined,
+    dataSourceNames: values.dataSourceNames ?? [],
+    labels: values.labels ?? [],
+    dashboardUid: values.dashboardUid || undefined,
     ruleHealth: values.ruleHealth === '*' ? undefined : values.ruleHealth,
     ruleState: values.ruleState === '*' ? undefined : values.ruleState,
     ruleType: values.ruleType === '*' ? undefined : values.ruleType,
     plugins: values.plugins === 'show' ? undefined : 'hide',
     ruleSource: values.ruleSource ?? undefined,
+    ...buildRoutingFilter(values.contactPoint || undefined, values.policy || undefined),
   };
 }
 
@@ -36,6 +39,7 @@ export const emptyAdvancedFilters: AdvancedFilters = {
   plugins: 'show',
   contactPoint: null,
   ruleSource: null,
+  policy: null,
 };
 
 export function advancedFiltersToRulesFilter(values: AdvancedFilters, freeFormWords: string[] = []): RulesFilter {
@@ -51,8 +55,8 @@ export function advancedFiltersToRulesFilter(values: AdvancedFilters, freeFormWo
     ruleHealth: values.ruleHealth === '*' ? undefined : values.ruleHealth,
     dashboardUid: values.dashboardUid || undefined,
     plugins: values.plugins === 'show' ? undefined : 'hide',
-    contactPoint: values.contactPoint || undefined,
     ruleSource: values.ruleSource ?? undefined,
+    ...buildRoutingFilter(values.contactPoint || undefined, values.policy || undefined),
   };
 }
 
@@ -70,6 +74,7 @@ export function searchQueryToDefaultValues(filterState: RulesFilter): AdvancedFi
     plugins: filterState.plugins ?? 'show',
     contactPoint: filterState.contactPoint ?? null,
     ruleSource: filterState.ruleSource ?? null,
+    policy: filterState.policy ?? null,
   };
 }
 

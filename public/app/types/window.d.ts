@@ -1,10 +1,11 @@
+import { type BootData } from '@grafana/data';
 export declare global {
   interface Window {
     __grafanaSceneContext: SceneObject;
     __grafana_app_bundle_loaded: boolean;
     __grafana_public_path__: string;
     __grafana_load_failed: () => void;
-    grafanaBootData: import('@grafana/data').BootData;
+    grafanaBootData: BootData;
 
     /**
      * (Potential) wait for API call to fetch boot data and place it on `window.grafanaBootData`.

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
-import { GrafanaManagedReceiverConfig } from '../../../../../../plugins/datasource/alertmanager/types';
-import { OnCallIntegrationDTO } from '../../../api/onCallApi';
+import { type GrafanaManagedReceiverConfig } from '../../../../../../plugins/datasource/alertmanager/types';
+import { type OnCallIntegrationDTO } from '../../../api/onCallApi';
 import { useIrmPlugin } from '../../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../../types/pluginBridges';
 import { createBridgeURL } from '../../PluginBridge';

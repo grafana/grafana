@@ -1,15 +1,22 @@
 import { size } from 'lodash';
 import { of } from 'rxjs';
 
-import { AnnotationEvent, DataFrame, DataQueryRequest, dateTime, FieldType, MutableDataFrame } from '@grafana/data';
-import { FetchResponse } from '@grafana/runtime';
+import {
+  type AnnotationEvent,
+  type DataFrame,
+  type DataQueryRequest,
+  dateTime,
+  FieldType,
+  MutableDataFrame,
+} from '@grafana/data';
+import { type FetchResponse } from '@grafana/runtime';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 import InfluxQueryModel from './influx_query_model';
 import { getMockDSInstanceSettings, getMockInfluxDS } from './mocks/datasource';
 import ResponseParser, { getSelectedParams } from './response_parser';
-import { InfluxQuery } from './types';
+import { type InfluxQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

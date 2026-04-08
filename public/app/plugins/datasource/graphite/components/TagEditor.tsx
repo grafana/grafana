@@ -6,8 +6,8 @@ import { Segment, SegmentAsync } from '@grafana/ui';
 import { actions } from '../state/actions';
 import { useDispatch } from '../state/context';
 import { getTagOperatorsSelectables, getTagsSelectables, getTagValuesSelectables } from '../state/providers';
-import { GraphiteQueryEditorState } from '../state/store';
-import { GraphiteTag, GraphiteTagOperator } from '../types';
+import { type GraphiteQueryEditorState } from '../state/store';
+import { type GraphiteTag, type GraphiteTagOperator } from '../types';
 
 type Props = {
   tag: GraphiteTag;

@@ -1,6 +1,6 @@
-import { PanelPlugin } from '@grafana/data';
+import { type PanelPlugin } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { LibraryElementDTOMeta } from '@grafana/schema';
+import { type LibraryElementDTOMeta } from '@grafana/schema';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { panelModelAndPluginReady, removePanel } from 'app/features/panel/state/reducers';
 
@@ -8,7 +8,7 @@ import { thunkTester } from '../../../../../../test/core/thunk/thunkTester';
 import { PanelModel } from '../../../state/PanelModel';
 
 import { exitPanelEditor, initPanelEditor, skipPanelUpdate } from './actions';
-import { closeEditor, initialState, PanelEditorState } from './reducers';
+import { closeEditor, initialState, type PanelEditorState } from './reducers';
 
 describe('panelEditor actions', () => {
   describe('initPanelEditor', () => {

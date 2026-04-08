@@ -883,9 +883,41 @@
           {
             "name": "query",
             "in": "query",
-            "description": "team name query string",
+            "description": "team name query string (fuzzy/partial match). Mutually exclusive with title.",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "description": "exact match on team name. Mutually exclusive with query.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uid",
+            "in": "query",
+            "description": "filter by team UIDs. Mutually exclusive with teamId.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "teamId",
+            "in": "query",
+            "description": "filter by legacy team IDs. Deprecated: use uid instead. Mutually exclusive with uid.",
+            "deprecated": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int64"
+              }
             }
           },
           {

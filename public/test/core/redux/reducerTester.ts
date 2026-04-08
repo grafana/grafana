@@ -1,8 +1,8 @@
-import { AnyAction } from '@reduxjs/toolkit';
+import { type AnyAction } from '@reduxjs/toolkit';
 import { cloneDeep } from 'lodash';
-import { Action } from 'redux';
+import { type Action } from 'redux';
 
-import { StoreState } from 'app/types/store';
+import { type StoreState } from 'app/types/store';
 
 type GrafanaReducer<S = StoreState, A extends Action = AnyAction> = (state: S, action: A) => S;
 

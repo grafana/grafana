@@ -1145,6 +1145,45 @@
    },
    "type": "object"
   },
+  "ExternalAlertmanagerConfig": {
+   "properties": {
+    "alertmanager_config": {
+     "$ref": "#/definitions/Config"
+    },
+    "template_files": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    }
+   },
+   "type": "object"
+  },
+  "ExternalAlertmanagerStatus": {
+   "properties": {
+    "cluster": {
+     "$ref": "#/definitions/clusterStatus"
+    },
+    "config": {
+     "$ref": "#/definitions/Config"
+    },
+    "uptime": {
+     "description": "uptime",
+     "format": "date-time",
+     "type": "string"
+    },
+    "versionInfo": {
+     "$ref": "#/definitions/versionInfo"
+    }
+   },
+   "required": [
+    "cluster",
+    "config",
+    "uptime",
+    "versionInfo"
+   ],
+   "type": "object"
+  },
   "ExtraConfiguration": {
    "properties": {
     "alertmanager_config": {
@@ -2012,6 +2051,9 @@
    },
    "type": "object"
   },
+  "Gone": {
+    "type": "object"
+  },
   "HTTPClientConfig": {
    "properties": {
     "authorization": {
@@ -2267,17 +2309,6 @@
    },
    "title": "Label is a key/value pair of strings.",
    "type": "object"
-  },
-  "LabelSet": {
-   "additionalProperties": {
-    "$ref": "#/definitions/LabelValue"
-   },
-   "description": "A LabelSet is a collection of LabelName and LabelValue pairs.  The LabelSet\nmay be fully-qualified down to the point where it may resolve to a single\nMetric in the data store or not.  All operations that occur within the realm\nof a LabelSet can emit a vector of Metric entities to which the LabelSet may\nmatch.",
-   "type": "object"
-  },
-  "LabelValue": {
-   "title": "A LabelValue is an associated value for a LabelName.",
-   "type": "string"
   },
   "Labels": {
    "description": "Labels is a sorted set of labels. Order has to be guaranteed upon\ninstantiation.",
@@ -4578,80 +4609,6 @@
    "title": "TelegramConfig configures notifications via Telegram.",
    "type": "object"
   },
-  "TestReceiverConfigResult": {
-   "properties": {
-    "error": {
-     "type": "string"
-    },
-    "name": {
-     "type": "string"
-    },
-    "status": {
-     "type": "string"
-    },
-    "uid": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
-  "TestReceiverResult": {
-   "properties": {
-    "grafana_managed_receiver_configs": {
-     "items": {
-      "$ref": "#/definitions/TestReceiverConfigResult"
-     },
-     "type": "array"
-    },
-    "name": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
-  "TestReceiversConfigAlertParams": {
-   "properties": {
-    "annotations": {
-     "$ref": "#/definitions/LabelSet"
-    },
-    "labels": {
-     "$ref": "#/definitions/LabelSet"
-    }
-   },
-   "type": "object"
-  },
-  "TestReceiversConfigBodyParams": {
-   "properties": {
-    "alert": {
-     "$ref": "#/definitions/TestReceiversConfigAlertParams"
-    },
-    "receivers": {
-     "items": {
-      "$ref": "#/definitions/PostableApiReceiver"
-     },
-     "type": "array"
-    }
-   },
-   "type": "object"
-  },
-  "TestReceiversResult": {
-   "properties": {
-    "alert": {
-     "$ref": "#/definitions/TestReceiversConfigAlertParams"
-    },
-    "notified_at": {
-     "format": "date-time",
-     "type": "string"
-    },
-    "receivers": {
-     "items": {
-      "$ref": "#/definitions/TestReceiverResult"
-     },
-     "type": "array"
-    }
-   },
-   "type": "object"
-  },
   "TestRulePayload": {
    "properties": {
     "expr": {
@@ -6031,64 +5988,18 @@
   },
   "/alertmanager/grafana/config/api/v1/receivers/test": {
    "post": {
-    "operationId": "RoutePostTestGrafanaReceivers",
-    "parameters": [
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/TestReceiversConfigBodyParams"
-      }
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
-     },
-     "207": {
-      "description": "MultiStatus",
-      "schema": {
-       "$ref": "#/definitions/MultiStatus"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     },
-     "403": {
-      "description": "PermissionDenied",
-      "schema": {
-       "$ref": "#/definitions/PermissionDenied"
-      }
-     },
-     "404": {
-      "description": "NotFound",
-      "schema": {
-       "$ref": "#/definitions/NotFound"
-      }
-     },
-     "408": {
-      "description": "Failure",
-      "schema": {
-       "$ref": "#/definitions/Failure"
-      }
-     },
-     "409": {
-      "description": "AlertManagerNotReady",
-      "schema": {
-       "$ref": "#/definitions/AlertManagerNotReady"
-      }
-     }
-    },
-    "summary": "Test Grafana managed receivers without saving them.",
+    "description": "This endpoint has been removed. Please use `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{uid}/test` instead.",
     "tags": [
      "alertmanager"
-    ]
+    ],
+    "summary": "Test Grafana managed receivers without saving them.",
+    "operationId": "RoutePostTestGrafanaReceivers",
+    "deprecated": true,
+    "responses": {
+     "410": {
+      "$ref": "#/definitions/Gone"
+     }
+    }
    }
   },
   "/alertmanager/grafana/config/api/v1/templates/test": {
@@ -8983,7 +8894,8 @@
     "summary": "Get all the contact points.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "post": {
     "consumes": [
@@ -9021,7 +8933,8 @@
     "summary": "Create a contact point.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   },
   "/v1/provisioning/contact-points/export": {
@@ -9111,7 +9024,8 @@
     "summary": "Delete a contact point.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "put": {
     "consumes": [
@@ -9156,7 +9070,8 @@
     "summary": "Update an existing contact point.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   },
   "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
@@ -9358,7 +9273,8 @@
     "summary": "Get all the mute timings.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "post": {
     "consumes": [
@@ -9396,7 +9312,8 @@
     "summary": "Create a new mute timing.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   },
   "/v1/provisioning/mute-timings/export": {
@@ -9487,7 +9404,8 @@
     "summary": "Delete a mute timing.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "get": {
     "operationId": "RouteGetMuteTiming",
@@ -9514,7 +9432,8 @@
     "summary": "Get a mute timing.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "put": {
     "consumes": [
@@ -9565,7 +9484,8 @@
     "summary": "Replace an existing mute timing.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   },
   "/v1/provisioning/mute-timings/{name}/export": {
@@ -9643,7 +9563,8 @@
     "summary": "Clears the notification policy tree.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "get": {
     "operationId": "RouteGetPolicyTree",
@@ -9658,7 +9579,8 @@
     "summary": "Get the notification policy tree.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "put": {
     "consumes": [
@@ -9697,7 +9619,8 @@
     "summary": "Sets the notification policy tree.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   },
   "/v1/provisioning/policies/export": {
@@ -9744,7 +9667,8 @@
     "summary": "Get all notification template groups.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   },
   "/v1/provisioning/templates/{name}": {
@@ -9779,7 +9703,8 @@
     "summary": "Delete a notification template group.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "get": {
     "operationId": "RouteGetTemplate",
@@ -9809,7 +9734,8 @@
     "summary": "Get a notification template group.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    },
    "put": {
     "consumes": [
@@ -9860,7 +9786,8 @@
     "summary": "Updates an existing notification template group.",
     "tags": [
      "provisioning"
-    ]
+    ],
+    "deprecated": true
    }
   },
   "/v1/rule/backtest": {

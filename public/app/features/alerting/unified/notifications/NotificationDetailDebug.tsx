@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-import { CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
+import { type CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
+import { type GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Collapse, Text, useStyles2 } from '@grafana/ui';
 

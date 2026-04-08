@@ -1,9 +1,9 @@
 import { screen } from '@testing-library/react';
 
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 import { dashboardDsSettingsMock, ds1SettingsMock, renderWithQueryEditorProvider } from '../testUtils';
-import { Transformation } from '../types';
+import { type Transformation } from '../types';
 
 import { QueriesAndTransformationsView } from './QueriesAndTransformationsView';
 

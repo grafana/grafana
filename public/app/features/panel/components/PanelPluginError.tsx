@@ -1,8 +1,8 @@
 // Libraries
-import { memo, ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 
 // Types
-import { PanelProps, PanelPlugin, PluginType, PanelPluginMeta } from '@grafana/data';
+import { type PanelProps, PanelPlugin, PluginType, type PanelPluginMeta } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 import { AppNotificationSeverity } from 'app/types/appNotifications';

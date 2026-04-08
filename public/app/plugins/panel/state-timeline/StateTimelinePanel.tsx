@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { DashboardCursorSync, PanelProps, useDataLinksContext } from '@grafana/data';
+import { DashboardCursorSync, type PanelProps, useDataLinksContext } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import {
   AxisPlacement,
@@ -11,7 +11,7 @@ import {
   useTheme2,
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
-import { TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import {
   prepareTimelineFields,
@@ -26,7 +26,7 @@ import { getTimezones } from '../timeseries/utils';
 
 import { StateTimelineTooltip } from './StateTimelineTooltip';
 import { usePagination } from './hooks';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 import { containerStyles } from './styles';
 
 interface TimelinePanelProps extends PanelProps<Options> {}

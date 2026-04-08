@@ -39,7 +39,11 @@ test.describe(
       await dashboardPage
         .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.datasourceSelect)
         .click();
+      await page.keyboard.type(dataSource);
       await page.getByText(dataSource).click();
+      await page
+        .getByRole('alert', { name: /this data source does not support filters/ })
+        .waitFor({ state: 'detached' });
 
       // mock the API call to get the labels
       const labels = ['label1', 'label2'];

@@ -5,7 +5,7 @@ import * as React from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 
-import { AdHocVariableForm, AdHocVariableFormProps } from './AdHocVariableForm';
+import { AdHocVariableForm, type AdHocVariableFormProps } from './AdHocVariableForm';
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',

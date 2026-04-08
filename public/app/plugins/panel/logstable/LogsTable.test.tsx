@@ -3,20 +3,22 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import {
-  AbsoluteTimeRange,
-  EventBus,
-  FieldConfigSource,
+  type AbsoluteTimeRange,
+  type EventBus,
+  type FieldConfigSource,
   LogSortOrderChangeEvent,
   LogsSortOrder,
-  ScopedVars,
+  type ScopedVars,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { defaultTableOptions } from '@grafana/schema';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
+import { LOG_LINE_BODY_FIELD_NAME } from '../../../features/logs/components/fieldSelector/logFields';
+
 import { LogsTable } from './LogsTable';
-import { Options } from './options/types';
+import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 import { getPanelData } from './testsUtils';
 
@@ -176,7 +178,7 @@ describe('LogsTable', () => {
       expect(onOptionsChange).toBeCalledTimes(1);
       expect(onOptionsChange).toBeCalledWith(
         expect.objectContaining({
-          displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, 'level', LOGS_DATAPLANE_BODY_NAME, 'service'],
+          displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, 'level', LOG_LINE_BODY_FIELD_NAME, 'service'],
         })
       );
     });
@@ -194,7 +196,7 @@ describe('LogsTable', () => {
       await userEvent.click(screen.getByRole('checkbox', { name: /level/i }));
       expect(onOptionsChange).toBeCalledTimes(1);
       expect(onOptionsChange).toBeCalledWith(
-        expect.objectContaining({ displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, LOGS_DATAPLANE_BODY_NAME] })
+        expect.objectContaining({ displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, LOG_LINE_BODY_FIELD_NAME] })
       );
     });
 
@@ -202,7 +204,7 @@ describe('LogsTable', () => {
       const onOptionsChange = jest.fn().mockImplementation((options: Options) => {});
       setUp(
         { onOptionsChange },
-        { displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, LOGS_DATAPLANE_BODY_NAME, 'level'] }
+        { displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, LOG_LINE_BODY_FIELD_NAME, 'level'] }
       );
       await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
       expect(screen.getByRole('checkbox', { name: /level/i })).toBeChecked();
@@ -212,7 +214,7 @@ describe('LogsTable', () => {
       expect(onOptionsChange).toBeCalledTimes(1);
       expect(onOptionsChange).toBeCalledWith(
         expect.objectContaining({
-          displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, 'level', LOGS_DATAPLANE_BODY_NAME],
+          displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, 'level', LOG_LINE_BODY_FIELD_NAME],
         })
       );
     });

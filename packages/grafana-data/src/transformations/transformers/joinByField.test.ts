@@ -1,11 +1,11 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
-import { DataTransformerConfig } from '../../types/transformations';
+import { type DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
-import { JoinMode, JoinByFieldOptions, joinByFieldTransformer } from './joinByField';
+import { JoinMode, type JoinByFieldOptions, joinByFieldTransformer } from './joinByField';
 
 describe('JOIN Transformer', () => {
   beforeAll(() => {
@@ -573,6 +573,39 @@ describe('JOIN Transformer', () => {
             },
           ]
         `);
+      });
+    });
+  });
+
+  describe('missing join field', () => {
+    it('should not crash when byField does not exist in any frame', async () => {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
+        id: DataTransformerID.seriesToColumns,
+        options: {
+          byField: 'nonexistent_field',
+          mode: JoinMode.outer,
+        },
+      };
+
+      const frame1 = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          { name: 'value', type: FieldType.number, values: [1, 2] },
+        ],
+      });
+
+      const frame2 = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 3000] },
+          { name: 'value', type: FieldType.number, values: [3, 4] },
+        ],
+      });
+
+      await expect(transformDataFrame([cfg], [frame1, frame2])).toEmitValuesWith((received) => {
+        const data = received[0];
+        expect(data).toBeDefined();
+        expect(data.length).toBeGreaterThanOrEqual(1);
+        expect(data[0].length).toBe(0);
       });
     });
   });

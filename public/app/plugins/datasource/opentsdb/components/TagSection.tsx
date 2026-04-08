@@ -2,7 +2,7 @@ import debounce from 'debounce-promise';
 import { has, size } from 'lodash';
 import { useState } from 'react';
 
-import { SelectableValue, toOption } from '@grafana/data';
+import { type SelectableValue, toOption } from '@grafana/data';
 import {
   Select,
   InlineFormLabel,
@@ -14,7 +14,7 @@ import {
   InlineLabel,
 } from '@grafana/ui';
 
-import { OpenTsdbQuery } from '../types';
+import { type OpenTsdbQuery } from '../types';
 
 export interface TagSectionProps {
   query: OpenTsdbQuery;

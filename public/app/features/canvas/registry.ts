@@ -1,6 +1,6 @@
 import { Registry } from '@grafana/data';
 
-import { CanvasElementItem, CanvasElementOptions } from './element';
+import { type CanvasElementItem, type CanvasElementOptions } from './element';
 import { buttonItem } from './elements/button';
 import { cloudItem } from './elements/cloud';
 import { droneFrontItem } from './elements/droneFront';

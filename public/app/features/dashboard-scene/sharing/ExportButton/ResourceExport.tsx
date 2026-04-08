@@ -1,15 +1,15 @@
-import { AsyncState } from 'react-use/lib/useAsync';
+import { type AsyncState } from 'react-use/lib/useAsync';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Alert, Icon, Label, RadioButtonGroup, Stack, Switch, Box, Tooltip } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { ExportFormat } from 'app/features/dashboard/api/types';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
+import { type DashboardJson } from 'app/features/manage-dashboards/types';
 
-import { ExportableResource } from '../ShareExportTab';
+import { type ExportableResource } from '../ShareExportTab';
 
 interface Props {
   dashboardJson: AsyncState<{

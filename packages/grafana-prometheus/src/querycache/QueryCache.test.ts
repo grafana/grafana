@@ -1,12 +1,12 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querycache/QueryCache.test.ts
 import moment from 'moment';
 
-import { DataFrame, DataQueryRequest, DateTime, dateTime, TimeRange } from '@grafana/data';
+import { type DataFrame, type DataQueryRequest, type DateTime, dateTime, type TimeRange } from '@grafana/data';
 
 import { QueryEditorMode } from '../querybuilder/shared/types';
-import { PromQuery } from '../types';
+import { type PromQuery } from '../types';
 
-import { CacheRequestInfo, findDatapointStep, QueryCache } from './QueryCache';
+import { type CacheRequestInfo, findDatapointStep, QueryCache } from './QueryCache';
 import {
   differentDisplayNameFromDS,
   trimmedFirstPointInPromFrames,

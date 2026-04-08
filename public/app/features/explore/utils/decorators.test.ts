@@ -1,21 +1,21 @@
 import { lastValueFrom } from 'rxjs';
 
 import {
-  DataFrame,
+  type DataFrame,
   FieldType,
   LoadingState,
-  PanelData,
+  type PanelData,
   getDefaultTimeRange,
   toDataFrame,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  PanelPluginMeta,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type PanelPluginMeta,
 } from '@grafana/data';
-import { CorrelationData } from '@grafana/runtime';
+import { type CorrelationData } from '@grafana/runtime';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
-import { DataSourceJsonData, DataQuery } from '@grafana/schema';
+import { type DataSourceJsonData, type DataQuery } from '@grafana/schema';
 import TableModel from 'app/core/TableModel';
-import { ExplorePanelData } from 'app/types/explore';
+import { type ExplorePanelData } from 'app/types/explore';
 
 import {
   decorateWithCorrelations,

@@ -1,4 +1,4 @@
-import { FieldConfigSource, PanelTypeChangedHandler } from '@grafana/data';
+import { type FieldConfigSource, type PanelTypeChangedHandler } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { SceneVariable } from '@grafana/scenes';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { type SceneVariable } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { ProvisionedControlsSection, SourceIcon } from '../ProvisionedControlsSection';

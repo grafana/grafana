@@ -7,7 +7,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { t } from '@grafana/i18n';
 
 import { fuzzyFind, itemToString } from './filter';
-import { ComboboxOption } from './types';
+import { type ComboboxOption } from './types';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
 
 type AsyncOptions<T extends string | number> =

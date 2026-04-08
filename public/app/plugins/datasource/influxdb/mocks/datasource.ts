@@ -1,10 +1,16 @@
 import { of } from 'rxjs';
 
-import { DataSourceInstanceSettings, PluginType, ScopedVars } from '@grafana/data';
-import { FetchResponse, getBackendSrv, setBackendSrv, TemplateSrv, VariableInterpolation } from '@grafana/runtime';
+import { type DataSourceInstanceSettings, PluginType, type ScopedVars } from '@grafana/data';
+import {
+  type FetchResponse,
+  getBackendSrv,
+  setBackendSrv,
+  type TemplateSrv,
+  type VariableInterpolation,
+} from '@grafana/runtime';
 
 import InfluxDatasource from '../datasource';
-import { InfluxOptions, InfluxVersion } from '../types';
+import { type InfluxOptions, InfluxVersion } from '../types';
 
 export const replaceMock = jest.fn().mockImplementation((a: string, ...rest: unknown[]) => a);
 export const templateSrvStub = mockTemplateSrv(replaceMock);

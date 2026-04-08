@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 

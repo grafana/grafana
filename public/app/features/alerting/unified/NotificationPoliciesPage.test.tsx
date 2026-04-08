@@ -25,10 +25,10 @@ import {
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import {
-  AlertManagerDataSourceJsonData,
+  type AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
   MatcherOperator,
-  RouteWithID,
+  type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 

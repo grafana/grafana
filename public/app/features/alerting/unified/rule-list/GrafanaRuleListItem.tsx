@@ -1,5 +1,5 @@
-import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
-import { GrafanaPromRuleDTO, PromRuleType } from 'app/types/unified-alerting-dto';
+import { type GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
+import { type GrafanaPromRuleDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME, GrafanaRulesSource } from '../utils/datasource';
 import { groups } from '../utils/navigation';
@@ -10,7 +10,7 @@ import { createRelativeUrl } from '../utils/url';
 import {
   AlertRuleListItem,
   RecordingRuleListItem,
-  RuleListItemCommonProps,
+  type RuleListItemCommonProps,
   UnknownRuleListItem,
 } from './components/AlertRuleListItem';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';

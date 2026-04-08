@@ -4,7 +4,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, Stack, Text } from '@grafana/ui';
 
 import { AIImproveLabelsButtonComponent } from '../../../enterprise-components/AI/AIGenImproveLabelsButton/addAIImproveLabelsButton';
-import { RuleFormValues } from '../../../types/rule-form';
+import { type RuleFormValues } from '../../../types/rule-form';
 import { DOCS_URL_ANNOTATION_LABEL } from '../../../utils/docs';
 import { isGrafanaManagedRuleByType, isRecordingRuleByType } from '../../../utils/rules';
 import { NeedHelpInfo } from '../NeedHelpInfo';

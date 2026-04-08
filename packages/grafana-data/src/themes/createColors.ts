@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { palette } from './palette';
-import { DeepRequired, ThemeRichColor, ThemeRichColorInputSchema } from './types';
+import { type DeepRequired, type ThemeRichColor, ThemeRichColorInputSchema } from './types';
 
 const ThemeColorsModeSchema = z.enum(['light', 'dark']);
 /** @internal */

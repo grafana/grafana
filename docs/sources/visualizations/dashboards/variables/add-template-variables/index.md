@@ -95,8 +95,10 @@ refs:
 
 The following table lists the types of variables shipped with Grafana.
 
-| Variable type     | Description                                                                                                                                                                             |
-| :---------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+<!-- prettier-ignore-start -->
+
+| Variable type     | Description                                                                                                                          |
+| :---------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
 | Query             | Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on. [Add a query variable](#add-a-query-variable).                                  |
 | Custom            | Define the variable options manually using a comma-separated list. [Add a custom variable](#add-a-custom-variable).                                                                     |
 | Text box          | Display a free text input field with an optional default value. [Add a text box variable](#add-a-text-box-variable).                                                                    |
@@ -108,16 +110,24 @@ The following table lists the types of variables shipped with Grafana.
 | Global variables  | Built-in variables that can be used in expressions in the query editor. Refer to [Global variables](#global-variables).                                                                 |
 | Chained variables | Variable queries can contain other variables. Refer to [Chained variables](#chained-variables).                                                                                         |
 
+<!-- prettier-ignore-end -->
+
 ## Enter General options
 
 You must enter general options for any type of variable that you create.
 To create a variable, follow these steps:
 
+{{< docs/list >}}
+
 1. Click **Edit** in the top-right corner of the dashboard.
-1. Click **Settings**.
+1. In the toolbar, click the **Dashboard options** icon to open the sidebar.
+1. In the sidebar, click **Settings**.
 1. Go to the **Variables** tab.
 1. Click **Add variable**, or if there are already existing variables, **+ New variable**.
 1. Choose an option in the **Select variable type** drop-down list.
+
+{{< shared id="add-variable" >}}
+
 1. Enter a **Name** for the variable.
 1. (Optional) In the **Label** field, enter the display name for the variable drop-down list.
 
@@ -133,6 +143,8 @@ To create a variable, follow these steps:
    - **Controls menu** - The variable is displayed in the dashboard controls menu instead of above the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar.
    - **Hidden** - No variable drop-down list is displayed on the dashboard.
 
+{{< /shared >}}
+
 1. Click one of the following links to complete the steps for adding your selected variable type:
    - [Query](#add-a-query-variable)
    - [Custom](#add-a-custom-variable)
@@ -143,7 +155,13 @@ To create a variable, follow these steps:
    - [Ad hoc filters](#add-ad-hoc-filters)
    - [Switch](#add-a-switch-variable)
 
+{{< /docs/list >}}
+
 <!-- vale Grafana.Spelling = YES -->
+
+{{< admonition type="tip" >}}
+To add variables without leaving the dashboard, click the **Add new element** icon in the dashboard toolbar, and select **Variable**.
+{{< /admonition >}}
 
 ### Variable best practices
 
@@ -578,6 +596,8 @@ This variable is the name of the current dashboard.
 
 Grafana has two built-in time range variables: `$__from` and `$__to`. They are currently always interpolated as epoch milliseconds by default, but you can control date formatting.
 
+<!-- prettier-ignore-start -->
+
 | Syntax                   | Example result           | Description                                                                                                                                                      |
 | ------------------------ | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `${__from}`              | 1594671549254            | Unix millisecond epoch                                                                                                                                           |
@@ -585,6 +605,8 @@ Grafana has two built-in time range variables: `$__from` and `$__to`. They are c
 | `${__from:date:iso}`     | 2020-07-13T20:19:09.254Z | ISO 8601/RFC 3339                                                                                                                                                |
 | `${__from:date:seconds}` | 1594671549               | Unix seconds epoch                                                                                                                                               |
 | `${__from:date:YYYY-MM}` | 2020-07                  | Any custom [date format](https://momentjs.com/docs/#/displaying/) that does not include the `:` character. Uses browser time. Use `:date` or `:date:iso` for UTC |
+
+<!-- prettier-ignore-end -->
 
 The syntax above also works with `${__to}`.
 

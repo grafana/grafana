@@ -1,22 +1,22 @@
-import { from, Observable } from 'rxjs';
+import { from, type Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
   CustomVariableSupport,
-  DataQueryRequest,
-  DataQueryResponse,
-  MetricFindValue,
-  SelectableValue,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type MetricFindValue,
+  type SelectableValue,
 } from '@grafana/data';
 
 import { VariableQueryEditor } from './components/VariableQueryEditor/VariableQueryEditor';
 import { ALL_ACCOUNTS_OPTION } from './components/shared/Account';
-import { CloudWatchDatasource } from './datasource';
+import { type CloudWatchDatasource } from './datasource';
 import { DEFAULT_VARIABLE_QUERY } from './defaultQueries';
 import { migrateVariableQuery } from './migrations/variableQueryMigrations';
-import { ResourcesAPI } from './resources/ResourcesAPI';
+import { type ResourcesAPI } from './resources/ResourcesAPI';
 import { standardStatistics } from './standardStatistics';
-import { VariableQuery, VariableQueryType } from './types';
+import { type VariableQuery, VariableQueryType } from './types';
 
 export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchDatasource, VariableQuery> {
   constructor(private readonly resources: ResourcesAPI) {

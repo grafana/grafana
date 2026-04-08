@@ -1,8 +1,8 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/promql.ts
-import { Grammar } from 'prismjs';
+import { type Grammar } from 'prismjs';
 
 import { t } from '@grafana/i18n';
-import { CompletionItem } from '@grafana/ui';
+import { type CompletionItem } from '@grafana/ui';
 
 export const OPERATORS = ['by', 'group_left', 'group_right', 'ignoring', 'on', 'offset', 'without'];
 export const LOGICAL_OPERATORS = ['or', 'and', 'unless'];

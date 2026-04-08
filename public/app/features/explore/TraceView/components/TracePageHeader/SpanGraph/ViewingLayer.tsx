@@ -16,16 +16,20 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { withTheme2, stylesFactory, Button } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import { TUpdateViewRangeTimeFunction, ViewRangeTimeUpdate, ViewRange } from '../../TraceTimelineViewer/types';
-import TNil from '../../types/TNil';
+import {
+  type TUpdateViewRangeTimeFunction,
+  type ViewRangeTimeUpdate,
+  type ViewRange,
+} from '../../TraceTimelineViewer/types';
+import type TNil from '../../types/TNil';
 import DraggableManager from '../../utils/DraggableManager/DraggableManager';
 import EUpdateTypes from '../../utils/DraggableManager/EUpdateTypes';
-import { DraggableBounds, DraggingUpdate } from '../../utils/DraggableManager/types';
+import { type DraggableBounds, type DraggingUpdate } from '../../utils/DraggableManager/types';
 
 import GraphTicks from './GraphTicks';
 import Scrubber from './Scrubber';

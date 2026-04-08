@@ -1,12 +1,12 @@
 import { groupBy } from 'lodash';
 
 import {
-  DataFrame,
-  Field as DataFrameField,
-  DataFrameJSON,
-  Field,
+  type DataFrame,
+  type Field as DataFrameField,
+  type DataFrameJSON,
+  type Field,
   FieldType,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   MappingType,
   ThresholdsMode,
   getDisplayProcessor,
@@ -15,7 +15,7 @@ import { fieldIndexComparer } from '@grafana/data/internal';
 
 import { labelsMatchMatchers } from '../../../utils/alertmanager';
 import { isPromQLStyleMatcher, parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
-import { LogRecord, historyDataFrameToLogRecords } from '../state-history/common';
+import { type LogRecord, historyDataFrameToLogRecords } from '../state-history/common';
 
 import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO } from './CentralAlertHistoryScene';
 import { StateFilterValues } from './constants';

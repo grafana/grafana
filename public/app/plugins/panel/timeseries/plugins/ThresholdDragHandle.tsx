@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { noop } from 'lodash';
 import { useMemo, useState } from 'react';
-import Draggable, { DraggableBounds } from 'react-draggable';
+import Draggable, { type DraggableBounds } from 'react-draggable';
 
-import { Threshold, GrafanaTheme2 } from '@grafana/data';
+import { type Threshold, type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
 type OutOfBounds = 'top' | 'bottom' | 'none';

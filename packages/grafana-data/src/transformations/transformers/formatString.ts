@@ -1,7 +1,11 @@
 import { map } from 'rxjs/operators';
 
-import { DataFrame, Field, FieldType } from '../../types/dataFrame';
-import { DataTransformerInfo, FieldMatcher, TransformationApplicabilityLevels } from '../../types/transformations';
+import { type DataFrame, type Field, FieldType } from '../../types/dataFrame';
+import {
+  type DataTransformerInfo,
+  type FieldMatcher,
+  TransformationApplicabilityLevels,
+} from '../../types/transformations';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 

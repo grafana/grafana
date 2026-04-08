@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
+import { FormProvider, type SubmitErrorHandler, type UseFormWatch, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
@@ -21,8 +21,8 @@ import {
   rulerRuleType,
 } from 'app/features/alerting/unified/utils/rules';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { RuleGroupIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
-import { PostableRuleGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { type RuleGroupIdentifier, type RuleWithLocation } from 'app/types/unified-alerting';
+import { type PostableRuleGrafanaRuleDTO, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
   LogMessages,
@@ -36,8 +36,8 @@ import {
   trackNewGrafanaAlertRuleFormSavedSuccess,
 } from '../../../Analytics';
 import {
-  GrafanaGroupUpdatedResponse,
-  RulerGroupUpdatedResponse,
+  type GrafanaGroupUpdatedResponse,
+  type RulerGroupUpdatedResponse,
   isGrafanaGroupUpdatedResponse,
 } from '../../../api/alertRuleModel';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
@@ -51,7 +51,7 @@ import {
   areQueriesTransformableToSimpleCondition,
   isExpressionQueryInAlert,
 } from '../../../rule-editor/formProcessing';
-import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
 import { rulesNav } from '../../../utils/navigation';
 import {
   MANUAL_ROUTING_KEY,

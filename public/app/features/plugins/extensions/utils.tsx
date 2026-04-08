@@ -39,8 +39,8 @@ import {
   getExtensionPointPluginMetaSync,
   type ExtensionPointPluginMeta,
 } from './appUtils';
-import { ExtensionsLog, log as baseLog } from './logs/log';
-import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
+import { type ExtensionsLog, log as baseLog } from './logs/log';
+import { type AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { assertIsNotPromise, assertStringProps, isPromise } from './validators';
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {

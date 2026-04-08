@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { CSSTransition } from 'react-transition-group';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { CONTENT_SIDE_BAR } from '../../constants';

@@ -20,8 +20,7 @@
           "grafana.com/access/canWrite": "true",
           "grafana.com/canUse": "true",
           "grafana.com/inUse/routes": "1",
-          "grafana.com/inUse/rules": "0",
-          "grafana.com/provenance": "none"
+          "grafana.com/inUse/rules": "0"
         }
       },
       "spec": {

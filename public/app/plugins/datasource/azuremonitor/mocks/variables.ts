@@ -1,4 +1,10 @@
-import { BaseVariableModel, CustomVariableModel, LoadingState, VariableHide, VariableOption } from '@grafana/data';
+import {
+  type BaseVariableModel,
+  type CustomVariableModel,
+  LoadingState,
+  VariableHide,
+  type VariableOption,
+} from '@grafana/data';
 
 const initialVariableModelState: BaseVariableModel = {
   id: '00000000-0000-0000-0000-000000000000',

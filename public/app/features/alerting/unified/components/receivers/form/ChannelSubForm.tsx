@@ -2,19 +2,19 @@ import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
 import * as React from 'react';
 import { type JSX, useEffect, useMemo } from 'react';
-import { Controller, FieldErrors, useFormContext } from 'react-hook-form';
+import { Controller, type FieldErrors, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
-import { NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
+import { type NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
 
 import {
-  ChannelValues,
-  CloudChannelValues,
-  CommonSettingsComponentType,
-  GrafanaChannelValues,
-  ReceiverFormValues,
+  type ChannelValues,
+  type CloudChannelValues,
+  type CommonSettingsComponentType,
+  type GrafanaChannelValues,
+  type ReceiverFormValues,
 } from '../../../types/receiver-form';
 import {
   canCreateNotifier,
@@ -27,7 +27,7 @@ import { OnCallIntegrationType } from '../grafanaAppReceivers/onCall/useOnCallIn
 
 import { ChannelOptions } from './ChannelOptions';
 import { CollapsibleSection } from './CollapsibleSection';
-import { Notifier } from './notifiers';
+import { type Notifier } from './notifiers';
 
 interface Props<R extends ChannelValues> {
   defaultValues: R;

@@ -1,11 +1,11 @@
-import { MonoTypeOperatorFunction } from 'rxjs';
+import { type MonoTypeOperatorFunction } from 'rxjs';
 
-import { MatcherConfig, DataTransformerConfig } from '@grafana/schema';
+import { type MatcherConfig, type DataTransformerConfig } from '@grafana/schema';
 
-import { RegistryItemWithOptions } from '../utils/Registry';
+import { type RegistryItemWithOptions } from '../utils/Registry';
 
-import { DataFrame, Field } from './dataFrame';
-import { InterpolateFunction } from './panel';
+import { type DataFrame, type Field } from './dataFrame';
+import { type InterpolateFunction } from './panel';
 
 /** deprecated, use it from schema */
 export type { MatcherConfig };

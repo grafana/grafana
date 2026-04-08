@@ -1,12 +1,15 @@
-import { MemoryHistoryBuildOptions } from 'history';
-import { ComponentProps, ReactNode } from 'react';
+import { type MemoryHistoryBuildOptions } from 'history';
+import { type ComponentProps, type ReactNode } from 'react';
 import { render, screen, userEvent, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { flushMicrotasks } from 'app/features/alerting/unified/test/test-utils';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
-import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
+import {
+  type AlertManagerDataSourceJsonData,
+  AlertManagerImplementation,
+} from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
@@ -23,7 +26,7 @@ import setupMimirFlavoredServer from './mocks/mimirFlavoredServer';
 import setupVanillaAlertmanagerFlavoredServer, {
   VANILLA_ALERTMANAGER_DATASOURCE_UID,
 } from './mocks/vanillaAlertmanagerServer';
-import { ContactPointWithMetadata, ReceiverConfigWithMetadata, RouteReference } from './utils';
+import { type ContactPointWithMetadata, type ReceiverConfigWithMetadata, type RouteReference } from './utils';
 
 /**
  * There are lots of ways in which we test our pages and components. Here's my opinionated approach to testing them.

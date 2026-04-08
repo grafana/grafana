@@ -10,8 +10,8 @@ import {
 import { areQueriesTransformableToSimpleCondition } from 'app/features/alerting/unified/rule-editor/formProcessing';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
-import { ExpressionQuery, ReducerMode } from 'app/features/expressions/types';
-import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
+import { type ExpressionQuery, ReducerMode } from 'app/features/expressions/types';
+import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
 const reduceExpression = mockReduceExpression({ expression: 'A', settings: { mode: ReducerMode.Strict } });
 const thresholdExpression = mockThresholdExpression({ expression: 'B' });

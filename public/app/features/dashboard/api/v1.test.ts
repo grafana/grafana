@@ -1,4 +1,4 @@
-import { GrafanaConfig, locationUtil } from '@grafana/data';
+import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import * as folderHooks from 'app/api/clients/folder/v1beta1/hooks';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
@@ -10,9 +10,9 @@ import {
   AnnoReloadOnParamsChange,
   ManagerKind,
 } from 'app/features/apiserver/types';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
-import { DashboardWithAccessInfo } from './types';
+import { type DashboardWithAccessInfo } from './types';
 import { K8sDashboardAPI } from './v1';
 
 const mockDashboardDto: DashboardWithAccessInfo<DashboardDataDTO> = {

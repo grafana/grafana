@@ -39,10 +39,8 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 		rulesInst      *rules.AppInstaller
 		expectRulesApp bool
 	}{
-		{name: "no flags", flags: nil, rulesInst: nil, expectRulesApp: false},
-		{name: "rules flag without installer", flags: []any{featuremgmt.FlagKubernetesAlertingRules}, rulesInst: nil, expectRulesApp: false},
-		{name: "rules flag with installer", flags: []any{featuremgmt.FlagKubernetesAlertingRules}, rulesInst: rulesInstaller, expectRulesApp: true},
-		{name: "rules installer without flag", flags: nil, rulesInst: rulesInstaller, expectRulesApp: false},
+		{name: "no rules installer", flags: nil, rulesInst: nil, expectRulesApp: false},
+		{name: "with rules installer", flags: nil, rulesInst: rulesInstaller, expectRulesApp: true},
 	}
 
 	for _, tt := range tests {

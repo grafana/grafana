@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { BusEvent, BusEventType, EventBus } from '@grafana/data';
+import { type BusEvent, type BusEventType, type EventBus } from '@grafana/data';
 
 /**
   A bit more efficient than using useObservable(eventBus.getStream(MyEventType)) as that will create a new Observable and subscription every render

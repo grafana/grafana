@@ -1,6 +1,6 @@
-import { SliderMarks } from '@grafana/data';
+import { type SliderMarks } from '@grafana/data';
 
-import { Orientation } from '../../types/orientation';
+import { type Orientation } from '../../types/orientation';
 
 interface CommonSliderProps {
   min: number;

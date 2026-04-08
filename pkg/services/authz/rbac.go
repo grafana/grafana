@@ -85,7 +85,7 @@ func ProvideAuthZClient(
 	case clientModeCloud:
 		rbacClient, err := newRemoteRBACClient(authCfg, tracer, reg)
 		if zanzanaEnabled {
-			return zClient.WithShadowClient(rbacClient, zanzanaClient, reg)
+			return newShadowClient(cfg.ZanzanaClient.PrimaryEngine, rbacClient, zanzanaClient, reg)
 		}
 		return rbacClient, err
 	default:
@@ -147,7 +147,7 @@ func ProvideAuthZClient(
 		)
 
 		if zanzanaEnabled {
-			return zClient.WithShadowClient(rbacClient, zanzanaClient, reg)
+			return newShadowClient(cfg.ZanzanaClient.PrimaryEngine, rbacClient, zanzanaClient, reg)
 		}
 
 		return rbacClient, nil
@@ -188,10 +188,19 @@ func ProvideStandaloneAuthZClient(
 	}
 
 	if zanzanaEnabled {
-		return zClient.WithShadowClient(remoteRBACClient, zanzanaClient, reg)
+		return newShadowClient(cfg.ZanzanaClient.PrimaryEngine, remoteRBACClient, zanzanaClient, reg)
 	}
 
 	return remoteRBACClient, nil
+}
+
+// newShadowClient returns either a ShadowClient (RBAC primary) or a
+// ShadowRBACClient (Zanzana primary) depending on the configured primary engine.
+func newShadowClient(engine setting.ZanzanaPrimaryEngine, rbacClient authlib.AccessClient, zanzanaClient authlib.AccessClient, reg prometheus.Registerer) (authlib.AccessClient, error) {
+	if engine == setting.ZanzanaPrimaryEngineZanzana {
+		return zClient.WithShadowRBACClient(zanzanaClient, rbacClient, reg)
+	}
+	return zClient.WithShadowClient(rbacClient, zanzanaClient, reg)
 }
 
 func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, reg prometheus.Registerer) (authlib.AccessClient, error) {

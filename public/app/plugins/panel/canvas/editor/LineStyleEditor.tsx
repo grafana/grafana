@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { SelectableValue, StandardEditorProps } from '@grafana/data';
+import { type SelectableValue, type StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, RadioButtonGroup, Switch } from '@grafana/ui';
 

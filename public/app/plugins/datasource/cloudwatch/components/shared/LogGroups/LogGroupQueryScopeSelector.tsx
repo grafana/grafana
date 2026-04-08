@@ -1,6 +1,6 @@
 import { RadioButtonGroup } from '@grafana/ui';
 
-import { LogsQueryScope } from '../../../dataquery.gen';
+import { type LogsQueryScope } from '../../../dataquery.gen';
 
 export interface LogGroupQueryScopeSelectorProps {
   value: LogsQueryScope | undefined;

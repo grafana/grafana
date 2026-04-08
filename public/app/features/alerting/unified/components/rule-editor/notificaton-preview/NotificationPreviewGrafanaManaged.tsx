@@ -5,8 +5,8 @@ import { Alert, Box, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
-import { Labels } from '../../../../../../types/unified-alerting-dto';
-import { AlertManagerDataSource } from '../../../utils/datasource';
+import { type Labels } from '../../../../../../types/unified-alerting-dto';
+import { type AlertManagerDataSource } from '../../../utils/datasource';
 
 import { GrafanaContactPointGroup } from './ContactPointGroup';
 import { InstanceMatch } from './NotificationRoute';

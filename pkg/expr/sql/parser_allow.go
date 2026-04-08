@@ -111,7 +111,9 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 		return
 
 	case *sqlparser.Into:
-		return
+		// Plain SELECT statements may carry a typed-nil Into pointer.
+		// Reject only when INTO is actually present.
+		return v == nil
 
 	case *sqlparser.IsExpr:
 		return
@@ -126,7 +128,8 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 		return
 
 	case *sqlparser.SetOp:
-		return
+		// SetOp.walkSubtree() does not traverse Into, so reject explicitly.
+		return v.GetInto() == nil
 
 	case *sqlparser.StarExpr:
 		return

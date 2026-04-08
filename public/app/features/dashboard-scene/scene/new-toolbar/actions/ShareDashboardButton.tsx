@@ -9,7 +9,7 @@ import { SaveBeforeShareModal } from '../../../sharing/SaveBeforeShareModal';
 import ShareMenu from '../../../sharing/ShareButton/ShareMenu';
 import { buildShareUrl } from '../../../sharing/ShareButton/utils';
 import { DashboardInteractions } from '../../../utils/interactions';
-import { ToolbarActionProps } from '../types';
+import { type ToolbarActionProps } from '../types';
 
 import { ShareExportDashboardButton } from './ShareExportDashboardButton';
 

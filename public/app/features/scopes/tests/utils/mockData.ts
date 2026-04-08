@@ -1,6 +1,6 @@
-import { ScopeDashboardBinding } from '@grafana/data';
+import { type ScopeDashboardBinding } from '@grafana/data';
 
-import { ScopeNavigation } from '../../dashboards/types';
+import { type ScopeNavigation } from '../../dashboards/types';
 
 // Mock subScope navigation items (specific to these tests)
 export const navigationWithSubScope: ScopeNavigation = {

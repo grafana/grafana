@@ -1818,7 +1818,7 @@ func TestDeleteFolders(t *testing.T) {
 
 func folderJSON(t *testing.T, uid, title string) []byte {
 	t.Helper()
-	manifest := resources.NewFolderManifest(uid, title)
+	manifest := resources.NewFolderManifest(uid, title, resources.FolderKind)
 	data, err := json.Marshal(manifest)
 	require.NoError(t, err)
 	return data

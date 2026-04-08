@@ -1,9 +1,9 @@
-import { FormEvent, memo } from 'react';
+import { type FormEvent, memo } from 'react';
 
-import { CustomVariableModel, VariableWithMultiSupport } from '@grafana/data';
+import { type CustomVariableModel, type VariableWithMultiSupport } from '@grafana/data';
 import { CustomVariableForm } from 'app/features/dashboard-scene/settings/variables/components/CustomVariableForm';
 
-import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
+import { type OnPropChangeArguments, type VariableEditorProps } from '../editor/types';
 
 interface Props extends VariableEditorProps<CustomVariableModel> {}
 

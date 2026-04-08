@@ -1,11 +1,11 @@
-import { SyntheticEvent } from 'react';
+import { type SyntheticEvent } from 'react';
 
-import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
+import { type DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { ConfigSubSection } from '@grafana/plugin-ui';
 import { FieldSet, Input, Field, TextLink } from '@grafana/ui';
 
-import { MSSQLAuthenticationType, MssqlOptions } from '../types';
+import { MSSQLAuthenticationType, type MssqlOptions } from '../types';
 
 export const UsernameMessage = (
   <span>

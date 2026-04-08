@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import transformTraceData from '../../model/transform-trace-data';
-import { TraceResponse } from '../../types/trace';
+import { type TraceResponse } from '../../types/trace';
 
 /*
                     ┌──────────┐        |

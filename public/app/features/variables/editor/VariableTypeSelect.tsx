@@ -1,6 +1,6 @@
-import { PropsWithChildren, useMemo } from 'react';
+import { type PropsWithChildren, useMemo } from 'react';
 
-import { SelectableValue, VariableType } from '@grafana/data';
+import { type SelectableValue, type VariableType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 

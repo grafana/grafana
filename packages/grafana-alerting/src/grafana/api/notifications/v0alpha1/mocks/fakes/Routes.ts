@@ -4,14 +4,14 @@ import { Factory } from 'fishery';
 import {
   API_GROUP,
   API_VERSION,
-  ListRoutingTreeApiResponse,
-  RoutingTree,
+  type ListRoutingTreeApiResponse,
+  type RoutingTree,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 
-import { LabelMatcher } from '../../../../../matchers/types';
+import { type LabelMatcher } from '../../../../../matchers/types';
 import { DEFAULT_NAMESPACE, generateResourceVersion } from '../../../../../mocks/util';
 import { USER_DEFINED_TREE_NAME } from '../../../../../notificationPolicies/consts';
-import { Route } from '../../../../../notificationPolicies/types';
+import { type Route } from '../../../../../notificationPolicies/types';
 
 export const LabelMatcherFactory = Factory.define<LabelMatcher>(() => {
   const operators: Array<LabelMatcher['type']> = ['=', '!=', '=~', '!~'];

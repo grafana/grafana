@@ -1,6 +1,6 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, FieldType } from '../../types/dataFrame';
+import { type DataFrame, FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
@@ -626,6 +626,35 @@ describe('align frames', () => {
         },
       ]
     `);
+  });
+
+  describe('handles empty tables (no frames match join field)', () => {
+    it.each([JoinMode.outer, JoinMode.inner, JoinMode.outerTabular])(
+      '%s join should not crash when no frames have the join field',
+      (mode) => {
+        const frame1 = toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 2000] },
+            { name: 'A', type: FieldType.number, values: [1, 2] },
+          ],
+        });
+        const frame2 = toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 3000] },
+            { name: 'B', type: FieldType.number, values: [3, 4] },
+          ],
+        });
+
+        const out = joinDataFrames({
+          frames: [frame1, frame2],
+          joinBy: fieldMatchers.get(FieldMatcherID.byName).get('nonexistent_field'),
+          mode,
+        });
+
+        expect(out).toBeDefined();
+        expect(out!.length).toBe(0);
+      }
+    );
   });
 
   describe('check ascending data', () => {

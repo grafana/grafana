@@ -2,25 +2,25 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
 
 import {
-  AbsoluteTimeRange,
+  type AbsoluteTimeRange,
   CoreApp,
-  DataFrame,
+  type DataFrame,
   EventBusSrv,
-  ExploreLogsPanelState,
-  LogLevel,
-  LogRowModel,
-  LogsMetaItem,
+  type ExploreLogsPanelState,
+  type LogLevel,
+  type LogRowModel,
+  type LogsMetaItem,
   LogsSortOrder,
-  SplitOpen,
-  TimeRange,
+  type SplitOpen,
+  type TimeRange,
 } from '@grafana/data';
 
-import { LogsVisualisationType } from '../../explore/Logs/constants';
+import { type LogsVisualisationType } from '../../explore/Logs/constants';
 
 import { ControlledLogsTable } from './ControlledLogsTable';
 import { InfiniteScroll } from './InfiniteScroll';
-import { LogRows, Props } from './LogRows';
-import { LogListOptions } from './panel/LogList';
+import { LogRows, type Props } from './LogRows';
+import { type LogListOptions } from './panel/LogList';
 import { LogListContextProvider, useLogListContext } from './panel/LogListContext';
 import { LogListControls } from './panel/LogListControls';
 import { ScrollToLogsEvent } from './panel/virtualization';

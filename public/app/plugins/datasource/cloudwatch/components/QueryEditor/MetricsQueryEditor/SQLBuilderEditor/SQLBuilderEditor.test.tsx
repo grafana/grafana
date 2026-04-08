@@ -1,10 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 
 import {
-  CloudWatchMetricsQuery,
+  type CloudWatchMetricsQuery,
   MetricEditorMode,
   MetricQueryType,
-  SQLExpression,
+  type SQLExpression,
   QueryEditorExpressionType,
   QueryEditorPropertyType,
 } from '../../../../dataquery.gen';

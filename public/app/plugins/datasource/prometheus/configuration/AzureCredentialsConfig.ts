@@ -1,15 +1,15 @@
 import {
-  AzureCredentials,
-  AzureDataSourceJsonData,
-  AzureDataSourceSecureJsonData,
-  AzureDataSourceSettings,
+  type AzureCredentials,
+  type AzureDataSourceJsonData,
+  type AzureDataSourceSecureJsonData,
+  type AzureDataSourceSettings,
   getAzureClouds,
   getDatasourceCredentials,
   getDefaultAzureCloud,
   updateDatasourceCredentials,
 } from '@grafana/azure-sdk';
-import { DataSourceSettings, SelectableValue } from '@grafana/data';
-import { PromOptions } from '@grafana/prometheus';
+import { type DataSourceSettings, type SelectableValue } from '@grafana/data';
+import { type PromOptions } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
 
 export function getAzureCloudOptions(): Array<SelectableValue<string>> {

@@ -2,7 +2,7 @@ import { Icon, useTheme2 } from '@grafana/ui';
 
 import { getAlertStateColor, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../../constants';
 import { useQueryEditorUIContext } from '../../QueryEditorContext';
-import { AlertRule } from '../../types';
+import { type AlertRule } from '../../types';
 import { CardTitle } from '../Cards/CardTitle';
 import { SidebarCard } from '../Cards/SidebarCard';
 
@@ -19,7 +19,7 @@ export const AlertCard = ({ alert }: { alert: AlertRule }) => {
   };
 
   return (
-    <SidebarCard id={alert.alertId} isSelected={isSelected} item={item} onClick={() => setSelectedAlert(alert)}>
+    <SidebarCard id={alert.alertId} isSelected={isSelected} item={item} onSelect={() => setSelectedAlert(alert)}>
       <Icon
         name={QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Alert].icon}
         color={getAlertStateColor(theme, alert.state)}

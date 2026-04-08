@@ -1,5 +1,5 @@
 import server from '@grafana/test-utils/server';
-import { OnCallIntegrationDTO } from 'app/features/alerting/unified/api/onCallApi';
+import { type OnCallIntegrationDTO } from 'app/features/alerting/unified/api/onCallApi';
 import {
   getFeaturesHandler,
   getOnCallIntegrationsHandler,

@@ -1,5 +1,5 @@
 import { Spinner } from '@grafana/ui';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';

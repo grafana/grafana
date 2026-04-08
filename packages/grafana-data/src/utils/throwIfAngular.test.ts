@@ -1,5 +1,5 @@
 import { PanelPlugin } from '../panel/PanelPlugin';
-import { PluginMeta, PluginType } from '../types/plugin';
+import { type PluginMeta, PluginType } from '../types/plugin';
 
 import { throwIfAngular } from './throwIfAngular';
 

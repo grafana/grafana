@@ -2,7 +2,7 @@ import { useId, useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { sceneGraph, VizPanel } from '@grafana/scenes';
+import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { Stack, Button } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -17,9 +17,12 @@ import {
 } from '../panel-edit/getPanelFrameOptions';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { BulkActionElement } from '../scene/types/BulkActionElement';
+import { type BulkActionElement } from '../scene/types/BulkActionElement';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
+import {
+  type EditableDashboardElement,
+  type EditableDashboardElementInfo,
+} from '../scene/types/EditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
@@ -86,10 +89,23 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   public constructor(public panel: VizPanel) {}
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
+    const parent = this.panel.parent;
+    let isHidden: boolean | undefined;
+
+    if (parent instanceof AutoGridItem) {
+      const repeatIndex = parent.state.repeatedPanels?.indexOf(this.panel) ?? -1;
+      if (repeatIndex >= 0) {
+        isHidden = !parent.state.repeatedConditionalRendering![repeatIndex].state.result;
+      } else {
+        isHidden = !parent.state.conditionalRendering?.state.result;
+      }
+    }
+
     return {
       typeName: t('dashboard.edit-pane.elements.panel', 'Panel'),
       icon: 'chart-line',
       instanceName: sceneGraph.interpolate(this.panel, this.panel.state.title, undefined, 'text'),
+      isHidden,
     };
   }
 

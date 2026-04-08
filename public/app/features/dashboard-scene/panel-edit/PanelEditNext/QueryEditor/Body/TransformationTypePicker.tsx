@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { ChangeEvent, useMemo, useState } from 'react';
+import { type ChangeEvent, useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EmptyState, FilterPill, Grid, IconButton, Input, Stack, Switch, useStyles2 } from '@grafana/ui';

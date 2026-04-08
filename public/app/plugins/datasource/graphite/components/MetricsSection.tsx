@@ -1,5 +1,5 @@
-import { GraphiteQueryEditorState } from '../state/store';
-import { GraphiteSegment } from '../types';
+import { type GraphiteQueryEditorState } from '../state/store';
+import { type GraphiteSegment } from '../types';
 
 import { MetricSegment } from './MetricSegment';
 

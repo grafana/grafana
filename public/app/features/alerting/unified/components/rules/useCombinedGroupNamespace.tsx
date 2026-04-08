@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { CombinedRuleNamespace } from '../../../../../types/unified-alerting';
+import { type CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 
 export function useCombinedGroupNamespace(namespaces: CombinedRuleNamespace[]) {
   return useMemo(

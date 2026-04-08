@@ -3,7 +3,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { config } from '@grafana/runtime';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { findItem } from 'app/features/browse-dashboards/state/utils';
-import { DashboardTreeSelection } from 'app/features/browse-dashboards/types';
+import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { getIsReadOnlyRepo, getItemRepositoryUid } from 'app/features/provisioning/utils/repository';
 import { useSelector } from 'app/types/store';

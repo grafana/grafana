@@ -1,4 +1,4 @@
-import { asapSmooth, DataPoint, ASAPOptions } from './asap';
+import { asapSmooth, type DataPoint, type ASAPOptions } from './asap';
 
 describe('asapSmooth', () => {
   describe('Basic functionality', () => {

@@ -6,11 +6,11 @@ import { config, getBackendSrv, isFetchError, reportInteraction } from '@grafana
 import { Spinner, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { isDashboardV1Resource, isDashboardV2Resource } from 'app/features/dashboard/api/utils';
 
-import { DashboardInputs, DashboardSource } from '../../types';
+import { type DashboardInputs, DashboardSource } from '../../types';
 import { detectExportFormat, extractV1Inputs, extractV2Inputs } from '../utils/inputs';
 
 import { ImportOverview } from './ImportOverview';

@@ -25,8 +25,6 @@ type MigrateOptions struct {
 }
 
 // Read from legacy and write into unified storage
-//
-//go:generate mockery --name UnifiedMigrator --structname MockUnifiedMigrator --inpackage --filename migrator_mock.go --with-expecter
 type UnifiedMigrator interface {
 	Migrate(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error)
 	RebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error

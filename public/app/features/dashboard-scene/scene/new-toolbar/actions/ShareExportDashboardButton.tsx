@@ -1,8 +1,8 @@
-import { ReactElement, useState } from 'react';
+import { type ReactElement, useState } from 'react';
 
 import { ButtonGroup, Dropdown, ToolbarButton } from '@grafana/ui';
 
-import { ToolbarActionProps } from '../types';
+import { type ToolbarActionProps } from '../types';
 
 interface Props extends ToolbarActionProps {
   menu: ReactElement | (() => ReactElement);

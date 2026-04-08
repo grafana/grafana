@@ -3,8 +3,12 @@ import { useAsync } from 'app/features/alerting/unified/hooks/useAsync';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { fromRulerRuleAndRuleGroupIdentifier } from 'app/features/alerting/unified/utils/rule-id';
 import { getRuleGroupLocationFromRuleWithLocation } from 'app/features/alerting/unified/utils/rules';
-import { RuleWithLocation } from 'app/types/unified-alerting';
-import { GrafanaRuleDefinition, RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { type RuleWithLocation } from 'app/types/unified-alerting';
+import {
+  type GrafanaRuleDefinition,
+  type RulerGrafanaRuleDTO,
+  type RulerRuleDTO,
+} from 'app/types/unified-alerting-dto';
 
 export function useRestoreVersion() {
   const [updateRuleInRuleGroup] = useUpdateRuleInRuleGroup();

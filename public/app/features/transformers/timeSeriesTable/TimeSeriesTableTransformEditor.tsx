@@ -2,25 +2,24 @@ import { useCallback } from 'react';
 
 import {
   PluginState,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   ReducerID,
   isReducerID,
-  SelectableValue,
-  Field,
-  FieldType,
+  type SelectableValue,
+  type Field,
+  type FieldType,
   isTimeSeriesField,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { InlineFieldRow, InlineField, StatsPicker, Select, InlineLabel } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/timeSeriesTable.svg';
 import lightImage from '../images/light/timeSeriesTable.svg';
 
 import {
   getTimeSeriesTableTransformer,
-  TimeSeriesTableTransformerOptions,
+  type TimeSeriesTableTransformerOptions,
   getRefData,
 } from './timeSeriesTableTransformer';
 
@@ -135,7 +134,6 @@ export const getTimeSeriesTableTransformRegistryItem: () => TransformerRegistryI
       name: timeSeriesTableTransformer.name,
       description: timeSeriesTableTransformer.description,
       state: PluginState.beta,
-      help: getTransformationContent(timeSeriesTableTransformer.id).helperDocs,
       imageDark: darkImage,
       imageLight: lightImage,
     };

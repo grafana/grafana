@@ -7,7 +7,7 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 
 import { setupProvisioningMswServer } from '../../mocks/server';
 
-import { DeleteProvisionedDashboardForm, Props } from './DeleteProvisionedDashboardForm';
+import { DeleteProvisionedDashboardForm, type Props } from './DeleteProvisionedDashboardForm';
 
 setupProvisioningMswServer();
 

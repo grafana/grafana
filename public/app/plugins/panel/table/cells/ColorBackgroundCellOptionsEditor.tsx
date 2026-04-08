@@ -1,12 +1,12 @@
 import { useId } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { TableCellBackgroundDisplayMode, TableColoredBackgroundCellOptions } from '@grafana/schema';
+import { TableCellBackgroundDisplayMode, type TableColoredBackgroundCellOptions } from '@grafana/schema';
 import { Field, RadioButtonGroup, Switch } from '@grafana/ui';
 
-import { TableCellEditorProps } from '../TableCellOptionEditor';
+import { type TableCellEditorProps } from '../TableCellOptionEditor';
 
 const colorBackgroundOpts: Array<SelectableValue<TableCellBackgroundDisplayMode>> = [
   { value: TableCellBackgroundDisplayMode.Basic, label: 'Basic' },

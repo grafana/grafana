@@ -3,13 +3,13 @@ import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { RuleGroup, RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
+import { type Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { type RuleGroup, type RuleIdentifier, type RuleNamespace } from 'app/types/unified-alerting';
 import {
   PromAlertingRuleState,
-  PromRuleGroupDTO,
+  type PromRuleGroupDTO,
   PromRuleType,
-  PromRulesResponse,
+  type PromRulesResponse,
 } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from '../utils/datasource';

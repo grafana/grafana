@@ -3,7 +3,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { Connection } from 'app/api/clients/provisioning/v0alpha1';
+import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 

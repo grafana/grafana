@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 	k8srest "k8s.io/apiserver/pkg/registry/rest"
 
@@ -129,9 +130,8 @@ func (w *Wrapper) Delete(ctx context.Context, name string, deleteValidation k8sr
 }
 
 func (w *Wrapper) DeleteCollection(ctx context.Context, deleteValidation k8srest.ValidateObjectFunc, options *metaV1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	// DeleteCollection is complex to authorize properly
-	// For now, deny it entirely for safety
-	return nil, fmt.Errorf("bulk delete operations are not supported through this API")
+	// DeleteCollection is complex to authorize properly; deny it entirely for safety
+	return nil, errors.NewMethodNotSupported(schema.GroupResource{}, "deleteCollection")
 }
 
 func (w *Wrapper) Destroy() {

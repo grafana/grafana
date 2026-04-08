@@ -1,15 +1,15 @@
 import { mergeMap, from } from 'rxjs';
 
 import {
-  DataFrame,
+  type DataFrame,
   DataTransformerID,
-  Field,
-  FieldMatcher,
+  type Field,
+  type FieldMatcher,
   FieldMatcherID,
   fieldMatchers,
-  DataTransformerInfo,
+  type DataTransformerInfo,
 } from '@grafana/data';
-import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from 'app/features/geo/gazetteer/gazetteer';
+import { COUNTRIES_GAZETTEER_PATH, type Gazetteer, getGazetteer } from 'app/features/geo/gazetteer/gazetteer';
 
 export interface FieldLookupOptions {
   lookupField?: string;

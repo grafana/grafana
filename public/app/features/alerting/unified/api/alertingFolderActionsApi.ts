@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 
-import { WithNotificationOptions, alertingApi } from './alertingApi';
+import { type WithNotificationOptions, alertingApi } from './alertingApi';
 import { GRAFANA_RULER_CONFIG } from './featureDiscoveryApi';
 import { rulerUrlBuilder } from './ruler';
 

@@ -1,9 +1,9 @@
 import { t } from '@grafana/i18n';
-import { BackendSrvRequest } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
+import { type BackendSrvRequest } from '@grafana/runtime';
+import { type Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { DashboardMeta } from 'app/types/dashboard';
+import { type DashboardMeta } from 'app/types/dashboard';
 
 import { RemovePanelEvent } from '../../../types/events';
 import { DashboardModel } from '../state/DashboardModel';

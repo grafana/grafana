@@ -8,16 +8,16 @@ import {
   useCreateContactPoint,
   useUpdateContactPoint,
 } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
-import { Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { type Receiver } from 'app/plugins/datasource/alertmanager/types';
 
-import { CloudChannelMap, CloudChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
+import { type CloudChannelMap, type CloudChannelValues, type ReceiverFormValues } from '../../../types/receiver-form';
 import { cloudNotifierTypes } from '../../../utils/cloud-alertmanager-notifier-types';
 import { isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
 import { cloudReceiverToFormValues, formValuesToCloudReceiver } from '../../../utils/receiver-form';
 
 import { CloudCommonChannelSettings } from './CloudCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
-import { Notifier } from './notifiers';
+import { type Notifier } from './notifiers';
 
 interface Props {
   alertManagerSourceName: string;

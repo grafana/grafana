@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { config } from '@grafana/runtime';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
+import { type DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { DashboardRoutes } from 'app/types/dashboard';
 

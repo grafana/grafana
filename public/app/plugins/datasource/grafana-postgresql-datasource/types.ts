@@ -1,4 +1,4 @@
-import { SQLOptions } from '@grafana/sql';
+import { type SQLOptions } from '@grafana/sql';
 
 export enum PostgresTLSModes {
   disable = 'disable',

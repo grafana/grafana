@@ -5,10 +5,10 @@ import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
-import { FolderDTO } from 'app/types/folders';
+import { type FolderDTO } from 'app/types/folders';
 
 import {
-  ProvisionedFolderFormDataResult,
+  type ProvisionedFolderFormDataResult,
   useProvisionedFolderFormData,
 } from '../../hooks/useProvisionedFolderFormData';
 import { setupProvisioningMswServer } from '../../mocks/server';

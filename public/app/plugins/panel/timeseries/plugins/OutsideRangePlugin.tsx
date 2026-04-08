@@ -1,9 +1,9 @@
 import { useLayoutEffect, useState, useCallback, memo } from 'react';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
-import { AbsoluteTimeRange } from '@grafana/data';
+import { type AbsoluteTimeRange } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { UPlotConfigBuilder, Button } from '@grafana/ui';
+import { type UPlotConfigBuilder, Button } from '@grafana/ui';
 
 interface ThresholdControlsPluginProps {
   config: UPlotConfigBuilder;

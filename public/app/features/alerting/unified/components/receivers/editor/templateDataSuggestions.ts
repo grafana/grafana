@@ -11,7 +11,7 @@ import {
   jsonSnippet,
   labelsLoopSnippet,
 } from './snippets';
-import { SuggestionDefinition } from './suggestionDefinition';
+import { type SuggestionDefinition } from './suggestionDefinition';
 
 // Suggestions available at the top level of a template
 export function getGlobalSuggestions(monaco: Monaco): SuggestionDefinition[] {

@@ -1,19 +1,19 @@
 import {
-  DataSourcePluginMeta,
-  DataSourceSettings,
+  type DataSourcePluginMeta,
+  type DataSourceSettings,
   locationUtil,
-  TestDataSourceResponse,
+  type TestDataSourceResponse,
   DataSourceTestSucceeded,
   DataSourceTestFailed,
-  DataSourceApi,
+  type DataSourceApi,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   config,
-  DataSourceSrv,
+  type DataSourceSrv,
   DataSourceWithBackend,
   HealthCheckError,
-  HealthCheckResultDetails,
+  type HealthCheckResultDetails,
   isFetchError,
   locationService,
 } from '@grafana/runtime';
@@ -27,8 +27,8 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { pluginImporter } from 'app/features/plugins/importer/pluginImporter';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { AccessControlAction } from 'app/types/accessControl';
-import { DataSourcePluginCategory } from 'app/types/datasources';
-import { ThunkDispatch, ThunkResult } from 'app/types/store';
+import { type DataSourcePluginCategory } from 'app/types/datasources';
+import { type ThunkDispatch, type ThunkResult } from 'app/types/store';
 
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';

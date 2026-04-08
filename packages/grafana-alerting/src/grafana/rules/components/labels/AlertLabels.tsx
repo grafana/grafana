@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { chain } from 'lodash';
 import { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Stack, Toggletip, useStyles2 } from '@grafana/ui';
 
 import { findCommonLabels, isPrivateLabel } from '../../utils/labels';
 
-import { AlertLabel, LabelSize } from './AlertLabel';
+import { AlertLabel, type LabelSize } from './AlertLabel';
 
 export interface AlertLabelsProps {
   labels: Record<string, string>;

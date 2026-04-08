@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { useEffect, useState, useMemo } from 'react';
 import { major, compare, lte } from 'semver';
 
-import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
+import { dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useStyles2, Badge } from '@grafana/ui';
 
 import { getLatestCompatibleVersion, shouldDisablePluginInstall } from '../helpers';
-import { CatalogPlugin, PluginUpdateStrategy, Version } from '../types';
+import { type CatalogPlugin, PluginUpdateStrategy, type Version } from '../types';
 
 import { VersionInstallButton } from './VersionInstallButton';
 

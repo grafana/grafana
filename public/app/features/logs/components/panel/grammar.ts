@@ -1,8 +1,8 @@
-import { Grammar } from 'prismjs';
+import { type Grammar } from 'prismjs';
 
 import { escapeRegex, parseFlags } from '@grafana/data';
 
-import { LogListModel } from './processing';
+import { type LogListModel } from './processing';
 
 // The Logs grammar is used for highlight in the logs panel
 const logsGrammar: Grammar = {

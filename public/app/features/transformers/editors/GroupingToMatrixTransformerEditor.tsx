@@ -2,19 +2,18 @@ import { useCallback } from 'react';
 
 import {
   DataTransformerID,
-  SelectableValue,
+  type SelectableValue,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
-  GroupingToMatrixTransformerOptions,
-  SpecialValue,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
+  type GroupingToMatrixTransformerOptions,
+  type SpecialValue,
   TransformerCategory,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/groupingToMatrix.svg';
 import lightImage from '../images/light/groupingToMatrix.svg';
 import { getEmptyOptions, useAllFieldNamesFromDataFrames } from '../utils';
@@ -118,7 +117,6 @@ export const getGroupingToMatrixTransformRegistryItem: () => TransformerRegistry
       'Summarize and reorganize data based on three fields.'
     ),
     categories: new Set([TransformerCategory.Combine, TransformerCategory.Reformat]),
-    help: getTransformationContent(DataTransformerID.groupingToMatrix).helperDocs,
     imageDark: darkImage,
     imageLight: lightImage,
   });

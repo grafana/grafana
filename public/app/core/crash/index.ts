@@ -1,5 +1,5 @@
 import { initCrashDetection } from 'crashme';
-import { BaseStateReport } from 'crashme/dist/types';
+import { type BaseStateReport } from 'crashme/dist/types';
 import { nanoid } from 'nanoid';
 
 import { config, createMonitoringLogger } from '@grafana/runtime';

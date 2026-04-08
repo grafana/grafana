@@ -1,22 +1,22 @@
 import { PureComponent } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 
-import { AppEvents, LoadingState, NavModelItem } from '@grafana/data';
+import { AppEvents, LoadingState, type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Spinner, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { isRecord } from 'app/core/utils/isRecord';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { dispatch } from 'app/store/store';
-import { StoreState } from 'app/types/store';
+import { type StoreState } from 'app/types/store';
 
 import { cleanUpAction } from '../../../../core/actions/cleanUp';
 import { ExportFormat } from '../../../dashboard/api/types';
-import { DashboardSource, ImportDashboardDTO } from '../../types';
+import { DashboardSource, type ImportDashboardDTO } from '../../types';
 import { GcomDashboardInfo } from '../components/GcomDashboardInfo';
 import { ImportForm } from '../components/ImportForm';
 import { ImportSourceForm } from '../components/ImportSourceForm';

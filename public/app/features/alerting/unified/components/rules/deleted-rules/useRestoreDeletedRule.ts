@@ -1,6 +1,6 @@
 import { useAsync } from 'app/features/alerting/unified/hooks/useAsync';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { type GrafanaRuleDefinition, type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { useAddRuleToRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 

@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
-import { FormEvent, useCallback, useEffect, useId, useState } from 'react';
+import { type FormEvent, useCallback, useEffect, useId, useState } from 'react';
 import * as React from 'react';
 
 import {
-  DateTime,
+  type DateTime,
   dateTimeFormat,
   dateTimeParse,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   isDateTime,
   rangeUtil,
-  RawTimeRange,
-  TimeRange,
-  TimeZone,
+  type RawTimeRange,
+  type TimeRange,
+  type TimeZone,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
@@ -22,7 +22,7 @@ import { Field } from '../../Forms/Field';
 import { Icon } from '../../Icon/Icon';
 import { Input } from '../../Input/Input';
 import { Tooltip } from '../../Tooltip/Tooltip';
-import { WeekStart } from '../WeekStartPicker';
+import { type WeekStart } from '../WeekStartPicker';
 import { commonFormat } from '../commonFormat';
 import { isValid } from '../utils';
 

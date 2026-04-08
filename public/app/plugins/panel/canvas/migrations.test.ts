@@ -1,4 +1,4 @@
-import { PanelModel } from '@grafana/data';
+import { type PanelModel } from '@grafana/data';
 
 import { canvasMigrationHandler } from './migrations';
 

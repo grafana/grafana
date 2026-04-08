@@ -1,8 +1,8 @@
-import * as React from 'react';
+import type * as React from 'react';
 import type { JSX, ReactNode } from 'react';
 
-import { DataFrameFieldIndex, DisplayValue } from '@grafana/data';
-import { LegendDisplayMode, LegendPlacement, LineStyle } from '@grafana/schema';
+import { type DataFrameFieldIndex, type DisplayValue } from '@grafana/data';
+import { type LegendDisplayMode, type LegendPlacement, type LineStyle } from '@grafana/schema';
 
 export enum SeriesVisibilityChangeBehavior {
   Isolate,

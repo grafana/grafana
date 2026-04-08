@@ -29,7 +29,6 @@ import (
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -44,10 +43,9 @@ type SearchHandler struct {
 	features featuremgmt.FeatureToggles
 }
 
-func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboardSearcher resourcepb.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
-	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), dashboardv0alpha1.DashboardResourceInfo.GroupResource(), resourceClient, legacyDashboardSearcher, features)
+func NewSearchHandler(tracer trace.Tracer, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
 	return &SearchHandler{
-		client:   searchClient,
+		client:   resourceClient,
 		log:      log.New("grafana-apiserver.dashboards.search"),
 		tracer:   tracer,
 		features: features,
@@ -351,13 +349,13 @@ var errEmptyResults = fmt.Errorf("empty results")
 func permissionToActions(p dashboardaccess.PermissionType) (dashboardAction string, folderAction string) {
 	switch p {
 	case dashboardaccess.PERMISSION_EDIT:
-		return dashboards.ActionDashboardsWrite, dashboards.ActionFoldersWrite
+		return dashboards.ActionDashboardsWrite, foldermodel.ActionFoldersWrite
 	case dashboardaccess.PERMISSION_ADMIN:
-		return dashboards.ActionDashboardsPermissionsWrite, dashboards.ActionFoldersPermissionsWrite
+		return dashboards.ActionDashboardsPermissionsWrite, foldermodel.ActionFoldersPermissionsWrite
 	case dashboardaccess.PERMISSION_VIEW:
 		fallthrough
 	default:
-		return dashboards.ActionDashboardsRead, dashboards.ActionFoldersRead
+		return dashboards.ActionDashboardsRead, foldermodel.ActionFoldersRead
 	}
 }
 
@@ -683,7 +681,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		}
 	}
 	for _, folderPermission := range folderPermissions {
-		if folderUid, found := strings.CutPrefix(folderPermission, dashboards.ScopeFoldersPrefix); found {
+		if folderUid, found := strings.CutPrefix(folderPermission, foldermodel.ScopeFoldersPrefix); found {
 			if !slices.Contains(dashboardUids, folderUid) && folderUid != foldermodel.SharedWithMeFolderUID && folderUid != foldermodel.GeneralFolderUID {
 				dashboardUids = append(dashboardUids, folderUid)
 			}

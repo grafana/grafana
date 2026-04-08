@@ -1,8 +1,8 @@
-import { PropsWithChildren, ReactNode, useMemo } from 'react';
+import { type PropsWithChildren, type ReactNode, useMemo } from 'react';
 import { useLocation } from 'react-use';
 
 import { Page } from 'app/core/components/Page/Page';
-import { PageProps } from 'app/core/components/Page/types';
+import { type PageProps } from 'app/core/components/Page/types';
 
 import { AlertmanagerProvider, useAlertmanager } from '../state/AlertmanagerContext';
 import { getRulesDataSources } from '../utils/datasource';

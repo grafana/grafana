@@ -1,12 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
 import { dateTime } from '@grafana/data';
 
 import { createLokiDatasource } from '../mocks/datasource';
 
 import { LokiQueryField } from './LokiQueryField';
-import { Props as MonacoProps } from './monaco-query-field/MonacoQueryFieldProps';
+import { type Props as MonacoProps } from './monaco-query-field/MonacoQueryFieldProps';
 
 jest.mock('./monaco-query-field/MonacoQueryFieldLazy', () => {
   const fakeQueryField = (props: MonacoProps) => {

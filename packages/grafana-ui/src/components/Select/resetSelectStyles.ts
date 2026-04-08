@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { StylesConfig } from 'react-select';
+import { type StylesConfig } from 'react-select';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 export default function resetSelectStyles(theme: GrafanaTheme2): Partial<StylesConfig> {
   return {

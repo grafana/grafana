@@ -1,4 +1,4 @@
-import { Registry, RegistryItem } from '../utils/Registry';
+import { Registry, type RegistryItem } from '../utils/Registry';
 
 import { createTheme, NewThemeOptionsSchema } from './createTheme';
 import aubergine from './themeDefinitions/aubergine.json';
@@ -17,7 +17,7 @@ import tritanopia_light from './themeDefinitions/tritanopia_light.json';
 import tron from './themeDefinitions/tron.json';
 import victorian from './themeDefinitions/victorian.json';
 import zen from './themeDefinitions/zen.json';
-import { GrafanaTheme2 } from './types';
+import { type GrafanaTheme2 } from './types';
 
 export interface ThemeRegistryItem extends RegistryItem {
   isExtra?: boolean;

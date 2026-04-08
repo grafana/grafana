@@ -1,27 +1,27 @@
 import { css } from '@emotion/css';
 import { PureComponent } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 
 import {
   applyFieldOverrides,
-  SplitOpen,
-  DataFrame,
+  type SplitOpen,
+  type DataFrame,
   LoadingState,
   FieldType,
   DataLinksContext,
-  EventBus,
+  type EventBus,
   EventBusSrv,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, getTemplateSrv, PanelRenderer } from '@grafana/runtime';
-import { TimeZone } from '@grafana/schema';
-import { AdHocFilterItem, PanelChrome, withTheme2, Themeable2, PanelContextProvider } from '@grafana/ui';
+import { type TimeZone } from '@grafana/schema';
+import { type AdHocFilterItem, PanelChrome, withTheme2, type Themeable2, PanelContextProvider } from '@grafana/ui';
 import {
   hasDeprecatedParentRowIndex,
   migrateFromParentRowIndexToNestedFrames,
 } from 'app/plugins/panel/table/migrations';
-import { ExploreItemState } from 'app/types/explore';
-import { StoreState } from 'app/types/store';
+import { type ExploreItemState } from 'app/types/explore';
+import { type StoreState } from 'app/types/store';
 
 import { LimitedDataDisclaimer } from '../LimitedDataDisclaimer';
 import { MetaInfoText } from '../MetaInfoText';

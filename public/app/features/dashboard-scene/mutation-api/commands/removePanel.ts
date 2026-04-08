@@ -4,7 +4,7 @@
  * Remove one or more panels from the dashboard by element name.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getLayoutManagerFor, getVizPanelKeyForPanelId } from '../../utils/utils';

@@ -1,5 +1,5 @@
 import { FieldType } from '@grafana/data';
-import { BackendDataSourceResponse, FetchResponse } from '@grafana/runtime';
+import { type BackendDataSourceResponse, type FetchResponse } from '@grafana/runtime';
 
 export const mockInfluxFetchResponse = (
   overrides?: Partial<FetchResponse<BackendDataSourceResponse>>

@@ -7,7 +7,7 @@ import { MetaInspector } from './components/MetaInspector/MetaInspector';
 import { QueryEditor } from './components/QueryEditor/QueryEditor';
 import { CloudWatchDatasource } from './datasource';
 import { onDashboardLoadedHandler } from './tracking';
-import { CloudWatchJsonData, CloudWatchQuery } from './types';
+import { type CloudWatchJsonData, type CloudWatchQuery } from './types';
 
 export const plugin = new DataSourcePlugin<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>(
   CloudWatchDatasource

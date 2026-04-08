@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useController, useFormContext } from 'react-hook-form';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Badge, Box, Button, Field, Select, Stack, Text, TextLink } from '@grafana/ui';
-import { Route } from 'app/plugins/datasource/alertmanager/types';
+import { type Route } from 'app/plugins/datasource/alertmanager/types';
 
-import { RuleFormValues } from '../../../types/rule-form';
+import { type RuleFormValues } from '../../../types/rule-form';
 import { ALERTING_PATHS } from '../../../utils/navigation';
 import { trackNotificationPolicySelectorChanged } from '../../notification-policies/notificationPolicyAnalytics';
 import {

@@ -5,9 +5,9 @@ import { Subject } from 'rxjs';
 // Importing this way to be able to spy on grafana/data
 
 import * as grafanaData from '@grafana/data';
-import { DataSourceApi, DataTransformerID, dateTime, TypedVariableModel } from '@grafana/data';
+import { type DataSourceApi, DataTransformerID, dateTime, type TypedVariableModel } from '@grafana/data';
 import { FrameType, mockTransformationsRegistry } from '@grafana/data/internal';
-import { DataSourceSrv, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
+import { type DataSourceSrv, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
 
 import { Echo } from '../../../core/services/echo/Echo';
@@ -15,11 +15,11 @@ import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/
 
 import {
   createDashboardQueryRunner,
-  DashboardQueryRunnerFactoryArgs,
+  type DashboardQueryRunnerFactoryArgs,
   setDashboardQueryRunnerFactory,
 } from './DashboardQueryRunner/DashboardQueryRunner';
 import { emptyResult } from './DashboardQueryRunner/utils';
-import { PanelQueryRunner, QueryRunnerOptions } from './PanelQueryRunner';
+import { PanelQueryRunner, type QueryRunnerOptions } from './PanelQueryRunner';
 
 jest.mock('@grafana/data', () => ({
   __esModule: true,

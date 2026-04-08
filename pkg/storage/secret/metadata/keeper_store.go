@@ -557,7 +557,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		thirdPartyKeepers = append(thirdPartyKeepers, name)
 	}
 
-	if err := rows.Err(); err != nil {
+	if err := keepersRows.Err(); err != nil {
 		return fmt.Errorf("third party keeper rows error: %w", err)
 	}
 

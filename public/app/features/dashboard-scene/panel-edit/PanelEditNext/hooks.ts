@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
@@ -8,7 +8,7 @@ import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/const
 
 import { useEditPaneCollapsed } from '../../edit-pane/shared';
 import { getDashboardSceneFor } from '../../utils/utils';
-import { PanelEditor } from '../PanelEditor';
+import { type PanelEditor } from '../PanelEditor';
 import { useSnappingSplitter } from '../splitter/useSnappingSplitter';
 import { useScrollReflowLimit } from '../useScrollReflowLimit';
 

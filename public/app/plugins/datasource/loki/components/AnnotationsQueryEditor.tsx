@@ -1,14 +1,14 @@
 import { memo } from 'react';
 
-import { AnnotationQuery } from '@grafana/data';
+import { type AnnotationQuery } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/plugin-ui';
 import { Input, Stack } from '@grafana/ui';
 
-import { LokiQuery } from '../types';
+import { type LokiQuery } from '../types';
 
 import { LokiOptionFields } from './LokiOptionFields';
 import { LokiQueryField } from './LokiQueryField';
-import { LokiQueryEditorProps } from './types';
+import { type LokiQueryEditorProps } from './types';
 
 type Props = LokiQueryEditorProps & {
   annotation?: AnnotationQuery<LokiQuery>;

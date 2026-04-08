@@ -2,7 +2,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Icon, ToolbarButton } from '@grafana/ui';
 
-import { ToolbarActionProps } from '../types';
+import { type ToolbarActionProps } from '../types';
 
 export const DashboardSettingsButton = ({ dashboard }: ToolbarActionProps) => {
   return (

@@ -1,4 +1,4 @@
-import { toDataFrame, FieldType, AbstractQuery, AbstractLabelOperator } from '@grafana/data';
+import { toDataFrame, FieldType, type AbstractQuery, AbstractLabelOperator } from '@grafana/data';
 
 import {
   abstractQueryToExpr,

@@ -3,14 +3,14 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneDeep, defaultsDeep } from 'lodash';
 
-import { CoreApp, PluginMeta, PluginType } from '@grafana/data';
+import { CoreApp, type PluginMeta, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { PromQueryEditorProps } from '../../components/types';
+import { type PromQueryEditorProps } from '../../components/types';
 import { PrometheusDatasource } from '../../datasource';
-import { PrometheusLanguageProviderInterface } from '../../language_provider';
+import { type PrometheusLanguageProviderInterface } from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
-import { PromQuery } from '../../types';
+import { type PromQuery } from '../../types';
 import { QueryEditorMode } from '../shared/types';
 
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';

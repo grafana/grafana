@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { Scope, ScopeNode } from '@grafana/data';
+import { type Scope, type ScopeNode } from '@grafana/data';
 
 export type NodesMap = Record<string, ScopeNode>;
 export type ScopesMap = Record<string, Scope>;

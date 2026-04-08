@@ -3,20 +3,19 @@ import { useCallback } from 'react';
 import * as React from 'react';
 
 import {
-  GrafanaTheme2,
-  SelectableValue,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type GrafanaTheme2,
+  type SelectableValue,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/prepareTimeSeries.svg';
 import lightImage from '../images/light/prepareTimeSeries.svg';
 
-import { PrepareTimeSeriesOptions, timeSeriesFormat, getPrepareTimeSeriesTransformer } from './prepareTimeSeries';
+import { type PrepareTimeSeriesOptions, timeSeriesFormat, getPrepareTimeSeriesTransformer } from './prepareTimeSeries';
 
 export function PrepareTimeSeriesEditor(props: TransformerUIProps<PrepareTimeSeriesOptions>): React.ReactElement {
   const { options, onChange } = props;
@@ -180,7 +179,6 @@ export const getPrepareTimeseriesTransformerRegistryItem: () => TransformerRegis
       name: prepareTimeSeriesTransformer.name,
       description: prepareTimeSeriesTransformer.description,
       categories: new Set([TransformerCategory.Reformat]),
-      help: getTransformationContent(prepareTimeSeriesTransformer.id).helperDocs,
       imageDark: darkImage,
       imageLight: lightImage,
     };

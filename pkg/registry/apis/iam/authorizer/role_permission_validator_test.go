@@ -63,13 +63,6 @@ func TestParsePermission(t *testing.T) {
 			wantVerb:  "get",
 		},
 		{
-			name:        "reject id-based scope",
-			action:      "dashboards:read",
-			scope:       "dashboards:id:123",
-			wantErr:     true,
-			errContains: "ID-based scopes",
-		},
-		{
 			name:       "folder scope wildcard",
 			action:     "dashboards:read",
 			scope:      "folders:*",

@@ -14,7 +14,7 @@
 
 import { render, screen } from '@testing-library/react';
 
-import GraphTicks, { GraphTicksProps } from './GraphTicks';
+import GraphTicks, { type GraphTicksProps } from './GraphTicks';
 
 const setup = (propOverrides?: GraphTicksProps) => {
   const defaultProps = {

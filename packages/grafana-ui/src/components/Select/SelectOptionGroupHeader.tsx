@@ -1,4 +1,4 @@
-import { GroupHeadingProps } from 'react-select';
+import { type GroupHeadingProps } from 'react-select';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Text } from '../Text/Text';

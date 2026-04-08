@@ -1,4 +1,4 @@
-import { Field } from '../types/dataFrame';
+import { type Field } from '../types/dataFrame';
 
 /**
  * Returns minimal time step from series time field

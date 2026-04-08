@@ -1,12 +1,12 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/ConfigEditor.tsx
 
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { type DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { ConfigSection, DataSourceDescription, AdvancedHttpSettings } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Alert, useTheme2 } from '@grafana/ui';
 
-import { PromOptions } from '../types';
+import { type PromOptions } from '../types';
 
 import { AlertingSettingsOverhaul } from './AlertingSettingsOverhaul';
 import { DataSourceHttpSettingsOverhaul } from './DataSourceHttpSettingsOverhaul';

@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { SceneComponentProps, VizPanel } from '@grafana/scenes';
+import { type SceneComponentProps, type VizPanel } from '@grafana/scenes';
 import { Button, Spinner, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
@@ -13,7 +13,7 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { UnlinkModal } from '../scene/UnlinkModal';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 
-import { PanelEditor } from './PanelEditor';
+import { type PanelEditor } from './PanelEditor';
 import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
 import { scrollReflowMediaCondition, useScrollReflowLimit } from './useScrollReflowLimit';

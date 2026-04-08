@@ -1,4 +1,4 @@
-import { render, RenderResult, screen, waitFor } from '@testing-library/react';
+import { render, type RenderResult, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -6,7 +6,7 @@ import { PluginType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getCatalogPluginMock, getPluginsStateMock } from 'app/features/plugins/admin/mocks/mockHelpers';
-import { CatalogPlugin } from 'app/features/plugins/admin/types';
+import { type CatalogPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { AddNewConnection } from './ConnectData';

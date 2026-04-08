@@ -1,12 +1,12 @@
 import { render, renderHook, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-import { TimeRange } from '@grafana/data';
+import { type TimeRange } from '@grafana/data';
 
 import { DEFAULT_SERIES_LIMIT, LAST_USED_LABELS_KEY, METRIC_LABEL } from '../../constants';
-import { PrometheusDatasource } from '../../datasource';
-import { PrometheusLanguageProviderInterface } from '../../language_provider';
+import { type PrometheusDatasource } from '../../datasource';
+import { type PrometheusLanguageProviderInterface } from '../../language_provider';
 import { getMockTimeRange } from '../../test/mocks/datasource';
 
 import { MetricsBrowserProvider, useMetricsBrowser } from './MetricsBrowserContext';

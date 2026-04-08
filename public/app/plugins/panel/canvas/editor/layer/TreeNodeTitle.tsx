@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, useStyles2 } from '@grafana/ui';
 import { LayerName } from 'app/core/components/Layers/LayerName';
-import { ElementState } from 'app/features/canvas/runtime/element';
+import { type ElementState } from 'app/features/canvas/runtime/element';
 
 import { LayerActionID } from '../../types';
-import { TreeViewEditorProps } from '../element/elementEditor';
+import { type TreeViewEditorProps } from '../element/elementEditor';
 
-import { TreeElement } from './tree';
+import { type TreeElement } from './tree';
 
 interface Props {
   settings: TreeViewEditorProps;

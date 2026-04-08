@@ -4,17 +4,17 @@ import { of, map } from 'rxjs';
 
 import {
   CoreApp,
-  DataQuery,
-  DataQueryRequest,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
-  DataSourceRef,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type DataSourceRef,
   FieldType,
   LoadingState,
-  PanelData,
+  type PanelData,
   PluginType,
-  TimeRange,
+  type TimeRange,
   toDataFrame,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
@@ -23,11 +23,11 @@ import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PANEL_EDIT_LAST_USED_DATASOURCE } from 'app/features/dashboard/utils/dashboard';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
-import { PanelTimeRange, PanelTimeRangeState } from '../../scene/panel-timerange/PanelTimeRange';
-import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
+import { PanelTimeRange, type PanelTimeRangeState } from '../../scene/panel-timerange/PanelTimeRange';
+import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { findVizPanelByKey } from '../../utils/utils';
@@ -40,7 +40,7 @@ import {
 } from '../testfiles/testDashboard';
 
 import { PanelDataPane } from './PanelDataPane';
-import { PanelDataQueriesTab, PanelDataQueriesTabRendered } from './PanelDataQueriesTab';
+import { type PanelDataQueriesTab, PanelDataQueriesTabRendered } from './PanelDataQueriesTab';
 
 async function createModelMock() {
   const { queriesTab } = await setupScene('panel-1');
@@ -407,7 +407,7 @@ describe('PanelDataQueriesTab', () => {
       const modelMock = await createModelMock();
       render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
 
-      expect(await screen.findAllByTestId('query-editor-row')).toHaveLength(1);
+      expect(await screen.findAllByTestId(selectors.components.QueryEditorRows.rows)).toHaveLength(1);
     });
 
     it('allow to add a new query when user clicks on add new', async () => {

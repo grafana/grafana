@@ -1,6 +1,6 @@
-import { PluginDashboard } from 'app/types/plugins';
+import { type PluginDashboard } from 'app/types/plugins';
 
-import { GnetDashboard } from '../types';
+import { type GnetDashboard } from '../types';
 
 /**
  * Creates a complete mock PluginDashboard with all fields.

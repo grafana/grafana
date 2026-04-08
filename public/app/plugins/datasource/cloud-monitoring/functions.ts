@@ -1,12 +1,12 @@
 import { chunk, initial, startCase, uniqBy } from 'lodash';
 
 import { rangeUtil } from '@grafana/data';
-import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import { AGGREGATIONS, ALIGNMENTS, SYSTEM_LABELS } from './constants';
-import { AlignmentTypes, PreprocessorType, TimeSeriesList, MetricKind, ValueTypes } from './dataquery.gen';
-import CloudMonitoringDatasource from './datasource';
-import { CustomMetaData, MetricDescriptor } from './types/types';
+import { AlignmentTypes, PreprocessorType, type TimeSeriesList, MetricKind, ValueTypes } from './dataquery.gen';
+import type CloudMonitoringDatasource from './datasource';
+import { type CustomMetaData, type MetricDescriptor } from './types/types';
 
 export const extractServicesFromMetricDescriptors = (metricDescriptors: MetricDescriptor[]) =>
   uniqBy(metricDescriptors, 'service');

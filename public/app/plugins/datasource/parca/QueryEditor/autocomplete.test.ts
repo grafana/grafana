@@ -1,6 +1,6 @@
 import { editor } from 'monaco-editor';
 
-import { Monaco, monacoTypes } from '@grafana/ui';
+import { type Monaco, type monacoTypes } from '@grafana/ui';
 
 import { CompletionProvider } from './autocomplete';
 

@@ -1,4 +1,4 @@
-import { useRegisterActions, useKBar, Action, Priority } from 'kbar';
+import { useRegisterActions, useKBar, type Action, Priority } from 'kbar';
 import { useEffect, useState } from 'react';
 
 import { contextSrv } from 'app/core/services/context_srv';

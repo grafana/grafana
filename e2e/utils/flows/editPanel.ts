@@ -1,4 +1,4 @@
-import { configurePanel, PartialEditPanelConfig } from './configurePanel';
+import { configurePanel, type PartialEditPanelConfig } from './configurePanel';
 
 export const editPanel = (config: Partial<PartialEditPanelConfig>) =>
   configurePanel({

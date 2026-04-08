@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { useMemo, ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 
-import { ActionModel, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { type ActionModel, type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
@@ -11,7 +11,7 @@ import { Portal } from '../Portal/Portal';
 import { VizTooltipFooter } from '../VizTooltip/VizTooltipFooter';
 import { VizTooltipWrapper } from '../VizTooltip/VizTooltipWrapper';
 
-import { DataLinksActionsTooltipCoords } from './utils';
+import { type DataLinksActionsTooltipCoords } from './utils';
 
 interface Props {
   links: LinkModel[];

@@ -13,6 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
+const (
+	ActionDashboardsPublicWrite = "dashboards.public:write"
+)
+
 // These are the api contracts. The API should match the underlying service and store
 
 //go:generate go run ./commands/generate_datasources/main.go

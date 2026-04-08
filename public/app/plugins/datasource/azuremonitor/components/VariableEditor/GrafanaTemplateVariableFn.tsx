@@ -1,12 +1,12 @@
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { type ChangeEvent, useCallback, useEffect, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { InlineField, Input } from '@grafana/ui';
 
 import { AzureQueryType } from '../../dataquery.gen';
-import DataSource from '../../datasource';
+import type DataSource from '../../datasource';
 import { migrateStringQueriesToObjectQueries } from '../../grafanaTemplateVariableFns';
-import { AzureMonitorQuery } from '../../types/query';
+import { type AzureMonitorQuery } from '../../types/query';
 
 const GrafanaTemplateVariableFnInput = ({
   query,

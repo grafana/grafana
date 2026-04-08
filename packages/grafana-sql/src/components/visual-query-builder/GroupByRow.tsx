@@ -1,12 +1,12 @@
 import { useCallback } from 'react';
 
-import { SelectableValue, toOption } from '@grafana/data';
+import { type SelectableValue, toOption } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { AccessoryButton, EditorList, InputGroup } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
-import { QueryEditorGroupByExpression } from '../../expressions';
-import { SQLExpression } from '../../types';
+import { type QueryEditorGroupByExpression } from '../../expressions';
+import { type SQLExpression } from '../../types';
 import { setGroupByField } from '../../utils/sql.utils';
 
 interface GroupByRowProps {

@@ -1,12 +1,12 @@
 import tinycolor from 'tinycolor2';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
 import {
   colorManipulator,
-  FieldColorMode,
+  type FieldColorMode,
   FieldColorModeId,
-  GrafanaTheme2,
-  ThresholdsConfig,
+  type GrafanaTheme2,
+  type ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
 import { ScaleOrientation } from '@grafana/schema';

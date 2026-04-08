@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
 import { ThresholdsMode } from '@grafana/schema';
 

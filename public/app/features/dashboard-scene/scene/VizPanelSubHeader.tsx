@@ -1,8 +1,8 @@
-import { Unsubscribable } from 'rxjs';
+import { type Unsubscribable } from 'rxjs';
 
 import {
-  SceneComponentProps,
-  SceneObjectState,
+  type SceneComponentProps,
+  type SceneObjectState,
   SceneObjectBase,
   sceneGraph,
   AdHocFiltersVariable,
@@ -10,7 +10,7 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 
 import { verifyDrilldownApplicability } from '../utils/drilldownUtils';
 import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';
@@ -72,10 +72,8 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
 
     this.setDrilldownApplicabilitySupportHelper();
 
-    // keep track of queryRunner datasource updates and update rendering
     this._subs.add(
       queryRunner?.subscribeToState((n, p) => {
-        // Datasource can be on queryRunner itself (mixed panels) or on the first query
         if (n.datasource !== p.datasource || n.queries !== p.queries) {
           this._queryRunnerDatasource = getDatasourceFromQueryRunner(queryRunner);
 
@@ -84,7 +82,6 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
       })
     );
 
-    // check when var set updates and search for drilldown vars
     this._subs.add(
       vars.subscribeToState((n) => {
         this._adHocVar = n.variables.find((variable) => variable instanceof AdHocFiltersVariable);
@@ -94,7 +91,6 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
       })
     );
 
-    // adhoc sub so if that changes, we potentially update rendering
     this._adHocSub = this._adHocVar?.subscribeToState((n, p) => {
       if (n.datasource !== p.datasource || n.applicabilityEnabled !== p.applicabilityEnabled) {
         this.setDrilldownApplicabilitySupportHelper({
@@ -104,7 +100,6 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
       }
     });
 
-    // same for groupBy
     this._groupBySub = this._groupByVar?.subscribeToState((n, p) => {
       if (n.datasource !== p.datasource || n.applicabilityEnabled !== p.applicabilityEnabled) {
         this.setDrilldownApplicabilitySupportHelper(undefined, {

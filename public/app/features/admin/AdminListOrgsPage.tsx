@@ -7,7 +7,7 @@ import { LinkButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
-import { Organization } from 'app/types/organization';
+import { type Organization } from 'app/types/organization';
 
 import { AdminOrgsTable } from './AdminOrgsTable';
 

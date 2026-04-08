@@ -6,11 +6,11 @@ import { useEffect, useRef } from 'react';
 import { useLatest } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Monaco, monacoTypes, ReactMonacoEditor, useTheme2 } from '@grafana/ui';
+import { type Monaco, type monacoTypes, ReactMonacoEditor, useTheme2 } from '@grafana/ui';
 
-import { Props } from './MonacoQueryFieldProps';
+import { type Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
 import { DataProvider } from './monaco-completion-provider/data_provider';
 import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider/monaco-completion-provider';

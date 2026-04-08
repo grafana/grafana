@@ -1,12 +1,12 @@
 import { memo } from 'react';
 import * as React from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { InlineField, Input, Stack } from '@grafana/ui';
 
 import { LokiQueryType, LokiQueryDirection } from '../dataquery.gen';
-import { LokiQuery } from '../types';
+import { type LokiQuery } from '../types';
 
 export interface LokiOptionFieldsProps {
   lineLimitValue: string;

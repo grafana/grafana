@@ -1,6 +1,6 @@
 ﻿import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MutableRefObject } from 'react';
+import { type MutableRefObject } from 'react';
 
 import { TextLink } from '../Link/TextLink';
 

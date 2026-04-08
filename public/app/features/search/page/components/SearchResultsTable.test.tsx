@@ -4,16 +4,16 @@ import { Subject } from 'rxjs';
 import {
   applyFieldOverrides,
   createTheme,
-  DataFrame,
+  type DataFrame,
   DataFrameView,
   FieldType,
-  PanelPluginMeta,
+  type PanelPluginMeta,
   toDataFrame,
 } from '@grafana/data';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
 
 import { getGrafanaSearcher } from '../../service/searcher';
-import { DashboardQueryResult, QueryResponse } from '../../service/types';
+import { type DashboardQueryResult, type QueryResponse } from '../../service/types';
 import { DashboardSearchItemType } from '../../types';
 
 import { SearchResultsTable } from './SearchResultsTable';

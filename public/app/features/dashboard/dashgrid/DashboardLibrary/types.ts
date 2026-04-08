@@ -1,5 +1,5 @@
-import { DashboardJson } from 'app/features/manage-dashboards/types';
-import { PluginDashboard } from 'app/types/plugins';
+import { type DashboardJson } from 'app/features/manage-dashboards/types';
+import { type PluginDashboard } from 'app/types/plugins';
 
 export interface Link {
   rel: string;

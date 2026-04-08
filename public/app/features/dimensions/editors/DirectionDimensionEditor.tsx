@@ -1,17 +1,17 @@
 import { useCallback } from 'react';
 
 import {
-  FieldNamePickerConfigSettings,
-  SelectableValue,
-  StandardEditorProps,
-  StandardEditorsRegistryItem,
+  type FieldNamePickerConfigSettings,
+  type SelectableValue,
+  type StandardEditorProps,
+  type StandardEditorsRegistryItem,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DirectionDimensionMode, DirectionDimensionConfig, ConnectionDirection } from '@grafana/schema';
+import { DirectionDimensionMode, type DirectionDimensionConfig, ConnectionDirection } from '@grafana/schema';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 
-import { DirectionDimensionOptions } from '../types';
+import { type DirectionDimensionOptions } from '../types';
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 const dummyFieldSettings = {

@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useLocation } from 'react-use';
 
-import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
+import { type GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
@@ -17,10 +17,10 @@ import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../../features/alerting/unified/utils/datasource';
-import { AlertInstanceTotalState, CombinedRuleWithLocation } from '../../../../types/unified-alerting';
+import { type AlertInstanceTotalState, type CombinedRuleWithLocation } from '../../../../types/unified-alerting';
 import { AlertInstances } from '../AlertInstances';
 import { getStyles } from '../UnifiedAlertList';
-import { UnifiedAlertListOptions } from '../types';
+import { type UnifiedAlertListOptions } from '../types';
 
 type Props = {
   rules: CombinedRuleWithLocation[];

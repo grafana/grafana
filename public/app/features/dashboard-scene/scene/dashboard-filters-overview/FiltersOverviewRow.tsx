@@ -1,9 +1,18 @@
 import { css, cx } from '@emotion/css';
 import { memo, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Checkbox, ComboboxOption, getInputStyles, Icon, MultiSelect, Select, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Checkbox,
+  type ComboboxOption,
+  getInputStyles,
+  Icon,
+  MultiSelect,
+  Select,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 
 interface GroupHeaderProps {
   group: string;

@@ -4,22 +4,22 @@ import { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
 
 import { AIImproveAnnotationsButtonComponent } from '../../enterprise-components/AI/AIGenImproveAnnotationsButton/addAIImproveAnnotationsButton';
-import { RuleFormValues } from '../../types/rule-form';
+import { type RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationLabels } from '../../utils/constants';
 import { DOCS_URL_ANNOTATIONS } from '../../utils/docs';
 import { isGrafanaManagedRuleByType } from '../../utils/rules';
 
 import AnnotationHeaderField from './AnnotationHeaderField';
 import DashboardAnnotationField from './DashboardAnnotationField';
-import { DashboardPicker, PanelDTO, getVisualPanels } from './DashboardPicker';
+import { DashboardPicker, type PanelDTO, getVisualPanels } from './DashboardPicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
-import { DashboardResponse, useDashboardQuery } from './useDashboardQuery';
+import { type DashboardResponse, useDashboardQuery } from './useDashboardQuery';
 
 const AnnotationsStep = () => {
   const styles = useStyles2(getStyles);

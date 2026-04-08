@@ -1,8 +1,12 @@
 import { throttle } from 'lodash';
 
 import { getBackendSrv, locationService } from '@grafana/runtime';
-import { ThunkResult } from 'app/types/store';
-import { SupportBundle, SupportBundleCollector, SupportBundleCreateRequest } from 'app/types/supportBundles';
+import { type ThunkResult } from 'app/types/store';
+import {
+  type SupportBundle,
+  type SupportBundleCollector,
+  type SupportBundleCreateRequest,
+} from 'app/types/supportBundles';
 
 import {
   collectorsFetchBegin,

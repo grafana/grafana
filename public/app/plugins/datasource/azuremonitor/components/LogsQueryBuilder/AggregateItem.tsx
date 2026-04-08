@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { InputGroup, AccessoryButton } from '@grafana/plugin-ui';
 import { Select, Label, Input } from '@grafana/ui';
@@ -8,7 +8,7 @@ import { Select, Label, Input } from '@grafana/ui';
 import {
   BuilderQueryEditorExpressionType,
   BuilderQueryEditorPropertyType,
-  BuilderQueryEditorReduceExpression,
+  type BuilderQueryEditorReduceExpression,
   BuilderQueryEditorReduceParameterTypes,
 } from '../../dataquery.gen';
 

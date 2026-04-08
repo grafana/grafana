@@ -1,4 +1,4 @@
-import { BaseVariableModel } from '@grafana/data';
+import { type BaseVariableModel } from '@grafana/data';
 
 export interface VariablePickerProps<Model extends BaseVariableModel = BaseVariableModel> {
   variable: Model;

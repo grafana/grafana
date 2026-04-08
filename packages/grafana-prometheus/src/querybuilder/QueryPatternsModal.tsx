@@ -3,17 +3,17 @@ import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import { useMemo, useState } from 'react';
 
-import { CoreApp, DataQuery, getNextRefId, GrafanaTheme2 } from '@grafana/data';
+import { type CoreApp, type DataQuery, getNextRefId, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Collapse, Modal, Stack, useStyles2 } from '@grafana/ui';
 
-import { PromQuery } from '../types';
+import { type PromQuery } from '../types';
 
 import { QueryPattern } from './QueryPattern';
 import { buildVisualQueryFromString } from './parsing';
 import { promQueryModeller } from './shared/modeller_instance';
-import { PromQueryPattern, PromQueryPatternType } from './types';
+import { type PromQueryPattern, PromQueryPatternType } from './types';
 
 type Props = {
   isOpen: boolean;

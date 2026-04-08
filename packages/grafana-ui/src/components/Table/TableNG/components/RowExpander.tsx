@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Icon } from '../../../Icon/Icon';
-import { RowExpanderNGProps } from '../types';
+import { type RowExpanderNGProps } from '../types';
 
 export function RowExpander({ onCellExpand, isExpanded, rowId }: RowExpanderNGProps) {
   const styles = useStyles2(getStyles);

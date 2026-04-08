@@ -1,6 +1,6 @@
-import { PlaywrightTestArgs } from '@playwright/test';
+import { type PlaywrightTestArgs } from '@playwright/test';
 
-import { PluginFixture } from '@grafana/plugin-e2e';
+import { type PluginFixture } from '@grafana/plugin-e2e';
 
 import { datasetResponse, fieldsResponse, tablesResponse } from './mocks/mysql.mocks';
 

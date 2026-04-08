@@ -34,6 +34,7 @@ runs:
         GH_TOKEN: ${{ steps.generate_token.outputs.token }}
       run: |
         RETRIES="5"
+        grafana_root="$PWD"
 
         for i in $(seq 1 $RETRIES); do
           echo "Attempt $i to clone..."
@@ -77,4 +78,4 @@ runs:
           sleep "$i"
         done
 
-        QUIET=1 ./build.sh
+        QUIET=1 ./build.sh "$grafana_root"

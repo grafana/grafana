@@ -1,7 +1,7 @@
-import { LoadingState } from './data';
-import { DataFrame } from './dataFrame';
-import { DataLinkPostProcessor } from './fieldOverrides';
-import { TimeZone } from './time';
+import { type LoadingState } from './data';
+import { type DataFrame } from './dataFrame';
+import { type DataLinkPostProcessor } from './fieldOverrides';
+import { type TimeZone } from './time';
 
 /**
  * Props for the PrometheusQueryResults exposed component.

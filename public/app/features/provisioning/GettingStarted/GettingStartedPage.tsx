@@ -1,5 +1,5 @@
 import { t } from '@grafana/i18n';
-import { Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 
 import GettingStarted from './GettingStarted';

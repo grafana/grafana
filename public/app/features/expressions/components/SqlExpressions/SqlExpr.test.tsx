@@ -1,8 +1,8 @@
 import { render, testWithFeatureToggles, userEvent, waitFor } from 'test/test-utils';
 
-import { ExpressionQuery, ExpressionQueryType } from '../../types';
+import { type ExpressionQuery, ExpressionQueryType } from '../../types';
 
-import { SqlExpr, SqlExprProps } from './SqlExpr';
+import { SqlExpr, type SqlExprProps } from './SqlExpr';
 
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
@@ -132,6 +132,7 @@ describe('Schema Inspector feature toggle', () => {
     testWithFeatureToggles({ enable: ['queryService', 'grafanaAPIServerWithExperimentalAPIs'] });
 
     afterEach(() => {
+      localStorage.removeItem('grafana.sql-expression.schema-inspector-open');
       mockBackendSrv.post.mockResolvedValue({
         kind: 'SQLSchemaResponse',
         apiVersion: 'query.grafana.app/v0alpha1',

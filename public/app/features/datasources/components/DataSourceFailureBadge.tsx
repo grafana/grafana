@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 
 import { textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Badge, useStyles2 } from '@grafana/ui';
 
-import { FailureSeverity } from '../../connections/hooks/useDatasourceAdvisorChecks';
+import { type FailureSeverity } from '../../connections/hooks/useDatasourceAdvisorChecks';
 
 interface Props {
   severity: FailureSeverity;

@@ -1,25 +1,32 @@
 import { css, cx } from '@emotion/css';
 import { PureComponent } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 
-import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil, GrafanaTheme2 } from '@grafana/data';
+import {
+  type NavModel,
+  type NavModelItem,
+  type TimeRange,
+  PageLayoutType,
+  locationUtil,
+  type GrafanaTheme2,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
-import { Themeable2, withTheme2 } from '@grafana/ui';
-import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
+import { type Themeable2, withTheme2 } from '@grafana/ui';
+import { type ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
-import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
+import { GrafanaContext, type GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { KioskMode } from 'app/types/dashboard';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
-import { StoreState } from 'app/types/store';
+import { type StoreState } from 'app/types/store';
 
 import { cancelVariables, templateVarsChangedInUrl } from '../../variables/state/actions';
 import { findTemplateVarChanges } from '../../variables/utils';
@@ -38,7 +45,7 @@ import { cleanUpDashboardAndVariables } from '../state/actions';
 import { initDashboard } from '../state/initDashboard';
 
 import { DashboardPageError } from './DashboardPageError';
-import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './types';
+import { type DashboardPageRouteParams, type DashboardPageRouteSearchParams } from './types';
 
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -398,7 +405,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           <DashboardPrompt dashboard={dashboard} />
           {initError && <DashboardPageError error={initError.error} type={params.type} />}
           {showSubMenu && (
-            <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
+            <section data-testid={selectors.pages.Dashboard.SubMenu.submenu}>
               <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
             </section>
           )}

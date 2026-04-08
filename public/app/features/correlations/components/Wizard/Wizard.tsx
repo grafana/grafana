@@ -1,7 +1,7 @@
-import { useForm, FormProvider, FieldValues } from 'react-hook-form';
+import { useForm, FormProvider, type FieldValues } from 'react-hook-form';
 
 import { WizardContent } from './WizardContent';
-import { WizardProps } from './types';
+import { type WizardProps } from './types';
 import { WizardContextProvider } from './wizardContext';
 
 export function Wizard<T extends FieldValues>(props: WizardProps<T>) {

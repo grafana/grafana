@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { addMinutes, subDays, subHours } from 'date-fns';
-import { Location } from 'history';
+import { type Location } from 'history';
 import { useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, isFetchError, locationService } from '@grafana/runtime';
 import {
@@ -28,7 +28,7 @@ import {
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
-import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
+import { type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
@@ -42,7 +42,7 @@ import { EditorColumnHeader } from '../EditorColumnHeader';
 import { ImportedResourceAlert, ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { Spacer } from '../Spacer';
 import {
-  NotificationTemplate,
+  type NotificationTemplate,
   useCreateNotificationTemplate,
   useNotificationTemplateMetadata,
   useUpdateNotificationTemplate,

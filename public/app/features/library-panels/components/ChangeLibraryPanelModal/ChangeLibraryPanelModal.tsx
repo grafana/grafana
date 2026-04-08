@@ -3,7 +3,7 @@ import type { JSX } from 'react';
 import { t } from '@grafana/i18n';
 import { ConfirmModal } from '@grafana/ui';
 
-import { PanelModel } from '../../../dashboard/state/PanelModel';
+import { type PanelModel } from '../../../dashboard/state/PanelModel';
 import { isPanelModelLibraryPanel } from '../../guard';
 
 export interface ChangeLibraryPanelModalProps {

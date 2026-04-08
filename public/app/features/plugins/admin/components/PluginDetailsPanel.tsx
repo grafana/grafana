@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { PageInfoItem } from '@grafana/runtime/internal';
+import { type PageInfoItem } from '@grafana/runtime/internal';
 import {
   Stack,
   Text,
@@ -20,7 +20,7 @@ import {
 } from '@grafana/ui';
 import { formatDate } from 'app/core/internationalization/dates';
 
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin } from '../types';
 
 import { PluginInsights } from './PluginInsights';
 

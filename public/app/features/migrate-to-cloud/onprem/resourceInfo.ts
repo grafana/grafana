@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 
-import { ResourceTableItem } from './types';
+import { type ResourceTableItem } from './types';
 
 export function iconNameForResource(resource: ResourceTableItem['type']) {
   switch (resource) {

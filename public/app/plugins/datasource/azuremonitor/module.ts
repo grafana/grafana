@@ -8,8 +8,8 @@ import { AzureQueryType, ResultFormat } from './dataquery.gen';
 import Datasource from './datasource';
 import pluginJson from './plugin.json';
 import { trackAzureMonitorDashboardLoaded } from './tracking';
-import { AzureMonitorQuery } from './types/query';
-import { AzureMonitorDataSourceJsonData } from './types/types';
+import { type AzureMonitorQuery } from './types/query';
+import { type AzureMonitorDataSourceJsonData } from './types/types';
 
 // don't load plugin translations in test environments
 // we don't use them anyway, and top-level await won't work currently in jest

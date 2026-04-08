@@ -1,7 +1,7 @@
-import { DataSourceApi, DataSourceJsonData } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { type DataSourceApi, type DataSourceJsonData } from '@grafana/data';
+import { type DataQuery } from '@grafana/schema';
 import { configureStore } from 'app/store/configureStore';
-import { StoreState, ThunkDispatch } from 'app/types/store';
+import { type StoreState, type ThunkDispatch } from 'app/types/store';
 
 import { selectExploreDSMaps } from './selectors';
 import { createDefaultInitialState } from './testHelpers';

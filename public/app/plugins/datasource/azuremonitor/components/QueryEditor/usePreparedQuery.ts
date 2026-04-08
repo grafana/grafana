@@ -3,7 +3,7 @@ import { defaults } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
 import { AzureQueryType, ResultFormat } from '../../dataquery.gen';
-import { AzureMonitorQuery } from '../../types/query';
+import { type AzureMonitorQuery } from '../../types/query';
 import migrateQuery from '../../utils/migrateQuery';
 
 const DEFAULT_QUERY = {

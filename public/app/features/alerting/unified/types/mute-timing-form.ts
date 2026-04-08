@@ -1,4 +1,4 @@
-import { TimeRange } from 'app/plugins/datasource/alertmanager/types';
+import { type TimeRange } from 'app/plugins/datasource/alertmanager/types';
 
 export type MuteTimingFields = {
   name: string;

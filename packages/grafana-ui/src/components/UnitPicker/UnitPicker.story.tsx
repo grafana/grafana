@@ -1,7 +1,7 @@
 import { action } from '@storybook/addon-actions';
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
-import { UnitPicker, UnitPickerProps } from './UnitPicker';
+import { UnitPicker, type UnitPickerProps } from './UnitPicker';
 
 const meta: Meta<typeof UnitPicker> = {
   title: 'Pickers/UnitPicker',

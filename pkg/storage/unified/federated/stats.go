@@ -6,7 +6,6 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -17,20 +16,6 @@ import (
 type LegacyStatsGetter struct {
 	SQL legacysql.LegacyDatabaseProvider
 	Cfg *setting.Cfg
-}
-
-func (s *LegacyStatsGetter) isDashboardsFallbackDisabled() bool {
-	if s.Cfg == nil {
-		return false
-	}
-	return s.Cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode == grafanarest.Mode5
-}
-
-func (s *LegacyStatsGetter) isFoldersFallbackDisabled() bool {
-	if s.Cfg == nil {
-		return false
-	}
-	return s.Cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode == grafanarest.Mode5
 }
 
 func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
@@ -78,22 +63,6 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		err = fn("alert_rule", "org_id=? AND namespace_uid=?", group, "alertrules", false)
 		if err != nil {
 			return err
-		}
-
-		// Legacy dashboard table
-		if !s.isDashboardsFallbackDisabled() {
-			err = fn("dashboard", "org_id=? AND folder_uid=? AND is_folder=false", group, "dashboards", true)
-			if err != nil {
-				return err
-			}
-		}
-
-		// Legacy folder table
-		if !s.isFoldersFallbackDisabled() {
-			err = fn("folder", "org_id=? AND parent_uid=?", group, "folders", true)
-			if err != nil {
-				return err
-			}
 		}
 
 		// Legacy library_elements table

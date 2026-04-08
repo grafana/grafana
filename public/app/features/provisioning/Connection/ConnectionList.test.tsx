@@ -1,6 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
-import { Connection } from 'app/api/clients/provisioning/v0alpha1';
+import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
 
 import { ConnectionList } from './ConnectionList';
 

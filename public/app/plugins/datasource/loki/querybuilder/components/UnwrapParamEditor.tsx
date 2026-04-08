@@ -1,12 +1,12 @@
 import { useState } from 'react';
 
-import { DataSourceApi, SelectableValue, getDefaultTimeRange, toOption } from '@grafana/data';
-import { QueryBuilderOperationParamEditorProps, VisualQueryModeller } from '@grafana/plugin-ui';
+import { type DataSourceApi, type SelectableValue, getDefaultTimeRange, toOption } from '@grafana/data';
+import { type QueryBuilderOperationParamEditorProps, type VisualQueryModeller } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
 import { extractUnwrapLabelKeysFromDataFrame } from '../../responseUtils';
 import { getOperationParamId } from '../operationUtils';
-import { LokiVisualQuery } from '../types';
+import { type LokiVisualQuery } from '../types';
 
 export function UnwrapParamEditor({
   onChange,

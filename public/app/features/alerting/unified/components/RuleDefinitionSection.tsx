@@ -2,12 +2,12 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Field, Input, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { RuleFormValues } from '../types/rule-form';
+import { type RuleFormValues } from '../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import { FolderSelectorV2 } from './rule-editor/FolderSelectorV2';

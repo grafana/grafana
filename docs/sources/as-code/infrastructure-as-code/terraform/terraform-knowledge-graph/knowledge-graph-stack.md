@@ -258,6 +258,8 @@ resource "grafana_asserts_stack" "example" {
 
 ## Best practices
 
+Consider the following best practices when configuring the Knowledge Graph stack with Terraform.
+
 ### Token management
 
 - Create a dedicated Cloud Access Policy for the Knowledge Graph stack with only the required scopes

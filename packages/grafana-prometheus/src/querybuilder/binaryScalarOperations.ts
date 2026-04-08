@@ -1,6 +1,10 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/binaryScalarOperations.ts
 import { defaultAddOperationHandler } from './operationUtils';
-import { QueryBuilderOperation, QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
+import {
+  type QueryBuilderOperation,
+  type QueryBuilderOperationDef,
+  type QueryBuilderOperationParamDef,
+} from './shared/types';
 import { PromOperationId, PromVisualQueryOperationCategory } from './types';
 
 export const binaryScalarDefs = [

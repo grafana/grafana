@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import * as React from 'react';
 import SVG from 'react-inlinesvg';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Stack, Text, TextLink, useStyles2, useTheme2 } from '@grafana/ui';

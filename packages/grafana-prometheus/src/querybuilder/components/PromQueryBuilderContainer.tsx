@@ -1,13 +1,13 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilderContainer.tsx
 import { useEffect, useState } from 'react';
 
-import { PanelData } from '@grafana/data';
+import { type PanelData } from '@grafana/data';
 
-import { PrometheusDatasource } from '../../datasource';
-import { PromQuery } from '../../types';
+import { type PrometheusDatasource } from '../../datasource';
+import { type PromQuery } from '../../types';
 import { buildVisualQueryFromString } from '../parsing';
 import { promQueryModeller } from '../shared/modeller_instance';
-import { PromVisualQuery } from '../types';
+import { type PromVisualQuery } from '../types';
 
 import { PromQueryBuilder } from './PromQueryBuilder';
 import { QueryPreview } from './QueryPreview';

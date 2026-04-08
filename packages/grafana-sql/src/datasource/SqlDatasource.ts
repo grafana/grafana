@@ -1,38 +1,38 @@
-import { lastValueFrom, Observable, throwError } from 'rxjs';
+import { lastValueFrom, type Observable, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
   getDefaultTimeRange,
-  DataFrame,
+  type DataFrame,
   DataFrameView,
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  MetricFindValue,
-  ScopedVars,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type MetricFindValue,
+  type ScopedVars,
   CoreApp,
   getSearchFilterScopedVar,
-  LegacyMetricFindQueryOptions,
-  VariableWithMultiSupport,
-  TimeRange,
+  type LegacyMetricFindQueryOptions,
+  type VariableWithMultiSupport,
+  type TimeRange,
 } from '@grafana/data';
 import { EditorMode } from '@grafana/plugin-ui';
 import {
-  BackendDataSourceResponse,
+  type BackendDataSourceResponse,
   DataSourceWithBackend,
-  FetchResponse,
+  type FetchResponse,
   getBackendSrv,
   getTemplateSrv,
   toDataQueryResponse,
-  TemplateSrv,
+  type TemplateSrv,
   reportInteraction,
 } from '@grafana/runtime';
 
 import { ResponseParser } from '../ResponseParser';
 import { SqlQueryEditorLazy } from '../components/QueryEditorLazy';
 import { MACRO_NAMES } from '../constants';
-import { DB, SQLQuery, SQLOptions, SqlQueryModel, QueryFormat, SQLDialect } from '../types';
+import { type DB, type SQLQuery, type SQLOptions, type SqlQueryModel, QueryFormat, type SQLDialect } from '../types';
 import migrateAnnotation from '../utils/migration';
 
 export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLOptions> {
@@ -45,7 +45,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   dialect: SQLDialect = 'other';
 
   constructor(
-    instanceSettings: DataSourceInstanceSettings<SQLOptions>,
+    public instanceSettings: DataSourceInstanceSettings<SQLOptions>,
     protected readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);

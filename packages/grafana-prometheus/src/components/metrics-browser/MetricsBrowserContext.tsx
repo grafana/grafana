@@ -1,8 +1,8 @@
-import { createContext, PropsWithChildren, useCallback, useContext, useMemo } from 'react';
+import { createContext, type PropsWithChildren, useCallback, useContext, useMemo } from 'react';
 
-import { TimeRange } from '@grafana/data';
+import { type TimeRange } from '@grafana/data';
 
-import { PrometheusLanguageProviderInterface } from '../../language_provider';
+import { type PrometheusLanguageProviderInterface } from '../../language_provider';
 
 import { buildSelector } from './selectorBuilder';
 import { useMetricsLabelsValues } from './useMetricsLabelsValues';

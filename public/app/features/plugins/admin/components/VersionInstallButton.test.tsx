@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
-import { Version } from '../types';
+import { type Version } from '../types';
 
 import { VersionInstallButton } from './VersionInstallButton';
 

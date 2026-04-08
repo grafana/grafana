@@ -5,10 +5,10 @@ import {
   AzureQueryType,
   BuilderQueryEditorExpressionType,
   BuilderQueryEditorPropertyType,
-  BuilderQueryEditorReduceExpression,
+  type BuilderQueryEditorReduceExpression,
   BuilderQueryEditorReduceParameterTypes,
 } from '../../dataquery.gen';
-import { AzureMonitorQuery } from '../../types/query';
+import { type AzureMonitorQuery } from '../../types/query';
 
 import { AggregateSection } from './AggregationSection';
 
