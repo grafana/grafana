@@ -21,7 +21,7 @@ review_date: 2026-04-08
 
 # Zipkin query editor
 
-This document explains how to use the Zipkin query editor to query and visualize traces.
+This document explains how to use the Zipkin query editor to query and visualize traces. You can look up traces by ID, browse available traces using the cascading service and span selector, or upload a JSON trace file for visualization.
 
 For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 

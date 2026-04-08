@@ -23,7 +23,11 @@ review_date: 2026-04-08
 # Zipkin data source
 
 Grafana ships with built-in support for [Zipkin](https://zipkin.io/), an open source distributed tracing system.
-The Zipkin data source lets you query and visualize traces from Zipkin directly in Grafana.
+The Zipkin data source lets you query and visualize traces collected by Zipkin directly in Grafana, helping you identify latency bottlenecks, trace requests across microservices, and understand dependencies between services.
+
+{{< admonition type="note" >}}
+This plugin requires Grafana version 12.3.0 or later.
+{{< /admonition >}}
 
 ## Supported features
 
@@ -49,8 +53,10 @@ The following pages help you get started with the Zipkin data source:
 After configuring the data source, you can:
 
 - Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to query traces without building a dashboard
-- Add [Transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to manipulate query results
+- Navigate from traces to related logs with [trace to logs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/zipkin/configure/#trace-to-logs) integration
+- Navigate from traces to related metrics with [trace to metrics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/zipkin/configure/#trace-to-metrics) integration
 - Enable the [Node graph](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/) visualization to view service dependencies
+- Add [Transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to manipulate query results
 
 ## Plugin updates
 

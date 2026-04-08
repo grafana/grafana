@@ -19,7 +19,7 @@ review_date: 2026-04-08
 
 # Zipkin template variables
 
-Use template variables to create dynamic, reusable dashboards. Instead of hard-coding trace IDs, you can use variables to make your dashboards interactive.
+Use template variables to create dynamic, reusable dashboards. Instead of hard-coding trace IDs, you can use variables to let dashboard viewers select or input trace IDs at view time, making it easier to share dashboards across teams.
 
 For an introduction to Grafana template variables, refer to [Variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/).
 

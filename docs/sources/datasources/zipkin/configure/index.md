@@ -22,7 +22,7 @@ review_date: 2026-04-08
 
 # Configure the Zipkin data source
 
-This document explains how to configure the Zipkin data source in Grafana.
+This document explains how to configure the Zipkin data source in Grafana, including connection settings, authentication, trace-to-logs and trace-to-metrics integrations, and provisioning with YAML or Terraform.
 
 ## Before you begin
 

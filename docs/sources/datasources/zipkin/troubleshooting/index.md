@@ -19,7 +19,7 @@ review_date: 2026-04-08
 
 # Troubleshoot Zipkin data source issues
 
-This document provides solutions to common issues you may encounter when configuring or using the Zipkin data source. For configuration instructions, refer to [Configure Zipkin](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/zipkin/configure/).
+This document provides solutions to common issues you may encounter when configuring or using the Zipkin data source, including connection failures, empty query results, JSON upload errors, and trace-to-logs link issues. For configuration instructions, refer to [Configure Zipkin](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/zipkin/configure/).
 
 ## Connection errors
 
