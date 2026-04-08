@@ -10,6 +10,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -96,8 +97,10 @@ func (s *TeamK8sService) resolveUserUID(ctx context.Context, namespace string, u
 		return "", err
 	}
 
-	labelSelector := fmt.Sprintf("%s=%d", utils.LabelKeyDeprecatedInternalID, userID) // nolint:staticcheck
-	result, err := client.List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	selector := labels.SelectorFromSet(labels.Set{
+		utils.LabelKeyDeprecatedInternalID: strconv.FormatInt(userID, 10),
+	})
+	result, err := client.List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
 		return "", err
 	}
@@ -483,7 +486,7 @@ func (s *TeamK8sService) GetTeamsByUser(ctx context.Context, query *team.GetTeam
 		return nil, err
 	}
 
-	bindings, err := s.listTeamBindings(ctx, namespace, fmt.Sprintf("spec.subject.name=%s", userUID))
+	bindings, err := s.listTeamBindings(ctx, namespace, fields.OneTermEqualSelector("spec.subject.name", userUID).String())
 	if err != nil {
 		return nil, err
 	}
@@ -522,7 +525,7 @@ func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTe
 		return nil, err
 	}
 
-	bindings, err := s.listTeamBindings(ctx, namespace, fmt.Sprintf("spec.subject.name=%s", userUID))
+	bindings, err := s.listTeamBindings(ctx, namespace, fields.OneTermEqualSelector("spec.subject.name", userUID).String())
 	if err != nil {
 		return nil, err
 	}
@@ -572,7 +575,10 @@ func (s *TeamK8sService) IsTeamMember(ctx context.Context, orgId int64, teamId i
 		return false, err
 	}
 
-	fieldSelector := fmt.Sprintf("spec.teamRef.name=%s,spec.subject.name=%s", teamUID, userUID)
+	fieldSelector := fields.AndSelectors(
+		fields.OneTermEqualSelector("spec.teamRef.name", teamUID),
+		fields.OneTermEqualSelector("spec.subject.name", userUID),
+	).String()
 	bindings, err := s.listTeamBindings(ctx, namespace, fieldSelector)
 	if err != nil {
 		return false, err
@@ -594,7 +600,7 @@ func (s *TeamK8sService) RemoveUsersMemberships(ctx context.Context, userID int6
 		return err
 	}
 
-	bindings, err := s.listTeamBindings(ctx, namespace, fmt.Sprintf("spec.subject.name=%s", userUID))
+	bindings, err := s.listTeamBindings(ctx, namespace, fields.OneTermEqualSelector("spec.subject.name", userUID).String())
 	if err != nil {
 		return err
 	}
@@ -623,10 +629,13 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 		return nil, err
 	}
 
-	fieldSelector := fmt.Sprintf("spec.subject.name=%s", userUID)
-	if external {
-		fieldSelector += ",spec.external=true"
+	selectors := []fields.Selector{
+		fields.OneTermEqualSelector("spec.subject.name", userUID),
 	}
+	if external {
+		selectors = append(selectors, fields.OneTermEqualSelector("spec.external", "true"))
+	}
+	fieldSelector := fields.AndSelectors(selectors...).String()
 
 	bindings, err := s.listTeamBindings(ctx, namespace, fieldSelector)
 	if err != nil {
@@ -707,10 +716,13 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 		}
 	}
 
-	fieldSelector := fmt.Sprintf("spec.teamRef.name=%s", teamUID)
-	if query.External {
-		fieldSelector += ",spec.external=true"
+	selectors := []fields.Selector{
+		fields.OneTermEqualSelector("spec.teamRef.name", teamUID),
 	}
+	if query.External {
+		selectors = append(selectors, fields.OneTermEqualSelector("spec.external", "true"))
+	}
+	fieldSelector := fields.AndSelectors(selectors...).String()
 
 	bindings, err := s.listTeamBindings(ctx, namespace, fieldSelector)
 	if err != nil {
