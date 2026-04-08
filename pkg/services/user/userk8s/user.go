@@ -498,6 +498,6 @@ func toUser(u *iamv0alpha1.User, orgID int64) *user.User {
 		IsProvisioned: u.Spec.Provisioned,
 		Created:       u.CreationTimestamp.Time,
 		Updated:       u.GetUpdateTimestamp(),
-		LastSeenAt:    time.UnixMilli(u.Status.LastSeenAt),
+		LastSeenAt:    time.Unix(u.Status.LastSeenAt, 0),
 	}
 }

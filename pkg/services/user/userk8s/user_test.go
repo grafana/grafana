@@ -338,6 +338,9 @@ func TestUserK8sService_GetByEmail(t *testing.T) {
 								Email: "jdoe@example.com",
 								Title: "John Doe",
 							},
+							Status: v0alpha1.UserStatus{
+								LastSeenAt: time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC).Unix(),
+							},
 						},
 					},
 				}
@@ -345,12 +348,13 @@ func TestUserK8sService_GetByEmail(t *testing.T) {
 				_ = json.NewEncoder(w).Encode(resp)
 			},
 			expectUser: &user.User{
-				UID:     "some-uid",
-				OrgID:   1,
-				Login:   "jdoe",
-				Email:   "jdoe@example.com",
-				Name:    "John Doe",
-				Created: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+				UID:        "some-uid",
+				OrgID:      1,
+				Login:      "jdoe",
+				Email:      "jdoe@example.com",
+				Name:       "John Doe",
+				Created:    time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+				LastSeenAt: time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC),
 			},
 		},
 		{
@@ -378,6 +382,9 @@ func TestUserK8sService_GetByEmail(t *testing.T) {
 								Login: "jdoe",
 								Email: "jdoe@example.com",
 							},
+							Status: v0alpha1.UserStatus{
+								LastSeenAt: time.Date(2025, 2, 10, 8, 30, 0, 0, time.UTC).Unix(),
+							},
 						},
 					},
 				}
@@ -385,10 +392,11 @@ func TestUserK8sService_GetByEmail(t *testing.T) {
 				_ = json.NewEncoder(w).Encode(resp)
 			},
 			expectUser: &user.User{
-				UID:   "some-uid",
-				OrgID: 1,
-				Login: "jdoe",
-				Email: "jdoe@example.com",
+				UID:        "some-uid",
+				OrgID:      1,
+				Login:      "jdoe",
+				Email:      "jdoe@example.com",
+				LastSeenAt: time.Date(2025, 2, 10, 8, 30, 0, 0, time.UTC),
 			},
 		},
 		{
@@ -419,6 +427,10 @@ func TestUserK8sService_GetByEmail(t *testing.T) {
 								EmailVerified: true,
 								Provisioned:   true,
 							},
+							Status: v0alpha1.UserStatus{
+								// LastSeenAt is stored as Unix seconds (not millis)
+								LastSeenAt: time.Date(2025, 3, 15, 12, 0, 0, 0, time.UTC).Unix(),
+							},
 						},
 					},
 				}
@@ -434,6 +446,7 @@ func TestUserK8sService_GetByEmail(t *testing.T) {
 				IsDisabled:    true,
 				EmailVerified: true,
 				IsProvisioned: true,
+				LastSeenAt:    time.Date(2025, 3, 15, 12, 0, 0, 0, time.UTC),
 			},
 		},
 		{
@@ -511,6 +524,7 @@ func TestUserK8sService_GetByEmail(t *testing.T) {
 			assert.Equal(t, tt.expectUser.EmailVerified, result.EmailVerified)
 			assert.Equal(t, tt.expectUser.IsProvisioned, result.IsProvisioned)
 			assert.Equal(t, tt.expectUser.Created.UTC(), result.Created.UTC())
+			assert.Equal(t, tt.expectUser.LastSeenAt.UTC(), result.LastSeenAt.UTC())
 		})
 	}
 }
