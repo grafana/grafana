@@ -101,6 +101,8 @@ jobs:
         TEST_SHARD_TOTAL: ${{ matrix.total }}
 
   frontend-decoupled-plugin-tests:
+    permissions:
+      contents: read
     needs:
       - detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
@@ -122,6 +124,8 @@ jobs:
     - run: yarn run plugin:test:ci
 
   frontend-packages-unit-tests:
+    permissions:
+      contents: read
     needs:
       - detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
@@ -156,6 +160,8 @@ jobs:
     # success() || failure() will skip this function if any need is also skipped.
     # That means conditional test suites will fail the entire requirement check.
     if: always()
+    permissions:
+      contents: read
 
     name: All frontend unit tests complete
     runs-on: ubuntu-x64-small
@@ -169,3 +175,28 @@ jobs:
           needs: ${{ toJson(needs) }}
           failure-message: "One or more unit test jobs have failed"
           success-message: "All unit tests completed successfully"
+
+  devenv:
+    permissions:
+      contents: read
+    needs:
+      - detect-changes
+    if: needs.detect-changes.outputs.devenv-changed == 'true'
+    runs-on: ubuntu-x64-large
+    name: "Devenv frontend-service build"
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - name: Setup Docker
+      uses: docker/setup-docker-action@3fb92d6d9c634363128c8cce4bc3b2826526370a # v4
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
+    - name: Install Tilt
+      run: curl -fsSL https://raw.githubusercontent.com/tilt-dev/tilt/master/scripts/install.sh | bash
+    - name: Create empty config files # TODO: the tiltfile should conditionally mount these only if they exist, like the enterprise license
+      run: |
+        touch devenv/frontend-service/configs/grafana-api.local.ini
+        touch devenv/frontend-service/configs/frontend-service.local.ini
+    - name: Test frontend-service Tiltfile
+      run: tilt ci --file devenv/frontend-service/Tiltfile

@@ -98,8 +98,10 @@ jobs:
       - name: Update npm
         run: npm install -g npm@^11.5.1
 
-      - name: Install dependencies
-        run: yarn install --immutable
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
+        with:
+          hardened-mode: 'true'
 
       - name: Typecheck packages
         run: yarn run packages:typecheck
