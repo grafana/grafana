@@ -30,18 +30,18 @@ type PluginInstaller struct {
 	installing      sync.Map
 	log             log.Logger
 	serviceRegistry auth.ExternalServiceRegistry
-	rbacCleaner     auth.PluginRBACCleaner
+	rbacCleaner     auth.RBACCleaner
 }
 
 func ProvideInstaller(cfg *config.PluginManagementCfg, pluginRegistry registry.Service, pluginLoader loader.Service,
-	pluginRepo repo.Service, serviceRegistry auth.ExternalServiceRegistry, rbacCleaner auth.PluginRBACCleaner) *PluginInstaller {
+	pluginRepo repo.Service, serviceRegistry auth.ExternalServiceRegistry, rbacCleaner auth.RBACCleaner) *PluginInstaller {
 	return New(cfg, pluginRegistry, pluginLoader, pluginRepo,
 		storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPaths[0]), storage.SimpleDirNameGeneratorFunc, serviceRegistry, rbacCleaner)
 }
 
 func New(cfg *config.PluginManagementCfg, pluginRegistry registry.Service, pluginLoader loader.Service,
 	pluginRepo repo.Service, pluginStorage storage.ZipExtractor, pluginStorageDirFunc storage.DirNameGeneratorFunc,
-	serviceRegistry auth.ExternalServiceRegistry, rbacCleaner auth.PluginRBACCleaner) *PluginInstaller {
+	serviceRegistry auth.ExternalServiceRegistry, rbacCleaner auth.RBACCleaner) *PluginInstaller {
 	return &PluginInstaller{
 		pluginLoader:         pluginLoader,
 		pluginRegistry:       pluginRegistry,

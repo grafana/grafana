@@ -71,7 +71,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			},
 		}
 
-		inst := New(&config.PluginManagementCfg{}, pluginfakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{})
+		inst := New(&config.PluginManagementCfg{}, pluginfakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{}, &pluginfakes.FakeRBACCleaner{})
 		err := inst.Add(context.Background(), pluginID, v1, testCompatOpts())
 		require.NoError(t, err)
 
@@ -99,7 +99,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 					}, nil
 				},
 			}
-			inst := New(&config.PluginManagementCfg{}, pluginfakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{})
+			inst := New(&config.PluginManagementCfg{}, pluginfakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{}, &pluginfakes.FakeRBACCleaner{})
 			err := inst.Add(context.Background(), pluginID, v1, plugins.NewAddOpts(v1, runtime.GOOS, runtime.GOARCH, url))
 			require.NoError(t, err)
 		})
@@ -222,7 +222,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			},
 		}
 
-		pm := New(&config.PluginManagementCfg{}, reg, &pluginfakes.FakeLoader{}, &pluginfakes.FakePluginRepo{}, &pluginfakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{})
+		pm := New(&config.PluginManagementCfg{}, reg, &pluginfakes.FakeLoader{}, &pluginfakes.FakePluginRepo{}, &pluginfakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{}, &pluginfakes.FakeRBACCleaner{})
 		err := pm.Add(context.Background(), p.ID, "3.2.0", testCompatOpts())
 		require.ErrorIs(t, err, plugins.ErrInstallCorePlugin)
 
@@ -287,7 +287,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			},
 		}
 
-		inst := New(&config.PluginManagementCfg{}, pluginfakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{})
+		inst := New(&config.PluginManagementCfg{}, pluginfakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{}, &pluginfakes.FakeRBACCleaner{})
 		err := inst.Add(context.Background(), p3, "", testCompatOpts())
 		require.NoError(t, err)
 		require.Equal(t, []string{p1Zip, p2Zip, p3Zip}, loadedPaths)
@@ -339,7 +339,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			},
 		}
 
-		inst := New(&config.PluginManagementCfg{}, pluginfakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{})
+		inst := New(&config.PluginManagementCfg{}, pluginfakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{}, &pluginfakes.FakeRBACCleaner{})
 		err := inst.Add(context.Background(), p1, "", testCompatOpts())
 		require.NoError(t, err)
 		require.Equal(t, []string{p2Zip, p1Zip}, loadedPaths)
@@ -387,7 +387,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			},
 		}
 
-		inst := New(&config.PluginManagementCfg{}, reg, loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{})
+		inst := New(&config.PluginManagementCfg{}, reg, loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{}, &pluginfakes.FakeRBACCleaner{})
 		err := inst.Add(context.Background(), testPluginID, "", testCompatOpts())
 		require.NoError(t, err)
 		require.Equal(t, []string{"test-plugin.zip"}, loadedPaths)
@@ -452,7 +452,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			},
 		}
 
-		inst := New(&config.PluginManagementCfg{}, pluginfakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{})
+		inst := New(&config.PluginManagementCfg{}, pluginfakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{}, &pluginfakes.FakeRBACCleaner{})
 		err := inst.Add(context.Background(), parentPluginID, "", plugins.NewAddOpts("10.0.0", runtime.GOOS, runtime.GOARCH, parentURL))
 		require.NoError(t, err)
 		require.Equal(t, []string{"dependency-plugin.zip", "parent-plugin.zip"}, loadedPaths)
@@ -532,7 +532,7 @@ func TestPluginInstaller_Removal(t *testing.T) {
 		_, err = os.Stat(pluginDir)
 		require.NoError(t, err)
 
-		inst := New(&config.PluginManagementCfg{}, registry, loader, &pluginfakes.FakePluginRepo{}, &pluginfakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{})
+		inst := New(&config.PluginManagementCfg{}, registry, loader, &pluginfakes.FakePluginRepo{}, &pluginfakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{}, &pluginfakes.FakeRBACCleaner{})
 		err = inst.Remove(context.Background(), "localfs-plugin", "1.0.0")
 		require.NoError(t, err)
 
@@ -580,7 +580,7 @@ func TestPluginInstaller_Removal(t *testing.T) {
 		_, err = os.Stat(pluginDir)
 		require.NoError(t, err)
 
-		inst := New(&config.PluginManagementCfg{}, registry, loader, &pluginfakes.FakePluginRepo{}, &pluginfakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{})
+		inst := New(&config.PluginManagementCfg{}, registry, loader, &pluginfakes.FakePluginRepo{}, &pluginfakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{}, &pluginfakes.FakeRBACCleaner{})
 		err = inst.Remove(context.Background(), "staticfs-plugin", "1.0.0")
 		require.NoError(t, err)
 
