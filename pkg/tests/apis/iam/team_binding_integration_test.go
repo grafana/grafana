@@ -24,8 +24,10 @@ import (
 func TestIntegrationTeamBindings(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1} {
-		t.Run(fmt.Sprintf("mode_%d", mode), func(t *testing.T) {
+	// TODO: Add rest.Mode5 when it's supported
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1}
+	for _, mode := range modes {
+		t.Run(fmt.Sprintf("Team binding CRUD operations with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 				GrafanaOpts: testinfra.GrafanaOpts{
 					AppModeProduction:      false,
@@ -49,6 +51,7 @@ func TestIntegrationTeamBindings(t *testing.T) {
 
 			ctx := context.Background()
 
+			// Create a team
 			teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
 				User:      helper.Org1.Admin,
 				Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
@@ -59,6 +62,7 @@ func TestIntegrationTeamBindings(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, team)
 
+			// Create a user
 			userClient := helper.GetResourceClient(apis.ResourceClientArgs{
 				User:      helper.Org1.Admin,
 				Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
@@ -71,7 +75,10 @@ func TestIntegrationTeamBindings(t *testing.T) {
 
 			doTeamBindingCRUDTestsUsingTheNewAPIs(t, helper, team, user)
 			doTeamBindingFieldSelectionTests(t, helper)
-			doTeamBindingCRUDTestsUsingTheLegacyAPIs(t, helper)
+
+			if mode < 3 {
+				doTeamBindingCRUDTestsUsingTheLegacyAPIs(t, helper)
+			}
 		})
 	}
 }
