@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 )
 
 type testSetup struct {
@@ -422,6 +423,90 @@ func TestWrapper_WithPreserveIdentity(t *testing.T) {
 	})
 }
 
+func TestWrapper_Watch(t *testing.T) {
+	t.Run("success - authorized user can watch", func(t *testing.T) {
+		mockWatchInterface := &fakeWatchInterface{}
+		mockStore := &fakeWatcherStore{
+			watchInterface: mockWatchInterface,
+			watchError:     nil,
+		}
+		mockAuth := &FakeAuthorizer{}
+		wrapper := New(mockStore, mockAuth)
+
+		ctx := identity.WithRequester(
+			context.Background(),
+			&identity.StaticRequester{UserUID: "u001", Type: types.TypeUser},
+		)
+
+		watchOpts := &internalversion.ListOptions{}
+
+		// Verify original user identity is used for authorization check
+		mockAuth.On("BeforeWatch", mock.MatchedBy(matchesOriginalUser())).Return(nil)
+
+		result, err := wrapper.Watch(ctx, watchOpts)
+
+		require.NoError(t, err)
+		assert.Equal(t, mockWatchInterface, result)
+
+		// Assert expectations
+		mockAuth.AssertExpectations(t)
+	})
+
+	t.Run("unauthorized - watch is blocked", func(t *testing.T) {
+		mockWatchInterface := &fakeWatchInterface{}
+		mockStore := &fakeWatcherStore{
+			watchInterface: mockWatchInterface,
+			watchError:     nil,
+		}
+		mockAuth := &FakeAuthorizer{}
+		wrapper := New(mockStore, mockAuth)
+
+		ctx := identity.WithRequester(
+			context.Background(),
+			&identity.StaticRequester{UserUID: "u001", Type: types.TypeUser},
+		)
+
+		watchOpts := &internalversion.ListOptions{}
+
+		// Simulate unauthorized error from BeforeWatch authorizer
+		mockAuth.On("BeforeWatch", mock.MatchedBy(matchesOriginalUser())).Return(ErrUnauthorized)
+
+		result, err := wrapper.Watch(ctx, watchOpts)
+
+		require.Error(t, err)
+		assert.Nil(t, result)
+		assert.Equal(t, ErrUnauthorized, err)
+
+		// Assert expectations - watch should fail before calling inner store
+		mockAuth.AssertExpectations(t)
+	})
+
+	t.Run("error - watch not supported by inner store", func(t *testing.T) {
+		// Create a wrapper with a store that doesn't implement Watcher
+		mockStore := &fakeNonWatcherStore{}
+		mockAuth := &FakeAuthorizer{}
+		wrapper := New(mockStore, mockAuth)
+
+		ctx := identity.WithRequester(
+			context.Background(),
+			&identity.StaticRequester{UserUID: "u001", Type: types.TypeUser},
+		)
+
+		watchOpts := &internalversion.ListOptions{}
+
+		// Authorization should still be checked first
+		mockAuth.On("BeforeWatch", mock.MatchedBy(matchesOriginalUser())).Return(nil)
+
+		result, err := wrapper.Watch(ctx, watchOpts)
+
+		require.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), "watch is not supported")
+
+		mockAuth.AssertExpectations(t)
+	})
+}
+
 // -----
 // Fakes
 // -----
@@ -459,6 +544,11 @@ func (f *FakeAuthorizer) FilterList(ctx context.Context, list runtime.Object) (r
 	return res, args.Error(1)
 }
 
+func (f *FakeAuthorizer) BeforeWatch(ctx context.Context) error {
+	args := f.Called(ctx)
+	return args.Error(0)
+}
+
 type fakeObject struct {
 	metaV1.TypeMeta
 	metaV1.ObjectMeta
@@ -483,3 +573,30 @@ func (f *fakeUpdatedObjectInfo) Preconditions() *metaV1.Preconditions {
 func (f *fakeUpdatedObjectInfo) UpdatedObject(ctx context.Context, oldObj runtime.Object) (runtime.Object, error) {
 	return f.obj, nil
 }
+
+// fakeWatchInterface implements watch.Interface for testing
+type fakeWatchInterface struct{}
+
+func (f *fakeWatchInterface) Stop() {}
+
+func (f *fakeWatchInterface) ResultChan() <-chan watch.Event {
+	return make(chan watch.Event)
+}
+
+// fakeWatcherStore is a mock store that implements the Watcher interface
+type fakeWatcherStore struct {
+	rest.MockStorage
+	watchInterface watch.Interface
+	watchError     error
+}
+
+func (f *fakeWatcherStore) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
+	return f.watchInterface, f.watchError
+}
+
+// fakeNonWatcherStore implements K8sStorage but NOT k8srest.Watcher
+type fakeNonWatcherStore struct {
+	rest.MockStorage
+}
+
+// Explicitly don't implement Watch() to test the "not supported" path
