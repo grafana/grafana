@@ -79,7 +79,6 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
 
     function onStepChange(e: React.SyntheticEvent<HTMLInputElement>) {
       onChange({ ...query, step: trim(e.currentTarget.value) });
-      onRunQuery();
     }
 
     useEffect(() => {
@@ -178,24 +177,26 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
               </EditorField>
             </>
           )}
-          {!isLogQuery && (
-            <>
-              <EditorField
-                label="Step"
-                tooltip="Use the step parameter when making metric queries to Loki. If not filled, Grafana's calculated interval will be used. Example valid values: 1s, 5m, 10h, 1d."
-                invalid={!isValidStep}
-                error={'Invalid step. Example valid values: 1s, 5m, 10h, 1d.'}
-              >
-                <AutoSizeInput
-                  className="width-6"
-                  placeholder={'auto'}
-                  type="string"
-                  value={query.step ?? ''}
-                  onCommitChange={onStepChange}
-                />
-              </EditorField>
-            </>
-          )}
+          <EditorField
+            label="Step"
+            tooltip="Use the step parameter when making queries to Loki. If not filled, Grafana's calculated interval will be used. Example valid values: 1s, 5m, 10h, 1d."
+            invalid={!isValidStep}
+            error={'Invalid step. Example valid values: 1s, 5m, 10h, 1d.'}
+          >
+            <AutoSizeInput
+              className="width-6"
+              placeholder={'auto'}
+              type="string"
+              value={query.step ?? ''}
+              onBlur={onStepChange}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  onStepChange(e);
+                  onRunQuery();
+                }
+              }}
+            />
+          </EditorField>
         </QueryOptionGroup>
       </Box>
     );
@@ -223,10 +224,10 @@ function getCollapsedInfo(
   if (isLogQuery && direction) {
     items.push(`Line limit: ${query.maxLines ?? maxLines}`);
     items.push(`Direction: ${getQueryDirectionLabel(direction)}`);
-  } else {
-    if (query.step) {
-      items.push(`Step: ${isValidStep ? query.step : 'Invalid value'}`);
-    }
+  }
+
+  if (query.step) {
+    items.push(`Step: ${isValidStep ? query.step : 'Invalid value'}`);
   }
 
   return items;
