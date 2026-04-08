@@ -1101,11 +1101,6 @@ export interface FeatureToggles {
   */
   unifiedNavbars?: boolean;
   /**
-  * Enables a control component for the logs panel in Explore
-  * @default true
-  */
-  logsPanelControls?: boolean;
-  /**
   * Enables creating metrics from profiles and storing them as recording rules
   * @default false
   */

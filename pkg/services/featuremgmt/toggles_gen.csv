@@ -215,7 +215,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-03-27,alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,false
 2025-04-02,multiTenantTempCredentials,experimental,@grafana/data-sources-plugins,false,false,false
 2025-04-09,unifiedNavbars,GA,@grafana/plugins-platform-backend,false,false,true
-2025-04-07,logsPanelControls,preview,@grafana/observability-logs,false,false,true
 2025-04-09,metricsFromProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2025-07-31,grafanaAssistantInProfilesDrilldown,GA,@grafana/observability-traces-and-profiling,false,false,true
 2025-07-15,tempoAlerting,experimental,@grafana/data-sources-plugins,false,false,false
