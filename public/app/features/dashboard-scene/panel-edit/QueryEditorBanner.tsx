@@ -109,15 +109,15 @@ function getStyles(theme: GrafanaTheme2) {
       minWidth: 0,
     }),
     accentIcon: css({
-      color: bannerColors.accent,
+      color: theme.colors.primary.text,
     }),
     title: css({
-      color: bannerColors.accent,
+      color: theme.colors.primary.text,
       fontWeight: theme.typography.fontWeightMedium,
       whiteSpace: 'nowrap',
     }),
     description: css({
-      color: theme.colors.text.secondary,
+      color: theme.colors.text.primary,
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
