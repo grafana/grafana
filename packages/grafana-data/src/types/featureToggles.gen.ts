@@ -29,11 +29,6 @@ export interface FeatureToggles {
   */
   publicDashboardsEmailSharing?: boolean;
   /**
-  * Enables public dashboard rendering using scenes
-  * @default true
-  */
-  publicDashboardsScene?: boolean;
-  /**
   * Support new streaming approach for loki (prototype, needs special loki build)
   * @default false
   */
@@ -398,11 +393,6 @@ export interface FeatureToggles {
   * @default false
   */
   annotationsClustering?: boolean;
-  /**
-  * Enables dashboard rendering using scenes for all roles
-  * @default true
-  */
-  dashboardScene?: boolean;
   /**
   * Enables new dashboard layouts
   * @default true
@@ -804,6 +794,11 @@ export interface FeatureToggles {
   * @default false
   */
   groupAttributeSync?: boolean;
+  /**
+  * Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation
+  * @default false
+  */
+  groupToNestedTableV2?: boolean;
   /**
   * Enables step mode for alerting queries and expressions
   * @default true
@@ -1771,4 +1766,9 @@ export interface FeatureToggles {
   * @default false
   */
   cacheConfigUnifiedStorageMigration?: boolean;
+  /**
+  * Boots the frontend using the boot.js script built from TS instead of the embedded boot script
+  * @default false
+  */
+  compiledBootScript?: boolean;
 }
