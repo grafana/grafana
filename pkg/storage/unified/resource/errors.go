@@ -9,6 +9,7 @@ import (
 	grpcstatus "google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -20,9 +21,7 @@ import (
 // Package-level errors.
 var (
 	ErrNotImplementedYet = errors.New("not implemented yet")
-)
 
-var (
 	ErrResourceAlreadyExists error = &apierrors.StatusError{
 		ErrStatus: metav1.Status{
 			Status:  metav1.StatusFailure,
@@ -30,12 +29,6 @@ var (
 			Message: "the resource already exists",
 			Code:    http.StatusConflict,
 		},
-	}
-
-	ErrOptimisticLockingFailed = resourcepb.ErrorResult{
-		Code:    http.StatusConflict,
-		Reason:  "optimistic locking failed",
-		Message: "requested RV does not match saved RV",
 	}
 )
 
@@ -49,7 +42,8 @@ func NewBadRequestError(msg string) *resourcepb.ErrorResult {
 
 func NewNotFoundError(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
 	return &resourcepb.ErrorResult{
-		Code: http.StatusNotFound,
+		Code:   http.StatusNotFound,
+		Reason: string(metav1.StatusReasonNotFound),
 		Details: &resourcepb.ErrorDetails{
 			Group: key.Group,
 			Kind:  key.Resource, // yup, resource as kind same is true in apierrors.NewNotFound()
@@ -64,6 +58,13 @@ func NewTooManyRequestsError(msg string) *resourcepb.ErrorResult {
 		Code:    http.StatusTooManyRequests,
 		Reason:  string(metav1.StatusReasonTooManyRequests),
 	}
+}
+
+func NewConflictStatusError(group, resource, name, message string) *apierrors.StatusError {
+	return apierrors.NewConflict(schema.GroupResource{
+		Group:    group,
+		Resource: resource,
+	}, name, fmt.Errorf("%s", message))
 }
 
 func newInvalidFieldError(

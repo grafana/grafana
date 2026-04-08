@@ -1,4 +1,4 @@
-import { PluginExtensionLink } from '@grafana/data';
+import { type PluginExtensionLink } from '@grafana/data';
 
 export type UsePluginLinksOptions = {
   extensionPointId: string;

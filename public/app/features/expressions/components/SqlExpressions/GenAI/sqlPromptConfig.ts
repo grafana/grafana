@@ -3,7 +3,7 @@
  * NOTE: Schema and error context information integration is planned for future implementation
  */
 
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 // Common SQL context information shared across all prompts
 const COMMON_SQL_CONTEXT = {

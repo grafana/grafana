@@ -1,16 +1,16 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { merge } from 'lodash';
 
 import {
-  DataFrame,
+  type DataFrame,
   FieldType,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   MutableDataFrame,
-  ThresholdsConfig,
+  type ThresholdsConfig,
   ThresholdsMode,
-  FieldConfig,
+  type FieldConfig,
   formattedValueToString,
-  Field,
+  type Field,
 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
@@ -20,7 +20,7 @@ import { Button } from '../Button/Button';
 
 import { Table } from './Table';
 import mdx from './Table.mdx';
-import { FooterItem, TableCellDisplayMode, TableCustomCellOptions } from './types';
+import { type FooterItem, TableCellDisplayMode, type TableCustomCellOptions } from './types';
 
 const meta: Meta<typeof Table> = {
   title: 'Plugins/Table',

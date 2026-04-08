@@ -3,7 +3,9 @@ package identity
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -27,21 +29,25 @@ func TestIntegrationTeamBindings(t *testing.T) {
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("Team binding CRUD operations with dual writer mode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:      false,
-				DisableAnonymous:       true,
-				RBACSingleOrganization: true,
-				APIServerStorageType:   "unified",
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"teambindings.iam.grafana.app": {
-						DualWriterMode: mode,
+			helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
+				GrafanaOpts: testinfra.GrafanaOpts{
+					AppModeProduction:      false,
+					DisableAnonymous:       true,
+					RBACSingleOrganization: true,
+					EnableLog:              true,
+					APIServerStorageType:   "unified",
+					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+						"teambindings.iam.grafana.app": {
+							DualWriterMode: mode,
+						},
+					},
+					EnableFeatureToggles: []string{
+						featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+						featuremgmt.FlagKubernetesTeamsApi,
+						featuremgmt.FlagKubernetesUsersApi,
 					},
 				},
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-					featuremgmt.FlagKubernetesTeamsApi,
-					featuremgmt.FlagKubernetesUsersApi,
-				},
+				CustomHTTPClient: &http.Client{Timeout: 60 * time.Second},
 			})
 
 			ctx := context.Background()
