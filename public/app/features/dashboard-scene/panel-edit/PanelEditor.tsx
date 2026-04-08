@@ -2,7 +2,7 @@ import deepEqual from 'fast-deep-equal';
 import type * as H from 'history';
 import { debounce } from 'lodash';
 
-import { type NavIndex, type PanelPlugin } from '@grafana/data';
+import { type FieldConfigSource, type NavIndex, type PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
@@ -20,6 +20,7 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Panel } from '@grafana/schema';
+import { isDashboardV1Spec } from 'app/features/dashboard/api/utils';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
@@ -188,6 +189,53 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   }
 
   /**
+   * Detects if the panel has unsaved changes that were made before entering panel edit
+   * (e.g., styles pasted from dashboard view). When detected, `isDirty` is set to true
+   * and `_layoutItemState` is updated so discard will correctly revert those changes.
+   */
+  private _detectPreExistingChanges(panel: VizPanel) {
+    const initialPanel = this._getInitialPanelSaveModel();
+    if (!initialPanel) {
+      return;
+    }
+
+    const currentPanelData = vizPanelToPanel(panel);
+    // Only compare fieldConfig — the only field that pastePanelStyles modifies
+    const hasFieldConfigChanges = !deepEqual(currentPanelData.fieldConfig, initialPanel.fieldConfig);
+
+    if (!hasFieldConfigChanges) {
+      return;
+    }
+
+    // Override _originalSaveModel so future dirty checks compare against the pre-paste fieldConfig
+    this._originalSaveModel = {
+      ...currentPanelData,
+      fieldConfig: initialPanel.fieldConfig ?? { defaults: {}, overrides: [] },
+    };
+
+    const fc: unknown = initialPanel.fieldConfig;
+    if (isFieldConfigSource(fc)) {
+      panel.setState({ fieldConfig: fc });
+    }
+
+    this.setState({ isDirty: true });
+  }
+
+  /**
+   * Returns the panel's save model from before any unsaved edits were made to the dashboard.
+   * Returns undefined for V2 dashboards or when the panel is not found.
+   */
+  private _getInitialPanelSaveModel(): Panel | undefined {
+    const dashboard = getDashboardSceneFor(this);
+    const initialSaveModel = dashboard.getInitialSaveModel();
+    if (!initialSaveModel || !isDashboardV1Spec(initialSaveModel)) {
+      return undefined;
+    }
+    const panelId = getPanelIdForVizPanel(this.getPanel());
+    return initialSaveModel.panels?.find((p) => p.id === panelId);
+  }
+
+  /**
    * Useful for testing to turn on debounce
    */
   public debounceSaveModelDiff = true;
@@ -226,6 +274,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     if (this.state.isInitializing) {
       this.setOriginalState(this.state.panelRef);
       this._setupChangeDetection();
+      this._detectPreExistingChanges(panel);
       this._updateDataPane(plugin);
 
       // Listen for panel plugin changes
@@ -433,4 +482,8 @@ export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelE
     panelRef: panel.getRef(),
     isNewPanel,
   });
+}
+
+function isFieldConfigSource(value: unknown): value is FieldConfigSource {
+  return typeof value === 'object' && value !== null && 'defaults' in value && 'overrides' in value;
 }
