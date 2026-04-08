@@ -155,3 +155,9 @@ func (r *TeamBindingAuthorizer) FilterList(ctx context.Context, list runtime.Obj
 	l.Items = filteredItems
 	return l, nil
 }
+
+// BeforeWatch implements ResourceStorageAuthorizer.
+// TODO: Implement proper authorization for Watch
+func (r *TeamBindingAuthorizer) BeforeWatch(ctx context.Context) error {
+	return nil // No authorization for now
+}
