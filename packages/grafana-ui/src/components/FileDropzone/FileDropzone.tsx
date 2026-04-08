@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { isString } from 'lodash';
 import { type ReactNode, useCallback, useState } from 'react';
 import {
   type Accept,
