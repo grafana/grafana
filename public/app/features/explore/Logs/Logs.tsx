@@ -216,6 +216,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     panelState?.logs?.visualisationType ?? getDefaultVisualisationType()
   );
   const logsContainerRef = useRef<HTMLDivElement | null>(null);
+  const [logListContainerElement, setLogListContainerElement] = useState<HTMLDivElement | null>(null);
   const dispatch = useDispatch();
   const previousLoading = usePrevious(loading);
 
@@ -968,11 +969,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               </div>
             )}
           {newLogsPanelEnabled && visualisationType === 'logs' && (
-            <div data-testid="logRows" ref={logsContainerRef} className={styles.logRowsWrapper}>
-              {logsContainerRef.current && hasData && (
+            <div data-testid="logRows" ref={setLogListContainerElement} className={styles.logRowsWrapper}>
+              {logListContainerElement && hasData && (
                 <LogList
                   app={CoreApp.Explore}
-                  containerElement={logsContainerRef.current}
+                  containerElement={logListContainerElement}
                   enableLogDetails={true}
                   dataFrames={props.logsFrames ?? []}
                   dedupStrategy={dedupStrategy}
