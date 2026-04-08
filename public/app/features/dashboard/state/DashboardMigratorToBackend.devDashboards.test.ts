@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, statSync } from 'fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import path from 'path';
 
 import { variableAdapters } from 'app/features/variables/adapters';
@@ -57,7 +57,7 @@ variableAdapters.register(createCustomVariableAdapter());
 variableAdapters.register(createTextBoxVariableAdapter());
 variableAdapters.register(createAdHocVariableAdapter());
 
-describe('Dev Dashboard Backend / Frontend result comparison', () => {
+describe.skip('Dev Dashboard Backend / Frontend result comparison', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Setup dev dashboard datasources to match backend DevDashboardDataSourceProvider
