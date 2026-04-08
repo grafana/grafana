@@ -84,46 +84,18 @@ func (s *Server) mutateOrgRoles(ctx context.Context, store *zanzana.StoreInfo, o
 }
 
 func (s *Server) getUserOrgRoleUpdateTuples(ctx context.Context, store *zanzana.StoreInfo, req *authzextv1.UpdateUserOrgRoleOperation) (*openfgav1.TupleKey, []*openfgav1.TupleKeyWithoutCondition, error) {
-	readReq := &openfgav1.ReadRequest{
-		StoreId: store.ID,
-		TupleKey: &openfgav1.ReadRequestTupleKey{
-			User:     common.NewTupleEntry(common.TypeUser, req.GetUser(), ""),
-			Relation: common.RelationAssignee,
-			// read tuples by object type ("role:")
-			Object: common.NewTupleEntry(common.TypeRole, "", ""),
-		},
-	}
-	res, err := s.openFGAClient.Read(ctx, readReq)
-	if err != nil {
-		return nil, nil, err
-	}
-	existingBasicRoleTuples := make([]*openfgav1.TupleKeyWithoutCondition, 0)
-	for _, tuple := range res.GetTuples() {
-		_, roleName, _ := common.SplitTupleObject(tuple.GetKey().GetObject())
-		if common.IsBasicRole(roleName) {
-			existingBasicRoleTuples = append(existingBasicRoleTuples, &openfgav1.TupleKeyWithoutCondition{
-				User:     tuple.GetKey().GetUser(),
-				Relation: tuple.GetKey().GetRelation(),
-				Object:   tuple.GetKey().GetObject(),
-			})
-		}
-	}
-
-	basicRole := common.TranslateBasicRole(req.GetRole())
-	writeTuple := &openfgav1.TupleKey{
-		User:     common.NewTupleEntry(common.TypeUser, req.GetUser(), ""),
-		Relation: common.RelationAssignee,
-		Object:   common.NewTupleEntry(common.TypeRole, basicRole, ""),
-	}
-
-	return writeTuple, existingBasicRoleTuples, nil
+	return s.getOrgRoleUpdateTuples(ctx, store, common.TypeUser, req.GetUser(), req.GetRole())
 }
 
 func (s *Server) getServiceAccountOrgRoleUpdateTuples(ctx context.Context, store *zanzana.StoreInfo, req *authzextv1.UpdateServiceAccountOrgRoleOperation) (*openfgav1.TupleKey, []*openfgav1.TupleKeyWithoutCondition, error) {
+	return s.getOrgRoleUpdateTuples(ctx, store, common.TypeServiceAccount, req.GetServiceAccount(), req.GetRole())
+}
+
+func (s *Server) getOrgRoleUpdateTuples(ctx context.Context, store *zanzana.StoreInfo, subjectType, subjectName, role string) (*openfgav1.TupleKey, []*openfgav1.TupleKeyWithoutCondition, error) {
 	readReq := &openfgav1.ReadRequest{
 		StoreId: store.ID,
 		TupleKey: &openfgav1.ReadRequestTupleKey{
-			User:     common.NewTupleEntry(common.TypeServiceAccount, req.GetServiceAccount(), ""),
+			User:     common.NewTupleEntry(subjectType, subjectName, ""),
 			Relation: common.RelationAssignee,
 			Object:   common.NewTupleEntry(common.TypeRole, "", ""),
 		},
@@ -144,9 +116,9 @@ func (s *Server) getServiceAccountOrgRoleUpdateTuples(ctx context.Context, store
 		}
 	}
 
-	basicRole := common.TranslateBasicRole(req.GetRole())
+	basicRole := common.TranslateBasicRole(role)
 	writeTuple := &openfgav1.TupleKey{
-		User:     common.NewTupleEntry(common.TypeServiceAccount, req.GetServiceAccount(), ""),
+		User:     common.NewTupleEntry(subjectType, subjectName, ""),
 		Relation: common.RelationAssignee,
 		Object:   common.NewTupleEntry(common.TypeRole, basicRole, ""),
 	}

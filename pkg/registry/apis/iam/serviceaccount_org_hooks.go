@@ -107,6 +107,9 @@ func (b *IdentityAccessManagementAPIBuilder) BeginServiceAccountUpdate(ctx conte
 		return nil, nil
 	}
 
+	resourceType := "service_account"
+	operation := "update"
+
 	// Return a finish function that performs the zanzana write only on success
 	return func(ctx context.Context, success bool) {
 		if !success {
@@ -115,7 +118,7 @@ func (b *IdentityAccessManagementAPIBuilder) BeginServiceAccountUpdate(ctx conte
 
 		wait := time.Now()
 		b.zTickets <- true
-		HooksWaitHistogram.WithLabelValues("service_account", "update").Observe(time.Since(wait).Seconds())
+		HooksWaitHistogram.WithLabelValues(resourceType, operation).Observe(time.Since(wait).Seconds())
 
 		go func(namespace, subjectName, oldRole, newRole string) {
 			start := time.Now()
@@ -123,8 +126,8 @@ func (b *IdentityAccessManagementAPIBuilder) BeginServiceAccountUpdate(ctx conte
 
 			defer func() {
 				<-b.zTickets
-				HooksDurationHistogram.WithLabelValues("service_account", "update", status).Observe(time.Since(start).Seconds())
-				HooksOperationCounter.WithLabelValues("service_account", "update", status).Inc()
+				HooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
+				HooksOperationCounter.WithLabelValues(resourceType, operation, status).Inc()
 			}()
 
 			b.logger.Debug("updating service account basic role in zanzana",
@@ -137,9 +140,17 @@ func (b *IdentityAccessManagementAPIBuilder) BeginServiceAccountUpdate(ctx conte
 			ctx, cancel := context.WithTimeout(context.Background(), DefaultWriteTimeout)
 			defer cancel()
 
-			err := b.zClient.Mutate(ctx, &v1.MutateRequest{
-				Namespace: namespace,
-				Operations: []*v1.MutateOperation{
+			var operations []*v1.MutateOperation
+			if newRole == "" || newRole == string(iamv0.ServiceAccountOrgRoleNone) {
+				operations = []*v1.MutateOperation{
+					{
+						Operation: &v1.MutateOperation_DeleteServiceAccountOrgRole{
+							DeleteServiceAccountOrgRole: &v1.DeleteServiceAccountOrgRoleOperation{ServiceAccount: subjectName, Role: oldRole},
+						},
+					},
+				}
+			} else {
+				operations = []*v1.MutateOperation{
 					{
 						Operation: &v1.MutateOperation_UpdateServiceAccountOrgRole{
 							UpdateServiceAccountOrgRole: &v1.UpdateServiceAccountOrgRoleOperation{ServiceAccount: subjectName, Role: newRole},
@@ -149,7 +160,12 @@ func (b *IdentityAccessManagementAPIBuilder) BeginServiceAccountUpdate(ctx conte
 							DeleteServiceAccountOrgRole: &v1.DeleteServiceAccountOrgRoleOperation{ServiceAccount: subjectName, Role: oldRole},
 						},
 					},
-				},
+				}
+			}
+
+			err := b.zClient.Mutate(ctx, &v1.MutateRequest{
+				Namespace:  namespace,
+				Operations: operations,
 			})
 			if err != nil {
 				status = "failure"

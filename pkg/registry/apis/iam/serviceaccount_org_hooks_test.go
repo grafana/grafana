@@ -227,7 +227,7 @@ func TestBeginServiceAccountUpdate(t *testing.T) {
 		wg.Wait()
 	})
 
-	t.Run("should update role when new role is None", func(t *testing.T) {
+	t.Run("should only delete old role when new role is None", func(t *testing.T) {
 		wg.Add(1)
 		oldSA := iamv0.ServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
@@ -253,14 +253,9 @@ func TestBeginServiceAccountUpdate(t *testing.T) {
 			defer wg.Done()
 			require.NotNil(t, req)
 			require.Equal(t, "org-2", req.Namespace)
-			require.Len(t, req.Operations, 2)
+			require.Len(t, req.Operations, 1)
 
-			updateOp := req.Operations[0].GetUpdateServiceAccountOrgRole()
-			require.NotNil(t, updateOp)
-			require.Equal(t, "sa-test2", updateOp.ServiceAccount)
-			require.Equal(t, "None", updateOp.Role)
-
-			deleteOp := req.Operations[1].GetDeleteServiceAccountOrgRole()
+			deleteOp := req.Operations[0].GetDeleteServiceAccountOrgRole()
 			require.NotNil(t, deleteOp)
 			require.Equal(t, "sa-test2", deleteOp.ServiceAccount)
 			require.Equal(t, "Editor", deleteOp.Role)
