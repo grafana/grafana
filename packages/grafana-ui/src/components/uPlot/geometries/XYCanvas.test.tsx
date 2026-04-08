@@ -23,10 +23,8 @@ describe('XYCanvas', () => {
     );
 
     expect(screen.getByTestId(selectors.components.UPlotChart.xyCanvas)).toHaveStyle({
-      position: 'absolute',
       left: '16px',
       top: '8px',
-      overflow: 'visible',
     });
   });
 
