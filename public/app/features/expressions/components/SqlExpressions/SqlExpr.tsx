@@ -182,6 +182,7 @@ LIMIT
         refIds={vars}
         initialQuery={initialQuery}
         errorContext={errorContext}
+        schemas={schemas?.sqlSchemas ?? null}
       />
       {isSchemasFeatureEnabled && (
         <Button

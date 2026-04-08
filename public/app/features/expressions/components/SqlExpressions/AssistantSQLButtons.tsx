@@ -3,20 +3,22 @@ import { useMemo } from 'react';
 import { OpenAssistantButton, createAssistantContextItem } from '@grafana/assistant';
 import { t } from '@grafana/i18n';
 
+import { type SQLSchemas } from './hooks/useSQLSchemas';
 import { type QueryUsageContext } from './sqlExpressionContext';
 
 interface AssistantSQLExplainButtonProps {
   currentQuery: string;
   refIds: string[];
   queryContext?: QueryUsageContext;
+  schemas?: SQLSchemas | null;
 }
 
-export const AssistantSQLExplainButton = ({ currentQuery, refIds, queryContext }: AssistantSQLExplainButtonProps) => {
+export const AssistantSQLExplainButton = ({ currentQuery, refIds, queryContext, schemas }: AssistantSQLExplainButtonProps) => {
   const hasQuery = currentQuery.trim() !== '';
 
   const context = useMemo(
-    () => buildSQLContext({ refIds, currentQuery, queryContext }),
-    [refIds, currentQuery, queryContext]
+    () => buildSQLContext({ refIds, currentQuery, queryContext, schemas }),
+    [refIds, currentQuery, queryContext, schemas]
   );
 
   const prompt = hasQuery
@@ -40,6 +42,7 @@ interface AssistantSQLSuggestionsButtonProps {
   initialQuery: string;
   errorContext?: string[];
   queryContext?: QueryUsageContext;
+  schemas?: SQLSchemas | null;
 }
 
 export const AssistantSQLSuggestionsButton = ({
@@ -48,13 +51,14 @@ export const AssistantSQLSuggestionsButton = ({
   initialQuery,
   errorContext,
   queryContext,
+  schemas,
 }: AssistantSQLSuggestionsButtonProps) => {
   const trimmedQuery = currentQuery.trim();
   const isImprove = trimmedQuery !== '' && currentQuery !== initialQuery;
 
   const context = useMemo(
-    () => buildSQLContext({ refIds, currentQuery, errorContext, queryContext }),
-    [refIds, currentQuery, errorContext, queryContext]
+    () => buildSQLContext({ refIds, currentQuery, errorContext, queryContext, schemas }),
+    [refIds, currentQuery, errorContext, queryContext, schemas]
   );
 
   const prompt = trimmedQuery
@@ -73,12 +77,14 @@ interface BuildSQLContextParams {
   currentQuery: string;
   errorContext?: string[];
   queryContext?: QueryUsageContext;
+  schemas?: SQLSchemas | null;
 }
 
-function buildSQLContext({ refIds, currentQuery, errorContext, queryContext }: BuildSQLContextParams) {
+function buildSQLContext({ refIds, currentQuery, errorContext, queryContext, schemas }: BuildSQLContextParams) {
   return [
     createAssistantContextItem('structured', {
       hidden: true,
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings -- hidden context for the LLM, not shown to users
       title: 'SQL Expression Context',
       data: {
         sqlDialect: 'MySQL dialect based on dolthub go-mysql-server. All tables are in memory.',
@@ -87,10 +93,39 @@ function buildSQLContext({ refIds, currentQuery, errorContext, queryContext }: B
         columnInfo: 'The value column should always be referenced as __value__',
         currentQuery: currentQuery.trim() || undefined,
         errors: errorContext?.length ? errorContext : undefined,
+        ...formatSchemas(schemas),
         ...formatQueryContext(queryContext),
       },
     }),
   ];
+}
+
+/**
+ * Formats schema column metadata into a compact representation for Grafana Assistant.
+ * Only includes column definitions (name, type, nullable) — sample rows are omitted
+ * to keep context size small.
+ */
+function formatSchemas(schemas?: SQLSchemas | null): Record<string, unknown> {
+  if (!schemas) {
+    return {};
+  }
+
+  const tableSchemas: Record<string, unknown> = {};
+  for (const [refId, schema] of Object.entries(schemas)) {
+    if (schema.columns?.length) {
+      tableSchemas[refId] = schema.columns.map((col) => ({
+        name: col.name,
+        type: col.mysqlType,
+        nullable: col.nullable,
+      }));
+    }
+  }
+
+  if (Object.keys(tableSchemas).length === 0) {
+    return {};
+  }
+
+  return { tableSchemas };
 }
 
 function formatQueryContext(queryContext?: QueryUsageContext): Record<string, unknown> {

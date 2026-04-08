@@ -17,6 +17,7 @@ describe('SqlQueryActions', () => {
     refIds: ['A'],
     initialQuery: `SELECT * FROM A LIMIT 10`,
     errorContext: [],
+    schemas: null,
   };
 
   beforeEach(() => {
