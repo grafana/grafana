@@ -70,6 +70,8 @@ For more information about traces and how to use them, refer to the following do
 
 ## Add a panel with tracing visualizations
 
+<!-- TODO: Fix steps for new add panel flow -->
+
 Once you have tracing data available in your Grafana stack, you can add tracing panels to your Grafana dashboards.
 
 Using a dashboard variable, `traceID`, lets you create a query to show specific traces for a given trace ID.

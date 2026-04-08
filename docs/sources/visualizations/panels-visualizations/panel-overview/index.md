@@ -156,7 +156,7 @@ Time series
 
 ## Add a panel
 
-To add a panel click or drag the panel image in the sidebar:
+To add a panel to an empty dashboard, click or drag the panel onto the dashboard:
 
 ![Empty dashboard state](/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.0.png)
 
