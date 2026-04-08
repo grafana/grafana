@@ -28,6 +28,7 @@ import { getThresholdsForQueries } from '../../components/rule-editor/util';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
 import { type LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
+import { type SilenceFormFields } from '../../types/silence-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { labelsToMatchersParam } from '../../utils/matchers';
 import { stringifyErrorLike } from '../../utils/misc';
@@ -73,6 +74,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
   const [timeRange] = useTimeRange();
   const { rightColumnWidth } = useWorkbenchContext();
   const [viewStack, setViewStack] = useState<DrawerView[]>([{ type: 'instance-details' }]);
+  const [silenceFormDraft, setSilenceFormDraft] = useState<SilenceFormFields | undefined>();
   const closeSilenceTimerRef = useRef<number | undefined>(undefined);
   const [isClosingSilenceDrawer, setIsClosingSilenceDrawer] = useState(false);
 
@@ -127,6 +129,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
       closeSilenceTimerRef.current = undefined;
     }
     setIsClosingSilenceDrawer(false);
+    setSilenceFormDraft(undefined);
     setViewStack([{ type: 'instance-details' }]);
     onClose();
   };
@@ -351,7 +354,13 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
           onClose={animateCloseSilenceDrawer}
           width={drawerWidth}
         >
-          <InstanceSilenceForm ruleUid={ruleUID} instanceLabels={instanceLabels} onClose={animateCloseSilenceDrawer} />
+          <InstanceSilenceForm
+            ruleUid={ruleUID}
+            instanceLabels={instanceLabels}
+            onClose={animateCloseSilenceDrawer}
+            formValues={silenceFormDraft}
+            onFormValuesChange={setSilenceFormDraft}
+          />
         </Drawer>
       </>
     );

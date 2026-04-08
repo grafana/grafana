@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { pickBy } from 'lodash';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 import { useDebounce } from 'react-use';
@@ -131,6 +131,8 @@ type SilencesEditorProps = {
   onSilenceCreated?: (response: SilenceCreatedResponse) => void;
   onCancel?: () => void;
   ruleUid?: string;
+  onFormValuesChange?: (values: SilenceFormFields) => void;
+  showCancelButton?: boolean;
 };
 
 /**
@@ -143,6 +145,8 @@ export const SilencesEditor = ({
   onSilenceCreated,
   onCancel,
   ruleUid,
+  onFormValuesChange,
+  showCancelButton = true,
 }: SilencesEditorProps) => {
   const [previewAlertsSupported, previewAlertsAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.PreviewSilencedInstances
@@ -150,12 +154,17 @@ export const SilencesEditor = ({
   const canPreview = previewAlertsSupported && previewAlertsAllowed;
 
   const [createSilence, { isLoading }] = alertSilencesApi.endpoints.createSilence.useMutation();
-  const formAPI = useForm({ defaultValues: formValues });
+  const formAPI = useForm<SilenceFormFields>({ defaultValues: formValues });
   const styles = useStyles2(getStyles);
 
   const { register, handleSubmit, formState, watch, setValue, clearErrors } = formAPI;
+  const allValues = watch();
 
   const [duration, startsAt, endsAt, matchers] = watch(['duration', 'startsAt', 'endsAt', 'matchers']);
+
+  useEffect(() => {
+    onFormValuesChange?.(allValues);
+  }, [allValues, onFormValuesChange]);
 
   /** Default action taken after creation or cancellation, if corresponding method is not defined */
   const defaultHandler = () => {
@@ -298,9 +307,11 @@ export const SilencesEditor = ({
               <Trans i18nKey="alerting.silences-editor.save-silence">Save silence</Trans>
             </Button>
           )}
-          <LinkButton onClick={onCancelHandler} variant={'secondary'}>
-            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
-          </LinkButton>
+          {showCancelButton && (
+            <LinkButton onClick={onCancelHandler} variant={'secondary'}>
+              <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+            </LinkButton>
+          )}
         </Stack>
       </form>
     </FormProvider>
