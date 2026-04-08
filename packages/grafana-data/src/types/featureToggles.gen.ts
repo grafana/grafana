@@ -1341,6 +1341,11 @@ export interface FeatureToggles {
   */
   alertingAlertsActivityBanner?: boolean;
   /**
+  * Enables live/history mode toggle on the alert activity triage page
+  * @default false
+  */
+  alertingTriageLiveMode?: boolean;
+  /**
   * Enables the Graphite data source full backend mode
   * @default false
   */

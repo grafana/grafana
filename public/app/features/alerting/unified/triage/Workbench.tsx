@@ -28,6 +28,8 @@ import { GroupRow } from './rows/GroupRow';
 import { generateRowKey } from './rows/utils';
 import { GenericRowSkeleton } from './scene/AlertRuleInstances';
 import { SummaryChartReact } from './scene/SummaryChart';
+import { SummaryStatsReact } from './scene/SummaryStats';
+import { TimeRulerStrip } from './scene/TimeRulerStrip';
 import { LabelsColumn } from './scene/filters/LabelsColumn';
 import { type Domain, type Filter, type WorkbenchRow } from './types';
 
@@ -40,6 +42,7 @@ type WorkbenchProps = {
   isInitialLoading?: boolean;
   isRefreshing?: boolean;
   hasActiveFilters?: boolean;
+  isLiveMode?: boolean;
 };
 
 const initialSize = 2 / 3;
@@ -138,6 +141,7 @@ export function Workbench({
   isInitialLoading = false,
   isRefreshing = false,
   hasActiveFilters = false,
+  isLiveMode = false,
 }: WorkbenchProps) {
   const styles = useStyles2(getStyles);
 
@@ -222,9 +226,15 @@ export function Workbench({
             </Box>
           ) : (
             <>
-              <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
+              {!isLiveMode && (
+                <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
+                  <SummaryStatsReact />
+                  <SummaryChartReact />
+                </div>
+              )}
+              <div className={styles.groupItemWrapper(leftColumnWidth)}>
                 <div />
-                <SummaryChartReact />
+                <TimeRulerStrip />
               </div>
               {groupBy && groupBy.length > 0 && (
                 <div className={styles.expandCollapseToolbar}>

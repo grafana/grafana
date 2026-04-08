@@ -1,9 +1,11 @@
 import { DashboardCursorSync } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   GroupByVariable,
   SceneControlsSpacer,
   SceneFlexLayout,
+  type SceneObject,
   SceneReactObject,
   SceneRefreshPicker,
   SceneTimePicker,
@@ -18,6 +20,7 @@ import { useTheme2 } from '@grafana/ui';
 import { DATASOURCE_UID } from '../constants';
 
 import { TriageSavedSearchesControl } from './TriageSavedSearchesControl';
+import { TriageTimeModeControl } from './TriageTimeModeControl';
 import { WorkbenchSceneObject } from './Workbench';
 import { prometheusExpressionBuilder } from './expressionBuilder';
 import { getAdHocTagKeysProvider, getAdHocTagValuesProvider, getGroupByTagKeysProvider } from './tagKeysProviders';
@@ -30,6 +33,13 @@ function TimePickerSpacer() {
   return <div style={{ width: theme.spacing(20) }} />;
 }
 
+function getTimeControls(): SceneObject[] {
+  if (config.featureToggles.alertingTriageLiveMode) {
+    return [new TriageTimeModeControl({})];
+  }
+  return [new SceneReactObject({ component: TimePickerSpacer }), new SceneTimePicker({}), new SceneRefreshPicker({})];
+}
+
 export const triageScene = new EmbeddedSceneWithContext({
   // this will allow us to share the cursor between all vizualizations
   $behaviors: [cursorSync],
@@ -37,10 +47,7 @@ export const triageScene = new EmbeddedSceneWithContext({
     new VariableValueSelectors({}),
     new TriageSavedSearchesControl({}),
     new SceneControlsSpacer(),
-    // Keep a fixed spacer before the time picker to align with row content.
-    new SceneReactObject({ component: TimePickerSpacer }),
-    new SceneTimePicker({}),
-    new SceneRefreshPicker({}),
+    ...getTimeControls(),
   ],
   $timeRange: new SceneTimeRange(defaultTimeRange),
   $variables: new SceneVariableSet({

@@ -1,6 +1,6 @@
 import { SceneObjectBase, type SceneObjectState, VizConfigBuilders } from '@grafana/scenes';
 import { VizPanel, useQueryRunner } from '@grafana/scenes-react';
-import { BarAlignment, GraphDrawStyle, VisibilityMode } from '@grafana/schema';
+import { AxisPlacement, BarAlignment, GraphDrawStyle, VisibilityMode } from '@grafana/schema';
 import { LegendDisplayMode, StackingMode, TooltipDisplayMode } from '@grafana/ui';
 
 import { overrideToFixedColor } from '../../home/Insights';
@@ -19,6 +19,8 @@ export const summaryChartVizConfig = VizConfigBuilders.timeseries()
   .setCustomFieldConfig('lineWidth', 0)
   .setCustomFieldConfig('stacking', { mode: StackingMode.None })
   .setCustomFieldConfig('showPoints', VisibilityMode.Never)
+  .setCustomFieldConfig('axisPlacement', AxisPlacement.Hidden)
+  .setCustomFieldConfig('axisGridShow', false)
   .setOption('legend', {
     showLegend: false,
     displayMode: LegendDisplayMode.Hidden,

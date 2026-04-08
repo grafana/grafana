@@ -13,6 +13,8 @@ import { toFilters, toUrl } from '../../../../variables/adhoc/urlParser';
 import { type SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
 import { TRIAGE_STATE_URL_PARAMS, URL_PARAMS, VARIABLES } from '../constants';
 
+import { TRIAGE_TIME_MODE_KEY, TriageTimeModeControl } from './TriageTimeModeControl';
+
 /**
  * Merges predefined and user saved searches, with the default search first.
  *
@@ -51,6 +53,7 @@ export function buildTriageQueryStringFromParts(input: {
   filters?: TriageFilterInput[];
   groupBy: string[];
   timeRange: RawTimeRange;
+  triageMode?: string;
 }): string {
   const params = new URLSearchParams();
 
@@ -69,6 +72,10 @@ export function buildTriageQueryStringFromParts(input: {
   const toValue = typeof input.timeRange.to === 'string' ? input.timeRange.to : input.timeRange.to.toISOString();
   params.set(URL_PARAMS.timeFrom, fromValue);
   params.set(URL_PARAMS.timeTo, toValue);
+
+  if (input.triageMode && input.triageMode !== 'live') {
+    params.set(URL_PARAMS.triageMode, input.triageMode);
+  }
 
   return params.toString();
 }
@@ -100,24 +107,27 @@ export function serializeCurrentSearchState(): string {
 }
 
 /**
- * Serializes triage state (filters, groupBy, time range) into a query string.
+ * Serializes triage state (filters, groupBy, time range, mode) into a query string.
  * This is used by the component to serialize the current Scene state for saved searches.
  *
  * @param filters - Array of AdHocVariableFilter objects
  * @param groupBy - Array of groupBy keys (or single string)
  * @param timeRange - Raw time range with from/to as strings, Date, or DateTime objects
+ * @param triageMode - Optional triage mode ('live' or 'history')
  * @returns Serialized query string
  */
 export function serializeTriageState(
   filters: AdHocVariableFilter[],
   groupBy: string | string[],
-  timeRange: RawTimeRange
+  timeRange: RawTimeRange,
+  triageMode?: string
 ): string {
   const groupByArray = Array.isArray(groupBy) ? groupBy : [groupBy].filter(Boolean);
   return buildTriageQueryStringFromParts({
     filters: filters.map((f) => ({ key: f.key, operator: f.operator, value: f.value })),
     groupBy: groupByArray,
     timeRange,
+    triageMode,
   });
 }
 
@@ -156,6 +166,13 @@ export function applyTriageSavedSearchState(scene: SceneObject, query: string): 
 
   if (fromDateTime && toDateTime) {
     sceneTimeRange.onTimeRangeChange(makeTimeRange(fromDateTime, toDateTime));
+  }
+
+  // Update triage mode if the control exists in the scene
+  const triageMode = params.get(URL_PARAMS.triageMode);
+  const modeControl = sceneGraph.findObject(scene, (obj) => obj.state.key === TRIAGE_TIME_MODE_KEY);
+  if (modeControl instanceof TriageTimeModeControl) {
+    modeControl.setMode(triageMode === 'live' ? 'live' : 'history');
   }
 }
 

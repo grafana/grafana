@@ -3623,7 +3623,12 @@
       "showing-groups-count_other": "Showing {{count}} groups",
       "state-filter-title": "State",
       "state-firing": "Firing",
-      "state-pending": "Pending"
+      "state-pending": "Pending",
+      "time-mode": {
+        "history": "History",
+        "live": "Active now",
+        "live-description": "Showing currently active alerts only. Content auto-refreshes every 15 seconds."
+      }
     },
     "type-selector-button": {
       "add-expression": "Add expression"

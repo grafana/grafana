@@ -2120,6 +2120,15 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertingTriageLiveMode",
+			Description:  "Enables live/history mode toggle on the alert activity triage page",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "graphiteBackendMode",
 			Description:  "Enables the Graphite data source full backend mode",
 			Stage:        FeatureStagePrivatePreview,
