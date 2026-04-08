@@ -7,7 +7,6 @@ import { locationService } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
@@ -79,15 +78,6 @@ export const useDashboardSave = (isCopy = false) => {
 
         if (newUrl !== currentPath && result.url) {
           setTimeout(() => locationService.replace(newUrl));
-        }
-        if (dashboard.meta.isStarred) {
-          dispatch(
-            updateDashboardName({
-              id: dashboard.uid,
-              title: dashboard.title,
-              url: newUrl,
-            })
-          );
         }
         return result;
       } catch (error) {

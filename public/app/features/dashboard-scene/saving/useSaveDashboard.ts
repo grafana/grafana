@@ -100,16 +100,6 @@ export function useSaveDashboard(isCopy = false) {
           });
         }
 
-        if (scene.state.meta.isStarred) {
-          dispatch(
-            updateDashboardName({
-              id: resultData.uid,
-              title: scene.state.title,
-              url: newUrl,
-            })
-          );
-        }
-
         return result.data;
       }
     },
