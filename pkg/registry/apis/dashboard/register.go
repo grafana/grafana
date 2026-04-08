@@ -1019,16 +1019,66 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	searchAPIRoutes := b.search.GetAPIRoutes(defs)
-	snapshotAPIRoutes := snapshot.GetRoutes(b.snapshotService, b.snapshotOptions, defs)
+	snapshotAPIRoutes := snapshot.GetRoutes(b.snapshotService, b.snapshotOptions, b.accessControl, defs)
 
 	return &builder.APIRoutes{
 		Namespace: append(searchAPIRoutes.Namespace, snapshotAPIRoutes.Namespace...),
 	}
 }
 
-// The default authorizer is fine because authorization happens in storage where we know the parent folder
+// GetAuthorizer returns a composite authorizer that dispatches by resource type.
+// Snapshots use RBAC-based authorization; other resources fall back to ServiceAuthorizer.
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return grafanaauthorizer.NewServiceAuthorizer()
+	serviceAuthorizer := grafanaauthorizer.NewServiceAuthorizer()
+
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+			if attr.IsResourceRequest() && attr.GetResource() == dashv0.SNAPSHOT_RESOURCE {
+				user, err := identity.GetRequester(ctx)
+				if err != nil {
+					return authorizer.DecisionDeny, "valid user is required", err
+				}
+
+				// Handle subresources
+				if attr.GetSubresource() != "" {
+					var action string
+					switch attr.GetSubresource() {
+					case "dashboard":
+						action = dashboards.ActionSnapshotsRead
+					case "deletekey":
+						action = dashboards.ActionSnapshotsDelete
+					default:
+						return authorizer.DecisionDeny, "unsupported subresource", nil
+					}
+					ok, err := b.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(action))
+					if !ok || err != nil {
+						return authorizer.DecisionDeny, "access denied", err
+					}
+					return authorizer.DecisionAllow, "", nil
+				}
+
+				// Map k8s verbs to snapshot RBAC actions
+				var action string
+				switch attr.GetVerb() {
+				case "get", "list", "watch":
+					action = dashboards.ActionSnapshotsRead
+				case "create":
+					action = dashboards.ActionSnapshotsCreate
+				case "delete":
+					action = dashboards.ActionSnapshotsDelete
+				default:
+					return authorizer.DecisionDeny, "unsupported verb", nil
+				}
+
+				ok, err := b.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(action))
+				if !ok || err != nil {
+					return authorizer.DecisionDeny, "access denied", err
+				}
+				return authorizer.DecisionAllow, "", nil
+			}
+
+			return serviceAuthorizer.Authorize(ctx, attr)
+		})
 }
 
 func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderIds ...string) error {
