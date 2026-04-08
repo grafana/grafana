@@ -145,8 +145,20 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	getTeamUIDByID := func(q *GetTeamUIDByIDQuery) sqltemplate.SQLTemplate {
+		v := newGetTeamUIDByID(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	updateUserLastSeenAt := func(cmd *UpdateUserLastSeenAtCommand) sqltemplate.SQLTemplate {
 		v := newUpdateUserLastSeenAt(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	getUserUIDByID := func(q *GetUserUIDByIDQuery) sqltemplate.SQLTemplate {
+		v := newGetUserUIDByID(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
@@ -658,6 +670,33 @@ func TestIdentityQueries(t *testing.T) {
 					Data: updateUserLastSeenAt(&UpdateUserLastSeenAtCommand{
 						UID:        "user-1",
 						LastSeenAt: legacysql.NewDBTime(time.Date(2023, 6, 15, 10, 30, 0, 0, time.UTC)),
+					}),
+				},
+			},
+			sqlQueryTeamUIDByIDTemplate: {
+				{
+					Name: "team_uid_by_id",
+					Data: getTeamUIDByID(&GetTeamUIDByIDQuery{
+						OrgID: 1,
+						ID:    42,
+					}),
+				},
+			},
+			sqlQueryUserUIDByIDTemplate: {
+				{
+					Name: "user_uid_by_id",
+					Data: getUserUIDByID(&GetUserUIDByIDQuery{
+						OrgID:            1,
+						ID:               99,
+						IsServiceAccount: false,
+					}),
+				},
+				{
+					Name: "service_account_uid_by_id",
+					Data: getUserUIDByID(&GetUserUIDByIDQuery{
+						OrgID:            1,
+						ID:               55,
+						IsServiceAccount: true,
 					}),
 				},
 			},

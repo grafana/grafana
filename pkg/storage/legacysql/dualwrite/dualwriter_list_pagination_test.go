@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 
@@ -16,8 +15,8 @@ import (
 // continue token encodes an empty legacy cursor (legacy finished paging) but unified
 // still has more. The writer should return an empty list without touching either store.
 func TestDualWriter_List_LegacyDonePaging(t *testing.T) {
-	ls := storageMock{&mock.Mock{}, rest.Storage(nil)}
-	us := storageMock{&mock.Mock{}, rest.Storage(nil)}
+	ls := &fakeStorage{}
+	us := &fakeStorage{}
 
 	dw, err := newStorage(kind, rest.Mode1, ls, us)
 	require.NoError(t, err)
@@ -27,20 +26,21 @@ func TestDualWriter_List_LegacyDonePaging(t *testing.T) {
 
 	obj, err := dw.List(context.Background(), &metainternalversion.ListOptions{Continue: continueToken})
 	require.NoError(t, err)
-	require.Nil(t, obj) // storageMock.NewList() returns nil
+	require.Nil(t, obj) // fakeStorage.NewList() returns nil
 
-	ls.AssertNotCalled(t, "List", mock.Anything, mock.Anything)
-	us.AssertNotCalled(t, "List", mock.Anything, mock.Anything)
+	// Neither store should have been called
+	require.Empty(t, ls.listCalls)
+	require.Empty(t, us.listCalls)
 }
 
 // TestDualWriter_List_UnifiedDonePaging covers the case where the combined token
 // encodes an empty unified cursor (unified finished paging) but legacy still has
 // more. The writer should skip the unified request entirely.
 func TestDualWriter_List_UnifiedDonePaging(t *testing.T) {
-	ls := storageMock{&mock.Mock{}, rest.Storage(nil)}
-	us := storageMock{&mock.Mock{}, rest.Storage(nil)}
+	ls := &fakeStorage{}
+	us := &fakeStorage{}
 
-	ls.On("List", mock.Anything, mock.Anything).Return(exampleList, nil)
+	ls.onList(exampleList, nil)
 
 	dw, err := newStorage(kind, rest.Mode1, ls, us)
 	require.NoError(t, err)
@@ -52,20 +52,20 @@ func TestDualWriter_List_UnifiedDonePaging(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, exampleList, obj)
 
-	ls.AssertCalled(t, "List", mock.Anything, mock.Anything)
-	us.AssertNotCalled(t, "List", mock.Anything, mock.Anything)
+	require.NotEmpty(t, ls.listCalls)
+	require.Empty(t, us.listCalls)
 }
 
 // TestDualWriter_List_UnifiedTimeoutDoesNotBlock verifies that when the unified
 // list call takes longer than the 300 ms budget the writer returns the legacy
 // result immediately without blocking.
 func TestDualWriter_List_UnifiedTimeoutDoesNotBlock(t *testing.T) {
-	ls := storageMock{&mock.Mock{}, rest.Storage(nil)}
-	us := storageMock{&mock.Mock{}, rest.Storage(nil)}
+	ls := &fakeStorage{}
+	us := &fakeStorage{}
 
-	ls.On("List", mock.Anything, mock.Anything).Return(exampleList, nil)
-	// unified deliberately takes longer than the 300 ms timeout
-	us.On("List", mock.Anything, mock.Anything).WaitUntil(time.After(time.Second)).Return(anotherList, nil)
+	ls.onList(exampleList, nil)
+	// unified deliberately blocks until ctx is canceled (simulates slow response)
+	us.blockList = true
 
 	dw, err := newStorage(kind, rest.Mode1, ls, us)
 	require.NoError(t, err)

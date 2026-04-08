@@ -729,3 +729,15 @@ func (m *mockLegacyStore) ListTeamBindings(ctx context.Context, ns claims.Namesp
 func (m *mockLegacyStore) ListTeamMembers(ctx context.Context, ns claims.NamespaceInfo, query legacy.ListTeamMembersQuery) (*legacy.ListTeamMembersResult, error) {
 	return nil, nil
 }
+
+func (m *mockLegacyStore) GetUserUIDByID(ctx context.Context, ns claims.NamespaceInfo, query legacy.GetUserUIDByIDQuery) (*legacy.GetUserUIDByIDResult, error) {
+	return nil, nil
+}
+
+func (m *mockLegacyStore) GetServiceAccountUIDByID(ctx context.Context, ns claims.NamespaceInfo, query legacy.GetUserUIDByIDQuery) (*legacy.GetUserUIDByIDResult, error) {
+	return nil, nil
+}
+
+func (m *mockLegacyStore) GetTeamUIDByID(ctx context.Context, ns claims.NamespaceInfo, query legacy.GetTeamUIDByIDQuery) (*legacy.GetTeamUIDByIDResult, error) {
+	return nil, nil
+}
