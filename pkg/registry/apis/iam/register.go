@@ -189,6 +189,7 @@ func NewAPIService(
 
 	globalRoleAuthorizer := globalRoleApiInstaller.GetAuthorizer()
 	roleAuthorizer := roleApiInstaller.GetAuthorizer()
+	serviceAccountAuthorizer := newServiceAccountAuthorizer(accessClient)
 	teamLBACAuthorizer := teamLBACApiInstaller.GetAuthorizer()
 	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 
@@ -274,7 +275,7 @@ func NewAPIService(
 					if user.GetIdentityType() != types.TypeAccessPolicy {
 						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
 					}
-					return resourceAuthorizer.Authorize(ctx, a)
+					return serviceAccountAuthorizer.Authorize(ctx, a)
 				}
 
 				return authorizer.DecisionDeny, "access denied", nil
