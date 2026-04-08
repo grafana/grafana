@@ -182,7 +182,6 @@ func TestIntegrationSQLKVConcurrentCreateClientRetry(t *testing.T) {
 }
 
 func newLocalClient(t *testing.T, backend resource.KVBackend) resource.ResourceClient {
-	t.Helper()
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{Backend: backend})
 	require.NoError(t, err)
 	_, err = server.IsHealthy(t.Context(), &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
@@ -191,7 +190,6 @@ func newLocalClient(t *testing.T, backend resource.KVBackend) resource.ResourceC
 }
 
 func newRemoteClient(t *testing.T, backend resource.KVBackend) resource.ResourceClient {
-	t.Helper()
 	cfg := setting.NewCfg()
 	cfg.GRPCServer.Address = "localhost:0"
 	cfg.GRPCServer.Network = "tcp"
@@ -218,7 +216,6 @@ func newRemoteClient(t *testing.T, backend resource.KVBackend) resource.Resource
 
 	t.Cleanup(func() {
 		_ = conn.Close()
-		grpcService.StopAsync()
 		_ = services.StopAndAwaitTerminated(context.Background(), grpcService)
 		_ = services.StopAndAwaitTerminated(context.Background(), svc)
 	})
