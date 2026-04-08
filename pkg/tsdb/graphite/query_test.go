@@ -58,6 +58,58 @@ func TestProcessQuery(t *testing.T) {
 		assert.False(t, isMetricTank)
 	})
 
+	t.Run("Trims trailing newline from target", func(t *testing.T) {
+		queries := []backend.DataQuery{
+			{
+				RefID: "A",
+				JSON:  []byte("{\"target\": \"stats.counters.web.hits\\n\"}"),
+			},
+		}
+		target, jsonModel, _, err := service.processQuery(queries[0])
+		assert.NoError(t, err)
+		assert.Nil(t, jsonModel)
+		assert.Equal(t, "stats.counters.web.hits", target)
+	})
+
+	t.Run("Trims leading and trailing whitespace from target", func(t *testing.T) {
+		queries := []backend.DataQuery{
+			{
+				RefID: "A",
+				JSON:  []byte("{\"target\": \"  stats.counters.web.hits  \"}"),
+			},
+		}
+		target, jsonModel, _, err := service.processQuery(queries[0])
+		assert.NoError(t, err)
+		assert.Nil(t, jsonModel)
+		assert.Equal(t, "stats.counters.web.hits", target)
+	})
+
+	t.Run("Uses targetFull over target when both are set", func(t *testing.T) {
+		queries := []backend.DataQuery{
+			{
+				RefID: "A",
+				JSON:  []byte(`{"target": "stats.counters.web.hits", "targetFull": "asPercent(stats.counters.web.hits, stats.counters.web.total)"}`),
+			},
+		}
+		target, jsonModel, _, err := service.processQuery(queries[0])
+		assert.NoError(t, err)
+		assert.Nil(t, jsonModel)
+		assert.Equal(t, "asPercent(stats.counters.web.hits, stats.counters.web.total)", target)
+	})
+
+	t.Run("Trims trailing newline from targetFull", func(t *testing.T) {
+		queries := []backend.DataQuery{
+			{
+				RefID: "A",
+				JSON:  []byte("{\"target\": \"stats.counters.web.hits\", \"targetFull\": \"asPercent(stats.counters.web.hits, stats.counters.web.total)\\n\"}"),
+			},
+		}
+		target, jsonModel, _, err := service.processQuery(queries[0])
+		assert.NoError(t, err)
+		assert.Nil(t, jsonModel)
+		assert.Equal(t, "asPercent(stats.counters.web.hits, stats.counters.web.total)", target)
+	})
+
 	t.Run("Returns isMetricTank value", func(t *testing.T) {
 		queries := []backend.DataQuery{
 			{
@@ -743,6 +795,147 @@ func TestRunQueryE2E(t *testing.T) {
 					experimental.CheckGoldenJSONResponse(t, "testdata", fmt.Sprintf("%s-%s.golden", testName, refId), &resp, false)
 				}
 			}
+		})
+	}
+}
+
+// TestTargetSentToGraphite verifies the exact form body sent to the Graphite /render endpoint.
+// This is a regression test for issue #17952 where trailing newlines in query targets caused
+// HTTP 400 errors from Booking's carbonapi (which is stricter than graphite-web).
+func TestTargetSentToGraphite(t *testing.T) {
+	tests := []struct {
+		name           string
+		queryJSON      string
+		expectedTarget string
+	}{
+		{
+			name:           "trailing newline is trimmed before sending",
+			queryJSON:      "{\"target\": \"stats.counters.web.hits\\n\"}",
+			expectedTarget: "stats.counters.web.hits",
+		},
+		{
+			name:           "leading and trailing whitespace trimmed before sending",
+			queryJSON:      "{\"target\": \"  stats.counters.web.hits  \"}",
+			expectedTarget: "stats.counters.web.hits",
+		},
+		{
+			name:           "targetFull with trailing newline is trimmed before sending",
+			queryJSON:      "{\"target\": \"stats.counters.web.hits\", \"targetFull\": \"asPercent(stats.counters.web.hits, stats.counters.web.total)\\n\"}",
+			expectedTarget: "asPercent(stats.counters.web.hits, stats.counters.web.total)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var receivedTarget string
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				err := r.ParseForm()
+				require.NoError(t, err)
+				receivedTarget = r.FormValue("target")
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte(`[]`))
+			}))
+			defer server.Close()
+
+			service := &Service{logger: backend.Logger}
+			dsInfo := &datasourceInfo{Id: 1, URL: server.URL, HTTPClient: &http.Client{}}
+			req := &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{
+					DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 1, URL: server.URL},
+					OrgID:                      1,
+				},
+				Queries: []backend.DataQuery{
+					{
+						RefID: "A",
+						TimeRange: backend.TimeRange{
+							From: time.Unix(1609459200, 0),
+							To:   time.Unix(1609459260, 0),
+						},
+						MaxDataPoints: 1000,
+						JSON:          []byte(tt.queryJSON),
+					},
+				},
+			}
+			_, err := service.RunQuery(context.Background(), req, dsInfo)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedTarget, receivedTarget)
+		})
+	}
+}
+
+// TestDisplayNameFromDS is a regression test for issue #20454 / grafana#117158.
+// It verifies that:
+//   - DisplayNameFromDS equals the series target returned by Graphite (including alias-resolved names)
+//   - Frame Name is always empty — any change setting it to a refId would be caught here
+func TestDisplayNameFromDS(t *testing.T) {
+	tests := []struct {
+		name                      string
+		graphiteTarget            string
+		expectedDisplayNameFromDS string
+	}{
+		{
+			name:                      "plain metric name flows to DisplayNameFromDS",
+			graphiteTarget:            "stats.counters.web.hits",
+			expectedDisplayNameFromDS: "stats.counters.web.hits",
+		},
+		{
+			name:                      "alias-resolved name flows to DisplayNameFromDS",
+			graphiteTarget:            "Web Hits",
+			expectedDisplayNameFromDS: "Web Hits",
+		},
+		{
+			name:                      "aliasByNode-resolved name flows to DisplayNameFromDS",
+			graphiteTarget:            "hits",
+			expectedDisplayNameFromDS: "hits",
+		},
+	}
+
+	service := &Service{logger: backend.Logger}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				resp := fmt.Sprintf(`[{"target": %q, "datapoints": [[100, 1609459200]]}]`, tt.graphiteTarget)
+				_, _ = w.Write([]byte(resp))
+			}))
+			defer server.Close()
+
+			dsInfo := &datasourceInfo{Id: 1, URL: server.URL, HTTPClient: &http.Client{}}
+			req := &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{
+					DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 1, URL: server.URL},
+					OrgID:                      1,
+				},
+				Queries: []backend.DataQuery{
+					{
+						RefID: "A",
+						TimeRange: backend.TimeRange{
+							From: time.Unix(1609459200, 0),
+							To:   time.Unix(1609459260, 0),
+						},
+						MaxDataPoints: 1000,
+						JSON:          []byte(`{"target": "ignored.because.graphite.returns.target"}`),
+					},
+				},
+			}
+			result, err := service.RunQuery(context.Background(), req, dsInfo)
+			require.NoError(t, err)
+			require.NotNil(t, result)
+
+			resp, ok := result.Responses["A"]
+			require.True(t, ok)
+			require.Len(t, resp.Frames, 1)
+
+			frame := resp.Frames[0]
+			// Frame Name must be empty — it is NOT the refId, not the metric path.
+			// This is the invariant broken by the naming convention change in #20454.
+			assert.Equal(t, "", frame.Name)
+
+			// DisplayNameFromDS must be the alias-resolved name Graphite returned.
+			valueField := frame.Fields[1]
+			require.NotNil(t, valueField.Config)
+			assert.Equal(t, tt.expectedDisplayNameFromDS, valueField.Config.DisplayNameFromDS)
 		})
 	}
 }

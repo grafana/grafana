@@ -1230,6 +1230,45 @@ describe('graphiteDatasource', () => {
       expect(results.length).toBe(1);
     });
 
+    // Regression test for issue #17952: trailing newlines in query targets caused HTTP 400
+    // from Booking's carbonapi. The backend alert path does not wrap targets in aliasSub()
+    // as the frontend does, so raw whitespace reached carbonapi verbatim.
+    it('should trim trailing newline from target and targetFull', () => {
+      const originalTargetMap = {
+        A: 'stats.counters.web.hits\n',
+      };
+      const results = ctx.ds.backendBuildGraphiteQueries(
+        {
+          ...defaultQueryProperties,
+          targets: [{ target: 'stats.counters.web.hits\n', refId: 'A' }],
+        },
+        originalTargetMap
+      );
+      expect(results[0].target).toBe('stats.counters.web.hits');
+      expect(results[0].targetFull).toBe('stats.counters.web.hits');
+    });
+
+    it('should trim trailing newline from resolved cross-query target', () => {
+      // Series A has no trailing newline; only B's own target has one.
+      // The trim() must clean the final resolved value even when cross-references are involved.
+      const originalTargetMap = {
+        A: 'series1',
+        B: 'asPercent(#A, 100)\n',
+      };
+      const results = ctx.ds.backendBuildGraphiteQueries(
+        {
+          ...defaultQueryProperties,
+          targets: [
+            { target: 'series1', refId: 'A' },
+            { target: 'asPercent(#A, 100)\n', refId: 'B' },
+          ],
+        },
+        originalTargetMap
+      );
+      expect(results[1].target).toBe('asPercent(series1, 100)');
+      expect(results[1].targetFull).toBe('asPercent(series1, 100)');
+    });
+
     describe('when formatting targets', () => {
       it('does not attempt to glob for one variable', () => {
         const originalReplace = ctx.templateSrv.replace;
@@ -1624,6 +1663,79 @@ describe('graphiteDatasource', () => {
       expect(data[1].text).toBe('apps.backend.backend_02');
 
       config.featureToggles.graphiteBackendMode = false;
+    });
+
+    // Regression tests for missing backend-mode coverage.
+    // In backend mode, all variable query sub-paths use postResource() instead of
+    // direct HTTP fetch, but only the MetricName path had a test (added in #119498).
+    describe('backend mode variable query paths', () => {
+      beforeEach(() => {
+        config.featureToggles.graphiteBackendMode = true;
+      });
+
+      afterEach(() => {
+        config.featureToggles.graphiteBackendMode = false;
+      });
+
+      it('requestMetricFind uses postResource in backend mode', async () => {
+        postResourceMock.mockResolvedValue([
+          { text: 'backend_01', expandable: false },
+          { text: 'backend_02', expandable: true },
+        ]);
+
+        const data = await ctx.ds.metricFindQuery('apps.backend.*');
+
+        expect(postResourceMock).toHaveBeenCalledWith(
+          'metrics/find',
+          expect.objectContaining({ query: 'apps.backend.*' })
+        );
+        expect(data).toEqual([
+          { text: 'backend_01', expandable: false },
+          { text: 'backend_02', expandable: true },
+        ]);
+      });
+
+      it('requestMetricExpand uses postResource in backend mode', async () => {
+        postResourceMock.mockResolvedValue([
+          { text: 'apps.backend.backend_01', expandable: false },
+          { text: 'apps.backend.backend_02', expandable: false },
+        ]);
+
+        const data = await ctx.ds.metricFindQuery('expand(apps.backend.*)');
+
+        expect(postResourceMock).toHaveBeenCalledWith(
+          'metrics/expand',
+          expect.objectContaining({ query: 'apps.backend.*' })
+        );
+        expect(data).toEqual([
+          { text: 'apps.backend.backend_01', expandable: false },
+          { text: 'apps.backend.backend_02', expandable: false },
+        ]);
+      });
+
+      it('getTagsAutoComplete uses postResource in backend mode', async () => {
+        postResourceMock.mockResolvedValue(['server', 'region', 'env']);
+
+        const data = await ctx.ds.metricFindQuery('tags(server=backend_01)');
+
+        expect(postResourceMock).toHaveBeenCalledWith(
+          'tags/autoComplete/tags',
+          expect.objectContaining({ tagPrefix: undefined })
+        );
+        expect(data).toEqual([{ text: 'server' }, { text: 'region' }, { text: 'env' }]);
+      });
+
+      it('getTagValuesAutoComplete uses postResource in backend mode', async () => {
+        postResourceMock.mockResolvedValue(['backend_01', 'backend_02', 'backend_03']);
+
+        const data = await ctx.ds.metricFindQuery('tag_values(server)');
+
+        expect(postResourceMock).toHaveBeenCalledWith(
+          'tags/autoComplete/values',
+          expect.objectContaining({ tag: 'server' })
+        );
+        expect(data).toEqual([{ text: 'backend_01' }, { text: 'backend_02' }, { text: 'backend_03' }]);
+      });
     });
   });
 

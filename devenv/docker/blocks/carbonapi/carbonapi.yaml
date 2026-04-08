@@ -1,0 +1,32 @@
+# carbonapi configuration for Grafana devenv
+# See https://github.com/go-graphite/carbonapi/blob/main/cmd/carbonapi/carbonapi.example.yaml
+
+listen: ":8080"
+
+# Use the go-carbon backend (via carbonserver HTTP)
+# backends must be inside upstreams for upstream carbonapi (unlike bookingcom fork)
+upstreams:
+  graphite09compat: false
+  buckets: 10
+  concurrencyLimitPerServer: 0
+  keepAliveInterval: "30s"
+  maxIdleConnsPerHost: 100
+  timeouts:
+    find: "10s"
+    render: "10s"
+    connect: "200ms"
+  backends:
+    - "http://go-carbon:8080"
+
+# Caching — keep short for dev so tests see fresh data
+cache:
+  type: "mem"
+  size_mb: 100
+  defaultTimeoutSec: 10
+
+# Logging
+logger:
+  - logger: ""
+    file: "stderr"
+    level: "info"
+    encoding: "console"

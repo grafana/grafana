@@ -1,0 +1,28 @@
+services:
+  go-carbon:
+    build:
+      context: .
+      dockerfile: Dockerfile.go-carbon
+    # carbonserver (port 8080) is internal-only; no host port needed.
+    healthcheck:
+      # Verify the seed metric is visible — a bare find against an empty index
+      # returns HTTP 500, so we check for the known seed path specifically.
+      test: ["CMD-SHELL", "wget -qO- 'http://localhost:8080/metrics/find/?query=test.*&format=json' | grep -q integration"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  carbonapi:
+    build:
+      context: .
+      dockerfile: Dockerfile.carbonapi
+    ports:
+      - "8580:8580"
+    depends_on:
+      go-carbon:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8580/render?target=constantLine(1)&format=json&from=-1min"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
