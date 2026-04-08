@@ -6,7 +6,7 @@ import { config } from '@grafana/runtime';
 import { type LineStyle } from '@grafana/schema';
 import { IconButton, RadioButtonGroup, Select, Stack } from '@grafana/ui';
 
-type LineFill = 'solid' | 'dash' | 'dot' | 'auto';
+type LineFill = 'solid' | 'dash' | 'dot' | 'accessible';
 
 const dashOptions: Array<SelectableValue<string>> = [
   '10, 10', // default
@@ -59,8 +59,8 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
 
   if (config.featureToggles.enableColorblindSafePanelOptions) {
     lineFillOptions.push({
-      label: t('timeseries.line-style-editor.line-fill-options.label-auto', 'Auto'),
-      value: 'auto',
+      label: t('timeseries.line-style-editor.line-fill-options.label-accessible', 'Accessible'),
+      value: 'accessible',
     });
   }
   const options = useMemo(() => (value?.fill === 'dash' ? dashOptions : dotOptions), [value]);
@@ -80,7 +80,7 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
   }, [value, options]);
 
   // Only dash and dots use LineStyle.dash definitions
-  const hasDashPattern = value?.fill && value?.fill !== 'solid' && value?.fill !== 'auto';
+  const hasDashPattern = value?.fill && value?.fill !== 'solid' && value?.fill !== 'accessible';
 
   return (
     <Stack wrap={true} alignItems="flex-end">

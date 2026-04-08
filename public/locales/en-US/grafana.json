@@ -15388,7 +15388,7 @@
     },
     "line-style-editor": {
       "line-fill-options": {
-        "label-auto": "Auto",
+        "label-accessible": "Accessible",
         "label-dash": "Dash",
         "label-dots": "Dots",
         "label-solid": "Solid"
