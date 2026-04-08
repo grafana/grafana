@@ -22,6 +22,10 @@ import (
 type changeInfo struct {
 	GrafanaBaseURL string
 
+	// Attribution: identifies which provisioning repository posted this comment
+	RepositoryName  string
+	RepositoryTitle string
+
 	// Files we tried to read
 	Changes []fileChangeInfo
 
@@ -80,6 +84,8 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 	shouldRender := rendererAvailable && len(changes) == 1 && cfg.Spec.GitHub.GenerateDashboardPreviews
 	info := changeInfo{
 		GrafanaBaseURL:       e.urlProvider(ctx, cfg.Namespace),
+		RepositoryName:       cfg.Name,
+		RepositoryTitle:      cfg.Spec.Title,
 		MissingImageRenderer: !rendererAvailable,
 	}
 
