@@ -107,7 +107,7 @@ describe('Heatmap data', () => {
 
   // Regression: a heatmap rows frame where all cell values are null should not
   // crash prepareHeatmapData — it should return a valid HeatmapData with heatmap set.
-  it('handles heatmap rows frame with all-null values without throwing', () => {
+  it('handles all null', () => {
     const frame = toDataFrame({
       meta: { type: DataFrameType.HeatmapRows },
       fields: [
@@ -116,7 +116,30 @@ describe('Heatmap data', () => {
       ],
     });
 
-    expect(prepareHeatmapData({ ...tpl, frames: [frame] })).toMatchSnapshot();
+    const heatmap = prepareHeatmapData({ ...tpl, frames: [frame] });
+
+    expect(heatmap.heatmap?.fields[0]).toMatchObject({
+      name: 'xMax',
+      type: 'time',
+      values: [1000, 2000, 3000],
+      config: {},
+    });
+    expect(heatmap.heatmap?.fields[1]).toMatchObject({
+      name: 'y',
+      type: 'number',
+      config: {
+        unit: 'short',
+      },
+      values: [0, 0, 0],
+    });
+    expect(heatmap.heatmap?.fields[2]).toMatchObject({
+      name: 'Value',
+      type: 'number',
+      values: [null, null, null],
+    });
+    expect(heatmap.heatmap?.fields[2].state?.calcs).toMatchObject({
+      allIsNull: true,
+    });
   });
 
   // Regression: negative bucket values caused boundedMinMax to compute an
@@ -130,13 +153,18 @@ describe('Heatmap data', () => {
       ],
     });
 
-    expect(
-      prepareHeatmapData({
-        ...tpl,
-        palette: ['#000000', '#ffffff'],
-        frames: [frame],
-      })
-    ).toMatchSnapshot();
+    const heatmap = prepareHeatmapData({
+      ...tpl,
+      palette: ['#000000', '#ffffff'],
+      frames: [frame],
+    });
+
+    expect(heatmap.heatmapColors).toMatchObject({
+      maxValue: -10,
+      minValue: -30,
+      palette: ['#000000', '#ffffff'],
+      values: [0, 1, 1],
+    });
   });
 
   // Regression: exemplars attached to an annotation frame named 'exemplar' should
@@ -154,7 +182,7 @@ describe('Heatmap data', () => {
     const regularAnnotation = toDataFrame({
       name: 'annotation',
       fields: [
-        { name: 'time', type: FieldType.time, values: [1500] },
+        { name: 'time', type: FieldType.time, values: [1450] },
         { name: 'text', type: FieldType.string, values: ['deploy'] },
       ],
     });
@@ -168,13 +196,15 @@ describe('Heatmap data', () => {
       ],
     });
 
-    expect(
-      prepareHeatmapData({
-        ...tpl,
-        frames: [dataFrame],
-        annotations: [regularAnnotation, exemplarFrame],
-      })
-    ).toMatchSnapshot();
+    const heatmap = prepareHeatmapData({
+      ...tpl,
+      frames: [dataFrame],
+      annotations: [regularAnnotation, exemplarFrame],
+    });
+
+    expect(heatmap.exemplars?.length).toEqual(1);
+    expect(heatmap.exemplars?.fields[0].values).toEqual([1500]);
+    expect(heatmap.exemplars?.fields[1].values).toEqual([7]);
   });
 
   // Regression: when a HeatmapRows frame has only the time field and no numeric
@@ -197,12 +227,67 @@ describe('Heatmap data', () => {
       ],
     });
 
-    expect(
-      prepareHeatmapData({
-        ...tpl,
-        frames: [emptyFrame, validFrame],
-      })
-    ).toMatchSnapshot();
+    const heatmap = prepareHeatmapData({
+      ...tpl,
+      frames: [emptyFrame, validFrame],
+    });
+
+    expect(heatmap.heatmap).toMatchObject({
+      fields: [
+        {
+          config: {},
+          name: 'xMax',
+          type: 'time',
+          values: [1000, 2000, 3000],
+        },
+        {
+          config: {
+            unit: 'short',
+          },
+          name: 'y',
+          type: 'number',
+          values: [0, 0, 0],
+        },
+        {
+          config: {
+            unit: 'short',
+          },
+          name: 'Value',
+          state: {
+            calcs: {
+              allIsNull: false,
+              allIsZero: false,
+              count: 3,
+              delta: 10,
+              diff: 10,
+              diffperc: 200,
+              first: 5,
+              firstNotNull: 5,
+              last: 15,
+              lastNotNull: 15,
+              logmin: 5,
+              max: 15,
+              mean: 10,
+              min: 5,
+              nonNullCount: 3,
+              previousDeltaUp: true,
+              range: 10,
+              step: 5,
+              sum: 30,
+            },
+          },
+          type: 'number',
+          values: [5, 10, 15],
+        },
+      ],
+      length: 3,
+      meta: {
+        custom: {
+          yOrdinalDisplay: ['bucket'],
+        },
+        type: 'heatmap-cells',
+      },
+    });
   });
 
   describe('calculate mode', () => {
@@ -214,26 +299,61 @@ describe('Heatmap data', () => {
         ],
       });
 
-      expect(
-        prepareHeatmapData({
-          ...tpl,
-          frames: [frame],
-          timeRange: { from: dateTime(0), to: dateTime(50), raw: { from: '0', to: '50' } },
-          options: {
-            ...options,
-            calculate: true,
-            calculation: {
-              xBuckets: { mode: HeatmapCalculationMode.Size, value: '10' },
-              yBuckets: {
-                mode: HeatmapCalculationMode.Size,
-                value: '5',
-                scale: { type: ScaleDistribution.Linear },
-              },
+      const heatmap = prepareHeatmapData({
+        ...tpl,
+        frames: [frame],
+        timeRange: { from: dateTime(0), to: dateTime(50), raw: { from: '0', to: '50' } },
+        options: {
+          ...options,
+          calculate: true,
+          calculation: {
+            xBuckets: { mode: HeatmapCalculationMode.Size, value: '10' },
+            yBuckets: {
+              mode: HeatmapCalculationMode.Size,
+              value: '5',
+              scale: { type: ScaleDistribution.Linear },
             },
           },
-          palette: ['#000', '#fff'],
-        })
-      ).toMatchSnapshot();
+        },
+        palette: ['#000', '#fff'],
+      });
+
+      expect(heatmap).toMatchObject({
+        heatmap: {
+          fields: [
+            {
+              name: 'xMin',
+              values: [
+                0, 0, 0, 0, 0, 10, 10, 10, 10, 10, 20, 20, 20, 20, 20, 30, 30, 30, 30, 30, 40, 40, 40, 40, 40, 50, 50,
+                50, 50, 50,
+              ],
+            },
+            {
+              config: {
+                custom: {
+                  scaleDistribution: {
+                    type: 'linear',
+                  },
+                },
+              },
+              name: 'yMin',
+              values: [
+                10, 15, 20, 25, 30, 10, 15, 20, 25, 30, 10, 15, 20, 25, 30, 10, 15, 20, 25, 30, 10, 15, 20, 25, 30, 10,
+                15, 20, 25, 30,
+              ],
+            },
+            {
+              name: 'Count',
+              values: [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            },
+          ],
+          length: 30,
+          meta: {
+            type: 'heatmap-cells',
+          },
+          name: 'value',
+        },
+      });
     });
 
     it('applies replaceVariables to calculation bucket values', () => {
@@ -269,13 +389,30 @@ describe('Heatmap data', () => {
 
   describe('HeatmapCells format', () => {
     it('returns getDenseHeatmapData for dense HeatmapCells frame', () => {
-      expect(
-        prepareHeatmapData({
-          ...tpl,
-          frames: [createDenseHeatmapCellsFrame()],
-          palette: ['#000', '#888', '#fff'],
-        })
-      ).toMatchSnapshot();
+      const heatmap = prepareHeatmapData({
+        ...tpl,
+        frames: [createDenseHeatmapCellsFrame()],
+        palette: ['#000', '#888', '#fff'],
+      });
+      expect(heatmap).toMatchObject({
+        heatmap: {
+          fields: [
+            {
+              name: 'x',
+              values: [1000, 1000, 2000, 2000],
+            },
+            {
+              name: 'y',
+              values: [1, 2, 1, 2],
+            },
+            {
+              name: 'count',
+              values: [5, 10, 15, 20],
+            },
+          ],
+          length: 4,
+        },
+      });
     });
 
     it('returns getSparseHeatmapData for sparse HeatmapCells frame', () => {
