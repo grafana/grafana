@@ -557,10 +557,7 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
           {showAdaptiveTracesRestoredHint && (
             <Tooltip
               placement="top"
-              content={t(
-                'explore.span-bar-row.tooltip-adaptive-traces-restored',
-                'Recovered by Adaptive Traces.'
-              )}
+              content={t('explore.span-bar-row.tooltip-adaptive-traces-restored', 'Recovered by Adaptive Traces.')}
             >
               <span
                 className={cx(styles.adaptiveTracesRestoredIconWrap, 'icon-wrapper')}
