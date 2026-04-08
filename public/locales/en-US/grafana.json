@@ -15867,6 +15867,7 @@
           "group-by": "Group by"
         }
       },
+      "placeholder-calculations": "Select calculation(s)",
       "placeholder-ignored": "Ignored",
       "placeholder-select-stats": "Select stats"
     },
@@ -15884,7 +15885,10 @@
       "aria-label-operation": "Select operation",
       "aria-label-remove-rule": "Remove rule",
       "button-add-rule": "Add rule",
-      "placeholder": "Select operation"
+      "label-calculations": "Calculation(s)",
+      "label-keep-nested-field": "Keep nested field(s)",
+      "placeholder": "Select operation",
+      "tooltip-keep-nested-field": "When enabled, the raw field values are also retained in the nested sub-table alongside the aggregated column."
     },
     "group-to-nested-table-transformer-editor": {
       "description": {
