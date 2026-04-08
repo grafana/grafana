@@ -1,9 +1,9 @@
 import { screen, within } from '@testing-library/react';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings } from '@grafana/data';
 
 import { renderWithQueryEditorProvider } from '../testUtils';
-import { Transformation } from '../types';
+import { type Transformation } from '../types';
 
 import { BulkActionsBar } from './BulkActionsBar';
 
