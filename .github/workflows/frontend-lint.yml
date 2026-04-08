@@ -17,6 +17,7 @@ jobs:
     outputs:
       changed: ${{ steps.detect-changes.outputs.frontend }}
       prettier: ${{ steps.detect-changes.outputs.frontend == 'true' || steps.detect-changes.outputs.docs == 'true' }}
+      changed-frontend-packages: ${{ steps.detect-changes.outputs.frontend-packages }}
     steps:
       - uses: actions/checkout@v5
         with:

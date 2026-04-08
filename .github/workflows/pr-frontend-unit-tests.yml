@@ -18,6 +18,7 @@ jobs:
       contents: read
     outputs:
       changed: ${{ steps.detect-changes.outputs.frontend }}
+      devenv-changed: ${{ steps.detect-changes.outputs.devenv }}
     steps:
       - uses: actions/checkout@v5
         with:

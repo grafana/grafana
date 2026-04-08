@@ -668,7 +668,6 @@ jobs:
           output: artifacts-${{ matrix.name }}.txt
           verify: false
           build-id: ${{ github.run_id }}
-          cache-builders: true
       - name: Stage package artifacts for upload
         env:
           BUILD_FILE: ${{ steps.build.outputs.file }}
