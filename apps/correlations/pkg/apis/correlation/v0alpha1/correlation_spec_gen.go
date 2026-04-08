@@ -36,8 +36,9 @@ func (CorrelationDataSourceRef) OpenAPIModelName() string {
 // there was a deprecated field here called type, we will need to move that for conversion and provisioning
 // +k8s:openapi-gen=true
 type CorrelationConfigSpec struct {
-	Field           string                          `json:"field"`
-	Target          CorrelationTargetSpec           `json:"target"`
+	Field  string                `json:"field"`
+	Target CorrelationTargetSpec `json:"target"`
+	// null is for PATCH/edit when we want to clear the value, undefined is if it's not valid for the correlation type
 	TimeRange       *CorrelationTimeRangeSpec       `json:"timeRange,omitempty"`
 	Transformations []CorrelationTransformationSpec `json:"transformations,omitempty"`
 }

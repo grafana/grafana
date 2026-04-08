@@ -182,10 +182,13 @@ export const generatePartialEditSpec = (data: EditFormDTO, correlation: Correlat
   if (
     data.type === 'query' &&
     correlation.type === 'query' &&
-    data.config.timeRange !== undefined &&
     !isEqual(data.config.timeRange, correlation.config.timeRange)
   ) {
-    partialSpec.config.timeRange = { ...data.config.timeRange };
+    if (data.config.timeRange?.field !== undefined || data.config.timeRange?.range !== undefined) {
+      partialSpec.config.timeRange = { ...data.config.timeRange };
+    } else {
+      partialSpec.config.timeRange = null;
+    }
   }
   return partialSpec;
 };

@@ -55,6 +55,7 @@ export const ConfigureCorrelationTargetForm = () => {
   const {
     control,
     register,
+    setValue,
     formState: { errors },
   } = useFormContext<FormDTO>();
   const withDsUID = (fn: Function) => (ds: DataSourceInstanceSettings) => fn(ds.uid);
@@ -63,7 +64,8 @@ export const ConfigureCorrelationTargetForm = () => {
   const targetUID: string | undefined = useWatch({ name: 'targetUID' }) || targetUIDFromCorrelation;
   const correlationType: CorrelationType | undefined = useWatch({ name: 'type' }) || correlation?.type;
   const timeRange: CorrelationQueryTimeRange | undefined =
-    useWatch({ name: 'timeRange' }) || (correlation?.type === 'query' ? correlation?.config?.timeRange : undefined);
+    useWatch({ name: 'config.timeRange' }) ||
+    (correlation?.type === 'query' ? correlation?.config?.timeRange : undefined);
   const styles = useStyles2(getStyles);
   // this is just used by the UI to show/hide the timerange fields that will save with data and is not mapped to the saved object.
   const [enableTimeRange, setEnableTimeRange] = useState(
@@ -177,7 +179,14 @@ export const ConfigureCorrelationTargetForm = () => {
                     <InlineSwitch
                       id="timerange-enable"
                       value={enableTimeRange}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => setEnableTimeRange(e.target.checked)}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                        // if we uncheck enable, clear prior values
+                        if (!e.target.checked) {
+                          setValue('config.timeRange.field', undefined);
+                          setValue('config.timeRange.range', undefined);
+                        }
+                        setEnableTimeRange(e.target.checked);
+                      }}
                     />
                   </InlineField>
                 </InlineFieldRow>
