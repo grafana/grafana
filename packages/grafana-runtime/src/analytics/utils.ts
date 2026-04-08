@@ -22,6 +22,8 @@ export const reportMetaAnalytics = (payload: MetaAnalyticsEventPayload) => {
   });
 };
 
+const MAX_PAGE_URL_LENGTH = 2048;
+
 /**
  * Helper function to report pageview events to the {@link EchoSrv}.
  *
@@ -29,7 +31,8 @@ export const reportMetaAnalytics = (payload: MetaAnalyticsEventPayload) => {
  */
 export const reportPageview = () => {
   const location = locationService.getLocation();
-  const page = `${config.appSubUrl ?? ''}${location.pathname}${location.search}${location.hash}`;
+  const fullPage = `${config.appSubUrl ?? ''}${location.pathname}${location.search}${location.hash}`;
+  const page = fullPage.length > MAX_PAGE_URL_LENGTH ? fullPage.substring(0, MAX_PAGE_URL_LENGTH) : fullPage;
   getEchoSrv().addEvent<PageviewEchoEvent>({
     type: EchoEventType.Pageview,
     payload: {

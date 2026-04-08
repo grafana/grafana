@@ -4,6 +4,8 @@ import { contextSrv } from '../context_srv';
 
 import { echoLog } from './utils';
 
+const MAX_PAGE_URL_LENGTH = 2048;
+
 interface EchoConfig {
   // How often should metrics be reported
   flushInterval: number;
@@ -86,7 +88,10 @@ export class Echo implements EchoSrv {
       ts: new Date().getTime(),
       timeSinceNavigationStart: performance.now(),
       path: window.location.pathname,
-      url: window.location.href,
+      url:
+        window.location.href.length > MAX_PAGE_URL_LENGTH
+          ? window.location.href.substring(0, MAX_PAGE_URL_LENGTH)
+          : window.location.href,
     };
   };
 }
