@@ -223,7 +223,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const logsVolumeEventBus = eventBus.newScopedBus('logsvolume', { onlyLocal: false });
   const { register, unregister, outlineItems, updateItem } = useContentOutlineContext() ?? {};
   const toggleLegendRef = useRef<(name: string | undefined, mode: SeriesVisibilityChangeMode) => void>(() => {});
-  const topLogsRef = useRef<HTMLDivElement>(null);
   const [filterLevels, setFilterLevels] = useState<LogLevel[] | undefined>(undefined);
   const newLogsPanelEnabled = useBooleanFlagValue('newLogsPanel', true);
   const newLogContextEnabled = useBooleanFlagValue('newLogContext', false);
@@ -845,7 +844,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         loadingState={loading ? LoadingState.Loading : LoadingState.Done}
       >
         <div className={styles.stickyNavigation}>
-          <div ref={topLogsRef} />
           <LogsMetaRow
             meta={logsMeta || []}
             dedupStrategy={dedupStrategy}
