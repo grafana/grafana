@@ -1045,7 +1045,7 @@
       "spec": {
         "description": "Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled",
         "stage": "GA",
-        "codeowner": "@grafana/aws-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
       }
     },
@@ -1058,7 +1058,7 @@
       "spec": {
         "description": "Enables http proxy settings for aws datasources",
         "stage": "experimental",
-        "codeowner": "@grafana/aws-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -1071,7 +1071,7 @@
       "spec": {
         "description": "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
         "stage": "GA",
-        "codeowner": "@grafana/aws-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
       }
     },
@@ -1084,7 +1084,7 @@
       "spec": {
         "description": "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
         "stage": "GA",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -1097,7 +1097,7 @@
       "spec": {
         "description": "Enables user auth for Azure Monitor datasource only",
         "stage": "GA",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
       }
     },
@@ -1110,7 +1110,7 @@
       "spec": {
         "description": "Enables the logs builder mode for the Azure Monitor data source",
         "stage": "preview",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -1123,7 +1123,7 @@
       "spec": {
         "description": "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
         "stage": "GA",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
       }
     },
@@ -1137,7 +1137,7 @@
       "spec": {
         "description": "Enables the updated Azure Monitor resource picker",
         "stage": "GA",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "frontend": true,
         "expression": "true"
       }
@@ -1267,7 +1267,7 @@
       "spec": {
         "description": "Runs CloudWatch metrics queries as separate batches",
         "stage": "GA",
-        "codeowner": "@grafana/aws-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -1280,7 +1280,7 @@
       "spec": {
         "description": "Enables cross-account querying in CloudWatch datasources",
         "stage": "GA",
-        "codeowner": "@grafana/aws-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
       }
     },
@@ -1293,7 +1293,7 @@
       "spec": {
         "description": "Updates CloudWatch label parsing to be more accurate",
         "stage": "GA",
-        "codeowner": "@grafana/aws-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
       }
     },
@@ -1306,7 +1306,7 @@
       "spec": {
         "description": "Round up end time for metric queries to the next minute to avoid missing data",
         "stage": "GA",
-        "codeowner": "@grafana/aws-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
       }
     },
@@ -1916,7 +1916,7 @@
       "spec": {
         "description": "Enables cross cluster search in the Elasticsearch data source",
         "stage": "GA",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -1929,7 +1929,7 @@
       "spec": {
         "description": "Enables the ES|QL query editor in the Elasticsearch data source",
         "stage": "experimental",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -1942,7 +1942,7 @@
       "spec": {
         "description": "Enables less memory intensive Elasticsearch result parsing",
         "stage": "experimental",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -1955,7 +1955,7 @@
       "spec": {
         "description": "Enables the raw DSL query editor in the Elasticsearch data source",
         "stage": "experimental",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -2449,7 +2449,7 @@
       "spec": {
         "description": "Enables the Graphite data source full backend mode",
         "stage": "privatePreview",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -2577,7 +2577,7 @@
       "spec": {
         "description": "Query InfluxDB InfluxQL without the proxy",
         "stage": "GA",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "frontend": true,
         "expression": "true"
       }
@@ -2591,7 +2591,7 @@
       "spec": {
         "description": "Enables running InfluxDB Influxql queries in parallel",
         "stage": "privatePreview",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -2604,7 +2604,7 @@
       "spec": {
         "description": "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
         "stage": "experimental",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -3668,7 +3668,7 @@
       "spec": {
         "description": "use multi-tenant path for awsTempCredentials",
         "stage": "experimental",
-        "codeowner": "@grafana/aws-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -3697,7 +3697,7 @@
       "spec": {
         "description": "Enables new design for the Clickhouse data source configuration page",
         "stage": "privatePreview",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -3756,7 +3756,7 @@
       "spec": {
         "description": "Enables new design for the InfluxDB data source configuration page",
         "stage": "privatePreview",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -4250,7 +4250,7 @@
       "spec": {
         "description": "Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.",
         "stage": "deprecated",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
       }
     },
@@ -4284,7 +4284,7 @@
       "spec": {
         "description": "Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources",
         "stage": "deprecated",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "requiresRestart": true,
         "expression": "true"
       }
