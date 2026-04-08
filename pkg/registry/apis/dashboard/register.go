@@ -840,7 +840,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		if err != nil {
 			return err
 		}
-		storage[snapshots.StoragePath()] = snapshot.NewStorageWrapper(snapshotDualWrite)
+		storage[snapshots.StoragePath()] = snapshot.NewStorageWrapper(snapshotDualWrite, b.snapshotOptions)
 		b.snapshotStorage = snapshotDualWrite // store for use in routes (needs rest.Creater)
 		storage[snapshots.StoragePath("dashboard")], err = snapshot.NewDashboardREST(snapshotDualWrite)
 		if err != nil {

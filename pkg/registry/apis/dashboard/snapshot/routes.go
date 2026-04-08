@@ -298,7 +298,7 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						Key:       snapshot.Name,
 						DeleteKey: cmd.DeleteKey,
 						URL:       snapshotURL,
-						DeleteURL: setting.ToAbsUrl("api/snapshots-delete/" + cmd.DeleteKey),
+						DeleteURL: setting.ToAbsUrl("apis/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/" + namespace + "/" + prefix + "/delete/" + cmd.DeleteKey),
 					}
 
 					wrap.JSON(http.StatusOK, response)
