@@ -37,20 +37,12 @@ function collectAncestorVariables(sceneObject: SceneObject): VariableModel[] {
 
   // The variable being edited is excluded from its own set
   // this is to avoid self-reference in that variable's editor
-  const excludeVariable = sceneObject;
+  const excludedVariable = sceneObject;
   let current: SceneObject | undefined = sceneObject;
   while (current) {
     if (current.state.$variables instanceof SceneVariableSet) {
       const set = current.state.$variables;
-      let models = sceneVariablesSetToVariables(set, keepQueryOptions);
-
-      if (excludeVariable && set.state.variables.some((v) => v === excludeVariable)) {
-        const rawName = Reflect.get(excludeVariable.state, 'name');
-        const excludeName = typeof rawName === 'string' ? rawName : undefined;
-        if (excludeName !== undefined) {
-          models = models.filter((m) => m.name !== excludeName);
-        }
-      }
+      const models = sceneVariablesSetToVariables(set, keepQueryOptions, excludedVariable);
 
       for (const model of models) {
         if (!seenNames.has(model.name)) {

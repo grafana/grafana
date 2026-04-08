@@ -9,8 +9,14 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { getVariablesCompatibility } from './getVariablesCompatibility';
 
 jest.mock('../serialization/sceneVariablesSetToVariables', () => ({
-  sceneVariablesSetToVariables: (set: { state: { variables: Array<{ state: { name: string; type?: string } }> } }) => {
-    return set.state.variables.map((v) => ({ name: v.state.name, type: v.state.type ?? 'custom' }));
+  sceneVariablesSetToVariables: (
+    set: { state: { variables: Array<{ state: { name: string; type?: string } }> } },
+    _keepQueryOptions?: boolean,
+    excludeVariable?: unknown
+  ) => {
+    return set.state.variables
+      .filter((v) => v !== excludeVariable)
+      .map((v) => ({ name: v.state.name, type: v.state.type ?? 'custom' }));
   },
 }));
 
