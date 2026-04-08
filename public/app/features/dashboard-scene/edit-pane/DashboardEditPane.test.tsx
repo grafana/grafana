@@ -256,8 +256,9 @@ describe('DashboardEditPane', () => {
           }),
         ],
       });
-      const { editPane, variables } = buildTestSceneWithRepeat(layoutManager);
+      const { scene, editPane, variables } = buildTestSceneWithRepeat(layoutManager);
       editPane.enableSelection();
+      editPane.selectObject(scene);
 
       const [sourceRow] = layoutManager.state.rows;
       const [sourceTab] = (sourceRow.state.layout as TabsLayoutManager).state.tabs;
@@ -465,6 +466,7 @@ function buildTestSceneWithRepeat(layoutManager: DashboardLayoutManager) {
   return {
     variables,
     editPane: scene.state.editPane,
+    scene,
   };
 }
 
