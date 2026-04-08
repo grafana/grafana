@@ -117,7 +117,7 @@ jest.mock('uplot', () => {
   }));
 });
 
-describe('ExemplarsPlugin (integration, real EventsCanvas)', () => {
+describe('ExemplarsPlugin', () => {
   let hooks: Record<string, Array<(...args: unknown[]) => void>>;
   let config: UPlotConfigBuilder;
 
@@ -196,13 +196,13 @@ describe('ExemplarsPlugin (integration, real EventsCanvas)', () => {
     return result;
   };
 
-  it('renders nothing from EventsCanvas before uPlot init and draw hooks have run', () => {
+  it('renders nothing before uPlot hooks', () => {
     setUp(undefined, undefined, undefined, false);
 
     expect(screen.queryByTestId(selectors.components.UPlotChart.xyCanvas)).not.toBeInTheDocument();
   });
 
-  it('renders xy-canvas with bbox offset after hooks run', () => {
+  it('renders xy-canvas', () => {
     setUp();
 
     const canvas = screen.getByTestId(selectors.components.UPlotChart.xyCanvas);
