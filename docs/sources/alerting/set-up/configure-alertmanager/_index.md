@@ -52,7 +52,7 @@ refs:
 Data source-managed alerts have been deprecated in Grafana and can not be created in new stacks.
 New Grafana stacks will use Grafana-managed alerting (GMA) by default. Datasource-managed alerting (DMA) is not provisioned in new stacks. Existing stacks are not affected.
 
-Users will no longer be able to create alert rules in Mimir and Loki, and Cloud Alertmanager will not be available nor will Grafana provision the data source for it.
+This applies to the default Grafana Cloud data sources managed by Grafana Labs. Users will no longer be able to create alert rules in the default Mimir and Loki data sources, and Cloud Alertmanager will not be available nor will Grafana provision the data source for it. If you add your own Mimir, Loki, or Alertmanager data sources, you can continue to use data source-managed alerts.
 
 Cloud users can import DMA rules into GMA rules with the import tool. See the [import data source-managed alerts to Grafana-managed alerts documentation](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/alerting-migration/) for information on how to do this.
 
