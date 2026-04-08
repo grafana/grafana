@@ -1957,31 +1957,51 @@ func (h *ProvisioningTestHelper) GetRepositories() *apis.K8sResourceClient {
 	return h.Repositories
 }
 
-// SyncAndWaitWithSuccess triggers a full pull sync, asserts that it succeeds,
-// and waits for the repository's lastRef to be set. Use this as the initial
-// sync in tests that later trigger incremental syncs, so that lastRef is
-// guaranteed to be populated.
-func SyncAndWaitWithSuccess(t *testing.T, h SyncHelper, repoName string) {
-	t.Helper()
+// SyncOption configures the behaviour of SyncAndWait.
+type SyncOption func(*syncOpts)
 
-	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
-	})
-	requireJobSuccess(t, job)
-	waitForRepoLastRef(t, h.GetRepositories(), repoName)
+type syncOpts struct {
+	incremental   bool
+	expectedState provisioning.JobState
 }
 
-// SyncAndWaitSuccessfulIncremental triggers an incremental pull sync, waits for
-// it to complete, and asserts that the job succeeded.
-func SyncAndWaitSuccessfulIncremental(t *testing.T, h SyncHelper, repoName string) {
+// Incremental makes SyncAndWait trigger an incremental pull instead of a full one.
+func Incremental(o *syncOpts) { o.incremental = true }
+
+// ExpectWarning makes SyncAndWait assert the job finished with a warning state
+// instead of the default success state.
+func ExpectWarning(o *syncOpts) { o.expectedState = provisioning.JobStateWarning }
+
+// SyncAndWait triggers a pull sync, waits for it to complete, and asserts the
+// expected outcome. By default it performs a full sync and expects success.
+// Pass Incremental to use an incremental sync, and/or ExpectWarning to assert
+// the job finished with warnings.
+//
+// Full (non-incremental) syncs also wait for the repository's lastRef to be
+// set, which is required before an incremental sync can be triggered.
+func SyncAndWait(t *testing.T, h SyncHelper, repoName string, opts ...SyncOption) {
 	t.Helper()
+
+	o := syncOpts{expectedState: provisioning.JobStateSuccess}
+	for _, fn := range opts {
+		fn(&o)
+	}
 
 	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		Pull:   &provisioning.SyncJobOptions{Incremental: o.incremental},
 	})
-	requireJobSuccess(t, job)
+
+	switch o.expectedState {
+	case provisioning.JobStateWarning:
+		RequireJobWarning(t, job)
+	default:
+		requireJobSuccess(t, job)
+	}
+
+	if !o.incremental {
+		waitForRepoLastRef(t, h.GetRepositories(), repoName)
+	}
 }
 
 // RequireJobSuccess asserts that a completed job has state "success" and no errors.
@@ -2002,32 +2022,6 @@ func RequireJobWarning(t *testing.T, job *unstructured.Unstructured) {
 	require.Empty(t, lastErrors, "job %q has errors: %v", job.GetName(), lastErrors)
 	require.Equal(t, string(provisioning.JobStateWarning), lastState,
 		"job %q should have warning state", job.GetName())
-}
-
-// SyncAndWaitWithWarning triggers a full pull sync, asserts that it completes
-// with a warning state (no errors), and waits for lastRef. Use this for syncs
-// where a warning is the expected outcome (e.g. missing folder metadata).
-func SyncAndWaitWithWarning(t *testing.T, h SyncHelper, repoName string) {
-	t.Helper()
-
-	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
-	})
-	RequireJobWarning(t, job)
-	waitForRepoLastRef(t, h.GetRepositories(), repoName)
-}
-
-// SyncAndWaitIncrementalWithWarning triggers an incremental pull sync, waits
-// for it to complete, and asserts that the job finished with a warning state.
-func SyncAndWaitIncrementalWithWarning(t *testing.T, h SyncHelper, repoName string) {
-	t.Helper()
-
-	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{Incremental: true},
-	})
-	RequireJobWarning(t, job)
 }
 
 // GetFolderGeneration returns the current generation of the folder with the given UID.
