@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import * as React from 'react';
 
 import {
   type FieldConfigOptionsRegistry,
@@ -9,7 +8,6 @@ import {
   type VariableSuggestionsScope,
   type DynamicConfigValue,
   type ConfigOverrideRule,
-  type GrafanaTheme2,
   fieldMatchers,
   type FieldConfigSource,
   type DataFrame,

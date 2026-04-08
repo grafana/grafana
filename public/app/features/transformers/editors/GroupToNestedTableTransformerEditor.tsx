@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { useCallback, useId } from 'react';
-import { is } from 'zod/v4/locales';
 
 import {
   DataTransformerID,
