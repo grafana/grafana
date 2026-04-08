@@ -61,7 +61,7 @@ func (m *queryCacheConfigMigrator) MigrateQueryCacheConfigs(ctx context.Context,
 		for rows.Next() {
 			var row cacheConfigRow
 			if err = rows.Scan(&row.id, &row.dataSourceUID, &row.enabled, &row.ttlMS,
-				&row.ttlResourcesMS, &row.useDefaultTTL, &row.created, &row.updated,
+				&row.ttlResourcesMS, &row.useDefaultTTL, &row.created,
 				&row.pluginID, &row.orgID); err != nil {
 				_ = rows.Close()
 				return err
@@ -70,9 +70,13 @@ func (m *queryCacheConfigMigrator) MigrateQueryCacheConfigs(ctx context.Context,
 			n++
 
 			name := fmt.Sprintf("%s.%s", row.pluginID, row.dataSourceUID)
-			created, _ := time.Parse("2006-01-02 15:04:05", row.created)
+			created, err := time.Parse("2006-01-02 15:04:05", row.created)
+			if err != nil {
+				_ = rows.Close()
+				return fmt.Errorf("parse created timestamp %q: %w", row.created, err)
+			}
 			body, err := json.Marshal(queryCacheConfigObject{
-				typeMeta:   typeMeta{APIVersion: apiGroup + "/" + apiVersion, Kind: "QueryCacheConfig"},
+				TypeMeta:   metav1.TypeMeta{APIVersion: apiGroup + "/" + apiVersion, Kind: "QueryCacheConfig"},
 				ObjectMeta: objectMeta{Name: name, Namespace: opts.Namespace, CreationTimestamp: metav1.NewTime(created)},
 				Spec: queryCacheConfigSpec{
 					DatasourceUID:  row.dataSourceUID,
@@ -118,12 +122,6 @@ func (m *queryCacheConfigMigrator) MigrateQueryCacheConfigs(ctx context.Context,
 	return nil
 }
 
-// typeMeta mirrors metav1.TypeMeta for JSON marshaling without importing enterprise types.
-type typeMeta struct {
-	APIVersion string `json:"apiVersion"`
-	Kind       string `json:"kind"`
-}
-
 // objectMeta holds the minimal ObjectMeta fields needed for the migration.
 type objectMeta struct {
 	Name              string      `json:"name"`
@@ -131,7 +129,8 @@ type objectMeta struct {
 	CreationTimestamp metav1.Time `json:"creationTimestamp"`
 }
 
-// queryCacheConfigSpec mirrors the QueryCacheConfigSpec for JSON marshaling.
+// queryCacheConfigSpec mirrors querycaching/v1beta1.QueryCacheConfigSpec.
+// Keep in sync with pkg/extensions/apps/querycaching/pkg/apis/querycaching/v1beta1/querycacheconfig_spec_gen.go.
 type queryCacheConfigSpec struct {
 	DatasourceUID  string `json:"datasource_uid"`
 	PluginID       string `json:"plugin_id"`
@@ -143,9 +142,9 @@ type queryCacheConfigSpec struct {
 
 // queryCacheConfigObject is the full K8s-style object sent to unified storage.
 type queryCacheConfigObject struct {
-	typeMeta   `json:",inline"`
-	ObjectMeta objectMeta           `json:"metadata"`
-	Spec       queryCacheConfigSpec `json:"spec"`
+	metav1.TypeMeta `json:",inline"`
+	ObjectMeta      objectMeta           `json:"metadata"`
+	Spec            queryCacheConfigSpec `json:"spec"`
 }
 
 type cacheConfigRow struct {
@@ -156,7 +155,6 @@ type cacheConfigRow struct {
 	ttlResourcesMS int64
 	useDefaultTTL  int64
 	created        string
-	updated        string
 	pluginID       string
 	orgID          int64
 }

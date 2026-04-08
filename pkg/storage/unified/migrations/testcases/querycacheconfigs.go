@@ -44,7 +44,10 @@ func (tc *queryCacheConfigsTestCase) Resources() []schema.GroupVersionResource {
 	}
 }
 
-func (tc *queryCacheConfigsTestCase) AddLegacySQLMigrations(mg *migrator.Migrator) {}
+func (tc *queryCacheConfigsTestCase) AddLegacySQLMigrations(mg *migrator.Migrator) {
+	// data_source_cache is still created by enterprise migrations (caching.AddMigration).
+	// When data_source_cache is decommissioned after full migration, add caching.AddMigration(mg) here.
+}
 
 func (tc *queryCacheConfigsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
 	t.Helper()
