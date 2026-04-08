@@ -28,23 +28,23 @@ describe('LineStyleEditor', () => {
   });
 
   it.each([false, undefined])(
-    'does not show the Auto line fill option when enableColorblindSafePanelOptions is %s',
+    'does not show the Accessible line fill option when enableColorblindSafePanelOptions is %s',
     (flagValue) => {
       config.featureToggles.enableColorblindSafePanelOptions = flagValue;
 
       render(<LineStyleEditor value={{ fill: 'solid' }} onChange={jest.fn()} context={mockContext} item={mockItem} />);
 
-      expect(screen.queryByRole('radio', { name: 'Auto' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('radio', { name: 'Accessible' })).not.toBeInTheDocument();
       expect(screen.getAllByRole('radio')).toHaveLength(3);
     }
   );
 
-  it('shows the Auto line fill option when enableColorblindSafePanelOptions is true', () => {
+  it('shows the Accessible line fill option when enableColorblindSafePanelOptions is true', () => {
     config.featureToggles.enableColorblindSafePanelOptions = true;
 
     render(<LineStyleEditor value={{ fill: 'solid' }} onChange={jest.fn()} context={mockContext} item={mockItem} />);
 
-    expect(screen.getByRole('radio', { name: 'Auto' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Accessible' })).toBeInTheDocument();
     expect(screen.getAllByRole('radio')).toHaveLength(4);
   });
 });
