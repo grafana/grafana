@@ -17,6 +17,7 @@ import {
   InlineField,
   InlineFieldRow,
   selectableValueToComboboxOption,
+  useFieldMatchersOptions,
   useStyles2,
 } from '@grafana/ui';
 
@@ -56,14 +57,7 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     onChange({ ...options, applyTo: { id: currentMatcher.id, options: matcherOption } });
   };
 
-  const matchers = useMemo(
-    () =>
-      fieldMatchersUI
-        .selectOptions()
-        .options.map(selectableValueToComboboxOption)
-        .filter((v) => !!v),
-    []
-  );
+  const matchers = useFieldMatchersOptions(true);
 
   return (
     <>

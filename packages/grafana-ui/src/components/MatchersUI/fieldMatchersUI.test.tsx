@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, renderHook } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
@@ -11,6 +11,7 @@ import { FieldNamesMatcherEditor, getFieldNamesMatcherItem } from './FieldNamesM
 import { FieldTypeMatcherEditor, getFieldTypeMatcherItem } from './FieldTypeMatcherEditor';
 import { FieldValueMatcherEditor, getFieldValueMatcherItem } from './FieldValueMatcher';
 import { MatcherScopeSelector } from './MatcherScopeSelector';
+import { fieldMatchersUI, useFieldMatchersOptions } from './fieldMatchersUI';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -339,5 +340,49 @@ describe('FieldNamesMatcherEditor', () => {
     const input = screen.getByRole('textbox');
     expect(input).toHaveAttribute('readonly');
     expect(input).toHaveValue('Time, Value');
+  });
+});
+
+describe('useFieldMatchersOptions', () => {
+  const registeredCount = fieldMatchersUI.selectOptions().options.length;
+
+  it('returns ComboboxOptions when called with true', () => {
+    const { result } = renderHook(() => useFieldMatchersOptions(true));
+    expect(result.current).toHaveLength(registeredCount);
+    for (const option of result.current) {
+      expect(option).toHaveProperty('value');
+      expect(typeof option.value).toBe('string');
+    }
+  });
+
+  it('returns SelectableValues when called with false', () => {
+    const { result } = renderHook(() => useFieldMatchersOptions(false));
+    expect(result.current).toHaveLength(registeredCount);
+    for (const option of result.current) {
+      expect(option).toHaveProperty('value');
+    }
+  });
+
+  it('returns SelectableValues when called with no argument', () => {
+    const { result } = renderHook(() => useFieldMatchersOptions());
+    expect(result.current).toHaveLength(registeredCount);
+    for (const option of result.current) {
+      expect(option).toHaveProperty('value');
+    }
+  });
+
+  it('returns ComboboxOptions when called with a boolean variable set to true', () => {
+    const flag = true;
+    const { result } = renderHook(() => useFieldMatchersOptions(flag));
+    expect(result.current).toHaveLength(registeredCount);
+    expect(result.current[0]).toHaveProperty('value');
+  });
+
+  it('combobox options have the same values as selectable options', () => {
+    const { result: combobox } = renderHook(() => useFieldMatchersOptions(true));
+    const { result: selectable } = renderHook(() => useFieldMatchersOptions(false));
+    const comboboxValues = combobox.current.map((o) => o.value).sort();
+    const selectableValues = selectable.current.map((o) => o.value).sort();
+    expect(comboboxValues).toEqual(selectableValues);
   });
 });
