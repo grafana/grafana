@@ -4,7 +4,9 @@ import React from 'react';
 
 import {
   type AbsoluteTimeRange,
+  CoreApp,
   type EventBus,
+  EventBusSrv,
   type FieldConfigSource,
   LogSortOrderChangeEvent,
   LogsSortOrder,
@@ -21,6 +23,7 @@ import { LogsTable } from './LogsTable';
 import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 import { getPanelData } from './testsUtils';
+import { PanelContextProvider } from '@grafana/ui';
 
 const fieldConfig: FieldConfigSource = {
   defaults: {},
@@ -55,40 +58,52 @@ jest.mock('@grafana/runtime', () => ({
   })),
 }));
 
-const setUp = (props?: Partial<React.ComponentProps<typeof LogsTable>>, options?: Partial<Options>) => {
+const setUp = (
+  props?: Partial<React.ComponentProps<typeof LogsTable>>,
+  options?: Partial<Options>,
+  app = CoreApp.Dashboard
+) => {
   return render(
-    <LogsTable
-      data={getPanelData()}
-      id={0}
-      timeZone={'UTC'}
-      options={{
-        ...defaultOptions,
-        ...defaultTableOptions,
-        showHeader: true,
-        frameIndex: 0,
-        ...options,
+    <PanelContextProvider
+      value={{
+        app,
+        eventsScope: 'test',
+        eventBus: new EventBusSrv(),
       }}
-      transparent={false}
-      width={800}
-      height={600}
-      fieldConfig={fieldConfig}
-      renderCounter={0}
-      title={''}
-      eventBus={mockEventBus}
-      onOptionsChange={function (options: Options): void {
-        throw new Error('Function not implemented.');
-      }}
-      onFieldConfigChange={function (config: FieldConfigSource): void {
-        throw new Error('Function not implemented.');
-      }}
-      replaceVariables={function (value: string, scopedVars?: ScopedVars, format?: string | Function): string {
-        throw new Error('Function not implemented.');
-      }}
-      onChangeTimeRange={function (timeRange: AbsoluteTimeRange): void {
-        throw new Error('Function not implemented.');
-      }}
-      {...props}
-    />
+    >
+      <LogsTable
+        data={getPanelData()}
+        id={0}
+        timeZone={'UTC'}
+        options={{
+          ...defaultOptions,
+          ...defaultTableOptions,
+          showHeader: true,
+          frameIndex: 0,
+          ...options,
+        }}
+        transparent={false}
+        width={800}
+        height={600}
+        fieldConfig={fieldConfig}
+        renderCounter={0}
+        title={''}
+        eventBus={mockEventBus}
+        onOptionsChange={function (options: Options): void {
+          throw new Error('Function not implemented.');
+        }}
+        onFieldConfigChange={function (config: FieldConfigSource): void {
+          throw new Error('Function not implemented.');
+        }}
+        replaceVariables={function (value: string, scopedVars?: ScopedVars, format?: string | Function): string {
+          throw new Error('Function not implemented.');
+        }}
+        onChangeTimeRange={function (timeRange: AbsoluteTimeRange): void {
+          throw new Error('Function not implemented.');
+        }}
+        {...props}
+      />
+    </PanelContextProvider>
   );
 };
 
@@ -166,10 +181,10 @@ describe('LogsTable', () => {
   });
 
   describe('Wrap text', () => {
-    it('with logs controls enabled, when wrap text is set via options only, toggling calls onOptionsChange but not onFieldConfigChange', async () => {
+    it('not in Dashboards, with logs controls enabled, when wrap text is set via options only, toggling calls onOptionsChange but not onFieldConfigChange', async () => {
       const onOptionsChange = jest.fn();
       const onFieldConfigChange = jest.fn();
-      setUp({ onOptionsChange, onFieldConfigChange }, { showControls: true, wrapText: false });
+      setUp({ onOptionsChange, onFieldConfigChange }, { showControls: true, wrapText: false }, CoreApp.Explore);
       await waitFor(() => expect(screen.getByLabelText('Enable text wrapping')).toBeInTheDocument());
       expect(onOptionsChange).not.toHaveBeenCalled();
       expect(onFieldConfigChange).not.toHaveBeenCalled();
@@ -181,7 +196,7 @@ describe('LogsTable', () => {
       expect(onFieldConfigChange).not.toHaveBeenCalled();
     });
 
-    it('when wrap text is set via field config, toggling calls onFieldConfigChange but not onOptionsChange', async () => {
+    it('in Dashboards, when wrap text is set via field config, toggling calls onFieldConfigChange but not onOptionsChange', async () => {
       const onOptionsChange = jest.fn();
       const onFieldConfigChange = jest.fn();
       const fieldConfigWithWrapText: FieldConfigSource = {

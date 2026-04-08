@@ -11,7 +11,7 @@ import {
   type PanelData,
   type PanelProps,
 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
@@ -64,6 +64,7 @@ export const LogsTable = ({
 }: LogsTablePanelProps) => {
   const frameIndex = options.frameIndex <= data.series.length - 1 ? options.frameIndex : 0;
   const styles = useStyles2(getStyles, height, width);
+  const { app } = usePanelContext();
 
   const rawTableFrame: DataFrame | null = data.series[frameIndex] ? data.series[frameIndex] : null;
   const logsFrame: LogsFrame | null = useMemo(
@@ -166,7 +167,7 @@ export const LogsTable = ({
 
   const handleWrapTextClick = useCallback(() => {
     const nextWrapText = !wrapText;
-    if (fieldConfigProp.defaults.custom?.wrapText !== undefined) {
+    if (app === CoreApp.Dashboard || app === CoreApp.PanelEditor || app === CoreApp.PanelViewer) {
       const nextFieldConfig: FieldConfigSource = {
         ...fieldConfigProp,
         defaults: {
@@ -184,7 +185,7 @@ export const LogsTable = ({
         wrapText: nextWrapText,
       });
     }
-  }, [fieldConfigProp, onFieldConfigChange, onOptionsChange, options, wrapText]);
+  }, [app, fieldConfigProp, onFieldConfigChange, onOptionsChange, options, wrapText]);
 
   const fieldConfig = useMemo(
     () => ({

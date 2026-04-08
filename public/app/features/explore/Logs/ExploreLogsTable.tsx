@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import {
   type AbsoluteTimeRange,
+  CoreApp,
   type DataFrame,
   type EventBus,
   type FieldConfigSource,
@@ -122,6 +123,7 @@ export function ExploreLogsTable(props: {
         eventsScope: 'explore',
         eventBus: props.eventBus,
         onAddAdHocFilter: onCellFilterAdded,
+        app: CoreApp.Explore,
       }}
     >
       <LogsTable
