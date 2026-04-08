@@ -26,6 +26,7 @@ type LegacyIdentityStore interface {
 	ListUserTeams(ctx context.Context, ns claims.NamespaceInfo, query ListUserTeamsQuery) (*ListUserTeamsResult, error)
 	CreateUser(ctx context.Context, ns claims.NamespaceInfo, cmd CreateUserCommand) (*CreateUserResult, error)
 	UpdateUser(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateUserCommand) (*UpdateUserResult, error)
+	UpdateLastSeenAt(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateUserLastSeenAtCommand) error
 	DeleteUser(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteUserCommand) error
 
 	GetServiceAccountInternalID(ctx context.Context, ns claims.NamespaceInfo, query GetServiceAccountInternalIDQuery) (*GetServiceAccountInternalIDResult, error)

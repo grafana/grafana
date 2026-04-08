@@ -658,6 +658,10 @@ func (m *mockLegacyStore) UpdateUser(ctx context.Context, ns claims.NamespaceInf
 	return nil, nil
 }
 
+func (m *mockLegacyStore) UpdateLastSeenAt(ctx context.Context, ns claims.NamespaceInfo, cmd legacy.UpdateUserLastSeenAtCommand) error {
+	return nil
+}
+
 func (m *mockLegacyStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo, cmd legacy.DeleteUserCommand) error {
 	return nil
 }

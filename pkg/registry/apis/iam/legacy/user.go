@@ -859,3 +859,58 @@ func (s *legacySQLStore) UpdateUser(ctx context.Context, ns claims.NamespaceInfo
 
 	return &UpdateUserResult{User: updatedUser}, nil
 }
+
+type UpdateUserLastSeenAtCommand struct {
+	UID        string
+	LastSeenAt legacysql.DBTime
+}
+
+var sqlUpdateUserLastSeenAtTemplate = mustTemplate("update_user_last_seen_at.sql")
+
+func newUpdateUserLastSeenAt(sql *legacysql.LegacyDatabaseHelper, cmd *UpdateUserLastSeenAtCommand) updateUserLastSeenAtQuery {
+	return updateUserLastSeenAtQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		UserTable:   sql.Table("user"),
+		Command:     cmd,
+	}
+}
+
+type updateUserLastSeenAtQuery struct {
+	sqltemplate.SQLTemplate
+	UserTable string
+	Command   *UpdateUserLastSeenAtCommand
+}
+
+func (r updateUserLastSeenAtQuery) Validate() error {
+	if r.Command.UID == "" {
+		return fmt.Errorf("UID is required")
+	}
+	return nil
+}
+
+// UpdateLastSeenAt implements LegacyIdentityStore.
+func (s *legacySQLStore) UpdateLastSeenAt(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateUserLastSeenAtCommand) error {
+	sql, err := s.getDB(ctx)
+	if err != nil {
+		return err
+	}
+
+	req := newUpdateUserLastSeenAt(sql, &cmd)
+	q, err := sqltemplate.Execute(sqlUpdateUserLastSeenAtTemplate, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlUpdateUserLastSeenAtTemplate.Name(), err)
+	}
+
+	result, err := sql.DB.GetSqlxSession().Exec(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return apierrors.NewNotFound(iamv0.UserResourceInfo.GroupResource(), cmd.UID)
+	}
+	return nil
+}

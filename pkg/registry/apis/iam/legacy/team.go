@@ -160,6 +160,7 @@ func (s *legacySQLStore) GetTeamInternalID(
 type ListTeamQuery struct {
 	OrgID int64
 	UID   string
+	ID    int64
 
 	Pagination common.Pagination
 }

@@ -144,8 +144,15 @@ func TestIdentityQueries(t *testing.T) {
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
+
 	getTeamUIDByID := func(q *GetTeamUIDByIDQuery) sqltemplate.SQLTemplate {
 		v := newGetTeamUIDByID(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	updateUserLastSeenAt := func(cmd *UpdateUserLastSeenAtCommand) sqltemplate.SQLTemplate {
+		v := newUpdateUserLastSeenAt(nodb, cmd)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
@@ -155,6 +162,7 @@ func TestIdentityQueries(t *testing.T) {
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
+
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir:        "testdata",
 		SQLTemplatesFS: sqlTemplatesFS,
@@ -180,6 +188,13 @@ func TestIdentityQueries(t *testing.T) {
 							Limit:    1,
 							Continue: 2,
 						},
+					}),
+				},
+				{
+					Name: "teams_id",
+					Data: listTeams(&ListTeamQuery{
+						ID:         42,
+						Pagination: common.Pagination{Limit: 1},
 					}),
 				},
 			},
@@ -653,6 +668,15 @@ func TestIdentityQueries(t *testing.T) {
 						UserID:  123,
 						Role:    "Admin",
 						Updated: legacysql.NewDBTime(time.Date(2023, 1, 1, 14, 0, 0, 0, time.UTC)),
+					}),
+				},
+			},
+			sqlUpdateUserLastSeenAtTemplate: {
+				{
+					Name: "update_user_last_seen_at_basic",
+					Data: updateUserLastSeenAt(&UpdateUserLastSeenAtCommand{
+						UID:        "user-1",
+						LastSeenAt: legacysql.NewDBTime(time.Date(2023, 6, 15, 10, 30, 0, 0, time.UTC)),
 					}),
 				},
 			},
