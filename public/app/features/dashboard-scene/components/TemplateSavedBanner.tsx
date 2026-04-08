@@ -1,13 +1,25 @@
+import { useSearchParams } from 'react-router-dom-v5-compat';
+
 import { t, Trans } from '@grafana/i18n';
 import { Alert, TextLink } from '@grafana/ui';
 
 interface TemplateSavedBannerProps {
   templateName: string;
-  onDismiss: () => void;
-  onOpenGallery: () => void;
 }
 
-export function TemplateSavedBanner({ templateName, onDismiss, onOpenGallery }: TemplateSavedBannerProps) {
+export function TemplateSavedBanner({ templateName }: TemplateSavedBannerProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const onDismiss = () => {
+    searchParams.delete('templateSaved');
+    setSearchParams(searchParams);
+  };
+
+  const onOpenGallery = () => {
+    searchParams.set('templateDashboards', 'true');
+    setSearchParams(searchParams);
+  };
+
   return (
     <Alert
       title={t('dashboard-scene.template-saved-banner.title', 'Template created')}
