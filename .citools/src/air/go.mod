@@ -1,6 +1,6 @@
 module air
 
-go 1.25.8
+go 1.25.9
 
 tool github.com/air-verse/air
 
