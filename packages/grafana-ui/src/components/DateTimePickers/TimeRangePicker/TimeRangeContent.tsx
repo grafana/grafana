@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import { type FormEvent, useCallback, useEffect, useId, useState } from 'react';
-import * as React from 'react';
+import { type FormEvent, type KeyboardEvent, useCallback, useEffect, useId, useState } from 'react';
 
 import {
   type DateTime,
@@ -11,10 +10,10 @@ import {
   rangeUtil,
   type RawTimeRange,
   type TimeRange,
-  type TimeZone,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
+import { type TimeZone } from '@grafana/schema';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Button } from '../../Button/Button';
@@ -89,6 +88,13 @@ export const TimeRangeContent = (props: Props) => {
 
   const onApply = useCallback(() => {
     if (to.invalid || from.invalid) {
+      // TODO do we want this?
+      if (from.invalid) {
+        document.getElementById(fromFieldId)?.focus();
+      } else if (to.invalid) {
+        document.getElementById(toFieldId)?.focus();
+      }
+
       return;
     }
 
@@ -96,7 +102,17 @@ export const TimeRangeContent = (props: Props) => {
     const timeRange = rangeUtil.convertRawToRange(raw, timeZone, fiscalYearStartMonth, commonFormat);
 
     onApplyFromProps(timeRange);
-  }, [from.invalid, from.value, onApplyFromProps, timeZone, to.invalid, to.value, fiscalYearStartMonth]);
+  }, [
+    to.invalid,
+    to.value,
+    from.invalid,
+    from.value,
+    timeZone,
+    fiscalYearStartMonth,
+    onApplyFromProps,
+    fromFieldId,
+    toFieldId,
+  ]);
 
   const onChange = useCallback(
     (from: DateTime | string, to: DateTime | string) => {
@@ -107,7 +123,7 @@ export const TimeRangeContent = (props: Props) => {
     [timeZone]
   );
 
-  const submitOnEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const submitOnEnter = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
       onApply();
     }

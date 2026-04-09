@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { type HTMLAttributes } from 'react';
+import { useId, type HTMLAttributes } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -74,6 +74,7 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
     const useFieldset = children.type === RadioButtonGroup;
     const label = typeof labelProp === 'string' ? `${labelProp}${required ? ' *' : ''}` : labelProp;
     const inputId = htmlFor ?? getChildId(children);
+    const errorId = useId();
 
     let labelElement = label;
 
@@ -95,6 +96,11 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
     }
 
     const childProps = deleteUndefinedProps({ invalid, disabled, loading });
+    if (invalid) {
+      childProps['aria-invalid'] = true;
+      // this should probably use aria-errormessage, but seems like voiceover still doesn't support that...
+      childProps['aria-describedby'] = errorId;
+    }
     const Wrapper = useFieldset ? 'fieldset' : 'div';
     return (
       <Wrapper className={cx(styles.field, horizontal && styles.fieldHorizontal, className)} {...otherProps}>
@@ -107,7 +113,7 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
                 [styles.validationMessageHorizontalOverflow]: !!validationMessageHorizontalOverflow,
               })}
             >
-              <FieldValidationMessage>{error}</FieldValidationMessage>
+              <FieldValidationMessage id={errorId}>{error}</FieldValidationMessage>
             </div>
           )}
         </div>
@@ -118,7 +124,7 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
               [styles.validationMessageHorizontalOverflow]: !!validationMessageHorizontalOverflow,
             })}
           >
-            <FieldValidationMessage>{error}</FieldValidationMessage>
+            <FieldValidationMessage id={errorId}>{error}</FieldValidationMessage>
           </div>
         )}
       </Wrapper>
