@@ -1983,24 +1983,6 @@ func HasNoErrors() JobMatcher {
 	}
 }
 
-// Succeeded returns a matcher that asserts success with no errors.
-func Succeeded() JobMatcher {
-	return func(t *testing.T, job *unstructured.Unstructured) {
-		t.Helper()
-		HasNoErrors()(t, job)
-		HasState(provisioning.JobStateSuccess)(t, job)
-	}
-}
-
-// Warning returns a matcher that asserts warning state with no errors.
-func Warning() JobMatcher {
-	return func(t *testing.T, job *unstructured.Unstructured) {
-		t.Helper()
-		HasNoErrors()(t, job)
-		HasState(provisioning.JobStateWarning)(t, job)
-	}
-}
-
 // ---------------------------------------------------------------------------
 // SyncAndWait — configurable pull-sync helper.
 // ---------------------------------------------------------------------------
@@ -2009,29 +1991,48 @@ func Warning() JobMatcher {
 type SyncOption func(*syncOpts)
 
 type syncOpts struct {
+	repoName    string
 	incremental bool
 	matchers    []JobMatcher
+}
+
+// Repo sets the repository name for the sync.
+func Repo(name string) SyncOption {
+	return func(o *syncOpts) { o.repoName = name }
 }
 
 // Incremental makes SyncAndWait trigger an incremental pull instead of a full one.
 func Incremental(o *syncOpts) { o.incremental = true }
 
-// Expect adds job matchers that are applied to the completed job.
-// When no Expect option is provided, SyncAndWait defaults to Succeeded().
+// Expect adds arbitrary job matchers that are applied to the completed job.
+// For the common cases prefer Succeeded() or Warning() directly.
 func Expect(m ...JobMatcher) SyncOption {
 	return func(o *syncOpts) {
 		o.matchers = append(o.matchers, m...)
 	}
 }
 
+// Succeeded is a SyncOption that asserts the job succeeded with no errors.
+func Succeeded() SyncOption {
+	return Expect(HasNoErrors(), HasState(provisioning.JobStateSuccess))
+}
+
+// Warning is a SyncOption that asserts the job finished with warning state
+// and no errors.
+func Warning() SyncOption {
+	return Expect(HasNoErrors(), HasState(provisioning.JobStateWarning))
+}
+
 // SyncAndWait triggers a pull sync, waits for it to complete, and asserts the
-// expected outcome. By default it performs a full sync and expects success.
-// Pass Incremental to use an incremental sync, and/or Expect(Warning()) to
-// assert the job finished with warnings.
+// expected outcome using the provided matchers.
+//
+// Every call must include Repo() to identify the target repository and an
+// expectation such as Succeeded() or Warning(). Pass Incremental for an
+// incremental sync.
 //
 // Full (non-incremental) syncs also wait for the repository's lastRef to be
 // set, which is required before an incremental sync can be triggered.
-func SyncAndWait(t *testing.T, h SyncHelper, repoName string, opts ...SyncOption) {
+func SyncAndWait(t *testing.T, h SyncHelper, opts ...SyncOption) {
 	t.Helper()
 
 	o := syncOpts{}
@@ -2039,29 +2040,30 @@ func SyncAndWait(t *testing.T, h SyncHelper, repoName string, opts ...SyncOption
 		fn(&o)
 	}
 
-	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+	require.NotEmpty(t, o.repoName, "SyncAndWait requires Repo()")
+	require.NotEmpty(t, o.matchers, "SyncAndWait requires an expectation such as Succeeded() or Warning()")
+
+	job := h.TriggerJobAndWaitForComplete(t, o.repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{Incremental: o.incremental},
 	})
 
-	if len(o.matchers) == 0 {
-		o.matchers = []JobMatcher{Succeeded()}
-	}
 	for _, m := range o.matchers {
 		m(t, job)
 	}
 
 	if !o.incremental {
-		waitForRepoLastRef(t, h.GetRepositories(), repoName)
+		waitForRepoLastRef(t, h.GetRepositories(), o.repoName)
 	}
 }
 
 // RequireJobWarning asserts that a completed job has state "warning" and no errors.
-// Prefer Warning() matcher for use with SyncAndWait; this standalone function
-// is kept for callers that assert on a job obtained outside SyncAndWait.
+// Prefer Warning() for use with SyncAndWait; this standalone function is kept
+// for callers that assert on a job obtained outside SyncAndWait.
 func RequireJobWarning(t *testing.T, job *unstructured.Unstructured) {
 	t.Helper()
-	Warning()(t, job)
+	HasNoErrors()(t, job)
+	HasState(provisioning.JobStateWarning)(t, job)
 }
 
 // GetFolderGeneration returns the current generation of the folder with the given UID.
