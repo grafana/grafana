@@ -4,20 +4,22 @@ Organized by wizard step. No `data-testid` attributes exist in the wizard -- use
 
 ## Step 1: Connect (authType)
 
-### Auth Type Radio Buttons
+GitHub is the only provider with an auth-mode picker. GitLab and Bitbucket render their token-flow fields directly on step 1.
+
+### Auth Type Radio Buttons (GitHub only)
 
 | Element          | Selector Strategy                            | Details                                                |
 | ---------------- | -------------------------------------------- | ------------------------------------------------------ |
 | GitHub App radio | RadioButtonGroup option, value: `github-app` | Label: "Connect with GitHub App". Selected by default. |
 | PAT radio        | RadioButtonGroup option, value: `pat`        | Label: "Connect with Personal Access Token"            |
 
-### PAT Fields
+### Token Flow Fields
 
-| Element        | ID               | Placeholder                           | Notes                                                      |
-| -------------- | ---------------- | ------------------------------------- | ---------------------------------------------------------- |
-| Token          | `token`          | `ghp_xxxxxxxxxxxxxxxxxxxx`            | `SecretInput` component -- has show/hide toggle            |
-| Repository URL | `repository-url` | `https://github.com/owner/repository` | Plain `Input`                                              |
-| Token User     | `tokenUser`      | `username`                            | Not shown for GitHub PAT flow (only Bitbucket/generic Git) |
+| Element        | ID               | Placeholder(s)                                                                                                         | Notes                                                                       |
+| -------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Token          | `token`          | `ghp_xxxxxxxxxxxxxxxxxxxx` (GitHub), `glpat-xxxxxxxxxxxxxxxxxxx` (GitLab), `ATATTxxxxxxxxxxxxxxxx` (Bitbucket)         | `SecretInput`. Token label changes by provider.                             |
+| Repository URL | `repository-url` | `https://github.com/owner/repository`, `https://gitlab.com/owner/repository`, `https://bitbucket.org/owner/repository` | Plain `Input`. Placeholder follows the selected provider.                   |
+| Token User     | `tokenUser`      | `username`                                                                                                             | Required for Bitbucket, optional for generic Git, hidden for GitHub/GitLab. |
 
 ### GitHub App Mode Selection
 
@@ -132,14 +134,14 @@ Cards are `<article>` or clickable `<div>` elements. Click the card itself to se
 
 ### Fields
 
-| Element            | Selector Strategy | Placeholder / Default         | Notes                                                   |
-| ------------------ | ----------------- | ----------------------------- | ------------------------------------------------------- |
-| Sync Interval      | Number input      | `60`                          | Seconds. Git-based providers only.                      |
-| Read Only          | Checkbox          | unchecked                     |                                                         |
-| PR Workflow        | Checkbox          | unchecked                     | GitHub label: "Enable pull request option when saving"  |
-| Push to Branch     | Checkbox          | unchecked                     |                                                         |
-| Dashboard Previews | Checkbox          | unchecked                     | GitHub-only, conditional on image renderer availability |
-| Webhook URL        | Text input        | `https://grafana.example.com` | GitHub-only                                             |
+| Element            | Selector Strategy | Placeholder / Default         | Notes                                                                                                                     |
+| ------------------ | ----------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Sync Interval      | Number input      | `60`                          | Seconds. Git-based providers only.                                                                                        |
+| Read Only          | Checkbox          | unchecked                     |                                                                                                                           |
+| PR Workflow        | Checkbox          | unchecked                     | GitHub/Bitbucket label: `Enable pull request option when saving`; GitLab label: `Enable merge request option when saving` |
+| Push to Branch     | Checkbox          | unchecked                     |                                                                                                                           |
+| Dashboard Previews | Checkbox          | unchecked                     | GitHub-only, conditional on image renderer availability                                                                   |
+| Webhook URL        | Text input        | `https://grafana.example.com` | GitHub-only                                                                                                               |
 
 ### Buttons
 
@@ -166,7 +168,7 @@ Note: `visibleStepIndex` is 0-based, but displayed as 1-based. If the synchroniz
 
 | Context                     | Alert Title                                                       |
 | --------------------------- | ----------------------------------------------------------------- |
-| No GitHub connections       | "No GitHub connections found"                                     |
+| No GitHub App connections   | "No GitHub connections found"                                     |
 | Connection load failure     | "Failed to load connections"                                      |
 | Connection creation failure | "Failed to create connection" (or field-specific errors from API) |
 | Token validation failure    | Inline field error below the token input                          |
@@ -235,13 +237,13 @@ Note: `visibleStepIndex` is 0-based, but displayed as 1-based. If the synchroniz
 
 ## PR Workflow Banners
 
-| Element                      | Context                                                    |
-| ---------------------------- | ---------------------------------------------------------- |
-| "Pull request created" alert | Shown in folder creation form after branch workflow        |
-| Preview banner with PR link  | Shown on dashboard preview page after branch workflow save |
-| "View branch" button         | Links to branch in remote repo                             |
-| "Compare branch" button      | Links to branch comparison in remote repo                  |
-| "Open pull request" button   | Links to PR creation URL                                   |
+| Element                                   | Context                                                                                   |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Branch-created alert                      | Uses provider name in text, e.g. `A new resource has been created in a branch in GitLab.` |
+| Preview banner with PR link               | Shown on dashboard preview pages after branch workflow saves                              |
+| "View branch" button                      | Links to branch in remote repo                                                            |
+| "Compare branch" button                   | Links to branch comparison in remote repo                                                 |
+| "Open/View pull request in {repo}" button | Uses current product wording for all providers, including GitLab and Bitbucket            |
 
 ## Browse View Selection
 

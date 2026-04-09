@@ -1,10 +1,10 @@
 # Git Sync Shared Operations
 
-Shared wizard steps and post-wizard operations for both PAT and GitHub App flows. Each flow skill handles Step 1 (Connect) independently; Steps 2–5 and all post-wizard operations are identical.
+Shared wizard steps and post-wizard operations for GitHub PAT, GitHub App, GitLab token, and Bitbucket token flows. Each flow skill handles Step 1 (Connect) independently; Steps 2–5 and all post-wizard operations are shared.
 
 ## Overview
 
-**Entry URL:** `http://localhost:3000/admin/provisioning/connect/github`
+**Entry URL:** Use the provider-specific route from the calling skill, for example `http://localhost:3000/admin/provisioning/connect/github`, `.../connect/gitlab`, or `.../connect/bitbucket`.
 
 The wizard has 5 steps. The Next button text always shows the _next step's name_ (e.g., "Configure repository", "Choose what to synchronize"), except on the last step where it says "Finish".
 
@@ -49,7 +49,7 @@ The step loads async. `wait_for` the cards to appear (the loading text is "Loadi
 2. Optionally configure:
    - **Sync Interval** (number input, placeholder: `60`, seconds)
    - **Read only** (checkbox)
-   - **Enable pull request option when saving** (checkbox, GitHub-specific label)
+   - **Branch workflow option** (checkbox) — GitHub/Bitbucket label: `Enable pull request option when saving`; GitLab label: `Enable merge request option when saving`
    - **Push to configured branch** (checkbox)
    - **Generate Dashboard Previews** (checkbox, GitHub-only, conditional on image renderer)
    - **Webhook URL** (text input, GitHub-only, placeholder: `https://grafana.example.com`)
@@ -63,17 +63,17 @@ The step loads async. `wait_for` the cards to appear (the loading text is "Loadi
 When setting up the repo in Step 5, to test all save workflows later, enable both workflow options:
 
 1. `take_snapshot` to see the settings checkboxes.
-2. Check **"Enable pull request option when saving"** (`prWorkflow`) -- enables the `branch` workflow (PR creation).
+2. Check the provider's branch workflow checkbox (`prWorkflow`) — `Enable pull request option when saving` for GitHub/Bitbucket, `Enable merge request option when saving` for GitLab. This enables the `branch` workflow.
 3. Check **"Enable push to synchronized branch"** (`enablePushToConfiguredBranch`) -- enables the `write` workflow (direct commit).
 
-This configures `workflows: ['write', 'branch']` on the repository, enabling both direct push and PR creation in save dialogs. Without both enabled, only one workflow is available.
+This configures `workflows: ['write', 'branch']` on the repository, enabling both direct push and branch-based review flows in save dialogs. Without both enabled, only one workflow is available.
 
 ## Post-Wizard: Dashboard & Folder Operations
 
 After the wizard completes and the repo is synced, the following operations can be tested against provisioned resources. All save/create dialogs use the same branch combobox to determine the workflow:
 
 - **Configured branch** (e.g., `agent-test`) → `write` workflow → direct commit to the synced branch.
-- **New/different branch** → `branch` workflow → creates a PR.
+- **New/different branch** → `branch` workflow → opens a branch-based review flow. Provider text may say pull request or merge request, but the branch workflow mechanics are the same.
 - Before clicking Create/Save/Move/Delete, take a fresh snapshot and confirm `provisioned-ref` shows the intended full value exactly. For `write` workflow it should still be `agent-test`; for `branch` workflow it must match the full new branch name. If the value is truncated or changed unexpectedly, clear it and re-enter it before submitting.
 
 ### Creating a New Folder
@@ -89,7 +89,7 @@ After the wizard completes and the repo is synced, the following operations can 
 5. `click` the "Create" button.
 6. **Wait:** Button shows "Creating...". `wait_for` navigation to `/dashboards/f/{newFolderUid}/`.
 
-**For PR workflow variant:** In step 3, click the branch combobox "Clear value" button, `click` the combobox, `type_text` the full new branch name (e.g., `folder-test-branch`), then `press_key` `Enter` as a separate action. Take a fresh snapshot and verify the committed combobox value matches the full branch name exactly. Workflow auto-switches to `branch`. After clicking Create, the intended success state is a PR success banner with an `Open pull request in GitHub` button. If local/dev instead only shows `A new resource has been created in a branch in GitHub.` plus branch/base links and the URL gains `new_pull_request_url`, use those as diagnostic cues and record the missing button/text as a mismatch.
+**For branch workflow variant:** In step 3, click the branch combobox "Clear value" button, `click` the combobox, `type_text` the full new branch name (e.g., `folder-test-branch`), then `press_key` `Enter` as a separate action. Take a fresh snapshot and verify the committed combobox value matches the full branch name exactly. Workflow auto-switches to `branch`. After clicking Create, the intended success state is a branch-created banner plus pull-request controls for the current provider (for example `Open pull request in GitHub` or `Open pull request in GitLab`). If local/dev instead only shows `A new resource has been created in a branch in {repoType}.` plus branch/base links and the URL gains `new_pull_request_url`, use those as diagnostic cues and record any missing button/text as a mismatch.
 
 ### Creating a New Dashboard
 
@@ -107,7 +107,7 @@ After the wizard completes and the repo is synced, the following operations can 
 6. Folder path (id: `folder-path`) and Filename (id: `dashboard-filename`) are auto-populated. Adjust if needed.
 7. Optionally `fill` Comment (id: `provisioned-resource-form-comment`).
 8. `click` the "Save" button.
-9. **Wait:** Button shows "Saving...". For `write` workflow, a success notification appears and the page navigates to the new dashboard URL. For `branch` workflow, the page navigates to a preview page and the PR banner should include `Open pull request in GitHub`. If local/dev instead only shows the generic `A new resource has been created in a branch in GitHub.` banner plus branch/base links, record that mismatch while still using preview-page navigation as diagnostic evidence that the drawer submitted.
+9. **Wait:** Button shows "Saving...". For `write` workflow, a success notification appears and the page navigates to the new dashboard URL. For `branch` workflow, the page navigates to a preview page and the preview banner should include `Open pull request in {repoType}` or `View pull request in {repoType}`. If local/dev instead only shows the generic `A new resource has been created in a branch in {repoType}.` banner plus branch/base links, record that mismatch while still using preview-page navigation as diagnostic evidence that the drawer submitted.
 
 ### Modifying an Existing Dashboard
 
@@ -122,7 +122,7 @@ After the wizard completes and the repo is synced, the following operations can 
 3. Path (id: `dashboard-path`) is shown read-only.
 4. Optionally `fill` Comment (id: `provisioned-resource-form-comment`).
 5. `click` the "Save" button.
-6. **Wait:** Same as new dashboard -- notification for `write` workflow; for `branch` workflow, a preview page plus an `Open pull request in GitHub` button is the intended result. If only the generic GitHub branch-created banner appears, record that as a mismatch and use the preview navigation only as a diagnostic cue.
+6. **Wait:** Same as new dashboard -- notification for `write` workflow; for `branch` workflow, a preview page plus `Open pull request in {repoType}` or `View pull request in {repoType}` is the intended result. If only the generic branch-created banner appears, record that as a mismatch and use the preview navigation only as a diagnostic cue.
 
 **Tabs:** The drawer has "Details" (default) and "Changes" tabs. `click` the "Changes" tab to verify the diff before saving.
 
@@ -291,42 +291,26 @@ curl -X DELETE -u admin:admin http://localhost:3000/api/admin/users/$EDITOR_ID
 
 Create a repository and sync it without using the wizard.
 
+For provider-specific create payloads, use the API reference in `../git-sync-shared/api.md` under **Create Repository via API**. GitHub PAT resource-ops runs still use the GitHub payload there; GitLab and Bitbucket token flows use the provider-specific variants.
+
 ### Step 1: Create the Repository
+
+Pick the payload for your provider and POST it to the repositories endpoint:
 
 ```bash
 curl -s -X POST -u admin:admin \
   -H 'Content-Type: application/json' \
   http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories \
-  -d '{
-  "apiVersion": "provisioning.grafana.app/v0alpha1",
-  "kind": "Repository",
-  "metadata": {
-    "name": "REPO_NAME"
-  },
-  "spec": {
-    "title": "REPO_TITLE",
-    "description": "API-created repo for testing",
-    "type": "github",
-    "github": {
-      "url": "$GIT_SYNC_TEST_PAT_REPO_URL",
-      "branch": "agent-test",
-      "generateDashboardPreviews": false,
-      "path": "PATH"
-    },
-    "sync": {
-      "enabled": true,
-      "target": "folder",
-      "intervalSeconds": 60
-    },
-    "workflows": ["write", "branch"]
-  },
-  "secure": {
-    "token": { "create": "$GIT_SYNC_TEST_PAT" }
-  }
-}'
+  -d @repository.json
 ```
 
-Replace `REPO_NAME`, `REPO_TITLE`, and `PATH` with desired values.
+Required payload differences:
+
+| Provider        | `spec.type` | Config block | Token env var                   | Extra field                                        |
+| --------------- | ----------- | ------------ | ------------------------------- | -------------------------------------------------- |
+| GitHub PAT      | `github`    | `github`     | `GIT_SYNC_TEST_PAT`             | `generateDashboardPreviews` optional               |
+| GitLab token    | `gitlab`    | `gitlab`     | `GIT_SYNC_TEST_GITLAB_TOKEN`    | none                                               |
+| Bitbucket token | `bitbucket` | `bitbucket`  | `GIT_SYNC_TEST_BITBUCKET_TOKEN` | `tokenUser: "$GIT_SYNC_TEST_BITBUCKET_TOKEN_USER"` |
 
 ### Step 2: Trigger Initial Sync
 
@@ -360,5 +344,5 @@ Browse to the provisioned folder in Grafana to confirm resources are visible, or
 ```bash
 curl -s -u admin:admin \
   http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories | \
-  jq '.items[] | {name: .metadata.name, type: .spec.type, url: .spec.github.url}'
+  jq '.items[] | {name: .metadata.name, type: .spec.type, url: (.spec.github.url // .spec.gitlab.url // .spec.bitbucket.url // .spec.git.url)}'
 ```
