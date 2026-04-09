@@ -123,24 +123,24 @@ describe('QuickAdd', () => {
       config.featureToggles.dashboardTemplates = true;
     });
 
-    it('shows a `Dashboard from template` button when the feature flag is enabled', async () => {
+    it('shows a `From template` button when the feature flag is enabled', async () => {
       setup();
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
-      expect(screen.getByRole('menuitem', { name: 'Dashboard from template' })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'From template' })).toBeInTheDocument();
     });
 
     it('does not show a `Dashboard from template` button when the feature flag is disabled', async () => {
       config.featureToggles.dashboardTemplates = false;
       setup();
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
-      expect(screen.queryByRole('menuitem', { name: 'Dashboard from template' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'From template' })).not.toBeInTheDocument();
     });
 
     it('redirects the user to the dashboard from template page when the button is clicked', async () => {
       setup();
 
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
-      const link = screen.getByRole('menuitem', { name: 'Dashboard from template' });
+      const link = screen.getByRole('menuitem', { name: 'From template' });
       expect(link).toHaveAttribute('href', '/dashboards?templateDashboards=true&source=quickAdd');
     });
   });
