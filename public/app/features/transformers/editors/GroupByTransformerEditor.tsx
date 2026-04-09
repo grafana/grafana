@@ -84,7 +84,7 @@ export const GroupByTransformerEditorBase = ({ options, onChange, fieldNames }: 
   );
 };
 
-const GroupByTransformerEditor = DataFieldsErrorWrapper(GroupByTransformerEditorBase, {
+export const GroupByTransformerEditor = DataFieldsErrorWrapper(GroupByTransformerEditorBase, {
   withBaseFieldNames: true,
 });
 

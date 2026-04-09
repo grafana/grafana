@@ -21,7 +21,7 @@ import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 import darkImage from '../images/dark/formatString.svg';
 import lightImage from '../images/light/formatString.svg';
 
-function FormatStringTransfomerEditor({
+export function FormatStringTransfomerEditor({
   input,
   options,
   onChange,
