@@ -2112,6 +2112,17 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		require.NotEmpty(t, continueToken, "continue token should not be empty when limit is set")
 	})
 
+	t.Run("should return all groups when group limit exceeds total groups", func(t *testing.T) {
+		groupLimit := int64(totalGroups + rand.IntN(10) + 1) // totalGroups + random number to ensure it exceeds totalGroups
+		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			Limit:               groupLimit,
+		})
+		require.NoError(t, err)
+		require.Len(t, result, numRules, "should return all rules when group limit exceeds total groups")
+		require.Empty(t, continueToken, "continue token should be empty when all rules are fetched")
+	})
+
 	t.Run("pagination should all for continuation", func(t *testing.T) {
 		groupLimit := int64(2) // fixed group limit for this test
 		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
