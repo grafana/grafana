@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, Field, Space, Text } from '@grafana/ui';
+import { getStatusFromError } from 'app/core/utils/errors';
 
 import { FolderPicker } from '../../../core/components/Select/FolderPicker';
 import { deletedFoldersState } from '../../search/service/deletedFoldersState';
@@ -22,17 +23,17 @@ function getAutoTarget(
   originCandidate: string | undefined,
   shouldValidateOrigin: boolean,
   isOriginValidationFetching: boolean,
-  isOriginValidationSuccess: boolean
+  originValidationStatus?: number
 ) {
   if (originCandidate === '') {
     return '';
   }
 
-  if (shouldValidateOrigin && isOriginValidationSuccess && !isOriginValidationFetching) {
-    return originCandidate;
+  if (!shouldValidateOrigin || isOriginValidationFetching) {
+    return undefined;
   }
 
-  return undefined;
+  return originValidationStatus === 404 ? undefined : originCandidate;
 }
 
 export const RestoreModal = ({
@@ -46,7 +47,7 @@ export const RestoreModal = ({
   const numberOfDashboards = selectedDashboards.length;
   const originWasDeleted = deletedFoldersState.isDeleted(originCandidate);
   const shouldValidateOrigin = originCandidate !== undefined && originCandidate !== '' && !originWasDeleted;
-  const { isFetching: isOriginValidationFetching, isSuccess: isOriginValidationSuccess } = useGetFolderQuery(
+  const { error: originValidationError, isFetching: isOriginValidationFetching } = useGetFolderQuery(
     shouldValidateOrigin
       ? {
           folderUID: originCandidate,
@@ -56,11 +57,12 @@ export const RestoreModal = ({
       : skipToken,
     { refetchOnMountOrArgChange: true }
   );
+  const originValidationStatus = getStatusFromError(originValidationError);
   const autoTarget = getAutoTarget(
     originCandidate,
     shouldValidateOrigin,
     isOriginValidationFetching,
-    isOriginValidationSuccess
+    originValidationStatus
   );
   const restoreTarget = manualTarget === null ? autoTarget : manualTarget;
 

@@ -100,7 +100,7 @@ describe('RestoreModal', () => {
     expect(screen.getByRole('button', { name: 'Restore' })).toBeDisabled();
   });
 
-  it('leaves the picker empty when the refetch fails even if stale data exists', () => {
+  it('leaves the picker empty when the refetch returns 404 even if stale data exists', () => {
     folderQueryState = buildFolderQueryState({
       data: { uid: 'folder-1' },
       error: { status: 404, data: { message: 'Folder not found' } },
@@ -113,6 +113,20 @@ describe('RestoreModal', () => {
 
     expect(screen.getByTestId('folder-picker-value')).toHaveTextContent('undefined');
     expect(screen.getByRole('button', { name: 'Restore' })).toBeDisabled();
+  });
+
+  it('keeps the original folder selected when validation returns 403', () => {
+    folderQueryState = buildFolderQueryState({
+      error: { status: 403, data: { message: 'Forbidden' } },
+      isError: true,
+      isSuccess: false,
+      isFetching: false,
+    });
+
+    renderRestoreModal({ originCandidate: 'folder-1' });
+
+    expect(screen.getByTestId('folder-picker-value')).toHaveTextContent('folder-1');
+    expect(screen.getByRole('button', { name: 'Restore' })).toBeEnabled();
   });
 
   it('does not preselect while a refetch is in progress, even if stale data exists', () => {
