@@ -174,9 +174,7 @@ func (f *fileChangeInfo) StatusIcon() string {
 }
 
 // TruncatedError returns a sanitized, length-limited error suitable for a
-// GitHub comment. Newlines are collapsed so the text stays on a single
-// markdown table row, and the message is capped at maxErrorLength characters
-// to stay well within GitHub's 65 536-character comment limit.
+// pullrequest comment.
 func (f *fileChangeInfo) TruncatedError() string {
 	msg := strings.ReplaceAll(f.Error, "\n", " ")
 	msg = strings.ReplaceAll(msg, "\r", "")
