@@ -322,7 +322,7 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 			}
 		} else {
 			// Make sure the collection RV is above our last written event
-			_, err = b.rvManager.ExecWithRV(ctx, key, func(tx db.Tx) (string, error) {
+			_, err = b.rvManager.ExecWithRV(ctx, key, func(_ context.Context, _ db.Tx) (string, error) {
 				return "", nil
 			})
 			if err != nil {

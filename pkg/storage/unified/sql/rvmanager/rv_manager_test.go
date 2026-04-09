@@ -1,6 +1,7 @@
 package rvmanager
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -57,8 +58,8 @@ func TestResourceVersionManager(t *testing.T) {
 		})
 		dbp.SQLMock.ExpectCommit()
 
-		rv, err := manager.ExecWithRV(ctx, key, func(tx db.Tx) (string, error) {
-			_, err := tx.ExecContext(ctx, "select 1")
+		rv, err := manager.ExecWithRV(ctx, key, func(txnCtx context.Context, tx db.Tx) (string, error) {
+			_, err := tx.ExecContext(txnCtx, "select 1")
 			return "1234", err
 		})
 		require.NoError(t, err)

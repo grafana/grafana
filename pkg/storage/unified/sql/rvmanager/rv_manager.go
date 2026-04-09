@@ -93,7 +93,11 @@ type writeOp struct {
 // WriteEventFunc is a function that writes a resource to the database
 // It returns the GUID of the created resource
 // The GUID is used to update the resource version for the resource in the same transaction.
-type WriteEventFunc func(tx db.Tx) (guid string, err error)
+//
+// ctx is the context associated with the batch transaction (from WithTx). Callers must use
+// this ctx for ExecContext/QueryContext on tx — not the original request context — so that
+// cancellation of the request cannot abort the transaction mid-batch while leaving tx stale.
+type WriteEventFunc func(ctx context.Context, tx db.Tx) (guid string, err error)
 
 type ResourceManagerOptions struct {
 	Dialect          sqltemplate.Dialect // The dialect to use for the database
@@ -265,7 +269,7 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 			rvmExecBatchPhaseDuration.WithLabelValues(group, resource, "write_ops").Observe(v)
 		}))
 		for i := range batch {
-			guid, err := batch[i].fn(tx)
+			guid, err := batch[i].fn(ctx, tx)
 			if err != nil {
 				span.AddEvent("batch_operation_failed", trace.WithAttributes(
 					attribute.Int("operation_index", i),
