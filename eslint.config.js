@@ -585,6 +585,7 @@ module.exports = [
       '@grafana/no-gf-form': 'error',
       '@grafana/no-config-apps': 'error',
       '@grafana/no-config-panels': 'error',
+      '@grafana/no-legacy-feature-toggles': 'error',
     },
   },
   {
@@ -597,6 +598,7 @@ module.exports = [
     rules: {
       '@grafana/no-config-apps': 'error',
       '@grafana/no-config-panels': 'error',
+      '@grafana/no-legacy-feature-toggles': 'error',
     },
     plugins: {
       '@grafana': grafanaPlugin,
@@ -607,6 +609,7 @@ module.exports = [
     rules: {
       '@grafana/no-config-apps': 'error',
       '@grafana/no-config-panels': 'error',
+      '@grafana/no-legacy-feature-toggles': 'error',
     },
   },
   {

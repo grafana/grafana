@@ -48,5 +48,12 @@ module.exports = createNoRestrictedSyntax(
     selector: 'MemberExpression[object.name="config"][property.name="panels"]',
     message:
       'Usage of config.panels is not allowed. Use the function getPanelPluginMetas or usePanelPluginMetas from @grafana/runtime/internal instead',
+  },
+  {
+    name: 'no-legacy-feature-toggles',
+    selector: 'MemberExpression[object.name="config"][property.name="featureToggles"]',
+    message:
+      'Usage of config.featureToggles is deprecated. Use the new OpenFeature-based generated hooks and feature flags instead for new flags.',
+    docUrl: 'https://github.com/grafana/grafana/blob/main/contribute/feature-toggles.md',
   }
 );
