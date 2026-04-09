@@ -30,7 +30,7 @@ export const QuickAdd = ({}: Props) => {
       if (testDataSources.length > 0) {
         const templateItem: NavModelItem = {
           id: 'browse-template-dashboard',
-          text: t('navigation.quick-add.new-template-dashboard-button', 'Dashboard from template'),
+          text: t('navigation.quick-add.new-template-dashboard-button', 'From template'),
           url: '/dashboards?templateDashboards=true&source=quickAdd',
           onClick: () => {
             isAnalyticsFrameworkEnabled
