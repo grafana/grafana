@@ -43,6 +43,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleBindingCreate(obj runtime.
 			<-b.zTickets
 			// Record operation duration and count
 			HooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
+			HooksOperationCounter.WithLabelValues(resourceType, operation, status).Inc()
 		}()
 
 		b.logger.Debug("writing role binding to zanzana",
@@ -120,6 +121,7 @@ func (b *IdentityAccessManagementAPIBuilder) AfterRoleBindingDelete(obj runtime.
 			<-b.zTickets
 			// Record operation duration and count
 			HooksDurationHistogram.WithLabelValues(resourceType, operation, status).Observe(time.Since(start).Seconds())
+			HooksOperationCounter.WithLabelValues(resourceType, operation, status).Inc()
 		}()
 
 		b.logger.Debug("deleting role binding from zanzana",
@@ -218,6 +220,7 @@ func (b *IdentityAccessManagementAPIBuilder) BeginRoleBindingUpdate(ctx context.
 				<-b.zTickets
 				// Record operation duration and count
 				HooksDurationHistogram.WithLabelValues(resourceType, "update", status).Observe(time.Since(start).Seconds())
+				HooksOperationCounter.WithLabelValues(resourceType, "update", status).Inc()
 			}()
 
 			b.logger.Debug("updating role binding in zanzana",
