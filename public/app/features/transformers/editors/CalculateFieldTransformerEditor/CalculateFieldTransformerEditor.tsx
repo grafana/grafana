@@ -10,7 +10,7 @@ import {
   getFieldDisplayName,
   type KeyValue,
   type SelectableValue,
-  standardTransformers,
+  standardTransformersRegistry,
   type TransformerRegistryItem,
   type TransformerUIProps,
   TransformerCategory,
@@ -87,7 +87,7 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
     const ctx = { interpolate: (v: string) => v };
     const subscription = of(input)
       .pipe(
-        standardTransformers.ensureColumnsTransformer.operator(null, ctx),
+        standardTransformersRegistry.get('ensureColumns').transformation.operator(null, ctx),
         extractAllNames(),
         getVariableNames(),
         extractNamesAndSelected(configuredOptions || [])
@@ -264,7 +264,7 @@ export const getCalculateFieldTransformRegistryItem: () => TransformerRegistryIt
   () => ({
     id: DataTransformerID.calculateField,
     editor: CalculateFieldTransformerEditor,
-    transformation: standardTransformers.calculateFieldTransformer,
+    transformation: standardTransformersRegistry.get('calculateField').transformation,
     name: t(
       'transformers.get-calculate-field-transform-registry-item.name.add-field-from-calculation',
       'Add field from calculation'

@@ -8,7 +8,7 @@ import {
   FieldType,
   getDisplayProcessor,
   type PanelData,
-  standardTransformers,
+  standardTransformersRegistry,
   preProcessPanelData,
   DataLinkConfigOrigin,
   getRawDisplayProcessor,
@@ -186,8 +186,8 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
   // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
   // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
   const transformer = hasOnlyTimeseries
-    ? of(data.tableFrames).pipe(standardTransformers.joinByFieldTransformer.operator({}, transformContext))
-    : of(data.tableFrames).pipe(standardTransformers.mergeTransformer.operator({}, transformContext));
+    ? of(data.tableFrames).pipe(standardTransformersRegistry.get('joinByField').transformation.operator({}, transformContext))
+    : of(data.tableFrames).pipe(standardTransformersRegistry.get('merge').transformation.operator({}, transformContext));
 
   return transformer.pipe(
     map((frames) => {
@@ -239,8 +239,8 @@ export const decorateWithRawPrometheusResult = (data: ExplorePanelData): Observa
   // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
   // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
   const transformer = hasOnlyTimeseries
-    ? of(tableFrames).pipe(standardTransformers.joinByFieldTransformer.operator({}, transformContext))
-    : of(tableFrames).pipe(standardTransformers.mergeTransformer.operator({}, transformContext));
+    ? of(tableFrames).pipe(standardTransformersRegistry.get('joinByField').transformation.operator({}, transformContext))
+    : of(tableFrames).pipe(standardTransformersRegistry.get('merge').transformation.operator({}, transformContext));
 
   return transformer.pipe(
     map((frames) => {
