@@ -31,6 +31,7 @@ spec:
           required:
           - spec
         DatasourceUID:
+          pattern: ^[a-zA-Z0-9_-]+$
           type: string
         Expression:
           additionalProperties: false
@@ -100,8 +101,12 @@ spec:
           - state
           type: object
         PromDuration:
+          not:
+            pattern: hmuµn
+          pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
           type: string
         PromDurationWMillis:
+          pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$
           type: string
         RelativeTimeRange:
           additionalProperties: false
@@ -176,6 +181,7 @@ spec:
               properties:
                 dashboardUID:
                   minLength: 1
+                  pattern: ^[a-zA-Z0-9_-]+$
                   type: string
                 panelID:
                   exclusiveMinimum: true
@@ -234,6 +240,7 @@ spec:
       plural: RecordingRules
       schemas:
         DatasourceUID:
+          pattern: ^[a-zA-Z0-9_-]+$
           type: string
         Expression:
           additionalProperties: false
@@ -303,8 +310,12 @@ spec:
           - state
           type: object
         PromDuration:
+          not:
+            pattern: hmuµn
+          pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
           type: string
         PromDurationWMillis:
+          pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$
           type: string
         RecordingRule:
           properties:

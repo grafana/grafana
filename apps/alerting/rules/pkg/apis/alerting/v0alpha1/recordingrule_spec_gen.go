@@ -2,6 +2,10 @@
 
 package v0alpha1
 
+import (
+	time "time"
+)
+
 // +k8s:openapi-gen=true
 type RecordingRuleIntervalTrigger struct {
 	Interval RecordingRulePromDuration `json:"interval"`
@@ -18,7 +22,7 @@ func (RecordingRuleIntervalTrigger) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type RecordingRulePromDuration string
+type RecordingRulePromDuration time.Duration
 
 // +k8s:openapi-gen=true
 type RecordingRuleTemplateString string
@@ -75,7 +79,7 @@ func (RecordingRuleRelativeTimeRange) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type RecordingRulePromDurationWMillis string
+type RecordingRulePromDurationWMillis time.Duration
 
 // +k8s:openapi-gen=true
 type RecordingRuleDatasourceUID string

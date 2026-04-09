@@ -2,6 +2,10 @@
 
 package v0alpha1
 
+import (
+	time "time"
+)
+
 // +k8s:openapi-gen=true
 type AlertRuleIntervalTrigger struct {
 	Interval AlertRulePromDuration `json:"interval"`
@@ -18,7 +22,7 @@ func (AlertRuleIntervalTrigger) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type AlertRulePromDuration string
+type AlertRulePromDuration time.Duration
 
 // +k8s:openapi-gen=true
 type AlertRuleTemplateString string
@@ -79,7 +83,7 @@ func (AlertRuleRelativeTimeRange) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type AlertRulePromDurationWMillis string
+type AlertRulePromDurationWMillis time.Duration
 
 // +k8s:openapi-gen=true
 type AlertRuleDatasourceUID string

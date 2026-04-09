@@ -132,9 +132,9 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleIntervalTrigger(ref common.Refer
 				Properties: map[string]spec.Schema{
 					"interval": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
 						},
 					},
 				},
@@ -200,16 +200,16 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleRelativeTimeRange(ref common.Ref
 				Properties: map[string]spec.Schema{
 					"from": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
 						},
 					},
 					"to": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
 						},
 					},
 				},
@@ -412,20 +412,20 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleV0alpha1SpecNotificationSettings
 					},
 					"groupWait": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Type:   []string{"integer"},
+							Format: "int64",
 						},
 					},
 					"groupInterval": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Type:   []string{"integer"},
+							Format: "int64",
 						},
 					},
 					"repeatInterval": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Type:   []string{"integer"},
+							Format: "int64",
 						},
 					},
 					"muteTimeIntervals": {
@@ -644,9 +644,9 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleIntervalTrigger(ref common.R
 				Properties: map[string]spec.Schema{
 					"interval": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
 						},
 					},
 				},
@@ -712,16 +712,16 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleRelativeTimeRange(ref common
 				Properties: map[string]spec.Schema{
 					"from": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
 						},
 					},
 					"to": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
 						},
 					},
 				},
