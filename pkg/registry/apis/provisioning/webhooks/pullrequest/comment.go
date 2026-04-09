@@ -117,7 +117,7 @@ NOTE: To enable dashboard previews in pull requests, refer to the [image renderi
 const commentTemplateFooter = `
 
 ---
-_Posted by [Grafana]({{.GrafanaBaseURL}}){{- if .RepositoryTitle}} · Repository: **{{.RepositoryTitle}}** (` + "`" + `{{.RepositoryName}}` + "`" + `){{- end}}_`
+_Posted by [{{.GrafanaHost}}]({{.GrafanaBaseURL}}){{- if .RepositoryTitle}} · Repository: **{{.RepositoryTitle}}** (` + "`" + `{{.RepositoryName}}` + "`" + `){{- end}}_`
 
 // TODO: does this have some value?
 func (f *fileChangeInfo) Kind() string {

@@ -10,4 +10,4 @@ Grafana spotted some changes.
 and 5 more files.
 
 ---
-_Posted by [Grafana](http://host/) · Repository: **My Repo** (`my-repo`)_
+_Posted by [host](http://host/) · Repository: **My Repo** (`my-repo`)_

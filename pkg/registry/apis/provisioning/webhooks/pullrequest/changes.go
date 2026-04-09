@@ -36,6 +36,14 @@ type changeInfo struct {
 	MissingImageRenderer bool
 }
 
+func (c changeInfo) GrafanaHost() string {
+	u, err := url.Parse(c.GrafanaBaseURL)
+	if err != nil || u.Host == "" {
+		return c.GrafanaBaseURL
+	}
+	return u.Host
+}
+
 type fileChangeInfo struct {
 	Change repository.VersionedFileChange
 	Error  string

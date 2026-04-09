@@ -7,4 +7,4 @@ Grafana spotted some changes to your dashboard.
 See the [preview](http://grafana/admin/preview) of file.json.
 
 ---
-_Posted by [Grafana](http://host/) · Repository: **My Repo** (`my-repo`)_
+_Posted by [host](http://host/) · Repository: **My Repo** (`my-repo`)_
