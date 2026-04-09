@@ -369,29 +369,32 @@ You can also use switch variables in panel titles and other dashboard elements:
 <!-- {{< docs/public-preview product="public-preview-feature" featureFlag="its-feature-flag" >}} -->
 
 <!-- TODO: Think about how to refer to this in the context of panel/dashboard groupings -->
-<!-- TODO: Figure out headings for this section; follow established pattern or no? -->
 
-The _Filter and Group by_ variable is one of the most complex and flexible variable options available.
+<!-- vale Grafana.Spelling = NO -->
+The _Filter and Group by_ variable (formerly the **ad hoc variable**) is one of the most complex and flexible variable options available.
 Instead of creating a variable for each dimension by which you want to filter, it automatically creates variables (key/value pairs) for all the dimensions returned by your data source query.
 This allows you to quickly apply filters dashboard-wide.
-The group by function allows you to then group data by label?
+The group by function allows you to then group data by label.
+<!-- vale Grafana.Spelling = YES -->
 
-Filter and group by variables let you add label/value filters that are automatically added to all metric queries that use the specified data source.
+Filter and group by variables let can add label/value filters that are automatically added to all metric queries that use the specified data source.
 Unlike other variables, you don't use these filters in queries.
 Instead, you use them to write filters for existing queries.
 
-The following data sources support filter and group by:
+The following data sources support filters. Data sources with an asterisk also support group by:
 
-- Dashboard - Use this special data source to [apply filters to data from unsupported data sources](#filter-any-data-using-the-dashboard-data-source).
-- Prometheus
-- Loki
+{{< column-list >}}
+
+- Prometheus*
+- Loki*
 - InfluxDB
 - Elasticsearch
-- OpenSearch
+- OpenSearch.
+- Special Dashboard data source - Use this to [apply filters to data from unsupported data sources](#filter-any-data-using-the-dashboard-data-source).
 
-<!-- ### Add filter and group by -->
+{{< /column-list >}}
 
-To create a filter and grouping, follow these steps:
+To add a filter and group by variable, follow these steps:
 
 1. Click **Edit** in the top-right corner of the dashboard.
 1. Click the **Add new element** icon (blue plus sign).
