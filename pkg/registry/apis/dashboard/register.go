@@ -56,7 +56,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
-	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -110,7 +109,6 @@ type DashboardsAPIBuilder struct {
 	resourcePermissionsSvc   *dynamic.NamespaceableResourceInterface
 	scheme                   *runtime.Scheme
 	search                   *SearchHandler
-	dashStore                dashboards.Store
 	QuotaService             quota.Service
 	ProvisioningService      provisioning.ProvisioningService
 	minRefreshInterval       string
@@ -137,14 +135,12 @@ func RegisterAPIService(
 	accessControl accesscontrol.AccessControl,
 	accessClient authlib.AccessClient,
 	provisioning provisioning.ProvisioningService,
-	dashStore dashboards.Store,
 	reg prometheus.Registerer,
 	sql db.DB,
 	tracing *tracing.TracingService,
 	unified resource.ResourceClient,
 	dual dualwrite.Service,
 	quotaService quota.Service,
-	libraryPanelSvc librarypanels.Service,
 	restConfigProvider apiserver.RestConfigProvider,
 	userService user.Service,
 	libraryPanels libraryelements.Service,
@@ -180,7 +176,6 @@ func RegisterAPIService(
 		accessClient:             accessClient,
 		unified:                  unified,
 		search:                   NewSearchHandler(tracing, unified, features),
-		dashStore:                dashStore,
 		QuotaService:             quotaService,
 		ProvisioningService:      provisioning,
 		minRefreshInterval:       cfg.MinRefreshInterval,
@@ -193,7 +188,7 @@ func RegisterAPIService(
 		snapshotOptions:          snapshotOptions,
 		namespacer:               namespacer,
 		dashboardActivityChannel: dashboardActivityChannel,
-		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, dashboardPermissionsSvc, accessControl, features),
+		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, provisioning, accessControl),
 	}
 
 	migration.RegisterMetrics(reg)
@@ -416,8 +411,11 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 		return fmt.Errorf("error getting requester: %w", err)
 	}
 
-	// Validate folder existence if specified
+	// Validate folder access permissions and existence if specified
 	if !a.IsDryRun() && accessor.GetFolder() != "" {
+		if err := b.verifyFolderAccessPermissions(ctx, id, accessor.GetFolder()); err != nil {
+			return err
+		}
 		if _, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
 			return err
 		}
@@ -1105,17 +1103,23 @@ func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context
 	for _, folderId := range folderIds {
 		resp, err := folderClient.Get(ctx, folderId, ns.OrgID, metav1.GetOptions{}, "access")
 		if err != nil {
-			return dashboards.ErrFolderAccessDenied
+			if apierrors.IsNotFound(err) {
+				return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), folderId)
+			}
+			if apierrors.IsForbidden(err) {
+				return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, dashboards.ErrFolderAccessDenied)
+			}
+			return err
 		}
 		var accessInfo folders.FolderAccessInfo
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(resp.Object, &accessInfo)
 		if err != nil {
 			logging.FromContext(ctx).Error("Failed to convert folder access response", "error", err)
-			return dashboards.ErrFolderAccessDenied
+			return err
 		}
 
 		if !accessInfo.CanEdit {
-			return dashboards.ErrFolderAccessDenied
+			return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderId, dashboards.ErrFolderAccessDenied)
 		}
 	}
 

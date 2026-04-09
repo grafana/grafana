@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/infra/features
 
-go 1.25.8
+go 1.25.9
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0
@@ -16,7 +16,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fatih/color v1.18.0 // indirect
-	github.com/go-jose/go-jose/v4 v4.1.3 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/grafana/authlib/types v0.0.0-20260316143530-e1d123886039 // indirect

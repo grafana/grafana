@@ -15,7 +15,7 @@ ARG JS_SRC=js-builder
 # By using FROM instructions we can delegate dependency updates to dependabot
 FROM alpine:3.23.3 AS alpine-base
 FROM ubuntu:24.04 AS ubuntu-base
-FROM golang:1.26.1-alpine AS go-builder-base
+FROM golang:1.25.9-alpine AS go-builder-base
 FROM --platform=${JS_PLATFORM} node:24-alpine AS js-builder-base
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
@@ -205,7 +205,7 @@ COPY ${RUN_SH} /run.sh
 USER "$GF_UID"
 ENTRYPOINT [ "/run.sh" ]
 
-# Ubuntu final stage
+# Ubuntu final stage — use --target=final-ubuntu to select this variant
 FROM ubuntu-base AS final-ubuntu
 
 LABEL maintainer="Grafana Labs <hello@grafana.com>"
@@ -267,3 +267,7 @@ COPY ${RUN_SH} /run.sh
 
 USER "$GF_UID"
 ENTRYPOINT [ "/run.sh" ]
+
+# Default stage — alpine. Builds without --target produce an alpine image.
+# Use --target=final-ubuntu to build the ubuntu variant instead.
+FROM final-alpine

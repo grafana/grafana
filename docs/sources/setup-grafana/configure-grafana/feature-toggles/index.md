@@ -32,15 +32,18 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `renderAuthJWT`                       | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                          | Yes                |
 | `awsDatasourcesTempCredentials`       | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                                             | Yes                |
 | `provisioning`                        | Enables Git Sync and as-code provisioning for Grafana resources                                                                                               | Yes                |
+| `provisioningFolderMetadata`          | Allow setting folder metadata for provisioned folders                                                                                                         | Yes                |
 | `awsAsyncQueryCaching`                | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled                            | Yes                |
 | `dashgpt`                             | Enable AI powered features in dashboards                                                                                                                      | Yes                |
 | `cloudWatchBatchQueries`              | Runs CloudWatch metrics queries as separate batches                                                                                                           |                    |
 | `annotationPermissionUpdate`          | Change the way annotation permissions work by scoping them to folders and dashboards.                                                                         | Yes                |
 | `dashboardScene`                      | Enables dashboard rendering using scenes for all roles                                                                                                        | Yes                |
+| `dashboardNewLayouts`                 | Enables new dashboard layouts                                                                                                                                 | Yes                |
 | `dashboardDefaultLayoutSelector`      | Enables default layout selector in dashboard settings                                                                                                         | Yes                |
 | `alertingQueryOptimization`           | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |
 | `cloudWatchNewLabelParsing`           | Updates CloudWatch label parsing to be more accurate                                                                                                          | Yes                |
 | `playlistsRBAC`                       | Enables RBAC for playlists                                                                                                                                    |                    |
+| `newUnconfiguredPanel`                | Enables the new unconfigured panel experience                                                                                                                 | Yes                |
 | `alertingListViewV2`                  | Enables the new alert list view design                                                                                                                        | Yes                |
 | `alertingNavigationV2`                | Enables the new Alerting navigation structure with improved menu grouping                                                                                     | Yes                |
 | `pluginProxyPreserveTrailingSlash`    | Preserve plugin proxy trailing slash.                                                                                                                         |                    |
@@ -86,7 +89,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability         |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
 | `annotationsClustering`           | Enables annotation clustering and switches to refactored annotation code                               |
-| `dashboardNewLayouts`             | Enables new dashboard layouts                                                                          |
 | `dashboardFiltersOverview`        | Enables the dashboard filters overview pane                                                            |
 | `feedbackButton`                  | Enables the feedback button in the dashboard edit sidebar                                              |
 | `pdfTables`                       | Enables generating table data as PDF in reporting                                                      |
@@ -110,6 +112,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `newPanelPadding`                 | Increases panel padding globally                                                                       |
 | `panelTimeSettings`               | Enables a new panel time settings drawer                                                               |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
+| `splashScreen`                    | Enables the splash screen modal for introducing new Grafana features on first session                  |
 
 ## Development feature toggles
 

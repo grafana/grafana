@@ -100,7 +100,7 @@ jobs:
               workflow = 'release-build-pro.yml';
             }
 
-            if (REF == 'main' && SOURCE_EVENT == 'schedule') {
+            if (SOURCE_EVENT == 'schedule') {
               workflow = 'release-build-nightly.yml';
             }
 
@@ -420,6 +420,7 @@ jobs:
       - build-targz
     permissions:
       contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -442,6 +443,7 @@ jobs:
             arm: '7'
             arch-tag: armv7
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
@@ -516,6 +518,7 @@ jobs:
       - build-targz
     permissions:
       contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -538,6 +541,7 @@ jobs:
             arm: '7'
             arch-tag: armv7
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
       - uses: actions/checkout@v6
         with:
           persist-credentials: false

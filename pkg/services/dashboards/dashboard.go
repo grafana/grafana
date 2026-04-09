@@ -75,33 +75,3 @@ type DashboardProvisioningService interface {
 	SaveProvisionedDashboard(ctx context.Context, dto *SaveDashboardDTO, provisioning *DashboardProvisioning) (*Dashboard, error)
 	UnprovisionDashboard(ctx context.Context, dashboardID int64) error
 }
-
-// Store is a dashboard store.
-//
-//go:generate mockery --name Store --structname FakeDashboardStore --inpackage --filename store_mock.go
-type Store interface {
-	DeleteDashboard(ctx context.Context, cmd *DeleteDashboardCommand) error
-	CleanupAfterDelete(ctx context.Context, cmd *DeleteDashboardCommand) error
-	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
-	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
-	// GetDashboardsByPluginID retrieves dashboards identified by plugin.
-	GetDashboardsByPluginID(ctx context.Context, query *GetDashboardsByPluginIDQuery) ([]*Dashboard, error)
-	GetDashboardTags(ctx context.Context, query *GetDashboardTagsQuery) ([]*DashboardTagCloudItem, error)
-	GetProvisionedDashboardData(ctx context.Context, name string) ([]*DashboardProvisioning, error)
-	GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*DashboardProvisioningSearchResults, error)
-	GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*DashboardProvisioningSearchResults, error)
-	GetProvisionedDashboardsByName(ctx context.Context, name string, orgID int64) ([]*DashboardProvisioningSearchResults, error)
-	GetOrphanedProvisionedDashboards(ctx context.Context, notIn []string, orgID int64) ([]*Dashboard, error)
-	SaveDashboard(ctx context.Context, cmd SaveDashboardCommand) (*Dashboard, error)
-	SaveProvisionedDashboard(ctx context.Context, cmd SaveDashboardCommand, provisioning *DashboardProvisioning) (*Dashboard, error)
-	UnprovisionDashboard(ctx context.Context, id int64) error
-	// ValidateDashboardBeforeSave validates a dashboard before save.
-	ValidateDashboardBeforeSave(ctx context.Context, dashboard *Dashboard, overwrite bool) (bool, error)
-
-	CountInOrg(ctx context.Context, orgID int64, isFolder bool) (int64, error)
-	DeleteDashboardsInFolders(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
-
-	GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error)
-
-	GetDashboardsByLibraryPanelUID(ctx context.Context, libraryPanelUID string, orgID int64) ([]*DashboardRef, error)
-}
