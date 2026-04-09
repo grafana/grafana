@@ -148,7 +148,7 @@ for name in $(curl -s -u "$AUTH" "$BASE/connections" | jq -r '.items[].metadata.
 done
 
 # Delete test users (ignore 404 if they don't exist)
-for login in viewer-test editor-test; do
+for login in viewer-test editor-test none-test; do
   USER_ID=$(curl -s -u "$AUTH" "http://localhost:3000/api/users/lookup?loginOrEmail=$login" | jq -r '.id // empty')
   if [ -n "$USER_ID" ] && [ "$USER_ID" != "null" ]; then
     curl -s -X DELETE -u "$AUTH" "http://localhost:3000/api/admin/users/$USER_ID"
@@ -170,18 +170,18 @@ Read these files during execution for detailed operation steps, gotchas, and sel
 
 ## RBAC Permission Matrix
 
-| Capability                             | Viewer | Editor | Admin |
-| -------------------------------------- | ------ | ------ | ----- |
-| Browse provisioned folders/dashboards  | Yes    | Yes    | Yes   |
-| View dashboard content                 | Yes    | Yes    | Yes   |
-| Create folders/dashboards (push jobs)  | No     | Yes    | Yes   |
-| Modify/save dashboards (push jobs)     | No     | Yes    | Yes   |
-| Delete resources (delete jobs)         | No     | Yes    | Yes   |
-| Move resources (move jobs)             | No     | Yes    | Yes   |
-| Access /admin/provisioning/\* pages    | No     | No     | Yes   |
-| Repository CRUD (create/update/delete) | No     | No     | Yes   |
-| Connection management                  | No     | No     | Yes   |
-| Trigger sync (pull jobs)               | No     | No     | Yes   |
+| Capability                             | None | Viewer | Editor | Admin |
+| -------------------------------------- | ---- | ------ | ------ | ----- |
+| Browse provisioned folders/dashboards  | No   | Yes    | Yes    | Yes   |
+| View dashboard content                 | No   | Yes    | Yes    | Yes   |
+| Create folders/dashboards (push jobs)  | No   | No     | Yes    | Yes   |
+| Modify/save dashboards (push jobs)     | No   | No     | Yes    | Yes   |
+| Delete resources (delete jobs)         | No   | No     | Yes    | Yes   |
+| Move resources (move jobs)             | No   | No     | Yes    | Yes   |
+| Access /admin/provisioning/\* pages    | No   | No     | No     | Yes   |
+| Repository CRUD (create/update/delete) | No   | No     | No     | Yes   |
+| Connection management                  | No   | No     | No     | Yes   |
+| Trigger sync (pull jobs)               | No   | No     | No     | Yes   |
 
 ---
 

@@ -268,6 +268,18 @@ curl -s -X PATCH -u admin:admin -H 'Content-Type: application/json' \
   -d '{"role":"Editor"}'
 ```
 
+**Create a None-role user:**
+
+```bash
+NONE_ID=$(curl -s -X POST -u admin:admin -H 'Content-Type: application/json' \
+  http://localhost:3000/api/admin/users \
+  -d '{"login":"none-test","password":"none-test","email":"none@test.com","name":"None Test"}' | jq -r '.id')
+
+curl -s -X PATCH -u admin:admin -H 'Content-Type: application/json' \
+  http://localhost:3000/api/org/users/$NONE_ID \
+  -d '{"role":"None"}'
+```
+
 ### Switch Browser User
 
 To test as a different user, log out and log back in:
@@ -285,6 +297,7 @@ To test as a different user, log out and log back in:
 ```bash
 curl -X DELETE -u admin:admin http://localhost:3000/api/admin/users/$VIEWER_ID
 curl -X DELETE -u admin:admin http://localhost:3000/api/admin/users/$EDITOR_ID
+curl -X DELETE -u admin:admin http://localhost:3000/api/admin/users/$NONE_ID
 ```
 
 ## API Repository Setup
