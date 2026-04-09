@@ -1,7 +1,6 @@
 import { uniqueId } from 'lodash';
 
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { ReportInteractionBehaviour } from '../scene/ReportInteractionBehaviour';
 import {
   AdHocFiltersVariable,
   type AdHocFilterWithLabels,
@@ -77,6 +76,7 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
+import { ReportInteractionBehaviour } from '../scene/ReportInteractionBehaviour';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
