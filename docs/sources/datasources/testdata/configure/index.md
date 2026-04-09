@@ -62,6 +62,8 @@ You can define and configure the data source in YAML files as part of Grafana's 
 
 TestData doesn't require any `jsonData` or `secureJsonData` fields.
 
+**YAML example**
+
 ```yaml
 apiVersion: 1
 
@@ -70,3 +72,16 @@ datasources:
     type: grafana-testdata-datasource
     access: proxy
 ```
+
+## Terraform example
+
+To provision the data source with Terraform, use the [`grafana_data_source` resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source):
+
+```hcl
+resource "grafana_data_source" "testdata" {
+  name = "TestData"
+  type = "grafana-testdata-datasource"
+}
+```
+
+For all available configuration options, refer to the [Grafana provider data source resource documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source).

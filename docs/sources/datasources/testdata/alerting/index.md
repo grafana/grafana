@@ -84,14 +84,46 @@ To create a Predictable Pulse alert:
 
 With this configuration, the alert fires for 3 minutes (3 x 60s on-points) and then resolves for 6 minutes (6 x 60s off-points), repeating indefinitely. Adjust the step, on count, and off count to control the timing.
 
+## Example: CSV Metric Values threshold alert
+
+The CSV Metric Values scenario lets you define an exact sequence of data points, making it useful for testing precise threshold boundaries.
+
+To create a threshold alert with fixed values:
+
+1. Select the **CSV Metric Values** scenario.
+1. Enter a comma-separated list of values in the **String Input** field. For example:
+
+   ```
+   10,45,70,95,50,20
+   ```
+
+1. Add a **Reduce** expression with function **Last**.
+1. Add a **Threshold** expression: **Is above** `80`.
+
+With this input, the series cycles through the values `10, 45, 70, 95, 50, 20`. The alert fires when the reduced value exceeds `80` (the `95` data point) and resolves when it drops back below the threshold.
+
+This approach is helpful for validating that a threshold condition triggers at the exact boundary you expect.
+
 ## Test error and no-data conditions
 
-TestData includes scenarios designed for testing how alerts respond to failures.
+TestData includes scenarios designed for testing how alerts respond to failures. Use these to verify that your alert rules handle edge cases correctly before connecting to production data sources.
 
-- **No Data Points:** Returns an empty result. Use this to verify your alert rule's **no data** handling (for example, configuring the rule to alert, keep the last state, or resolve when no data is received).
-- **Random Walk (with error):** Returns data alongside an error. Use this to test how alert evaluation handles responses with both valid data and errors.
-- **Error with source:** Returns only an error, classified as either a **plugin** error or a **downstream** error. Use this to verify error-state behavior in alert rules.
-- **Slow Query:** Introduces a delay (default `5s`). Use this to test alert evaluation timeouts by setting a duration longer than the evaluation interval.
+### No data
+
+Select the **No Data Points** scenario. The backend returns an empty result, which triggers the alert rule's **no data** state. Use this to verify that your rule is configured to alert, keep the last state, or resolve when no data is received. Configure this behavior in the alert rule's **No data and error handling** section.
+
+### Errors
+
+Select **Error with source** and choose the error type:
+
+- **Plugin** — simulates a failure in the plugin itself. The alert enters an error state.
+- **Downstream** — simulates a failure in the data source or network. The alert enters an error state with a downstream classification.
+
+You can also use **Random Walk (with error)**, which returns valid data alongside an error, to test how the alerting engine handles partial failures.
+
+### Timeouts
+
+Select **Slow Query** and set the **String Input** field to a duration longer than your evaluation interval (for example, `30s` for a rule evaluated every `10s`). The default delay is `5s`. Use this to verify timeout behavior and confirm that alerts transition to the expected state when queries take too long.
 
 ## Limitations
 
