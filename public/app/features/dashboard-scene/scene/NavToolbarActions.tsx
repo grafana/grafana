@@ -284,8 +284,6 @@ export function ToolbarActions({ dashboard }: Props) {
     ),
   });
 
-  console.log('config.featureToggles.orgDashboardTemplates', config.featureToggles.orgDashboardTemplates);
-
   toolbarActions.push({
     group: 'back-button',
     condition: (isViewingPanel || isEditingPanel) && !isEditingLibraryPanel,
@@ -569,15 +567,6 @@ export function ToolbarActions({ dashboard }: Props) {
               dashboard.openSaveDrawer({ saveAsCopy: true });
             }}
           />
-          {config.featureToggles.orgDashboardTemplates && (
-            <Menu.Item
-              label={t('dashboard.toolbar.save-as-template.label', 'Save as template')}
-              icon="bookmark"
-              onClick={() => {
-                dashboard.openSaveDrawer({ saveAsTemplate: true });
-              }}
-            />
-          )}
         </Menu>
       );
 

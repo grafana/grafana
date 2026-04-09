@@ -3,6 +3,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, ButtonGroup, Dropdown, Menu } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getSaveAsTemplateForm } from 'app/features/dashboard-scene/saving/enterprise-components/SaveAsTemplateFormExtension';
 
 import { type ToolbarActionProps } from '../types';
 
@@ -68,7 +69,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
               icon="copy"
               onClick={() => dashboard.openSaveDrawer({ saveAsCopy: true })}
             />
-            {config.featureToggles.orgDashboardTemplates && (
+            {config.featureToggles.orgDashboardTemplates && getSaveAsTemplateForm() !== null && (
               <Menu.Item
                 label={t('dashboard.toolbar.save-as-template.label', 'Save as template')}
                 icon="grid"
