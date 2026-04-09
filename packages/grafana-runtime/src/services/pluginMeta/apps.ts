@@ -23,7 +23,7 @@ function setMetas(metas: PluginMetasResponse) {
   if (!metas.items.length) {
     // something failed while trying to fetch plugin meta
     // fallback to config.panels from bootdata
-    // eslint-disable-next-line no-restricted-syntax
+    // eslint-disable-next-line @grafana/no-config-apps
     setApps(config.apps);
     logPluginMetaWarning(FALLBACK_TO_BOOTDATA_WARNING, PluginType.app);
     return;
@@ -35,7 +35,7 @@ function setMetas(metas: PluginMetasResponse) {
 
 async function initAppPluginMetas(): Promise<void> {
   if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
-    // eslint-disable-next-line no-restricted-syntax
+    // eslint-disable-next-line @grafana/no-config-apps
     setApps(config.apps);
     return;
   }

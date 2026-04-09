@@ -80,6 +80,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             baseFilters: v.baseFilters ?? [],
             defaultKeys: v.defaultKeys,
             useQueriesAsFilterForOptions: true,
+            applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
             layout: 'combobox',
             supportsMultiValueOperators: Boolean(
               getDataSourceSrv().getInstanceSettings({ type: v.datasource?.type })?.meta.multiValueFilterOperators
@@ -179,7 +180,9 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultKeys: variable.defaultKeys,
       allowCustomValue: variable.allowCustomValue,
       useQueriesAsFilterForOptions: true,
-      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
+      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
+      drilldownRecommendationsEnabled:
+        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
       layout: 'combobox',
       collapsible: config.featureToggles.dashboardUnifiedDrilldownControls,
       supportsMultiValueOperators: Boolean(
@@ -311,12 +314,13 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       text: variable.current?.text || [],
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
-      wideInput: config.featureToggles.dashboardAdHocAndGroupByWrapper,
       // @ts-expect-error
       defaultOptions: variable.options,
       defaultValue: variable.defaultValue,
       allowCustomValue: variable.allowCustomValue,
-      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
+      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
+      drilldownRecommendationsEnabled:
+        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
     });
     // Switch variable
     // In the old variable model we are storing the enabled and disabled values in the options:

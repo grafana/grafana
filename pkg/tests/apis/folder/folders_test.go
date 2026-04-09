@@ -779,7 +779,7 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 			expectedParentTitles: []string{"testparent"},
 			permissions: []resourcepermissions.SetResourcePermissionCommand{
 				{
-					Actions:           []string{dashboards.ActionFoldersRead},
+					Actions:           []string{folder.ActionFoldersRead},
 					Resource:          "folders",
 					ResourceAttribute: "uid",
 					ResourceID:        "*",
@@ -794,7 +794,7 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 			expectedParentTitles: []string{},
 			permissions: []resourcepermissions.SetResourcePermissionCommand{
 				{
-					Actions:           []string{dashboards.ActionFoldersRead},
+					Actions:           []string{folder.ActionFoldersRead},
 					Resource:          "folders",
 					ResourceAttribute: "uid",
 					ResourceID:        "descuid",
@@ -888,8 +888,8 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 
 					if tc.expectedCode == http.StatusOK {
 						require.NotNil(t, getResp.Result)
-						require.False(t, getResp.Result.AccessControl[dashboards.ActionFoldersRead])
-						require.False(t, getResp.Result.AccessControl[dashboards.ActionFoldersWrite])
+						require.False(t, getResp.Result.AccessControl[folder.ActionFoldersRead])
+						require.False(t, getResp.Result.AccessControl[folder.ActionFoldersWrite])
 
 						parents := getResp.Result.Parents
 						require.Equal(t, len(expectedParentUIDs), len(parents))
@@ -903,13 +903,13 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 						if tc.checkAccessControl {
 							acPerms := []resourcepermissions.SetResourcePermissionCommand{
 								{
-									Actions:           []string{dashboards.ActionFoldersRead},
+									Actions:           []string{folder.ActionFoldersRead},
 									Resource:          "folders",
 									ResourceAttribute: "uid",
 									ResourceID:        "*",
 								},
 								{
-									Actions:           []string{dashboards.ActionFoldersWrite},
+									Actions:           []string{folder.ActionFoldersWrite},
 									Resource:          "folders",
 									ResourceAttribute: "uid",
 									ResourceID:        parentUID,
@@ -930,8 +930,8 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 							require.Equal(t, tc.expectedCode, getWithAC.Response.StatusCode)
 							require.NotNil(t, getWithAC.Result)
 
-							require.True(t, getWithAC.Result.AccessControl[dashboards.ActionFoldersRead])
-							require.True(t, getWithAC.Result.AccessControl[dashboards.ActionFoldersWrite])
+							require.True(t, getWithAC.Result.AccessControl[folder.ActionFoldersRead])
+							require.True(t, getWithAC.Result.AccessControl[folder.ActionFoldersWrite])
 						}
 					}
 				})
@@ -972,7 +972,7 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 		},
 	}
 
-	// NOTE: folder creation does not return ErrFolderAccessDenied neither ErrFolderNotFound
+	// NOTE: folder creation does not return ErrAccessDenied neither ErrFolderNotFound
 	tcs := []testCase{
 		{
 			description:  "folder creation succeeds given the correct request for creating a folder",
@@ -991,8 +991,8 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithTitleEmpty,
 			expectedCode:           http.StatusBadRequest,
-			expectedMessage:        dashboards.ErrFolderTitleEmpty.Error(),
-			expectedFolderSvcError: dashboards.ErrFolderTitleEmpty,
+			expectedMessage:        folder.ErrTitleEmpty.Error(),
+			expectedFolderSvcError: folder.ErrTitleEmpty,
 			permissions:            folderCreatePermission,
 		},
 		{
@@ -1015,8 +1015,8 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithoutParentInput,
 			expectedCode:           http.StatusPreconditionFailed,
-			expectedMessage:        dashboards.ErrFolderVersionMismatch.Error(),
-			expectedFolderSvcError: dashboards.ErrFolderVersionMismatch,
+			expectedMessage:        folder.ErrVersionMismatch.Error(),
+			expectedFolderSvcError: folder.ErrVersionMismatch,
 			createSecondRecord:     true,
 			permissions:            folderCreatePermission,
 		},

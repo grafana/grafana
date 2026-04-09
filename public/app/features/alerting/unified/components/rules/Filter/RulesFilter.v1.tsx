@@ -13,7 +13,8 @@ import { LogMessages, logInfo, trackAlertRuleFilterEvent } from '../../../Analyt
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useCanViewContactPoints } from '../../../hooks/useNotificationAbilities';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
-import { type RulesFilterProps } from '../../../rule-list/filter/RulesFilter';
+import { type RulesFilterProps as RulesFilterV2Props } from '../../../rule-list/filter/RulesFilter.v2';
+type RulesFilterProps = RulesFilterV2Props & { onClear?: () => void };
 import { RuleHealth, getSearchFilterFromQuery } from '../../../search/rulesSearchParser';
 import { alertStateToReadable } from '../../../utils/rules';
 import { PopupCard } from '../../HoverCard';

@@ -56,7 +56,6 @@ import {
   AnnoKeyDashboardIsSnapshot,
   AnnoKeyEmbedded,
   AnnoReloadOnParamsChange,
-  DeprecatedInternalId,
 } from 'app/features/apiserver/types';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
@@ -211,11 +210,8 @@ export function transformSaveModelSchemaV2ToScene(
     dashboardProfiler
   );
 
-  const deprecatedId = metadata.labels?.[DeprecatedInternalId];
-
   const dashboardScene = new DashboardScene(
     {
-      id: deprecatedId ? parseInt(deprecatedId, 10) : undefined,
       preferences: templateLayoutManager
         ? {
             defaultLayoutTemplate: templateLayoutManager,
@@ -376,7 +372,9 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       baseFilters: variable.spec.baseFilters ?? [],
       defaultKeys: variable.spec.defaultKeys.length ? variable.spec.defaultKeys : undefined,
       useQueriesAsFilterForOptions: true,
-      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
+      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
+      drilldownRecommendationsEnabled:
+        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
       layout: 'combobox',
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
@@ -520,8 +518,9 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.spec.skipUrlSync,
       isMulti: variable.spec.multi,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
-      wideInput: config.featureToggles.dashboardAdHocAndGroupByWrapper,
-      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
+      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
+      drilldownRecommendationsEnabled:
+        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
       // @ts-expect-error
       defaultOptions: variable.options,
       defaultValue: variable.spec.defaultValue
@@ -604,6 +603,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
             baseFilters: v.spec.baseFilters ?? [],
             defaultKeys: v.spec.defaultKeys?.length ? v.spec.defaultKeys : undefined,
             useQueriesAsFilterForOptions: true,
+            applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
             layout: 'combobox',
             supportsMultiValueOperators: Boolean(
               getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators

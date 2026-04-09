@@ -13,21 +13,19 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -128,15 +126,14 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 		}
 	}
 
-	sql, cfgT := db.InitTestDBWithCfg(t)
-	features := featuremgmt.WithFeatures()
-	fStore := folderimpl.ProvideStore(sql, cfgT)
-	tagService := tagimpl.ProvideService(sql)
-	dashStore, err := database.ProvideDashboardStore(sql, cfgT, features, tagService)
-	require.NoError(t, err)
-	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()),
-		dashStore, nil, sql, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
+	_, cfgT := db.InitTestDBWithCfg(t)
+	searchMock := resource.NewMockResourceClient(t)
+	searchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).
+		Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
+	searchMock.On("GetStats", mock.Anything, mock.Anything, mock.Anything).
+		Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
+	folderSvc := folderimpl.ProvideService(actest.FakeAccessControl{}, nil, featuremgmt.WithFeatures(),
+		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), searchMock, sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	t.Run("Reading dashboards from disk", func(t *testing.T) {
 		t.Run("Can read default dashboard", func(t *testing.T) {
@@ -440,7 +437,7 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 		ctx := context.Background()
 		ctx, _ = identity.WithServiceIdentity(ctx, 1)
 		_, _, err = r.getOrCreateFolder(ctx, cfg, fakeService, cfg.Folder)
-		require.ErrorIs(t, err, dashboards.ErrFolderInvalidUID)
+		require.ErrorIs(t, err, folder.ErrInvalidUID)
 	})
 
 	t.Run("Walking the folder with dashboards", func(t *testing.T) {

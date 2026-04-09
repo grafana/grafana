@@ -5624,6 +5624,29 @@
         },
         "type": "object"
       },
+      "FooterItem": {
+        "properties": {
+          "color": {
+            "type": "string"
+          },
+          "fontSize": {
+            "type": "string"
+          },
+          "fontStyle": {
+            "type": "string"
+          },
+          "fontWeight": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ForbiddenError": {
         "properties": {
           "body": {
@@ -9897,6 +9920,15 @@
           },
           "embeddedImageTheme": {
             "type": "string"
+          },
+          "footerFontFamily": {
+            "type": "string"
+          },
+          "footerItems": {
+            "items": {
+              "$ref": "#/components/schemas/FooterItem"
+            },
+            "type": "array"
           },
           "id": {
             "format": "int64",
@@ -24893,6 +24925,7 @@
     },
     "/v1/provisioning/contact-points": {
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetContactpoints",
         "parameters": [
           {
@@ -24930,6 +24963,7 @@
         "tags": ["provisioning"]
       },
       "post": {
+        "deprecated": true,
         "operationId": "RoutePostContactpoints",
         "parameters": [
           {
@@ -25095,6 +25129,7 @@
     },
     "/v1/provisioning/contact-points/{UID}": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteDeleteContactpoints",
         "parameters": [
           {
@@ -25126,6 +25161,7 @@
         "tags": ["provisioning"]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutContactpoint",
         "parameters": [
           {
@@ -25475,6 +25511,7 @@
     },
     "/v1/provisioning/mute-timings": {
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetMuteTimings",
         "responses": {
           "200": {
@@ -25502,6 +25539,7 @@
         "tags": ["provisioning"]
       },
       "post": {
+        "deprecated": true,
         "operationId": "RoutePostMuteTiming",
         "parameters": [
           {
@@ -25650,6 +25688,7 @@
     },
     "/v1/provisioning/mute-timings/{name}": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteDeleteMuteTiming",
         "parameters": [
           {
@@ -25706,6 +25745,7 @@
         "tags": ["provisioning"]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetMuteTiming",
         "parameters": [
           {
@@ -25747,6 +25787,7 @@
         "tags": ["provisioning"]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutMuteTiming",
         "parameters": [
           {
@@ -25923,6 +25964,7 @@
     },
     "/v1/provisioning/policies": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteResetPolicyTree",
         "responses": {
           "202": {
@@ -25950,6 +25992,7 @@
         "tags": ["provisioning"]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetPolicyTree",
         "responses": {
           "200": {
@@ -25977,6 +26020,7 @@
         "tags": ["provisioning"]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutPolicyTree",
         "parameters": [
           {
@@ -26135,6 +26179,7 @@
     },
     "/v1/provisioning/templates": {
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetTemplates",
         "responses": {
           "200": {
@@ -26164,6 +26209,7 @@
     },
     "/v1/provisioning/templates/{name}": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteDeleteTemplate",
         "parameters": [
           {
@@ -26213,6 +26259,7 @@
         "tags": ["provisioning"]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetTemplate",
         "parameters": [
           {
@@ -26261,6 +26308,7 @@
         "tags": ["provisioning"]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutTemplate",
         "parameters": [
           {
