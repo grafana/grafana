@@ -56,4 +56,4 @@ The `agent-test` branch (or whatever branch you configure in Step 2) must alread
 
 ## Path Conflicts Across Repositories
 
-When connecting more than one repository in different runs, use different path names in Step 2 to avoid conflicts. If two repositories sync to the same path (e.g., both use `dev`), the second connection may fail or overwrite the first. Use distinct paths per auth type (e.g., `dev/pat-test` for PAT, `dev/app-test` for GitHub App).
+When connecting more than one repository in different runs, use different path names in Step 2 to avoid conflicts. If two repositories sync to the same path (e.g., both use `dev`), the second connection may fail or overwrite the first. Use distinct paths per flow (e.g., `dev/pat-test` for PAT, `dev/app-test` for GitHub App, `dev/gitlab-test` for GitLab, `dev/bitbucket-test` for Bitbucket).
