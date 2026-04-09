@@ -33,7 +33,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 			"team/dashboard.json": common.DashboardJSON("team-dash", "Team Dashboard", 1),
 		})
 
-		common.SyncAndWait(t, helper, repoName, common.ExpectWarning)
+		common.SyncAndWait(t, helper, repoName, common.Expect(common.Warning()))
 		oldUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "team")
 
 		require.NoError(t, local.CreateFile("team/_folder.json", string(invalidFolderMetadataJSON("Broken Team"))))
@@ -220,7 +220,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 			"parent/child/second-dash.json": common.DashboardJSON("child-dash-2", "Child Dashboard Two", 1),
 		})
 
-		common.SyncAndWait(t, helper, repoName, common.ExpectWarning)
+		common.SyncAndWait(t, helper, repoName, common.Expect(common.Warning()))
 
 		oldBrokenUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "broken")
 		oldParentUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "parent")

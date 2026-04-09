@@ -1957,32 +1957,84 @@ func (h *ProvisioningTestHelper) GetRepositories() *apis.K8sResourceClient {
 	return h.Repositories
 }
 
+// ---------------------------------------------------------------------------
+// Job matchers — composable assertions for completed sync jobs.
+// ---------------------------------------------------------------------------
+
+// JobMatcher asserts properties of a completed sync job.
+type JobMatcher func(t *testing.T, job *unstructured.Unstructured)
+
+// HasState returns a matcher that asserts the job finished in the given state.
+func HasState(expected provisioning.JobState) JobMatcher {
+	return func(t *testing.T, job *unstructured.Unstructured) {
+		t.Helper()
+		actual := MustNestedString(job.Object, "status", "state")
+		require.Equal(t, string(expected), actual,
+			"job %q should have state %s", job.GetName(), expected)
+	}
+}
+
+// HasNoErrors returns a matcher that asserts the job completed without errors.
+func HasNoErrors() JobMatcher {
+	return func(t *testing.T, job *unstructured.Unstructured) {
+		t.Helper()
+		errs := MustNestedStringSlice(job.Object, "status", "errors")
+		require.Empty(t, errs, "job %q has errors: %v", job.GetName(), errs)
+	}
+}
+
+// Succeeded returns a matcher that asserts success with no errors.
+func Succeeded() JobMatcher {
+	return func(t *testing.T, job *unstructured.Unstructured) {
+		t.Helper()
+		HasNoErrors()(t, job)
+		HasState(provisioning.JobStateSuccess)(t, job)
+	}
+}
+
+// Warning returns a matcher that asserts warning state with no errors.
+func Warning() JobMatcher {
+	return func(t *testing.T, job *unstructured.Unstructured) {
+		t.Helper()
+		HasNoErrors()(t, job)
+		HasState(provisioning.JobStateWarning)(t, job)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// SyncAndWait — configurable pull-sync helper.
+// ---------------------------------------------------------------------------
+
 // SyncOption configures the behaviour of SyncAndWait.
 type SyncOption func(*syncOpts)
 
 type syncOpts struct {
-	incremental   bool
-	expectedState provisioning.JobState
+	incremental bool
+	matchers    []JobMatcher
 }
 
 // Incremental makes SyncAndWait trigger an incremental pull instead of a full one.
 func Incremental(o *syncOpts) { o.incremental = true }
 
-// ExpectWarning makes SyncAndWait assert the job finished with a warning state
-// instead of the default success state.
-func ExpectWarning(o *syncOpts) { o.expectedState = provisioning.JobStateWarning }
+// Expect adds job matchers that are applied to the completed job.
+// When no Expect option is provided, SyncAndWait defaults to Succeeded().
+func Expect(m ...JobMatcher) SyncOption {
+	return func(o *syncOpts) {
+		o.matchers = append(o.matchers, m...)
+	}
+}
 
 // SyncAndWait triggers a pull sync, waits for it to complete, and asserts the
 // expected outcome. By default it performs a full sync and expects success.
-// Pass Incremental to use an incremental sync, and/or ExpectWarning to assert
-// the job finished with warnings.
+// Pass Incremental to use an incremental sync, and/or Expect(Warning()) to
+// assert the job finished with warnings.
 //
 // Full (non-incremental) syncs also wait for the repository's lastRef to be
 // set, which is required before an incremental sync can be triggered.
 func SyncAndWait(t *testing.T, h SyncHelper, repoName string, opts ...SyncOption) {
 	t.Helper()
 
-	o := syncOpts{expectedState: provisioning.JobStateSuccess}
+	o := syncOpts{}
 	for _, fn := range opts {
 		fn(&o)
 	}
@@ -1992,11 +2044,11 @@ func SyncAndWait(t *testing.T, h SyncHelper, repoName string, opts ...SyncOption
 		Pull:   &provisioning.SyncJobOptions{Incremental: o.incremental},
 	})
 
-	switch o.expectedState {
-	case provisioning.JobStateWarning:
-		RequireJobWarning(t, job)
-	default:
-		requireJobSuccess(t, job)
+	if len(o.matchers) == 0 {
+		o.matchers = []JobMatcher{Succeeded()}
+	}
+	for _, m := range o.matchers {
+		m(t, job)
 	}
 
 	if !o.incremental {
@@ -2004,24 +2056,12 @@ func SyncAndWait(t *testing.T, h SyncHelper, repoName string, opts ...SyncOption
 	}
 }
 
-// RequireJobSuccess asserts that a completed job has state "success" and no errors.
-func requireJobSuccess(t *testing.T, job *unstructured.Unstructured) {
-	t.Helper()
-	lastState := MustNestedString(job.Object, "status", "state")
-	lastErrors := MustNestedStringSlice(job.Object, "status", "errors")
-	require.Empty(t, lastErrors, "job %q has errors: %v", job.GetName(), lastErrors)
-	require.Equal(t, string(provisioning.JobStateSuccess), lastState,
-		"job %q should succeed", job.GetName())
-}
-
 // RequireJobWarning asserts that a completed job has state "warning" and no errors.
+// Prefer Warning() matcher for use with SyncAndWait; this standalone function
+// is kept for callers that assert on a job obtained outside SyncAndWait.
 func RequireJobWarning(t *testing.T, job *unstructured.Unstructured) {
 	t.Helper()
-	lastState := MustNestedString(job.Object, "status", "state")
-	lastErrors := MustNestedStringSlice(job.Object, "status", "errors")
-	require.Empty(t, lastErrors, "job %q has errors: %v", job.GetName(), lastErrors)
-	require.Equal(t, string(provisioning.JobStateWarning), lastState,
-		"job %q should have warning state", job.GetName())
+	Warning()(t, job)
 }
 
 // GetFolderGeneration returns the current generation of the folder with the given UID.

@@ -68,7 +68,7 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagEnabl
 			"myfolder/dashboard.json": common.DashboardJSON("noop-dash", "Noop Dashboard", 1),
 		})
 
-		common.SyncAndWait(t, helper, repoName, common.ExpectWarning)
+		common.SyncAndWait(t, helper, repoName, common.Expect(common.Warning()))
 
 		// Trigger incremental sync with no new commits — same ref.
 		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
@@ -194,7 +194,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWait(t, helper, repoName, common.Incremental, common.ExpectWarning)
+		common.SyncAndWait(t, helper, repoName, common.Incremental, common.Expect(common.Warning()))
 
 		// Should use directory name "analytics" as the title.
 		common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "analytics")
@@ -364,7 +364,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWait(t, helper, repoName, common.Incremental, common.ExpectWarning)
+		common.SyncAndWait(t, helper, repoName, common.Incremental, common.Expect(common.Warning()))
 
 		common.RequireRepoFolderUID(t, helper.Folders, ctx, repoName, "stable-uid")
 		childUID = common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "child")
@@ -862,7 +862,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 			"old-team/dashboard1.json": common.DashboardJSON("gr-nometa-001", "No Meta Dashboard", 1),
 		})
 
-		common.SyncAndWait(t, helper, repoName, common.ExpectWarning)
+		common.SyncAndWait(t, helper, repoName, common.Expect(common.Warning()))
 		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"old-team"})
 
 		_, err := local.Git("mv", "old-team", "new-team")
@@ -872,7 +872,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWait(t, helper, repoName, common.Incremental, common.ExpectWarning)
+		common.SyncAndWait(t, helper, repoName, common.Incremental, common.Expect(common.Warning()))
 
 		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"new-team"})
 
@@ -1421,7 +1421,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 
 		// dst/ has no _folder.json, so the initial sync produces a
 		// missing-metadata warning.
-		common.SyncAndWait(t, helper, repoName, common.ExpectWarning)
+		common.SyncAndWait(t, helper, repoName, common.Expect(common.Warning()))
 		common.RequireFolderState(t, helper.Folders, folderUID, "Source Folder", "src", "")
 		// dst/ gets a hash-derived UID since it has no metadata.
 		dstAutoUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "dst")
@@ -1435,7 +1435,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWait(t, helper, repoName, common.Incremental, common.ExpectWarning)
+		common.SyncAndWait(t, helper, repoName, common.Incremental, common.Expect(common.Warning()))
 
 		// dst/ should now carry the metadata UID and title.
 		common.RequireFolderState(t, helper.Folders, folderUID, "Source Folder", "dst", "")
@@ -1489,7 +1489,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 		// loses its _folder.json (triggering a missing-metadata warning).
 		// The src UID is NOT scheduled for deletion because it is being
 		// actively written to dst/_folder.json.
-		common.SyncAndWait(t, helper, repoName, common.Incremental, common.ExpectWarning)
+		common.SyncAndWait(t, helper, repoName, common.Incremental, common.Expect(common.Warning()))
 
 		// dst/ should now carry the source UID.
 		common.RequireFolderState(t, helper.Folders, srcUID, "Source", "dst", "")

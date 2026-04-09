@@ -127,7 +127,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 			"plain/.keep":         {},
 		})
 
-		common.SyncAndWait(t, helper, repoName, common.ExpectWarning)
+		common.SyncAndWait(t, helper, repoName, common.Expect(common.Warning()))
 
 		requireGitFolderState(t, helper, ctx, "parent-uid", "Parent", "parent", repoName)
 		plainUID := findGitFolderUIDBySourcePath(t, helper, ctx, repoName, "plain")
@@ -158,7 +158,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 
 		// parent/plain still has no _folder.json after the move, so the incremental
 		// sync warns about missing metadata.
-		common.SyncAndWait(t, helper, repoName, common.Incremental, common.ExpectWarning)
+		common.SyncAndWait(t, helper, repoName, common.Incremental, common.Expect(common.Warning()))
 
 		// The old folder object must be gone — without metadata the path change
 		// causes a delete-and-recreate rather than an in-place update.
@@ -361,7 +361,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 		})
 
 		// legacy-parent has no _folder.json, so the sync correctly warns about missing metadata.
-		common.SyncAndWait(t, helper, repoName, common.ExpectWarning)
+		common.SyncAndWait(t, helper, repoName, common.Expect(common.Warning()))
 
 		requireGitFolderState(t, helper, ctx, "child-meta-uid", "Child With Meta", "child-with-meta", repoName)
 		legacyParentUID := findGitFolderUIDBySourcePath(t, helper, ctx, repoName, "legacy-parent")
@@ -392,7 +392,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 
 		// After the move, legacy-parent still has no _folder.json, so the incremental sync
 		// also warns about missing metadata.
-		common.SyncAndWait(t, helper, repoName, common.Incremental, common.ExpectWarning)
+		common.SyncAndWait(t, helper, repoName, common.Incremental, common.Expect(common.Warning()))
 
 		// The legacy parent keeps its original hash-based UID (its path did not change).
 		requireGitFolderState(t, helper, ctx, legacyParentUID, "legacy-parent", "legacy-parent", repoName)
