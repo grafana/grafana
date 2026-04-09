@@ -25,7 +25,7 @@ type DataSourceMigrator interface {
 }
 
 type dataSourceMigrator struct {
-	getter      func(ctx context.Context, namespace string) ([]*datasources.DataSource, error)
+	getter      func(ctx context.Context, namespace string) ([]*datasourceV0.DataSource, error)
 	secretStore secret.InlineSecureValueSupport
 }
 
@@ -35,7 +35,7 @@ func ProvideDataSourceMigrator(
 	secretStore secret.InlineSecureValueSupport,
 ) DataSourceMigrator {
 	return &dataSourceMigrator{
-		getter: func(ctx context.Context, namespace string) ([]*datasources.DataSource, error) {
+		getter: func(ctx context.Context, namespace string) ([]*datasourceV0.DataSource, error) {
 			orgId, err := migrations.ParseOrgIDFromNamespace(namespace)
 			if err != nil {
 				return nil, err
@@ -48,19 +48,35 @@ func ProvideDataSourceMigrator(
 				return nil, err
 			}
 
-			result := make([]*datasources.DataSource, len(dss))
+			namespacer := func(_ int64) string { return namespace }
+			result := make([]*datasourceV0.DataSource, len(dss))
 			for i, ds := range dss {
 				dsSecrets, err := dsService.DecryptedValues(ctx, ds)
 				if err != nil {
 					return nil, fmt.Errorf("error decrypting existing secrets for datasource %s (type=%s): %w", ds.UID, ds.Type, err)
 				}
-				// Always replace SecureJsonData with decrypted plaintext values so
-				// that the migrator never operates on stale encrypted bytes from the DB.
-				ds.SecureJsonData = make(map[string][]byte, len(dsSecrets))
-				for k, v := range dsSecrets {
-					ds.SecureJsonData[k] = []byte(v)
+
+				group := ds.Type + ".datasource.grafana.app"
+				conv := converter.NewConverter(namespacer, group, ds.Type, nil)
+				obj, err := conv.AsDataSource(ds)
+				if err != nil {
+					return nil, fmt.Errorf("converting datasource %s (type=%s): %w", ds.UID, ds.Type, err)
 				}
-				result[i] = ds
+
+				// Override Secure with plaintext Create values. AsDataSource sets stub
+				// Name-references from SecureJsonData keys; we replace them with actual
+				// secret creation requests carrying the decrypted plaintext values.
+				obj.Secure = nil
+				for k, v := range dsSecrets {
+					if v != "" {
+						if obj.Secure == nil {
+							obj.Secure = make(common.InlineSecureValues)
+						}
+						obj.Secure[k] = common.InlineSecureValue{Create: common.NewSecretValue(v)}
+					}
+				}
+
+				result[i] = obj
 			}
 			return result, nil
 		},
@@ -70,7 +86,7 @@ func ProvideDataSourceMigrator(
 
 // This is useful for the cloud controller, where we populate values from cloudconfig
 func NewDataSourceMigrator(
-	getter func(ctx context.Context, namespace string) ([]*datasources.DataSource, error),
+	getter func(ctx context.Context, namespace string) ([]*datasourceV0.DataSource, error),
 	secretStore secret.InlineSecureValueSupport,
 ) DataSourceMigrator {
 	return &dataSourceMigrator{
@@ -84,42 +100,36 @@ func NewDataSourceMigrator(
 // types found in the database, grouping by type and using per-plugin converters.
 func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	opts.Progress(-1, "migrating datasources...")
-	datasources, err := m.getter(ctx, opts.Namespace)
+	dsList, err := m.getter(ctx, opts.Namespace)
 	if err != nil {
 		return err
 	}
 
 	// Clean up any existing secrets in the MT secret service
 	plugins := map[string]bool{}
-	for _, ds := range datasources {
-		if !plugins[ds.Type] {
+	for _, ds := range dsList {
+		dsType := ds.Spec.GetString("type")
+		if !plugins[dsType] {
 			if err = m.secretStore.DeleteWhenOwnedByResource(ctx, common.ObjectReference{
-				APIGroup:   ds.Type + ".datasource.grafana.app",
+				APIGroup:   dsType + ".datasource.grafana.app",
 				APIVersion: datasourceV0.VERSION,
 				Namespace:  opts.Namespace,
 				Kind:       "DataSource",
 				Name:       "*",
 				UID:        "*",
 			}, "*"); err != nil {
-				return fmt.Errorf("error deleting secrets for datasource type %s: %w", ds.Type, err)
+				return fmt.Errorf("error deleting secrets for datasource type %s: %w", dsType, err)
 			}
 		}
-		plugins[ds.Type] = true
+		plugins[dsType] = true
 	}
 
-	namespacer := func(orgId int64) string {
-		return opts.Namespace
-	}
+	for count, ds := range dsList {
+		dsType := ds.Spec.GetString("type")
+		group := dsType + ".datasource.grafana.app"
 
-	for count, ds := range datasources {
-		group := ds.Type + ".datasource.grafana.app"
-		dsConverter := converter.NewConverter(namespacer, group, ds.Type, nil)
-		obj, err := dsConverter.AsDataSource(ds)
-		if err != nil {
-			return fmt.Errorf("converting datasource %s (type=%s): %w", ds.UID, ds.Type, err)
-		}
-
-		// Set TypeMeta with the per-plugin group
+		// Shallow-copy the struct so we can set TypeMeta without mutating the slice element.
+		obj := *ds
 		obj.TypeMeta = metav1.TypeMeta{
 			APIVersion: group + "/" + datasourceV0.VERSION,
 			Kind:       "DataSource",
@@ -130,7 +140,7 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 			return fmt.Errorf("invalid apiVersion: %w", err)
 		}
 
-		if len(ds.SecureJsonData) > 0 {
+		if len(ds.Secure) > 0 {
 			objRef := common.ObjectReference{
 				APIGroup:   gv.Group,
 				APIVersion: gv.Version,
@@ -139,16 +149,16 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 				Name:       obj.Name,
 				UID:        obj.UID,
 			}
-			secure, err := m.createSecrets(ctx, ds.SecureJsonData, objRef)
+			secure, err := m.createSecrets(ctx, ds.Secure, objRef)
 			if err != nil {
-				return fmt.Errorf("error create secrets for datasource %s (type=%s): %w, %#v", ds.UID, ds.Type, err, obj)
+				return fmt.Errorf("error create secrets for datasource %s (type=%s): %w, %#v", ds.Name, dsType, err, obj)
 			}
 			obj.Secure = secure
 		}
 
 		body, err := json.Marshal(obj)
 		if err != nil {
-			return fmt.Errorf("marshaling datasource %s: %w", ds.UID, err)
+			return fmt.Errorf("marshaling datasource %s: %w", ds.Name, err)
 		}
 
 		req := &resourcepb.BulkRequest{
@@ -156,13 +166,13 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 				Namespace: opts.Namespace,
 				Group:     gv.Group,
 				Resource:  "datasources",
-				Name:      ds.UID,
+				Name:      ds.Name,
 			},
 			Value:  body,
 			Action: resourcepb.BulkRequest_ADDED,
 		}
 
-		opts.Progress(count, fmt.Sprintf("%s/%s (%d) %s", ds.Type, ds.Name, len(req.Value), req.Key))
+		opts.Progress(count, fmt.Sprintf("%s/%s (%d) %s", dsType, obj.Spec.Title(), len(req.Value), req.Key))
 
 		err = stream.Send(req)
 		if err != nil {
@@ -173,21 +183,25 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 		}
 	}
 
-	opts.Progress(-2, fmt.Sprintf("finished datasources... (%d)", len(datasources)))
+	opts.Progress(-2, fmt.Sprintf("finished datasources... (%d)", len(dsList)))
 	return nil
 }
 
-func (m *dataSourceMigrator) createSecrets(ctx context.Context, dsSecrets map[string][]byte, objRef common.ObjectReference) (common.InlineSecureValues, error) {
+func (m *dataSourceMigrator) createSecrets(ctx context.Context, dsSecrets common.InlineSecureValues, objRef common.ObjectReference) (common.InlineSecureValues, error) {
 	if len(dsSecrets) == 0 {
 		return nil, nil
 	}
 
 	values := make(common.InlineSecureValues)
-	for k, v := range dsSecrets {
-		if len(v) == 0 {
+	for k, sv := range dsSecrets {
+		if sv.Create.IsZero() {
+			continue // skip Name-references and empty entries
+		}
+		v := sv.Create.DangerouslyExposeAndConsumeValue()
+		if v == "" {
 			continue // do not create empty secret values
 		}
-		name, err := m.secretStore.CreateInline(ctx, objRef, common.NewSecretValue(string(v)), nil)
+		name, err := m.secretStore.CreateInline(ctx, objRef, common.NewSecretValue(v), nil)
 		if err != nil {
 			return nil, err
 		}
@@ -197,6 +211,9 @@ func (m *dataSourceMigrator) createSecrets(ctx context.Context, dsSecrets map[st
 		values[k] = common.InlineSecureValue{
 			Name: name,
 		}
+	}
+	if len(values) == 0 {
+		return nil, nil
 	}
 	return values, nil
 }
