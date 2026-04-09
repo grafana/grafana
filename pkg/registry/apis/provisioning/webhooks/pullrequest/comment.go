@@ -4,26 +4,30 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"html/template"
 	"path/filepath"
 	"strings"
+	"text/template"
 )
 
+const maxErrorLength = 256
+
 type commenter struct {
-	templateDashboard     *template.Template
-	templateTable         *template.Template
-	templateRenderInfo    *template.Template
-	templateFooter        *template.Template
+	templateDashboard     	 *template.Template
+	templateTable         	 *template.Template
+	templateRenderInfo    	 *template.Template
+	templateFooter        	 *template.Template
+	templateValidationErrors *template.Template
 	showImageRendererNote bool
 }
 
 func NewCommenter(showImageRendererNote bool) Commenter {
 	return &commenter{
-		templateDashboard:     template.Must(template.New("dashboard").Parse(commentTemplateSingleDashboard)),
-		templateTable:         template.Must(template.New("table").Parse(commentTemplateTable)),
-		templateRenderInfo:    template.Must(template.New("setup").Parse(commentTemplateMissingImageRenderer)),
-		templateFooter:        template.Must(template.New("footer").Parse(commentTemplateFooter)),
-		showImageRendererNote: showImageRendererNote,
+		templateDashboard:        template.Must(template.New("dashboard").Parse(commentTemplateSingleDashboard)),
+		templateTable:            template.Must(template.New("table").Parse(commentTemplateTable)),
+		templateRenderInfo:       template.Must(template.New("setup").Parse(commentTemplateMissingImageRenderer)),
+		templateFooter:        	  template.Must(template.New("footer").Parse(commentTemplateFooter)),
+		templateValidationErrors: template.Must(template.New("errors").Parse(commentTemplateValidationErrors)),
+		showImageRendererNote: 	  showImageRendererNote,
 	}
 }
 
@@ -47,12 +51,17 @@ func (c *commenter) generateComment(_ context.Context, info changeInfo) (string,
 	if len(info.Changes) == 0 {
 		buf.WriteString("Grafana didn't find any changes in this pull request.")
 	} else if len(info.Changes) == 1 && info.Changes[0].Parsed.GVK.Kind == dashboardKind {
-		if err := c.templateDashboard.Execute(&buf, info.Changes[0]); err != nil {
+		if err := c.templateDashboard.Execute(&buf, &info.Changes[0]); err != nil {
 			return "", fmt.Errorf("unable to execute template: %w", err)
 		}
 	} else {
 		if err := c.templateTable.Execute(&buf, info); err != nil {
 			return "", fmt.Errorf("unable to execute template: %w", err)
+		}
+		if info.HasErrors() {
+			if err := c.templateValidationErrors.Execute(&buf, info); err != nil {
+				return "", fmt.Errorf("unable to execute validation errors template: %w", err)
+			}
 		}
 	}
 
@@ -66,7 +75,11 @@ func (c *commenter) generateComment(_ context.Context, info changeInfo) (string,
 		return "", fmt.Errorf("unable to execute footer template: %w", err)
 	}
 
-	return strings.TrimSpace(buf.String()), nil
+	result := strings.TrimSpace(buf.String())
+	for strings.Contains(result, "\n\n\n") {
+		result = strings.ReplaceAll(result, "\n\n\n", "\n\n")
+	}
+	return result, nil
 }
 
 const commentTemplateSingleDashboard = `Hey there! 🎉
@@ -95,20 +108,34 @@ See the [original]({{.GrafanaURL}}) of {{.Title}}.
 {{- else if .PreviewURL}}
 
 See the [preview]({{.PreviewURL}}) of {{.Parsed.Info.Path}}.
-{{- end}}`
+{{- end}}{{ if .Error}}
+
+> ⚠️ **Validation failed:** {{.TruncatedError}}
+{{- end}}
+`
 
 const commentTemplateTable = `Hey there! 🎉
 Grafana spotted some changes.
 
-| Action | Kind | Resource | Preview |
-|--------|------|----------|---------|
+| Action | Kind | Resource | Preview | |
+|--------|------|----------|---------|-|
 {{- range .Changes}}
-| {{.Parsed.Action}} | {{.Kind}} | {{.ExistingLink}} | {{ if .PreviewURL}}[preview]({{.PreviewURL}}){{ end }} |
+| {{.Parsed.Action}} | {{.Kind}} | {{.ExistingLink}} | {{ if .PreviewURL}}[preview]({{.PreviewURL}}){{ end }} | {{.StatusIcon}} |
 {{- end -}}
 {{- if .SkippedFiles}}
 
 and {{ .SkippedFiles }} more files.
 {{- end}}`
+
+const commentTemplateValidationErrors = `
+### ⚠️ Validation Issues
+
+| File | Error |
+|------|-------|
+{{- range .Changes}}{{ if .Error}}
+| ` + "`{{.Change.Path}}`" + ` | {{.TruncatedError}} |
+{{- end}}{{ end}}
+`
 
 const commentTemplateMissingImageRenderer = `
 
@@ -137,4 +164,34 @@ func (f *fileChangeInfo) ExistingLink() string {
 		return fmt.Sprintf("[%s](%s)", f.Title, f.GrafanaURL)
 	}
 	return f.Title
+}
+
+func (f *fileChangeInfo) StatusIcon() string {
+	if f.Error != "" {
+		return "⚠️"
+	}
+	return "✅"
+}
+
+// TruncatedError returns a sanitized, length-limited error suitable for a
+// GitHub comment. Newlines are collapsed so the text stays on a single
+// markdown table row, and the message is capped at maxErrorLength characters
+// to stay well within GitHub's 65 536-character comment limit.
+func (f *fileChangeInfo) TruncatedError() string {
+	msg := strings.ReplaceAll(f.Error, "\n", " ")
+	msg = strings.ReplaceAll(msg, "\r", "")
+	msg = strings.ReplaceAll(msg, "|", "\\|")
+	if len(msg) > maxErrorLength {
+		return msg[:maxErrorLength] + "…"
+	}
+	return msg
+}
+
+func (c *changeInfo) HasErrors() bool {
+	for i := range c.Changes {
+		if c.Changes[i].Error != "" {
+			return true
+		}
+	}
+	return false
 }
