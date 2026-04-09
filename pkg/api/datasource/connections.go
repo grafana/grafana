@@ -1,18 +1,19 @@
 package datasource
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
-	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -30,40 +31,44 @@ type ConnectionClient interface {
 	// as we cannot guarantee which resource the caller intended to get.
 	//
 	// Deprecated: Use /apis/<type>.datasource.grafana.app/v0alpha1/namespaces/{ns}/datasources/{uid} instead.
-	GetConnectionByUID(c *contextmodel.ReqContext, uid string) (*queryV0.DataSourceConnectionList, error)
+	GetConnectionByUID(ctx context.Context, orgID int64, uid string) (*dsV0.DataSourceConnectionList, error)
 }
 
 var _ ConnectionClient = (*connectionClientImpl)(nil)
 
 // connectionClientImpl implements the ConnectionClient interface.
 type connectionClientImpl struct {
-	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
+	clientConfigProvider grafanaapiserver.RestConfigProvider
 	namespaceMapper      request.NamespaceMapper
 }
 
 // NewConnectionClient creates a new ConnectionClient that queries the connections endpoint in the query api group.
-func NewConnectionClient(cfg *setting.Cfg, provider grafanaapiserver.DirectRestConfigProvider) ConnectionClient {
+func NewConnectionClient(cfg *setting.Cfg, provider grafanaapiserver.RestConfigProvider) ConnectionClient {
 	return &connectionClientImpl{
 		clientConfigProvider: provider,
 		namespaceMapper:      request.GetNamespaceMapper(cfg),
 	}
 }
 
-// GetConnectionByUID queries GET /apis/query.grafana.app/v0alpha1/namespaces/{ns}/connections/{uid}
+// GetConnectionByUID queries GET /apis/datasource.grafana.app/v0alpha1/namespaces/{ns}/connections/{uid}
 // Deprecated: Use GetConnectionByTypeAndUID when type is known.
-func (cl *connectionClientImpl) GetConnectionByUID(c *contextmodel.ReqContext, uid string) (*queryV0.DataSourceConnectionList, error) {
-	namespace := cl.namespaceMapper(c.OrgID)
+func (cl *connectionClientImpl) GetConnectionByUID(ctx context.Context, orgID int64, uid string) (*dsV0.DataSourceConnectionList, error) {
+	namespace := cl.namespaceMapper(orgID)
 
-	cfg := cl.clientConfigProvider.GetDirectRestConfig(c)
-	cfg = dynamic.ConfigFor(cfg) // This sets NegotiatedSerializer, required for RESTClientFor
-	cfg.GroupVersion = &schema.GroupVersion{Group: "query.grafana.app", Version: "v0alpha1"}
-	rest, err := rest.RESTClientFor(cfg)
+	restCfg, err := cl.clientConfigProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rest config: %w", err)
+	}
+
+	cfg := dynamic.ConfigFor(restCfg) // This sets NegotiatedSerializer, required for RESTClientFor
+	cfg.GroupVersion = &dsV0.SchemeGroupVersion
+	client, err := rest.RESTClientFor(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rest client: %w", err)
 	}
 
 	var statusCode int
-	result := rest.Get().AbsPath("apis", "query.grafana.app", "v0alpha1", "namespaces", namespace, "connections").Param("name", uid).Do(c.Req.Context()).StatusCode(&statusCode)
+	result := client.Get().AbsPath("apis", dsV0.GROUP, dsV0.VERSION, "namespaces", namespace, "connections").Param("name", uid).Do(ctx).StatusCode(&statusCode)
 	err = result.Error()
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -74,10 +79,58 @@ func (cl *connectionClientImpl) GetConnectionByUID(c *contextmodel.ReqContext, u
 
 	body, _ := result.Raw() // err has already been checked
 
-	var conn queryV0.DataSourceConnectionList
+	var conn dsV0.DataSourceConnectionList
 	if err := json.Unmarshal(body, &conn); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal connection: %w", err)
 	}
 
 	return &conn, nil
+}
+
+// legacyConnectionClientImpl implements ConnectionClient
+//
+// This client is a temporary implementation so we reroute datasource CRUD requests
+// without relying on the query.grafana.app API group. We're using the legacy
+// datasource service just to get the datasource type, then forwarding the request
+// to the new APIs.
+type legacyConnectionClientImpl struct {
+	datasourceService datasourceservice.DataSourceRetriever
+}
+
+var _ ConnectionClient = (*legacyConnectionClientImpl)(nil)
+
+// NewLegacyConnectionClient creates a new ConnectionClient that relies on the legacy datasource service.
+func NewLegacyConnectionClient(datasourceService datasourceservice.DataSourceRetriever) ConnectionClient {
+	return &legacyConnectionClientImpl{
+		datasourceService: datasourceService,
+	}
+}
+
+func (cl *legacyConnectionClientImpl) GetConnectionByUID(ctx context.Context, orgID int64, uid string) (*dsV0.DataSourceConnectionList, error) {
+	query := datasources.GetDataSourceQuery{
+		UID:   uid,
+		OrgID: orgID,
+	}
+
+	conn, err := cl.datasourceService.GetDataSource(ctx, &query)
+	if err != nil {
+		return nil, err
+	}
+
+	if conn == nil {
+		return &dsV0.DataSourceConnectionList{
+			Items: []dsV0.DataSourceConnection{},
+		}, nil
+	}
+
+	return &dsV0.DataSourceConnectionList{
+		Items: []dsV0.DataSourceConnection{
+			{
+				APIGroup:   conn.Type + ".datasource.grafana.app",
+				APIVersion: "v0alpha1",
+				Name:       conn.UID,
+				Plugin:     conn.Type,
+			},
+		},
+	}, nil
 }

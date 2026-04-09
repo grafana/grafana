@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -28,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards/service/intervalv2"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/query"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -111,9 +111,12 @@ func (pd *PublicDashboardServiceImpl) GetPublicDashboardForView(ctx context.Cont
 		FolderUid:              dash.FolderUID,
 		PublicDashboardEnabled: pubdash.IsEnabled,
 	}
-	dash.Data.Get("timepicker").Set("hidden", !pubdash.TimeSelectionEnabled)
-
-	sanitizeData(dash.Data)
+	if isDashboardV2(dash) {
+		sanitizeDataV2(dash.Data)
+	} else {
+		dash.Data.Get("timepicker").Set("hidden", !pubdash.TimeSelectionEnabled)
+		sanitizeData(dash.Data)
+	}
 
 	return &dtos.DashboardFullWithMeta{Meta: meta, Dashboard: dash.Data}, nil
 }
@@ -125,6 +128,8 @@ func (pd *PublicDashboardServiceImpl) FindByDashboardUid(ctx context.Context, or
 	return pd.serviceWrapper.FindByDashboardUid(ctx, orgId, dashboardUid)
 }
 
+// Find should only be used when accessing a public dashboard by email/link or creating a new one to check for colliding UIDs.
+// Prefer `FindByDashboardUid` for anything else.
 func (pd *PublicDashboardServiceImpl) Find(ctx context.Context, uid string) (*PublicDashboard, error) {
 	ctx, span := tracer.Start(ctx, "publicdashboards.Find")
 	defer span.End()
@@ -290,9 +295,9 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 	}
 
 	// get existing public dashboard if exists
-	existingPubdash, err := pd.store.Find(ctx, dto.Uid)
+	existingPubdash, err := pd.store.FindByOrgAndUid(ctx, u.OrgID, dto.Uid)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("Update: failed to find public dashboard by uid: %s: %w", dto.Uid, err)
+		return nil, ErrInternalServerError.Errorf("Update: failed to find public dashboard by uid: %s and orgId: %d: %w", dto.Uid, u.OrgID, err)
 	} else if existingPubdash == nil {
 		return nil, ErrPublicDashboardNotFound.Errorf("Update: public dashboard not found by uid: %s", dto.Uid)
 	}
@@ -321,9 +326,9 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 	}
 
 	// get latest public dashboard to return
-	newPubdash, err := pd.store.Find(ctx, existingPubdash.Uid)
+	newPubdash, err := pd.store.FindByOrgAndUid(ctx, existingPubdash.OrgId, existingPubdash.Uid)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("Update: failed to find public dashboard by uid: %s: %w", existingPubdash.Uid, err)
+		return nil, ErrInternalServerError.Errorf("Update: failed to find public dashboard by uid: %s and orgId: %d: %w", existingPubdash.Uid, existingPubdash.OrgId, err)
 	}
 
 	pd.logIsEnabledChanged(existingPubdash, newPubdash, u)
@@ -388,7 +393,7 @@ func (pd *PublicDashboardServiceImpl) FindAllWithPagination(ctx context.Context,
 		DashboardUIDs: dashUIDs,
 		SignedInUser:  query.User,
 		Limit:         int64(len(dashUIDs)),
-		Type:          searchstore.TypeDashboard,
+		Type:          model.TypeDashboard,
 	})
 	if err != nil {
 		return nil, ErrInternalServerError.Errorf("FindAllWithPagination: GetDashboards: %w", err)
@@ -436,10 +441,10 @@ func (pd *PublicDashboardServiceImpl) FindAllWithPagination(ctx context.Context,
 	return resp, nil
 }
 
-func (pd *PublicDashboardServiceImpl) ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error) {
+func (pd *PublicDashboardServiceImpl) ExistsEnabledByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (bool, error) {
 	ctx, span := tracer.Start(ctx, "publicdashboards.ExistsEnabledByDashboardUid")
 	defer span.End()
-	return pd.store.ExistsEnabledByDashboardUid(ctx, dashboardUid)
+	return pd.store.ExistsEnabledByDashboardUid(ctx, orgId, dashboardUid)
 }
 
 func (pd *PublicDashboardServiceImpl) ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error) {
@@ -454,23 +459,28 @@ func (pd *PublicDashboardServiceImpl) GetOrgIdByAccessToken(ctx context.Context,
 	return pd.store.GetOrgIdByAccessToken(ctx, accessToken)
 }
 
-func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, uid string, dashboardUid string) error {
+func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, orgId int64, uid string, dashboardUid string) error {
 	ctx, span := tracer.Start(ctx, "publicdashboards.Delete")
 	defer span.End()
 	// get existing public dashboard if exists
-	existingPubdash, err := pd.store.Find(ctx, uid)
+	existingPubdash, err := pd.store.FindByOrgAndUid(ctx, orgId, uid)
 	if err != nil {
-		return ErrInternalServerError.Errorf("Delete: failed to find public dashboard by uid: %s: %w", uid, err)
+		return ErrInternalServerError.Errorf("Delete: failed to find public dashboard by uid: %s and orgId: %d: %w", uid, orgId, err)
 	}
 	if existingPubdash == nil {
 		return ErrPublicDashboardNotFound.Errorf("Delete: public dashboard not found by uid: %s", uid)
+	}
+
+	// validate the public dashboard belongs to the requested org
+	if existingPubdash.OrgId != orgId {
+		return ErrPublicDashboardWrongOrg.Errorf("Delete: public dashboard does not belong to org %d", orgId)
 	}
 
 	// validate the public dashboard belongs to the dashboard
 	if existingPubdash.DashboardUid != dashboardUid {
 		return ErrInvalidUid.Errorf("Delete: the public dashboard does not belong to the dashboard")
 	}
-	return pd.serviceWrapper.Delete(ctx, uid)
+	return pd.serviceWrapper.Delete(ctx, orgId, uid)
 }
 
 // intervalMS and maxQueryData values are being calculated on the frontend for regular dashboards
@@ -609,6 +619,7 @@ func newUpdatePublicDashboard(dto *SavePublicDashboardDTO, pd *PublicDashboard) 
 
 	return &PublicDashboard{
 		Uid:                  pd.Uid,
+		OrgId:                pd.OrgId,
 		IsEnabled:            isEnabled,
 		AnnotationsEnabled:   annotationsEnabled,
 		TimeSelectionEnabled: timeSelectionEnabled,

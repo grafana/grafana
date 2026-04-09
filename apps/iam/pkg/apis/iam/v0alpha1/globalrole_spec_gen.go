@@ -26,18 +26,13 @@ type GlobalRoleSpec struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Group       string `json:"group"`
-	// TODO:
-	// delegatable?: bool
-	// created?
-	// updated?
-	Permissions []GlobalRolespecPermission `json:"permissions"`
+	// Permissions for this role
+	Permissions []GlobalRolespecPermission `json:"permissions,omitempty"`
 }
 
 // NewGlobalRoleSpec creates a new GlobalRoleSpec object.
 func NewGlobalRoleSpec() *GlobalRoleSpec {
-	return &GlobalRoleSpec{
-		Permissions: []GlobalRolespecPermission{},
-	}
+	return &GlobalRoleSpec{}
 }
 
 // OpenAPIModelName returns the OpenAPI model name for GlobalRoleSpec.

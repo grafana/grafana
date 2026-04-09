@@ -1,20 +1,33 @@
-import { createContext, ReactNode, useContext } from 'react';
+import { createContext, type ReactNode, useContext } from 'react';
 
 import {
-  DataQueryError,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  DataTransformerConfig,
-  PanelData,
+  type DataQueryError,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type DataTransformerConfig,
+  type PanelData,
 } from '@grafana/data';
-import { VizPanel } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
-import { ExpressionQuery } from 'app/features/expressions/types';
-import { QueryGroupOptions } from 'app/types/query';
+import { type VizPanel } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
+import { type ExpressionQuery, type ExpressionQueryType } from 'app/features/expressions/types';
+import { type QueryGroupOptions } from 'app/types/query';
 
-import { QueryEditorType } from '../constants';
+import { type QueryEditorType, type QueryEditorTypeConfig } from '../constants';
 
-import { QueryOptionField, Transformation } from './types';
+import { type AlertRule, type QueryOptionField, type Transformation } from './types';
+
+export interface PendingExpression {
+  insertAfter: string;
+}
+
+export interface PendingSavedQuery {
+  insertAfter: string;
+}
+
+export interface PendingTransformation {
+  insertAfter?: string;
+  showPicker?: boolean;
+}
 
 export interface DatasourceState {
   datasource?: DataSourceApi;
@@ -25,8 +38,13 @@ export interface DatasourceState {
 export interface QueryRunnerState {
   queries: DataQuery[];
   data?: PanelData;
-  isLoading: boolean;
   queryError?: DataQueryError;
+}
+
+export interface AlertingState {
+  alertRules: AlertRule[];
+  loading: boolean;
+  isDashboardSaved: boolean;
 }
 
 export interface PanelState {
@@ -42,11 +60,35 @@ export interface QueryOptionsState {
   focusedField: QueryOptionField | null;
 }
 
+export interface TransformationToggleState {
+  showHelp: boolean;
+  showDebug: boolean;
+}
+
+interface TransformationToggles extends TransformationToggleState {
+  toggleHelp: () => void;
+  toggleDebug: () => void;
+}
+
+export interface SelectionModifiers {
+  /** True when Ctrl or Cmd is held — toggles this card in/out of the selection without clearing others. */
+  multi?: boolean;
+  /** True when Shift is held — range-selects from the last selected card to this one. */
+  range?: boolean;
+}
+
 export interface QueryEditorUIState {
   selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;
+  selectedAlert: AlertRule | null;
+  selectedQueryRefIds: readonly string[];
+  selectedTransformationIds: readonly string[];
   setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;
+  setSelectedAlert: (alert: AlertRule | null) => void;
+  toggleQuerySelection: (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => void;
+  toggleTransformationSelection: (transformation: Transformation, modifiers?: SelectionModifiers) => void;
+  clearSelection: () => void;
   queryOptions: QueryOptionsState;
   selectedQueryDsData: {
     datasource?: DataSourceApi;
@@ -55,10 +97,21 @@ export interface QueryEditorUIState {
   selectedQueryDsLoading: boolean;
   showingDatasourceHelp: boolean;
   toggleDatasourceHelp: () => void;
+  transformToggles: TransformationToggles;
   cardType: QueryEditorType;
+  pendingExpression: PendingExpression | null;
+  setPendingExpression: (pending: PendingExpression | null) => void;
+  finalizePendingExpression: (type: ExpressionQueryType) => void;
+  pendingSavedQuery: PendingSavedQuery | null;
+  setPendingSavedQuery: (pending: PendingSavedQuery | null) => void;
+  pendingTransformation: PendingTransformation | null;
+  setPendingTransformation: (pending: PendingTransformation | null) => void;
+  finalizePendingTransformation: (transformationId: string) => void;
+  showVersionBanner: boolean;
 }
 
 export interface QueryEditorActions {
+  onSwitchToClassic?: () => void;
   updateQueries: (queries: DataQuery[]) => void;
   updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
   addQuery: (query?: Partial<DataQuery>, afterRefId?: string) => string | undefined;
@@ -68,17 +121,22 @@ export interface QueryEditorActions {
   runQueries: () => void;
   changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => void;
   onQueryOptionsChange: (options: QueryGroupOptions) => void;
+  addTransformation: (transformationId: string, afterTransformId?: string) => string | undefined;
   deleteTransformation: (transformId: string) => void;
   toggleTransformationDisabled: (transformId: string) => void;
   updateTransformation: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;
   reorderTransformations: (transformations: DataTransformerConfig[]) => void;
 }
 
+export type QueryEditorTypeConfigState = Record<QueryEditorType, QueryEditorTypeConfig>;
+
 const DatasourceContext = createContext<DatasourceState | null>(null);
 const QueryRunnerContext = createContext<QueryRunnerState | null>(null);
 const PanelContext = createContext<PanelState | null>(null);
+const AlertingContext = createContext<AlertingState | null>(null);
 const QueryEditorUIContext = createContext<QueryEditorUIState | null>(null);
 const ActionsContext = createContext<QueryEditorActions | null>(null);
+const QueryEditorTypeConfigContext = createContext<QueryEditorTypeConfigState | null>(null);
 
 export function useDatasourceContext(): DatasourceState {
   const context = useContext(DatasourceContext);
@@ -104,6 +162,14 @@ export function usePanelContext(): PanelState {
   return context;
 }
 
+export function useAlertingContext(): AlertingState {
+  const context = useContext(AlertingContext);
+  if (!context) {
+    throw new Error('useAlertingContext must be used within QueryEditorProvider');
+  }
+  return context;
+}
+
 export function useActionsContext(): QueryEditorActions {
   const context = useContext(ActionsContext);
   if (!context) {
@@ -120,13 +186,23 @@ export function useQueryEditorUIContext(): QueryEditorUIState {
   return context;
 }
 
+export function useQueryEditorTypeConfig(): QueryEditorTypeConfigState {
+  const context = useContext(QueryEditorTypeConfigContext);
+  if (!context) {
+    throw new Error('useQueryEditorTypeConfig must be used within QueryEditorProvider');
+  }
+  return context;
+}
+
 interface QueryEditorProviderProps {
   children: ReactNode;
   dsState: DatasourceState;
   qrState: QueryRunnerState;
   panelState: PanelState;
+  alertingState: AlertingState;
   uiState: QueryEditorUIState;
   actions: QueryEditorActions;
+  typeConfig: QueryEditorTypeConfigState;
 }
 
 export function QueryEditorProvider({
@@ -134,15 +210,23 @@ export function QueryEditorProvider({
   dsState,
   qrState,
   panelState,
+  alertingState,
   uiState,
   actions,
+  typeConfig,
 }: QueryEditorProviderProps) {
   return (
     <ActionsContext.Provider value={actions}>
       <DatasourceContext.Provider value={dsState}>
         <QueryRunnerContext.Provider value={qrState}>
           <PanelContext.Provider value={panelState}>
-            <QueryEditorUIContext.Provider value={uiState}>{children}</QueryEditorUIContext.Provider>
+            <AlertingContext.Provider value={alertingState}>
+              <QueryEditorUIContext.Provider value={uiState}>
+                <QueryEditorTypeConfigContext.Provider value={typeConfig}>
+                  {children}
+                </QueryEditorTypeConfigContext.Provider>
+              </QueryEditorUIContext.Provider>
+            </AlertingContext.Provider>
           </PanelContext.Provider>
         </QueryRunnerContext.Provider>
       </DatasourceContext.Provider>

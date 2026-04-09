@@ -115,7 +115,14 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 					return fmt.Errorf("'keepFiringFor' cannot be less than 0")
 				}
 			}
-
+			// 9) Validate the expressions
+			expressions := make([]util.Expression, 0, len(r.Spec.Expressions))
+			for _, expression := range r.Spec.Expressions {
+				expressions = append(expressions, &expression)
+			}
+			if err := util.ValidateExpressions(expressions); err != nil {
+				return err
+			}
 			return nil
 		},
 	}

@@ -1,18 +1,18 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-import { colorManipulator, DataFrame, Field, InterpolateFunction, LinkModel } from '@grafana/data';
+import { colorManipulator, type DataFrame, type Field, type InterpolateFunction, type LinkModel } from '@grafana/data';
 import {
   VizTooltipContent,
   VizTooltipFooter,
   VizTooltipHeader,
   VizTooltipWrapper,
   ColorIndicator,
-  VizTooltipItem,
+  type VizTooltipItem,
 } from '@grafana/ui/internal';
 
 import { getFieldActions } from '../status-history/utils';
 
-import { XYSeries } from './types2';
+import { type XYSeries } from './types2';
 import { fmt } from './utils';
 
 export interface Props {

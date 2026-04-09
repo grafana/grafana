@@ -60,6 +60,23 @@ const (
 
 	// JobActionMove moves files in the remote repository
 	JobActionMove JobAction = "move"
+
+	// JobActionFixFolderMetadata is a placeholder job that will eventually regenerate folder metadata files.
+	// Currently a no-op to unblock frontend development.
+	JobActionFixFolderMetadata JobAction = "fixFolderMetadata"
+
+	// JobActionReleaseResources removes ownership annotations from all resources
+	// managed by a repository that no longer exists or is stuck in Terminating state.
+	// Resources remain in Grafana but become unmanaged.
+	// This action has inverted validation: it is only allowed when the repository
+	// does not exist or has a DeletionTimestamp set.
+	JobActionReleaseResources JobAction = "releaseResources"
+
+	// JobActionDeleteResources deletes all resources managed by a repository
+	// that no longer exists or is stuck in Terminating state.
+	// This action has inverted validation: it is only allowed when the repository
+	// does not exist or has a DeletionTimestamp set.
+	JobActionDeleteResources JobAction = "deleteResources"
 )
 
 // +enum
@@ -87,7 +104,7 @@ func (j JobState) Finished() bool {
 }
 
 type JobSpec struct {
-	Action JobAction `json:"action,omitempty"`
+	Action JobAction `json:"action"`
 
 	// The the repository reference (for now also in labels)
 	// This value is required, but will be popuplated from the job making the request
@@ -110,6 +127,9 @@ type JobSpec struct {
 
 	// Move when the action is `move`
 	Move *MoveJobOptions `json:"move,omitempty"`
+
+	// Options when the action is `fix-folder-metadata`
+	FixFolderMetadata *FixFolderMetadataJobOptions `json:"fixFolderMetadata,omitempty"`
 }
 
 func (JobSpec) OpenAPIModelName() string {
@@ -232,6 +252,15 @@ func (MoveJobOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "MoveJobOptions"
 }
 
+type FixFolderMetadataJobOptions struct {
+	// Ref to the branch to create the commit on (uses repository's default branch if not specified)
+	Ref string `json:"ref,omitempty"`
+}
+
+func (FixFolderMetadataJobOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "FixFolderMetadataJobOptions"
+}
+
 // The job status
 type JobStatus struct {
 	State    JobState `json:"state,omitempty"`
@@ -255,15 +284,22 @@ func (JobStatus) OpenAPIModelName() string {
 	return OpenAPIPrefix + "JobStatus"
 }
 
-// Convert a JOB to a
+// ToSyncStatus converts a job status to a sync status, which will be put in the repository status.
 func (in JobStatus) ToSyncStatus(jobId string) SyncStatus {
-	return SyncStatus{
+	s := SyncStatus{
 		JobID:    jobId,
 		State:    in.State,
 		Started:  in.Started,
 		Finished: in.Finished,
-		Message:  in.Errors,
 	}
+
+	if len(in.Errors) > 0 {
+		s.Message = in.Errors
+	} else if len(in.Warnings) > 0 {
+		s.Message = in.Warnings
+	}
+
+	return s
 }
 
 type JobResourceSummary struct {

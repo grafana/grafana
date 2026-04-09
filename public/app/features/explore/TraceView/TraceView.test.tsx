@@ -3,14 +3,14 @@ import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { Provider } from 'react-redux';
 
-import { DataFrame, MutableDataFrame } from '@grafana/data';
-import { mockTimeRange } from '@grafana/plugin-ui';
-import { DataSourceSrv, setDataSourceSrv, setPluginLinksHook, setPluginComponentsHook } from '@grafana/runtime';
+import { type DataFrame, MutableDataFrame } from '@grafana/data';
+import { mockTimeRange } from '@grafana/plugin-ui/test';
+import { type DataSourceSrv, setDataSourceSrv, setPluginLinksHook, setPluginComponentsHook } from '@grafana/runtime';
 
 import { configureStore } from '../../../store/configureStore';
 
 import { TraceView } from './TraceView';
-import { TraceData, TraceSpanData } from './components/types/trace';
+import { type TraceData, type TraceSpanData } from './components/types/trace';
 import { transformDataFrames } from './utils/transform';
 
 function getTraceView(frames: DataFrame[]) {

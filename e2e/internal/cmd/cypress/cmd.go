@@ -226,7 +226,7 @@ func runAction(ctx context.Context, c *cli.Command) error {
 		}
 	}
 
-	args := []string{"run", "cypress", c.String("command"),
+	args := []string{"run", "cypress", c.String("command"), //nolint:prealloc
 		"--env", joinCypressCfg(env),
 		"--config", joinCypressCfg(cypressConfig),
 		"--browser", c.String("browser")}

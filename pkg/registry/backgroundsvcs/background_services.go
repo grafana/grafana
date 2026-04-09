@@ -58,7 +58,7 @@ func ProvideBackgroundServiceRegistry(
 	provisioning *provisioning.ProvisioningServiceImpl, usageStats *uss.UsageStats,
 	statsCollector *statscollector.Service, grafanaUpdateChecker *updatemanager.GrafanaService,
 	pluginsUpdateChecker *updatemanager.PluginsService, metrics *metrics.InternalMetricsService,
-	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache, StorageService store.StorageService, entityEventsService store.EntityEventsService,
+	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache, StorageService store.StorageService,
 	saService *samanager.ServiceAccountsService, grpcServerProvider grpcserver.Provider,
 	secretMigrationProvider secretsMigrations.SecretMigrationProvider, loginAttemptService *loginattemptimpl.Service,
 	bundleService *supportbundlesimpl.Service, publicDashboardsMetric *publicdashboardsmetric.Service,
@@ -74,6 +74,7 @@ func ProvideBackgroundServiceRegistry(
 	dashboardServiceImpl *service.DashboardServiceImpl,
 	secretsGarbageCollectionWorker *secretsgarbagecollectionworker.Worker,
 	fixedRolesLoader *accesscontrol.FixedRolesLoader,
+	noopIAMRolesSyncer *accesscontrol.NoopIAMRolesSyncer,
 	installSync installsync.Syncer,
 	zanzanaService *authz.EmbeddedZanzanaService,
 	// Need to make sure these are initialized, is there a better place to put them?
@@ -102,7 +103,6 @@ func ProvideBackgroundServiceRegistry(
 		remoteCache,
 		secretsService,
 		StorageService,
-		entityEventsService,
 		grpcServerProvider,
 		saService,
 		pluginStore,
@@ -123,6 +123,7 @@ func ProvideBackgroundServiceRegistry(
 		dashboardServiceImpl,
 		secretsGarbageCollectionWorker,
 		fixedRolesLoader,
+		noopIAMRolesSyncer,
 		installSync,
 		zanzanaService,
 	)

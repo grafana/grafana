@@ -16,9 +16,6 @@ on:
       - public/app/features/search/**/*.ts
       - public/app/features/search/**/*.tsx
       - pkg/storage/**/*.go
-env:
-  ARCH: linux-amd64
-
 jobs:
   trigger-search-e2e:
     runs-on: ubuntu-latest

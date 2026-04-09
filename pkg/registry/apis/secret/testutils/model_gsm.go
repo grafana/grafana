@@ -15,6 +15,7 @@ type ModelSecureValue struct {
 	*secretv1beta1.SecureValue
 	active       bool
 	created      time.Time
+	updated      time.Time
 	leaseCreated time.Time
 }
 
@@ -88,7 +89,7 @@ func (m *ModelGsm) Create(now time.Time, sv *secretv1beta1.SecureValue) (*secret
 		created = sv.created
 	}
 
-	modelSv := &ModelSecureValue{SecureValue: sv, active: false, created: created}
+	modelSv := &ModelSecureValue{SecureValue: sv, active: false, created: created, updated: now}
 	modelSv.Status.Version = m.getNewVersionNumber(modelSv.Namespace, modelSv.Name)
 	modelSv.Status.ExternalID = fmt.Sprintf("%d", modelSv.Status.Version)
 	modelSv.Status.Keeper = keeper.name
@@ -265,13 +266,18 @@ func (m *ModelGsm) Read(namespace, name string) (*secretv1beta1.SecureValue, err
 }
 
 func (m *ModelGsm) LeaseInactiveSecureValues(now time.Time, minAge, leaseTTL time.Duration, maxBatchSize uint16) ([]*ModelSecureValue, error) {
+	// Match the SQL's ROW_NUMBER() OVER (ORDER BY created ASC)
+	slices.SortStableFunc(m.SecureValues, func(a, b *ModelSecureValue) int {
+		return a.created.Compare(b.created)
+	})
+
 	out := make([]*ModelSecureValue, 0)
 
 	for _, sv := range m.SecureValues {
 		if len(out) >= int(maxBatchSize) {
 			break
 		}
-		if !sv.active && now.Sub(sv.created) > minAge && now.Sub(sv.leaseCreated) > leaseTTL {
+		if !sv.active && now.Sub(sv.updated) > minAge && now.Sub(sv.leaseCreated) > leaseTTL {
 			sv.leaseCreated = now
 			out = append(out, sv)
 		}
@@ -280,36 +286,18 @@ func (m *ModelGsm) LeaseInactiveSecureValues(now time.Time, minAge, leaseTTL tim
 	return out, nil
 }
 
-func (m *ModelGsm) CleanupInactiveSecureValues(now time.Time, minAge time.Duration, maxBatchSize uint16) ([]*ModelSecureValue, error) {
-	// Using a slice to allow duplicates
-	toDelete := make([]*ModelSecureValue, 0)
-
-	// The implementation query sorts by created time ascending
-	slices.SortFunc(m.SecureValues, func(a, b *ModelSecureValue) int {
-		if a.created.Before(b.created) {
-			return -1
-		} else if a.created.After(b.created) {
-			return 1
-		}
-		return 0
-	})
-
-	for _, sv := range m.SecureValues {
-		if len(toDelete) >= int(maxBatchSize) {
-			break
-		}
-
-		if !sv.active && now.Sub(sv.created) > minAge {
-			toDelete = append(toDelete, sv)
-		}
+func (m *ModelGsm) CleanupInactiveSecureValues(now time.Time, minAge, leaseTTL time.Duration, maxBatchSize uint16) ([]*ModelSecureValue, error) {
+	leased, err := m.LeaseInactiveSecureValues(now, minAge, leaseTTL, maxBatchSize)
+	if err != nil {
+		return nil, err
 	}
 
 	// PERF: The slices are always small
 	m.SecureValues = slices.DeleteFunc(m.SecureValues, func(v1 *ModelSecureValue) bool {
-		return slices.ContainsFunc(toDelete, func(v2 *ModelSecureValue) bool {
+		return slices.ContainsFunc(leased, func(v2 *ModelSecureValue) bool {
 			return v2.UID == v1.UID
 		})
 	})
 
-	return toDelete, nil
+	return leased, nil
 }

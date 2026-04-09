@@ -6,11 +6,15 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/user"
+)
+
+const (
+	ActionDashboardsPublicWrite = "dashboards.public:write"
 )
 
 // These are the api contracts. The API should match the underlying service and store
@@ -29,7 +33,7 @@ type Service interface {
 	Find(ctx context.Context, uid string) (*PublicDashboard, error)
 	Create(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error)
 	Update(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error)
-	Delete(ctx context.Context, uid string, dashboardUid string) error
+	Delete(ctx context.Context, orgId int64, uid string, dashboardUid string) error
 
 	GetMetricRequest(ctx context.Context, dashboard *dashboards.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO PublicDashboardQueryDTO) (dtos.MetricRequest, error)
 	GetQueryDataResponse(ctx context.Context, skipDSCache bool, reqDTO PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error)
@@ -38,7 +42,7 @@ type Service interface {
 	NewPublicDashboardUid(ctx context.Context) (string, error)
 
 	ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error)
-	ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error)
+	ExistsEnabledByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (bool, error)
 
 	GetSQLSchemas(ctx context.Context, user identity.Requester, reqDTO dtos.MetricRequest) (queryV0.SQLSchemas, error)
 }
@@ -48,24 +52,25 @@ type Service interface {
 //go:generate mockery --name ServiceWrapper --structname FakePublicDashboardServiceWrapper --inpackage --filename public_dashboard_service_wrapper_mock.go
 type ServiceWrapper interface {
 	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
-	Delete(ctx context.Context, uid string) error
+	Delete(ctx context.Context, orgId int64, uid string) error
 	DeleteByDashboardUIDs(ctx context.Context, orgId int64, dashboardUIDs []string) error
 }
 
 //go:generate mockery --name Store --structname FakePublicDashboardStore --inpackage --filename public_dashboard_store_mock.go
 type Store interface {
 	Find(ctx context.Context, uid string) (*PublicDashboard, error)
+	FindByOrgAndUid(ctx context.Context, orgId int64, uid string) (*PublicDashboard, error)
 	FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error)
 	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
 	FindAll(ctx context.Context, query *PublicDashboardListQuery) (*PublicDashboardListResponseWithPagination, error)
 	Create(ctx context.Context, cmd SavePublicDashboardCommand) (int64, error)
 	Update(ctx context.Context, cmd SavePublicDashboardCommand) (int64, error)
-	Delete(ctx context.Context, uid string) (int64, error)
+	Delete(ctx context.Context, orgId int64, uid string) (int64, error)
 	DeleteByDashboardUIDs(ctx context.Context, orgId int64, dashboardUIDs []string) error
 
 	GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error)
 	ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error)
-	ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error)
+	ExistsEnabledByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (bool, error)
 	GetMetrics(ctx context.Context) (*Metrics, error)
 }
 

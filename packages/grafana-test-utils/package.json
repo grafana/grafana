@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/test-utils",
-  "version": "12.4.0-pre",
+  "version": "13.1.0-pre",
   "private": true,
   "description": "Grafana test utils & Mock API",
   "keywords": [
@@ -53,6 +53,7 @@
     "test:ci": "jest --maxWorkers 4"
   },
   "dependencies": {
+    "@grafana/api-clients": "workspace:*",
     "@openfeature/react-sdk": "^1.2.0",
     "chance": "^1.1.13",
     "jest-matcher-utils": "29.7.0",
@@ -61,6 +62,7 @@
     "rxjs": "7.8.2"
   },
   "devDependencies": {
+    "@grafana/runtime": "workspace:*",
     "@swc/core": "1.13.3",
     "@swc/jest": "^0.2.26",
     "@types/chance": "^1.1.7",

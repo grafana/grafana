@@ -1,18 +1,21 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { useStyles2, Input, FieldValidationMessage, Icon, Text } from '@grafana/ui';
+
+import { trackRenameInitiated } from '../../tracking';
 
 interface EditableQueryNameProps {
   query: DataQuery;
   queries: DataQuery[];
   onQueryUpdate: (updatedQuery: DataQuery, originalRefId: string) => void;
+  readOnly?: boolean;
 }
 
-export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQueryNameProps) {
+export function EditableQueryName({ query, queries, onQueryUpdate, readOnly }: EditableQueryNameProps) {
   const styles = useStyles2(getStyles);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -24,6 +27,7 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
   );
 
   const onEditQuery = () => {
+    trackRenameInitiated();
     setIsEditing(true);
     setValidationError(null);
   };
@@ -45,20 +49,18 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
   };
 
   const onEndEditName = (newName: string) => {
-    const trimmedName = newName.trim();
-    const error = validateQueryName(trimmedName);
+    setIsEditing(false);
+    setValidationError(null);
 
-    if (error) {
-      setValidationError(error);
+    const trimmedName = newName.trim();
+
+    if (validateQueryName(trimmedName)) {
       return;
     }
 
     if (query.refId !== trimmedName) {
       onQueryUpdate({ ...query, refId: trimmedName }, query.refId);
     }
-
-    setIsEditing(false);
-    setValidationError(null);
   };
 
   const onInputChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
@@ -67,12 +69,28 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
     setValidationError(error);
   };
 
-  const onEditQueryBlur = (event: React.SyntheticEvent<HTMLInputElement>) => {
+  const onEditQueryBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+    // Switching cards should cancel in-progress rename edits.
+    if (isSidebarCardElement(event.relatedTarget)) {
+      setIsEditing(false);
+      setValidationError(null);
+      return;
+    }
+
+    // Any other blur should finish the edit flow (validate + optional rename).
     onEndEditName(event.currentTarget.value);
   };
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
+      const trimmedName = event.currentTarget.value.trim();
+      const error = validateQueryName(trimmedName);
+
+      if (error) {
+        setValidationError(error);
+        return;
+      }
+
       onEndEditName(event.currentTarget.value);
     } else if (event.key === 'Escape') {
       event.stopPropagation(); // Prevent going all the way back to the dashboard scene
@@ -84,6 +102,16 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
   const onFocus = (event: React.FocusEvent<HTMLInputElement>) => {
     event.target.select();
   };
+
+  if (readOnly) {
+    return (
+      <span className={styles.queryNameText}>
+        <Text color="primary" truncate variant="code">
+          {query.refId}
+        </Text>
+      </span>
+    );
+  }
 
   if (isEditing) {
     return (
@@ -123,6 +151,10 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
       <Icon name="pen" className={styles.queryEditIcon} data-edit-icon size="sm" />
     </button>
   );
+}
+
+function isSidebarCardElement(target: EventTarget | null) {
+  return target instanceof HTMLElement && target.closest('[data-query-sidebar-card]') !== null;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

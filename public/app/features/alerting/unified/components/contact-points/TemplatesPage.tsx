@@ -15,7 +15,7 @@ function TemplatesPageContent() {
   );
 
   return (
-    <Stack direction="column" gap={3}>
+    <Stack direction="column" gap={1}>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Text variant="body" color="secondary">
           <Trans i18nKey="alerting.templates-page.description">
@@ -29,7 +29,7 @@ function TemplatesPageContent() {
             href="/alerting/notifications/templates/new"
             disabled={!createTemplateAllowed}
           >
-            <Trans i18nKey="alerting.templates-page.add-template">Add notification template group</Trans>
+            <Trans i18nKey="alerting.templates-page.add-template">New notification template</Trans>
           </LinkButton>
         )}
       </Stack>

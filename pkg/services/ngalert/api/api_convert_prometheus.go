@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	amconfig "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	prommodel "github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
@@ -511,11 +510,11 @@ func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext
 			c.Permissions[orgID] = make(map[string][]string)
 		}
 
-		folderScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ns.UID)
-		if c.Permissions[orgID][dashboards.ActionFoldersRead] == nil {
-			c.Permissions[orgID][dashboards.ActionFoldersRead] = []string{}
+		folderScope := folder.ScopeFoldersProvider.GetResourceScopeUID(ns.UID)
+		if c.Permissions[orgID][folder.ActionFoldersRead] == nil {
+			c.Permissions[orgID][folder.ActionFoldersRead] = []string{}
 		}
-		c.Permissions[orgID][dashboards.ActionFoldersRead] = append(c.Permissions[orgID][dashboards.ActionFoldersRead], folderScope)
+		c.Permissions[orgID][folder.ActionFoldersRead] = append(c.Permissions[orgID][folder.ActionFoldersRead], folderScope)
 	}
 
 	logger.Debug("Using folder for the converted rules", "folder_uid", ns.UID)
@@ -894,7 +893,7 @@ func parseKeyValuePairs(input string, headerName string) (map[string]string, err
 
 // parseMergeMatchersHeader parses the merge matchers header value.
 // Expected format: "key1=value1,key2=value2"
-func parseMergeMatchersHeader(c *contextmodel.ReqContext) (amconfig.Matchers, error) {
+func parseMergeMatchersHeader(c *contextmodel.ReqContext) (apimodels.Matchers, error) {
 	matchersStr := strings.TrimSpace(c.Req.Header.Get(mergeMatchersHeader))
 
 	if matchersStr == "" {
@@ -906,7 +905,7 @@ func parseMergeMatchersHeader(c *contextmodel.ReqContext) (amconfig.Matchers, er
 		return nil, err
 	}
 
-	matchers := amconfig.Matchers{}
+	matchers := apimodels.Matchers{}
 	for key, value := range kvPairs {
 		matchers = append(matchers, &labels.Matcher{
 			Type:  labels.MatchEqual,
@@ -935,7 +934,7 @@ func parseVersionMessageHeader(c *contextmodel.ReqContext) (string, error) {
 	return str, nil
 }
 
-func formatMergeMatchers(matchers amconfig.Matchers) string {
+func formatMergeMatchers(matchers apimodels.Matchers) string {
 	var pairs []string
 	for _, matcher := range matchers {
 		if matcher.Type == labels.MatchEqual {

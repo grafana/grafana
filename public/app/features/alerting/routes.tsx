@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom-v5-compat';
 
 import { config } from '@grafana/runtime';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
-import { GrafanaRouteComponent, RouteDescriptor } from 'app/core/navigation/types';
+import { type GrafanaRouteComponent, type RouteDescriptor } from 'app/core/navigation/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { PERMISSIONS_CONTACT_POINTS } from './unified/components/contact-points/permissions';
@@ -152,6 +152,20 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
+      path: '/alerting/silence/:id/view',
+      roles: evaluateAccess([
+        AccessControlAction.AlertingInstanceRead,
+        AccessControlAction.AlertingInstancesExternalRead,
+        AccessControlAction.AlertingSilenceRead,
+      ]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "SilenceViewPage" */ 'app/features/alerting/unified/components/silences/SilenceViewPage'
+          )
+      ),
+    },
+    {
       path: '/alerting/notifications',
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsRead,
@@ -258,6 +272,21 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
             /* webpackChunkName: "HistoryPage" */ 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistoryPage'
           )
       ),
+    },
+    {
+      path: '/alerting/notifications-history',
+      component: () => <Navigate replace to="/alerting/history?tab=notifications" />,
+    },
+    {
+      path: '/alerting/notifications-history/view/:uuid',
+      component: cfg.featureToggles.alertingNotificationHistoryDetail
+        ? importAlertingComponent(
+            () =>
+              import(
+                /* webpackChunkName: "NotificationDetailPage" */ 'app/features/alerting/unified/notifications/NotificationDetailPage'
+              )
+          )
+        : () => <Navigate replace to="/alerting" />,
     },
     {
       path: '/alerting/recently-deleted/',

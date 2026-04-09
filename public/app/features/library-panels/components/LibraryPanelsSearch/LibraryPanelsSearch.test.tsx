@@ -1,16 +1,15 @@
 import { render, screen, waitFor, within } from 'test/test-utils';
 
-import { PanelPluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
+import { type PanelPluginMeta, type PluginMetaInfo, PluginType } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
-import { Panel } from '@grafana/schema';
+import { type Panel } from '@grafana/schema';
 import { setupMockServer } from '@grafana/test-utils/server';
 
 import { backendSrv } from '../../../../core/services/backend_srv';
-import * as panelUtils from '../../../panel/state/util';
 import * as api from '../../state/api';
-import { LibraryElementsSearchResult } from '../../types';
+import { type LibraryElementsSearchResult } from '../../types';
 
-import { LibraryPanelsSearch, LibraryPanelsSearchProps } from './LibraryPanelsSearch';
+import { LibraryPanelsSearch, type LibraryPanelsSearchProps } from './LibraryPanelsSearch';
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -35,23 +34,31 @@ const timeseries: PanelPluginMeta = {
   sort: 1,
 };
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    panels: {
-      timeseries: {
-        info: { logos: { small: '' } },
-        name: 'Time Series',
-      },
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  usePanelPluginMeta: jest.fn((type: string) => ({
+    value: {
+      id: type,
+      name: type === 'timeseries' ? 'Time Series' : 'Graph',
+      info: { logos: { small: '', large: '' } },
+      baseUrl: '',
+      type: 'panel',
+      module: '',
+      sort: 0,
     },
-  },
+    loading: false,
+    error: undefined,
+  })),
+  useListedPanelPluginMetas: jest.fn(() => ({
+    value: [graph, timeseries],
+    loading: false,
+    error: undefined,
+  })),
 }));
 
 const getLibraryPanelsSpy = jest.spyOn(api, 'getLibraryPanels');
 jest.spyOn(api, 'getConnectedDashboards').mockResolvedValue([]);
 jest.spyOn(api, 'deleteLibraryPanel').mockResolvedValue({ message: 'success' });
-jest.spyOn(panelUtils, 'getAllPanelPluginMeta').mockReturnValue([graph, timeseries]);
 
 async function getTestContext(
   propOverrides: Partial<LibraryPanelsSearchProps> = {},

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -22,6 +22,10 @@ import (
 type changeInfo struct {
 	GrafanaBaseURL string
 
+	// Attribution: identifies which provisioning repository posted this comment
+	RepositoryName  string
+	RepositoryTitle string
+
 	// Files we tried to read
 	Changes []fileChangeInfo
 
@@ -30,6 +34,14 @@ type changeInfo struct {
 
 	// Requested image render, but it is not available
 	MissingImageRenderer bool
+}
+
+func (c changeInfo) GrafanaHost() string {
+	u, err := url.Parse(c.GrafanaBaseURL)
+	if err != nil || u.Host == "" {
+		return c.GrafanaBaseURL
+	}
+	return u.Host
 }
 
 type fileChangeInfo struct {
@@ -80,6 +92,8 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 	shouldRender := rendererAvailable && len(changes) == 1 && cfg.Spec.GitHub.GenerateDashboardPreviews
 	info := changeInfo{
 		GrafanaBaseURL:       e.urlProvider(ctx, cfg.Namespace),
+		RepositoryName:       cfg.Name,
+		RepositoryTitle:      cfg.Spec.Title,
 		MissingImageRenderer: !rendererAvailable,
 	}
 

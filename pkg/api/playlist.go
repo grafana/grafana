@@ -12,11 +12,10 @@ import (
 	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/routing"
-	internalplaylist "github.com/grafana/grafana/pkg/registry/apps/playlist"
+	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -176,7 +175,7 @@ func (pk8s *playlistK8sHandler) searchPlaylists(c *contextmodel.ReqContext) {
 	query := strings.ToUpper(c.Query("query"))
 	playlists := []playlist.Playlist{}
 	for _, item := range out.Items {
-		p := internalplaylist.UnstructuredToLegacyPlaylist(item)
+		p := playlist.UnstructuredToLegacyPlaylist(item)
 		if p == nil {
 			continue
 		}
@@ -213,7 +212,7 @@ func (pk8s *playlistK8sHandler) getPlaylist(c *contextmodel.ReqContext) {
 		pk8s.writeError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, internalplaylist.UnstructuredToLegacyPlaylistDTO(*out))
+	c.JSON(http.StatusOK, playlist.UnstructuredToLegacyPlaylistDTO(*out))
 }
 
 // swagger:route GET /playlists/{uid}/items playlists getPlaylistItems
@@ -241,7 +240,7 @@ func (pk8s *playlistK8sHandler) getPlaylistItems(c *contextmodel.ReqContext) {
 		pk8s.writeError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, internalplaylist.UnstructuredToLegacyPlaylistDTO(*out).Items)
+	c.JSON(http.StatusOK, playlist.UnstructuredToLegacyPlaylistDTO(*out).Items)
 }
 
 // swagger:route DELETE /playlists/{uid} playlists deletePlaylist
@@ -297,7 +296,7 @@ func (pk8s *playlistK8sHandler) updatePlaylist(c *contextmodel.ReqContext) {
 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
 		return
 	}
-	obj := internalplaylist.LegacyUpdateCommandToUnstructured(cmd)
+	obj := playlist.LegacyUpdateCommandToUnstructured(cmd)
 	obj.SetName(uid)
 	existing, err := client.Get(c.Req.Context(), uid, v1.GetOptions{})
 	if err != nil {
@@ -310,7 +309,7 @@ func (pk8s *playlistK8sHandler) updatePlaylist(c *contextmodel.ReqContext) {
 		pk8s.writeError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, internalplaylist.UnstructuredToLegacyPlaylistDTO(*out))
+	c.JSON(http.StatusOK, playlist.UnstructuredToLegacyPlaylistDTO(*out))
 }
 
 // swagger:route POST /playlists playlists createPlaylist
@@ -337,13 +336,13 @@ func (pk8s *playlistK8sHandler) createPlaylist(c *contextmodel.ReqContext) {
 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
 		return
 	}
-	obj := internalplaylist.LegacyUpdateCommandToUnstructured(cmd)
+	obj := playlist.LegacyUpdateCommandToUnstructured(cmd)
 	out, err := client.Create(c.Req.Context(), &obj, v1.CreateOptions{})
 	if err != nil {
 		pk8s.writeError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, internalplaylist.UnstructuredToLegacyPlaylistDTO(*out))
+	c.JSON(http.StatusOK, playlist.UnstructuredToLegacyPlaylistDTO(*out))
 }
 
 //-----------------------------------------------------------------------------------------

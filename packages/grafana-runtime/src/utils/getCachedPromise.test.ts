@@ -1,5 +1,6 @@
-import { getCachedPromise, invalidateCache, MAX_CACHE_SIZE, setLogger } from './getCachedPromise';
-import { MonitoringLogger } from './logging';
+import { getLogger, setLogger } from '../services/logging/registry';
+
+import { getCachedPromise, invalidateCache, MAX_CACHE_SIZE } from './getCachedPromise';
 
 const TEST_ASYNC_DELAY = 10;
 
@@ -15,19 +16,17 @@ function simulateErrorRequest(): Promise<{ ok: boolean; status: number; statusTe
   });
 }
 
-let logger: MonitoringLogger;
-
 beforeEach(() => {
   jest.clearAllMocks();
   invalidateCache();
-  logger = {
+  // can't use mockLogger here because that would cause a circular dependency between @grafana/runtime and @grafana/test-utils
+  setLogger('grafana/runtime.utils.getCachedPromise', {
     logDebug: jest.fn(),
     logError: jest.fn(),
     logInfo: jest.fn(),
     logMeasurement: jest.fn(),
     logWarning: jest.fn(),
-  };
-  setLogger(logger);
+  });
 });
 
 // heads up that all jest.fn(any function) will get the name 'mockConstructor'
@@ -64,6 +63,42 @@ describe('getCachedPromise', () => {
       });
 
       await Promise.all(expectClearedPromises);
+    });
+  });
+
+  describe('when called with invalidate option', () => {
+    test('should invalidate cache for function name', async () => {
+      const actual1 = await getCachedPromise(simulateOkRequest);
+      const actual2 = await getCachedPromise(simulateOkRequest, { invalidate: true });
+      const actual3 = await getCachedPromise(simulateOkRequest);
+
+      expect(actual1).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
+      expect(actual1).not.toBe(actual2);
+      expect(actual2).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
+      expect(actual3).toBe(actual2);
+    });
+
+    test('should invalidate cache for cacheKey', async () => {
+      const actual1 = await getCachedPromise(simulateOkRequest, { cacheKey: 'the-key' });
+      const actual2 = await getCachedPromise(simulateOkRequest, { cacheKey: 'the-key', invalidate: true });
+      const actual3 = await getCachedPromise(simulateOkRequest, { cacheKey: 'the-key' });
+
+      expect(actual1).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
+      expect(actual1).not.toBe(actual2);
+      expect(actual2).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
+      expect(actual3).toBe(actual2);
+    });
+
+    test('should return correct values when called concurrently', async () => {
+      const otherFunction = async () => 2;
+
+      const promise1 = getCachedPromise(simulateOkRequest, { cacheKey: 'the-key', invalidate: true });
+      const promise2 = getCachedPromise(otherFunction, { cacheKey: 'the-key', invalidate: true });
+
+      const [actual1, actual2] = await Promise.all([promise1, promise2]);
+
+      expect(actual1).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
+      expect(actual2).toBe(2);
     });
   });
 
@@ -187,12 +222,15 @@ describe('getCachedPromise', () => {
 
       expect(actual).toStrictEqual({ ok: false, status: 500, statusText: 'Internal Server Error' });
       expect(promise).toHaveBeenCalledTimes(1);
-      expect(logger.logError).toHaveBeenCalledTimes(1);
-      expect(logger.logError).toHaveBeenCalledWith(new Error(`Something failed while resolving a cached promise`), {
-        stack: expect.any(String),
-        message: 'Network Error',
-        key: 'mockConstructor',
-      });
+      expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledTimes(1);
+      expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledWith(
+        new Error(`Something failed while resolving a cached promise`),
+        {
+          stack: expect.any(String),
+          message: 'Network Error',
+          key: 'mockConstructor',
+        }
+      );
     });
 
     test('should invalidate cache when something errors', async () => {

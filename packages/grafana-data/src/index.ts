@@ -251,7 +251,16 @@ export {
   CSVReader,
   toCSV,
 } from './utils/csv';
-export { parseLabels, findCommonLabels, findUniqueLabels, matchAllLabels, formatLabels } from './utils/labels';
+export {
+  parseLabels,
+  findCommonLabels,
+  findUniqueLabels,
+  matchAllLabels,
+  formatLabels,
+  extractFacetedLabels,
+  resolveFacetedFilterNames,
+  FIELD_NAME_FACET_KEY,
+} from './utils/labels';
 export { roundDecimals, guessDecimals } from './utils/numbers';
 export { objRemoveUndefined, isEmptyObject } from './utils/object';
 export { classicColors } from './utils/namedColorsPalette';
@@ -447,6 +456,8 @@ export {
 export {
   type RestrictedGrafanaApisContextType,
   type RestrictedGrafanaApisAllowList,
+  type DashboardMutationAPI,
+  type DashboardMutationResult,
   RestrictedGrafanaApisContext,
   RestrictedGrafanaApisContextProvider,
   useRestrictedGrafanaApis,
@@ -721,6 +732,8 @@ export {
   type PanelPluginVisualizationSuggestion,
   type VisualizationSuggestionsBuilder,
   VisualizationSuggestionScore,
+  type VisualizationPresetsSupplier,
+  type VisualizationPresetsContext,
 } from './types/suggestions';
 export {
   type MatcherConfig,

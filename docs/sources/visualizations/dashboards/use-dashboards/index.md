@@ -129,6 +129,12 @@ image_maps:
           **Dashboard insights**
 
           View [dashboard analytics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/assess-dashboard-usage/) including information about users, activity, query counts.
+      - x_coord: 93.5
+        y_coord: 75
+        content: |
+          **Toolbar**
+
+          A dashboard toolbar.
       - x_coord: 11.5
         y_coord: 30
         content: |
@@ -199,6 +205,14 @@ By hovering over a panel with the mouse you can use some shortcuts that will tar
 - `ps`: Open share panel snapshot configuration
 - `pd`: Duplicate panel
 - `pr`: Remove panel
+
+## Kiosk mode
+
+In kiosk mode, the main menu and top navigation bar of a dashboard are hidden.
+This can be useful if you want to display as much information as possible on the screen or use the dashboard to present information to a wider audience.
+
+- **Turn on kiosk mode**: Click your user icon and select **Enable kiosk mode**.
+- **Turn off kiosk mode**: Press `Esc`.
 
 ## Set dashboard time range
 
@@ -272,6 +286,8 @@ Select the relative time range from the **Relative time ranges** list. You can f
 - Today so far
 - This week so far
 - This month so far
+
+You can enter a custom relative time range into the search at the top to quickly select, such as `13h` to select a time range for the last 13 hours.
 
 #### Absolute time range
 

@@ -3,23 +3,33 @@ import { take } from 'lodash';
 import { useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { SceneQueryRunner } from '@grafana/scenes';
-import { Box, EmptyState, ScrollContainer, useSplitter, useStyles2 } from '@grafana/ui';
+import { type SceneQueryRunner } from '@grafana/scenes';
+import {
+  Box,
+  Button,
+  EmptyState,
+  LoadingBar,
+  ScrollContainer,
+  Stack,
+  Text,
+  useSplitter,
+  useStyles2,
+} from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import LoadMoreHelper from '../rule-list/LoadMoreHelper';
 
-import { WorkbenchProvider } from './WorkbenchContext';
+import { WorkbenchProvider, useExpandCollapseAll } from './WorkbenchContext';
 import { AlertRuleRow } from './rows/AlertRuleRow';
 import { FolderGroupRow } from './rows/FolderGroupRow';
 import { GroupRow } from './rows/GroupRow';
 import { generateRowKey } from './rows/utils';
 import { GenericRowSkeleton } from './scene/AlertRuleInstances';
 import { SummaryChartReact } from './scene/SummaryChart';
-import { SummaryStatsReact } from './scene/SummaryStats';
-import { Domain, Filter, WorkbenchRow } from './types';
+import { LabelsColumn } from './scene/filters/LabelsColumn';
+import { type Domain, EmptyLabelValue, type Filter, type WorkbenchRow } from './types';
 
 type WorkbenchProps = {
   domain: Domain;
@@ -27,11 +37,12 @@ type WorkbenchProps = {
   groupBy?: string[];
   filterBy?: Filter[];
   queryRunner: SceneQueryRunner;
-  isLoading?: boolean;
+  isInitialLoading?: boolean;
+  isRefreshing?: boolean;
   hasActiveFilters?: boolean;
 };
 
-const initialSize = 1 / 3;
+const initialSize = 2 / 3;
 
 // Helper function to recursively render WorkbenchRow items with children pattern
 function renderWorkbenchRow(
@@ -40,7 +51,8 @@ function renderWorkbenchRow(
   domain: Domain,
   key: React.Key,
   enableFolderMeta: boolean,
-  depth = 0
+  depth = 0,
+  groupLabels: Record<string, string> = {}
 ): React.ReactElement {
   if (row.type === 'alertRule') {
     return (
@@ -51,9 +63,17 @@ function renderWorkbenchRow(
         rowKey={key}
         depth={depth}
         enableFolderMeta={enableFolderMeta}
+        groupLabels={groupLabels}
       />
     );
   } else {
+    // Accumulate this group's label=value so child AlertRuleRows can scope their instance queries.
+    // EmptyLabelValue (instances missing this label) maps to "" which produces label="" in PromQL.
+    const childGroupLabels = {
+      ...groupLabels,
+      [row.metadata.label]: row.metadata.value === EmptyLabelValue ? '' : row.metadata.value,
+    };
+
     const children = row.rows.map((childRow, childIndex) =>
       renderWorkbenchRow(
         childRow,
@@ -61,7 +81,8 @@ function renderWorkbenchRow(
         domain,
         `${key}-${generateRowKey(childRow, childIndex)}`,
         enableFolderMeta,
-        depth + 1
+        depth + 1,
+        childGroupLabels
       )
     );
 
@@ -124,23 +145,35 @@ export function Workbench({
   data,
   queryRunner,
   groupBy,
-  isLoading = false,
+  isInitialLoading = false,
+  isRefreshing = false,
   hasActiveFilters = false,
 }: WorkbenchProps) {
   const styles = useStyles2(getStyles);
 
   const [pageIndex, setPageIndex] = useState<number>(1);
+  const [allExpanded, setAllExpanded] = useState(true);
+  const { expandGeneration, collapseGeneration, expandAll, collapseAll } = useExpandCollapseAll();
+
+  const toggleExpandAll = () => {
+    if (allExpanded) {
+      collapseAll();
+      setAllExpanded(false);
+    } else {
+      expandAll();
+      setAllExpanded(true);
+    }
+  };
 
   // Calculate once: show folder metadata only if not grouping by grafana_folder
   const enableFolderMeta = !groupBy?.includes('grafana_folder');
 
-  // Determine UI state
-  const showEmptyState = !isLoading && data.length === 0;
-  const showData = !isLoading && data.length > 0;
+  const showEmptyState = !isInitialLoading && data.length === 0;
+  const showData = data.length > 0;
   // splitter for template and payload editor
   const splitter = useSplitter({
     direction: 'row',
-    // if Grafana Alertmanager, split 50/50, otherwise 100/0 because there is no payload editor
+    // if Grafana Alertmanager, split 2/3 : 1/3, otherwise 100/0 because there is no payload editor
     initialSize: initialSize,
     dragPosition: 'middle',
   });
@@ -156,75 +189,118 @@ export function Workbench({
   const hasMore = data.length > itemsToRender;
 
   return (
-    <div style={{ position: 'relative', display: 'flex', flexGrow: 1, width: '100%', height: '100%' }}>
-      {/* dummy splitter to handle flex width of group items */}
-      <div {...splitter.containerProps}>
-        <div {...splitter.primaryProps}>
-          <div ref={leftColumnRef} className={cx(styles.flexFull, styles.minColumnWidth)} />
+    <Stack gap={0} grow={1} width="100%" height="100%">
+      {/* always-visible labels column */}
+      <LabelsColumn />
+      {/* main workbench: splitter + overlaid content */}
+      <div style={{ position: 'relative', display: 'flex', flex: 1, minWidth: 0, height: '100%' }}>
+        {/* dummy splitter to handle flex width of group items */}
+        <div {...splitter.containerProps}>
+          <div {...splitter.primaryProps}>
+            <div ref={leftColumnRef} className={cx(styles.flexFull, styles.minColumnWidth)} />
+          </div>
+          {!showEmptyState && <div {...splitter.splitterProps} />}
+          <div {...splitter.secondaryProps}>
+            <div ref={rightColumnRef} className={cx(styles.flexFull, styles.minColumnWidth)} />
+          </div>
         </div>
-        {!showEmptyState && <div {...splitter.splitterProps} />}
-        <div {...splitter.secondaryProps}>
-          <div ref={rightColumnRef} className={cx(styles.flexFull, styles.minColumnWidth)} />
-        </div>
-      </div>
-      {/* content goes here */}
-      <div data-testid="groups-container" className={cx(splitter.containerProps.className, styles.groupsContainer)}>
-        {showEmptyState ? (
-          <Box display="flex" alignItems="center" justifyContent="center" width="100%" height="100%" minHeight="400px">
-            <EmptyState
-              variant="not-found"
-              message={hasActiveFilters ? 'No matching instances found' : 'No firing or pending instances'}
+        {/* content goes here */}
+        <div data-testid="groups-container" className={cx(splitter.containerProps.className, styles.groupsContainer)}>
+          {showEmptyState ? (
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              width="100%"
+              height="100%"
+              minHeight="400px"
             >
-              {hasActiveFilters ? (
-                <Trans i18nKey="alerting.triage.no-matching-instances-with-filters">
-                  No alert instances match your current set of filters for the selected time range.
-                </Trans>
-              ) : (
-                <Trans i18nKey="alerting.triage.no-firing-or-pending-instances">
-                  You have no alert instances in a firing or pending state for the selected time range.
-                </Trans>
-              )}
-            </EmptyState>
-          </Box>
-        ) : (
-          <>
-            <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
-              <SummaryStatsReact />
-              <SummaryChartReact />
-            </div>
-            <div className={styles.virtualizedContainer}>
-              <WorkbenchProvider
-                leftColumnWidth={leftColumnWidth}
-                rightColumnWidth={rightColumnWidth}
-                domain={domain}
-                queryRunner={queryRunner}
+              <EmptyState
+                variant="not-found"
+                message={hasActiveFilters ? 'No matching instances found' : 'No firing or pending instances'}
               >
-                <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators={showData}>
-                  {isLoading && (
-                    <>
-                      <GenericRowSkeleton key="skeleton-1" width={leftColumnWidth} depth={0} />
-                      <GenericRowSkeleton key="skeleton-2" width={leftColumnWidth} depth={0} />
-                      <GenericRowSkeleton key="skeleton-3" width={leftColumnWidth} depth={0} />
-                    </>
-                  )}
-                  {showData &&
-                    dataSlice.map((row, index) => {
-                      const rowKey = generateRowKey(row, index);
-                      return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey, enableFolderMeta);
-                    })}
-                  {hasMore && <LoadMoreHelper handleLoad={() => setPageIndex((prevIndex) => prevIndex + 1)} />}
-                </ScrollContainer>
-              </WorkbenchProvider>
-            </div>
-          </>
-        )}
+                {hasActiveFilters ? (
+                  <Trans i18nKey="alerting.triage.no-matching-instances-with-filters">
+                    No alert instances match your current set of filters for the selected time range.
+                  </Trans>
+                ) : (
+                  <Trans i18nKey="alerting.triage.no-firing-or-pending-instances">
+                    You have no alert instances in a firing or pending state for the selected time range.
+                  </Trans>
+                )}
+              </EmptyState>
+            </Box>
+          ) : (
+            <>
+              <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
+                <div />
+                <SummaryChartReact />
+              </div>
+              {groupBy && groupBy.length > 0 && (
+                <div className={styles.expandCollapseToolbar}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    icon={allExpanded ? 'table-collapse-all' : 'table-expand-all'}
+                    onClick={toggleExpandAll}
+                  >
+                    {allExpanded ? (
+                      <Trans i18nKey="alerting.triage.collapse-all">Collapse all</Trans>
+                    ) : (
+                      <Trans i18nKey="alerting.triage.expand-all">Expand all</Trans>
+                    )}
+                  </Button>
+                  <span
+                    style={{ position: 'absolute', right: `calc(100% - ${leftColumnWidth}px)`, textAlign: 'right' }}
+                  >
+                    <Text variant="bodySmall" color="secondary">
+                      <Trans i18nKey="alerting.triage.showing-groups-count" values={{ count: data.length }}>
+                        {'Showing {{count}} groups'}
+                      </Trans>
+                    </Text>
+                  </span>
+                </div>
+              )}
+              <div className={styles.virtualizedContainer}>
+                <WorkbenchProvider
+                  leftColumnWidth={leftColumnWidth}
+                  rightColumnWidth={rightColumnWidth}
+                  domain={domain}
+                  queryRunner={queryRunner}
+                  expandGeneration={expandGeneration}
+                  collapseGeneration={collapseGeneration}
+                >
+                  <ScrollContainer height="100%" width="100%" scrollbarWidth="none" showScrollIndicators={showData}>
+                    {isRefreshing && (
+                      <div className={styles.loadingBarContainer}>
+                        <LoadingBar width={leftColumnWidth + rightColumnWidth} />
+                      </div>
+                    )}
+                    {isInitialLoading && (
+                      <>
+                        <GenericRowSkeleton key="skeleton-1" width={leftColumnWidth} depth={0} />
+                        <GenericRowSkeleton key="skeleton-2" width={leftColumnWidth} depth={0} />
+                        <GenericRowSkeleton key="skeleton-3" width={leftColumnWidth} depth={0} />
+                      </>
+                    )}
+                    {showData &&
+                      dataSlice.map((row, index) => {
+                        const rowKey = generateRowKey(row, index);
+                        return renderWorkbenchRow(row, leftColumnWidth, domain, rowKey, enableFolderMeta);
+                      })}
+                    {hasMore && <LoadMoreHelper handleLoad={() => setPageIndex((prevIndex) => prevIndex + 1)} />}
+                  </ScrollContainer>
+                </WorkbenchProvider>
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </Stack>
   );
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
-  const summaryHeight = 200;
   return {
     groupsContainer: css({
       position: 'absolute',
@@ -247,11 +323,22 @@ export const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden', // Let AutoSizer handle the overflow
     }),
     summaryContainer: css({
-      minHeight: summaryHeight,
+      height: theme.spacing(20),
       marginBottom: theme.spacing(2),
+      alignItems: 'stretch',
     }),
-    headerContainer: css({
-      top: summaryHeight,
+    loadingBarContainer: css({
+      position: 'sticky',
+      top: 0,
+      zIndex: 1,
+    }),
+    headerContainer: css({}),
+    expandCollapseToolbar: css({
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      marginBottom: theme.spacing(1),
     }),
     flexFull: css({
       flex: 1,

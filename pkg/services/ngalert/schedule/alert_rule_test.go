@@ -1063,13 +1063,19 @@ func TestRuleRoutine(t *testing.T) {
 			rule:        rule,
 		})
 
-		// Because we are using a mock clock, first we need to wait until the rule evaluation
-		// reaches the point where it sleeps for the duration of the retry interval.
-		time.Sleep(200 * time.Millisecond)
-		// Then advance the mock clock to trigger the retry.
-		clk.Add(2 * time.Second)
-
-		waitForTimeChannel(t, evalAppliedChan)
+		// Advance the mock clock to trigger retries. We poll WaitForAllTimers
+		// which advances the clock just enough to fire each registered timer.
+		// This avoids the race of a fixed time.Sleep before clk.Add, where the
+		// goroutine may not have registered its timer yet.
+		require.Eventually(t, func() bool {
+			clk.WaitForAllTimers()
+			select {
+			case <-evalAppliedChan:
+				return true
+			default:
+				return false
+			}
+		}, 10*time.Second, 10*time.Millisecond)
 
 		t.Run("it should increase failure counter by 1 and attempt failure counter by 3", func(t *testing.T) {
 			// duration metric has 0 values because of mocked clock that do not advance
@@ -1394,7 +1400,7 @@ func TestAlertRuleRetry(t *testing.T) {
 	t.Run("first attempt", func(t *testing.T) {
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			compareMetrics(c, 1, 1)
-		}, 5*time.Millisecond, 1*time.Millisecond)
+		}, time.Second, 10*time.Millisecond)
 	})
 
 	t.Run("second attempt", func(t *testing.T) {
@@ -1402,7 +1408,7 @@ func TestAlertRuleRetry(t *testing.T) {
 		fakeClock.Add(backoffDuration)
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			compareMetrics(c, 1, 2)
-		}, 5*time.Millisecond, 1*time.Millisecond)
+		}, time.Second, 10*time.Millisecond)
 	})
 
 	t.Run("third attempt", func(t *testing.T) {
@@ -1410,7 +1416,7 @@ func TestAlertRuleRetry(t *testing.T) {
 		fakeClock.Add(backoffDuration)
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			compareMetrics(c, 1, 3)
-		}, 5*time.Millisecond, 1*time.Millisecond)
+		}, time.Second, 10*time.Millisecond)
 	})
 
 	t.Run("no fourth attempt", func(t *testing.T) {
@@ -1418,7 +1424,7 @@ func TestAlertRuleRetry(t *testing.T) {
 		fakeClock.Add(backoffDuration * 10)
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			compareMetrics(c, 1, 3)
-		}, 5*time.Millisecond, 1*time.Millisecond)
+		}, time.Second, 10*time.Millisecond)
 	})
 }
 

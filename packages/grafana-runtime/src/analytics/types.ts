@@ -1,6 +1,6 @@
-import { CoreApp } from '@grafana/data';
+import { type CoreApp } from '@grafana/data';
 
-import { EchoEvent, EchoEventType } from '../services/EchoSrv';
+import { type EchoEvent, type EchoEventType } from '../services/EchoSrv';
 
 /**
  * Describes the basic dashboard information that can be passed as the meta
@@ -9,6 +9,7 @@ import { EchoEvent, EchoEventType } from '../services/EchoSrv';
  * @public
  */
 export interface DashboardInfo {
+  /** @deprecated -- use UID not internal ID */
   dashboardUid: string;
   dashboardName: string;
   folderName?: string;

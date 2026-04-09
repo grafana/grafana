@@ -3,19 +3,22 @@ package meta
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 
+	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
 const (
-	defaultCatalogTTL = 1 * time.Hour
+	defaultCatalogTTL = 6 * time.Hour
 )
 
 // CatalogProvider retrieves plugin metadata from the grafana.com API.
@@ -47,6 +50,11 @@ func NewCatalogProviderWithTTL(logger logging.Logger, grafanaComAPIURL, grafanaC
 		ttl:                ttl,
 		logger:             logger,
 	}
+}
+
+// Name returns the name of the provider.
+func (p *CatalogProvider) Name() string {
+	return "catalog"
 }
 
 // GetMeta fetches plugin metadata from grafana.com API endpoint:
@@ -82,6 +90,12 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, 
 
 	resp, err := p.httpClient.Do(req)
 	if err != nil {
+		errType := "network"
+		var netErr *url.Error
+		if errors.As(err, &netErr) && netErr.Timeout() {
+			errType = "timeout"
+		}
+		metrics.MetaFetchErrorsTotal.WithLabelValues(p.Name(), errType).Inc()
 		return nil, fmt.Errorf("failed to fetch plugin metadata: %w", err)
 	}
 	defer func() {
@@ -90,17 +104,18 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, 
 		}
 	}()
 
-	if resp.StatusCode == http.StatusNotFound {
-		logger.Debug("Plugin metadata not found", "pluginId", lookupID, "version", ref.Version, "url", u.String())
-		return nil, ErrMetaNotFound
-	}
-
 	if resp.StatusCode != http.StatusOK {
+		metrics.MetaFetchErrorsTotal.WithLabelValues(p.Name(), strconv.Itoa(resp.StatusCode)).Inc()
+		if resp.StatusCode == http.StatusNotFound {
+			logger.Debug("Plugin metadata not found", "pluginId", lookupID, "version", ref.Version, "url", u.String())
+			return nil, ErrMetaNotFound
+		}
 		return nil, fmt.Errorf("unexpected status code %d from grafana.com API", resp.StatusCode)
 	}
 
 	var gcomMeta grafanaComPluginVersionMeta
 	if err = json.NewDecoder(resp.Body).Decode(&gcomMeta); err != nil {
+		metrics.MetaFetchErrorsTotal.WithLabelValues(p.Name(), "decode").Inc()
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 

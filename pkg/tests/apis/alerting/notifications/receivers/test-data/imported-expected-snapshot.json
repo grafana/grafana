@@ -1,13 +1,15 @@
 {
   "kind": "ReceiverList",
-  "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+  "apiVersion": "notifications.alerting.grafana.app/v1beta1",
   "metadata": {},
   "items": [
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "ZW1wdHk",
         "namespace": "default",
-        "uid": "a1YdAlNiDl6P4Ub0Hgt2Unlh1vMLa3wVczyEoqIyevQX",
+        "uid": "LtUsLXN5g8PDXHGdoRiZc2ddeLB90xS0I8XgChMqxuYX",
         "resourceVersion": "d7c9689fe44f7d0b",
         "annotations": {
           "grafana.com/access/canAdmin": "true",
@@ -18,8 +20,7 @@
           "grafana.com/access/canWrite": "true",
           "grafana.com/canUse": "true",
           "grafana.com/inUse/routes": "1",
-          "grafana.com/inUse/rules": "0",
-          "grafana.com/provenance": "none"
+          "grafana.com/inUse/rules": "0"
         }
       },
       "spec": {
@@ -28,10 +29,12 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "Z3JhZmFuYS1kZWZhdWx0LWVtYWls",
         "namespace": "default",
-        "uid": "zyXFk301pvwNz4HRPrTMKPMFO2934cPB7H1ZXmyM1TUX",
+        "uid": "Kv3aohRRhZZgwZRUOA62GbN6vjUAa6Xs4Ql2TTYE2XIX",
         "resourceVersion": "40409c09d2b2f217",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
@@ -48,10 +51,12 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "ZGlzY29yZA",
         "namespace": "default",
-        "uid": "8cH8Ql2S6VhPEVUhwlQEKYWyPbRJS7YKj2lEXdrehH8X",
+        "uid": "qZZWlsquf3y9Jq7t4DPEHSRuBoeHemHgnoHgUVV43OYX",
         "resourceVersion": "06e437697f62ac59",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
@@ -91,10 +96,12 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "ZW1haWw",
         "namespace": "default",
-        "uid": "bhlvlN758xmnwVrHVPX0c5XvFHepenUbOXP0fuE6eUMX",
+        "uid": "HqiXTxM48q3i9R6eNxGMsqRwFotgKfd2Y3Sgrg0QQagX",
         "resourceVersion": "9b3ffed277cee189",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
@@ -138,10 +145,12 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "amlyYQ",
         "namespace": "default",
-        "uid": "7Pu4xcRXbvw4XEX279SoqyO8Ibo8cMl0vAJyYTsJ0NEX",
+        "uid": "lvjnZkpXPRYUr8kb6E5H009rCuobN8lPszXoThLzrxwX",
         "resourceVersion": "deae9d34f8554205",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
@@ -195,10 +204,12 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "bXN0ZWFtcw",
         "namespace": "default",
-        "uid": "z7xTMDjrk1HAHXPEx78tQb63LXYA6ivXLOtz2Z09ucIX",
+        "uid": "k7o0Hz5XWPoVRtr7MrhMlPY1E6Ap1XXda4da4wEKgBYX",
         "resourceVersion": "95c8d082d65466a3",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
@@ -239,10 +250,12 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "b3BzZ2VuaWU",
         "namespace": "default",
-        "uid": "XmkZ214Dj030hvynYiwNLq8i6uRCjUYXMXjE5m19OKAX",
+        "uid": "14bze1pZagWIKYELPXs1Mcy8cL1DAlqpzJ4JkoLDfvYX",
         "resourceVersion": "8ee2957ba150ba16",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
@@ -299,10 +312,12 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "cGFnZXJkdXR5",
         "namespace": "default",
-        "uid": "QNitkUCkwzrIc7WVCCJGGDyvXLyo9csSUVqfyStyctQX",
+        "uid": "JV4UiQeX9R6UmwVHL7GXBskXRqvaunmRBIIaS7YMnl8X",
         "resourceVersion": "fe673d5dcd67ccf0",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
@@ -369,10 +384,12 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "cHVzaG92ZXI",
         "namespace": "default",
-        "uid": "t2TJSktI6vyGfdbLOKmxH4eBqgcIGsAuW8Qm9m0HRycX",
+        "uid": "KmdEYNvIFqIhZXDgo72RJqKNeg8dBQDKam9ROun2tZAX",
         "resourceVersion": "6ae076725ab463e0",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
@@ -421,10 +438,12 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "c2xhY2s",
         "namespace": "default",
-        "uid": "xSB0hnoc9j1CnLCHR3VgeVGXdVXILM0p2dM64bbHN9oX",
+        "uid": "MHKEKXAOzOMISzPH7eCi0c2CvT0wODhSfSk1TiuNnKgX",
         "resourceVersion": "ec0e343029ff5d8b",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
@@ -504,11 +523,13 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "c25z",
         "namespace": "default",
-        "uid": "vSP8NtFr23hnqZqLxRgzUKfr1wOemOvZm1S6MYkfRI4X",
-        "resourceVersion": "77d734ad4c196d36",
+        "uid": "0hEMltsOTiMXbcfNFtajn9V7A5Dc9PuJo91i3jT0UIYX",
+        "resourceVersion": "d45308fd19fecf7d",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -541,26 +562,28 @@
               "message": "{{ template \"sns.default.message\" . }}",
               "send_resolved": true,
               "sigv4": {
-                "AccessKey": "secret-access-key",
-                "Profile": "default,",
-                "Region": "us-east-1",
-                "RoleARN": "arn:aws:iam::123456789012:role/role-name"
+                "access_key": "secret-access-key",
+                "profile": "default,",
+                "region": "us-east-1",
+                "role_arn": "arn:aws:iam::123456789012:role/role-name"
               },
               "subject": "{{ template \"sns.default.subject\" . }}",
               "topic_arn": "arn:aws:sns:us-east-1:123456789012:alerts"
             },
             "secureFields": {
-              "sigv4.SecretKey": true
+              "sigv4.secret_key": true
             }
           }
         ]
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "dGVsZWdyYW0",
         "namespace": "default",
-        "uid": "XLWjtmYcjP5PiqBCwZXX3YKHV1G8niRtpCakIpcHqoYX",
+        "uid": "o6LIJM0yt1aXox7EVBiZmDVXGSfShDYsk1gVEENSSGcX",
         "resourceVersion": "d9850878a33e302e",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
@@ -602,10 +625,12 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "dmljdG9yb3Bz",
         "namespace": "default",
-        "uid": "EWiwQ6TIW0GpEo46WusW7Nvg0HuD4QAbHf0JZ2OSOhEX",
+        "uid": "aiBEoHeP0XnxaWsteUm7JXYlOUMgcXoX03DuzxiZteMX",
         "resourceVersion": "1e6886531440afc2",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
@@ -650,10 +675,12 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "d2ViZXg",
         "namespace": "default",
-        "uid": "wDNufI44UXHWq4ERRYenZ7XgXVV3Tjxaokz9IjMRZ54X",
+        "uid": "UWNKI0plkKlibdMG2E31fXv7rSp1bj5En5Ly8y7PXuIX",
         "resourceVersion": "08fc955a08dfe9c0",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
@@ -697,10 +724,12 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "d2ViaG9vaw",
         "namespace": "default",
-        "uid": "aKzigXATPp6HOh20yTrlTcuF2Y9IrPHridGIcWrJygsX",
+        "uid": "Tb4lHkct27YZEAVtmU6UtYo31OKxl3aSZhvHUteYgQkX",
         "resourceVersion": "494392f899a7b410",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
@@ -741,10 +770,12 @@
       }
     },
     {
+      "kind": "Receiver",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
         "name": "d2VjaGF0",
         "namespace": "default",
-        "uid": "jkXCvNrNVw7XX5nmYFyrGiA4ckAvJ282u2scW8KZq7IX",
+        "uid": "OjepUCGQaz7BU7QeECzRfv3L2jDQB4wnfCUQYGN5YBMX",
         "resourceVersion": "135913515cbc156b",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",

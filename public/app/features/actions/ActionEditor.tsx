@@ -2,16 +2,16 @@ import { css } from '@emotion/css';
 import { memo } from 'react';
 
 import {
-  Action,
+  type Action,
   ActionType,
-  DataSourceInstanceSettings,
-  GrafanaTheme2,
+  type DataSourceInstanceSettings,
+  type GrafanaTheme2,
   httpMethodOptions,
   HttpRequestMethod,
-  VariableSuggestion,
-  InfinityOptions,
-  FetchOptions,
-  ActionVariable,
+  type VariableSuggestion,
+  type InfinityOptions,
+  type FetchOptions,
+  type ActionVariable,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {

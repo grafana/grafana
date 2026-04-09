@@ -305,34 +305,6 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 	// nolint:staticcheck
 	provisioningMetadata.identity = dashboardIdentity{title: dash.Dashboard.Title, folderID: dash.Dashboard.FolderID}
 
-	// fix empty folder_uid from already provisioned dashboards
-	if upToDate && folderUID != "" {
-		// search for root dashboard with the specified uid or title
-		d, err := fr.dashboardStore.GetDashboard(
-			ctx,
-			&dashboards.GetDashboardQuery{
-				OrgID:     jsonFile.dashboard.OrgID,
-				UID:       jsonFile.dashboard.Dashboard.UID,
-				FolderUID: util.Pointer(""),
-
-				// provisioning depends on unique names
-				//nolint:staticcheck
-				Title: &jsonFile.dashboard.Dashboard.Title,
-			},
-		)
-		if err != nil {
-			// if no problematic entry is found it's safe to ignore
-			if !errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return provisioningMetadata, err
-			}
-		} else {
-			// inconsistency is detected so force updating the dashboard
-			if d.FolderUID != folderUID {
-				upToDate = false
-			}
-		}
-	}
-
 	if upToDate {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Provisioning).Inc()
 		// nolint:staticcheck
@@ -428,7 +400,7 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 
 	// do not allow the creation of folder with uid "general"
 	if result != nil && result.UID == accesscontrol.GeneralFolderUID {
-		return 0, "", dashboards.ErrFolderInvalidUID
+		return 0, "", folder.ErrInvalidUID
 	}
 
 	// When we expect folders in unified storage, they should have a manager indicated.

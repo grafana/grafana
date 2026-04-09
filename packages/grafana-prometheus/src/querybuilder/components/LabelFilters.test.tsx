@@ -1,14 +1,14 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/LabelFilters.test.tsx
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 import { select } from 'react-select-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 
 import { getLabelSelects } from '../testUtils';
 
-import { LabelFilters, MISSING_LABEL_FILTER_ERROR_MESSAGE, LabelFiltersProps } from './LabelFilters';
+import { LabelFilters, MISSING_LABEL_FILTER_ERROR_MESSAGE, type LabelFiltersProps } from './LabelFilters';
 
 describe('LabelFilters', () => {
   it('truncates list of label names to 1000', async () => {

@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { useStepperState } from './StepperState';
 import { getWizardSteps } from './constants';
-import { StepKey, StepState } from './types';
+import { type StepKey, StepState } from './types';
 
 /**
  * Stepper component - sidebar navigation for the wizard

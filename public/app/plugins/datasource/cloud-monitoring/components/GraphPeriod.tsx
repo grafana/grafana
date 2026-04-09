@@ -1,4 +1,4 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/plugin-ui';
 import { Stack, Switch } from '@grafana/ui';
 

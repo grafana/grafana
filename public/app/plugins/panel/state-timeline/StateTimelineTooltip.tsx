@@ -1,6 +1,6 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-import { FieldType, TimeRange, usePluginContext } from '@grafana/data';
+import { FieldType, type TimeRange, usePluginContext } from '@grafana/data';
 import { SortOrder } from '@grafana/schema';
 import { TooltipDisplayMode } from '@grafana/ui';
 import {
@@ -9,12 +9,12 @@ import {
   VizTooltipHeader,
   VizTooltipWrapper,
   getContentItems,
-  VizTooltipItem,
+  type VizTooltipItem,
 } from '@grafana/ui/internal';
 import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineChart/utils';
 
 import { getFieldActions } from '../status-history/utils';
-import { TimeSeriesTooltipProps } from '../timeseries/TimeSeriesTooltip';
+import { type TimeSeriesTooltipProps } from '../timeseries/TimeSeriesTooltip';
 import { isTooltipScrollable } from '../timeseries/utils';
 
 interface StateTimelineTooltipProps extends TimeSeriesTooltipProps {

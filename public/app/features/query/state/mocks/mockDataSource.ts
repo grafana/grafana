@@ -1,16 +1,16 @@
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
 import {
-  DataQuery,
-  DataSourceJsonData,
-  PluginMetaInfo,
-  DataSourcePluginMeta,
+  type DataQuery,
+  type DataSourceJsonData,
+  type PluginMetaInfo,
+  type DataSourcePluginMeta,
   PluginType,
-  DataSourceInstanceSettings,
+  type DataSourceInstanceSettings,
   DataSourceApi,
-  DataQueryRequest,
-  DataQueryResponse,
-  TestDataSourceResponse,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type TestDataSourceResponse,
 } from '@grafana/data';
 
 export interface TestQuery extends DataQuery {

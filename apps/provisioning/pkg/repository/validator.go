@@ -4,13 +4,16 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"slices"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 
+	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -90,6 +93,19 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 		}
 	}
 
+	// Validating the presence of finalizers in resources not marked for deletion.
+	if cfg.DeletionTimestamp != nil || cfg.DeletionTimestamp.IsZero() {
+		if len(cfg.Finalizers) == 0 {
+			list = append(list,
+				field.Invalid(
+					field.NewPath("medatada", "finalizers"),
+					cfg.Finalizers,
+					"cannot have no finalizers set on resources not marked for deletion",
+				),
+			)
+		}
+	}
+
 	if slices.Contains(cfg.Finalizers, RemoveOrphanResourcesFinalizer) &&
 		slices.Contains(cfg.Finalizers, ReleaseOrphanResourcesFinalizer) {
 		list = append(list,
@@ -118,6 +134,32 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 			field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
 				cfg.Spec.GitHub.GenerateDashboardPreviews,
 				"image rendering is not enabled"))
+	}
+
+	if cfg.Spec.Webhook != nil && cfg.Spec.Webhook.BaseURL != "" {
+		list = append(list, validateWebhookBaseURL(cfg.Spec.Webhook.BaseURL)...)
+	}
+
+	return list
+}
+
+func validateWebhookBaseURL(baseURL string) field.ErrorList {
+	var list field.ErrorList
+	fld := field.NewPath("spec", "webhook", "baseUrl")
+
+	parsed, err := url.Parse(baseURL)
+	if err != nil {
+		list = append(list, field.Invalid(fld, baseURL, "must be a valid URL"))
+		return list
+	}
+
+	scheme := strings.ToLower(parsed.Scheme)
+	if scheme != "http" && scheme != "https" {
+		list = append(list, field.Invalid(fld, baseURL, "must use HTTP or HTTPS scheme"))
+	}
+
+	if parsed.Host == "" {
+		list = append(list, field.Invalid(fld, baseURL, "must include a host"))
 	}
 
 	return list
@@ -182,6 +224,12 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 	meta, _ := utils.MetaAccessor(obj)
 	if meta.GetDeletionTimestamp() != nil {
 		return nil
+	}
+
+	// Block creations of pending-deleted resources and mutations on resources whose namespace is pending deletion.
+	// Allows for updates that remove the pending-delete label (explicit unlock).
+	if err := provisioningadmission.ValidatePendingDeletion(a, meta); err != nil {
+		return err
 	}
 
 	r, ok := obj.(*provisioning.Repository)

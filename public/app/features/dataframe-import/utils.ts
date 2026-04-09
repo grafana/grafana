@@ -2,7 +2,7 @@ import { Observable } from 'rxjs';
 
 import { readCSV, toDataFrame } from '@grafana/data';
 
-import { FileImportResult } from './types';
+import { type FileImportResult } from './types';
 
 export function filesToDataframes(files: File[]): Observable<FileImportResult> {
   return new Observable<FileImportResult>((subscriber) => {

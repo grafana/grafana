@@ -1,7 +1,7 @@
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
 
-import { PlacenameInfo, Gazetteer } from './gazetteer';
+import { type PlacenameInfo, type Gazetteer } from './gazetteer';
 
 // https://github.com/grafana/worldmap-panel/blob/master/src/data/countries.json
 export interface WorldmapPoint {

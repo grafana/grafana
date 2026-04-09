@@ -1,4 +1,4 @@
-import { StoryFn, Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react';
 
 import { iconOptions } from '../../utils/storybook/icons';
 import { Button } from '../Button/Button';
