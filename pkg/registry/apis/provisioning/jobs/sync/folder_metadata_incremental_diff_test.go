@@ -795,6 +795,41 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		require.Empty(t, replacedFolders, "same UID at old and new path means folder is moved, not replaced")
 	})
 
+	t.Run("UID theft while source is vacating does not bypass conflict check", func(t *testing.T) {
+		repo := newCompositeRepoWithConfig(t)
+
+		// Real move: src/_folder.json → dst/_folder.json (same UID).
+		// Theft: thief/_folder.json updated to claim the same UID.
+		diff := []repository.VersionedFileChange{
+			{Action: repository.FileActionRenamed, Path: "dst/_folder.json", PreviousPath: "src/_folder.json", PreviousRef: "old-ref", Ref: "new-ref"},
+			{Action: repository.FileActionUpdated, Path: "thief/_folder.json", Ref: "new-ref"},
+		}
+
+		resourcesList := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Name: "moving-uid", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Path: "src/"},
+				{Name: "thief-old-uid", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Path: "thief/"},
+			},
+		}
+
+		// src/ directory is gone after the rename.
+		repo.MockReader.On("Read", mock.Anything, "src/", "new-ref").
+			Return((*repository.FileInfo)(nil), repository.ErrFileNotFound).Once()
+		// dst/ gets the same UID as src/ had — real relocation.
+		expectFolderMetadataRead(repo, "dst/", "new-ref", "moving-uid")
+		// thief/ claims the same UID — theft.
+		expectFolderMetadataRead(repo, "thief/", "new-ref", "moving-uid")
+
+		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
+		_, relocations, replacedFolders, _, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, resourcesList)
+
+		require.NoError(t, err)
+		require.Equal(t, map[string][]string{"dst/": {"moving-uid"}}, relocations,
+			"only the real move target should have a relocation bypass")
+		require.Contains(t, replacedFolders, replacedFolder{Path: "thief/", OldUID: "thief-old-uid"},
+			"thief's old UID should still be scheduled for replacement")
+	})
+
 	t.Run("directory rename plus invalid renamed metadata only records a warning", func(t *testing.T) {
 		repo := newCompositeRepoWithConfig(t)
 		diff := []repository.VersionedFileChange{
@@ -1169,4 +1204,126 @@ func expectFolderMetadataReadTimes(repo *compositeRepo, folderPath, ref, uid str
 
 func expectFolderMetadataRead(repo *compositeRepo, folderPath, ref, uid string) {
 	expectFolderMetadataReadTimes(repo, folderPath, ref, uid, 1)
+}
+
+func TestIsFolderRelocating(t *testing.T) {
+	folder := func(name, path string) provisioning.ResourceListItem {
+		return provisioning.ResourceListItem{
+			Name: name, Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Path: path,
+		}
+	}
+	dash := func(name, path string) provisioning.ResourceListItem {
+		return provisioning.ResourceListItem{
+			Name: name, Group: "dashboards", Resource: "dashboards", Path: path,
+		}
+	}
+
+	tests := []struct {
+		name       string
+		items      []provisioning.ResourceListItem
+		diff       []repository.VersionedFileChange
+		activeUIDs map[string]struct{}
+		queryName  string
+		queryPath  string
+		want       bool
+	}{
+		{
+			name:      "simple move: metadata rename vacates source",
+			items:     []provisioning.ResourceListItem{folder("uid-a", "src")},
+			diff:      []repository.VersionedFileChange{{Action: repository.FileActionRenamed, Path: "dst/_folder.json", PreviousPath: "src/_folder.json"}},
+			queryName: "uid-a", queryPath: "dst/",
+			want: true,
+		},
+		{
+			name:  "simple move: directory rename vacates source",
+			items: []provisioning.ResourceListItem{folder("uid-a", "src")},
+			diff: []repository.VersionedFileChange{
+				{Action: repository.FileActionRenamed, Path: "dst/", PreviousPath: "src/"},
+				{Action: repository.FileActionUpdated, Path: "dst/_folder.json"},
+			},
+			queryName: "uid-a", queryPath: "dst/",
+			want: true,
+		},
+		{
+			name:      "title-only update: same name same path, no move",
+			items:     []provisioning.ResourceListItem{folder("uid-a", "folder")},
+			diff:      []repository.VersionedFileChange{{Action: repository.FileActionUpdated, Path: "folder/_folder.json"}},
+			queryName: "uid-a", queryPath: "folder/",
+			want: false,
+		},
+		{
+			name:      "UID change to unused name: new name not in index",
+			items:     []provisioning.ResourceListItem{folder("old-uid", "folder")},
+			diff:      []repository.VersionedFileChange{{Action: repository.FileActionUpdated, Path: "folder/_folder.json"}},
+			queryName: "new-uid", queryPath: "folder/",
+			want: false,
+		},
+		{
+			name:      "UID theft: claim existing name, owner untouched",
+			items:     []provisioning.ResourceListItem{folder("victim-uid", "owner"), folder("thief-uid", "thief")},
+			diff:      []repository.VersionedFileChange{{Action: repository.FileActionUpdated, Path: "thief/_folder.json"}},
+			queryName: "victim-uid", queryPath: "thief/",
+			want: false,
+		},
+		{
+			name:       "UID theft while owner is moving: already-claimed UID blocks thief",
+			items:      []provisioning.ResourceListItem{folder("victim-uid", "owner"), folder("thief-uid", "thief")},
+			diff:       []repository.VersionedFileChange{{Action: repository.FileActionUpdated, Path: "thief/_folder.json"}},
+			activeUIDs: map[string]struct{}{"victim-uid": {}},
+			queryName:  "victim-uid", queryPath: "thief/",
+			want: false,
+		},
+		{
+			name:      "move + change UID to unused name: new name not in index",
+			items:     []provisioning.ResourceListItem{folder("old-uid", "src")},
+			diff:      []repository.VersionedFileChange{{Action: repository.FileActionRenamed, Path: "dst/_folder.json", PreviousPath: "src/_folder.json"}},
+			queryName: "brand-new-uid", queryPath: "dst/",
+			want: false,
+		},
+		{
+			name:      "move + steal name, victim untouched: source not vacating",
+			items:     []provisioning.ResourceListItem{folder("victim-uid", "victim"), folder("mover-uid", "src")},
+			diff:      []repository.VersionedFileChange{{Action: repository.FileActionRenamed, Path: "dst/_folder.json", PreviousPath: "src/_folder.json"}},
+			queryName: "victim-uid", queryPath: "dst/",
+			want: false,
+		},
+		{
+			name:      "name matches a non-folder resource: ignored",
+			items:     []provisioning.ResourceListItem{dash("shared-name", "path-a/dash.json")},
+			diff:      []repository.VersionedFileChange{{Action: repository.FileActionCreated, Path: "other/_folder.json"}},
+			queryName: "shared-name", queryPath: "other/",
+			want: false,
+		},
+		{
+			name:      "name does not exist in index",
+			items:     []provisioning.ResourceListItem{folder("uid-a", "src")},
+			diff:      []repository.VersionedFileChange{{Action: repository.FileActionCreated, Path: "new/_folder.json"}},
+			queryName: "unknown", queryPath: "new/",
+			want: false,
+		},
+		{
+			name:      "empty index",
+			items:     nil,
+			diff:      []repository.VersionedFileChange{{Action: repository.FileActionUpdated, Path: "folder/_folder.json"}},
+			queryName: "uid-a", queryPath: "folder/",
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var list *provisioning.ResourceList
+			if tt.items != nil {
+				list = &provisioning.ResourceList{Items: tt.items}
+			}
+			index := newManagedResourceIndex(list)
+			input := splitMetadataChanges(tt.diff)
+			activeUIDs := tt.activeUIDs
+			if activeUIDs == nil {
+				activeUIDs = make(map[string]struct{})
+			}
+			got := isFolderRelocating(index, input, activeUIDs, tt.queryName, tt.queryPath)
+			require.Equal(t, tt.want, got)
+		})
+	}
 }

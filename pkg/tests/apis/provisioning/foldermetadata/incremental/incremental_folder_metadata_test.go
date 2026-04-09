@@ -1714,3 +1714,135 @@ func TestIntegrationProvisioning_IncrementalSync_FileRenameIntoRelocatedFolder(t
 		})
 	})
 }
+
+// TestIntegrationProvisioning_IncrementalSync_FolderUIDConflict verifies that
+// changing a folder's _folder.json to use a UID that already belongs to another
+// folder at a different path is rejected with a warning, not silently allowed.
+func TestIntegrationProvisioning_IncrementalSync_FolderUIDConflict(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("updating metadata to steal another folder UID produces a conflict warning", func(t *testing.T) {
+		helper := sharedGitHelper(t)
+		ctx := context.Background()
+
+		const repoName = "incr-uid-conflict"
+		const ownerUID = "owner-folder-uid"
+		const thiefUID = "thief-folder-uid"
+
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"owner/_folder.json": folderMetadataJSON(ownerUID, "Owner Folder"),
+			"owner/dash.json":    common.DashboardJSON("owner-dash", "Owner Dashboard", 1),
+			"thief/_folder.json": folderMetadataJSON(thiefUID, "Thief Folder"),
+			"thief/dash.json":    common.DashboardJSON("thief-dash", "Thief Dashboard", 1),
+		})
+
+		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.RequireFolderState(t, helper.Folders, ownerUID, "Owner Folder", "owner", "")
+		common.RequireFolderState(t, helper.Folders, thiefUID, "Thief Folder", "thief", "")
+
+		// Change thief's _folder.json to claim owner's UID.
+		require.NoError(t, local.CreateFile("thief/_folder.json", string(folderMetadataJSON(ownerUID, "Thief Stealing UID"))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "thief steals owner folder UID")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		// Incremental sync should complete with a warning — the UID conflict
+		// must not be silently bypassed.
+		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
+		jobObj := &provisioning.Job{}
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+
+		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+			"incremental sync should finish with warning when a folder UID conflict is detected")
+
+		foundConflict := false
+		for _, w := range jobObj.Status.Warnings {
+			if strings.Contains(w, "already used by folder") {
+				foundConflict = true
+				break
+			}
+		}
+		require.True(t, foundConflict,
+			"expected a warning about folder UID conflict, got warnings: %v", jobObj.Status.Warnings)
+
+		// The owner folder must be untouched — still at its original path with its UID.
+		common.RequireFolderState(t, helper.Folders, ownerUID, "Owner Folder", "owner", "")
+
+		// The thief folder's UID conflict was rejected, so it should still
+		// exist under its original UID.
+		common.RequireRepoFolderUID(t, helper.Folders, ctx, repoName, thiefUID)
+	})
+
+	t.Run("real relocation succeeds while simultaneous UID theft is rejected", func(t *testing.T) {
+		helper := sharedGitHelper(t)
+		ctx := context.Background()
+
+		const repoName = "incr-uid-conflict-dual"
+		const movingUID = "moving-folder-uid"
+		const thiefUID = "thief-dual-uid"
+
+		// Seed: src/ has a folder with movingUID, thief/ has its own UID,
+		// and src/ has a dashboard to keep it visible after the move.
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"src/_folder.json":   folderMetadataJSON(movingUID, "Moving Folder"),
+			"src/stay.json":      common.DashboardJSON("dash-stay", "Staying Dashboard", 1),
+			"thief/_folder.json": folderMetadataJSON(thiefUID, "Thief Folder"),
+			"thief/dash.json":    common.DashboardJSON("thief-dash", "Thief Dashboard", 1),
+		})
+
+		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.RequireFolderState(t, helper.Folders, movingUID, "Moving Folder", "src", "")
+		common.RequireFolderState(t, helper.Folders, thiefUID, "Thief Folder", "thief", "")
+
+		// In one commit: move src/_folder.json to dst/ (real relocation),
+		// AND update thief/_folder.json to claim the same UID (theft).
+		require.NoError(t, local.CreateDirPath("dst"))
+		_, err := local.Git("mv", "src/_folder.json", "dst/_folder.json")
+		require.NoError(t, err)
+		require.NoError(t, local.CreateFile("thief/_folder.json", string(folderMetadataJSON(movingUID, "Thief Stealing UID"))))
+		_, err = local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "move folder and steal UID in same commit")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		// Incremental sync: the real move should succeed, the theft should
+		// produce a UID conflict warning.
+		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
+		jobObj := &provisioning.Job{}
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+
+		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+			"incremental sync should warn due to the UID theft, even though the real move succeeded")
+
+		foundConflict := false
+		for _, w := range jobObj.Status.Warnings {
+			if strings.Contains(w, "already used by folder") {
+				foundConflict = true
+				break
+			}
+		}
+		require.True(t, foundConflict,
+			"expected a UID conflict warning for the thief, got warnings: %v", jobObj.Status.Warnings)
+
+		// The real move should have succeeded — movingUID is now at dst/.
+		common.RequireFolderState(t, helper.Folders, movingUID, "Moving Folder", "dst", "")
+
+		// src/ should still exist (has stay.json) with a hash-derived UID.
+		srcAutoUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "src")
+		require.NotEqual(t, movingUID, srcAutoUID, "src/ should have a hash-derived UID after losing _folder.json")
+
+		// The thief's UID conflict was rejected, so it should retain its original UID.
+		common.RequireRepoFolderUID(t, helper.Folders, ctx, repoName, thiefUID)
+	})
+}

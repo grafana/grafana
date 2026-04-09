@@ -137,7 +137,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 	if err != nil {
 		return nil, err
 	}
-	if newUID != "" {
+	if newUID != "" && isFolderRelocating(index, input, diffTracker.activeUIDs, newUID, folderPath) {
 		diffTracker.TrackRelocation(folderPath, newUID)
 	}
 	for _, r := range replaced {
@@ -458,4 +458,25 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementForDeletedMetadataItem
 // entries.
 func folderPathForMetadataChange(metadataPath string) string {
 	return safepath.EnsureTrailingSlash(safepath.Dir(metadataPath))
+}
+
+// isFolderRelocating reports whether a folder with the given name is genuinely
+// moving from another path to targetPath in this diff without any UID change.
+func isFolderRelocating(index managedResourceIndex, input folderMetadataDiffSplit, activeUIDs map[string]struct{}, name, targetPath string) bool {
+	if _, alreadyClaimed := activeUIDs[name]; alreadyClaimed {
+		return false
+	}
+	for _, item := range index.ExistingByName(name) {
+		if item.Group != resources.FolderResource.Group {
+			continue
+		}
+		sourcePath := safepath.EnsureTrailingSlash(item.Path)
+		if sourcePath == targetPath {
+			continue
+		}
+		if input.HasMetadataFolderAt(sourcePath) || input.HadChangeOriginallyAt(sourcePath) {
+			return true
+		}
+	}
+	return false
 }

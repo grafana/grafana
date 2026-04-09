@@ -53,6 +53,11 @@ func (result *rebuiltIncrementalDiffTracker) TrackRelocation(targetPath, uid str
 	result.relocations[targetPath] = append(result.relocations[targetPath], uid)
 }
 
+func (result *rebuiltIncrementalDiffTracker) IsActiveUID(uid string) bool {
+	_, ok := result.activeUIDs[uid]
+	return ok
+}
+
 // Relocations returns a mapping from target folder path to the UIDs that are
 // relocating there. Callers thread these per-path allowlists into
 // EnsureFolderPathExist via WithRelocatingUIDs.

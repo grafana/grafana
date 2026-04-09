@@ -1,6 +1,8 @@
 package sync
 
 import (
+	"sort"
+
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -44,9 +46,7 @@ func splitMetadataChanges(repoDiff []repository.VersionedFileChange) folderMetad
 		}
 	}
 
-	safepath.SortByDepth(input.metadataChanges, func(change repository.VersionedFileChange) string {
-		return change.Path
-	}, false)
+	sortMetadataChanges(input.metadataChanges)
 
 	return input
 }
@@ -90,4 +90,30 @@ func isHandledFolderMetadataChange(change repository.VersionedFileChange) bool {
 		change.Action == repository.FileActionUpdated ||
 		change.Action == repository.FileActionDeleted ||
 		change.Action == repository.FileActionRenamed
+}
+
+// sortMetadataChanges orders metadata changes deepest-first (so nested folders
+// are expanded before their parents) with a secondary sort that places renames
+// before other actions at the same depth. This guarantees that a legitimate
+// folder move are proccessed before folder updates that might reference the same UID.
+func sortMetadataChanges(changes []repository.VersionedFileChange) {
+	sort.SliceStable(changes, func(i, j int) bool {
+		di, dj := safepath.Depth(changes[i].Path), safepath.Depth(changes[j].Path)
+		if di != dj {
+			return di > dj
+		}
+		ri := metadataActionPriority(changes[i].Action)
+		rj := metadataActionPriority(changes[j].Action)
+		if ri != rj {
+			return ri < rj
+		}
+		return changes[i].Path < changes[j].Path
+	})
+}
+
+func metadataActionPriority(action repository.FileAction) int {
+	if action == repository.FileActionRenamed {
+		return 0
+	}
+	return 1
 }
