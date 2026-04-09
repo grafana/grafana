@@ -45,8 +45,6 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   const path = params['*'];
   const prevMatch = usePrevious({ params });
   const [searchParams, setSearchParams] = useSearchParams();
-  const templateSavedName = searchParams.get('templateSaved');
-  const orgTemplateUid = searchParams.get('orgTemplateUid');
   const stateManager = getDashboardScenePageStateManager();
   const { dashboard, isLoading, loadError } = stateManager.useState();
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
@@ -146,8 +144,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       <DashboardConversionWarningBanner dashboard={dashboard} />
       <OrphanedDashboardBanner dashboard={dashboard} />
       <SuggestedDashboardsBanner route={route.routeName} dashboard={dashboard} />
-      {templateSavedName && <TemplateSavedBanner templateName={templateSavedName} />}
-      {orgTemplateUid && <TemplateUseBanner dashboard={dashboard} />}
+      <TemplateSavedBanner templateName={dashboard.state.title} />
+      <TemplateUseBanner dashboard={dashboard} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
       {config.featureToggles.orgDashboardTemplates && <TemplateDashboardModal />}

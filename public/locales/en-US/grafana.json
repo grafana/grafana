@@ -6597,10 +6597,11 @@
       "delete-confirm-body": "Are you sure you want to delete the template \"{{title}}\"?",
       "delete-confirm-button": "Delete",
       "delete-confirm-title": "Delete template",
-      "delete-template-button": "Delete",
-      "delete-template-button-label": "Delete template: {{title}}",
       "details-tooltip": "Details",
+      "edit-template-button": "Edit",
+      "edit-template-button-label": "Edit template: {{title}}",
       "no-preview": "No preview available ",
+      "use-template-button": "Use template",
       "view-dashboard-button": "View dashboard",
       "view-dashboard-button-label": "View dashboard: {{title}}",
       "view-template-button": "View template",
@@ -6657,7 +6658,7 @@
     "suggested-error-description": "Failed to load suggested dashboard.",
     "suggested-error-title": "Error loading suggested dashboard",
     "template-dashboard-modal": {
-      "description": "Get started with Grafana templates using sample data. Connect your data to power them with real metrics.",
+      "description": "Get started with Grafana templates. Connect your data to power them with real metrics.",
       "tab-custom": "Custom templates",
       "tab-grafana": "Grafana-provisioned",
       "title": "Start a dashboard from a template"
@@ -7525,6 +7526,10 @@
     "template-saved-banner": {
       "body": "The {{ templateName }} template was created. You can access it in the <1>template gallery</1>.",
       "title": "Template created"
+    },
+    "template-use-banner": {
+      "body": "Save this dashboard and edit it for your use case",
+      "title": "You are using {{ templateName }} template in a new dashboard"
     },
     "text-box-variable": {
       "name-default-value": "Default value"

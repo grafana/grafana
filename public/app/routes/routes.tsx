@@ -87,15 +87,6 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPageProxy')
       ),
     },
-    config.featureToggles.orgDashboardTemplates && {
-      path: DASHBOARD_LIBRARY_ROUTES.TemplateEdit,
-      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsWrite]),
-      pageClass: 'page-dashboard',
-      routeName: DashboardRoutes.TemplateEdit,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPageProxy')
-      ),
-    },
     {
       path: '/dashboard/:type/:slug',
       allowAnonymous: (params) => params.type === 'snapshot',

@@ -1,13 +1,16 @@
+import { css } from '@emotion/css';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, TextLink } from '@grafana/ui';
+import { Alert, TextLink, useStyles2 } from '@grafana/ui';
 
 interface TemplateSavedBannerProps {
   templateName: string;
 }
 
 export function TemplateSavedBanner({ templateName }: TemplateSavedBannerProps) {
+  const styles = useStyles2(getStyles);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const onDismiss = () => {
@@ -20,11 +23,15 @@ export function TemplateSavedBanner({ templateName }: TemplateSavedBannerProps) 
     setSearchParams(searchParams);
   };
 
+  if (!searchParams.get('templateSaved')) {
+    return null;
+  }
+
   return (
     <Alert
       title={t('dashboard-scene.template-saved-banner.title', 'Template created')}
       severity="success"
-      style={{ flex: 0 }}
+      className={styles.banner}
       onRemove={onDismiss}
     >
       <Trans i18nKey="dashboard-scene.template-saved-banner.body" values={{ templateName }}>
@@ -44,3 +51,10 @@ export function TemplateSavedBanner({ templateName }: TemplateSavedBannerProps) 
     </Alert>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  banner: css({
+    flex: 0,
+    margin: theme.spacing(2, 2, 0, 2),
+  }),
+});

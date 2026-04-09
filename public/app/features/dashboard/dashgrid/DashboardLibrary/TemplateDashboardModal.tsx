@@ -184,7 +184,7 @@ export const TemplateDashboardModal = () => {
       <div className={styles.stickyHeader}>
         <Text element="p">
           <Trans i18nKey="dashboard-library.template-dashboard-modal.description">
-            Get started with Grafana templates using sample data. Connect your data to power them with real metrics.
+            Get started with Grafana templates. Connect your data to power them with real metrics.
           </Trans>
         </Text>
         {showOrgTemplates && (
