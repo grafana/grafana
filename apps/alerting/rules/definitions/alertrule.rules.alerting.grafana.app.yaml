@@ -20,7 +20,11 @@ spec:
                   type: string
                 type: object
               execErrState:
-                default: Error
+                enum:
+                - Error
+                - Ok
+                - Alerting
+                - KeepLast
                 type: string
               expressions:
                 additionalProperties:
@@ -72,9 +76,15 @@ spec:
                 minimum: 0
                 type: integer
               noDataState:
-                default: NoData
+                enum:
+                - NoData
+                - Ok
+                - Alerting
+                - KeepLast
                 type: string
               notificationSettings:
+                description: 'TODO(@moustafab): this should be imported from the notifications
+                  package'
                 properties:
                   activeTimeIntervals:
                     items:

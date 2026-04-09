@@ -58,10 +58,13 @@ spec:
                   type: string
                 type: object
               metric:
+                description: 'TODO(@moustafab): validate the metric name regex'
+                pattern: ^[a-zA-Z_:][a-zA-Z0-9_:]*$
                 type: string
               paused:
                 type: boolean
               targetDatasourceUID:
+                pattern: ^[a-zA-Z0-9_-]+$
                 type: string
               title:
                 type: string

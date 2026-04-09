@@ -7,4 +7,6 @@ generate: install-app-sdk update-app-sdk
 	@rm -f ./pkg/apis/playlist/v0alpha1/playlist_codec_gen.go
 	@rm -f ./pkg/apis/playlist/v0alpha1/playlist_object_gen.go
 	@rm -f ./pkg/apis/playlist/v0alpha1/playlist_schema_gen.go
+	@rm -f ./pkg/apis/playlist/v0alpha1/playlist_spec_gen.go
+	@rm -f ./pkg/apis/playlist/v0alpha1/playlist_status_gen.go
 	@echo "Removed generated v0alpha1 files (v0alpha1 is a thin wrapper around v1)"
