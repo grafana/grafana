@@ -1266,6 +1266,36 @@ func TestIsFolderRelocating(t *testing.T) {
 			want: false,
 		},
 		{
+			name:  "UID theft: owner metadata updated in-place in same diff",
+			items: []provisioning.ResourceListItem{folder("victim-uid", "owner"), folder("thief-uid", "thief")},
+			diff: []repository.VersionedFileChange{
+				{Action: repository.FileActionUpdated, Path: "owner/_folder.json"},
+				{Action: repository.FileActionUpdated, Path: "thief/_folder.json"},
+			},
+			queryName: "victim-uid", queryPath: "thief/",
+			want: false,
+		},
+		{
+			name:  "UID theft: owner metadata created in same diff",
+			items: []provisioning.ResourceListItem{folder("victim-uid", "owner"), folder("thief-uid", "thief")},
+			diff: []repository.VersionedFileChange{
+				{Action: repository.FileActionCreated, Path: "owner/_folder.json"},
+				{Action: repository.FileActionCreated, Path: "thief/_folder.json"},
+			},
+			queryName: "victim-uid", queryPath: "thief/",
+			want: false,
+		},
+		{
+			name:  "legitimate move: owner metadata deleted in same diff",
+			items: []provisioning.ResourceListItem{folder("uid-a", "old"), folder("other-uid", "new")},
+			diff: []repository.VersionedFileChange{
+				{Action: repository.FileActionDeleted, Path: "old/_folder.json"},
+				{Action: repository.FileActionUpdated, Path: "new/_folder.json"},
+			},
+			queryName: "uid-a", queryPath: "new/",
+			want: true,
+		},
+		{
 			name:       "UID theft while owner is moving: already-claimed UID blocks thief",
 			items:      []provisioning.ResourceListItem{folder("victim-uid", "owner"), folder("thief-uid", "thief")},
 			diff:       []repository.VersionedFileChange{{Action: repository.FileActionUpdated, Path: "thief/_folder.json"}},

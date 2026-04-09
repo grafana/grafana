@@ -12,10 +12,11 @@ import (
 // changes and all the remaining changes while tracking the paths already
 // claimed by the real diff.
 type folderMetadataDiffSplit struct {
-	otherChanges        []repository.VersionedFileChange
-	metadataChanges     []repository.VersionedFileChange
-	changedPaths        map[string]struct{}
-	metadataFolderPaths map[string]struct{}
+	otherChanges          []repository.VersionedFileChange
+	metadataChanges       []repository.VersionedFileChange
+	changedPaths          map[string]struct{}
+	metadataFolderPaths   map[string]struct{}
+	vacatingMetadataPaths map[string]struct{}
 }
 
 // splitMetadataChanges partitions the raw incremental diff into metadata
@@ -23,18 +24,23 @@ type folderMetadataDiffSplit struct {
 // nested folder metadata is expanded deterministically.
 func splitMetadataChanges(repoDiff []repository.VersionedFileChange) folderMetadataDiffSplit {
 	input := folderMetadataDiffSplit{
-		otherChanges:        make([]repository.VersionedFileChange, 0, len(repoDiff)),
-		metadataChanges:     make([]repository.VersionedFileChange, 0),
-		changedPaths:        make(map[string]struct{}, len(repoDiff)),
-		metadataFolderPaths: make(map[string]struct{}),
+		otherChanges:          make([]repository.VersionedFileChange, 0, len(repoDiff)),
+		metadataChanges:       make([]repository.VersionedFileChange, 0),
+		changedPaths:          make(map[string]struct{}, len(repoDiff)),
+		metadataFolderPaths:   make(map[string]struct{}),
+		vacatingMetadataPaths: make(map[string]struct{}),
 	}
 
 	for _, change := range repoDiff {
 		if isHandledFolderMetadataChange(change) {
 			input.metadataChanges = append(input.metadataChanges, change)
 			input.metadataFolderPaths[folderPathForMetadataChange(change.Path)] = struct{}{}
+			if change.Action == repository.FileActionDeleted {
+				input.vacatingMetadataPaths[folderPathForMetadataChange(change.Path)] = struct{}{}
+			}
 			if change.Action == repository.FileActionRenamed && resources.IsFolderMetadataFile(change.PreviousPath) {
 				input.metadataFolderPaths[folderPathForMetadataChange(change.PreviousPath)] = struct{}{}
+				input.vacatingMetadataPaths[folderPathForMetadataChange(change.PreviousPath)] = struct{}{}
 			}
 			continue
 		}
@@ -73,6 +79,13 @@ func (input folderMetadataDiffSplit) HadChangeOriginallyAt(path string) bool {
 // owns the provided folder path.
 func (input folderMetadataDiffSplit) HasMetadataFolderAt(path string) bool {
 	_, ok := input.metadataFolderPaths[path]
+	return ok
+}
+
+// IsMetadataVacatingAt reports whether _folder.json is being removed from the
+// given folder path (deleted or renamed away).
+func (input folderMetadataDiffSplit) IsMetadataVacatingAt(path string) bool {
+	_, ok := input.vacatingMetadataPaths[path]
 	return ok
 }
 

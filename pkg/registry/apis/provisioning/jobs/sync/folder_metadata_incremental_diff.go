@@ -474,7 +474,7 @@ func isFolderRelocating(index managedResourceIndex, input folderMetadataDiffSpli
 		if sourcePath == targetPath {
 			continue
 		}
-		if input.HasMetadataFolderAt(sourcePath) || input.HadChangeOriginallyAt(sourcePath) {
+		if input.IsMetadataVacatingAt(sourcePath) || input.HadChangeOriginallyAt(sourcePath) {
 			return true
 		}
 	}
