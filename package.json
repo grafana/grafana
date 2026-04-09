@@ -6,6 +6,7 @@
   "version": "13.0.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
+    "analytics-report": "node --experimental-strip-types ./packages/grafana-runtime/src/internal/analyticsFramework/script/main.ts",
     "check-frontend-dev": "./scripts/check-frontend-dev.sh",
     "build": "NODE_ENV=production nx exec --verbose -- webpack --config scripts/webpack/webpack.prod.js && yarn build:react19",
     "build:react19": "NODE_ENV=production nx exec --verbose -- webpack --config scripts/webpack/webpack.prod.js --env react19=1",

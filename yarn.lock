@@ -3831,6 +3831,7 @@ __metadata:
     esbuild: "npm:0.25.8"
     history: "npm:4.10.1"
     lodash: "npm:^4.17.23"
+    prettier: "npm:3.6.2"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-loading-skeleton: "npm:3.5.0"
