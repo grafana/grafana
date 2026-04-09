@@ -670,7 +670,7 @@ func TestCallK8sDataSourceHealthHandler(t *testing.T) {
 				require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
 				assert.Equal(t, tt.expectedMessage, body["message"])
 			}
-			
+
 			if tt.expectedForwardPath != "" {
 				assert.Equal(t, tt.expectedForwardPath, configProvider.lastServedPath)
 			}

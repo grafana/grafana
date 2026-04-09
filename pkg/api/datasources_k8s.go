@@ -199,7 +199,7 @@ func (hs *HTTPServer) callK8sDataSourceResourceHandler() web.Handler {
 func (hs *HTTPServer) callK8sDataSourceHealthHandler() web.Handler {
 	return func(c *contextmodel.ReqContext) {
 		flagEnabled, _ := openfeature.NewDefaultClient().BooleanValue(c.Req.Context(), featuremgmt.FlagDatasourcesApiServerEnableHealthEndpointRedirect, false, openfeature.TransactionContext(c.Req.Context()))
-		
+
 		if !flagEnabled {
 			hs.dsEndpointRedirects.WithLabelValues("health", "", "legacy").Inc()
 			hs.CheckDatasourceHealthWithUID(c).WriteTo(c)
