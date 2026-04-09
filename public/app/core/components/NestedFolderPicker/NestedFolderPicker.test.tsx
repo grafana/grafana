@@ -6,6 +6,7 @@ import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { NestedFolderPicker } from './NestedFolderPicker';
+import * as useFoldersQueryModule from './useFoldersQuery';
 import { useGetTeamFolders } from './useTeamOwnedFolder';
 
 const [_, { folderA, folderB, folderC, folderA_folderA, folderA_folderB, folderA_folderC }] = getFolderFixtures();
@@ -255,11 +256,27 @@ describe('NestedFolderPicker', () => {
     const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
     await user.click(await screen.findByRole('button', { name: 'Select folder' }));
 
-    expect(await screen.findByText('Error loading folders')).toBeInTheDocument();
+    expect(await screen.findByText('Error loading team folders')).toBeInTheDocument();
     expect(await screen.findByText('Team folders failed')).toBeInTheDocument();
     expect(await screen.findByLabelText('Dashboards')).toBeInTheDocument();
     expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
     expect(screen.queryByLabelText('Team folders')).not.toBeInTheDocument();
+  });
+
+  it('shows an error when folder browsing fails', async () => {
+    jest.spyOn(useFoldersQueryModule, 'useFoldersQuery').mockReturnValue({
+      emptyFolders: new Set<string>(),
+      items: [],
+      isLoading: false,
+      error: new Error('Failed to load folders'),
+      requestNextPage: jest.fn(),
+    });
+
+    const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+    await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+    expect(await screen.findByText('Error loading some folders')).toBeInTheDocument();
+    expect(await screen.findByText('Failed to load folders')).toBeInTheDocument();
   });
 
   it('shows team folders at top level when root folder is hidden', async () => {
