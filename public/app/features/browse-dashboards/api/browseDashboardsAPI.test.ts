@@ -9,14 +9,20 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { deletedFoldersState } from 'app/features/search/service/deletedFoldersState';
 import { setStore } from 'app/store/store';
 import { type FolderDTO } from 'app/types/folders';
+import { type ThunkDispatch } from 'app/types/store';
+
+import { refetchChildren } from '../state/actions';
+import { browseDashboardsReducer } from '../state/slice';
 
 import { browseDashboardsAPI } from './browseDashboardsAPI';
+import { PAGE_SIZE } from './services';
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -32,6 +38,7 @@ describe('browseDashboardsAPI', () => {
       reducer: {
         [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
         [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
+        browseDashboards: browseDashboardsReducer,
       },
       middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware().concat(browseDashboardsAPI.middleware, folderAPIv1beta1.middleware),
@@ -199,6 +206,69 @@ describe('browseDashboardsAPI', () => {
 
     firstSubscription.unsubscribe();
     secondSubscription.unsubscribe();
+  });
+
+  it('invalidates the folder list when bulk delete yields no successes', async () => {
+    const store = createTestStore();
+    const listFoldersSpy = jest.fn();
+
+    server.use(
+      http.get('/api/folders', () => {
+        listFoldersSpy();
+        return HttpResponse.json([{ uid: 'folder-1', title: 'Folder 1' }]);
+      }),
+      http.delete('/api/folders/folder-1', () => HttpResponse.json({ message: 'Folder not found' }, { status: 404 })),
+      http.delete('/api/folders/folder-2', () => HttpResponse.json({ message: 'Folder not found' }, { status: 404 }))
+    );
+
+    const subscription = store.dispatch(
+      browseDashboardsAPI.endpoints.listFolders.initiate({ parentUid: undefined, limit: PAGE_SIZE, page: 1 })
+    );
+
+    await subscription;
+    await store.dispatch(
+      browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+    );
+
+    expect(listFoldersSpy).toHaveBeenCalledTimes(2);
+    expect(deletedFoldersState.isDeleted('folder-1')).toBe(false);
+    expect(deletedFoldersState.isDeleted('folder-2')).toBe(false);
+
+    subscription.unsubscribe();
+  });
+
+  it('refreshes parents for requested folders even when bulk delete yields no successes', async () => {
+    const store = createTestStore();
+    const dispatch = store.dispatch as ThunkDispatch;
+    const listFoldersSpy = jest.fn();
+    const hasPermissionSpy = jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
+    server.use(
+      http.get('/api/folders', () => {
+        listFoldersSpy();
+        return HttpResponse.json(
+          Array.from({ length: PAGE_SIZE }, (_, index) => ({
+            uid: `folder-${index + 1}`,
+            title: `Folder ${index + 1}`,
+          }))
+        );
+      }),
+      http.delete('/api/folders/folder-1', () => HttpResponse.json({ message: 'Folder not found' }, { status: 404 })),
+      http.delete('/api/folders/folder-2', () => HttpResponse.json({ message: 'Folder not found' }, { status: 404 }))
+    );
+
+    try {
+      await dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
+      await store.dispatch(
+        browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+      );
+
+      expect(listFoldersSpy).toHaveBeenCalledTimes(2);
+      expect(deletedFoldersState.isDeleted('folder-1')).toBe(false);
+      expect(deletedFoldersState.isDeleted('folder-2')).toBe(false);
+    } finally {
+      hasPermissionSpy.mockRestore();
+    }
   });
 
   it('does not mark skipped provisioned folders as deleted', async () => {

@@ -89,8 +89,6 @@ export interface ListFolderQueryArgs {
 
 const folderListTag = { type: 'getFolder' as const, id: 'LIST' };
 const invalidateFolderListOnSuccess = (_result: unknown, error: unknown) => (error ? [] : [folderListTag]);
-const invalidateFolderListOnDelete = (result: string[] | undefined, error: unknown) =>
-  error || !result?.length ? [] : [folderListTag];
 
 // TODO: Once backend returns alert rule counts, set this back to true
 // when this is merged https://github.com/grafana/grafana/pull/67259
@@ -343,8 +341,8 @@ export const browseDashboardsAPI = createApi({
     }),
 
     // delete *multiple* folders. used in the delete modal.
-    deleteFolders: builder.mutation<string[], DeleteFoldersArgs>({
-      invalidatesTags: invalidateFolderListOnDelete,
+    deleteFolders: builder.mutation<DeleteFoldersResult, DeleteFoldersArgs>({
+      invalidatesTags: invalidateFolderListOnSuccess,
       queryFn: async ({ folderUIDs }, api, _extraOptions, baseQuery) => {
         const deleteFolderBaseQuery: DeleteFolderBaseQuery = async (args) => await baseQuery(args);
         const { deletedFolderUIDs } = await deleteFoldersByUID({
@@ -352,15 +350,20 @@ export const browseDashboardsAPI = createApi({
           baseQuery: deleteFolderBaseQuery,
           thunkDispatch: api.dispatch,
         });
-        return { data: deletedFolderUIDs };
+        return {
+          data: {
+            requestedFolderUIDs: folderUIDs,
+            deletedFolderUIDs,
+          },
+        };
       },
       onQueryStarted: (_arg, { queryFulfilled, dispatch }) => {
-        queryFulfilled.then(({ data: deletedFolderUIDs }) => {
+        queryFulfilled.then(({ data: { requestedFolderUIDs, deletedFolderUIDs } }) => {
           handleDeletedFolders({
             deletedFolderUIDs,
             thunkDispatch: dispatch,
-            refreshDeletedParents: true,
           });
+          dispatch(refreshParents(requestedFolderUIDs));
         });
       },
     }),
@@ -612,12 +615,16 @@ type DeleteFoldersByUIDResult = {
   deletedFolderUIDs: string[];
 };
 
+type DeleteFoldersResult = {
+  requestedFolderUIDs: string[];
+  deletedFolderUIDs: string[];
+};
+
 type HandleDeletedFoldersArgs = {
   deletedFolderUIDs: string[];
   thunkDispatch: typeof dispatch;
   parentUID?: string;
   shouldRefetchParentChildren?: boolean;
-  refreshDeletedParents?: boolean;
 };
 
 async function deleteFoldersByUID({
@@ -655,7 +662,6 @@ function handleDeletedFolders({
   thunkDispatch,
   parentUID,
   shouldRefetchParentChildren = false,
-  refreshDeletedParents = false,
 }: HandleDeletedFoldersArgs) {
   if (deletedFolderUIDs.length === 0) {
     return;
@@ -672,10 +678,6 @@ function handleDeletedFolders({
         pageSize: PAGE_SIZE,
       })
     );
-  }
-
-  if (refreshDeletedParents) {
-    thunkDispatch(refreshParents(deletedFolderUIDs));
   }
 
   invalidateQuotaUsage(thunkDispatch);
