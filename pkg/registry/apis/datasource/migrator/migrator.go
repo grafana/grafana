@@ -8,7 +8,6 @@ import (
 	"io"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -114,11 +113,7 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 	// Clean up any existing secrets in the MT secret service
 	plugins := map[string]bool{}
 	for _, ds := range dsList {
-		gv, err := schema.ParseGroupVersion(ds.APIVersion)
-		if err != nil {
-			return fmt.Errorf("invalid apiVersion for datasource %s: %w", ds.Name, err)
-		}
-		apiGroup := gv.Group
+		apiGroup := ds.GroupVersionKind().Group
 		if !plugins[apiGroup] {
 			if err = m.secretStore.DeleteWhenOwnedByResource(ctx, common.ObjectReference{
 				APIGroup:   apiGroup,
@@ -135,11 +130,7 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 	}
 
 	for count, ds := range dsList {
-		gv, err := schema.ParseGroupVersion(ds.APIVersion)
-		if err != nil {
-			return fmt.Errorf("invalid apiVersion for datasource %s: %w", ds.Name, err)
-		}
-		group := gv.Group
+		gvk := ds.GroupVersionKind()
 
 		// Shallow-copy the struct so we can set TypeMeta without mutating the slice element.
 		obj := *ds
@@ -150,16 +141,16 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 
 		if len(ds.Secure) > 0 {
 			objRef := common.ObjectReference{
-				APIGroup:   gv.Group,
-				APIVersion: gv.Version,
-				Kind:       obj.Kind,
-				Namespace:  obj.Namespace,
-				Name:       obj.Name,
-				UID:        obj.UID,
+				APIGroup:   gvk.Group,
+				APIVersion: gvk.Version,
+				Kind:       "DataSource",
+				Namespace:  ds.Namespace,
+				Name:       ds.Name,
+				UID:        ds.UID,
 			}
 			secure, err := m.createSecrets(ctx, ds.Secure, objRef)
 			if err != nil {
-				return fmt.Errorf("error create secrets for datasource %s (group=%s): %w, %#v", ds.Name, group, err, obj)
+				return fmt.Errorf("error creating secrets for datasource %s (group=%s): %w", ds.Name, gvk.Group, err)
 			}
 			obj.Secure = secure
 		}
@@ -172,7 +163,7 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 		req := &resourcepb.BulkRequest{
 			Key: &resourcepb.ResourceKey{
 				Namespace: opts.Namespace,
-				Group:     gv.Group,
+				Group:     gvk.Group,
 				Resource:  "datasources",
 				Name:      ds.Name,
 			},
@@ -180,7 +171,7 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 			Action: resourcepb.BulkRequest_ADDED,
 		}
 
-		opts.Progress(count, fmt.Sprintf("%s/%s (%d) %s", group, obj.Spec.Title(), len(req.Value), req.Key))
+		opts.Progress(count, fmt.Sprintf("%s/%s (%d) %s", gvk.Group, obj.Spec.Title(), len(req.Value), req.Key))
 
 		err = stream.Send(req)
 		if err != nil {
