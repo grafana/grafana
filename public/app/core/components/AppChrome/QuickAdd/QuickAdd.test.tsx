@@ -30,6 +30,7 @@ const setup = () => {
       url: '/dashboards',
       children: [
         { text: 'New dashboard', id: 'dashboards/new', url: '/dashboard/new', isCreateAction: true },
+        { text: 'Import dashboard', id: 'dashboards/import', url: '/dashboard/import', isCreateAction: true },
         { text: 'Browse', id: 'dashboards-browse', url: '/dashboards' },
       ],
     },
@@ -39,6 +40,7 @@ const setup = () => {
       url: '/alerting',
       children: [{ text: 'New alert rule', id: 'alert', url: '/alerting/new', isCreateAction: true }],
     },
+    // Synthetic top-level create action — not in production navtree today, but exercises the ungrouped code path
     {
       text: 'New import',
       id: 'standalone-import',
@@ -71,6 +73,7 @@ describe('QuickAdd', () => {
     setup();
     await userEvent.click(screen.getByRole('button', { name: 'New' }));
     expect(screen.getByRole('menuitem', { name: 'New dashboard' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Import dashboard' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'New alert rule' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'New import' })).toBeInTheDocument();
   });
@@ -94,6 +97,7 @@ describe('QuickAdd', () => {
 
     const dashboardGroup = screen.getByRole('group', { name: 'Dashboards' });
     expect(within(dashboardGroup).getByRole('menuitem', { name: 'New dashboard' })).toBeInTheDocument();
+    expect(within(dashboardGroup).getByRole('menuitem', { name: 'Import dashboard' })).toBeInTheDocument();
 
     const alertingGroup = screen.getByRole('group', { name: 'Alerting' });
     expect(within(alertingGroup).getByRole('menuitem', { name: 'New alert rule' })).toBeInTheDocument();

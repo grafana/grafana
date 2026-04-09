@@ -71,39 +71,43 @@ export const QuickAdd = ({}: Props) => {
     setIsOpen(!isOpen);
   };
 
-  const MenuActions = () => (
-    <Menu>
-      {actionGroups.map((group, groupIdx) => {
-        const groupColors: Record<string, string> = {
-          'dashboards/browse': theme.visualization.getColorByName('green'),
-          alerting: theme.visualization.getColorByName('purple'),
-        };
-        const iconColor = groupColors[group.parentId];
-        return (
-          <Fragment key={group.parentId}>
-            {groupIdx > 0 && <Menu.Divider />}
-            <Menu.Group label={group.parentText || undefined}>
-              {group.items.map((item) => {
-                return (
-                  <Menu.Item
-                    key={item.id}
-                    url={item.url}
-                    label={item.text}
-                    icon={item.id ? ITEM_ICONS[item.id] : undefined}
-                    iconColor={iconColor}
-                    onClick={() => {
-                      reportInteraction('grafana_menu_item_clicked', { url: item.url, from: 'quickadd' });
-                      item.onClick?.();
-                    }}
-                  />
-                );
-              })}
-            </Menu.Group>
-          </Fragment>
-        );
-      })}
-    </Menu>
-  );
+  const MenuActions = () => {
+    const groupColors: Record<string, string> = {
+      'dashboards/browse': theme.visualization.getColorByName('green'),
+      alerting: theme.visualization.getColorByName('purple'),
+    };
+
+    return (
+      <Menu>
+        {actionGroups.map((group, groupIdx) => {
+          const iconColor = groupColors[group.parentId];
+          return (
+            <Fragment key={group.parentId}>
+              {groupIdx > 0 && <Menu.Divider />}
+              {/* Empty parentText (ungrouped items) becomes undefined to suppress the group header */}
+              <Menu.Group label={group.parentText || undefined}>
+                {group.items.map((item) => {
+                  return (
+                    <Menu.Item
+                      key={item.id ?? item.url}
+                      url={item.url}
+                      label={item.text}
+                      icon={item.id ? ITEM_ICONS[item.id] : undefined}
+                      iconColor={iconColor}
+                      onClick={() => {
+                        reportInteraction('grafana_menu_item_clicked', { url: item.url, from: 'quickadd' });
+                        item.onClick?.();
+                      }}
+                    />
+                  );
+                })}
+              </Menu.Group>
+            </Fragment>
+          );
+        })}
+      </Menu>
+    );
+  };
 
   return (
     <>
