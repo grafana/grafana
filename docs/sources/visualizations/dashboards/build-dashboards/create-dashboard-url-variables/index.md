@@ -78,7 +78,7 @@ Grafana interprets `var-example=value1&var-example=value2` as the dashboard vari
 
 ## Filter and group by variables
 
-Filter and group by variables (formerly **ad hoc variables**) apply key/value filters to all metric queries that use the specified data source.
+Filter and group by variables (formerly **ad hoc filters**) apply key/value filters to all metric queries that use the specified data source.
 For more information, refer to [variables documentation](/docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/#add-ad-filter-and-group-by).
 
 To pass a filter as a query parameter, use the variable syntax to pass the filter variable.
@@ -98,8 +98,6 @@ In the preceding example, replace the pipes (`|`) with `%7C` and the equality op
 {{< /admonition >}}
 
 ### Example
-
-<!-- TODO: Figure out what to do with this example -->
 
 [This dashboard in Grafana Play](https://play.grafana.org/d/p-k6QtkGz/template-redux?var-interval=$__auto&orgId=1&from=now-5m&to=now&timezone=utc&var-query=$__all&var-query2=$__all&var-query3=$__all&var-Filters=job%7C%3D%7Cmetrictank%2Ftsdb-gw&var-textbox=foo&var-custom=lisa&var-datasource=grafanacloud-demoinfra-prom) passes the ad hoc filter variable `Filters` with the filter value `job = metrictank/tsdb-gw`.
 

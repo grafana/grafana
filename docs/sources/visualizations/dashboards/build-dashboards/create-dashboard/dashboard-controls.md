@@ -17,9 +17,9 @@ weight: 200
 
 # Dashboard controls
 
-In the **Dashboard controls** section of the sidebar, you can add variables, annotation queries, and dashboard links without leaving the dashboard.
+In the **Dashboard controls** section of the sidebar in add mode, you can add variables, annotation queries, and dashboard links without leaving the dashboard.
 
-<!-- TODO: Add screenshot after filters work is done -->
+{{< figure src="../screenshot-dashboard-controls-v13.0.png" max-width="500px" alt="Dashboard controls in the Dashboard options sidebar view" >}}
 
 ## Add filters and group by
 
@@ -29,7 +29,7 @@ In the **Dashboard controls** section of the sidebar, you can add variables, ann
 Filter and group by is currently in public preview.
 Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 
-This feature replaces ad hoc variables, and extends them by adding grouping for Prometheus and Loki data sources.
+This feature replaces ad hoc filters, and extends them by adding grouping for Prometheus and Loki data sources.
 However, in the dashboard schema, it is still referred to as `"kind": "AdhocVariable"`.
 
 To use this feature, enable the `dashboardUnifiedDrilldownControls` feature toggle in your Grafana configuration file.
@@ -175,16 +175,16 @@ To add a URL link to your dashboard, follow these steps:
 ## Manage dashboard controls
 
 After you add dashboard controls, you can manage them from the dashboard options.
-The sidebar includes collapsible sections for variables, annotations, and links, including hidden controls that aren't otherwise visible on the dashboard:
+In this view, the sidebar includes collapsible sections for variables (including filter and group by), annotations, and links, including hidden controls that aren't otherwise visible on the dashboard:
 
-<!-- TODO: Add screenshot here after filters work is done -->
+{{< figure src="../screenshot-dashboard-controls-mgmt-2-v13.0.png" alt="Dashboard controls in the Dashboard options sidebar view" max-width="500px" >}}
 
 To manage dashboard controls, follow these steps:
 
 1. Click the **Dashboard options** icon in the sidebar.
 1. In the sidebar, expand the appropriate collapsible section.
 1. Do one or more of the following:
-   - **Edit**: Click **Select** on the control to open the sidebar so you can make updates.
+   - **Edit**: Click **Select** on the control to open it in the sidebar so you can make updates.
    - **Reorder**: Drag and drop controls to reorder them.
    - **Change display**: Drag and drop controls between sub-sections **Above dashboard**, **Controls menu**, and **Hidden** to update the control display option. Note that links can't be hidden.
 
