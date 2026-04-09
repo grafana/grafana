@@ -1621,15 +1621,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "rendererDisableAppPluginsPreload",
-			Description:  "Disable pre-loading app plugins when the request is coming from the renderer",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaOperatorExperienceSquad,
-			HideFromDocs: true,
-			FrontendOnly: true,
-			Expression:   "false",
-		},
-		{
 			Name:         "assetSriChecks",
 			Description:  "Enables SRI checks for Grafana JavaScript assets",
 			Stage:        FeatureStageExperimental,

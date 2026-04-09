@@ -1030,11 +1030,6 @@ export interface FeatureToggles {
   */
   newShareReportDrawer?: boolean;
   /**
-  * Disable pre-loading app plugins when the request is coming from the renderer
-  * @default false
-  */
-  rendererDisableAppPluginsPreload?: boolean;
-  /**
   * Enables SRI checks for Grafana JavaScript assets
   * @default false
   */
