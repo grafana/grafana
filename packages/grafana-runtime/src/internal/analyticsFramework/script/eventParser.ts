@@ -101,6 +101,12 @@ const parseEventFromCall = (
  *     trackClick: createNavEvent<ClickProperties>('click'),
  *   };
  *
+ * Supports spreads from other event groups:
+ *   export const TemplateInteractions = {
+ *     ...NavInteractions,
+ *     trackClick: createNavEvent<ClickProperties>('click'), // overrides the spread
+ *   };
+ *
  * Owner falls back to the containing object's JSDoc `@owner` tag.
  */
 const parseEventsFromObjectLiteral = (
@@ -108,11 +114,32 @@ const parseEventsFromObjectLiteral = (
   eventNamespaces: Map<string, EventNamespace>,
   groupOwner: string | undefined
 ): EventData[] => {
-  const events: EventData[] = [];
+  // Keyed by fullEventName so that direct property assignments override spread entries
+  // when they refer to the same event, matching JS object spread semantics.
+  const eventMap = new Map<string, EventData>();
 
   for (const property of objectLiteral.getProperties()) {
+    if (Node.isSpreadAssignment(property)) {
+      // Resolve the spread target (e.g. `...NavInteractions`) to its object literal
+      // and recursively collect the events it contributes.
+      const spreadExpr = property.getExpression();
+      if (Node.isIdentifier(spreadExpr)) {
+        const decl = spreadExpr.getSymbol()?.getDeclarations()?.[0];
+        if (decl && Node.isVariableDeclaration(decl)) {
+          const spreadInit = decl.getInitializer();
+          if (spreadInit && Node.isObjectLiteralExpression(spreadInit)) {
+            const spreadEvents = parseEventsFromObjectLiteral(spreadInit, eventNamespaces, groupOwner);
+            for (const event of spreadEvents) {
+              eventMap.set(event.fullEventName, event);
+            }
+          }
+        }
+      }
+      continue;
+    }
+
     if (!Node.isPropertyAssignment(property)) {
-      continue; // skip spread assignments like ...NavInteractions
+      continue;
     }
 
     const value = property.getInitializer();
@@ -126,11 +153,12 @@ const parseEventsFromObjectLiteral = (
     });
 
     if (event) {
-      events.push(event);
+      // Direct assignment — overrides any previously spread event with the same name
+      eventMap.set(event.fullEventName, event);
     }
   }
 
-  return events;
+  return [...eventMap.values()];
 };
 
 /**
