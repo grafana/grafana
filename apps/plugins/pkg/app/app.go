@@ -52,7 +52,7 @@ func New(cfg app.Config) (app.App, error) {
 		Name:       "plugins",
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
-			InformerSupplier: childReconcilerInformerSupplier(specificConfig.ChildReconciler.MemcachedAddrs),
+			InformerSupplier: childReconcilerInformerSupplier(specificConfig.ChildReconciler.MemcachedSelector),
 			RetryPolicy:      operator.ExponentialBackoffRetryPolicy(5*time.Second, 5),
 			InformerOptions: operator.InformerOptions{
 				ErrorHandler: func(ctx context.Context, err error) {
@@ -91,8 +91,8 @@ type PluginAppConfig struct {
 }
 
 type ChildReconcilerConfig struct {
-	Enabled        bool
-	MemcachedAddrs []string
+	Enabled           bool
+	MemcachedSelector operator.MemcachedServerSelector
 }
 
 type PluginAppInstallerConfig struct {
@@ -109,8 +109,8 @@ func NewPluginsAppInstaller(config PluginAppInstallerConfig) (*PluginAppInstalle
 	specificConfig := &PluginAppConfig{
 		MetaProviderManager: config.MetaProviderManager,
 		ChildReconciler: ChildReconcilerConfig{
-			Enabled:        config.ChildReconciler.Enabled,
-			MemcachedAddrs: append([]string(nil), config.ChildReconciler.MemcachedAddrs...),
+			Enabled:           config.ChildReconciler.Enabled,
+			MemcachedSelector: config.ChildReconciler.MemcachedSelector,
 		},
 	}
 	provider := simple.NewAppProvider(pluginsappapis.LocalManifest(), specificConfig, New)
@@ -134,12 +134,11 @@ func NewPluginsAppInstaller(config PluginAppInstallerConfig) (*PluginAppInstalle
 	return appInstaller, nil
 }
 
-func childReconcilerInformerSupplier(memcachedAddrs []string) simple.InformerSupplier {
-	if len(memcachedAddrs) == 0 {
+func childReconcilerInformerSupplier(selector operator.MemcachedServerSelector) simple.InformerSupplier {
+	if selector == nil {
 		return simple.OptimizedInformerSupplier
 	}
 
-	serverAddrs := append([]string(nil), memcachedAddrs...)
 	return func(kind resource.Kind, clients resource.ClientGenerator, options operator.InformerOptions) (operator.Informer, error) {
 		client, err := clients.ClientFor(kind)
 		if err != nil {
@@ -147,7 +146,7 @@ func childReconcilerInformerSupplier(memcachedAddrs []string) simple.InformerSup
 		}
 
 		inf, err := operator.NewMemcachedInformer(kind, client, operator.MemcachedInformerOptions{
-			ServerAddrs: serverAddrs,
+			ServerSelector: selector,
 			CustomCacheInformerOptions: operator.CustomCacheInformerOptions{
 				InformerOptions: options,
 			},

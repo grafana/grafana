@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -25,7 +26,10 @@ func TestChildReconcilerInformerSupplier(t *testing.T) {
 	})
 
 	t.Run("uses memcached informer when configured", func(t *testing.T) {
-		inf, err := childReconcilerInformerSupplier([]string{"127.0.0.1:11211"})(
+		selector, err := simple.NewMemcachedHostList([]string{"127.0.0.1:11211"})
+		require.NoError(t, err)
+
+		inf, err := childReconcilerInformerSupplier(selector)(
 			pluginsv0alpha1.PluginKind(),
 			fakeClientGenerator{client: fakeResourceClient{}},
 			operator.InformerOptions{},

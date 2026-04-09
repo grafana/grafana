@@ -68,8 +68,7 @@ func ProvideAppInstaller(
 		MetaProviderManager:  metaProviderManager,
 		PrometheusRegisterer: registerer,
 		ChildReconciler: pluginsapp.ChildReconcilerConfig{
-			Enabled:        false,
-			MemcachedAddrs: nil,
+			Enabled: false,
 		},
 	})
 	if err != nil {
