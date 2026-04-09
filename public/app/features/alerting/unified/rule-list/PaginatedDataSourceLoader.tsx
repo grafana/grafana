@@ -10,7 +10,7 @@ import {
 } from 'app/types/unified-alerting';
 import { type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { useExternalRuleAbility } from '../hooks/useAbilities';
+import { useExternalRuleAbilityState } from '../hooks/useAbilities';
 import { ExternalRuleAction } from '../hooks/useAbilities.types';
 import { useHasRulerV2 } from '../hooks/useHasRuler';
 import { groups } from '../utils/navigation';
@@ -207,8 +207,7 @@ interface DataSourceGroupActionsProps {
 
 function DataSourceGroupActions({ dsUid, namespaceName, groupName }: DataSourceGroupActionsProps) {
   const { hasRuler } = useHasRulerV2(dsUid);
-  const [editRuleSupported, editRuleAllowed] = useExternalRuleAbility(ExternalRuleAction.UpdateAlertRule);
-  const canEdit = editRuleSupported && editRuleAllowed;
+  const { granted: canEdit } = useExternalRuleAbilityState(ExternalRuleAction.UpdateAlertRule);
 
   if (!hasRuler || !canEdit) {
     return null;

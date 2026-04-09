@@ -11,7 +11,7 @@ import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { GrafanaRulesExporter } from '../components/export/GrafanaRulesExporter';
 import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
 import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
-import { useExternalRuleAbility, useRuleAbility } from '../hooks/useAbilities';
+import { useExternalRuleAbilityState, useRuleAbilityState } from '../hooks/useAbilities';
 import { ExternalRuleAction, RuleAction } from '../hooks/useAbilities.types';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
@@ -51,18 +51,15 @@ function RuleList() {
 }
 
 export function RuleListActions() {
-  const [createGrafanaRuleSupported, createGrafanaRuleAllowed] = useRuleAbility(RuleAction.Create);
-  const [createCloudRuleSupported, createCloudRuleAllowed] = useExternalRuleAbility(ExternalRuleAction.CreateAlertRule);
-  const [exportRulesSupported, exportRulesAllowed] = useRuleAbility(RuleAction.ExportRules);
+  const { granted: canCreateGrafanaRules } = useRuleAbilityState(RuleAction.Create);
+  const { granted: canCreateCloudRuleBase } = useExternalRuleAbilityState(ExternalRuleAction.CreateAlertRule);
+  const { granted: canExportRules } = useRuleAbilityState(RuleAction.ExportRules);
 
   // Check if there are any data sources with manageAlerts enabled
   const hasAlertEnabledDataSources = useMemo(() => getRulesDataSources().length > 0, []);
   const isDisableDMAinUIEnabled = config.featureToggles.alertingDisableDMAinUI ?? false;
 
-  const canCreateGrafanaRules = createGrafanaRuleSupported && createGrafanaRuleAllowed;
-  const canCreateCloudRules =
-    createCloudRuleSupported && createCloudRuleAllowed && hasAlertEnabledDataSources && !isDisableDMAinUIEnabled;
-  const canExportRules = exportRulesSupported && exportRulesAllowed;
+  const canCreateCloudRules = canCreateCloudRuleBase && hasAlertEnabledDataSources && !isDisableDMAinUIEnabled;
 
   const canCreateRules = canCreateGrafanaRules || canCreateCloudRules;
   // Align import UI permission with convert endpoint requirements: rule create + provisioning set status

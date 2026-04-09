@@ -1,4 +1,4 @@
-import { Fragment, type JSX } from 'react';
+import { Fragment, type JSX, useMemo } from 'react';
 
 import { textUtil } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -6,11 +6,12 @@ import { useReturnToPrevious } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { type CombinedRule, type RulesSource } from 'app/types/unified-alerting';
 
-import { useCombinedRuleAbility } from '../../hooks/useAbilities';
+import { useAllRulerRuleAbilityStates } from '../../hooks/useAbilities';
 import { RuleAction } from '../../hooks/useAbilities.types';
 import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
 import { Annotation } from '../../utils/constants';
 import { isCloudRulesSource } from '../../utils/datasource';
+import { groupIdentifier } from '../../utils/groupIdentifier';
 import { createExploreLink } from '../../utils/misc';
 import { isFederatedRuleGroup, rulerRuleType } from '../../utils/rules';
 
@@ -32,7 +33,11 @@ const RuleDetailsButtons = ({ rule, rulesSource }: Props) => {
 
   const setReturnToPrevious = useReturnToPrevious();
 
-  const [exploreSupported, exploreAllowed] = useCombinedRuleAbility(rule, RuleAction.Explore);
+  const groupId = useMemo(() => groupIdentifier.fromCombinedRule(rule), [rule]);
+  const { supported: exploreSupported, allowed: exploreAllowed } = useAllRulerRuleAbilityStates(
+    rule.rulerRule,
+    groupId
+  )[RuleAction.Explore];
 
   const buttons: JSX.Element[] = [];
 

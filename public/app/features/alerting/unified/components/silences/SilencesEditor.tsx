@@ -34,7 +34,7 @@ import { MatcherOperator, type SilenceCreatePayload } from 'app/plugins/datasour
 
 import { contextSrv } from '../../../../../core/services/context_srv';
 import { AlertmanagerAction } from '../../hooks/useAbilities.types';
-import { useAlertmanagerAbility } from '../../hooks/useAlertmanagerAbilities';
+import { useAlertmanagerAbilityState } from '../../hooks/useAlertmanagerAbilities';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { type SilenceFormFields } from '../../types/silence-form';
 import { matcherFieldToMatcher } from '../../utils/alertmanager';
@@ -145,10 +145,7 @@ export const SilencesEditor = ({
   onCancel,
   ruleUid,
 }: SilencesEditorProps) => {
-  const [previewAlertsSupported, previewAlertsAllowed] = useAlertmanagerAbility(
-    AlertmanagerAction.PreviewSilencedInstances
-  );
-  const canPreview = previewAlertsSupported && previewAlertsAllowed;
+  const { granted: canPreview } = useAlertmanagerAbilityState(AlertmanagerAction.PreviewSilencedInstances);
 
   const [createSilence, { isLoading }] = alertSilencesApi.endpoints.createSilence.useMutation();
   const formAPI = useForm({ defaultValues: formValues });

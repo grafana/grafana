@@ -2,7 +2,7 @@ import { Trans } from '@grafana/i18n';
 import { LinkButton, Stack, Text } from '@grafana/ui';
 
 import { AlertmanagerAction } from '../../hooks/useAbilities.types';
-import { useAlertmanagerAbility } from '../../hooks/useAlertmanagerAbilities';
+import { useAlertmanagerAbilityState } from '../../hooks/useAlertmanagerAbilities';
 import { useTemplatesNav } from '../../navigation/useNotificationConfigNav';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
@@ -11,7 +11,7 @@ import { GrafanaAlertmanagerWarning } from '../GrafanaAlertmanagerWarning';
 import { NotificationTemplates } from './NotificationTemplates';
 
 function TemplatesPageContent() {
-  const [createTemplateSupported, createTemplateAllowed] = useAlertmanagerAbility(
+  const { supported: createTemplateSupported, allowed: createTemplateAllowed } = useAlertmanagerAbilityState(
     AlertmanagerAction.CreateNotificationTemplate
   );
 

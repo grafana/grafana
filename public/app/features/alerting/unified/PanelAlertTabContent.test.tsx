@@ -13,6 +13,7 @@ import { type AlertQuery, type PromRulesResponse } from 'app/types/unified-alert
 import { PanelAlertTabContent } from './PanelAlertTabContent';
 import * as apiRuler from './api/ruler';
 import * as alertingAbilities from './hooks/useAbilities';
+import { type AbilityState, type AbilityStates, RuleAction } from './hooks/useAbilities.types';
 import { mockAlertRuleApi, setupMswServer } from './mockApi';
 import {
   grantUserPermissions,
@@ -31,7 +32,7 @@ jest.mock('./api/ruler');
 jest.mock('@grafana/assistant', () => ({
   useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
 }));
-jest.spyOn(alertingAbilities, 'useCombinedRuleAbility');
+jest.spyOn(alertingAbilities, 'useAllRulerRuleAbilityStates');
 
 const prometheusModuleSettings = { alerting: true, module: 'core:plugin/prometheus' };
 
@@ -66,7 +67,7 @@ const dataSources = {
 };
 
 const mocks = {
-  useAlertRuleAbilityMock: jest.mocked(alertingAbilities.useCombinedRuleAbility),
+  useAlertRuleAbilityMock: jest.mocked(alertingAbilities.useAllRulerRuleAbilityStates),
   rulerBuilderMock: jest.mocked(apiRuler.rulerUrlBuilder),
 };
 
@@ -209,7 +210,10 @@ describe('PanelAlertTabContent', () => {
       namespace: () => ({ path: 'ruler' }),
       namespaceGroup: () => ({ path: 'ruler' }),
     });
-    mocks.useAlertRuleAbilityMock.mockReturnValue([true, true]);
+    const granted: AbilityState = { supported: true, allowed: true, loading: false, granted: true };
+    mocks.useAlertRuleAbilityMock.mockReturnValue(
+      Object.fromEntries(Object.values(RuleAction).map((action) => [action, granted])) as AbilityStates<RuleAction>
+    );
 
     mockAlertRuleApi(server).prometheusRuleNamespaces(GRAFANA_RULES_SOURCE_NAME, promResponse);
     mockAlertRuleApi(server).rulerRules(GRAFANA_RULES_SOURCE_NAME, rulerResponse);

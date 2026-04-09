@@ -7,6 +7,11 @@ import { config, locationService, setPluginLinksHook } from '@grafana/runtime';
 import * as ruler from 'app/features/alerting/unified/api/ruler';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import * as alertingAbilities from 'app/features/alerting/unified/hooks/useAbilities';
+import {
+  type AbilityState,
+  type AbilityStates,
+  RuleAction,
+} from 'app/features/alerting/unified/hooks/useAbilities.types';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   grantUserPermissions,
@@ -46,7 +51,7 @@ jest.mock('@grafana/assistant', () => ({
 
 jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
 jest.spyOn(ruler, 'rulerUrlBuilder');
-jest.spyOn(alertingAbilities, 'useCombinedRuleAbility');
+jest.spyOn(alertingAbilities, 'useAllRulerRuleAbilityStates');
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
@@ -79,7 +84,7 @@ const dataSources = {
 };
 
 const mocks = {
-  useAlertRuleAbilityMock: jest.mocked(alertingAbilities.useCombinedRuleAbility),
+  useAlertRuleAbilityMock: jest.mocked(alertingAbilities.useAllRulerRuleAbilityStates),
   rulerBuilderMock: jest.mocked(ruler.rulerUrlBuilder),
 };
 
@@ -196,7 +201,10 @@ describe('PanelAlertTabContent', () => {
       namespace: () => ({ path: 'ruler' }),
       namespaceGroup: () => ({ path: 'ruler' }),
     });
-    mocks.useAlertRuleAbilityMock.mockReturnValue([true, true]);
+    const granted: AbilityState = { supported: true, allowed: true, loading: false, granted: true };
+    mocks.useAlertRuleAbilityMock.mockReturnValue(
+      Object.fromEntries(Object.values(RuleAction).map((action) => [action, granted])) as AbilityStates<RuleAction>
+    );
 
     mockAlertRuleApi(server).prometheusRuleNamespaces(GRAFANA_RULES_SOURCE_NAME, promResponse);
     mockAlertRuleApi(server).rulerRules(GRAFANA_RULES_SOURCE_NAME, {

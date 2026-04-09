@@ -42,7 +42,10 @@ import { type Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { type ThunkDispatch, useDispatch } from 'app/types/store';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { useExternalRuleAbility, useRuleAbility } from '../../../features/alerting/unified/hooks/useAbilities';
+import {
+  useExternalRuleAbilityState,
+  useRuleAbilityState,
+} from '../../../features/alerting/unified/hooks/useAbilities';
 import { ExternalRuleAction, RuleAction } from '../../../features/alerting/unified/hooks/useAbilities.types';
 import { getAlertingRule } from '../../../features/alerting/unified/utils/rules';
 import { type AlertingRule, type CombinedRuleWithLocation } from '../../../types/unified-alerting';
@@ -111,7 +114,7 @@ const fetchPromAndRuler = ({
 function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
   const [limitInstances, toggleLimit] = useToggle(true);
-  const [, gmaViewAllowed] = useRuleAbility(RuleAction.View);
+  const { allowed: gmaViewAllowed } = useRuleAbilityState(RuleAction.View);
 
   const { usePrometheusRulesByNamespaceQuery } = alertRuleApi;
 
@@ -536,8 +539,8 @@ export const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 export function UnifiedAlertListPanel(props: PanelProps<UnifiedAlertListOptions>) {
-  const [, gmaReadAllowed] = useRuleAbility(RuleAction.View);
-  const [, externalReadAllowed] = useExternalRuleAbility(ExternalRuleAction.ViewAlertRule);
+  const { allowed: gmaReadAllowed } = useRuleAbilityState(RuleAction.View);
+  const { allowed: externalReadAllowed } = useExternalRuleAbilityState(ExternalRuleAction.ViewAlertRule);
 
   if (!gmaReadAllowed && !externalReadAllowed) {
     return (

@@ -7,7 +7,7 @@ import { useDispatch } from 'app/types/store';
 
 import { alertingFolderActionsApi } from '../../api/alertingFolderActionsApi';
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
-import { useFolderBulkActionAbility, useRuleAbility } from '../../hooks/useAbilities';
+import { useFolderBulkActionAbilityState, useRuleAbilityState } from '../../hooks/useAbilities';
 import { FolderBulkAction, RuleAction } from '../../hooks/useAbilities.types';
 import { useFolder } from '../../hooks/useFolder';
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../../state/actions';
@@ -31,9 +31,7 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
   const bulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
   const listView2Enabled = shouldUseAlertingListViewV2();
 
-  const [exportRulesSupported, exportRulesAllowed] = useRuleAbility(RuleAction.ExportRules);
-
-  const canExportRules = exportRulesSupported && exportRulesAllowed;
+  const { granted: canExportRules } = useRuleAbilityState(RuleAction.ExportRules);
 
   const [deleteGrafanaRulesFromFolder, deleteState] =
     alertingFolderActionsApi.endpoints.deleteGrafanaRulesFromFolder.useMutation();
@@ -130,11 +128,8 @@ function BulkActions({
   const bulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
 
   // abilities
-  const [pauseSupported, pauseAllowed] = useFolderBulkActionAbility(FolderBulkAction.Pause);
-  const [deleteSupported, deleteAllowed] = useFolderBulkActionAbility(FolderBulkAction.Delete);
-
-  const canPause = pauseSupported && pauseAllowed;
-  const canDelete = deleteSupported && deleteAllowed;
+  const { granted: canPause } = useFolderBulkActionAbilityState(FolderBulkAction.Pause);
+  const { granted: canDelete } = useFolderBulkActionAbilityState(FolderBulkAction.Delete);
 
   // mutations
   const [pauseFolder, updateState] = alertingFolderActionsApi.endpoints.pauseFolder.useMutation();

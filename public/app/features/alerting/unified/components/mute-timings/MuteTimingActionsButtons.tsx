@@ -4,9 +4,9 @@ import { Trans, t } from '@grafana/i18n';
 import { Badge, ConfirmModal, LinkButton, Stack } from '@grafana/ui';
 import { useExportMuteTimingsDrawer } from 'app/features/alerting/unified/components/mute-timings/useExportMuteTimingsDrawer';
 
-import { Authorize } from '../../components/Authorize';
+import { AbilityAny } from '../../components/AbilityGuards';
 import { AlertmanagerAction } from '../../hooks/useAbilities.types';
-import { useAlertmanagerAbility } from '../../hooks/useAlertmanagerAbilities';
+import { useAlertmanagerAbilityState } from '../../hooks/useAlertmanagerAbilities';
 import { isLoading } from '../../hooks/useAsync';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
@@ -25,7 +25,9 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
   });
   const [showDeleteDrawer, setShowDeleteDrawer] = useState(false);
   const [ExportDrawer, showExportDrawer] = useExportMuteTimingsDrawer();
-  const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportTimeIntervals);
+  const { supported: exportSupported, allowed: exportAllowed } = useAlertmanagerAbilityState(
+    AlertmanagerAction.ExportTimeIntervals
+  );
 
   const closeDeleteModal = () => setShowDeleteDrawer(false);
 
@@ -56,7 +58,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
         {!isGrafanaDataSource && isDisabled(muteTiming) && (
           <Badge text={t('alerting.mute-timing-actions-buttons.text-disabled', 'Disabled')} color="orange" />
         )}
-        <Authorize actions={[AlertmanagerAction.UpdateTimeInterval]}>{viewOrEditButton}</Authorize>
+        <AbilityAny actions={[AlertmanagerAction.UpdateTimeInterval]}>{viewOrEditButton}</AbilityAny>
 
         {exportSupported && (
           <LinkButton
@@ -72,7 +74,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
         )}
 
         {!muteTiming.provisioned && (
-          <Authorize actions={[AlertmanagerAction.DeleteTimeInterval]}>
+          <AbilityAny actions={[AlertmanagerAction.DeleteTimeInterval]}>
             <LinkButton
               icon="trash-alt"
               variant="secondary"
@@ -82,7 +84,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
             >
               <Trans i18nKey="alerting.common.delete">Delete</Trans>
             </LinkButton>
-          </Authorize>
+          </AbilityAny>
         )}
       </Stack>
       <ConfirmModal

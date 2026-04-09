@@ -19,7 +19,7 @@ import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 import { AlertmanagerAction } from '../../hooks/useAbilities.types';
-import { useAlertmanagerAbility } from '../../hooks/useAlertmanagerAbilities';
+import { useAlertmanagerAbilityState } from '../../hooks/useAlertmanagerAbilities';
 import { useCanViewContactPoints } from '../../hooks/useNotificationAbilities';
 import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
@@ -62,10 +62,10 @@ const ContactPointsTab = () => {
     fetchStatuses,
   });
 
-  const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
+  const { supported: addContactPointSupported, allowed: addContactPointAllowed } = useAlertmanagerAbilityState(
     AlertmanagerAction.CreateContactPoint
   );
-  const [exportContactPointsSupported, exportContactPointsAllowed] = useAlertmanagerAbility(
+  const { supported: exportContactPointsSupported, allowed: exportContactPointsAllowed } = useAlertmanagerAbilityState(
     AlertmanagerAction.ExportContactPoint
   );
 
@@ -151,7 +151,7 @@ const ContactPointsTab = () => {
 };
 
 const NotificationTemplatesTab = () => {
-  const [createTemplateSupported, createTemplateAllowed] = useAlertmanagerAbility(
+  const { supported: createTemplateSupported, allowed: createTemplateAllowed } = useAlertmanagerAbilityState(
     AlertmanagerAction.CreateNotificationTemplate
   );
 
@@ -199,9 +199,9 @@ const useTabQueryParam = (defaultTab: ActiveTab) => {
 
 export const ContactPointsPageContents = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  const [, canViewContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
-  const [, canCreateContactPoints] = useAlertmanagerAbility(AlertmanagerAction.CreateContactPoint);
-  const [, showTemplatesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationTemplate);
+  const { allowed: canViewContactPoints } = useAlertmanagerAbilityState(AlertmanagerAction.ViewContactPoint);
+  const { allowed: canCreateContactPoints } = useAlertmanagerAbilityState(AlertmanagerAction.CreateContactPoint);
+  const { allowed: showTemplatesTab } = useAlertmanagerAbilityState(AlertmanagerAction.ViewNotificationTemplate);
 
   const showContactPointsTab = canViewContactPoints || canCreateContactPoints;
 

@@ -17,14 +17,15 @@ import { AlertmanagerProvider } from '../state/AlertmanagerContext';
 import { grantPermissionsHelper } from '../test/test-utils';
 import { setupDataSources } from '../testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { groupIdentifier } from '../utils/groupIdentifier';
 import * as misc from '../utils/misc';
 
-import { useAllCombinedRuleAbilities, useEnrichmentAbilities, useEnrichmentAbility } from './useAbilities';
-import { AlertmanagerAction, RuleAction, EnrichmentAction } from './useAbilities.types'; // eslint-disable-line sort-imports
+import { useAllRulerRuleAbilityStates, useEnrichmentAbilityState, useEnrichmentAbilityStates } from './useAbilities';
+import { AlertmanagerAction, EnrichmentAction, RuleAction } from './useAbilities.types'; // eslint-disable-line sort-imports
 import {
-  useAlertmanagerAbilities,
-  useAlertmanagerAbility,
-  useAllAlertmanagerAbilities,
+  useAlertmanagerAbilityState,
+  useAlertmanagerAbilityStates,
+  useAllAlertmanagerAbilityStates,
 } from './useAlertmanagerAbilities';
 
 /**
@@ -41,7 +42,7 @@ describe('alertmanager abilities', () => {
       })
     );
 
-    const { result } = renderHook(() => useAllAlertmanagerAbilities(), {
+    const { result } = renderHook(() => useAllAlertmanagerAbilityStates(), {
       wrapper: createAlertmanagerWrapper('does-not-exist'),
     });
     expect(result.current).toMatchSnapshot();
@@ -57,33 +58,27 @@ describe('alertmanager abilities', () => {
 
     grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingInstanceRead]);
 
-    const { result } = renderHook(() => useAllAlertmanagerAbilities(), {
+    const { result } = renderHook(() => useAllAlertmanagerAbilityStates(), {
       wrapper: createAlertmanagerWrapper(GRAFANA_RULES_SOURCE_NAME),
     });
 
-    Object.values(result.current).forEach(([supported]) => {
+    Object.values(result.current).forEach(({ supported }) => {
       expect(supported).toBe(true);
     });
 
     // since we only granted "read" permissions, only those should be allowed
-    const { result: viewResult } = renderHook(() => useAlertmanagerAbility(AlertmanagerAction.ViewSilence), {
+    const { result: viewResult } = renderHook(() => useAlertmanagerAbilityState(AlertmanagerAction.ViewSilence), {
       wrapper: createAlertmanagerWrapper(GRAFANA_RULES_SOURCE_NAME),
     });
-
-    const [viewSupported, viewAllowed] = viewResult.current;
-
-    expect(viewSupported).toBe(true);
-    expect(viewAllowed).toBe(true);
+    expect(viewResult.current.supported).toBe(true);
+    expect(viewResult.current.allowed).toBe(true);
 
     // editing should not be allowed, but supported
-    const { result: editResult } = renderHook(() => useAlertmanagerAbility(AlertmanagerAction.ViewSilence), {
+    const { result: editResult } = renderHook(() => useAlertmanagerAbilityState(AlertmanagerAction.ViewSilence), {
       wrapper: createAlertmanagerWrapper(GRAFANA_RULES_SOURCE_NAME),
     });
-
-    const [editSupported, editAllowed] = editResult.current;
-
-    expect(editSupported).toBe(true);
-    expect(editAllowed).toBe(true);
+    expect(editResult.current.supported).toBe(true);
+    expect(editResult.current.allowed).toBe(true);
 
     // record the snapshot to prevent future regressions
     expect(result.current).toMatchSnapshot();
@@ -107,14 +102,14 @@ describe('alertmanager abilities', () => {
       AccessControlAction.AlertingInstancesExternalWrite,
     ]);
 
-    const { result } = renderHook(() => useAllAlertmanagerAbilities(), {
+    const { result } = renderHook(() => useAllAlertmanagerAbilityStates(), {
       wrapper: createAlertmanagerWrapper('mimir'),
     });
 
     expect(result.current).toMatchSnapshot();
   });
 
-  it('should be able to return multiple abilities', () => {
+  it('should be able to return multiple ability states', () => {
     setupDataSources(
       mockDataSource<AlertManagerDataSourceJsonData>({
         name: GRAFANA_RULES_SOURCE_NAME,
@@ -126,7 +121,7 @@ describe('alertmanager abilities', () => {
 
     const { result } = renderHook(
       () =>
-        useAlertmanagerAbilities([
+        useAlertmanagerAbilityStates([
           AlertmanagerAction.ViewContactPoint,
           AlertmanagerAction.CreateContactPoint,
           AlertmanagerAction.ExportContactPoint,
@@ -137,9 +132,15 @@ describe('alertmanager abilities', () => {
     );
 
     expect(result.current).toHaveLength(3);
-    expect(result.current[0]).toStrictEqual([true, true]);
-    expect(result.current[1]).toStrictEqual([true, false]);
-    expect(result.current[2]).toStrictEqual([true, true]);
+    // ViewContactPoint — supported & allowed (read permission granted)
+    expect(result.current[0].supported).toBe(true);
+    expect(result.current[0].allowed).toBe(true);
+    // CreateContactPoint — supported but not allowed (no write permission)
+    expect(result.current[1].supported).toBe(true);
+    expect(result.current[1].allowed).toBe(false);
+    // ExportContactPoint — supported & allowed (Grafana AM supports export; view ⇒ export)
+    expect(result.current[2].supported).toBe(true);
+    expect(result.current[2].allowed).toBe(true);
   });
 });
 
@@ -149,16 +150,17 @@ const wrapper = () => getWrapper({ renderWithRouter: true });
 
 /**
  * Render the hook result in a component so we can more reliably check that the result has settled
- * after API requests. Without this approach, the hook might return `[false, false]` whilst
- * API requests are still loading
+ * after API requests. Without this approach, the hook might return loading whilst
+ * API requests are still in flight.
  */
 const RenderActionPermissions = ({ rule, action }: { rule: CombinedRule; action: RuleAction }) => {
-  const result = useAllCombinedRuleAbilities(rule);
-  const [isSupported, isAllowed] = result[action];
+  const groupId = groupIdentifier.fromCombinedRule(rule);
+  const result = useAllRulerRuleAbilityStates(rule.rulerRule, groupId);
+  const { supported, allowed } = result[action];
   return (
     <>
-      {isSupported && 'supported'}
-      {isAllowed && 'allowed'}
+      {supported && 'supported'}
+      {allowed && 'allowed'}
     </>
   );
 };
@@ -166,14 +168,22 @@ const RenderActionPermissions = ({ rule, action }: { rule: CombinedRule; action:
 describe('AlertRule abilities', () => {
   it('should report that all actions are supported for a Grafana Managed alert rule', async () => {
     const rule = getGrafanaRule();
+    const groupId = groupIdentifier.fromCombinedRule(rule);
 
-    const { result } = renderHook(() => useAllCombinedRuleAbilities(rule), { wrapper: wrapper() });
+    const { result } = renderHook(() => useAllRulerRuleAbilityStates(rule.rulerRule, groupId), {
+      wrapper: wrapper(),
+    });
 
     await waitFor(() => {
-      const results = Object.values(result.current);
+      const results = Object.entries(result.current) as Array<[RuleAction, { supported: boolean }]>;
 
-      for (const [supported, _allowed] of results) {
-        expect(supported).toBe(true);
+      for (const [action, { supported }] of results) {
+        // Create is a list-level action — not meaningful on a per-rule instance
+        if (action === RuleAction.Create) {
+          expect(supported).toBe(false);
+        } else {
+          expect(supported).toBe(true);
+        }
       }
     });
 
@@ -207,8 +217,11 @@ describe('AlertRule abilities', () => {
     setupDataSources(mimirDs);
 
     const rule = getCloudRule({}, { rulesSource: mimirDs });
+    const groupId = groupIdentifier.fromCombinedRule(rule);
 
-    const { result } = renderHook(() => useAllCombinedRuleAbilities(rule), { wrapper: wrapper() });
+    const { result } = renderHook(() => useAllRulerRuleAbilityStates(rule.rulerRule, groupId), {
+      wrapper: wrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current).not.toBeUndefined();
@@ -222,21 +235,20 @@ describe('AlertRule abilities', () => {
     const rule = getGrafanaRule({
       labels: { __grafana_origin: 'plugin/non-existent-plugin' },
     });
+    const groupId = groupIdentifier.fromCombinedRule(rule);
 
-    const { result } = renderHook(() => useAllCombinedRuleAbilities(rule), { wrapper: wrapper() });
+    const { result } = renderHook(() => useAllRulerRuleAbilityStates(rule.rulerRule, groupId), {
+      wrapper: wrapper(),
+    });
 
     await waitFor(() => {
       // Wait for the abilities to settle - update should be supported (not loading)
-      const [updateSupported] = result.current[RuleAction.Update];
-      expect(updateSupported).toBe(true);
+      expect(result.current[RuleAction.Update].supported).toBe(true);
     });
 
     // When plugin is not installed, these actions should be supported
-    const [updateSupported] = result.current[RuleAction.Update];
-    const [deleteSupported] = result.current[RuleAction.Delete];
-
-    expect(updateSupported).toBe(true);
-    expect(deleteSupported).toBe(true);
+    expect(result.current[RuleAction.Update].supported).toBe(true);
+    expect(result.current[RuleAction.Delete].supported).toBe(true);
   });
 });
 
@@ -258,87 +270,70 @@ describe('enrichment abilities', () => {
     grantPermissionsHelper([]);
     jest.spyOn(misc, 'isAdmin').mockReturnValue(true);
 
-    const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
+    const { result } = renderHook(() => useEnrichmentAbilityStates(), { wrapper: wrapper() });
 
-    const [readSupported, readAllowed] = result.current[EnrichmentAction.Read];
-    const [writeSupported, writeAllowed] = result.current[EnrichmentAction.Write];
-
-    expect(readSupported).toBe(true);
-    expect(readAllowed).toBe(true);
-    expect(writeSupported).toBe(true);
-    expect(writeAllowed).toBe(true);
+    expect(result.current[EnrichmentAction.Read].supported).toBe(true);
+    expect(result.current[EnrichmentAction.Read].allowed).toBe(true);
+    expect(result.current[EnrichmentAction.Write].supported).toBe(true);
+    expect(result.current[EnrichmentAction.Write].allowed).toBe(true);
   });
 
   it('should grant read permission when user has enrichments:read permission', () => {
     jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
     grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsRead]);
 
-    const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
+    const { result } = renderHook(() => useEnrichmentAbilityStates(), { wrapper: wrapper() });
 
-    const [readSupported, readAllowed] = result.current[EnrichmentAction.Read];
-    const [writeSupported, writeAllowed] = result.current[EnrichmentAction.Write];
-
-    expect(readSupported).toBe(true);
-    expect(readAllowed).toBe(true);
-    expect(writeSupported).toBe(true);
-    expect(writeAllowed).toBe(false);
+    expect(result.current[EnrichmentAction.Read].supported).toBe(true);
+    expect(result.current[EnrichmentAction.Read].allowed).toBe(true);
+    expect(result.current[EnrichmentAction.Write].supported).toBe(true);
+    expect(result.current[EnrichmentAction.Write].allowed).toBe(false);
   });
 
   it('should grant write permission when user has enrichments:write permission', () => {
     jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
     grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsWrite]);
 
-    const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
+    const { result } = renderHook(() => useEnrichmentAbilityStates(), { wrapper: wrapper() });
 
-    const [readSupported, readAllowed] = result.current[EnrichmentAction.Read];
-    const [writeSupported, writeAllowed] = result.current[EnrichmentAction.Write];
-
-    expect(readSupported).toBe(true);
-    expect(readAllowed).toBe(false);
-    expect(writeSupported).toBe(true);
-    expect(writeAllowed).toBe(true);
+    expect(result.current[EnrichmentAction.Read].supported).toBe(true);
+    expect(result.current[EnrichmentAction.Read].allowed).toBe(false);
+    expect(result.current[EnrichmentAction.Write].supported).toBe(true);
+    expect(result.current[EnrichmentAction.Write].allowed).toBe(true);
   });
 
   it('should grant both read and write permissions when user has both permissions', () => {
     jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
     grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsRead, AccessControlAction.AlertingEnrichmentsWrite]);
 
-    const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
+    const { result } = renderHook(() => useEnrichmentAbilityStates(), { wrapper: wrapper() });
 
-    const [readSupported, readAllowed] = result.current[EnrichmentAction.Read];
-    const [writeSupported, writeAllowed] = result.current[EnrichmentAction.Write];
-
-    expect(readSupported).toBe(true);
-    expect(readAllowed).toBe(true);
-    expect(writeSupported).toBe(true);
-    expect(writeAllowed).toBe(true);
+    expect(result.current[EnrichmentAction.Read].supported).toBe(true);
+    expect(result.current[EnrichmentAction.Read].allowed).toBe(true);
+    expect(result.current[EnrichmentAction.Write].supported).toBe(true);
+    expect(result.current[EnrichmentAction.Write].allowed).toBe(true);
   });
 
   it('should deny all permissions when user is not admin and has no permissions', () => {
     jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
     grantPermissionsHelper([]);
 
-    const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
+    const { result } = renderHook(() => useEnrichmentAbilityStates(), { wrapper: wrapper() });
 
-    const [readSupported, readAllowed] = result.current[EnrichmentAction.Read];
-    const [writeSupported, writeAllowed] = result.current[EnrichmentAction.Write];
-
-    expect(readSupported).toBe(true);
-    expect(readAllowed).toBe(false);
-    expect(writeSupported).toBe(true);
-    expect(writeAllowed).toBe(false);
+    expect(result.current[EnrichmentAction.Read].supported).toBe(true);
+    expect(result.current[EnrichmentAction.Read].allowed).toBe(false);
+    expect(result.current[EnrichmentAction.Write].supported).toBe(true);
+    expect(result.current[EnrichmentAction.Write].allowed).toBe(false);
   });
 
-  it('should return correct ability for specific action using useEnrichmentAbility', () => {
+  it('should return correct ability state for specific action using useEnrichmentAbilityState', () => {
     jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
     grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsRead]);
 
-    const { result } = renderHook(() => useEnrichmentAbility(EnrichmentAction.Read), { wrapper: wrapper() });
+    const { result } = renderHook(() => useEnrichmentAbilityState(EnrichmentAction.Read), { wrapper: wrapper() });
 
-    const [supported, allowed] = result.current;
-
-    expect(supported).toBe(true);
-    expect(allowed).toBe(true);
+    expect(result.current.supported).toBe(true);
+    expect(result.current.allowed).toBe(true);
   });
 
   it('should report enrichments as not supported when feature toggle is disabled', () => {
@@ -346,17 +341,14 @@ describe('enrichment abilities', () => {
     jest.spyOn(misc, 'isAdmin').mockReturnValue(true);
     grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsRead, AccessControlAction.AlertingEnrichmentsWrite]);
 
-    const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
-
-    const [readSupported, readAllowed] = result.current[EnrichmentAction.Read];
-    const [writeSupported, writeAllowed] = result.current[EnrichmentAction.Write];
+    const { result } = renderHook(() => useEnrichmentAbilityStates(), { wrapper: wrapper() });
 
     // Enrichments not supported when feature toggle is off
-    expect(readSupported).toBe(false);
-    expect(writeSupported).toBe(false);
+    expect(result.current[EnrichmentAction.Read].supported).toBe(false);
+    expect(result.current[EnrichmentAction.Write].supported).toBe(false);
     // Permissions would be granted if it were supported
-    expect(readAllowed).toBe(true);
-    expect(writeAllowed).toBe(true);
+    expect(result.current[EnrichmentAction.Read].allowed).toBe(true);
+    expect(result.current[EnrichmentAction.Write].allowed).toBe(true);
   });
 });
 

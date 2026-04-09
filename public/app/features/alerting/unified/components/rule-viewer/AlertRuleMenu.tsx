@@ -17,7 +17,12 @@ import {
 } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { skipToken, useEnrichmentAbility, usePromRuleAbilities, useRulerRuleAbilities } from '../../hooks/useAbilities';
+import {
+  skipToken,
+  useEnrichmentAbilityState,
+  usePromRuleAbilityStates,
+  useRulerRuleAbilityStates,
+} from '../../hooks/useAbilities';
 import { EnrichmentAction, RuleAction } from '../../hooks/useAbilities.types';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
@@ -66,23 +71,13 @@ const AlertRuleMenu = ({
   fill,
 }: Props) => {
   // check all abilities and permissions using rulerRule
-  const [rulerPauseAbility, rulerDeleteAbility, rulerDuplicateAbility, rulerSilenceAbility, rulerExportAbility] =
-    useRulerRuleAbilities(rulerRule, groupIdentifier, [
-      RuleAction.Pause,
-      RuleAction.Delete,
-      RuleAction.Duplicate,
-      RuleAction.Silence,
-      RuleAction.ModifyExport,
-    ]);
-
-  // check all abilities and permissions using promRule
   const [
-    grafanaPauseAbility,
-    grafanaDeleteAbility,
-    grafanaDuplicateAbility,
-    grafanaSilenceAbility,
-    grafanaExportAbility,
-  ] = usePromRuleAbilities(prometheusRuleType.grafana.rule(promRule) ? promRule : skipToken, [
+    { granted: canPauseRuler },
+    { granted: canDeleteRuler },
+    { granted: canDuplicateRuler },
+    { granted: canSilenceRuler },
+    { granted: canExportRuler },
+  ] = useRulerRuleAbilityStates(rulerRule, groupIdentifier, [
     RuleAction.Pause,
     RuleAction.Delete,
     RuleAction.Duplicate,
@@ -90,32 +85,34 @@ const AlertRuleMenu = ({
     RuleAction.ModifyExport,
   ]);
 
-  const [pauseSupported, pauseAllowed] = rulerPauseAbility;
-  const [grafanaPauseSupported, grafanaPauseAllowed] = grafanaPauseAbility;
-  const canPause = (pauseSupported && pauseAllowed) || (grafanaPauseSupported && grafanaPauseAllowed);
+  // check all abilities and permissions using promRule
+  const [
+    { granted: canPauseGrafana },
+    { granted: canDeleteGrafana },
+    { granted: canDuplicateGrafana },
+    { granted: canSilenceGrafana },
+    { granted: canExportGrafana },
+  ] = usePromRuleAbilityStates(prometheusRuleType.grafana.rule(promRule) ? promRule : skipToken, [
+    RuleAction.Pause,
+    RuleAction.Delete,
+    RuleAction.Duplicate,
+    RuleAction.Silence,
+    RuleAction.ModifyExport,
+  ]);
 
-  const [deleteSupported, deleteAllowed] = rulerDeleteAbility;
-  const [grafanaDeleteSupported, grafanaDeleteAllowed] = grafanaDeleteAbility;
-  const canDelete = (deleteSupported && deleteAllowed) || (grafanaDeleteSupported && grafanaDeleteAllowed);
-
-  const [duplicateSupported, duplicateAllowed] = rulerDuplicateAbility;
-  const [grafanaDuplicateSupported, grafanaDuplicateAllowed] = grafanaDuplicateAbility;
-  const canDuplicate =
-    (duplicateSupported && duplicateAllowed) || (grafanaDuplicateSupported && grafanaDuplicateAllowed);
-
-  const [silenceSupported, silenceAllowed] = rulerSilenceAbility;
-  const [grafanaSilenceSupported, grafanaSilenceAllowed] = grafanaSilenceAbility;
-  const canSilence = (silenceSupported && silenceAllowed) || (grafanaSilenceSupported && grafanaSilenceAllowed);
-
-  const [exportSupported, exportAllowed] = rulerExportAbility;
-  const [grafanaExportSupported, grafanaExportAllowed] = grafanaExportAbility;
-  const canExport = (exportSupported && exportAllowed) || (grafanaExportSupported && grafanaExportAllowed);
+  const canPause = canPauseRuler || canPauseGrafana;
+  const canDelete = canDeleteRuler || canDeleteGrafana;
+  const canDuplicate = canDuplicateRuler || canDuplicateGrafana;
+  const canSilence = canSilenceRuler || canSilenceGrafana;
+  const canExport = canExportRuler || canExportGrafana;
 
   const ruleExtensionLinks = useRulePluginLinkExtension(promRule, groupIdentifier);
 
   const extensionsAvailable = ruleExtensionLinks.length > 0;
 
-  const [enrichmentReadSupported, enrichmentReadAllowed] = useEnrichmentAbility(EnrichmentAction.Read);
+  const { supported: enrichmentReadSupported, allowed: enrichmentReadAllowed } = useEnrichmentAbilityState(
+    EnrichmentAction.Read
+  );
 
   /**
    * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.

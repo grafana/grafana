@@ -7,7 +7,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { CodeText } from 'app/features/alerting/unified/components/common/TextVariants';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
-import { Authorize } from '../../components/Authorize';
+import { AbilityAny } from '../../components/AbilityGuards';
 import { AlertmanagerAction } from '../../hooks/useAbilities.types';
 import { getAlertTableStyles } from '../../styles/table';
 import { isProvisionedResource } from '../../utils/k8s/utils';
@@ -67,7 +67,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
             <th>
               <Trans i18nKey="alerting.templates-table.template-group">Template group</Trans>
             </th>
-            <Authorize
+            <AbilityAny
               actions={[
                 AlertmanagerAction.CreateNotificationTemplate,
                 AlertmanagerAction.UpdateNotificationTemplate,
@@ -77,7 +77,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
               <th>
                 <Trans i18nKey="alerting.templates-table.actions">Actions</Trans>
               </th>
-            </Authorize>
+            </AbilityAny>
           </tr>
         </thead>
         <tbody>
@@ -183,15 +183,15 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
             />
           )}
           {!isProvisioned && (
-            <Authorize actions={[AlertmanagerAction.UpdateNotificationTemplate]}>
+            <AbilityAny actions={[AlertmanagerAction.UpdateNotificationTemplate]}>
               <ActionIcon
                 to={makeAMLink(`/alerting/notifications/templates/${encodeURIComponent(uid)}/edit`, alertManagerName)}
                 tooltip={t('alerting.template-row.tooltip-edit-template-group', 'Edit template group')}
                 icon="pen"
               />
-            </Authorize>
+            </AbilityAny>
           )}
-          <Authorize actions={[AlertmanagerAction.CreateNotificationTemplate]}>
+          <AbilityAny actions={[AlertmanagerAction.CreateNotificationTemplate]}>
             <ActionIcon
               to={makeAMLink(
                 `/alerting/notifications/templates/${encodeURIComponent(uid)}/duplicate`,
@@ -200,15 +200,15 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
               tooltip={t('alerting.template-row.tooltip-copy-template-group', 'Copy template group')}
               icon="copy"
             />
-          </Authorize>
+          </AbilityAny>
           {!isProvisioned && (
-            <Authorize actions={[AlertmanagerAction.DeleteNotificationTemplate]}>
+            <AbilityAny actions={[AlertmanagerAction.DeleteNotificationTemplate]}>
               <ActionIcon
                 onClick={() => onDeleteClick(notificationTemplate)}
                 tooltip={t('alerting.template-row.tooltip-delete-template-group', 'Delete template group')}
                 icon="trash-alt"
               />
-            </Authorize>
+            </AbilityAny>
           )}
         </td>
       </tr>

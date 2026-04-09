@@ -10,8 +10,8 @@ import { setupDataSources } from 'app/features/alerting/unified/testSetup/dataso
 
 import { AccessControlAction } from '../../../../../types/accessControl';
 import NotificationPolicies from '../../NotificationPoliciesPage';
-import { AlertmanagerAction } from '../../hooks/useAbilities.types';
-import { useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAlertmanagerAbilities';
+import { type AbilityState, AlertmanagerAction } from '../../hooks/useAbilities.types';
+import { useAlertmanagerAbilityState, useAlertmanagerAbilityStates } from '../../hooks/useAlertmanagerAbilities';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
 import { getRoutingTree, getRoutingTreeList, resetRoutingTreeMap } from '../../mocks/server/entities/k8s/routingtrees';
 import { KnownProvenance } from '../../types/knownProvenance';
@@ -31,13 +31,18 @@ jest.mock('../export/GrafanaPoliciesExporter', () => ({
 
 jest.mock('../../hooks/useAlertmanagerAbilities', () => ({
   ...jest.requireActual('../../hooks/useAlertmanagerAbilities'),
-  useAlertmanagerAbilities: jest.fn(),
-  useAlertmanagerAbility: jest.fn(),
+  useAlertmanagerAbilityStates: jest.fn(),
+  useAlertmanagerAbilityState: jest.fn(),
 }));
 
+/** Convert a [supported, allowed] pair to an AbilityState for test mocks */
+function toAbilityState(supported: boolean, allowed: boolean): AbilityState {
+  return { supported, allowed, granted: supported && allowed, loading: false };
+}
+
 const mocks = {
-  useAlertmanagerAbilities: jest.mocked(useAlertmanagerAbilities),
-  useAlertmanagerAbility: jest.mocked(useAlertmanagerAbility),
+  useAlertmanagerAbilityStates: jest.mocked(useAlertmanagerAbilityStates),
+  useAlertmanagerAbilityState: jest.mocked(useAlertmanagerAbilityState),
 };
 
 const server = setupMswServer();
@@ -76,15 +81,15 @@ const allPolicyActions = [
 ];
 
 const grantAlertmanagerAbilities = (allowed: AlertmanagerAction[]) => {
-  mocks.useAlertmanagerAbility.mockImplementation((action) => {
+  mocks.useAlertmanagerAbilityState.mockImplementation((action) => {
     const included = allowed.includes(action);
-    return [true, included];
+    return toAbilityState(true, included);
   });
 
-  mocks.useAlertmanagerAbilities.mockImplementation((actions) => {
+  mocks.useAlertmanagerAbilityStates.mockImplementation((actions) => {
     return actions.map((action) => {
       const included = allowed.includes(action);
-      return [true, included];
+      return toAbilityState(true, included);
     });
   });
 };

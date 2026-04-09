@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { keyBy, startCase, uniqueId } from 'lodash';
+import { useMemo } from 'react';
 import * as React from 'react';
 
 import { type DataSourceInstanceSettings, type GrafanaTheme2, type PanelData, urlUtil } from '@grafana/data';
@@ -31,8 +32,9 @@ import { ExpressionResult } from './components/expressions/Expression';
 import { type ThresholdDefinition, getThresholdsForQueries } from './components/rule-editor/util';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { DatasourceModelPreview } from './components/rule-viewer/tabs/Query/DataSourceModelPreview';
-import { useCombinedRuleAbility } from './hooks/useAbilities';
+import { useAllRulerRuleAbilityStates } from './hooks/useAbilities';
 import { RuleAction } from './hooks/useAbilities.types';
+import { groupIdentifier as groupIdentifierUtil } from './utils/groupIdentifier';
 
 interface GrafanaRuleViewerProps {
   rule: CombinedRule;
@@ -110,8 +112,8 @@ export function QueryPreview({
 }: QueryPreviewProps) {
   const styles = useStyles2(getQueryPreviewStyles);
   const isExpression = isExpressionQuery(model);
-  const [exploreSupported, exploreAllowed] = useCombinedRuleAbility(rule, RuleAction.Explore);
-  const canExplore = exploreSupported && exploreAllowed;
+  const groupId = useMemo(() => groupIdentifierUtil.fromCombinedRule(rule), [rule]);
+  const { granted: canExplore } = useAllRulerRuleAbilityStates(rule.rulerRule, groupId)[RuleAction.Explore];
 
   const headerItems: React.ReactNode[] = [];
 

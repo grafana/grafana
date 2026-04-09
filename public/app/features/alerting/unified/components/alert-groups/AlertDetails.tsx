@@ -10,8 +10,8 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { AlertmanagerAction } from '../../hooks/useAbilities.types';
 import { isGrafanaRulesSource } from '../../utils/datasource';
 import { makeAMLink, makeLabelBasedSilenceLink } from '../../utils/misc';
+import { AbilityAny } from '../AbilityGuards';
 import { AnnotationDetailsField } from '../AnnotationDetailsField';
-import { Authorize } from '../Authorize';
 
 interface AmNotificationsAlertDetailsProps {
   alertManagerSourceName: string;
@@ -32,7 +32,7 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
     <>
       <div className={styles.actionsRow}>
         {alert.status.state === AlertState.Suppressed && (
-          <Authorize actions={[AlertmanagerAction.CreateSilence, AlertmanagerAction.UpdateSilence]}>
+          <AbilityAny actions={[AlertmanagerAction.CreateSilence, AlertmanagerAction.UpdateSilence]}>
             <LinkButton
               href={`${makeAMLink(
                 '/alerting/silences',
@@ -44,10 +44,10 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
             >
               <Trans i18nKey="alerting.alert-details.manage-silences">Manage silences</Trans>
             </LinkButton>
-          </Authorize>
+          </AbilityAny>
         )}
         {alert.status.state === AlertState.Active && (
-          <Authorize actions={[AlertmanagerAction.CreateSilence]}>
+          <AbilityAny actions={[AlertmanagerAction.CreateSilence]}>
             <LinkButton
               href={makeLabelBasedSilenceLink(alertManagerSourceName, alert.labels)}
               className={styles.button}
@@ -56,7 +56,7 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
             >
               <Trans i18nKey="alerting.alert-details.silence">Silence</Trans>
             </LinkButton>
-          </Authorize>
+          </AbilityAny>
         )}
         {isSeeSourceButtonEnabled && alert.generatorURL && (
           <LinkButton className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>

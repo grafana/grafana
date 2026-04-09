@@ -9,7 +9,7 @@ import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getDatasourceAPIUid } from '../utils/datasource';
 
 import { AlertmanagerAction } from './useAbilities.types';
-import { useAlertmanagerAbility } from './useAlertmanagerAbilities';
+import { useAlertmanagerAbilityState } from './useAlertmanagerAbilities';
 
 interface UseSilenceViewDataResult {
   silence?: Silence;
@@ -33,10 +33,7 @@ export function useSilenceViewData(): UseSilenceViewDataResult {
     accessControl: true,
   });
 
-  const [previewAlertsSupported, previewAlertsAllowed] = useAlertmanagerAbility(
-    AlertmanagerAction.PreviewSilencedInstances
-  );
-  const canPreview = previewAlertsSupported && previewAlertsAllowed;
+  const { granted: canPreview } = useAlertmanagerAbilityState(AlertmanagerAction.PreviewSilencedInstances);
 
   const { data: alertManagerAlerts = [] } = alertmanagerApi.endpoints.getAlertmanagerAlerts.useQuery(
     {

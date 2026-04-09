@@ -23,13 +23,13 @@ import { type AlertmanagerAlert, type Silence, SilenceState } from 'app/plugins/
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { AlertmanagerAction } from '../../hooks/useAbilities.types';
-import { useAlertmanagerAbility } from '../../hooks/useAlertmanagerAbilities';
+import { useAlertmanagerAbilityState } from '../../hooks/useAlertmanagerAbilities';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
 import { getSilenceFiltersFromUrlParams, makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { AbilityAny } from '../AbilityGuards';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
-import { Authorize } from '../Authorize';
 import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../DynamicTable';
 import { GrafanaAlertmanagerWarning } from '../GrafanaAlertmanagerWarning';
 
@@ -50,10 +50,7 @@ const API_QUERY_OPTIONS = { pollingInterval: SILENCES_POLL_INTERVAL_MS, refetchO
 
 const SilencesTable = () => {
   const { selectedAlertmanager: alertManagerSourceName = '' } = useAlertmanager();
-  const [previewAlertsSupported, previewAlertsAllowed] = useAlertmanagerAbility(
-    AlertmanagerAction.PreviewSilencedInstances
-  );
-  const canPreview = previewAlertsSupported && previewAlertsAllowed;
+  const { granted: canPreview } = useAlertmanagerAbilityState(AlertmanagerAction.PreviewSilencedInstances);
 
   const { data: alertManagerAlerts = [], isLoading: amAlertsIsLoading } =
     alertmanagerApi.endpoints.getAlertmanagerAlerts.useQuery(
@@ -151,13 +148,13 @@ const SilencesTable = () => {
       {!!silences.length && (
         <Stack direction="column">
           <SilencesFilter silences={silences} />
-          <Authorize actions={[AlertmanagerAction.CreateSilence]}>
+          <AbilityAny actions={[AlertmanagerAction.CreateSilence]}>
             <Stack justifyContent="end">
               <LinkButton href={makeAMLink('/alerting/silence/new', alertManagerSourceName)} icon="plus">
                 <Trans i18nKey="silences.table.add-silence-button">Add Silence</Trans>
               </LinkButton>
             </Stack>
-          </Authorize>
+          </AbilityAny>
           <SilenceList
             items={itemsNotExpired}
             alertManagerSourceName={alertManagerSourceName}
@@ -281,7 +278,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 function useColumns(alertManagerSourceName: string) {
-  const [updateSupported, updateAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateSilence);
+  const { supported: updateSupported, allowed: updateAllowed } = useAlertmanagerAbilityState(
+    AlertmanagerAction.UpdateSilence
+  );
   const [expireSilence] = alertSilencesApi.endpoints.expireSilence.useMutation();
 
   const isGrafanaFlavoredAlertmanager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;

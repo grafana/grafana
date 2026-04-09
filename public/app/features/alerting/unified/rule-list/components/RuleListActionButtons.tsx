@@ -6,7 +6,7 @@ import { LinkButton, Stack } from '@grafana/ui';
 
 import { LogMessages } from '../../Analytics';
 import { AIAlertRuleButtonComponent } from '../../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
-import { useExternalRuleAbility, useRuleAbility } from '../../hooks/useAbilities';
+import { useExternalRuleAbilityState, useRuleAbilityState } from '../../hooks/useAbilities';
 import { ExternalRuleAction, RuleAction } from '../../hooks/useAbilities.types';
 import { createReturnTo } from '../../hooks/useReturnTo';
 import { createRelativeUrl } from '../../utils/url';
@@ -31,13 +31,10 @@ export const RuleListActionButtons = memo<RuleListActionButtonsProps>(({ hasAler
 RuleListActionButtons.displayName = 'RuleListActionButtons';
 
 function CreateAlertButtons() {
-  const [createRuleSupported, createRuleAllowed] = useRuleAbility(RuleAction.Create);
-  const [createCloudRuleSupported, createCloudRuleAllowed] = useExternalRuleAbility(ExternalRuleAction.CreateAlertRule);
+  const { granted: canCreateGrafanaRules } = useRuleAbilityState(RuleAction.Create);
+  const { granted: canCreateCloudRules } = useExternalRuleAbilityState(ExternalRuleAction.CreateAlertRule);
 
   const returnTo = createReturnTo();
-
-  const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;
-  const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
 
   if (canCreateGrafanaRules || canCreateCloudRules) {
     return (

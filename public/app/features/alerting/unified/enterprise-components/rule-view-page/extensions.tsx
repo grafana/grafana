@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { FeatureBadge, useStyles2 } from '@grafana/ui';
 
 import { useAlertRule } from '../../components/rule-viewer/RuleContext';
-import { useEnrichmentAbility } from '../../hooks/useAbilities';
+import { useEnrichmentAbilityState } from '../../hooks/useAbilities';
 import { EnrichmentAction } from '../../hooks/useAbilities.types';
 import { rulerRuleType } from '../../utils/rules';
 
@@ -16,7 +16,17 @@ type RuleViewTabBuilderArgs = {
   setActiveTab: SetActiveTab;
 };
 
-type RuleViewTabBuilder = (args: RuleViewTabBuilderArgs) => NavModelItem | null;
+/**
+ * A tab builder receives the current tab state AND a set of pre-resolved ability
+ * flags. Abilities are resolved by the surrounding hook so that this function is
+ * a plain function — not a hook — making it safe to store in a registry and call
+ * outside of React's render phase.
+ */
+type TabAbilityFlags = {
+  canReadEnrichments: boolean;
+};
+
+type RuleViewTabBuilder = (args: RuleViewTabBuilderArgs, abilities: TabAbilityFlags) => NavModelItem | null;
 type RuleViewTabBuilderConfig = {
   filterOnlyGrafanaAlertRules: boolean;
   ruleViewTabBuilder: RuleViewTabBuilder;
@@ -31,31 +41,45 @@ function registerRuleViewTab(builder: RuleViewTabBuilder) {
   });
 }
 
-export function getRuleViewExtensionTabs(args: RuleViewTabBuilderArgs, isGrafanaAlertRule: boolean): NavModelItem[] {
+/**
+ * Returns the list of extension tabs for the rule view page.
+ * Ability flags must be resolved by the caller (a hook) and passed in — this
+ * function is intentionally a plain function so it can be called in tests and
+ * non-hook contexts without triggering React hook violations.
+ */
+export function getRuleViewExtensionTabs(
+  args: RuleViewTabBuilderArgs,
+  isGrafanaAlertRule: boolean,
+  abilities: TabAbilityFlags
+): NavModelItem[] {
   return ruleViewTabBuilders
     .filter((config) => {
-      // Check if rule type matches requirement
       if (config.filterOnlyGrafanaAlertRules && !isGrafanaAlertRule) {
         return false;
       }
       return true;
     })
-    .map((config) => config.ruleViewTabBuilder(args))
+    .map((config) => config.ruleViewTabBuilder(args, abilities))
     .filter((item): item is NavModelItem => item !== null);
 }
 
+/**
+ * Hook wrapper around {@link getRuleViewExtensionTabs}. Resolves all ability
+ * flags here so the tab builders themselves are plain functions.
+ */
 export function useRuleViewExtensionTabs(args: RuleViewTabBuilderArgs): NavModelItem[] {
   const { rule } = useAlertRule();
   const isGrafanaAlertRule = rulerRuleType.grafana.alertingRule(rule.rulerRule);
 
-  return getRuleViewExtensionTabs(args, isGrafanaAlertRule);
+  // Resolve ability flags here — not inside the builder callbacks — so that
+  // hook rules are never violated by stored callbacks.
+  const { granted: canReadEnrichments } = useEnrichmentAbilityState(EnrichmentAction.Read);
+
+  return getRuleViewExtensionTabs(args, isGrafanaAlertRule, { canReadEnrichments });
 }
 
 export function addEnrichmentSection() {
-  registerRuleViewTab(({ activeTab, setActiveTab }) => {
-    const [, canReadEnrichments] = useEnrichmentAbility(EnrichmentAction.Read);
-
-    // Return null if user doesn't have permission (will be filtered out)
+  registerRuleViewTab(({ activeTab, setActiveTab }, { canReadEnrichments }) => {
     if (!canReadEnrichments) {
       return null;
     }

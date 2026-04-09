@@ -1,5 +1,5 @@
 import { isString } from 'lodash';
-import { type JSX, useState } from 'react';
+import { type JSX, useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Stack } from '@grafana/ui';
@@ -11,7 +11,7 @@ import { useRulesFilter } from 'app/features/alerting/unified/hooks/useFilteredR
 import { useDispatch } from 'app/types/store';
 import { type CombinedRule, type RuleIdentifier, type RulesSource } from 'app/types/unified-alerting';
 
-import { useCombinedRuleAbility } from '../../hooks/useAbilities';
+import { useAllRulerRuleAbilityStates } from '../../hooks/useAbilities';
 import { RuleAction } from '../../hooks/useAbilities.types';
 import { fetchPromAndRulerRulesAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
@@ -58,17 +58,14 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
 
   const isProvisioned = rulerRuleType.grafana.rule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
-  const [editRuleSupported, editRuleAllowed] = useCombinedRuleAbility(rule, RuleAction.Update);
-
-  const canEditRule = editRuleSupported && editRuleAllowed;
-
   const buttons: JSX.Element[] = [];
   const buttonSize = compact ? 'sm' : 'md';
 
   const sourceName = getRulesSourceName(rulesSource);
 
   const identifier = ruleId.fromCombinedRule(sourceName, rule);
-  const groupId = groupIdentifier.fromCombinedRule(rule);
+  const groupId = useMemo(() => groupIdentifier.fromCombinedRule(rule), [rule]);
+  const { granted: canEditRule } = useAllRulerRuleAbilityStates(rule.rulerRule, groupId)[RuleAction.Update];
 
   if (showViewButton) {
     buttons.push(

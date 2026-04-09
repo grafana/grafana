@@ -1,7 +1,7 @@
 // Actions for Grafana-managed alert rules.
 // Covers both global/list-level checks (Create, ExportRules) and per-rule instance checks
 // (Duplicate, Silence, Pause, etc.). Hooks that operate at the global level set per-instance
-// actions to [false, false]; hooks that operate on a single rule set Create to [false, false].
+// actions to NeverGranted; hooks that operate on a single rule set Create to NeverGranted.
 export enum RuleAction {
   // global (list / page level)
   Create = 'create-alert-rule',
@@ -31,7 +31,7 @@ export enum ExternalRuleAction {
 // Actions on Grafana-managed alertmanager notification entities:
 // contact points, templates, policies, silences, time intervals, alert groups.
 // These apply regardless of which alertmanager is selected; the permission checks
-// inside useAllAlertmanagerAbilities differ by AM type.
+// inside useAllAlertmanagerAbilityStates differ by AM type.
 export enum AlertmanagerAction {
   // contact points
   CreateContactPoint = 'create-contact-point',
@@ -78,7 +78,7 @@ export enum ExternalAlertmanagerAction {
   UpdateExternalConfiguration = 'update-external-configuration',
 }
 
-// this enum list all of the bulk actions we can perform on a folder
+// this enum lists all of the bulk actions we can perform on a folder
 export enum FolderBulkAction {
   Pause = 'pause-folder', // unpause permissions are the same as pause
   Delete = 'delete-folder',
@@ -99,19 +99,38 @@ export type Action =
   | EnrichmentAction;
 
 /**
- * Represents the ability to perform an action, with two distinct checks:
+ * Represents the ability to perform an action.
  *
- * @param actionSupported - Whether the action is technically possible in the current context.
- *   This depends on system capabilities (e.g., API availability), feature availability
- *   (e.g., Grafana vs external alertmanager), and rule state (e.g., provisioned/immutable rules).
- *   Examples: Can't edit provisioned rules, can't export from external alertmanagers.
+ * - Use `granted` for the common yes/no check — action is both supported and allowed.
+ * - Use `supported` / `allowed` separately when you need to distinguish between
+ *   "feature not available in this context" and "user has no permission", e.g. for
+ *   tooltips or disabled-vs-hidden UI decisions.
+ * - `loading` is true while async checks (folder metadata, plugin settings) are still
+ *   in flight. When loading, `granted` is always false.
  *
- * @param actionAllowed - Whether the user has permission to perform the action.
- *   This is based on RBAC permissions, folder-specific permissions, and admin status.
- *   Examples: User lacks AlertingRuleUpdate permission, user can't edit in this folder.
+ * @example
+ * // Common case — just check granted
+ * const { granted } = useRulerRuleAbilityState(rule, groupId, RuleAction.Update);
+ * if (granted) { ... }
  *
- * Both must be true for an action to be available. This separation allows showing appropriate
- * messages: "Feature not available" vs "You don't have permission".
+ * @example
+ * // Rich UI — distinguish supported from allowed
+ * const { supported, allowed, loading } = useRulerRuleAbilityState(rule, groupId, RuleAction.Update);
+ * if (loading) return <Spinner />;
+ * if (!supported) return null;                          // feature not available
+ * if (!allowed) return <Button disabled tooltip="No permission" />;
+ * return <Button />;
  */
-export type Ability = [actionSupported: boolean, actionAllowed: boolean];
-export type Abilities<T extends Action> = Record<T, Ability>;
+export interface AbilityState {
+  /** Both supported AND allowed — the common yes/no check */
+  granted: boolean;
+  /** System/feature/rule-state allows this action to exist */
+  supported: boolean;
+  /** User's RBAC grants them permission to perform it */
+  allowed: boolean;
+  /** Still resolving async checks (folder metadata, plugin settings) */
+  loading: boolean;
+}
+
+/** Map of every action in domain T to its {@link AbilityState}. */
+export type AbilityStates<T extends Action> = Record<T, AbilityState>;

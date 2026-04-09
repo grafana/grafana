@@ -20,7 +20,7 @@ import {
   useListNotificationPolicyRoutes,
 } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
 import { AlertmanagerAction } from 'app/features/alerting/unified/hooks/useAbilities.types';
-import { useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAlertmanagerAbilities';
+import { useAlertmanagerAbilityState } from 'app/features/alerting/unified/hooks/useAlertmanagerAbilities';
 import { useRouteGroupsMatcher } from 'app/features/alerting/unified/useRouteGroupsMatcher';
 import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
@@ -56,8 +56,12 @@ const NotificationPoliciesTabs = () => {
 
   // Alertmanager logic and data hooks
   const { selectedAlertmanager = '' } = useAlertmanager();
-  const [policiesSupported, canSeePoliciesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationPolicyTree);
-  const [timingsSupported, canSeeTimingsTab] = useAlertmanagerAbility(AlertmanagerAction.ViewTimeInterval);
+  const { supported: policiesSupported, allowed: canSeePoliciesTab } = useAlertmanagerAbilityState(
+    AlertmanagerAction.ViewNotificationPolicyTree
+  );
+  const { supported: timingsSupported, allowed: canSeeTimingsTab } = useAlertmanagerAbilityState(
+    AlertmanagerAction.ViewTimeInterval
+  );
   const availableTabs = [
     canSeePoliciesTab && ActiveTab.NotificationPolicies,
     canSeeTimingsTab && ActiveTab.TimeIntervals,
@@ -134,7 +138,7 @@ const NotificationPoliciesTabs = () => {
  */
 function PolicyTreeTab() {
   const { selectedAlertmanager = '', isGrafanaAlertmanager } = useAlertmanager();
-  const [, canSeeAlertGroups] = useAlertmanagerAbility(AlertmanagerAction.ViewAlertGroups);
+  const { granted: canSeeAlertGroups } = useAlertmanagerAbilityState(AlertmanagerAction.ViewAlertGroups);
 
   // Single worker + alert groups query shared by all PoliciesTree instances
   const { getRouteGroupsMap } = useRouteGroupsMatcher();

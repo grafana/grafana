@@ -4,7 +4,7 @@ import { Alert, LinkButton } from '@grafana/ui';
 import { ExternalAlertmanagerAction } from '../../../hooks/useAbilities.types';
 import { isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
 import { makeAMLink } from '../../../utils/misc';
-import { Authorize } from '../../Authorize';
+import { AbilityAny } from '../../AbilityGuards';
 
 interface GlobalConfigAlertProps {
   alertManagerName: string;
@@ -14,7 +14,7 @@ export const GlobalConfigAlert = ({ alertManagerName }: GlobalConfigAlertProps) 
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerName);
 
   return (
-    <Authorize actions={[ExternalAlertmanagerAction.UpdateExternalConfiguration]}>
+    <AbilityAny actions={[ExternalAlertmanagerAction.UpdateExternalConfiguration]}>
       <Alert
         severity="info"
         title={t(
@@ -34,6 +34,6 @@ export const GlobalConfigAlert = ({ alertManagerName }: GlobalConfigAlertProps) 
             : t('alerting.global-config-alert.edit-global-config', 'Edit global config')}
         </LinkButton>
       </Alert>
-    </Authorize>
+    </AbilityAny>
   );
 };

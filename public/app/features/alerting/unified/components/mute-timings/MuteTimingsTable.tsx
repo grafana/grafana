@@ -10,9 +10,9 @@ import {
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/constants';
 
-import { Authorize } from '../../components/Authorize';
+import { AbilityAny } from '../../components/AbilityGuards';
 import { AlertmanagerAction } from '../../hooks/useAbilities.types';
-import { useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAlertmanagerAbilities';
+import { useAlertmanagerAbilityState, useAlertmanagerAbilityStates } from '../../hooks/useAlertmanagerAbilities';
 import { makeAMLink } from '../../utils/misc';
 import { DynamicTable, type DynamicTableColumnProps } from '../DynamicTable';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
@@ -45,9 +45,9 @@ export const TimeIntervalsTable = () => {
     });
   }, [data]);
 
-  const [_, allowedToCreateMuteTiming] = useAlertmanagerAbility(AlertmanagerAction.CreateTimeInterval);
+  const { allowed: allowedToCreateMuteTiming } = useAlertmanagerAbilityState(AlertmanagerAction.CreateTimeInterval);
 
-  const [exportMuteTimingsSupported, exportMuteTimingsAllowed] = useAlertmanagerAbility(
+  const { supported: exportMuteTimingsSupported, allowed: exportMuteTimingsAllowed } = useAlertmanagerAbilityState(
     AlertmanagerAction.ExportTimeIntervals
   );
   const columns = useColumns(alertManagerSourceName, hideActions);
@@ -81,7 +81,7 @@ export const TimeIntervalsTable = () => {
         </Text>
         <Spacer />
         {!hideActions && items.length > 0 && (
-          <Authorize actions={[AlertmanagerAction.CreateTimeInterval]}>
+          <AbilityAny actions={[AlertmanagerAction.CreateTimeInterval]}>
             <LinkButton
               icon="plus"
               variant="primary"
@@ -89,7 +89,7 @@ export const TimeIntervalsTable = () => {
             >
               <Trans i18nKey="alerting.time-interval.add-time-interval">New time interval</Trans>
             </LinkButton>
-          </Authorize>
+          </AbilityAny>
         )}
         {exportMuteTimingsSupported && (
           <>
@@ -137,7 +137,7 @@ export const TimeIntervalsTable = () => {
 };
 
 function useColumns(alertManagerSourceName: string, hideActions = false) {
-  const [[_editSupported, allowedToEdit], [_deleteSupported, allowedToDelete]] = useAlertmanagerAbilities([
+  const [{ allowed: allowedToEdit }, { allowed: allowedToDelete }] = useAlertmanagerAbilityStates([
     AlertmanagerAction.UpdateTimeInterval,
     AlertmanagerAction.DeleteTimeInterval,
   ]);

@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 import { AlertmanagerAction } from 'app/features/alerting/unified/hooks/useAbilities.types';
-import { useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAlertmanagerAbilities';
+import { useAlertmanagerAbilityState } from 'app/features/alerting/unified/hooks/useAlertmanagerAbilities';
 import { useRouteGroupsMatcher } from 'app/features/alerting/unified/useRouteGroupsMatcher';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -19,7 +19,7 @@ import { PoliciesTree } from './PoliciesTree';
 const PoliciesTreeWrapper = () => {
   const { name = '' } = useParams();
   const { selectedAlertmanager = '' } = useAlertmanager();
-  const [, canSeeAlertGroups] = useAlertmanagerAbility(AlertmanagerAction.ViewAlertGroups);
+  const { granted: canSeeAlertGroups } = useAlertmanagerAbilityState(AlertmanagerAction.ViewAlertGroups);
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
   const { currentData: alertGroups, refetch: refetchAlertGroups } = alertmanagerApi.useGetAlertmanagerAlertGroupsQuery(
     { amSourceName: selectedAlertmanager },

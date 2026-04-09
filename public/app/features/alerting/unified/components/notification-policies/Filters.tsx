@@ -11,7 +11,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Field, Icon, Input, Label, Stack, Tooltip } from '@grafana/ui';
 import { AlertmanagerAction } from 'app/features/alerting/unified/hooks/useAbilities.types';
-import { useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAlertmanagerAbilities';
+import { useAlertmanagerAbilityState } from 'app/features/alerting/unified/hooks/useAlertmanagerAbilities';
 import { type ObjectMatcher, type RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
@@ -32,7 +32,9 @@ interface NotificationPoliciesFilterProps {
 }
 
 const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: NotificationPoliciesFilterProps) => {
-  const [contactPointsSupported, canSeeContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
+  const { supported: contactPointsSupported, allowed: canSeeContactPoints } = useAlertmanagerAbilityState(
+    AlertmanagerAction.ViewContactPoint
+  );
   const { isGrafanaAlertmanager } = useAlertmanager();
   const [searchParams, setSearchParams] = useURLSearchParams();
   const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);

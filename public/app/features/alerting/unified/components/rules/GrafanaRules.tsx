@@ -10,7 +10,7 @@ import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { LogMessages, logInfo } from '../../Analytics';
-import { useRuleAbility } from '../../hooks/useAbilities';
+import { useRuleAbilityState } from '../../hooks/useAbilities';
 import { RuleAction } from '../../hooks/useAbilities.types';
 import { flattenGrafanaManagedRules } from '../../hooks/useCombinedRuleNamespaces';
 import { usePagination } from '../../hooks/usePagination';
@@ -53,8 +53,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
     DEFAULT_PER_PAGE_PAGINATION
   );
 
-  const [exportRulesSupported, exportRulesAllowed] = useRuleAbility(RuleAction.ExportRules);
-  const canExportRules = exportRulesSupported && exportRulesAllowed;
+  const { granted: canExportRules } = useRuleAbilityState(RuleAction.ExportRules);
 
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
   const hasGrafanaAlerts = namespaces.length > 0;

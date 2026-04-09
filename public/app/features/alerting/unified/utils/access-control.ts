@@ -1,3 +1,20 @@
+/**
+ * access-control.ts — Alerting RBAC permission helpers
+ *
+ * This file has two tiers:
+ *
+ * 1. **Pure data** (no side effects): static permission maps and source-type-aware
+ *    getters (`getRulesPermissions`, `getInstancesPermissions`, `getNotificationsPermissions`).
+ *    Safe to call at module load time or in non-React contexts.
+ *
+ * 2. **contextSrv-calling utilities**: functions that call `contextSrv.hasPermission` /
+ *    `contextSrv.evaluatePermission` at call time (`evaluateAccess`, `getRulesAccess`,
+ *    `getCreateAlertInMenuAvailability`). These are intentionally plain functions (not hooks)
+ *    because they are also used in non-React contexts (route guards, panel menus).
+ *    When used inside React components, wrap them in `useMemo` or call them via the
+ *    `useRulesAccess()` hook in `accessControlHooks.ts`.
+ */
+
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -5,6 +22,10 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from './datasource';
 
 type RulesSourceType = 'grafana' | 'external';
+
+// ── Pure data: static permission maps ────────────────────────────────────────
+// Maps each CRUD operation to the correct AccessControlAction for Grafana-managed
+// vs. external datasource resources. No side effects; safe to import anywhere.
 
 function getRulesSourceType(alertManagerSourceName: string): RulesSourceType {
   return isGrafanaRulesSource(alertManagerSourceName) ? 'grafana' : 'external';
@@ -88,6 +109,10 @@ const rulesPermissions = {
   },
 };
 
+// ── Pure functions: source-type-aware permission resolvers ────────────────────
+// Accept a rulesSourceName and return the correct AccessControlAction set for
+// that source. No side effects; safe to call at any time.
+
 export function getInstancesPermissions(rulesSourceName: string) {
   const sourceType = getRulesSourceType(rulesSourceName);
 
@@ -122,12 +147,28 @@ export function getRulesPermissions(rulesSourceName: string) {
   };
 }
 
+// ── contextSrv-calling utilities ─────────────────────────────────────────────
+// These functions read permissions at call time via contextSrv. They are plain
+// functions (not hooks) because they are also used in non-React contexts
+// (route guards, panel menus). Inside React components prefer the wrappers in
+// accessControlHooks.ts.
+
+/**
+ * Returns a route-guard thunk for Grafana's route config.
+ * The returned function is called at navigation time to check if the user can
+ * access the route.
+ */
 export function evaluateAccess(actions: AccessControlAction[]) {
   return () => {
     return contextSrv.evaluatePermission(actions);
   };
 }
 
+/**
+ * Returns an object describing what rule-creation actions the current user can
+ * perform globally.  Inside React components use `useRulesAccess()` from
+ * `accessControlHooks.ts` instead.
+ */
 export function getRulesAccess() {
   return {
     canCreateGrafanaRules:
@@ -142,6 +183,10 @@ export function getRulesAccess() {
   };
 }
 
+/**
+ * Returns whether the "Create alert rule" option should appear in panel menus.
+ * Called in non-React panel-menu utilities; not a hook.
+ */
 export function getCreateAlertInMenuAvailability() {
   const { unifiedAlertingEnabled } = getConfig();
   const hasRuleReadPermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).read);

@@ -5,7 +5,7 @@ import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { LogMessages, logInfo } from '../../Analytics';
 import { ExternalRuleAction, RuleAction } from '../../hooks/useAbilities.types';
 import { isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
-import { Authorize } from '../Authorize';
+import { AbilityAny } from '../AbilityGuards';
 
 import { CloudRules } from './CloudRules';
 import { GrafanaRules } from './GrafanaRules';
@@ -35,12 +35,12 @@ export const RuleListGroupView = ({ namespaces, expandAll }: Props) => {
 
   return (
     <>
-      <Authorize actions={[RuleAction.View]}>
+      <AbilityAny actions={[RuleAction.View]}>
         <GrafanaRules namespaces={grafanaNamespaces} expandAll={expandAll} />
-      </Authorize>
-      <Authorize actions={[ExternalRuleAction.ViewAlertRule]}>
+      </AbilityAny>
+      <AbilityAny actions={[ExternalRuleAction.ViewAlertRule]}>
         <CloudRules namespaces={cloudNamespaces} expandAll={expandAll} />
-      </Authorize>
+      </AbilityAny>
     </>
   );
 };

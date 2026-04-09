@@ -7,7 +7,7 @@ import { Alert, Button, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useContactPointsWithStatus } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { AlertmanagerAction } from 'app/features/alerting/unified/hooks/useAbilities.types';
-import { useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAlertmanagerAbilities';
+import { useAlertmanagerAbilityState } from 'app/features/alerting/unified/hooks/useAlertmanagerAbilities';
 import { type FormAmRoute } from 'app/features/alerting/unified/types/amroutes';
 import { addUniqueIdentifierToRoute } from 'app/features/alerting/unified/utils/amroutes';
 import { getErrorCode, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
@@ -81,12 +81,11 @@ export const PoliciesTree = ({
   getRouteGroupsMap,
 }: PoliciesTreeProps) => {
   const appNotification = useAppNotification();
-  const [contactPointsSupported, canSeeContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
-  const [, canSeeAlertGroups] = useAlertmanagerAbility(AlertmanagerAction.ViewAlertGroups);
+  const { granted: shouldFetchContactPoints } = useAlertmanagerAbilityState(AlertmanagerAction.ViewContactPoint);
+  const { granted: canSeeAlertGroups } = useAlertmanagerAbilityState(AlertmanagerAction.ViewAlertGroups);
 
   const { selectedAlertmanager, isGrafanaAlertmanager, hasConfigurationAPI } = useAlertmanager();
 
-  const shouldFetchContactPoints = contactPointsSupported && canSeeContactPoints;
   const { currentData: contactPointsStatusData } = alertmanagerApi.useGetContactPointsStatusQuery(undefined, {
     skip: !shouldFetchContactPoints,
     pollingInterval: CONTACT_POINTS_STATE_INTERVAL_MS,

@@ -19,7 +19,7 @@ import {
 } from 'app/features/alerting/unified/utils/k8s/utils';
 
 import { AlertmanagerAction } from '../../hooks/useAbilities.types';
-import { useAlertmanagerAbility } from '../../hooks/useAlertmanagerAbilities';
+import { useAlertmanagerAbilityState } from '../../hooks/useAlertmanagerAbilities';
 import { createRelativeUrl } from '../../utils/url';
 import MoreButton from '../MoreButton';
 import { ProvisioningBadge } from '../Provisioning';
@@ -43,9 +43,15 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
 
   const isProvisioned = isProvisionedResource(provenance);
 
-  const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
-  const [editSupported, editAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
-  const [deleteSupported, deleteAllowed] = useAlertmanagerAbility(AlertmanagerAction.DeleteContactPoint);
+  const { supported: exportSupported, allowed: exportAllowed } = useAlertmanagerAbilityState(
+    AlertmanagerAction.ExportContactPoint
+  );
+  const { supported: editSupported, allowed: editAllowed } = useAlertmanagerAbilityState(
+    AlertmanagerAction.UpdateContactPoint
+  );
+  const { supported: deleteSupported, allowed: deleteAllowed } = useAlertmanagerAbilityState(
+    AlertmanagerAction.DeleteContactPoint
+  );
   const [ExportDrawer, openExportDrawer] = useExportContactPoint();
 
   const showManagePermissions = showManageContactPointPermissions(selectedAlertmanager!, contactPoint);
