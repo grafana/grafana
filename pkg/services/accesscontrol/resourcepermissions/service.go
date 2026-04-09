@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
@@ -186,7 +187,7 @@ func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, r
 				actionSetActions := s.actionSetSvc.ResolveActionSet(action)
 				if len(actionSetActions) > 0 {
 					// Folders and routes: expand all actions unconditionally (no inherited scope filtering needed).
-					if s.options.Resource == dashboards.ScopeFoldersRoot || s.options.Resource == accesscontrol.AlertingRoutesResource {
+					if s.options.Resource == folder.ScopeFoldersRoot || s.options.Resource == accesscontrol.AlertingRoutesResource {
 						expandedActions = append(expandedActions, actionSetActions...)
 						continue
 					}
@@ -225,12 +226,20 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 		return nil, err
 	}
 
+	var datasourceType string
+	if s.options.DatasourceTypeResolver != nil {
+		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
+			datasourceType = t
+		}
+	}
+
 	return s.store.SetUserResourcePermission(ctx, orgID, user, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
 		Resource:          s.scopeResource(),
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
+		DatasourceType:    datasourceType,
 	}, s.options.OnSetUser)
 }
 
@@ -251,12 +260,20 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 		return nil, err
 	}
 
+	var datasourceType string
+	if s.options.DatasourceTypeResolver != nil {
+		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
+			datasourceType = t
+		}
+	}
+
 	return s.store.SetTeamResourcePermission(ctx, orgID, teamID, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
 		Resource:          s.scopeResource(),
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
+		DatasourceType:    datasourceType,
 	}, s.options.OnSetTeam)
 }
 
@@ -277,12 +294,20 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 		return nil, err
 	}
 
+	var datasourceType string
+	if s.options.DatasourceTypeResolver != nil {
+		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
+			datasourceType = t
+		}
+	}
+
 	return s.store.SetBuiltInResourcePermission(ctx, orgID, builtInRole, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
 		Resource:          s.scopeResource(),
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
+		DatasourceType:    datasourceType,
 	}, s.options.OnSetBuiltInRole)
 }
 
@@ -295,6 +320,13 @@ func (s *Service) SetPermissions(
 
 	if err := s.validateResource(ctx, orgID, resourceID); err != nil {
 		return nil, err
+	}
+
+	var datasourceType string
+	if s.options.DatasourceTypeResolver != nil {
+		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
+			datasourceType = t
+		}
 	}
 
 	dbCommands := make([]SetResourcePermissionsCommand, 0, len(commands))
@@ -328,6 +360,7 @@ func (s *Service) SetPermissions(
 				ResourceID:        resourceID,
 				ResourceAttribute: s.options.ResourceAttribute,
 				Permission:        cmd.Permission,
+				DatasourceType:    datasourceType,
 			},
 		})
 	}
@@ -364,7 +397,7 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 	var actions []string
 
 	// Write action sets for folders and dashboards
-	if s.options.Resource == dashboards.ScopeFoldersRoot || s.options.Resource == dashboards.ScopeDashboardsRoot {
+	if s.options.Resource == folder.ScopeFoldersRoot || s.options.Resource == dashboards.ScopeDashboardsRoot {
 		actions = append(actions, s.options.GetActionSetName(permission))
 
 		// If we only want to store action sets, return now
@@ -563,11 +596,11 @@ func (a *ActionSetSvc) ResolveActionSet(actionSet string) []string {
 // StoreActionSet stores action set. If a set with the given name has already been stored, the new actions will be appended to the existing actions.
 func (a *ActionSetSvc) StoreActionSet(name string, actions []string) {
 	// To avoid backwards incompatible changes, we don't want to store these actions in the DB
-	// Once action sets are fully enabled, we can include dashboards.ActionFoldersCreate in the list of other folder edit/admin actions
+	// Once action sets are fully enabled, we can include folder.ActionFoldersCreate in the list of other folder edit/admin actions
 	// Tracked in https://github.com/grafana/identity-access-team/issues/794
 	if name == "folders:edit" || name == "folders:admin" {
-		if !slices.Contains(a.ResolveActionSet(name), dashboards.ActionFoldersCreate) {
-			actions = append(actions, dashboards.ActionFoldersCreate)
+		if !slices.Contains(a.ResolveActionSet(name), folder.ActionFoldersCreate) {
+			actions = append(actions, folder.ActionFoldersCreate)
 		}
 	}
 
@@ -605,7 +638,7 @@ func (a *ActionSetSvc) RegisterActionSets(ctx context.Context, pluginID string, 
 
 func isActionSetEnabledResource(action string) bool {
 	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) ||
-		strings.HasPrefix(action, dashboards.ScopeFoldersRoot) ||
+		strings.HasPrefix(action, folder.ScopeFoldersRoot) ||
 		strings.HasPrefix(action, accesscontrol.AlertingRoutesKind)
 }
 

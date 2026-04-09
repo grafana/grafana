@@ -180,6 +180,12 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 		err = safepath.Walk(ctx, opts.Path, func(ctx context.Context, segPath string) error {
 			folderPath := segPath + "/"
 			existing, _, readErr := ReadFolderMetadata(ctx, r.repo, folderPath, opts.Ref)
+			if errors.Is(readErr, repository.ErrRefNotFound) {
+				// The target branch doesn't exist yet — it will be created from the
+				// configured branch by repo.Create. Check the configured branch so
+				// we know whether the file already exists in the tree we'll inherit.
+				existing, _, readErr = ReadFolderMetadata(ctx, r.repo, folderPath, "")
+			}
 			if readErr == nil {
 				if segPath == leafPath {
 					return apierrors.NewAlreadyExists(
@@ -191,7 +197,7 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 				stableUID = existing.Name
 				return nil
 			}
-			if !errors.Is(readErr, repository.ErrFileNotFound) && !errors.Is(readErr, repository.ErrRefNotFound) {
+			if !errors.Is(readErr, repository.ErrFileNotFound) {
 				return fmt.Errorf("failed to read folder metadata for %q: %w", folderPath, readErr)
 			}
 			// Not found: write a new folder metadata file

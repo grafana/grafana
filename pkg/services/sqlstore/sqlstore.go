@@ -213,7 +213,7 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 				Password: user.Password(ss.cfg.AdminPassword),
 				IsAdmin:  true,
 			}); err != nil {
-				return fmt.Errorf("failed to create admin user: %s", err)
+				return fmt.Errorf("failed to create admin user: %w", err)
 			}
 
 			ss.log.Info("Created default admin", "user", ss.cfg.AdminUser)

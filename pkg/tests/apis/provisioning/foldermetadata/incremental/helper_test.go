@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	sharedGitEnvWithFolderMetadata = common.NewSharedGitEnv(common.WithProvisioningFolderMetadata)
+	sharedGitEnvWithFolderMetadata = common.NewSharedGitEnv()
 )
 
 func TestMain(m *testing.M) {

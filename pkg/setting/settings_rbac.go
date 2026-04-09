@@ -13,6 +13,9 @@ type RBACSettings struct {
 	ResetBasicRoles bool
 	// RBAC single organization. This configuration option is subject to change.
 	SingleOrganization bool
+	// PluginsCleanup lists plugin IDs whose RBAC data (roles, permissions, seed assignments)
+	// should be purged from the database at startup.
+	PluginsCleanup []string
 	// set of resources that should generate managed permissions when created
 	resourcesWithPermissionsOnCreation map[string]struct{}
 
@@ -28,6 +31,7 @@ func (cfg *Cfg) readRBACSettings() {
 	s.PermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
 	s.ResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
 	s.SingleOrganization = rbac.Key("single_organization").MustBool(false)
+	s.PluginsCleanup = util.SplitString(rbac.Key("plugins_cleanup").MustString(""))
 
 	// List of resources to generate managed permissions for upon resource creation (dashboard, folder, service-account, datasource)
 	resources := util.SplitString(rbac.Key("resources_with_managed_permissions_on_creation").MustString("dashboard, folder, service-account, datasource"))

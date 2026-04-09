@@ -120,6 +120,12 @@ roles:
       - action: 'users:write'
         scope: 'users:*'
       - action: 'users:create'
+      # Optional `datasourceType` for scopes `datasources:uid:<DATASOURCE_UID>`.
+      # If you omit it, Grafana resolves the plugin type from the data source when this file is provisioned.
+      # It is required if there are two datasources with the same uid.
+      - action: 'datasources:query'
+        scope: 'datasources:uid:loki-uid-here'
+        datasourceType: loki
   - name: 'custom:global:users:reader'
     # <bool> overwrite org id and creates a global role.
     global: true
