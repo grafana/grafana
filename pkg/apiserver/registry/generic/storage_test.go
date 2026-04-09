@@ -148,6 +148,44 @@ func TestKeyRootFunc_ClusterScoped(t *testing.T) {
 	}
 }
 
+func TestNewRegistryStore_KeyRootFuncSelection(t *testing.T) {
+	ctx := genericapirequest.WithNamespace(context.Background(), "stacks-4060")
+
+	t.Run("cluster-scoped store list key excludes namespace", func(t *testing.T) {
+		ri := utils.NewResourceInfo(
+			"iam.grafana.app", "v1alpha1", "globalroles", "globalrole", "GlobalRole",
+			func() runtime.Object { return &mockObject{} },
+			func() runtime.Object { return &mockObjectList{} },
+			utils.TableColumns{},
+		)
+		ri = ri.WithClusterScope()
+
+		keyRootFunc := buildKeyRootFunc(ri)
+		key := keyRootFunc(ctx)
+		if strings.Contains(key, "namespace") || strings.Contains(key, "stacks-4060") {
+			t.Errorf("Cluster-scoped KeyRootFunc key %q should not contain namespace", key)
+		}
+		if !strings.Contains(key, "globalroles") {
+			t.Errorf("Cluster-scoped KeyRootFunc key %q should contain resource name", key)
+		}
+	})
+
+	t.Run("namespaced store list key includes namespace", func(t *testing.T) {
+		ri := utils.NewResourceInfo(
+			"example.grafana.app", "v1alpha1", "roles", "role", "Role",
+			func() runtime.Object { return &mockObject{} },
+			func() runtime.Object { return &mockObjectList{} },
+			utils.TableColumns{},
+		)
+
+		keyRootFunc := buildKeyRootFunc(ri)
+		key := keyRootFunc(ctx)
+		if !strings.Contains(key, "stacks-4060") {
+			t.Errorf("Namespaced KeyRootFunc key %q should contain namespace stacks-4060", key)
+		}
+	})
+}
+
 type mockObject struct {
 	metav1.TypeMeta
 	metav1.ObjectMeta

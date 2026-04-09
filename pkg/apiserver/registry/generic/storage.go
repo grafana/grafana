@@ -47,19 +47,16 @@ func NewRegistryStoreWithSelectableFields(scheme *runtime.Scheme, resourceInfo u
 	}
 
 	var keyFunc func(ctx context.Context, name string) (string, error)
-	var keyRootFunc func(ctx context.Context) string
 	if resourceInfo.IsClusterScoped() {
 		keyFunc = ClusterScopedKeyFunc(resourceInfo.GroupResource())
-		keyRootFunc = ClusterKeyRootFunc(resourceInfo.GroupResource())
 	} else {
 		keyFunc = NamespaceKeyFunc(resourceInfo.GroupResource())
-		keyRootFunc = KeyRootFunc(resourceInfo.GroupResource())
 	}
 
 	store := &registry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
-		KeyRootFunc:               keyRootFunc,
+		KeyRootFunc:               buildKeyRootFunc(resourceInfo),
 		KeyFunc:                   keyFunc,
 		PredicateFunc:             predicateFunc,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
@@ -86,6 +83,16 @@ func NewCompleteRegistryStore(scheme *runtime.Scheme, resourceInfo utils.Resourc
 	registryStore.UpdateStrategy = strategy
 	registryStore.DeleteStrategy = strategy
 	return registryStore, nil
+}
+
+// buildKeyRootFunc returns the appropriate KeyRootFunc for the resource.
+// Cluster-scoped resources use ClusterKeyRootFunc (no namespace in key),
+// while namespaced resources use KeyRootFunc (includes namespace).
+func buildKeyRootFunc(resourceInfo utils.ResourceInfo) func(ctx context.Context) string {
+	if resourceInfo.IsClusterScoped() {
+		return ClusterKeyRootFunc(resourceInfo.GroupResource())
+	}
+	return KeyRootFunc(resourceInfo.GroupResource())
 }
 
 func NewRegistryStatusStore(scheme *runtime.Scheme, specStore *registry.Store) *StatusREST {
