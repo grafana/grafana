@@ -1,10 +1,8 @@
-import { type EchoBackend, type EchoMeta, type EchoEvent, type EchoSrv } from '@grafana/runtime';
+import { type EchoBackend, type EchoMeta, type EchoEvent, type EchoSrv, MAX_PAGE_URL_LENGTH } from '@grafana/runtime';
 
 import { contextSrv } from '../context_srv';
 
 import { echoLog } from './utils';
-
-const MAX_PAGE_URL_LENGTH = 2048;
 
 interface EchoConfig {
   // How often should metrics be reported
