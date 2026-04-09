@@ -136,6 +136,44 @@ describe('browseDashboardsAPI', () => {
     subscription.unsubscribe();
   });
 
+  it('does not check whether a single delete target is provisioned before deleting it', async () => {
+    const store = createTestStore();
+    config.featureToggles.provisioning = true;
+
+    const getProvisionedFolderSpy = jest.fn();
+    const deleteFolderSpy = jest.fn();
+
+    server.use(
+      http.get('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/folder-1', () => {
+        getProvisionedFolderSpy();
+        return HttpResponse.json({
+          apiVersion: 'folder.grafana.app/v1beta1',
+          kind: 'Folder',
+          metadata: {
+            name: 'folder-1',
+            namespace: 'default',
+            annotations: {
+              [AnnoKeyManagerKind]: ManagerKind.Repo,
+            },
+          },
+          spec: { title: 'Folder 1' },
+        });
+      }),
+      http.delete('/api/folders/folder-1', () => {
+        deleteFolderSpy();
+        return HttpResponse.json({});
+      })
+    );
+
+    await store.dispatch(
+      browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
+    );
+
+    expect(getProvisionedFolderSpy).not.toHaveBeenCalled();
+    expect(deleteFolderSpy).toHaveBeenCalledTimes(1);
+    expect(deletedFoldersState.isDeleted('folder-1')).toBe(true);
+  });
+
   it('marks only successfully deleted folders during bulk delete and does not refetch active folder queries', async () => {
     const store = createTestStore();
     const folderOneQueryArg = { folderUID: 'folder-1', accesscontrol: true, isLegacyCall: false };

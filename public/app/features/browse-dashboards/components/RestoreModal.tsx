@@ -17,6 +17,24 @@ export interface RestoreModalProps {
   isLoading: boolean;
 }
 
+// Derive the initial restore target before the user overrides it.
+function getAutoTarget(
+  originCandidate: string | undefined,
+  shouldValidateOrigin: boolean,
+  isOriginValidationFetching: boolean,
+  isOriginValidationSuccess: boolean
+) {
+  if (originCandidate === '') {
+    return '';
+  }
+
+  if (shouldValidateOrigin && isOriginValidationSuccess && !isOriginValidationFetching) {
+    return originCandidate;
+  }
+
+  return undefined;
+}
+
 export const RestoreModal = ({
   onConfirm,
   onDismiss,
@@ -28,7 +46,7 @@ export const RestoreModal = ({
   const numberOfDashboards = selectedDashboards.length;
   const originWasDeleted = deletedFoldersState.isDeleted(originCandidate);
   const shouldValidateOrigin = originCandidate !== undefined && originCandidate !== '' && !originWasDeleted;
-  const originValidation = useGetFolderQuery(
+  const { isFetching: isOriginValidationFetching, isSuccess: isOriginValidationSuccess } = useGetFolderQuery(
     shouldValidateOrigin
       ? {
           folderUID: originCandidate,
@@ -38,12 +56,12 @@ export const RestoreModal = ({
       : skipToken,
     { refetchOnMountOrArgChange: true }
   );
-  const autoTarget =
-    originCandidate === ''
-      ? ''
-      : shouldValidateOrigin && originValidation.isSuccess && !originValidation.isFetching
-        ? originCandidate
-        : undefined;
+  const autoTarget = getAutoTarget(
+    originCandidate,
+    shouldValidateOrigin,
+    isOriginValidationFetching,
+    isOriginValidationSuccess
+  );
   const restoreTarget = manualTarget === null ? autoTarget : manualTarget;
 
   const onTargetChange = useCallback((folderUID: string | undefined) => {
