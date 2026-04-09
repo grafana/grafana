@@ -368,7 +368,9 @@ You can also use switch variables in panel titles and other dashboard elements:
 The filter and group by variable (formerly the **ad hoc variable**) is one of the most complex and flexible variable options available.
 Instead of creating a variable for each dimension by which you want to filter, it automatically creates variables (key/value pairs) for all the dimensions returned by your data source query.
 This allows you to quickly apply filters dashboard-wide.
-The group by function allows you to then group data by label.
+
+The group by function allows you to then group data by label, letting you further narrow your scope.
+Then, you can filter further with panel-level filters that let you drill down into your data.
 
 <!-- vale Grafana.Spelling = YES -->
 
@@ -376,7 +378,8 @@ Filter and group by variables let can add label/value filters that are automatic
 Unlike other variables, you don't use these filters in queries.
 Instead, you use them to write filters for existing queries.
 
-The following data sources support filters. Data sources with an asterisk also support group by:
+The following data sources support filters. 
+Data sources with an asterisk also support group by:
 
 {{< column-list >}}
 
@@ -449,6 +452,31 @@ To see every active filter and group by across the dashboard all at once, click 
 The overview lets you see your current filters and group by selections and adjust them without scrolling through the dashboard controls:
 
 {{< figure src="/media/docs/grafana/screenshot-filters-overview-v12.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" >}}
+
+### Group and filter from the panel
+
+When the **Group by** switch is toggled on, you can also set a group by from a panel rather than from the dashboard-level control.
+Hover the cursor over any panel using the data source of the filter to show the **Group by** selector:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-panel-groupby-v13.0.png" max-width="550px" alt="Group by control on a panel" >}}
+
+This can be helpful when you're working with a panel that's far away from the dashboard controls.
+Your selection is still applied to the all the panels in the dashboard with the same data source.
+
+You can also further filter a panel, which allows you to drill down further into your data.
+To enable this functionality, you need to add one or more overrides for the panel.
+In the following example, the override:
+
+- Adds a regular expression, so that all fields are filterable
+- Enables the **Ad-hoc filterable** switch
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filter-override-v13.0.png" max-width="400px" alt="Field override making all fields filterable" >}}
+
+However, you can create overrides to address specific fields.
+
+With the override in place, you can click a series on the panel and filter it in or out.
+
+<!-- TODO: Add screenshot here when feature is working properly -->
 
 ### Filter any data using the Dashboard data source
 
