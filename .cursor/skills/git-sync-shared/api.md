@@ -83,7 +83,7 @@ After wizard completion, verify the repository was created:
 # Check repository exists and has expected config
 curl -s -u admin:admin \
   http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories | \
-  jq '.items[] | {name: .metadata.name, type: .spec.type, url: .spec.github.url}'
+  jq '.items[] | {name: .metadata.name, type: .spec.type, url: (.spec.github.url // .spec.gitlab.url // .spec.bitbucket.url // .spec.git.url)}'
 ```
 
 After cleanup, verify deletion:
@@ -99,7 +99,7 @@ curl -s -u admin:admin \
 
 ```bash
 #!/bin/bash
-# Delete all test repositories and connections
+# Delete all test repositories and GitHub App connections
 BASE="http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default"
 AUTH="admin:admin"
 
@@ -109,7 +109,7 @@ for name in $(curl -s -u "$AUTH" "$BASE/repositories" | jq -r '.items[].metadata
   curl -s -X DELETE -u "$AUTH" "$BASE/repositories/$name"
 done
 
-# Then delete connections
+# Then delete connections (GitHub App only)
 for name in $(curl -s -u "$AUTH" "$BASE/connections" | jq -r '.items[].metadata.name // empty'); do
   echo "Deleting connection: $name"
   curl -s -X DELETE -u "$AUTH" "$BASE/connections/$name"
@@ -120,7 +120,17 @@ echo "Cleanup complete."
 
 ## Create Repository via API
 
-### Create PAT Repository
+Use the provider-specific payload that matches your repository type. All examples create a folder-scoped repo on `agent-test` with both `write` and `branch` workflows enabled.
+
+### Provider Mapping
+
+| Provider        | `spec.type` | Config block | Repo URL env var                   | Token env var                   | Extra field                                        |
+| --------------- | ----------- | ------------ | ---------------------------------- | ------------------------------- | -------------------------------------------------- |
+| GitHub PAT      | `github`    | `github`     | `GIT_SYNC_TEST_PAT_REPO_URL`       | `GIT_SYNC_TEST_PAT`             | `generateDashboardPreviews` optional               |
+| GitLab token    | `gitlab`    | `gitlab`     | `GIT_SYNC_TEST_GITLAB_REPO_URL`    | `GIT_SYNC_TEST_GITLAB_TOKEN`    | none                                               |
+| Bitbucket token | `bitbucket` | `bitbucket`  | `GIT_SYNC_TEST_BITBUCKET_REPO_URL` | `GIT_SYNC_TEST_BITBUCKET_TOKEN` | `tokenUser: "$GIT_SYNC_TEST_BITBUCKET_TOKEN_USER"` |
+
+### Create GitHub PAT Repository
 
 ```bash
 curl -s -X POST -u admin:admin \
@@ -155,7 +165,76 @@ curl -s -X POST -u admin:admin \
 }'
 ```
 
-Replace `REPO_NAME`, `REPO_TITLE`, and `PATH` with your values. `$GIT_SYNC_TEST_PAT_REPO_URL` and `$GIT_SYNC_TEST_PAT` are environment variables.
+### Create GitLab Token Repository
+
+```bash
+curl -s -X POST -u admin:admin \
+  -H 'Content-Type: application/json' \
+  http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories \
+  -d '{
+  "apiVersion": "provisioning.grafana.app/v0alpha1",
+  "kind": "Repository",
+  "metadata": {
+    "name": "REPO_NAME"
+  },
+  "spec": {
+    "title": "REPO_TITLE",
+    "description": "API-created repo for testing",
+    "type": "gitlab",
+    "gitlab": {
+      "url": "$GIT_SYNC_TEST_GITLAB_REPO_URL",
+      "branch": "agent-test",
+      "path": "PATH"
+    },
+    "sync": {
+      "enabled": true,
+      "target": "folder",
+      "intervalSeconds": 60
+    },
+    "workflows": ["write", "branch"]
+  },
+  "secure": {
+    "token": { "create": "$GIT_SYNC_TEST_GITLAB_TOKEN" }
+  }
+}'
+```
+
+### Create Bitbucket Token Repository
+
+```bash
+curl -s -X POST -u admin:admin \
+  -H 'Content-Type: application/json' \
+  http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories \
+  -d '{
+  "apiVersion": "provisioning.grafana.app/v0alpha1",
+  "kind": "Repository",
+  "metadata": {
+    "name": "REPO_NAME"
+  },
+  "spec": {
+    "title": "REPO_TITLE",
+    "description": "API-created repo for testing",
+    "type": "bitbucket",
+    "bitbucket": {
+      "url": "$GIT_SYNC_TEST_BITBUCKET_REPO_URL",
+      "branch": "agent-test",
+      "path": "PATH",
+      "tokenUser": "$GIT_SYNC_TEST_BITBUCKET_TOKEN_USER"
+    },
+    "sync": {
+      "enabled": true,
+      "target": "folder",
+      "intervalSeconds": 60
+    },
+    "workflows": ["write", "branch"]
+  },
+  "secure": {
+    "token": { "create": "$GIT_SYNC_TEST_BITBUCKET_TOKEN" }
+  }
+}'
+```
+
+Replace `REPO_NAME`, `REPO_TITLE`, and `PATH` with your values. Use the env vars shown in the example for your provider.
 
 ### Create Sync Job
 
