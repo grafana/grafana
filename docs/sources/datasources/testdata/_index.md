@@ -38,11 +38,11 @@ Grafana ships with a built-in TestData data source that generates simulated time
 
 The following pages help you set up and use the TestData data source:
 
-- [Configure the TestData data source](configure/) for setup and provisioning instructions.
-- [TestData query editor](query-editor/) for a reference of all 30 available scenarios and their options.
-- [TestData alerting](alerting/) for prototyping and testing alert rules with simulated data.
-- [TestData template variables](template-variables/) for using TestData with dashboard variables.
-- [Troubleshoot TestData](troubleshooting/) for solutions to common issues.
+- [Configure the TestData data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/configure/) for setup and provisioning instructions.
+- [TestData query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/query-editor/) for a reference of all 30 available scenarios and their options.
+- [TestData alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/alerting/) for prototyping and testing alert rules with simulated data.
+- [TestData template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/template-variables/) for using TestData with dashboard variables.
+- [Troubleshoot TestData](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/troubleshooting/) for solutions to common issues.
 
 ## Additional features
 
@@ -58,7 +58,7 @@ TestData includes a bundled dashboard that demonstrates streaming data scenarios
 
 To import the dashboard:
 
-1. Navigate to the data source's [configuration page](configure/).
+1. Navigate to the data source's [configuration page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/configure/).
 1. Select the **Dashboards** tab.
 1. Click **Import** for the **Streaming Example** dashboard.
 

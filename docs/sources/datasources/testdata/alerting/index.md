@@ -24,7 +24,7 @@ The TestData data source supports [Grafana Alerting](https://grafana.com/docs/gr
 
 ## Before you begin
 
-- [Configure the TestData data source](../configure/).
+- [Configure the TestData data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/configure/).
 - Familiarize yourself with [alert rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/) and how to [create a Grafana-managed alert rule](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/).
 
 ## Choose a scenario for alerting

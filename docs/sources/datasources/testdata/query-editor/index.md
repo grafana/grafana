@@ -33,7 +33,7 @@ Use scenarios to:
 To build a query, select a scenario from the **Scenario** drop-down. The query editor updates to show fields specific to that scenario. Click **Run queries** or use the keyboard shortcut to execute.
 
 {{< admonition type="note" >}}
-Some scenarios run entirely in the browser (Streaming Client, Grafana Live, Grafana API, Steps, No Data Points). These scenarios don't send queries to the backend, which means they can't be used with [Grafana Alerting](../alerting/) or in any context that requires server-side evaluation.
+Some scenarios run entirely in the browser (Streaming Client, Grafana Live, Grafana API, Steps, No Data Points). These scenarios don't send queries to the backend, which means they can't be used with [Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/alerting/) or in any context that requires server-side evaluation.
 {{< /admonition >}}
 
 ## Scenario reference
@@ -263,7 +263,9 @@ Generates simulated distributed trace data.
 
 ### Annotations
 
-Generates annotation data points.
+Generates synthetic annotation data points. These annotations are created entirely in the browser and are useful for testing how panels display annotation markers and overlays. They don't query an external source or persist data.
+
+For more information about annotations in Grafana, refer to [Annotate visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/).
 
 | Field     | Description                                              |
 | --------- | -------------------------------------------------------- |

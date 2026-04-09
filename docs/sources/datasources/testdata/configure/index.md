@@ -56,6 +56,8 @@ Click **Save & test** to verify the data source. A successful test displays the 
 
 **Data source is working**
 
+If the test fails, refer to [Troubleshoot TestData](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/troubleshooting/) for common issues and solutions.
+
 ## Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system. For more information about provisioning, refer to [Provisioning data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
@@ -73,7 +75,7 @@ datasources:
     access: proxy
 ```
 
-## Terraform example
+## Provision with Terraform 
 
 To provision the data source with Terraform, use the [`grafana_data_source` resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source):
 
@@ -85,3 +87,12 @@ resource "grafana_data_source" "testdata" {
 ```
 
 For all available configuration options, refer to the [Grafana provider data source resource documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source).
+
+## Next steps
+
+After configuring your TestData data source, you can:
+
+- [Write queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/query-editor/) using the 30 available scenarios to generate simulated data.
+- [Use template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/template-variables/) to create dynamic, reusable dashboards.
+- [Set up alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/alerting/) to prototype and test alert rules with simulated data.
+- [Troubleshoot issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/troubleshooting/) if you encounter problems with your data source.
