@@ -388,7 +388,8 @@ To use ad hoc filters on data from an unsupported data source, follow these step
 
 1. Navigate to the dashboard with the panel with the data you want to filter.
 1. Click **Edit** in top-right corner of the dashboard.
-1. At the top of the dashboard, click **Add** and select **Visualization** in the drop-down list.
+1. Click the **Add new element** icon and click or drag a panel onto the dashboard.
+1. Click **Configure visualization**.
 1. In the **Queries** tab of the edit panel view, enter `Dashboard` in the **Data source** field and select **-- Dashboard --**.
 1. In the query configuration section, make the following selections:
    - **Source panel** - Choose the panel with the source data.
@@ -400,7 +401,9 @@ To use ad hoc filters on data from an unsupported data source, follow these step
    {{< /admonition >}}
 
 1. Configure any other needed options for the panel.
-1. Click **Save dashboard**.
+1. Click **Save** in the top-right corner.
+1. Enter an optional description of your changes and click **Save**.
+1. Click **Back to dashboard** and then **Exit edit**.
 
 Now you can filter the data from the source panel by way of the Dashboard data source.
 Add as many panels as you need.
