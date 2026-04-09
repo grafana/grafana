@@ -50,7 +50,7 @@ After adding the data source, you can:
 
 - Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to run scenarios without building a dashboard.
 - Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to manipulate query results.
-- Set up [alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) rules using simulated data.
+- Build [dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/) with simulated data for prototyping and demos.
 
 ## Pre-built dashboard
 
@@ -63,6 +63,10 @@ To import the dashboard:
 1. Click **Import** for the **Streaming Example** dashboard.
 
 To customize the imported dashboard, save it under a different name first. Otherwise, upgrading Grafana can overwrite your customizations.
+
+## Report issues with test data
+
+If you report an issue on GitHub involving time-series data rendering, use the TestData data source to replicate the problem. This makes it easier for developers to reproduce and resolve the issue.
 
 ## Use a custom version of TestData
 
@@ -81,6 +85,12 @@ To enable this:
 
 With the default configuration, Grafana loads the bundled core version of TestData. An externally installed version has no effect unless `as_external` is set to `true`.
 
-## Report issues with test data
+## Plugin updates
 
-If you report an issue on GitHub involving time-series data rendering, use the TestData data source to replicate the problem. This makes it easier for developers to reproduce and resolve the issue.
+TestData is a core plugin that ships with Grafana. It updates automatically when you upgrade your Grafana instance.
+
+If you use TestData as an [external plugin](#use-a-custom-version-of-testdata), navigate to **Administration** > **Plugins and data** > **Plugins** to check for updates.
+
+{{< admonition type="note" >}}
+Plugins are automatically updated in Grafana Cloud.
+{{< /admonition >}}
