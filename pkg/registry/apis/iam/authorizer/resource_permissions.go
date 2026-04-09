@@ -9,6 +9,7 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/watch"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -271,6 +272,11 @@ func (r *ResourcePermissionsAuthorizer) BeforeDelete(ctx context.Context, obj ru
 // BeforeUpdate implements ResourceStorageAuthorizer.
 func (r *ResourcePermissionsAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
 	return r.beforeWrite(ctx, obj)
+}
+
+// FilterWatch implements ResourceStorageAuthorizer.
+func (r *ResourcePermissionsAuthorizer) FilterWatch(ctx context.Context, event watch.Event) bool {
+	return r.AfterGet(ctx, event.Object) == nil
 }
 
 // FilterList implements ResourceStorageAuthorizer.
