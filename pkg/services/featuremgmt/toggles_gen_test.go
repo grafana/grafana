@@ -97,7 +97,7 @@ func readFeatureList(t *testing.T) map[string]featuretoggleapi.Feature {
 			Stage:           flag.Stage.String(),
 			Owner:           string(flag.Owner),
 			RequiresDevMode: flag.RequiresDevMode,
-			FrontendOnly:    !flag.ShouldGenerate(GenerateLegacyGo),
+			FrontendOnly:    !flag.Generate.Go && !flag.Generate.LegacyGo,
 			RequiresRestart: flag.RequiresRestart,
 			HideFromDocs:    flag.HideFromDocs,
 			Expression:      flag.Expression,
@@ -172,7 +172,7 @@ func verifyFlagName(flag FeatureFlag) error {
 	name := flag.Name
 
 	// Flags should be in the format `namespace.flagName`, except legacy feature toggles
-	isLegacy := flag.ShouldGenerate(GenerateLegacyGo) || flag.ShouldGenerate(GenerateLegacyFrontend)
+	isLegacy := flag.Generate.LegacyFrontend || flag.Generate.LegacyGo
 	if !isLegacy && !strings.Contains(name, ".") {
 		return fmt.Errorf("flag name %q must contain a flag namespace, separated with a dot", name)
 	}
@@ -217,7 +217,7 @@ func verifyFlagsConfiguration(t *testing.T) {
 		if err := verifyFlagName(flag); err != nil {
 			t.Error(err)
 		}
-		if len(flag.Generate) == 0 {
+		if !flag.Generate.Go && !flag.Generate.LegacyGo && !flag.Generate.LegacyFrontend && !flag.Generate.React {
 			t.Errorf("feature %s does not have any generation targets. please set the `Generate` property to specify which clients should be generated for this feature", flag.Name)
 		}
 	}
@@ -303,7 +303,7 @@ func generateTypeScript() string {
 export interface FeatureToggles {
 `
 	for _, flag := range standardFeatureFlags {
-		if !flag.ShouldGenerate(GenerateLegacyFrontend) {
+		if !flag.Generate.LegacyFrontend {
 			continue
 		}
 
@@ -362,7 +362,7 @@ const (`)
 
 	for _, flag := range standardFeatureFlags {
 		// There's no OpenFeature-specific generation for Go yet, but `GenerateGo` is used to enforce new naming conventions
-		if !flag.ShouldGenerate(GenerateLegacyGo) && !flag.ShouldGenerate(GenerateGo) {
+		if !flag.Generate.LegacyGo && !flag.Generate.Go {
 			continue
 		}
 
@@ -413,7 +413,7 @@ func generateCSV(lookup map[string]featuretoggleapi.Feature) string {
 			string(flag.Owner),
 			strconv.FormatBool(flag.RequiresDevMode),
 			strconv.FormatBool(flag.RequiresRestart),
-			strconv.FormatBool(!flag.ShouldGenerate(GenerateLegacyGo)),
+			strconv.FormatBool(!flag.Generate.Go && !flag.Generate.LegacyGo),
 		})
 	}
 
@@ -544,7 +544,7 @@ func writeToggleDocsTable(include func(FeatureFlag) bool, showEnableByDefault bo
 // Generates and returns an OpenFeature React SDK file content. It shells out to the OpenFeature CLI, writes
 // the SDK to a temp dir, and then reads and returns its content.
 func generateOpenFeatureReact(t *testing.T) string {
-	manifestPath := generateOpenFeatureManifest(t, GenerateReact)
+	manifestPath := generateOpenFeatureManifest(t, Generate{React: true})
 	openFeatureBin := getOpenFeatureCLIBin(t)
 
 	outputDir := t.TempDir()
@@ -577,7 +577,7 @@ func getOpenFeatureCLIBin(t *testing.T) string {
 
 // Generates an OpenFeature flags manifest file for flags matching the given generation target
 // and returns the path to that manifest.
-func generateOpenFeatureManifest(t *testing.T, generationTarget GenerateTarget) string {
+func generateOpenFeatureManifest(t *testing.T, requested Generate) string {
 	t.Helper()
 
 	type flagDef struct {
@@ -596,7 +596,9 @@ func generateOpenFeatureManifest(t *testing.T, generationTarget GenerateTarget) 
 	}
 
 	for _, flag := range standardFeatureFlags {
-		if !flag.ShouldGenerate(generationTarget) {
+		shouldGenerate := (flag.Generate.Go && requested.Go) || (flag.Generate.React && requested.React)
+
+		if !shouldGenerate {
 			continue
 		}
 

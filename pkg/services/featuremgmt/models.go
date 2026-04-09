@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"slices"
 )
 
 //go:generate mockery --name FeatureToggles --structname MockFeatureToggles --inpackage --filename feature_toggles_mock.go --with-expecter
@@ -127,18 +126,12 @@ func (s *FeatureFlagStage) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-type GenerateTarget uint8
-
-const (
-	// GenerateLegacyGo generates the legacy Go client (constants in feature_toggles.go)
-	GenerateLegacyGo GenerateTarget = 1 << iota
-	// GenerateLegacyFrontend generates the legacy frontend client (constants in featureToggles.gen.ts)
-	GenerateLegacyFrontend
-	// GenerateGo generates constants in feature_toggles.go. The same as GenerateLegacyGo but with new name requirements
-	GenerateGo
-	// GenerateReact generates the React client
-	GenerateReact
-)
+type Generate struct {
+	LegacyGo       bool
+	LegacyFrontend bool
+	Go             bool
+	React          bool
+}
 
 // These are properties about the feature, but not the current state or value for it
 type FeatureFlag struct {
@@ -165,11 +158,7 @@ type FeatureFlag struct {
 	RequiresRestart bool `json:"requiresRestart,omitempty"`
 
 	// Generate instructs codegen on what clients to generate for this feature flag.
-	Generate []GenerateTarget `json:"-"`
-}
-
-func (f FeatureFlag) ShouldGenerate(client GenerateTarget) bool {
-	return slices.Contains(f.Generate, client)
+	Generate Generate `json:"-"`
 }
 
 type FeatureToggleWebhookPayload struct {
