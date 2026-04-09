@@ -819,7 +819,7 @@ func TestSearchFolders(t *testing.T) {
 	})
 }
 
-func TestGetFolders(t *testing.T) {
+func TestGetFolderByTitle(t *testing.T) {
 	fakeK8sClient := new(client.MockK8sHandler)
 	folderStore := folder.NewFakeStore()
 	folderStore.ExpectedFolder = &folder.Folder{
@@ -827,7 +827,7 @@ func TestGetFolders(t *testing.T) {
 		ID:    2,
 		Title: "parent title",
 	}
-	tracer := noop.NewTracerProvider().Tracer("TestGetFolders")
+	tracer := noop.NewTracerProvider().Tracer("TestGetFolderByTitle")
 	service := Service{
 		k8sclient:     fakeK8sClient,
 		features:      featuremgmt.WithFeatures(),
