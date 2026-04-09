@@ -3,7 +3,6 @@ import { cx } from '@emotion/css';
 import {
   type DataFrame,
   type TransformerRegistryItem,
-  TransformationApplicabilityLevels,
   standardTransformersRegistry,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -34,21 +33,10 @@ export function TransformationCard({
   const theme = useTheme2();
   const styles = useStyles2(getCardStyles, fullWidth);
 
-  // Check to see if the transform is applicable to the given data
-  let applicabilityScore = TransformationApplicabilityLevels.Applicable;
-  if (data.length > 0 && transform.transformation.isApplicable !== undefined) {
-    applicabilityScore = transform.transformation.isApplicable(data);
-  }
-  const isApplicable = applicabilityScore > 0;
-
-  let applicabilityDescription = null;
-  if (data.length > 0 && transform.transformation.isApplicableDescription !== undefined) {
-    if (typeof transform.transformation.isApplicableDescription === 'function') {
-      applicabilityDescription = transform.transformation.isApplicableDescription(data);
-    } else {
-      applicabilityDescription = transform.transformation.isApplicableDescription;
-    }
-  }
+  // Applicability check removed - isApplicable is now behind an async transformation resolver.
+  // This deprecated editor path doesn't warrant async resolution.
+  const isApplicable = true;
+  const applicabilityDescription = null;
 
   const cardClasses = cx(styles.baseCard, { [styles.cardDisabled]: !isApplicable });
   const imageUrl = theme.isDark ? transform.imageDark : transform.imageLight;

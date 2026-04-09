@@ -40,7 +40,7 @@ export const TransformationEditor = ({
   const editor = useMemo(
     () =>
       createElement(uiConfig.editor, {
-        options: { ...uiConfig.transformation.defaultOptions, ...config.transformation.options },
+        options: { ...uiConfig.defaultOptions, ...config.transformation.options },
         input,
         onChange: (opts) => {
           onChange(index, {
@@ -49,7 +49,7 @@ export const TransformationEditor = ({
           });
         },
       }),
-    [uiConfig.editor, uiConfig.transformation.defaultOptions, config.transformation, input, onChange, index]
+    [uiConfig.editor, uiConfig.defaultOptions, config.transformation, input, onChange, index]
   );
 
   return (

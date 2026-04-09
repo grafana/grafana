@@ -1,7 +1,7 @@
 import { type ChangeEvent, useEffect, useState } from 'react';
 import * as React from 'react';
-import { of, type OperatorFunction } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { from, of, type OperatorFunction } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
 
 import {
   type DataFrame,
@@ -85,12 +85,11 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
 
   useEffect(() => {
     const ctx = { interpolate: (v: string) => v };
-    const subscription = of(input)
+    const subscription = from(standardTransformersRegistry.get('ensureColumns').transformation())
       .pipe(
-        standardTransformersRegistry.get('ensureColumns').transformation.operator(null, ctx),
-        extractAllNames(),
-        getVariableNames(),
-        extractNamesAndSelected(configuredOptions || [])
+        mergeMap((t) =>
+          of(input).pipe(t.operator(null, ctx), extractAllNames(), getVariableNames(), extractNamesAndSelected(configuredOptions || []))
+        )
       )
       .subscribe(({ selected, names }) => {
         setState({ names, selected });

@@ -14,18 +14,6 @@ import { standardTransformers } from '../../../../packages/grafana-data/src/tran
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 
-import { getHeatmapTransformer } from './calculateHeatmap/heatmap';
-import { getConfigFromDataTransformer } from './configFromQuery/configFromQuery';
-import { extractFieldsTransformer } from './extractFields/extractFields';
-import { getJoinByLabelsTransformer } from './joinByLabels/joinByLabels';
-import { fieldLookupTransformer } from './lookupGazetteer/fieldLookup';
-import { getPartitionByValuesTransformer } from './partitionByValues/partitionByValues';
-import { getPrepareTimeSeriesTransformer } from './prepareTimeSeries/prepareTimeSeries';
-import { getRegressionTransformer } from './regression/regression';
-import { getRowsToFieldsTransformer } from './rowsToFields/rowsToFields';
-import { getSmoothingTransformer } from './smoothing/smoothing';
-import { getSpatialTransformer } from './spatial/spatialTransformer';
-import { getTimeSeriesTableTransformer } from './timeSeriesTable/timeSeriesTableTransformer';
 
 // SVG images - dark
 import calculateFieldDark from './images/dark/calculateField.svg';
@@ -106,7 +94,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       editor: lazy(() =>
         import('./editors/ReduceTransformerEditor').then((m) => ({ default: m.ReduceTransformerEditor }))
       ),
-      transformation: standardTransformers.reduceTransformer,
+      transformation: () => Promise.resolve(standardTransformers.reduceTransformer),
       name: t('transformers.reduce-transformer-editor.name.reduce', 'Reduce'),
       description: t(
         'transformers.reduce-transformer-editor.description.reduce-to-single-value',
@@ -123,7 +111,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
           default: m.FilterByNameTransformerEditor,
         }))
       ),
-      transformation: standardTransformers.filterFieldsByNameTransformer,
+      transformation: () => Promise.resolve(standardTransformers.filterFieldsByNameTransformer),
       name: t('transformers.filter-by-name-transformer-editor.name.filter-fields-by-name', 'Filter fields by name'),
       description: t(
         'transformers.filter-by-name-transformer-editor.description.remove-part-query-results-regex-pattern',
@@ -138,7 +126,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       editor: lazy(() =>
         import('./editors/RenameByRegexTransformer').then((m) => ({ default: m.RenameByRegexTransformerEditor }))
       ),
-      transformation: standardTransformers.renameByRegexTransformer,
+      transformation: () => Promise.resolve(standardTransformers.renameByRegexTransformer),
       name: t('transformers.rename-by-regex-transformer.name.rename-fields-by-regex', 'Rename fields by regex'),
       description: t(
         'transformers.rename-by-regex-transformer.description.rename-parts-using-regex',
@@ -153,7 +141,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       editor: lazy(() =>
         import('./editors/FilterByRefIdTransformerEditor').then((m) => ({ default: m.FilterByRefIdTransformerEditor }))
       ),
-      transformation: standardTransformers.filterFramesByRefIdTransformer,
+      transformation: () => Promise.resolve(standardTransformers.filterFramesByRefIdTransformer),
       name: t('transformers.filter-by-ref-id-transformer-editor.name.filter-data-by-query', 'Filter data by query'),
       description: t(
         'transformers.filter-by-ref-id-transformer-editor.description.filter-data-by-query-useful-sharing-results',
@@ -170,7 +158,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
           default: m.FilterByValueTransformerEditor,
         }))
       ),
-      transformation: standardTransformers.filterByValueTransformer,
+      transformation: () => Promise.resolve(standardTransformers.filterByValueTransformer),
       name: t('transformers.filter-by-value-transformer-editor.name.filter-data-by-values', 'Filter data by values'),
       description: t(
         'transformers.filter-by-value-transformer-editor.description.remove-rows-query-results-user-defined-filters',
@@ -187,7 +175,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
           default: m.OrganizeFieldsTransformerEditor,
         }))
       ),
-      transformation: standardTransformers.organizeFieldsTransformer,
+      transformation: () => Promise.resolve(standardTransformers.organizeFieldsTransformer),
       name: t('transformers.organize-fields-transformer-editor.name.organize-fields', 'Organize fields by name'),
       description: t(
         'transformers.organize-fields-transformer-editor.description.reorder-hide-or-rename-fields',
@@ -205,7 +193,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
           default: m.SeriesToFieldsTransformerEditor,
         }))
       ),
-      transformation: standardTransformers.joinByFieldTransformer,
+      transformation: () => Promise.resolve(standardTransformers.joinByFieldTransformer),
       name: t('transformers.join-by-field-transformer-editor.name.join-by-field', 'Join by field'),
       description: t(
         'transformers.join-by-field-transformer-editor.description.combine-rows-from-2-tables',
@@ -222,7 +210,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
           default: m.SeriesToRowsTransformerEditor,
         }))
       ),
-      transformation: standardTransformers.seriesToRowsTransformer,
+      transformation: () => Promise.resolve(standardTransformers.seriesToRowsTransformer),
       name: t('transformers.series-to-rows-transformer-editor.name.series-to-rows', 'Series to rows'),
       description: t(
         'transformers.series-to-rows-transformer-editor.description.merge-multiple-series',
@@ -239,7 +227,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
           default: m.ConcatenateTransformerEditor,
         }))
       ),
-      transformation: standardTransformers.concatenateTransformer,
+      transformation: () => Promise.resolve(standardTransformers.concatenateTransformer),
       name: t('transformers.editors.concatenate-transformer-editor.name.concatenate-fields', 'Concatenate fields'),
       description: t(
         'transformers.editors.concatenate-transformer-editor.description.combine-all-fields',
@@ -257,7 +245,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
           default: m.CalculateFieldTransformerEditor,
         }))
       ),
-      transformation: standardTransformers.calculateFieldTransformer,
+      transformation: () => Promise.resolve(standardTransformers.calculateFieldTransformer),
       name: t(
         'transformers.get-calculate-field-transform-registry-item.name.add-field-from-calculation',
         'Add field from calculation'
@@ -277,7 +265,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
           default: m.LabelsAsFieldsTransformerEditor,
         }))
       ),
-      transformation: standardTransformers.labelsToFieldsTransformer,
+      transformation: () => Promise.resolve(standardTransformers.labelsToFieldsTransformer),
       name: t('transformers.labels-to-fields-transformer-editor.name.labels-to-fields', 'Labels to fields'),
       description: t(
         'transformers.labels-to-fields-transformer-editor.description.groups-series-time-return-labels-tags-fields',
@@ -292,7 +280,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       editor: lazy(() =>
         import('./editors/GroupByTransformerEditor').then((m) => ({ default: m.GroupByTransformerEditor }))
       ),
-      transformation: standardTransformers.groupByTransformer,
+      transformation: () => Promise.resolve(standardTransformers.groupByTransformer),
       name: t('transformers.group-by-transformer-editor.name.group-by', 'Group by'),
       description: t(
         'transformers.group-by-transformer-editor.description.group-series-by-field-calculate-stats',
@@ -311,7 +299,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       editor: lazy(() =>
         import('./editors/SortByTransformerEditor').then((m) => ({ default: m.SortByTransformerEditor }))
       ),
-      transformation: standardTransformers.sortByTransformer,
+      transformation: () => Promise.resolve(standardTransformers.sortByTransformer),
       name: t('transformers.sort-by-transformer-editor.name.sort-by', 'Sort by'),
       description: t('transformers.sort-by-transformer-editor.description.sort-fields', 'Sort fields in a frame.'),
       categories: new Set([TransformerCategory.ReorderAndRename]),
@@ -323,7 +311,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       editor: lazy(() =>
         import('./editors/MergeTransformerEditor').then((m) => ({ default: m.MergeTransformerEditor }))
       ),
-      transformation: standardTransformers.mergeTransformer,
+      transformation: () => Promise.resolve(standardTransformers.mergeTransformer),
       name: t('transformers.merge-transformer-editor.name.merge', 'Merge series/tables'),
       description: t(
         'transformers.merge-transformer-editor.description.merge-multiple-series',
@@ -338,7 +326,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       editor: lazy(() =>
         import('./editors/HistogramTransformerEditor').then((m) => ({ default: m.HistogramTransformerEditor }))
       ),
-      transformation: standardTransformers.histogramTransformer,
+      transformation: () => Promise.resolve(standardTransformers.histogramTransformer),
       name: t('transformers.histogram-transformer-editor.name.histogram', 'Histogram'),
       description: t(
         'transformers.histogram-transformer-editor.description.calculate-histogram-from-input-data',
@@ -348,59 +336,67 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       imageDark: histogramDark,
       imageLight: histogramLight,
     },
-    (() => {
-      const rowsToFieldsTransformer = getRowsToFieldsTransformer();
-      return {
-        id: rowsToFieldsTransformer.id,
-        editor: lazy(() =>
-          import('./rowsToFields/RowsToFieldsTransformerEditor').then((m) => ({
-            default: m.RowsToFieldsTransformerEditor,
-          }))
-        ),
-        transformation: rowsToFieldsTransformer,
-        name: rowsToFieldsTransformer.name,
-        description: rowsToFieldsTransformer.description,
-        state: PluginState.beta,
-        categories: new Set([TransformerCategory.Reformat]),
-        imageDark: rowsToFieldsDark,
-        imageLight: rowsToFieldsLight,
-      };
-    })(),
-    (() => {
-      const configFromDataTransformer = getConfigFromDataTransformer();
-      return {
-        id: configFromDataTransformer.id,
-        editor: lazy(() =>
-          import('./configFromQuery/ConfigFromQueryTransformerEditor').then((m) => ({
-            default: m.ConfigFromQueryTransformerEditor,
-          }))
-        ),
-        transformation: configFromDataTransformer,
-        name: configFromDataTransformer.name,
-        description: configFromDataTransformer.description,
-        state: PluginState.beta,
-        categories: new Set([TransformerCategory.CalculateNewFields]),
-        imageDark: configFromDataDark,
-        imageLight: configFromDataLight,
-      };
-    })(),
-    (() => {
-      const prepareTimeSeriesTransformer = getPrepareTimeSeriesTransformer();
-      return {
-        id: prepareTimeSeriesTransformer.id,
-        editor: lazy(() =>
-          import('./prepareTimeSeries/PrepareTimeSeriesEditor').then((m) => ({
-            default: m.PrepareTimeSeriesEditor,
-          }))
-        ),
-        transformation: prepareTimeSeriesTransformer,
-        name: prepareTimeSeriesTransformer.name,
-        description: prepareTimeSeriesTransformer.description,
-        categories: new Set([TransformerCategory.Reformat]),
-        imageDark: prepareTimeSeriesDark,
-        imageLight: prepareTimeSeriesLight,
-      };
-    })(),
+    {
+      id: DataTransformerID.rowsToFields,
+      editor: lazy(() =>
+        import('./rowsToFields/RowsToFieldsTransformerEditor').then((m) => ({
+          default: m.RowsToFieldsTransformerEditor,
+        }))
+      ),
+      transformation: () => import('./rowsToFields/rowsToFields').then((m) => m.getRowsToFieldsTransformer()),
+      name: t('transformers.get-rows-to-fields-transformer.name.rows-to-fields', 'Rows to fields'),
+      description: t(
+        'transformers.get-rows-to-fields-transformer.description.convert-field-dynamic-config',
+        'Convert each row into a field with dynamic config.'
+      ),
+      state: PluginState.beta,
+      categories: new Set([TransformerCategory.Reformat]),
+      imageDark: rowsToFieldsDark,
+      imageLight: rowsToFieldsLight,
+    },
+    {
+      id: DataTransformerID.configFromData,
+      editor: lazy(() =>
+        import('./configFromQuery/ConfigFromQueryTransformerEditor').then((m) => ({
+          default: m.ConfigFromQueryTransformerEditor,
+        }))
+      ),
+      transformation: () =>
+        import('./configFromQuery/configFromQuery').then((m) => m.getConfigFromDataTransformer()),
+      name: t(
+        'transformers.get-config-from-data-transformer.name.config-from-query-results',
+        'Config from query results'
+      ),
+      description: t(
+        'transformers.get-config-from-data-transformer.description.set-unit-min-max-and-more',
+        'Set unit, min, max and more.'
+      ),
+      state: PluginState.beta,
+      categories: new Set([TransformerCategory.CalculateNewFields]),
+      imageDark: configFromDataDark,
+      imageLight: configFromDataLight,
+    },
+    {
+      id: DataTransformerID.prepareTimeSeries,
+      editor: lazy(() =>
+        import('./prepareTimeSeries/PrepareTimeSeriesEditor').then((m) => ({
+          default: m.PrepareTimeSeriesEditor,
+        }))
+      ),
+      transformation: () =>
+        import('./prepareTimeSeries/prepareTimeSeries').then((m) => m.getPrepareTimeSeriesTransformer()),
+      name: t(
+        'transformers.prepare-time-series.name.prepare-time-series',
+        'Prepare time series'
+      ),
+      description: t(
+        'transformers.prepare-time-series.description.stretch-data-frames',
+        'Stretch data frames from the wide format into the long format.'
+      ),
+      categories: new Set([TransformerCategory.Reformat]),
+      imageDark: prepareTimeSeriesDark,
+      imageLight: prepareTimeSeriesLight,
+    },
     {
       id: DataTransformerID.convertFieldType,
       editor: lazy(() =>
@@ -408,7 +404,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
           default: m.ConvertFieldTypeTransformerEditor,
         }))
       ),
-      transformation: standardTransformers.convertFieldTypeTransformer,
+      transformation: () => Promise.resolve(standardTransformers.convertFieldTypeTransformer),
       name: t('transformers.convert-field-type-transformer-editor.name.convert-field-type', 'Convert field type'),
       description: t(
         'transformers.convert-field-type-transformer-editor.description.convert-to-specified-field-type',
@@ -419,22 +415,25 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       imageDark: convertFieldTypeDark,
       imageLight: convertFieldTypeLight,
     },
-    (() => {
-      const spatialTransformer = getSpatialTransformer();
-      return {
-        id: DataTransformerID.spatial,
-        editor: lazy(() =>
-          import('./spatial/SpatialTransformerEditor').then((m) => ({ default: m.SetGeometryTransformerEditor }))
-        ),
-        transformation: spatialTransformer,
-        name: spatialTransformer.name,
-        description: spatialTransformer.description,
-        state: PluginState.alpha,
-        categories: new Set([TransformerCategory.PerformSpatialOperations]),
-        imageDark: spatialDark,
-        imageLight: spatialLight,
-      };
-    })(),
+    {
+      id: DataTransformerID.spatial,
+      editor: lazy(() =>
+        import('./spatial/SpatialTransformerEditor').then((m) => ({ default: m.SetGeometryTransformerEditor }))
+      ),
+      transformation: () => import('./spatial/spatialTransformer').then((m) => m.getSpatialTransformer()),
+      name: t(
+        'transformers.get-spatial-transformer.name.spatial-operations',
+        'Spatial operations'
+      ),
+      description: t(
+        'transformers.get-spatial-transformer.description.apply-spatial-operations-to-query-results',
+        'Apply spatial operations to query results.'
+      ),
+      state: PluginState.alpha,
+      categories: new Set([TransformerCategory.PerformSpatialOperations]),
+      imageDark: spatialDark,
+      imageLight: spatialLight,
+    },
     {
       id: DataTransformerID.fieldLookup,
       editor: lazy(() =>
@@ -442,7 +441,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
           default: m.FieldLookupTransformerEditor,
         }))
       ),
-      transformation: fieldLookupTransformer,
+      transformation: () => import('./lookupGazetteer/fieldLookup').then((m) => m.fieldLookupTransformer),
       name: t(
         'transformers.field-lookup-transformer-editor.name.lookup-fields-from-resource',
         'Lookup fields from resource'
@@ -463,7 +462,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
           default: m.extractFieldsTransformerEditor,
         }))
       ),
-      transformation: extractFieldsTransformer,
+      transformation: () => import('./extractFields/extractFields').then((m) => m.extractFieldsTransformer),
       name: t('transformers.extract-fields-transformer-editor.name.extract-fields', 'Extract fields'),
       description: t(
         'transformers.extract-fields-transformer-editor.description.parse-fields-from-content',
@@ -473,24 +472,24 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       imageDark: extractFieldsDark,
       imageLight: extractFieldsLight,
     },
-    (() => {
-      const heatmapTransformer = getHeatmapTransformer();
-      return {
-        id: heatmapTransformer.id,
-        editor: lazy(() =>
-          import('./calculateHeatmap/HeatmapTransformerEditor').then((m) => ({
-            default: m.HeatmapTransformerEditor,
-          }))
-        ),
-        transformation: heatmapTransformer,
-        name: heatmapTransformer.name,
-        description: heatmapTransformer.description,
-        state: PluginState.alpha,
-        categories: new Set([TransformerCategory.CreateNewVisualization]),
-        imageDark: heatmapDark,
-        imageLight: heatmapLight,
-      };
-    })(),
+    {
+      id: DataTransformerID.heatmap,
+      editor: lazy(() =>
+        import('./calculateHeatmap/HeatmapTransformerEditor').then((m) => ({
+          default: m.HeatmapTransformerEditor,
+        }))
+      ),
+      transformation: () => import('./calculateHeatmap/heatmap').then((m) => m.getHeatmapTransformer()),
+      name: t('transformers.get-heatmap-transformer.name.create-heatmap', 'Create heatmap'),
+      description: t(
+        'transformers.get-heatmap-transformer.description.generate-heatmap-data-from-source',
+        'Generate heatmap data from source data.'
+      ),
+      state: PluginState.alpha,
+      categories: new Set([TransformerCategory.CreateNewVisualization]),
+      imageDark: heatmapDark,
+      imageLight: heatmapLight,
+    },
     {
       id: DataTransformerID.groupingToMatrix,
       editor: lazy(() =>
@@ -498,7 +497,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
           default: m.GroupingToMatrixTransformerEditor,
         }))
       ),
-      transformation: standardTransformers.groupingToMatrixTransformer,
+      transformation: () => Promise.resolve(standardTransformers.groupingToMatrixTransformer),
       name: t('transformers.grouping-to-matrix-transformer-editor.name.grouping-to-matrix', 'Grouping to matrix'),
       description: t(
         'transformers.grouping-to-matrix-transformer-editor.description.summarize-and-reorganize-data',
@@ -513,7 +512,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       editor: lazy(() =>
         import('./editors/LimitTransformerEditor').then((m) => ({ default: m.LimitTransformerEditor }))
       ),
-      transformation: standardTransformers.limitTransformer,
+      transformation: () => Promise.resolve(standardTransformers.limitTransformer),
       name: t('transformers.limit-transformer-editor.name.limit', 'Limit'),
       description: t(
         'transformers.limit-transformer-editor.description.limit-number-items-displayed',
@@ -523,60 +522,64 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       imageDark: limitDark,
       imageLight: limitLight,
     },
-    (() => {
-      const joinByLabelsTransformer = getJoinByLabelsTransformer();
-      return {
-        id: joinByLabelsTransformer.id,
-        editor: lazy(() =>
-          import('./joinByLabels/JoinByLabelsTransformerEditor').then((m) => ({
-            default: m.JoinByLabelsTransformerEditor,
-          }))
-        ),
-        transformation: joinByLabelsTransformer,
-        name: joinByLabelsTransformer.name,
-        description: joinByLabelsTransformer.description,
-        state: PluginState.beta,
-        categories: new Set([TransformerCategory.Combine]),
-        imageDark: joinByLabelsDark,
-        imageLight: joinByLabelsLight,
-      };
-    })(),
-    (() => {
-      const regressionTransformer = getRegressionTransformer();
-      return {
-        id: DataTransformerID.regression,
-        editor: lazy(() =>
-          import('./regression/regressionEditor').then((m) => ({ default: m.RegressionTransformerEditor }))
-        ),
-        transformation: regressionTransformer,
-        name: regressionTransformer.name,
-        description: regressionTransformer.description,
-        categories: new Set([TransformerCategory.CalculateNewFields]),
-        tags: new Set([
-          t('transformers.regression-transformer-editor.tags.regression-analysis', 'Regression analysis'),
-        ]),
-        imageDark: regressionDark,
-        imageLight: regressionLight,
-      };
-    })(),
-    (() => {
-      const partitionByValuesTransformer = getPartitionByValuesTransformer();
-      return {
-        id: DataTransformerID.partitionByValues,
-        editor: lazy(() =>
-          import('./partitionByValues/PartitionByValuesEditor').then((m) => ({
-            default: m.PartitionByValuesEditor,
-          }))
-        ),
-        transformation: partitionByValuesTransformer,
-        name: partitionByValuesTransformer.name,
-        description: partitionByValuesTransformer.description,
-        state: PluginState.alpha,
-        categories: new Set([TransformerCategory.Reformat]),
-        imageDark: partitionByValuesDark,
-        imageLight: partitionByValuesLight,
-      };
-    })(),
+    {
+      id: DataTransformerID.joinByLabels,
+      editor: lazy(() =>
+        import('./joinByLabels/JoinByLabelsTransformerEditor').then((m) => ({
+          default: m.JoinByLabelsTransformerEditor,
+        }))
+      ),
+      transformation: () => import('./joinByLabels/joinByLabels').then((m) => m.getJoinByLabelsTransformer()),
+      name: t('transformers.get-join-by-labels-transformer.name.join-by-labels', 'Join by labels'),
+      description: t(
+        'transformers.get-join-by-labels-transformer.description.flatten-labeled-results-table-joined-labels',
+        'Flatten labeled results into a table joined by labels.'
+      ),
+      state: PluginState.beta,
+      categories: new Set([TransformerCategory.Combine]),
+      imageDark: joinByLabelsDark,
+      imageLight: joinByLabelsLight,
+    },
+    {
+      id: DataTransformerID.regression,
+      editor: lazy(() =>
+        import('./regression/regressionEditor').then((m) => ({ default: m.RegressionTransformerEditor }))
+      ),
+      transformation: () => import('./regression/regression').then((m) => m.getRegressionTransformer()),
+      name: t('transformers.regression.name.trendline', 'Trendline'),
+      description: t(
+        'transformers.regression.description.create-new-data-frame',
+        'Create a new data frame containing values predicted by a statistical model.'
+      ),
+      categories: new Set([TransformerCategory.CalculateNewFields]),
+      tags: new Set([
+        t('transformers.regression-transformer-editor.tags.regression-analysis', 'Regression analysis'),
+      ]),
+      imageDark: regressionDark,
+      imageLight: regressionLight,
+    },
+    {
+      id: DataTransformerID.partitionByValues,
+      editor: lazy(() =>
+        import('./partitionByValues/PartitionByValuesEditor').then((m) => ({
+          default: m.PartitionByValuesEditor,
+        }))
+      ),
+      transformation: () =>
+        import('./partitionByValues/partitionByValues').then((m) => m.getPartitionByValuesTransformer()),
+      name: t(
+        'transformers.get-partition-by-values-transformer.name.partition-by-values',
+        'Partition by values'
+      ),
+      description: t(
+        'transformers.get-partition-by-values-transformer.description.split-oneframe-dataset-multiple-series',
+        'Split a one-frame dataset into multiple series.'
+      ),
+      state: PluginState.alpha,
+      categories: new Set([TransformerCategory.Reformat]),
+      imageDark: partitionByValuesDark,
+      imageLight: partitionByValuesLight,
+    },
     {
       id: DataTransformerID.formatString,
       editor: lazy(() =>
@@ -584,7 +587,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
           default: m.FormatStringTransfomerEditor,
         }))
       ),
-      transformation: standardTransformers.formatStringTransformer,
+      transformation: () => Promise.resolve(standardTransformers.formatStringTransformer),
       name: t('transformers.format-string-transformer-editor.name.format-string', 'Format string'),
       state: PluginState.beta,
       description: t(
@@ -602,7 +605,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
           default: m.GroupToNestedTableTransformerEditor,
         }))
       ),
-      transformation: standardTransformers.groupToNestedTable,
+      transformation: () => Promise.resolve(standardTransformers.groupToNestedTable),
       name: t(
         'transformers.group-to-nested-table-transformer-editor.name.group-to-nested-tables',
         'Group to nested tables'
@@ -622,22 +625,22 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
     },
     ...(config.featureToggles.smoothingTransformation
       ? [
-          (() => {
-            const smoothingTransformer = getSmoothingTransformer();
-            return {
-              id: DataTransformerID.smoothing,
-              editor: lazy(() =>
-                import('./smoothing/smoothingEditor').then((m) => ({ default: m.SmoothingTransformerEditor }))
-              ),
-              transformation: smoothingTransformer,
-              name: smoothingTransformer.name,
-              description: smoothingTransformer.description,
-              categories: new Set([TransformerCategory.CalculateNewFields]),
-              tags: new Set(['ASAP', 'Autosmooth']),
-              imageDark: smoothingDark,
-              imageLight: smoothingLight,
-            };
-          })(),
+          {
+            id: DataTransformerID.smoothing,
+            editor: lazy(() =>
+              import('./smoothing/smoothingEditor').then((m) => ({ default: m.SmoothingTransformerEditor }))
+            ),
+            transformation: () => import('./smoothing/smoothing').then((m) => m.getSmoothingTransformer()),
+            name: t('transformers.smoothing.name', 'Smoothing'),
+            description: t(
+              'transformers.smoothing.description',
+              'Reduce noise in time series data through adaptive downsampling.'
+            ),
+            categories: new Set([TransformerCategory.CalculateNewFields]),
+            tags: new Set(['ASAP', 'Autosmooth']),
+            imageDark: smoothingDark,
+            imageLight: smoothingLight,
+          },
         ]
       : []),
     {
@@ -645,7 +648,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       editor: lazy(() =>
         import('./editors/FormatTimeTransformerEditor').then((m) => ({ default: m.FormatTimeTransfomerEditor }))
       ),
-      transformation: standardTransformers.formatTimeTransformer,
+      transformation: () => Promise.resolve(standardTransformers.formatTimeTransformer),
       name: t('transformers.format-time-transformer-editor.name.format-time', 'Format time'),
       state: PluginState.alpha,
       description: t(
@@ -656,29 +659,33 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       imageDark: formatTimeDark,
       imageLight: formatTimeLight,
     },
-    (() => {
-      const timeSeriesTableTransformer = getTimeSeriesTableTransformer();
-      return {
-        id: timeSeriesTableTransformer.id,
-        editor: lazy(() =>
-          import('./timeSeriesTable/TimeSeriesTableTransformEditor').then((m) => ({
-            default: m.TimeSeriesTableTransformEditor,
-          }))
-        ),
-        transformation: timeSeriesTableTransformer,
-        name: timeSeriesTableTransformer.name,
-        description: timeSeriesTableTransformer.description,
-        state: PluginState.beta,
-        imageDark: timeSeriesTableDark,
-        imageLight: timeSeriesTableLight,
-      };
-    })(),
+    {
+      id: DataTransformerID.timeSeriesTable,
+      editor: lazy(() =>
+        import('./timeSeriesTable/TimeSeriesTableTransformEditor').then((m) => ({
+          default: m.TimeSeriesTableTransformEditor,
+        }))
+      ),
+      transformation: () =>
+        import('./timeSeriesTable/timeSeriesTableTransformer').then((m) => m.getTimeSeriesTableTransformer()),
+      name: t(
+        'transformers.time-series-table.name.time-series-to-table',
+        'Time series to table'
+      ),
+      description: t(
+        'transformers.time-series-table.description.convert-to-table-rows',
+        'Convert time series data to table rows so that they can be viewed in tabular or sparkline format.'
+      ),
+      state: PluginState.beta,
+      imageDark: timeSeriesTableDark,
+      imageLight: timeSeriesTableLight,
+    },
     {
       id: DataTransformerID.transpose,
       editor: lazy(() =>
         import('./editors/TransposeTransformerEditor').then((m) => ({ default: m.TransposeTransformerEditor }))
       ),
-      transformation: standardTransformers.transposeTransformer,
+      transformation: () => Promise.resolve(standardTransformers.transposeTransformer),
       name: t('transformers.transpose-transformer-editor.name.transpose', 'Transpose'),
       description: t(
         'transformers.transpose-transformer-editor.description.transpose-data-frame',

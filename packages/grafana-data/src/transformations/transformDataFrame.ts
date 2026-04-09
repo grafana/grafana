@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash';
-import { type MonoTypeOperatorFunction, type Observable, of } from 'rxjs';
+import { from, type MonoTypeOperatorFunction, type Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import { type DataFrame } from '../types/dataFrame';
@@ -7,11 +7,15 @@ import {
   type CustomTransformOperator,
   type DataTransformContext,
   type DataTransformerConfig,
+  type DataTransformerInfo,
   type FrameMatcher,
 } from '../types/transformations';
 
 import { getFrameMatchers } from './matchers';
 import { standardTransformersRegistry, type TransformerRegistryItem } from './standardTransformersRegistry';
+
+// Cache resolved transformations to avoid re-resolving on subsequent calls
+const resolvedTransformations = new Map<string, DataTransformerInfo>();
 
 const getOperator =
   (config: DataTransformerConfig, ctx: DataTransformContext): MonoTypeOperatorFunction<DataFrame[]> =>
@@ -22,29 +26,42 @@ const getOperator =
       return source;
     }
 
-    const defaultOptions = info.transformation.defaultOptions ?? {};
-    const options = { ...defaultOptions, ...config.options };
-
-    // when running within Scenes, we can skip var interpolation, since it's already handled upstream
-    const isScenes = window.__grafanaSceneContext != null;
-
-    const interpolated = isScenes
-      ? options
-      : deepIterate(cloneDeep(options), (v) => {
-          if (typeof v === 'string') {
-            return ctx.interpolate(v);
-          }
-          return v;
-        });
-
     const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
+
     return source.pipe(
-      mergeMap((before) =>
-        of(filterInput(before, matcher)).pipe(
-          info.transformation.operator(interpolated, ctx),
-          postProcessTransform(before, info, matcher)
-        )
-      )
+      mergeMap((before) => {
+        const cached = resolvedTransformations.get(config.id);
+        const transformationPromise = cached ? Promise.resolve(cached) : info.transformation();
+
+        return from(transformationPromise).pipe(
+          mergeMap((transformation) => {
+            // Cache the resolved transformation
+            if (!cached) {
+              resolvedTransformations.set(config.id, transformation);
+            }
+
+            const defaultOptions = transformation.defaultOptions ?? {};
+            const options = { ...defaultOptions, ...config.options };
+
+            // when running within Scenes, we can skip var interpolation, since it's already handled upstream
+            const isScenes = window.__grafanaSceneContext != null;
+
+            const interpolated = isScenes
+              ? options
+              : deepIterate(cloneDeep(options), (v) => {
+                  if (typeof v === 'string') {
+                    return ctx.interpolate(v);
+                  }
+                  return v;
+                });
+
+            return of(filterInput(before, matcher)).pipe(
+              transformation.operator(interpolated, ctx),
+              postProcessTransform(before, info, matcher)
+            );
+          })
+        );
+      })
     );
   };
 

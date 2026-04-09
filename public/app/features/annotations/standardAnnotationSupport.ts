@@ -1,5 +1,5 @@
 import { isString } from 'lodash';
-import { type Observable, of, type OperatorFunction } from 'rxjs';
+import { from, type Observable, of, type OperatorFunction } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import {
@@ -72,9 +72,8 @@ export function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFr
           interpolate: (v: string) => v,
         };
 
-        return of(data).pipe(
-          standardTransformersRegistry.get('merge').transformation.operator({}, ctx),
-          map((d) => d[0])
+        return from(standardTransformersRegistry.get('merge').transformation()).pipe(
+          mergeMap((t) => of(data).pipe(t.operator({}, ctx), map((d) => d[0])))
         );
       })
     );

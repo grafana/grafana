@@ -45,7 +45,7 @@ export function TransformationEditor({ transformation, inputData, onUpdate }: Tr
           <Editor
             input={inputData}
             onChange={handleChange}
-            options={{ ...registryItem!.transformation.defaultOptions, ...transformConfig.options }}
+            options={{ ...registryItem!.defaultOptions, ...transformConfig.options }}
           />
         </Suspense>
       </ErrorBoundaryWithRetry>

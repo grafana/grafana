@@ -11,8 +11,8 @@ import {
   type DataSourceInstanceSettings,
   type PanelPluginMeta,
   standardTransformers,
+  standardTransformersRegistry,
 } from '@grafana/data';
-import { mockTransformationsRegistry } from '@grafana/data/internal';
 import { type CorrelationData } from '@grafana/runtime';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import { type DataSourceJsonData, type DataQuery } from '@grafana/schema';
@@ -34,10 +34,18 @@ jest.mock('@grafana/data', () => ({
 }));
 
 beforeAll(() => {
-  mockTransformationsRegistry([
-    standardTransformers.joinByFieldTransformer,
-    standardTransformers.mergeTransformer,
-  ]);
+  standardTransformersRegistry.setInit(() =>
+    [standardTransformers.joinByFieldTransformer, standardTransformers.mergeTransformer].map((t) => ({
+      id: t.id,
+      aliasIds: t.aliasIds,
+      name: t.name,
+      transformation: () => Promise.resolve(t),
+      description: t.description,
+      editor: () => null,
+      imageDark: '',
+      imageLight: '',
+    }))
+  );
 });
 
 const getTestContext = () => {
