@@ -210,6 +210,27 @@ func TestCanSearchByTitle(t *testing.T) {
 		checkSearchQuery(t, index, newTestQuery("new das"), []string{"name2", "name1"})
 	})
 
+	t.Run("multi-word exact title match gets highest score", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Quick Brown Fox",
+			"name2": "Quick Brown Fox Jumps",
+		})
+		// exact title "Quick Brown Fox" should score highest (boost=10 on title_phrase)
+		checkSearchQuery(t, index, newTestQuery("Quick Brown Fox"), []string{"name1", "name2"})
+	})
+
+	t.Run("lowercase search matches via exact match boost", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Quick Brown Fox Jumps Over",
+			"name2": "Quick Brown Fox",
+		})
+		// lowercase query should get exact-match boost via pre-lowered title_phrase
+		// name2 is exact match (boost=10) so it ranks first despite name ordering
+		checkSearchQuery(t, index, newTestQuery("quick brown fox"), []string{"name2", "name1"})
+	})
+
 	t.Run("title search will%smatch term in the middle/end", func(t *testing.T) {
 		index := newTestDashboardsIndex(t, threshold, 2, noop)
 		indexDocumentsWithTitles(t, index, key, map[string]string{
@@ -249,6 +270,60 @@ func newQueryByTitle(query string) *resourcepb.ResourceSearchRequest {
 		},
 		Limit: 100000,
 	}
+}
+
+func newExactQueryByTitle(query string) *resourcepb.ResourceSearchRequest {
+	return &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+			},
+			Fields: []*resourcepb.Requirement{{Key: "title", Operator: "==", Values: []string{query}}},
+		},
+		Limit: 100000,
+	}
+}
+
+func TestDoubleEqualsExactMatch(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+
+	t.Run("double equals on title matches only exact title", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Test",
+			"name2": "Test Team 1",
+			"name3": "Testing Fox Tales",
+		})
+		// == should only match the document with title exactly "Test"
+		checkSearchQuery(t, index, newExactQueryByTitle("Test"), []string{"name1"})
+	})
+
+	t.Run("double equals on title is case insensitive", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Quick Brown Fox",
+			"name2": "Another Fox Story",
+		})
+		// == with different casing should still match
+		checkSearchQuery(t, index, newExactQueryByTitle("quick brown fox"), []string{"name1"})
+		checkSearchQuery(t, index, newExactQueryByTitle("QUICK BROWN FOX"), []string{"name1"})
+	})
+
+	t.Run("single equals on title keeps fuzzy behavior", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Test",
+			"name2": "Test Team 1",
+		})
+		// = should still match documents containing "Test" (fuzzy/word match)
+		checkSearchQuery(t, index, newQueryByTitle("Test"), []string{"name1", "name2"})
+	})
 }
 
 func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer resource.BuildFn) resource.ResourceIndex {
