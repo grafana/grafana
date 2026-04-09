@@ -34,7 +34,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify both dashboards were created with no quota restriction
@@ -78,7 +78,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify 1 dashboard was created
@@ -124,7 +124,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify 2 dashboards were created with no quota restriction
@@ -188,7 +188,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		helper.RequireRepoDashboardCount(t, repo, 1)
@@ -274,7 +274,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		helper.RequireRepoDashboardCount(t, repo, 2)
@@ -391,7 +391,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify 3 dashboards were created with no quota restriction
@@ -439,7 +439,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 
 		// Verify 3 dashboards were created with no quota restriction

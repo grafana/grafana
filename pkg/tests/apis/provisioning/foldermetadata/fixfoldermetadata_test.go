@@ -28,7 +28,7 @@ func TestIntegrationProvisioning_FixFolderMetadata_MissingFile(t *testing.T) {
 	const repoName = "fix-meta-no-metadata"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:   repoName,
 		Path:   repoPath,
 		Target: "folder",
@@ -66,7 +66,7 @@ func TestIntegrationProvisioning_FixFolderMetadata_ValidFile(t *testing.T) {
 	const repoName = "fix-meta-valid-metadata"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:   repoName,
 		Path:   repoPath,
 		Target: "folder",
@@ -103,7 +103,7 @@ func TestIntegrationProvisioning_FixFolderMetadata_SkipsExistingMetadata(t *test
 	const repoName = "fix-meta-skip-existing"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:   repoName,
 		Path:   repoPath,
 		Target: "folder",
@@ -138,7 +138,7 @@ func TestIntegrationProvisioning_FixFolderMetadata_SkipsMalformedMetadata(t *tes
 	const repoName = "fix-meta-skip-malformed"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:   repoName,
 		Path:   repoPath,
 		Target: "folder",

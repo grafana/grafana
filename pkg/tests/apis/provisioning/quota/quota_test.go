@@ -27,7 +27,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			SkipSync:               true, // Prevent controller auto-sync racing with file copy
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 		helper.RequireRepoDashboardCount(t, repo, 1)
 
@@ -87,7 +87,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			SkipSync:               true, // Prevent controller auto-sync racing with file copy
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 		helper.RequireRepoDashboardCount(t, repo, 2)
 
@@ -151,7 +151,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			SkipSync:               true, // Prevent controller auto-sync racing with file copy
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 		helper.RequireRepoDashboardCount(t, repo, 1)
 
@@ -242,7 +242,7 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 			SkipSync:               true, // Prevent controller auto-sync racing with file copy
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 		helper.RequireRepoDashboardCount(t, repo, 1)
 
@@ -299,7 +299,7 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 			SkipSync:               true, // Prevent controller auto-sync racing with file copy
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 		helper.RequireRepoDashboardCount(t, repo, 1)
 

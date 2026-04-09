@@ -651,7 +651,7 @@ type TestRepo struct {
 	Name                   string
 	Target                 string
 	Path                   string
-	Values                 map[string]any
+	TemplateValues         RepositoryTemplateValues
 	Copies                 map[string]string
 	ExpectedDashboards     int
 	ExpectedFolders        int
@@ -660,7 +660,177 @@ type TestRepo struct {
 	Template               string
 }
 
-func (h *ProvisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
+type RepositoryTemplateValues struct {
+	Title                     string
+	Description               string
+	URL                       string
+	Branch                    string
+	Path                      string
+	Token                     string
+	TokenUser                 string
+	WebhookSecret             string
+	GenerateName              string
+	GenerateDashboardPreviews *bool
+	SyncEnabled               *bool
+	SyncTarget                string
+	SyncIntervalSeconds       *int
+	Workflows                 *[]string
+}
+
+func (v RepositoryTemplateValues) AddToTemplateVars(templateVars map[string]any) {
+	if v.Title != "" {
+		templateVars["Title"] = v.Title
+	}
+	if v.Description != "" {
+		templateVars["Description"] = v.Description
+	}
+	if v.URL != "" {
+		templateVars["URL"] = v.URL
+	}
+	if v.Branch != "" {
+		templateVars["Branch"] = v.Branch
+	}
+	if v.Path != "" {
+		templateVars["Path"] = v.Path
+	}
+	if v.Token != "" {
+		templateVars["Token"] = v.Token
+	}
+	if v.TokenUser != "" {
+		templateVars["TokenUser"] = v.TokenUser
+	}
+	if v.WebhookSecret != "" {
+		templateVars["WebhookSecret"] = v.WebhookSecret
+	}
+	if v.GenerateName != "" {
+		templateVars["GenerateName"] = v.GenerateName
+	}
+	if v.GenerateDashboardPreviews != nil {
+		templateVars["GenerateDashboardPreviews"] = *v.GenerateDashboardPreviews
+	}
+	if v.SyncEnabled != nil {
+		templateVars["SyncEnabled"] = *v.SyncEnabled
+	}
+	if v.SyncTarget != "" {
+		templateVars["SyncTarget"] = v.SyncTarget
+	}
+	if v.SyncIntervalSeconds != nil {
+		templateVars["SyncIntervalSeconds"] = *v.SyncIntervalSeconds
+	}
+	if v.Workflows != nil {
+		workflowsJSON, err := json.Marshal(*v.Workflows)
+		if err == nil {
+			templateVars["Workflows"] = string(workflowsJSON)
+		}
+	}
+}
+
+type LocalRepositorySpec struct {
+	Name               string
+	SyncEnabled        bool
+	SyncTarget         string
+	SyncIntervalSecond int
+	Path               string
+	Title              string
+	Description        string
+	Workflows          []string
+}
+
+func (h *ProvisioningTestHelper) CreateLocalRepository(t *testing.T, repo LocalRepositorySpec) {
+	t.Helper()
+
+	if repo.SyncTarget == "" {
+		repo.SyncTarget = "folder"
+	}
+
+	templateVars := map[string]any{
+		"Name":        repo.Name,
+		"SyncEnabled": repo.SyncEnabled,
+		"SyncTarget":  repo.SyncTarget,
+		"Path":        repo.Path,
+	}
+	if repo.SyncIntervalSecond > 0 {
+		templateVars["SyncIntervalSeconds"] = repo.SyncIntervalSecond
+	}
+	if repo.Title != "" {
+		templateVars["Title"] = repo.Title
+	}
+	if repo.Description != "" {
+		templateVars["Description"] = repo.Description
+	}
+	if repo.Workflows != nil {
+		workflowsJSON, err := json.Marshal(repo.Workflows)
+		require.NoError(t, err)
+		templateVars["Workflows"] = string(workflowsJSON)
+	}
+
+	localRepo := h.RenderObject(t, TestdataPath("local.json.tmpl"), templateVars)
+
+	_, err := h.Repositories.Resource.Create(t.Context(), localRepo, metav1.CreateOptions{})
+	require.NoError(t, err)
+	h.WaitForHealthyRepository(t, repo.Name)
+}
+
+type GitHubRepositorySpec struct {
+	Name                      string
+	GenerateName              string
+	SyncEnabled               bool
+	SyncTarget                string
+	SyncIntervalSecond        int
+	URL                       string
+	Branch                    string
+	Path                      string
+	Title                     string
+	Description               string
+	Token                     string
+	TokenUser                 string
+	WebhookSecret             string
+	GenerateDashboardPreviews bool
+	Workflows                 []string
+}
+
+func (h *ProvisioningTestHelper) CreateGitHubRepository(t *testing.T, repo GitHubRepositorySpec) string {
+	t.Helper()
+
+	if repo.SyncTarget == "" {
+		repo.SyncTarget = "folder"
+	}
+
+	templateVars := map[string]any{
+		"Name":                      repo.Name,
+		"GenerateName":              repo.GenerateName,
+		"SyncEnabled":               repo.SyncEnabled,
+		"SyncTarget":                repo.SyncTarget,
+		"URL":                       repo.URL,
+		"Branch":                    repo.Branch,
+		"Path":                      repo.Path,
+		"Title":                     repo.Title,
+		"Description":               repo.Description,
+		"Token":                     repo.Token,
+		"TokenUser":                 repo.TokenUser,
+		"WebhookSecret":             repo.WebhookSecret,
+		"GenerateDashboardPreviews": repo.GenerateDashboardPreviews,
+	}
+	if repo.SyncIntervalSecond > 0 {
+		templateVars["SyncIntervalSeconds"] = repo.SyncIntervalSecond
+	}
+	if repo.Workflows != nil {
+		workflowsJSON, err := json.Marshal(repo.Workflows)
+		require.NoError(t, err)
+		templateVars["Workflows"] = string(workflowsJSON)
+	}
+
+	githubRepo := h.RenderObject(t, TestdataPath("github.json.tmpl"), templateVars)
+	createdRepo, err := h.Repositories.Resource.Create(t.Context(), githubRepo, metav1.CreateOptions{})
+	require.NoError(t, err)
+	createdName := createdRepo.GetName()
+	require.NotEmpty(t, createdName)
+
+	h.WaitForHealthyRepository(t, createdName)
+	return createdName
+}
+
+func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
 	if repo.Target == "" {
 		repo.Target = "instance"
 	}
@@ -683,9 +853,7 @@ func (h *ProvisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 	if repo.Path != "" {
 		templateVars["Path"] = repoPath
 	}
-	for key, value := range repo.Values {
-		templateVars[key] = value
-	}
+	repo.TemplateValues.AddToTemplateVars(templateVars)
 
 	tmpl := TestdataPath("local.json.tmpl")
 	if repo.Template != "" {

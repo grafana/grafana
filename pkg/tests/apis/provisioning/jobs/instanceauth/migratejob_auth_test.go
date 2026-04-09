@@ -24,7 +24,7 @@ func TestIntegrationProvisioning_MigrateJobAuthorization(t *testing.T) {
 		ExpectedDashboards: 0,
 		ExpectedFolders:    0,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	t.Run("admin can create migrate job", func(t *testing.T) {
 		body := common.AsJSON(provisioning.JobSpec{

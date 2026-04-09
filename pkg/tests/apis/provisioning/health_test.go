@@ -27,7 +27,7 @@ func TestIntegrationHealth(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := context.Background()
 	repo := "test-repo-health"
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:            repo,
 		Target:          "folder",
 		ExpectedFolders: 1,

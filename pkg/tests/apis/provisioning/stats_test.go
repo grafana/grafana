@@ -28,7 +28,7 @@ func TestIntegrationProvisioning_Stats(t *testing.T) {
 		ExpectedDashboards: 2,
 		ExpectedFolders:    2, // folder sync creates a folder for the repo + one nested folder
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Create some unmanaged dashboards directly in Grafana
 	unmanagedDash1 := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v1.yaml")

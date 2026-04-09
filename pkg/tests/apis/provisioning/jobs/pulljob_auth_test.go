@@ -24,7 +24,7 @@ func TestIntegrationProvisioning_PullJobAuthorization(t *testing.T) {
 		ExpectedDashboards: 0,
 		ExpectedFolders:    1,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	body := common.AsJSON(provisioning.JobSpec{
 		Action: provisioning.JobActionPull,

@@ -24,7 +24,7 @@ func TestIntegrationProvisioning_RepositorySubresourcesAuthorization(t *testing.
 		ExpectedDashboards: 0,
 		ExpectedFolders:    1, // Repository creates a folder
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	t.Run("test subresource", func(t *testing.T) {
 		newRepoConfig := map[string]any{

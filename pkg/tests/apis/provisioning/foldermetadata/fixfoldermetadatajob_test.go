@@ -26,7 +26,7 @@ func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 		ExpectedDashboards: 1,
 		ExpectedFolders:    1,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	t.Run("job completes successfully", func(t *testing.T) {
 		spec := provisioning.JobSpec{
@@ -83,7 +83,7 @@ func TestIntegrationProvisioning_FixFolderMetadataJob_RemovesKeepFiles(t *testin
 		Target:                 "folder",
 		SkipResourceAssertions: true,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Plant .keep files in both folder directories, mimicking legacy state
 	// where folders were tracked via .keep instead of _folder.json.

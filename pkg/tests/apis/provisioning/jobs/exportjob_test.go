@@ -46,7 +46,7 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 		ExpectedDashboards: 4,                   // 4 dashboards created above (v0, v1, v2alpha1, v2beta1)
 		ExpectedFolders:    0,                   // No folders expected after sync
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Now export
 	helper.DebugState(t, repo, "BEFORE EXPORT TO REPOSITORY")
@@ -181,7 +181,7 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 		ExpectedDashboards: len(tests),
 		ExpectedFolders:    0,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Export dashboards
 	spec := provisioning.JobSpec{

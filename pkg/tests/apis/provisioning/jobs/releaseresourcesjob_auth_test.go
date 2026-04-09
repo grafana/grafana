@@ -77,7 +77,7 @@ func TestIntegrationProvisioning_ReleaseResourcesJobAuthorization(t *testing.T) 
 			ExpectedDashboards: 0,
 			ExpectedFolders:    1,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 
 		existingRepoBody := common.AsJSON(provisioning.JobSpec{
 			Action:     provisioning.JobActionReleaseResources,

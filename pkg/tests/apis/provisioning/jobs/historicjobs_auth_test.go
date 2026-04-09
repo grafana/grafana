@@ -24,7 +24,7 @@ func TestIntegrationProvisioning_HistoricJobsAuthorization(t *testing.T) {
 		ExpectedDashboards: 0,
 		ExpectedFolders:    1, // Repository creates a folder
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Trigger a job to create a historic job entry
 	jobSpec := provisioning.JobSpec{

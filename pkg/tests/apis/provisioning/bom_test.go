@@ -25,7 +25,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 
 	t.Run("dashboard JSON file with UTF-8 BOM prefix", func(t *testing.T) {
 		// Create repository first
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
 			Path:                   helper.ProvisioningPath,
 			Target:                 "folder",
@@ -110,7 +110,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 
 		// Create repository
 		repoName := "bom-embedded-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repoName,
 			Path:                   helper.ProvisioningPath,
 			Target:                 "folder",
@@ -184,7 +184,7 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 
 		// Create repository first
 		repoName := "bom-deletion-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repoName,
 			Path:                   helper.ProvisioningPath,
 			Target:                 "folder",
@@ -280,7 +280,7 @@ spec:
 
 		// Create repository first
 		repoName := "bom-yaml-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repoName,
 			Path:                   helper.ProvisioningPath,
 			Target:                 "folder",

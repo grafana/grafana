@@ -24,7 +24,7 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 		folderPathPrefix = "parent-with-metadata"
 	)
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repoName,
 		Target:                 "instance",
 		SkipResourceAssertions: true,

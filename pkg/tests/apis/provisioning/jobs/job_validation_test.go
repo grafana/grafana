@@ -27,7 +27,7 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 		ExpectedDashboards: 0,
 		ExpectedFolders:    1, // folder sync creates a folder
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	tests := []struct {
 		name        string

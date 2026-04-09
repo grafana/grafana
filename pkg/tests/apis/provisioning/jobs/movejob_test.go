@@ -32,7 +32,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		ExpectedDashboards: 3,
 		ExpectedFolders:    2, // folder sync creates a folder for the repo + one nested folder
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	t.Run("move single file", func(t *testing.T) {
 		helper.DebugState(t, repo, "BEFORE MOVE SINGLE FILE")
@@ -238,7 +238,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 
 		// Create a unique repository for resource reference testing to avoid contamination
 		const refRepo = "move-ref-test-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   refRepo,
 			Target:                 "folder",
 			SkipResourceAssertions: true, // HACK: I am not sure why sometimes it's 6 or 3 dashbaords.

@@ -52,7 +52,7 @@ func TestIntegrationProvisioning_FolderAPIVersionConfig(t *testing.T) {
 
 			const repoName = "folder-version-repo"
 			repoPath := filepath.Join(helper.ProvisioningPath, repoName)
-			helper.CreateRepo(t, common.TestRepo{
+			helper.CreateLocalRepo(t, common.TestRepo{
 				Name:   repoName,
 				Path:   repoPath,
 				Target: "folder",

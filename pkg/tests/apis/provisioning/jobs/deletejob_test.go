@@ -33,7 +33,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		ExpectedFolders:    1,
 	}
 
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	t.Run("delete single file", func(t *testing.T) {
 		// FIXME: make the tests in a way that we can simply have a spec and some expectations per scenario.

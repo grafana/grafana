@@ -21,7 +21,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 
 		const repo = "files-quota-unlimited-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:   repo,
 			Path:   repoPath,
 			Target: "folder",
@@ -80,7 +80,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 
 		const repo = "files-quota-within-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:   repo,
 			Path:   repoPath,
 			Target: "folder",
@@ -138,7 +138,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 
 		const repo = "files-quota-reached-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:   repo,
 			Path:   repoPath,
 			Target: "folder",
@@ -194,7 +194,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 
 		const repo = "files-quota-exceeded-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:   repo,
 			Path:   repoPath,
 			Target: "folder",

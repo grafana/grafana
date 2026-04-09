@@ -39,7 +39,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 			ExpectedDashboards: 2,
 			ExpectedFolders:    0,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 
 		// Wait for quota reconciliation to confirm limits are set on the repository
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
@@ -82,7 +82,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 			ExpectedDashboards: 2,
 			ExpectedFolders:    0,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 
@@ -148,7 +148,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 			ExpectedDashboards: 1,
 			ExpectedFolders:    2,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 

@@ -26,7 +26,7 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 		const repo = "classic-delete-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:   repo,
 			Path:   repoPath,
 			Target: "folder",
@@ -70,7 +70,7 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 		err = os.WriteFile(filepath.Join(repoPath, "inline-classic.json"), classicDashboard, 0o600)
 		require.NoError(t, err)
 
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
 			Path:                   repoPath,
 			Target:                 "folder",
@@ -110,7 +110,7 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 		err = os.WriteFile(filepath.Join(repoPath, "status-check.json"), classicDashboard, 0o600)
 		require.NoError(t, err)
 
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
 			Path:                   repoPath,
 			Target:                 "folder",
@@ -176,7 +176,7 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 		err = os.WriteFile(filepath.Join(repoPath, "k8s.json"), k8sDashboard, 0o600)
 		require.NoError(t, err)
 
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
 			Path:                   repoPath,
 			Target:                 "folder",

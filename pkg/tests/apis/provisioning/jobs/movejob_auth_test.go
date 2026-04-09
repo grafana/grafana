@@ -26,7 +26,7 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 		ExpectedDashboards: 1,
 		ExpectedFolders:    0,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Grant the editor user dashboard permissions (the default editor role
 	// does not include dashboards:write/dashboards:create which are required

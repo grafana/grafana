@@ -76,7 +76,7 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "export-meta-new-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
 			Target:                 "instance",
 			SkipSync:               true,
@@ -110,7 +110,7 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "export-existing-folder-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
 			Target:                 "instance",
 			SkipSync:               true,
@@ -152,7 +152,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "nested-middle-existing-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
 			Target:                 "instance",
 			SkipSync:               true,
@@ -204,7 +204,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "nested-two-level-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
 			Target:                 "instance",
 			SkipSync:               true,
@@ -241,7 +241,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "nested-three-level-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
 			Target:                 "instance",
 			SkipSync:               true,
@@ -287,7 +287,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "nested-siblings-repo"
-		helper.CreateRepo(t, common.TestRepo{
+		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
 			Target:                 "instance",
 			SkipSync:               true,

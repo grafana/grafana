@@ -26,7 +26,7 @@ func TestIntegrationProvisioning_JobWarningResult(t *testing.T) {
 		SkipSync:               true, // Skip initial sync so we can add the malformed file first
 		SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Execute a pull job - this should process the malformed dashboard and result in warnings
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
@@ -81,7 +81,7 @@ func TestIntegrationProvisioning_JobWarningResult_MissingName(t *testing.T) {
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Execute a pull job - this should process the dashboard and result in a warning
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
@@ -127,7 +127,7 @@ func TestIntegrationProvisioning_JobWarningResult_DashboardRefreshInterval(t *te
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Execute a pull job - this should process the dashboard and result in a warning
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
@@ -175,7 +175,7 @@ func TestIntegrationProvisioning_JobWarningResult_DuplicateName(t *testing.T) {
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Execute a pull job - this should detect the duplicate name and produce a warning
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{

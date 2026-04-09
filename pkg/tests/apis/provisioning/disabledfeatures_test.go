@@ -18,7 +18,7 @@ func TestIntegrationProvisioning_MigrateDisabledByConfiguration(t *testing.T) {
 		Name:   repo,
 		Target: "instance",
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionMigrate,
@@ -52,7 +52,7 @@ func TestIntegrationProvisioning_ExportDisabledByConfiguration(t *testing.T) {
 		Name:   repo,
 		Target: "instance",
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPush,

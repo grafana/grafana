@@ -26,7 +26,7 @@ func TestIntegrationProvisioning_JobPendingDeleteLabel_SkipsExecution(t *testing
 
 	// Create a local repository with one dashboard and run the initial sync so
 	// the resource is present in Grafana.
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:               repoName,
 		Target:             "folder",
 		ExpectedDashboards: 1,

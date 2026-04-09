@@ -23,7 +23,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 	writeToProvisioningPath(t, helper, "teamB/_folder.json", folderMetadataJSON("team-b-uid", "Team B Display"))
 	writeToProvisioningPath(t, helper, "teamC/teamD/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
@@ -113,7 +113,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t
 	writeToProvisioningPath(t, helper, "root/child/grand/.keep", []byte{})
 	writeToProvisioningPath(t, helper, "other/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
@@ -164,7 +164,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MixedLegacy(t *
 	writeToProvisioningPath(t, helper, "metaA/_folder.json", folderMetadataJSON("meta-a-uid", "Meta A"))
 	writeToProvisioningPath(t, helper, "plainB/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
@@ -208,7 +208,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MetaToPlainPare
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 	writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child"))
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
@@ -246,7 +246,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_RootToNested(t 
 	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON("my-uid", "My Folder"))
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
@@ -289,7 +289,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedToRoot(t 
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 	writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child"))
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
@@ -332,7 +332,7 @@ func TestIntegrationProvisioning_FullSync_FolderMovePreservesGeneration(t *testi
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 	writeToProvisioningPath(t, helper, "plain/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
@@ -421,7 +421,7 @@ func TestIntegrationProvisioning_FullSync_FolderMove_NestedToNested_PreservesGen
 	writeToProvisioningPath(t, helper, "parentA/myfolder/_folder.json", folderMetadataJSON("my-uid", "My Folder"))
 	writeToProvisioningPath(t, helper, "parentB/_folder.json", folderMetadataJSON("parent-b-uid", "Parent B"))
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
@@ -480,7 +480,7 @@ func TestIntegrationProvisioning_FullSync_FolderMove_RootToNested_PreservesGener
 	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON("my-uid", "My Folder"))
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
@@ -538,7 +538,7 @@ func TestIntegrationProvisioning_FullSync_FolderMove_NestedToRoot_PreservesGener
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
 	writeToProvisioningPath(t, helper, "parent/myfolder/_folder.json", folderMetadataJSON("my-uid", "My Folder"))
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
@@ -605,7 +605,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveUpdatesChildrenFolders(t *te
 	writeToProvisioningPath(t, helper, "target/_folder.json", folderMetadataJSON("target-uid", "Target"))
 	writeToProvisioningPath(t, helper, "target/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
 		Target:                 "folder",
 		SkipSync:               true,
@@ -649,7 +649,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithUIDChange_NoGenerationPr
 	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON("original-uid", "My Folder"))
 	writeToProvisioningPath(t, helper, "myfolder/.keep", []byte{})
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
 		Target:                 "folder",
 		SkipSync:               true,
@@ -807,7 +807,7 @@ func TestIntegrationProvisioning_FullSync_DashboardMoveInPlace(t *testing.T) {
 	writeToProvisioningPath(t, helper, "folderA/_folder.json", folderMetadataJSON("folder-a-uid", "Folder A"))
 	writeToProvisioningPath(t, helper, "folderB/_folder.json", folderMetadataJSON("folder-b-uid", "Folder B"))
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{

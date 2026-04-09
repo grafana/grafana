@@ -20,12 +20,12 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 	testRepo := common.TestRepo{
 		Name:               repoReadOnly,
 		Target:             "folder",
-		Values:             map[string]any{"Workflows": "[]"},
+		TemplateValues:     common.RepositoryTemplateValues{Workflows: &[]string{}},
 		Copies:             map[string]string{},
 		ExpectedDashboards: 0,
 		ExpectedFolders:    1,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	t.Run("write jobs should be rejected for read-only repositories", func(t *testing.T) {
 		writeJobs := []struct {

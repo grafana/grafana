@@ -26,7 +26,7 @@ func TestIntegrationProvisioning_EmptyRepositoryFileList(t *testing.T) {
 	helper := sharedHelper(t)
 
 	const repo = "empty-files-repo"
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:               repo,
 		Path:               helper.ProvisioningPath,
 		Target:             "instance",
@@ -53,7 +53,7 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 	ctx := context.Background()
 
 	const repo = "delete-test-repo"
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:   repo,
 		Path:   helper.ProvisioningPath,
 		Target: "instance",
@@ -166,7 +166,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := context.Background()
 	repo := "move-test-repo"
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:   repo,
 		Path:   helper.ProvisioningPath,
 		Target: "instance",
@@ -397,7 +397,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 	ctx := context.Background()
 
 	const repo1 = "ownership-repo-1"
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:   repo1,
 		Path:   path.Join(helper.ProvisioningPath, "repo1"),
 		Target: "folder",
@@ -408,7 +408,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 	})
 
 	const repo2 = "ownership-repo-2"
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:   repo2,
 		Path:   path.Join(helper.ProvisioningPath, "repo2"),
 		Target: "folder",
@@ -606,7 +606,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 	ctx := context.Background()
 
 	const repo = "auth-test-repo"
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:   repo,
 		Path:   helper.ProvisioningPath,
 		Target: "instance",
