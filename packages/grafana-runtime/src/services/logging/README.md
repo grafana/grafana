@@ -94,17 +94,20 @@ Empties the entire registry. **Test-only** — throws if `NODE_ENV` is not `test
 Use `mockLogger` from `@grafana/test-utils/unstable` to replace a logger with `jest.fn()` stubs. This prevents tests from hitting the real Faro SDK and lets you assert on log calls.
 
 ````ts
+import { type MonitoringLogger } from '@grafana/runtime';
 import { mockLogger } from '@grafana/test-utils/unstable';
-import { getLogger } from '@grafana/runtime/unstable';
+
+let logger: MonitoringLogger;
 
 beforeEach(() => {
-  mockLogger('grafana/runtime.plugins.meta');
+  logger = mockLogger('grafana/runtime.plugins.meta');
 });
+
 it('should log a warning when something unexpected happens', () => {
   doSomethingThatWarns();
 
-  expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
-    'unexpected thin happened',
+  expect(logger.logWarning).toHaveBeenCalledWith(
+    'unexpected thing happened',
     expect.objectContaining({ type: 'panel' })
   );
 });
@@ -112,8 +115,8 @@ it('should log a warning when something unexpected happens', () => {
 it('should log an error on failure', () => {
   doSomethingThatFails();
 
-  expect(getLogger('grafana/runtime.plugins.meta').logError).toHaveBeenCalledTimes(1);
-  expect(getLogger('rafana/runtime.plugins.meta').logError).toHaveBeenCalledWith(expect.any(Error));
+  expect(logger.logError).toHaveBeenCalledTimes(1);
+  expect(logger.logError).toHaveBeenCalledWith(expect.any(Error));
 });```
 
 > **Note:** `mockLogger` calls `setLogger` under the hood, which throws if called outside of `NODE_ENV=test`.
