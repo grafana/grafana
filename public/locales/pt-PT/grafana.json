@@ -2419,7 +2419,9 @@
       "recipient-notification-fires": "Selecionar quem deve receber uma notificação quando uma regra de alerta for acionada."
     },
     "open-drawer-icon-button": {
-      "details": ""
+      "details": "",
+      "instance-details": "",
+      "rule-details": ""
     },
     "option-customfield": {
       "label-custom-template": "Modelo personalizado",
@@ -3565,6 +3567,7 @@
       }
     },
     "triage": {
+      "clear-filters": "",
       "collapse": "",
       "collapse-all": "",
       "collapse-sidebar": "",
@@ -3581,6 +3584,7 @@
         "no-label": ""
       },
       "instance-details-drawer": {
+        "alert-instance-label": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Detalhes da instância",
@@ -3609,6 +3613,7 @@
           "folder-only": ""
         }
       },
+      "severity-filter-title": "",
       "show-fewer-values": "",
       "state-filter-title": "",
       "state-firing": "",
@@ -4918,6 +4923,9 @@
       "light-theme": "Claro",
       "scopes": "Âmbitos"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "Pesquisar com o Assistente Grafana",
       "message": "Não foram encontrados resultados"
@@ -4993,24 +5001,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Ligar dados à Grafana através de origens de dados, integrações e aplicações",
-          "title": "Adicionar uma nova ligação"
+          "subtitle": "Ligar dados à Grafana através de origens de dados, integrações e aplicações"
         },
         "collector": {
-          "subtitle": "Gerir a configuração da Grafana Alloy, a nossa distribuição do OpenTelemetry Collector",
-          "title": ""
+          "subtitle": "Gerir a configuração da Grafana Alloy, a nossa distribuição do OpenTelemetry Collector"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "Gerir as suas ligações de origem de dados existentes",
-          "title": "Origens de dados"
+          "subtitle": "Gerir as suas ligações de origem de dados existentes"
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "Gerir as suas integrações ativas",
-          "title": "Integrações"
+          "subtitle": "Gerir as suas integrações ativas"
         },
         "private-data-source-connections": {
-          "subtitle": "Gerir as suas ligações de rede privadas para origens de dados",
-          "title": "Private data source connect"
+          "subtitle": "Gerir as suas ligações de rede privadas para origens de dados"
         },
         "subtitle": "Ligue a sua infraestrutura à Grafana Cloud usando origens de dados, integrações e aplicações. Utilize esta página para adicionar e gerir tudo, desde a ingestão de dados até ligações privadas e pipelines de telemetria."
       }
@@ -5070,11 +5082,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Ligar a uma nova origem de dados",
-          "title": "Adicionar uma nova ligação"
+          "subtitle": "Ligar a uma nova origem de dados"
         },
         "data-sources": {
-          "subtitle": "Gerir as suas ligações de origem de dados existentes",
           "title": "Ver origens de dados configuradas"
         },
         "subtitle": "Faça a gestão das suas ligações de origem de dados num só lugar. Use esta página para adicionar uma nova origem de dados ou gerir as suas ligações existentes."
@@ -5124,10 +5134,6 @@
       "view-json-diff": "Ver diferenças JSON para ver todas as alterações"
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "Adicionar novo",
     "alert": {
@@ -5169,6 +5175,14 @@
       "back-button": "Voltar",
       "next-button": "Seguinte",
       "save-button": "Guardar"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "A origem dos dados de destino selecionada tem de exportar um editor de consultas.",
@@ -5235,11 +5249,6 @@
       "transform-required": "Selecione um tipo de transformação",
       "type-label": "Tipo",
       "type-tooltip": "O tipo de transformação que será aplicado aos dados de origem."
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "Executar consulta"
     }
   },
   "dashboard": {
@@ -7689,6 +7698,7 @@
       "placeholder-descriptive-text": "Texto descritivo",
       "placeholder-label-name": "Nome da etiqueta",
       "placeholder-variable-name": "Nome da variável",
+      "run-query": "",
       "text-running-query": "A executar consulta...",
       "title": {
         "delete-variable": "Eliminar variável"
@@ -11399,6 +11409,12 @@
       "show-search": "Pesquisar no resultado dos registos",
       "show-timestamps": "Mostrar registos de data e hora",
       "show-unique-labels": "Mostrar etiquetas únicas",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "Ocultar registos de hora/data",
         "label": "Registos de hora/data",
@@ -12312,6 +12328,8 @@
       "description": "As notificações que recebeu aparecerão aqui",
       "title": "Tem tudo em dia! "
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "Ignorar notificações",
       "title-alert": "Esta página exibe erros e avisos anteriores. Uma vez dispensados, não podem ser recuperados."

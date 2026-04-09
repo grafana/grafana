@@ -458,6 +458,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/playlists',
+      roles: config.featureToggles.playlistsRBAC
+        ? () => contextSrv.evaluatePermission([AccessControlAction.PlaylistsRead])
+        : undefined,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "PlaylistPage"*/ 'app/features/playlist/PlaylistPage')
       ),

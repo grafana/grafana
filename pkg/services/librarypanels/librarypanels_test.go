@@ -519,7 +519,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			LastSeenAt: time.Now(),
 			Permissions: map[int64]map[string][]string{
 				orgID: {
-					dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll},
+					folder.ActionFoldersRead: {folder.ScopeFoldersAll},
 				},
 			},
 		}

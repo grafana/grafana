@@ -78,8 +78,8 @@ func ProvideService(
 
 	supportBundles.RegisterSupportItemCollector(srv.supportBundleCollector())
 
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(srv.getUIDFromLegacyID, srv))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(srv))
+	ac.RegisterScopeAttributeResolver(folder.NewFolderIDScopeResolver(srv.getUIDFromLegacyID, srv))
+	ac.RegisterScopeAttributeResolver(folder.NewFolderUIDScopeResolver(srv))
 
 	k8sHandler := client.NewK8sHandler(
 		request.GetNamespaceMapper(cfg),
@@ -193,10 +193,10 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, q *folder.GetC
 	permissions := q.SignedInUser.GetPermissions()
 	var folderPermissions []string
 	if q.Permission == dashboardaccess.PERMISSION_EDIT {
-		folderPermissions = permissions[dashboards.ActionFoldersWrite]
+		folderPermissions = permissions[folder.ActionFoldersWrite]
 		folderPermissions = append(folderPermissions, permissions[dashboards.ActionDashboardsWrite]...)
 	} else {
-		folderPermissions = permissions[dashboards.ActionFoldersRead]
+		folderPermissions = permissions[folder.ActionFoldersRead]
 		folderPermissions = append(folderPermissions, permissions[dashboards.ActionDashboardsRead]...)
 	}
 
@@ -207,7 +207,7 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, q *folder.GetC
 	nonRootFolders := make([]*folder.Folder, 0)
 	folderUids := make([]string, 0, len(folderPermissions))
 	for _, p := range folderPermissions {
-		if folderUid, found := strings.CutPrefix(p, dashboards.ScopeFoldersPrefix); found {
+		if folderUid, found := strings.CutPrefix(p, folder.ScopeFoldersPrefix); found {
 			if !slices.Contains(folderUids, folderUid) {
 				folderUids = append(folderUids, folderUid)
 			}
@@ -359,19 +359,19 @@ func SplitFullpath(s string) []string {
 
 func toFolderError(err error) error {
 	if errors.Is(err, dashboards.ErrDashboardTitleEmpty) {
-		return dashboards.ErrFolderTitleEmpty
+		return folder.ErrTitleEmpty
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardUpdateAccessDenied) {
-		return dashboards.ErrFolderAccessDenied
+		return folder.ErrAccessDenied
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardWithSameUIDExists) {
-		return dashboards.ErrFolderWithSameUIDExists
+		return folder.ErrSameUIDExists
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardVersionMismatch) {
-		return dashboards.ErrFolderVersionMismatch
+		return folder.ErrVersionMismatch
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardNotFound) {
@@ -406,7 +406,7 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 					OrgRole:          "Admin",
 					IsGrafanaAdmin:   true,
 					IsServiceAccount: true,
-					Permissions:      map[int64]map[string][]string{accesscontrol.GlobalOrgID: {dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}}},
+					Permissions:      map[int64]map[string][]string{accesscontrol.GlobalOrgID: {folder.ActionFoldersRead: {folder.ScopeFoldersAll}}},
 				},
 			})
 			if err != nil {

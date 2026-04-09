@@ -2406,7 +2406,9 @@
       "recipient-notification-fires": "경고 규칙이 발생될 때 알림을 받을 사람을 선택하세요."
     },
     "open-drawer-icon-button": {
-      "details": ""
+      "details": "",
+      "instance-details": "",
+      "rule-details": ""
     },
     "option-customfield": {
       "label-custom-template": "사용자 정의 템플릿",
@@ -3546,6 +3548,7 @@
       }
     },
     "triage": {
+      "clear-filters": "",
       "collapse": "",
       "collapse-all": "",
       "collapse-sidebar": "",
@@ -3562,6 +3565,7 @@
         "no-label": ""
       },
       "instance-details-drawer": {
+        "alert-instance-label": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "인스턴스 세부 정보",
@@ -3590,6 +3594,7 @@
           "folder-only": ""
         }
       },
+      "severity-filter-title": "",
       "show-fewer-values": "",
       "state-filter-title": "",
       "state-firing": "",
@@ -4888,6 +4893,9 @@
       "light-theme": "라이트",
       "scopes": "범위"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "Grafana Assistant로 검색",
       "message": "찾은 결과 없음"
@@ -4963,24 +4971,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "데이터 소스, 통합 기능 및 앱을 통해 데이터를 Grafana에 연결합니다.",
-          "title": "새 연결 추가"
+          "subtitle": "데이터 소스, 통합 기능 및 앱을 통해 데이터를 Grafana에 연결합니다."
         },
         "collector": {
-          "subtitle": "Grafana Alloy(당사의 OpenTelemetry Collector 배포판)의 구성 관리",
-          "title": ""
+          "subtitle": "Grafana Alloy(당사의 OpenTelemetry Collector 배포판)의 구성 관리"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "기존 데이터 소스 연결을 관리합니다.",
-          "title": "데이터 소스"
+          "subtitle": "기존 데이터 소스 연결을 관리합니다."
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "활성 통합을 관리합니다.",
-          "title": "통합"
+          "subtitle": "활성 통합을 관리합니다."
         },
         "private-data-source-connections": {
-          "subtitle": "데이터 소스에 대한 사설망 연결을 관리합니다.",
-          "title": "비공개 데이터 소스 연결"
+          "subtitle": "데이터 소스에 대한 사설망 연결을 관리합니다."
         },
         "subtitle": "Grafana 클라우드에 인프라를 연결하려면 데이터 소스, 통합 기능 및 앱을 사용하세요. 이 페이지를 통해 데이터 수집부터 비공개 연결과 원격 측정 파이프라인에 이르기까지 모든 기능을 추가 및 관리할 수 있습니다."
       }
@@ -5040,11 +5052,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "새 데이터 소스에 연결",
-          "title": "새 연결 추가"
+          "subtitle": "새 데이터 소스에 연결"
         },
         "data-sources": {
-          "subtitle": "기존 데이터 소스 연결을 관리합니다.",
           "title": "구성된 데이터 소스 보기"
         },
         "subtitle": "데이터 소스 연결을 편리하게 한 곳에서 관리하세요. 이 페이지를 사용하여 새로운 데이터 소스를 추가하거나 기존 연결을 관리할 수 있습니다. "
@@ -5094,10 +5104,6 @@
       "view-json-diff": "모든 변경 내용을 보려면 JSON 차이를 확인하세요."
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "새로 추가",
     "alert": {
@@ -5139,6 +5145,14 @@
       "back-button": "뒤로가기",
       "next-button": "다음",
       "save-button": "저장"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "선택한 대상 데이터 소스는 쿼리 편집기를 내보내야 합니다.",
@@ -5205,11 +5219,6 @@
       "transform-required": "변환 유형을 선택하세요.",
       "type-label": "유형",
       "type-tooltip": "소스 데이터에 적용될 변환 유형입니다."
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "쿼리 실행"
     }
   },
   "dashboard": {
@@ -7650,6 +7659,7 @@
       "placeholder-descriptive-text": "설명 텍스트",
       "placeholder-label-name": "라벨 이름",
       "placeholder-variable-name": "변수 이름",
+      "run-query": "",
       "text-running-query": "쿼리 실행 중...",
       "title": {
         "delete-variable": "변수 삭제"
@@ -11336,6 +11346,12 @@
       "show-search": "로그 결과에서 검색",
       "show-timestamps": "타임스탬프 표시",
       "show-unique-labels": "고유 라벨 표시",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "타임스탬프 숨기기",
         "label": "로그 타임스탬프",
@@ -12246,6 +12262,8 @@
       "description": "받은 알림이 여기에 표시됩니다.",
       "title": "모두 확인했습니다!"
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "알림 무시",
       "title-alert": "이 페이지는 과거의 오류와 경고를 표시합니다. 한 번 무시한 경고는 검색할 수 없습니다."

@@ -251,12 +251,12 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		1: accesscontrol.GroupScopesByActionContext(
 			ctx,
 			[]accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersCreate, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionFoldersDelete, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-				{Action: accesscontrol.ActionAlertingRuleDelete, Scope: dashboards.ScopeFoldersAll},
-				{Action: accesscontrol.ActionLibraryPanelsDelete, Scope: dashboards.ScopeFoldersAll},
+				{Action: folder.ActionFoldersCreate, Scope: folder.ScopeFoldersAll},
+				{Action: folder.ActionFoldersWrite, Scope: folder.ScopeFoldersAll},
+				{Action: folder.ActionFoldersDelete, Scope: folder.ScopeFoldersAll},
+				{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersAll},
+				{Action: accesscontrol.ActionAlertingRuleDelete, Scope: folder.ScopeFoldersAll},
+				{Action: accesscontrol.ActionLibraryPanelsDelete, Scope: folder.ScopeFoldersAll},
 			}),
 	}}
 
@@ -308,7 +308,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 					OrgID:        orgID,
 					SignedInUser: noPermUsr,
 				})
-				require.Equal(t, dashboards.ErrFolderAccessDenied, err)
+				require.Equal(t, folder.ErrAccessDenied, err)
 			})
 
 			t.Run("When get folder by uid should return access denied error", func(t *testing.T) {
@@ -317,7 +317,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 					OrgID:        orgID,
 					SignedInUser: noPermUsr,
 				})
-				require.Equal(t, dashboards.ErrFolderAccessDenied, err)
+				require.Equal(t, folder.ErrAccessDenied, err)
 			})
 
 			t.Run("When creating folder should return access denied error", func(t *testing.T) {
@@ -339,7 +339,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 					SignedInUser: noPermUsr,
 				})
 				require.Error(t, err)
-				require.Equal(t, dashboards.ErrFolderAccessDenied, err)
+				require.Equal(t, folder.ErrAccessDenied, err)
 			})
 
 			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
@@ -350,7 +350,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 					SignedInUser:     noPermUsr,
 				})
 				require.Error(t, err)
-				require.Equal(t, dashboards.ErrFolderAccessDenied, err)
+				require.Equal(t, folder.ErrAccessDenied, err)
 			})
 		})
 
@@ -384,7 +384,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 					UID:          "general",
 					SignedInUser: usr,
 				})
-				require.ErrorIs(t, err, dashboards.ErrFolderInvalidUID)
+				require.ErrorIs(t, err, folder.ErrInvalidUID)
 			})
 
 			t.Run("When updating folder should not return access denied error", func(t *testing.T) {

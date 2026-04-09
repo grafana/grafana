@@ -1390,3 +1390,144 @@ func buildJsonDataWithTimeRange(from, to, timezone string) *simplejson.Json {
 		"timezone": timezone,
 	})
 }
+
+func TestSanitizeDataV2(t *testing.T) {
+	t.Run("removes expr, query, rawSql from query specs", func(t *testing.T) {
+		data := simplejson.NewFromAny(map[string]interface{}{
+			"elements": map[string]interface{}{
+				"panel-1": map[string]interface{}{
+					"spec": map[string]interface{}{
+						"data": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"queries": []interface{}{
+									map[string]interface{}{
+										"spec": map[string]interface{}{
+											"query": map[string]interface{}{
+												"spec": map[string]interface{}{
+													"expr":       "go_goroutines{job=\"grafana\"}",
+													"refId":      "A",
+													"datasource": "prometheus",
+												},
+											},
+										},
+									},
+									map[string]interface{}{
+										"spec": map[string]interface{}{
+											"query": map[string]interface{}{
+												"spec": map[string]interface{}{
+													"rawSql": "SELECT * FROM metrics",
+													"refId":  "B",
+													"format": "time_series",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				"panel-2": map[string]interface{}{
+					"spec": map[string]interface{}{
+						"data": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"queries": []interface{}{
+									map[string]interface{}{
+										"spec": map[string]interface{}{
+											"query": map[string]interface{}{
+												"spec": map[string]interface{}{
+													"query": "buckets()",
+													"refId": "A",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		})
+
+		sanitizeDataV2(data)
+
+		elements := data.Get("elements").MustMap()
+
+		panel1Queries := simplejson.NewFromAny(elements["panel-1"]).
+			Get("spec").Get("data").Get("spec").Get("queries").MustArray()
+		require.Len(t, panel1Queries, 2)
+
+		q1spec := simplejson.NewFromAny(panel1Queries[0]).Get("spec").Get("query").Get("spec")
+		assert.Empty(t, q1spec.Get("expr").MustString())
+		assert.Equal(t, "A", q1spec.Get("refId").MustString())
+		assert.Equal(t, "prometheus", q1spec.Get("datasource").MustString())
+
+		q2spec := simplejson.NewFromAny(panel1Queries[1]).Get("spec").Get("query").Get("spec")
+		assert.Empty(t, q2spec.Get("rawSql").MustString())
+		assert.Equal(t, "B", q2spec.Get("refId").MustString())
+		assert.Equal(t, "time_series", q2spec.Get("format").MustString())
+
+		panel2Queries := simplejson.NewFromAny(elements["panel-2"]).
+			Get("spec").Get("data").Get("spec").Get("queries").MustArray()
+		require.Len(t, panel2Queries, 1)
+		q3spec := simplejson.NewFromAny(panel2Queries[0]).Get("spec").Get("query").Get("spec")
+		assert.Empty(t, q3spec.Get("query").MustString())
+		assert.Equal(t, "A", q3spec.Get("refId").MustString())
+	})
+
+	t.Run("does not panic when queries key is missing", func(t *testing.T) {
+		data := simplejson.NewFromAny(map[string]interface{}{
+			"elements": map[string]interface{}{
+				"panel-1": map[string]interface{}{
+					"spec": map[string]interface{}{
+						"data": map[string]interface{}{
+							"spec": map[string]interface{}{},
+						},
+					},
+				},
+			},
+		})
+		require.NotPanics(t, func() { sanitizeDataV2(data) })
+	})
+
+	t.Run("does not panic when spec.query is missing from a query entry", func(t *testing.T) {
+		data := simplejson.NewFromAny(map[string]interface{}{
+			"elements": map[string]interface{}{
+				"panel-1": map[string]interface{}{
+					"spec": map[string]interface{}{
+						"data": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"queries": []interface{}{
+									map[string]interface{}{
+										"spec": map[string]interface{}{},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		})
+		require.NotPanics(t, func() { sanitizeDataV2(data) })
+	})
+}
+
+func TestIsDashboardV2(t *testing.T) {
+	tests := []struct {
+		apiVersion string
+		expected   bool
+	}{
+		{"", false},
+		{"v0alpha1", false},
+		{"v1alpha1", false},
+		{"v2alpha1", true},
+		{"v2beta1", true},
+		{"v3alpha1", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.apiVersion, func(t *testing.T) {
+			assert.Equal(t, tt.expected, isDashboardV2(&dashboards.Dashboard{APIVersion: tt.apiVersion}))
+		})
+	}
+}

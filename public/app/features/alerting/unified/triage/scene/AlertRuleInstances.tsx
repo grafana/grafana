@@ -14,7 +14,7 @@ import { InstanceRow } from '../rows/InstanceRow';
 import { alertRuleInstancesQuery } from './queries';
 import { useQueryFilter } from './utils';
 
-function extractInstancesFromData(series: DataFrame[] | undefined) {
+export function extractInstancesFromData(series: DataFrame[] | undefined) {
   if (!series) {
     return [];
   }
@@ -42,14 +42,15 @@ function extractInstancesFromData(series: DataFrame[] | undefined) {
 type AlertRuleInstancesProps = {
   ruleUID: string;
   depth?: number;
+  groupLabels?: Record<string, string>;
 };
 
-export function AlertRuleInstances({ ruleUID, depth = 0 }: AlertRuleInstancesProps) {
+export function AlertRuleInstances({ ruleUID, depth = 0, groupLabels }: AlertRuleInstancesProps) {
   const { leftColumnWidth } = useWorkbenchContext();
   const [timeRange] = useTimeRange();
   const queryFilter = useQueryFilter();
 
-  const queryRunner = useQueryRunner({ queries: [alertRuleInstancesQuery(ruleUID, queryFilter)] });
+  const queryRunner = useQueryRunner({ queries: [alertRuleInstancesQuery(ruleUID, queryFilter, groupLabels)] });
 
   const isLoading = !queryRunner.isDataReadyToDisplay();
   const { data } = queryRunner.useState();

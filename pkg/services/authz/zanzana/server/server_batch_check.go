@@ -249,8 +249,94 @@ func (s *Server) runGroupResourcePhase(
 	return len(checks), nil
 }
 
-// runFolderPermissionPhase checks folder permission inheritance.
-// This applies to generic resources that support folder-based permissions (like dashboards).
+// --- Dedup batcher: groups identical OpenFGA folder checks so each unique
+// (relation, folder, context) tuple is only checked once. ---
+
+type folderDedupKey struct {
+	relation      string
+	folderIdent   string
+	groupResource string
+}
+
+type dedupGroup struct {
+	check          *openfgav1.BatchCheckItem
+	correlationIDs []string
+}
+
+type dedupBatcher struct {
+	groups []dedupGroup
+	seen   map[folderDedupKey]int // key → index into groups
+}
+
+func newDedupBatcher() *dedupBatcher {
+	return &dedupBatcher{seen: make(map[folderDedupKey]int)}
+}
+
+// add registers a correlation ID for a folder check identified by key.
+// If the key has been seen before, the correlation ID is appended to the
+// existing group and the check is discarded. Otherwise the check is stored
+// and assigned a unique internal correlation ID.
+func (b *dedupBatcher) add(key folderDedupKey, correlationID string, check *openfgav1.BatchCheckItem) {
+	if idx, ok := b.seen[key]; ok {
+		b.groups[idx].correlationIDs = append(b.groups[idx].correlationIDs, correlationID)
+		return
+	}
+	check.CorrelationId = fmt.Sprintf("dedup_%d", len(b.groups))
+	b.seen[key] = len(b.groups)
+	b.groups = append(b.groups, dedupGroup{
+		check:          check,
+		correlationIDs: []string{correlationID},
+	})
+}
+
+func (b *dedupBatcher) checks() []*openfgav1.BatchCheckItem {
+	out := make([]*openfgav1.BatchCheckItem, len(b.groups))
+	for i := range b.groups {
+		out[i] = b.groups[i].check
+	}
+	return out
+}
+
+// resolve fans out OpenFGA results to all batch items that share each check.
+// A correlation ID may appear in multiple groups (e.g. subresource expansion);
+// if ANY group returns allowed the item is allowed. Items that only received
+// errors are resolved with the first error.
+func (b *dedupBatcher) resolve(results map[string]*openfgav1.BatchCheckSingleResult, items map[string]*batchCheckItem) {
+	for i := range b.groups {
+		g := &b.groups[i]
+		result, ok := results[g.check.CorrelationId]
+		if !ok {
+			continue
+		}
+		for _, cid := range g.correlationIDs {
+			item := items[cid]
+			if item.allowed {
+				continue
+			}
+			if result.GetAllowed() {
+				item.allowed = true
+				item.resolved = true
+				item.err = ""
+			} else if err := result.GetError(); err != nil && item.err == "" {
+				item.err = err.GetMessage()
+			}
+		}
+	}
+
+	for i := range b.groups {
+		for _, cid := range b.groups[i].correlationIDs {
+			item := items[cid]
+			if !item.resolved && item.err != "" {
+				item.resolved = true
+			}
+		}
+	}
+}
+
+// --- Phase implementations using dedupBatcher ---
+
+// runFolderPermissionPhase checks folder permission inheritance (e.g. can_get on a folder
+// grants access to all dashboards in that folder). Identical folder checks are deduplicated.
 func (s *Server) runFolderPermissionPhase(
 	ctx context.Context,
 	store *zanzana.StoreInfo,
@@ -258,44 +344,34 @@ func (s *Server) runFolderPermissionPhase(
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
 ) (int, error) {
-	checks := make([]*openfgav1.BatchCheckItem, 0, len(items))
-	checkIDToCorrelation := make(map[string]string, len(items))
+	batcher := newDedupBatcher()
 
 	for _, item := range items {
-		if item.resolved {
+		if item.resolved || !item.resource.IsGeneric() {
 			continue
 		}
-
-		// Only applies to generic resources with folder support
-		if !item.resource.IsGeneric() {
-			continue
-		}
-
 		folderIdent := item.resource.FolderIdent()
 		if folderIdent == "" {
 			continue
 		}
-
-		// Only check folder permission for resources that inherit folder permissions
 		if !isFolderPermissionBasedResource(item.resource.GroupResource()) {
 			continue
 		}
 
-		folderCheckRelation := common.FolderPermissionRelation(item.relation)
-		checkID := fmt.Sprintf("%s_fp", item.correlationID)
-		checkIDToCorrelation[checkID] = item.correlationID
-		checks = append(checks, &openfgav1.BatchCheckItem{
+		relation := common.FolderPermissionRelation(item.relation)
+		key := folderDedupKey{relation: relation, folderIdent: folderIdent, groupResource: item.resource.GroupResource()}
+		batcher.add(key, item.correlationID, &openfgav1.BatchCheckItem{
 			TupleKey: &openfgav1.CheckRequestTupleKey{
 				User:     subject,
-				Relation: folderCheckRelation,
+				Relation: relation,
 				Object:   folderIdent,
 			},
 			ContextualTuples: contextuals,
 			Context:          item.resource.Context(),
-			CorrelationId:    checkID,
 		})
 	}
 
+	checks := batcher.checks()
 	if len(checks) == 0 {
 		return 0, nil
 	}
@@ -305,25 +381,13 @@ func (s *Server) runFolderPermissionPhase(
 		return len(checks), err
 	}
 
-	// Process results
-	for checkID, result := range results {
-		correlationID := checkIDToCorrelation[checkID]
-		item := items[correlationID]
-
-		if err := result.GetError(); err != nil {
-			item.err = err.GetMessage()
-			item.resolved = true
-		} else if result.GetAllowed() {
-			item.allowed = true
-			item.resolved = true
-		}
-	}
-
+	batcher.resolve(results, items)
 	return len(checks), nil
 }
 
-// runFolderSubresourcePhase checks folder subresource access.
-// This handles cases where access is granted via folder subresource relations.
+// runFolderSubresourcePhase checks folder subresource access (e.g. folder_get, folder_set_edit).
+// Each item may expand into multiple relations; identical checks are deduplicated, and an item
+// is allowed if ANY of its expanded checks returns allowed.
 func (s *Server) runFolderSubresourcePhase(
 	ctx context.Context,
 	store *zanzana.StoreInfo,
@@ -331,33 +395,24 @@ func (s *Server) runFolderSubresourcePhase(
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
 ) (int, error) {
-	checks := make([]*openfgav1.BatchCheckItem, 0, len(items))
-	checkIDToCorrelation := make(map[string]string, len(items))
+	batcher := newDedupBatcher()
 
 	for _, item := range items {
-		if item.resolved {
+		if item.resolved || !item.resource.IsGeneric() {
 			continue
 		}
-
-		// Only applies to generic resources
-		if !item.resource.IsGeneric() {
-			continue
-		}
-
 		folderIdent := item.resource.FolderIdent()
 		if folderIdent == "" {
 			continue
 		}
-
 		folderRelation := common.SubresourceRelation(item.relation)
 		if !common.IsSubresourceRelation(folderRelation) {
 			continue
 		}
 
-		for idx, relation := range expandedSubresourcePermissionRelations(folderRelation) {
-			checkID := fmt.Sprintf("%s_fs_%d", item.correlationID, idx)
-			checkIDToCorrelation[checkID] = item.correlationID
-			checks = append(checks, &openfgav1.BatchCheckItem{
+		for _, relation := range expandedSubresourcePermissionRelations(folderRelation) {
+			key := folderDedupKey{relation: relation, folderIdent: folderIdent, groupResource: item.resource.GroupResource()}
+			batcher.add(key, item.correlationID, &openfgav1.BatchCheckItem{
 				TupleKey: &openfgav1.CheckRequestTupleKey{
 					User:     subject,
 					Relation: relation,
@@ -365,11 +420,11 @@ func (s *Server) runFolderSubresourcePhase(
 				},
 				ContextualTuples: contextuals,
 				Context:          item.resource.Context(),
-				CorrelationId:    checkID,
 			})
 		}
 	}
 
+	checks := batcher.checks()
 	if len(checks) == 0 {
 		return 0, nil
 	}
@@ -379,42 +434,7 @@ func (s *Server) runFolderSubresourcePhase(
 		return len(checks), err
 	}
 
-	// Aggregate results per original correlation ID. A single allowed relation
-	// should allow the item; otherwise first OpenFGA error (if any) is surfaced.
-	type relationResult struct {
-		allowed bool
-		err     string
-	}
-	agg := make(map[string]relationResult, len(items))
-
-	for checkID, result := range results {
-		correlationID := checkIDToCorrelation[checkID]
-		cur := agg[correlationID]
-		if cur.allowed {
-			continue
-		}
-		if err := result.GetError(); err != nil {
-			if cur.err == "" {
-				cur.err = err.GetMessage()
-			}
-		} else if result.GetAllowed() {
-			cur.allowed = true
-			cur.err = ""
-		}
-		agg[correlationID] = cur
-	}
-
-	for correlationID, res := range agg {
-		item := items[correlationID]
-		if res.allowed {
-			item.allowed = true
-			item.resolved = true
-		} else if res.err != "" {
-			item.err = res.err
-			item.resolved = true
-		}
-	}
-
+	batcher.resolve(results, items)
 	return len(checks), nil
 }
 
