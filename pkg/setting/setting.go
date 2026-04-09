@@ -535,6 +535,9 @@ type Cfg struct {
 	// Grafana.com SSO API token used for Unified SSO between instances and Grafana.com.
 	GrafanaComSSOAPIToken string
 
+	// PluginInstallToken is the auth token for requests to the Grafana.com /plugins API.
+	PluginInstallToken string
+
 	// Geomap base layer config
 	GeomapDefaultBaseLayerConfig map[string]any
 	GeomapEnableCustomBaseLayers bool
@@ -1658,6 +1661,10 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", grafanaComUrl+"/api")
 	cfg.GrafanaComSSOAPIToken = valueAsString(iniFile.Section("grafana_com"), "sso_api_token", "")
+	// Fall back to sso_api_token when install_token is not explicitly configured.
+	if cfg.PluginInstallToken == "" {
+		cfg.PluginInstallToken = cfg.GrafanaComSSOAPIToken
+	}
 	imageUploadingSection := iniFile.Section("external_image_storage")
 	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
 
