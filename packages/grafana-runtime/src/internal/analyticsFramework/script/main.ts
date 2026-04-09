@@ -5,7 +5,7 @@ import { Project } from 'ts-morph';
 import { findAllEvents } from './findAllEvents.ts';
 import { formatEventsAsMarkdown } from './generateMarkdown.ts';
 
-const DEFINE_FEATURE_EVENTS_PATH = path.resolve('public/app/core/services/echo/Echo.ts');
+const DEFINE_FEATURE_EVENTS_PATH = '@grafana/runtime/internal';
 const SOURCE_FILE_PATTERNS = ['**/*.ts'];
 const OUTPUT_FORMAT = 'markdown';
 

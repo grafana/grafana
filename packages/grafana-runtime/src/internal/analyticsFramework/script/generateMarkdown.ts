@@ -3,6 +3,10 @@ import prettier from 'prettier';
 import type { EventData } from '../types.ts';
 
 const makeMarkdownTable = (properties: Array<Record<string, string | undefined>>): string => {
+  if (properties.length === 0) {
+    return '';
+  }
+
   const keys = Object.keys(properties[0]);
 
   const header = `| ${keys.join(' | ')} |`;
@@ -30,7 +34,7 @@ export const formatEventAsMarkdown = (event: EventData): string => {
       };
     }) ?? [];
 
-  const propertiesTable = event.properties ? makeMarkdownTable(preparedProperties) : '';
+  const propertiesTable = event.properties && event.properties.length > 0 ? makeMarkdownTable(preparedProperties) : '';
 
   const markdownRows = [
     `#### ${event.fullEventName}`,

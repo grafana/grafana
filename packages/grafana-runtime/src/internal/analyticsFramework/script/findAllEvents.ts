@@ -31,7 +31,7 @@ export const findAllEvents = (files: SourceFile[], defineFeatureEventsPath: stri
  */
 const getDefineFeatureEventsLocalName = (sourceFile: SourceFile, defineFeatureEventsPath: string): string | null => {
   const importDecl = sourceFile.getImportDeclaration(
-    (decl) => decl.getModuleSpecifierValue() === '@grafana/runtime/internal'
+    (decl) => decl.getModuleSpecifierValue() === defineFeatureEventsPath
   );
   if (!importDecl) {
     return null;

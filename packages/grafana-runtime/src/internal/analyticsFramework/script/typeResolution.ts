@@ -1,4 +1,4 @@
-import type { JSDoc, Type } from 'ts-morph';
+import { Node, type JSDoc, type Type } from 'ts-morph';
 
 /**
  * Resolves a TypeScript type to a string representation. For example for:
@@ -11,25 +11,17 @@ import type { JSDoc, Type } from 'ts-morph';
 export function resolveType(type: Type): string {
   // If the type is an enum, resolve it to a union of its values
   if (type.isEnum()) {
-    const enumMembers = type.getSymbol()?.getDeclarations()?.[0]?.getChildren() || [];
-
-    const values = enumMembers
-      .filter((member) => member.getKindName() === 'SyntaxList' && member.getText() !== `export`)
-      .map((member) => {
-        const value = member.getText();
-        const stripQuotesAndBackticks = value.replace(/['"`]/g, '').replace(/`/g, '');
-        const splitOnCommaAndReturn = stripQuotesAndBackticks.split(',\n');
-
-        return splitOnCommaAndReturn
-          .map((v) => {
-            const trimmed = v.trim().replace(/,/g, '');
-            const splitOnEquals = trimmed.split('=');
-            return `"${splitOnEquals[1].trim()}"`;
-          })
-          .join(` | `);
-      });
-
-    return values.join(` | `);
+    const enumDecl = type.getSymbol()?.getDeclarations()?.[0];
+    if (!enumDecl || !Node.isEnumDeclaration(enumDecl)) {
+      return type.getText();
+    }
+    return enumDecl
+      .getMembers()
+      .map((m) => {
+        const value = m.getValue();
+        return typeof value === 'string' ? `"${value}"` : String(value);
+      })
+      .join(' | ');
   }
   // If the type is an alias (e.g., `Action`), resolve its declaration
   const aliasSymbol = type.getAliasSymbol();
@@ -40,7 +32,7 @@ export function resolveType(type: Type): string {
     }
   }
 
-  // Step 2: If it's a union type, resolve each member recursively
+  // If it's a union type, resolve each member recursively
   if (type.isUnion()) {
     return type
       .getUnionTypes()
@@ -48,12 +40,10 @@ export function resolveType(type: Type): string {
       .join(' | ');
   }
 
-  // Step 3: If it's a string literal type, return its literal value
+  // If it's a string literal type, return its literal value
   if (type.isStringLiteral()) {
     return `"${type.getLiteralValue()}"`;
   }
-
-  // TODO: handle enums. Would want to represent an enum as a union of its values
 
   return type.getText(); // Default to the type's text representation
 }
