@@ -97,6 +97,8 @@ type DeleteFolderBaseQuery = (args: {
   params: { forceDeleteRules: false };
 }) => Promise<{ data?: unknown; error?: unknown }>;
 
+// TODO: Once backend returns alert rule counts, set this back to true
+// when this is merged https://github.com/grafana/grafana/pull/67259
 const deleteFolderParams = {
   forceDeleteRules: false,
 } as const;
@@ -110,7 +112,9 @@ async function deleteFoldersByUID(
   const folderUIDs = Array.isArray(folderUIDOrUIDs) ? folderUIDOrUIDs : [folderUIDOrUIDs];
   const deletedFolderUIDs: string[] = [];
 
+  // Delete folders sequentially so bulk delete can skip failures while single delete can fail fast.
   for (const folderUID of folderUIDs) {
+    // This also shows the provisioned-folder warning alert.
     if (await isProvisionedFolderCheck(thunkDispatch, folderUID)) {
       continue;
     }
@@ -152,6 +156,7 @@ function handleDeletedFolders({
   }
 
   deletedFoldersState.markDeleted(deletedFolderUIDs);
+  // Deleting a folder also deletes its dashboards, so bust the deleted dashboards cache.
   deletedDashboardsCache.clear();
 
   if (shouldRefetchParentChildren) {
