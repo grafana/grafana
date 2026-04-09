@@ -2811,13 +2811,28 @@ var (
 			Expression:   "false",
 			HideFromDocs: true,
 		},
+		{
+			Name:         "influxDBConfigValidation",
+			Description:  "Enables validation on the InfluxDB data source configuration page",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "clickHouseConfigValidation",
+			Description:  "Enables validation on the ClickHouse data source configuration page",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
 	}
 )
 
 //go:embed toggles_gen.json
 var f embed.FS
 
-// Get the cached feature list (exposed as a k8s resource)
 func GetEmbeddedFeatureList() (featuretoggleapi.FeatureList, error) {
 	features := featuretoggleapi.FeatureList{}
 	body, err := f.ReadFile("toggles_gen.json")
