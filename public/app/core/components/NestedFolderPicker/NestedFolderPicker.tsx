@@ -7,7 +7,7 @@ import * as React from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Alert, floatingUtils, Icon, Input, LoadingBar, Space, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getStatusFromError } from 'app/core/utils/errors';
 import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
@@ -104,13 +104,18 @@ export function NestedFolderPicker({
 
   const lastSearchTimestamp = useRef<number>(0);
 
-  const { teamFolderTreeItems, teamFolderOwnersByUid, error } = useTeamFolders(foldersOpenState, value, onChange);
+  const {
+    teamFolderTreeItems,
+    teamFolderOwnersByUid,
+    error: teamFoldersError,
+  } = useTeamFolders(foldersOpenState, value, onChange);
 
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
     emptyFolders,
     items: browseFlatTree,
     isLoading: isBrowseLoading,
+    error: browseError,
     requestNextPage: fetchFolderPage,
   } = useFoldersQuery({
     isBrowsing,
@@ -258,6 +263,7 @@ export function NestedFolderPicker({
   );
 
   const isLoading = isBrowseLoading || isFetchingSearchResults;
+  const displayError = teamFoldersError || browseError;
 
   const { focusedItemIndex, handleKeyDown } = useTreeInteractions({
     tree: flatTree,
@@ -338,13 +344,19 @@ export function NestedFolderPicker({
         }}
         {...getFloatingProps()}
       >
-        {error && (
+        {displayError && (
           <Alert
             className={styles.error}
             severity="warning"
-            title={t('browse-dashboards.folder-picker.error-title', 'Error loading folders')}
+            title={
+              teamFoldersError
+                ? t('browse-dashboards.folder-picker.teamfolderserror-title', 'Error loading team folders')
+                : t('browse-dashboards.folder-picker.error-title', 'Error loading some folders')
+            }
           >
-            {error.message || error.toString?.() || t('browse-dashboards.folder-picker.unknown-error', 'Unknown error')}
+            {displayError.message ||
+              displayError.toString?.() ||
+              t('browse-dashboards.folder-picker.unknown-error', 'Unknown error')}
           </Alert>
         )}
         {isLoading && (
@@ -438,7 +450,7 @@ function useTeamFolders(
   return {
     teamFolderTreeItems,
     teamFolderOwnersByUid,
-    error,
+    error: error,
   };
 }
 
