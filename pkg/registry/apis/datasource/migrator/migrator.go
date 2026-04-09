@@ -63,6 +63,12 @@ func ProvideDataSourceMigrator(
 					return nil, fmt.Errorf("converting datasource %s (type=%s): %w", ds.UID, ds.Type, err)
 				}
 
+				// AsDataSource does not set APIVersion when the legacy datasource has none.
+				// Set it explicitly so MigrateDataSources can recover the group.
+				if obj.APIVersion == "" {
+					obj.APIVersion = group + "/" + datasourceV0.VERSION
+				}
+
 				// Override Secure with plaintext Create values. AsDataSource sets stub
 				// Name-references from SecureJsonData keys; we replace them with actual
 				// secret creation requests carrying the decrypted plaintext values.
@@ -108,36 +114,38 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 	// Clean up any existing secrets in the MT secret service
 	plugins := map[string]bool{}
 	for _, ds := range dsList {
-		dsType := ds.Spec.GetString("type")
-		if !plugins[dsType] {
+		gv, err := schema.ParseGroupVersion(ds.APIVersion)
+		if err != nil {
+			return fmt.Errorf("invalid apiVersion for datasource %s: %w", ds.Name, err)
+		}
+		apiGroup := gv.Group
+		if !plugins[apiGroup] {
 			if err = m.secretStore.DeleteWhenOwnedByResource(ctx, common.ObjectReference{
-				APIGroup:   dsType + ".datasource.grafana.app",
+				APIGroup:   apiGroup,
 				APIVersion: datasourceV0.VERSION,
 				Namespace:  opts.Namespace,
 				Kind:       "DataSource",
 				Name:       "*",
 				UID:        "*",
 			}, "*"); err != nil {
-				return fmt.Errorf("error deleting secrets for datasource type %s: %w", dsType, err)
+				return fmt.Errorf("error deleting secrets for datasource type %s: %w", apiGroup, err)
 			}
 		}
-		plugins[dsType] = true
+		plugins[apiGroup] = true
 	}
 
 	for count, ds := range dsList {
-		dsType := ds.Spec.GetString("type")
-		group := dsType + ".datasource.grafana.app"
+		gv, err := schema.ParseGroupVersion(ds.APIVersion)
+		if err != nil {
+			return fmt.Errorf("invalid apiVersion for datasource %s: %w", ds.Name, err)
+		}
+		group := gv.Group
 
 		// Shallow-copy the struct so we can set TypeMeta without mutating the slice element.
 		obj := *ds
 		obj.TypeMeta = metav1.TypeMeta{
-			APIVersion: group + "/" + datasourceV0.VERSION,
+			APIVersion: ds.APIVersion,
 			Kind:       "DataSource",
-		}
-
-		gv, err := schema.ParseGroupVersion(obj.APIVersion)
-		if err != nil {
-			return fmt.Errorf("invalid apiVersion: %w", err)
 		}
 
 		if len(ds.Secure) > 0 {
@@ -151,7 +159,7 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 			}
 			secure, err := m.createSecrets(ctx, ds.Secure, objRef)
 			if err != nil {
-				return fmt.Errorf("error create secrets for datasource %s (type=%s): %w, %#v", ds.Name, dsType, err, obj)
+				return fmt.Errorf("error create secrets for datasource %s (group=%s): %w, %#v", ds.Name, group, err, obj)
 			}
 			obj.Secure = secure
 		}
@@ -172,7 +180,7 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 			Action: resourcepb.BulkRequest_ADDED,
 		}
 
-		opts.Progress(count, fmt.Sprintf("%s/%s (%d) %s", dsType, obj.Spec.Title(), len(req.Value), req.Key))
+		opts.Progress(count, fmt.Sprintf("%s/%s (%d) %s", group, obj.Spec.Title(), len(req.Value), req.Key))
 
 		err = stream.Send(req)
 		if err != nil {
