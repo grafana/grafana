@@ -315,6 +315,53 @@ func TestDoubleEqualsExactMatch(t *testing.T) {
 		checkSearchQuery(t, index, newExactQueryByTitle("QUICK BROWN FOX"), []string{"name1"})
 	})
 
+	t.Run("double equals with no values returns error", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Test",
+		})
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "dashboard.grafana.app",
+					Resource:  "dashboards",
+				},
+				Fields: []*resourcepb.Requirement{{Key: "title", Operator: "==", Values: []string{}}},
+			},
+			Limit: 100000,
+		}
+		res, err := index.Search(context.Background(), nil, req, nil, nil)
+		require.NoError(t, err)
+		require.NotNil(t, res.Error)
+		require.Equal(t, int32(400), res.Error.Code)
+		require.Contains(t, res.Error.Message, "unsupported query operation")
+	})
+
+	t.Run("double equals with multiple values returns error", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Test",
+			"name2": "Other",
+		})
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "dashboard.grafana.app",
+					Resource:  "dashboards",
+				},
+				Fields: []*resourcepb.Requirement{{Key: "title", Operator: "==", Values: []string{"Test", "Other"}}},
+			},
+			Limit: 100000,
+		}
+		res, err := index.Search(context.Background(), nil, req, nil, nil)
+		require.NoError(t, err)
+		require.NotNil(t, res.Error)
+		require.Equal(t, int32(400), res.Error.Code)
+		require.Contains(t, res.Error.Message, "unsupported query operation")
+	})
+
 	t.Run("single equals on title keeps fuzzy behavior", func(t *testing.T) {
 		index := newTestDashboardsIndex(t, threshold, 2, noop)
 		indexDocumentsWithTitles(t, index, key, map[string]string{

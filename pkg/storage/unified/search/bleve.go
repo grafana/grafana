@@ -1629,28 +1629,17 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 	useExactTermQuery := slices.Contains(exactTermFields, req.Key) || strings.HasPrefix(req.Key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX)
 	switch selection.Operator(req.Operator) {
 	case selection.DoubleEquals:
-		if len(req.Values) == 0 {
-			return query.NewMatchAllQuery(), nil
-		}
-		// DoubleEquals always does exact matching via TermQuery.
+		// DoubleEquals does exact matching via TermQuery (single value only).
 		// For title, route to the pre-lowered title_phrase field.
-		key := req.Key
-		values := req.Values
-		if key == resource.SEARCH_FIELD_TITLE {
-			key = resource.SEARCH_FIELD_TITLE_PHRASE
-			values = make([]string, len(req.Values))
-			for i, v := range req.Values {
-				values[i] = strings.ToLower(v)
+		if len(req.Values) == 1 {
+			key := req.Key
+			value := req.Values[0]
+			if key == resource.SEARCH_FIELD_TITLE {
+				key = resource.SEARCH_FIELD_TITLE_PHRASE
+				value = strings.ToLower(value)
 			}
+			return newExactTermsQuery(key, value, prefix), nil
 		}
-		if len(values) == 1 {
-			return newExactTermsQuery(key, values[0], prefix), nil
-		}
-		conjuncts := []query.Query{}
-		for _, v := range values {
-			conjuncts = append(conjuncts, newExactTermsQuery(key, v, prefix))
-		}
-		return query.NewConjunctionQuery(conjuncts), nil
 
 	case selection.Equals:
 		if len(req.Values) == 0 {
