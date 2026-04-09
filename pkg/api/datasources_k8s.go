@@ -212,7 +212,7 @@ func (hs *HTTPServer) callK8sDataSourceHealthHandler() web.Handler {
 			return
 		}
 
-		conns, err := hs.dsConnectionClient.GetConnectionByUID(c, dsUID) //nolint:staticcheck
+		conns, err := hs.dsConnectionClient.GetConnectionByUID(c.Req.Context(), c.OrgID, dsUID) //nolint:staticcheck
 		if err != nil {
 			if strings.Contains(err.Error(), "not found") {
 				response.Error(http.StatusNotFound, "Data source not found", nil).WriteTo(c)
