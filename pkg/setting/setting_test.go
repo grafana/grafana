@@ -380,6 +380,25 @@ func TestLoadingSettings(t *testing.T) {
 		require.Equal(t, "https://grafana.com", cfg.GrafanaComURL)
 		require.Equal(t, "https://grafana.com/api", cfg.GrafanaComAPIURL)
 	})
+
+	t.Run("PluginInstallToken falls back to sso_api_token when install_token is not set", func(t *testing.T) {
+		t.Setenv("GF_GRAFANA_COM_SSO_API_TOKEN", "sso-token")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.NoError(t, err)
+		require.Equal(t, "sso-token", cfg.PluginInstallToken)
+	})
+
+	t.Run("PluginInstallToken uses install_token when explicitly configured", func(t *testing.T) {
+		t.Setenv("GF_GRAFANA_COM_SSO_API_TOKEN", "sso-token")
+		t.Setenv("GF_PLUGINS_INSTALL_TOKEN", "dedicated-token")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.NoError(t, err)
+		require.Equal(t, "dedicated-token", cfg.PluginInstallToken)
+	})
 }
 
 func TestParseAppURLAndSubURL(t *testing.T) {
