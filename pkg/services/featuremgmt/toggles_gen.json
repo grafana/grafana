@@ -1785,6 +1785,19 @@
     },
     {
       "metadata": {
+        "name": "datasourcesApiServerEnableHealthEndpointRedirect",
+        "resourceVersion": "1774543694579",
+        "creationTimestamp": "2026-03-26T16:48:14Z"
+      },
+      "spec": {
+        "description": "Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourcesApiServerEnableResourceEndpoint",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"

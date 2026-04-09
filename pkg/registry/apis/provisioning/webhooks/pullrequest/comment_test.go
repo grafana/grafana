@@ -31,9 +31,15 @@ func TestGenerateComment(t *testing.T) {
 		Name  string
 		Input changeInfo
 	}{
-		{"no changes", changeInfo{}},
+		{"no changes", changeInfo{
+			GrafanaBaseURL:  "http://host/",
+			RepositoryName:  "my-repo",
+			RepositoryTitle: "My Repo",
+		}},
 		{"new dashboard", changeInfo{
-			GrafanaBaseURL: "http://host/",
+			GrafanaBaseURL:  "http://host/",
+			RepositoryName:  "my-repo",
+			RepositoryTitle: "My Repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -50,7 +56,9 @@ func TestGenerateComment(t *testing.T) {
 			},
 		}},
 		{"update dashboard", changeInfo{
-			GrafanaBaseURL: "http://host/",
+			GrafanaBaseURL:  "http://host/",
+			RepositoryName:  "my-repo",
+			RepositoryTitle: "My Repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -70,7 +78,9 @@ func TestGenerateComment(t *testing.T) {
 			},
 		}},
 		{"update dashboard missing renderer", changeInfo{
-			GrafanaBaseURL: "http://host/",
+			GrafanaBaseURL:  "http://host/",
+			RepositoryName:  "my-repo",
+			RepositoryTitle: "My Repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -88,8 +98,10 @@ func TestGenerateComment(t *testing.T) {
 			MissingImageRenderer: true,
 		}},
 		{"multiple files", changeInfo{
-			GrafanaBaseURL: "http://host/",
-			SkippedFiles:   5,
+			GrafanaBaseURL:  "http://host/",
+			RepositoryName:  "my-repo",
+			RepositoryTitle: "My Repo",
+			SkippedFiles:    5,
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -149,7 +161,9 @@ func TestCommenter_ShowImageRendererNote(t *testing.T) {
 	t.Run("note appears when showImageRendererNote is true", func(t *testing.T) {
 		repo := NewMockPullRequestRepo(t)
 		info := changeInfo{
-			GrafanaBaseURL: "http://host/",
+			GrafanaBaseURL:  "http://host/",
+			RepositoryName:  "my-repo",
+			RepositoryTitle: "My Repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -183,7 +197,9 @@ func TestCommenter_ShowImageRendererNote(t *testing.T) {
 	t.Run("note does not appear when showImageRendererNote is false", func(t *testing.T) {
 		repo := NewMockPullRequestRepo(t)
 		info := changeInfo{
-			GrafanaBaseURL: "http://host/",
+			GrafanaBaseURL:  "http://host/",
+			RepositoryName:  "my-repo",
+			RepositoryTitle: "My Repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{

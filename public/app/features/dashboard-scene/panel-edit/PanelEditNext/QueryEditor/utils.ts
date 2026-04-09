@@ -4,7 +4,7 @@ import { type CustomTransformerDefinition } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 
-import { getAlertStateColor, getQueryEditorColors, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../constants';
+import { getAlertStateColor, getQueryEditorTypeConfig, QueryEditorType } from '../constants';
 
 import { type PendingExpression, type PendingTransformation } from './QueryEditorContext';
 import { type AlertRule, type Transformation } from './types';
@@ -85,13 +85,15 @@ export function getEditorBorderColor({
   isError?: boolean;
 }): string {
   if (isError) {
-    return getQueryEditorColors(theme).error;
+    return theme.colors.error.border;
   }
 
   if (editorType === QueryEditorType.Alert && alertState) {
     return getAlertStateColor(theme, alertState);
   }
-  return QUERY_EDITOR_TYPE_CONFIG[editorType].color;
+
+  const typeConfig = getQueryEditorTypeConfig(theme);
+  return typeConfig[editorType].color;
 }
 
 export interface TransformerCategoryOption {

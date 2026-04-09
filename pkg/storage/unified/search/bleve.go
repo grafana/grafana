@@ -18,7 +18,6 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/blevesearch/bleve/v2"
-	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/blevesearch/bleve/v2/search"
@@ -1296,17 +1295,13 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 			if len(queryFields) == 0 {
 				queryFields = []*resourcepb.ResourceSearchRequest_QueryField{
 					{
-						Name:  resource.SEARCH_FIELD_TITLE,
-						Type:  resourcepb.QueryFieldType_KEYWORD,
-						Boost: 10, // exact match -- includes ngrams! If they lived on their own field, we could score them differently
-					}, {
-						Name:  resource.SEARCH_FIELD_TITLE,
-						Type:  resourcepb.QueryFieldType_TEXT,
-						Boost: 2, // standard analyzer (with ngrams!)
-					}, {
 						Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
+						Type:  resourcepb.QueryFieldType_KEYWORD,
+						Boost: 10, // exact title match (case-insensitive via pre-lowered title_phrase)
+					}, {
+						Name:  resource.SEARCH_FIELD_TITLE,
 						Type:  resourcepb.QueryFieldType_TEXT,
-						Boost: 5, // standard analyzer
+						Boost: 2, // standard analyzer (word-level matching with ngrams)
 					},
 				}
 			}
@@ -1322,10 +1317,9 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 					disjoin.AddQuery(q)
 
 				case resourcepb.QueryFieldType_KEYWORD:
-					q := bleve.NewMatchQuery(req.Query)
+					q := bleve.NewTermQuery(strings.ToLower(req.Query))
 					q.SetBoost(float64(field.Boost))
 					q.SetField(field.Name)
-					q.Analyzer = keyword.Name // don't analyze the query input - treat it as a single token
 					disjoin.AddQuery(q)
 
 				case resourcepb.QueryFieldType_PHRASE:
@@ -1634,7 +1628,20 @@ var exactTermFields = []string{
 func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, *resourcepb.ErrorResult) {
 	useExactTermQuery := slices.Contains(exactTermFields, req.Key) || strings.HasPrefix(req.Key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX)
 	switch selection.Operator(req.Operator) {
-	case selection.Equals, selection.DoubleEquals:
+	case selection.DoubleEquals:
+		// DoubleEquals does exact matching via TermQuery (single value only).
+		// For title, route to the pre-lowered title_phrase field.
+		if len(req.Values) == 1 {
+			key := req.Key
+			value := req.Values[0]
+			if key == resource.SEARCH_FIELD_TITLE {
+				key = resource.SEARCH_FIELD_TITLE_PHRASE
+				value = strings.ToLower(value)
+			}
+			return newExactTermsQuery(key, value, prefix), nil
+		}
+
+	case selection.Equals:
 		if len(req.Values) == 0 {
 			return query.NewMatchAllQuery(), nil
 		}
