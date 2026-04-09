@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import { type FormEvent, type KeyboardEvent, useCallback, useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useId, useState } from 'react';
+import { useForm } from 'react-hook-form';
 
 import {
   type DateTime,
@@ -39,15 +40,24 @@ interface Props {
   weekStart?: WeekStart;
 }
 
-interface InputState {
-  value: string;
-  invalid: boolean;
-  errorMessage: string;
+interface FormState {
+  from: string;
+  to: string;
 }
 
 const ERROR_MESSAGES = {
-  default: () => t('time-picker.range-content.default-error', 'Please enter a past date or "{{now}}"', { now: 'now' }),
-  range: () => t('time-picker.range-content.range-error', '"From" can\'t be after "To"'),
+  required: () => t('time-picker.range-content.required-error', 'This field is required'),
+  default: () =>
+    t(
+      'time-picker.range-content.default-error',
+      'Enter a date ({{dateExample}}) or relative time ({{relativeTimeExample1}}, {{relativeTimeExample2}})',
+      {
+        dateExample: 'YYYY-MM-DD HH:mm:ss',
+        relativeTimeExample1: 'now',
+        relativeTimeExample2: 'now-1h',
+      }
+    ),
+  range: () => t('time-picker.range-content.range-error', '"From" date must be before "To" date'),
 };
 
 export const TimeRangeContent = (props: Props) => {
@@ -61,73 +71,53 @@ export const TimeRangeContent = (props: Props) => {
     onError,
     weekStart,
   } = props;
-  const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone);
   const style = useStyles2(getStyles);
-
-  const [from, setFrom] = useState<InputState>(fromValue);
-  const [to, setTo] = useState<InputState>(toValue);
   const [isOpen, setOpen] = useState(false);
+
+  const {
+    handleSubmit,
+    register,
+    formState: { errors, isValid: formValid },
+    setValue,
+    getValues,
+  } = useForm<FormState>({
+    defaultValues: {
+      from: valueAsString(value.raw.from, timeZone),
+      to: valueAsString(value.raw.to, timeZone),
+    },
+  });
 
   const fromFieldId = useId();
   const toFieldId = useId();
 
   // Synchronize internal state with external value
   useEffect(() => {
-    const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone);
-    setFrom(fromValue);
-    setTo(toValue);
-  }, [value.raw.from, value.raw.to, timeZone]);
+    setValue('from', valueAsString(value.raw.from, timeZone));
+    setValue('to', valueAsString(value.raw.to, timeZone));
+  }, [value.raw.from, value.raw.to, setValue, timeZone]);
 
-  const onOpen = useCallback(
-    (event: FormEvent<HTMLElement>) => {
-      event.preventDefault();
-      setOpen(true);
-    },
-    [setOpen]
-  );
+  const onOpen = () => setOpen(true);
 
   const onApply = useCallback(() => {
-    if (to.invalid || from.invalid) {
-      // TODO do we want this?
-      if (from.invalid) {
-        document.getElementById(fromFieldId)?.focus();
-      } else if (to.invalid) {
-        document.getElementById(toFieldId)?.focus();
-      }
-
+    if (!formValid) {
       return;
     }
+    const from = getValues('from');
+    const to = getValues('to');
 
-    const raw: RawTimeRange = { from: from.value, to: to.value };
+    const raw: RawTimeRange = { from, to };
     const timeRange = rangeUtil.convertRawToRange(raw, timeZone, fiscalYearStartMonth, commonFormat);
 
     onApplyFromProps(timeRange);
-  }, [
-    to.invalid,
-    to.value,
-    from.invalid,
-    from.value,
-    timeZone,
-    fiscalYearStartMonth,
-    onApplyFromProps,
-    fromFieldId,
-    toFieldId,
-  ]);
+  }, [timeZone, fiscalYearStartMonth, onApplyFromProps, getValues, formValid]);
 
   const onChange = useCallback(
     (from: DateTime | string, to: DateTime | string) => {
-      const [fromValue, toValue] = valueToState(from, to, timeZone);
-      setFrom(fromValue);
-      setTo(toValue);
+      setValue('from', valueAsString(from, timeZone));
+      setValue('to', valueAsString(to, timeZone));
     },
-    [timeZone]
+    [setValue, timeZone]
   );
-
-  const submitOnEnter = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      onApply();
-    }
-  };
 
   const onCopy = () => {
     const rawSource: RawTimeRange = value.raw;
@@ -148,9 +138,8 @@ export const TimeRangeContent = (props: Props) => {
       return;
     }
 
-    const [fromValue, toValue] = valueToState(range.from, range.to, timeZone);
-    setFrom(fromValue);
-    setTo(toValue);
+    setValue('from', valueAsString(range.from, timeZone));
+    setValue('to', valueAsString(range.to, timeZone));
   };
 
   const fiscalYear = rangeUtil.convertRawToRange({ from: 'now/fy', to: 'now/fy' }, timeZone, fiscalYearStartMonth);
@@ -182,35 +171,62 @@ export const TimeRangeContent = (props: Props) => {
   );
 
   return (
-    <div>
+    <form onSubmit={handleSubmit(onApply)}>
       <div className={style.fieldContainer}>
         <Field
           label={t('time-picker.range-content.from-input', 'From')}
-          invalid={from.invalid}
-          error={from.errorMessage}
+          invalid={!!errors.from}
+          error={errors.from?.message}
         >
           <Input
+            {...register('from', {
+              required: ERROR_MESSAGES.required(),
+
+              validate: (value, formValues) => {
+                if (!isValid(value, false, timeZone)) {
+                  return ERROR_MESSAGES.default();
+                }
+                if (
+                  !!formValues.to &&
+                  isValid(formValues.to, true, timeZone) &&
+                  isRangeInvalid(value, formValues.to, timeZone)
+                ) {
+                  return ERROR_MESSAGES.range();
+                }
+                return true;
+              },
+            })}
             id={fromFieldId}
             onClick={(event) => event.stopPropagation()}
-            onChange={(event) => onChange(event.currentTarget.value, to.value)}
             addonAfter={icon}
-            onKeyDown={submitOnEnter}
             data-testid={selectors.components.TimePicker.fromField}
-            value={from.value}
           />
         </Field>
         {fyTooltip}
       </div>
       <div className={style.fieldContainer}>
-        <Field label={t('time-picker.range-content.to-input', 'To')} invalid={to.invalid} error={to.errorMessage}>
+        <Field label={t('time-picker.range-content.to-input', 'To')} invalid={!!errors.to} error={errors.to?.message}>
           <Input
+            {...register('to', {
+              required: ERROR_MESSAGES.required(),
+              validate: (value, formValues) => {
+                if (!isValid(value, true, timeZone)) {
+                  return ERROR_MESSAGES.default();
+                }
+                if (
+                  !!formValues.from &&
+                  isValid(formValues.from, false, timeZone) &&
+                  isRangeInvalid(formValues.from, value, timeZone)
+                ) {
+                  return ERROR_MESSAGES.range();
+                }
+                return true;
+              },
+            })}
             id={toFieldId}
             onClick={(event) => event.stopPropagation()}
-            onChange={(event) => onChange(from.value, event.currentTarget.value)}
             addonAfter={icon}
-            onKeyDown={submitOnEnter}
             data-testid={selectors.components.TimePicker.toField}
-            value={to.value}
           />
         </Field>
         {fyTooltip}
@@ -232,7 +248,7 @@ export const TimeRangeContent = (props: Props) => {
           type="button"
           onClick={onPaste}
         />
-        <Button data-testid={selectors.components.TimePicker.applyTimeRange} type="button" onClick={onApply}>
+        <Button data-testid={selectors.components.TimePicker.applyTimeRange} type="submit" onClick={onApply}>
           <Trans i18nKey="time-picker.range-content.apply-button">Apply time range</Trans>
         </Button>
       </div>
@@ -240,8 +256,8 @@ export const TimeRangeContent = (props: Props) => {
       <TimePickerCalendar
         isFullscreen={isFullscreen}
         isOpen={isOpen}
-        from={dateTimeParse(from.value, { timeZone })}
-        to={dateTimeParse(to.value, { timeZone })}
+        from={dateTimeParse(getValues('from'), { timeZone })}
+        to={dateTimeParse(getValues('to'), { timeZone })}
         onApply={onApply}
         onClose={() => setOpen(false)}
         onChange={onChange}
@@ -249,7 +265,7 @@ export const TimeRangeContent = (props: Props) => {
         isReversed={isReversed}
         weekStart={weekStart}
       />
-    </div>
+    </form>
   );
 };
 
@@ -259,28 +275,6 @@ function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
   const valid = timeRange.from.isSame(timeRange.to) || timeRange.from.isBefore(timeRange.to);
 
   return !valid;
-}
-
-function valueToState(
-  rawFrom: DateTime | string,
-  rawTo: DateTime | string,
-  timeZone?: TimeZone
-): [InputState, InputState] {
-  const fromValue = valueAsString(rawFrom, timeZone);
-  const toValue = valueAsString(rawTo, timeZone);
-  const fromInvalid = !isValid(fromValue, false, timeZone);
-  const toInvalid = !isValid(toValue, true, timeZone);
-  // If "To" is invalid, we should not check the range anyways
-  const rangeInvalid = isRangeInvalid(fromValue, toValue, timeZone) && !toInvalid;
-
-  return [
-    {
-      value: fromValue,
-      invalid: fromInvalid || rangeInvalid,
-      errorMessage: rangeInvalid && !fromInvalid ? ERROR_MESSAGES.range() : ERROR_MESSAGES.default(),
-    },
-    { value: toValue, invalid: toInvalid, errorMessage: ERROR_MESSAGES.default() },
-  ];
 }
 
 function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {

@@ -28,7 +28,7 @@ export const FieldValidationMessage = ({
   const cssName = cx(horizontal ? styles.horizontal : styles.vertical, className);
 
   return (
-    <div id={id} role="alert" className={cssName}>
+    <div id={id} role="alert" aria-live="polite" className={cssName}>
       <Icon className={styles.fieldValidationMessageIcon} name="exclamation-circle" />
       {children}
     </div>

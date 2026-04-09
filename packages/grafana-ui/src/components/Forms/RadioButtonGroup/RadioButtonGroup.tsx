@@ -81,6 +81,7 @@ export function RadioButtonGroup<T>({
     <div
       {...rest}
       role="radiogroup"
+      aria-invalid={!!invalid}
       aria-label={ariaLabel}
       className={cx(styles.radioGroup, fullWidth && styles.fullWidth, invalid && styles.invalid, className)}
     >

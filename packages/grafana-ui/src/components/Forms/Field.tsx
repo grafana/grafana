@@ -11,9 +11,11 @@ import { FieldValidationMessage } from './FieldValidationMessage';
 import { Label, getLabelStyles } from './Label';
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
 
+type ChildProps = Record<string, unknown>;
+
 export interface FieldProps extends HTMLAttributes<HTMLElement> {
   /** Form input element, i.e Input or Switch */
-  children: React.ReactElement<Record<string, unknown>>;
+  children: React.ReactElement<ChildProps>;
   /** Label for the field */
   label?: React.ReactNode;
   /** Description of the field */
@@ -95,9 +97,8 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
       }
     }
 
-    const childProps = deleteUndefinedProps({ invalid, disabled, loading });
-    if (invalid) {
-      childProps['aria-invalid'] = true;
+    const childProps: ChildProps = deleteUndefinedProps({ invalid, disabled, loading });
+    if (invalid && error) {
       // this should probably use aria-errormessage, but seems like voiceover still doesn't support that...
       childProps['aria-describedby'] = errorId;
     }
