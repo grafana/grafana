@@ -2805,7 +2805,7 @@ var (
 		},
 		{
 			Name:            "kubernetesQueryCachingRedirect",
-			Description:     "Redirect query cache config reads from legacy storage to K8s API in the caching handler",
+			Description:     "Redirect caching service cache config reads from legacy storage to K8s API",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaOperatorExperienceSquad,
 			Expression:      "false",

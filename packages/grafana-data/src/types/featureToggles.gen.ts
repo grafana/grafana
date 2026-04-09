@@ -1767,7 +1767,7 @@ export interface FeatureToggles {
   */
   cacheConfigUnifiedStorageMigration?: boolean;
   /**
-  * Redirect query cache config reads from legacy storage to K8s API in the caching handler
+  * Redirect caching service cache config reads from legacy storage to K8s API
   * @default false
   */
   kubernetesQueryCachingRedirect?: boolean;
