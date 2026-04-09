@@ -121,29 +121,35 @@ describe('browseDashboardsAPI', () => {
 
     const getFolderSpy = jest.fn();
     const deleteFolderSpy = jest.fn();
+    const invalidateQuotaUsageSpy = jest.spyOn(quotasAPI, 'invalidateQuotaUsage');
 
-    server.use(
-      http.get('/api/folders/folder-1', () => {
-        getFolderSpy();
-        return HttpResponse.json({ uid: 'folder-1' });
-      }),
-      http.delete('/api/folders/folder-1', () => {
-        deleteFolderSpy();
-        return HttpResponse.json({});
-      })
-    );
+    try {
+      server.use(
+        http.get('/api/folders/folder-1', () => {
+          getFolderSpy();
+          return HttpResponse.json({ uid: 'folder-1' });
+        }),
+        http.delete('/api/folders/folder-1', () => {
+          deleteFolderSpy();
+          return HttpResponse.json({});
+        })
+      );
 
-    const subscription = store.dispatch(browseDashboardsAPI.endpoints.getFolder.initiate(folderQueryArg));
-    await subscription;
-    await store.dispatch(
-      browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
-    );
+      const subscription = store.dispatch(browseDashboardsAPI.endpoints.getFolder.initiate(folderQueryArg));
+      await subscription;
+      await store.dispatch(
+        browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
+      );
 
-    expect(getFolderSpy).toHaveBeenCalledTimes(1);
-    expect(deleteFolderSpy).toHaveBeenCalledTimes(1);
-    expect(deletedFoldersState.isDeleted('folder-1')).toBe(true);
+      expect(getFolderSpy).toHaveBeenCalledTimes(1);
+      expect(deleteFolderSpy).toHaveBeenCalledTimes(1);
+      expect(invalidateQuotaUsageSpy).toHaveBeenCalledTimes(1);
+      expect(deletedFoldersState.isDeleted('folder-1')).toBe(true);
 
-    subscription.unsubscribe();
+      subscription.unsubscribe();
+    } finally {
+      invalidateQuotaUsageSpy.mockRestore();
+    }
   });
 
   it('does not check whether a single delete target is provisioned before deleting it', async () => {

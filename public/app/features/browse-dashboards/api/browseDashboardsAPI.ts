@@ -218,6 +218,7 @@ export const browseDashboardsAPI = createApi({
             parentUID: parentUid,
             shouldRefetchParentChildren: true,
           });
+          invalidateQuotaUsage(dispatch);
         } catch {
           // Error handled by mutation caller
         }
