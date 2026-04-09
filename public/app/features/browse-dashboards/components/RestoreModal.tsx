@@ -1,17 +1,18 @@
-import { useState } from 'react';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { useCallback, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, Field, Space, Text } from '@grafana/ui';
 
 import { FolderPicker } from '../../../core/components/Select/FolderPicker';
+import { useGetFolderQuery } from '../api/browseDashboardsAPI';
 
 export interface RestoreModalProps {
-  isOpen: boolean;
   onConfirm: (restoreTarget: string) => Promise<void>;
   onDismiss: () => void;
   selectedDashboards: string[];
-  dashboardOrigin: string[];
+  originCandidate?: string;
   isLoading: boolean;
 }
 
@@ -19,19 +20,34 @@ export const RestoreModal = ({
   onConfirm,
   onDismiss,
   selectedDashboards,
-  dashboardOrigin,
+  originCandidate,
   isLoading,
   ...props
 }: RestoreModalProps) => {
-  const [restoreTarget, setRestoreTarget] = useState<string | undefined>(() => {
-    // Preselect the restore target and therefore enable the confirm button if all selected dashboards come from the same folder
-    return dashboardOrigin.length > 0 &&
-      dashboardOrigin.every((originalLocation) => originalLocation === dashboardOrigin[0])
-      ? dashboardOrigin[0]
-      : undefined;
-  });
-
+  const [manualTarget, setManualTarget] = useState<string | undefined | null>(null);
   const numberOfDashboards = selectedDashboards.length;
+  const shouldValidateOrigin = originCandidate !== undefined && originCandidate !== '';
+  const originValidation = useGetFolderQuery(
+    shouldValidateOrigin
+      ? {
+          folderUID: originCandidate,
+          accesscontrol: true,
+          isLegacyCall: Boolean(config.featureToggles.foldersAppPlatformAPI),
+        }
+      : skipToken,
+    { refetchOnMountOrArgChange: true }
+  );
+  const autoTarget =
+    originCandidate === ''
+      ? ''
+      : shouldValidateOrigin && originValidation.isSuccess && !originValidation.isFetching
+        ? originCandidate
+        : undefined;
+  const restoreTarget = manualTarget === null ? autoTarget : manualTarget;
+
+  const onTargetChange = useCallback((folderUID: string | undefined) => {
+    setManualTarget(folderUID);
+  }, []);
 
   const onRestore = async () => {
     reportInteraction('grafana_restore_confirm_clicked', {
@@ -63,7 +79,7 @@ export const RestoreModal = ({
           <Space v={1} />
           {/* Field wrapper resets font-size to 14px, preventing cascade from parent Text components */}
           <Field noMargin>
-            <FolderPicker onChange={setRestoreTarget} value={restoreTarget} />
+            <FolderPicker onChange={onTargetChange} value={restoreTarget} />
           </Field>
         </>
       }
@@ -73,6 +89,7 @@ export const RestoreModal = ({
           : t('recently-deleted.restore-modal.restore-button', 'Restore')
       }
       confirmButtonVariant="primary"
+      isOpen
       onDismiss={onDismiss}
       onConfirm={onRestore}
       title={t('recently-deleted.restore-modal.title', 'Restore Dashboards')}
