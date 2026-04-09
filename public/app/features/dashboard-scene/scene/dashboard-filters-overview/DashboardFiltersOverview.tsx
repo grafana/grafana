@@ -5,7 +5,6 @@ import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
 import { type AdHocFiltersVariable, type GroupByVariable } from '@grafana/scenes';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
@@ -146,13 +145,9 @@ export const DashboardFiltersOverview = ({
       </div>
 
       <Footer
-        onApply={() => {
-          actions.applyChanges();
-          reportInteraction('grafana_unified_drilldown_filters_overview_applied', { action: 'apply' });
-        }}
+        onApply={actions.applyChanges}
         onApplyAndClose={() => {
           actions.applyChanges();
-          reportInteraction('grafana_unified_drilldown_filters_overview_applied', { action: 'apply_and_close' });
           onClose();
         }}
         onClose={onClose}
