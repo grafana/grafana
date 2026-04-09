@@ -82,7 +82,7 @@ export const QuickAdd = ({}: Props) => {
         return (
           <Fragment key={group.parentId}>
             {groupIdx > 0 && <Menu.Divider />}
-            <Menu.Group label={group.parentText}>
+            <Menu.Group label={group.parentText || undefined}>
               {group.items.map((item) => {
                 return (
                   <Menu.Item

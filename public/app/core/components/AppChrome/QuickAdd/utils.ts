@@ -21,21 +21,29 @@ export function findCreateActionGroups(navTree: NavModelItem[]): CreateActionGro
   return Array.from(groupMap.values());
 }
 
+/**
+ * Recursively walks the nav tree, collecting items marked with `isCreateAction`
+ * into groups keyed by their parent node. Top-level items (no parent) are placed
+ * in an ungrouped bucket with an empty key, which renders without a group header.
+ */
 function collectCreateActions(
   items: NavModelItem[],
   groupMap: Map<string, CreateActionGroup>,
   parent: NavModelItem | undefined
 ) {
   for (const navItem of items) {
-    if (navItem.isCreateAction && parent) {
-      const key = parent.id ?? parent.text;
+    if (navItem.isCreateAction) {
+      // Use parent id as group key; empty string for top-level (ungrouped) items
+      const key = parent ? (parent.id ?? parent.text) : '';
       let group = groupMap.get(key);
       if (!group) {
-        group = { parentId: key, parentText: parent.text, items: [] };
+        // parentText is empty for ungrouped items, which suppresses the Menu.Group label
+        group = { parentId: key, parentText: parent?.text ?? '', items: [] };
         groupMap.set(key, group);
       }
       group.items.push(navItem);
     }
+    // Recurse into children, passing the current node as the new parent
     if (navItem.children) {
       collectCreateActions(navItem.children, groupMap, navItem);
     }
