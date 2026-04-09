@@ -91,8 +91,7 @@ For more information on the panel editor, refer to the [Panel editor documentati
 This procedure uses dashboard variables and templates to allow you to enter trace IDs which can then be visualized. You'll use a variable called `traceId` and add it as a template query.
 
 1. From your Grafana instance, do one of the following:
-
-   - On a new dashboard:  Click or drag a panel onto the dashboard.
+   - On a new dashboard: Click or drag a panel onto the dashboard.
    - On an existing dashboard: Click **Edit** in the top-right corner, click the **Add new element** icon, and then click or drag a panel onto the dashboard.
 
 1. Click **Configure visualization** to open panel edit mode.

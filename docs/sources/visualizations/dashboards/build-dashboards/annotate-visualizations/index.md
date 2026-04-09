@@ -176,7 +176,7 @@ To confirm if the built-in query is enabled, take the following steps:
 1. Select the **Annotations & Alerts (Built-in query)**.
 1. Check if the **Enabled** checkbox is selected.
 
-    If you don't want annotations to be fetched and drawn, clear the checkbox.
+   If you don't want annotations to be fetched and drawn, clear the checkbox.
 
 1. Click **Save**.
 1. Enter an optional description of your changes and click **Save**.
