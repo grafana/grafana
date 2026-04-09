@@ -1722,6 +1722,7 @@ func membershipServerHandlerWithPermission(t *testing.T, perm iamv0alpha1.TeamBi
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "binding-1",
 			Namespace: "org-1",
+			Labels:    map[string]string{"grafana.app/deprecatedInternalID": "10"},
 		},
 		Spec: iamv0alpha1.TeamBindingSpec{
 			Subject:    iamv0alpha1.TeamBindingspecSubject{Kind: "User", Name: "user-uid-42"},

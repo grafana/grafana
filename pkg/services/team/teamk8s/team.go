@@ -588,26 +588,9 @@ func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTe
 		return nil, err
 	}
 
-	if len(bindings) == 0 {
-		return []int64{}, nil
-	}
-
-	client, err := s.getClient(ctx, namespace)
-	if err != nil {
-		return nil, err
-	}
-
 	ids := make([]int64, 0, len(bindings))
 	for _, b := range bindings {
-		teamUID := b.Spec.TeamRef.Name
-		result, err := client.Get(ctx, teamUID, metav1.GetOptions{})
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				continue
-			}
-			return nil, err
-		}
-		if id := deprecatedInternalID(result); id != 0 {
+		if id := deprecatedInternalID(&b); id != 0 {
 			ids = append(ids, id)
 		}
 	}
