@@ -73,8 +73,11 @@ export const QuickAdd = ({}: Props) => {
 
   const MenuActions = () => {
     const groupColors: Record<string, string> = {
-      'dashboards/browse': theme.visualization.getColorByName('green'),
-      alerting: theme.visualization.getColorByName('purple'),
+      'dashboards/browse': theme.visualization.getColorByName('semi-dark-green'),
+      alerting:
+        theme.colors.mode === 'dark'
+          ? theme.visualization.getColorByName('light-purple') // #CA95E5 — lighter, better contrast on dark bg
+          : theme.visualization.getColorByName('semi-dark-purple'), // #8F3BB8 — darker, better contrast on white
     };
 
     return (
