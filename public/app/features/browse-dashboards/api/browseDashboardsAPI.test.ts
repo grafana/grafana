@@ -45,6 +45,7 @@ describe('browseDashboardsAPI', () => {
     folderAPIVersionResolver.set('v1beta1');
     config.featureToggles.provisioning = false;
     deletedFoldersState.clear();
+    server.use(http.get('/api/access-control/user/actions', () => HttpResponse.json({})));
   });
 
   const createMockDashboardAPI = (saveDashboard: jest.Mock) =>

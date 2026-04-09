@@ -97,93 +97,6 @@ const deleteFolderParams = {
   forceDeleteRules: false,
 } as const;
 
-type DeleteFolderRequest = {
-  url: string;
-  method: 'DELETE';
-  params: typeof deleteFolderParams;
-};
-
-type DeleteFolderBaseQuery = (args: DeleteFolderRequest) => Promise<{ data?: unknown; error?: unknown }>;
-
-type DeleteFoldersByUIDArgs = {
-  folderUIDs: string[];
-  baseQuery: DeleteFolderBaseQuery;
-  thunkDispatch: typeof dispatch;
-};
-
-type DeleteFoldersByUIDResult = {
-  deletedFolderUIDs: string[];
-};
-
-type HandleDeletedFoldersArgs = {
-  deletedFolderUIDs: string[];
-  thunkDispatch: typeof dispatch;
-  parentUID?: string;
-  shouldRefetchParentChildren?: boolean;
-  refreshDeletedParents?: boolean;
-};
-
-async function deleteFoldersByUID({
-  folderUIDs,
-  baseQuery,
-  thunkDispatch,
-}: DeleteFoldersByUIDArgs): Promise<DeleteFoldersByUIDResult> {
-  const deletedFolderUIDs: string[] = [];
-
-  // Delete folders sequentially so bulk delete can skip failures.
-  for (const folderUID of folderUIDs) {
-    // This also shows the provisioned-folder warning alert.
-    if (await isProvisionedFolderCheck(thunkDispatch, folderUID)) {
-      continue;
-    }
-
-    const response = await baseQuery({
-      url: `/folders/${folderUID}`,
-      method: 'DELETE',
-      params: deleteFolderParams,
-    });
-
-    if ('error' in response && response.error) {
-      continue;
-    }
-
-    deletedFolderUIDs.push(folderUID);
-  }
-
-  return { deletedFolderUIDs };
-}
-
-function handleDeletedFolders({
-  deletedFolderUIDs,
-  thunkDispatch,
-  parentUID,
-  shouldRefetchParentChildren = false,
-  refreshDeletedParents = false,
-}: HandleDeletedFoldersArgs) {
-  if (deletedFolderUIDs.length === 0) {
-    return;
-  }
-
-  deletedFoldersState.markDeleted(deletedFolderUIDs);
-  // Deleting a folder also deletes its dashboards, so bust the deleted dashboards cache.
-  deletedDashboardsCache.clear();
-
-  if (shouldRefetchParentChildren) {
-    thunkDispatch(
-      refetchChildren({
-        parentUID,
-        pageSize: PAGE_SIZE,
-      })
-    );
-  }
-
-  if (refreshDeletedParents) {
-    thunkDispatch(refreshParents(deletedFolderUIDs));
-  }
-
-  invalidateQuotaUsage(thunkDispatch);
-}
-
 export const browseDashboardsAPI = createApi({
   tagTypes: ['getFolder'],
   reducerPath: 'browseDashboardsAPI',
@@ -678,6 +591,94 @@ export const browseDashboardsAPI = createApi({
     }),
   }),
 });
+
+// Folder delete helpers
+type DeleteFolderRequest = {
+  url: string;
+  method: 'DELETE';
+  params: typeof deleteFolderParams;
+};
+
+type DeleteFolderBaseQuery = (args: DeleteFolderRequest) => Promise<{ data?: unknown; error?: unknown }>;
+
+type DeleteFoldersByUIDArgs = {
+  folderUIDs: string[];
+  baseQuery: DeleteFolderBaseQuery;
+  thunkDispatch: typeof dispatch;
+};
+
+type DeleteFoldersByUIDResult = {
+  deletedFolderUIDs: string[];
+};
+
+type HandleDeletedFoldersArgs = {
+  deletedFolderUIDs: string[];
+  thunkDispatch: typeof dispatch;
+  parentUID?: string;
+  shouldRefetchParentChildren?: boolean;
+  refreshDeletedParents?: boolean;
+};
+
+async function deleteFoldersByUID({
+  folderUIDs,
+  baseQuery,
+  thunkDispatch,
+}: DeleteFoldersByUIDArgs): Promise<DeleteFoldersByUIDResult> {
+  const deletedFolderUIDs: string[] = [];
+
+  // Delete folders sequentially so bulk delete can skip failures.
+  for (const folderUID of folderUIDs) {
+    // This also shows the provisioned-folder warning alert.
+    if (await isProvisionedFolderCheck(thunkDispatch, folderUID)) {
+      continue;
+    }
+
+    const response = await baseQuery({
+      url: `/folders/${folderUID}`,
+      method: 'DELETE',
+      params: deleteFolderParams,
+    });
+
+    if ('error' in response && response.error) {
+      continue;
+    }
+
+    deletedFolderUIDs.push(folderUID);
+  }
+
+  return { deletedFolderUIDs };
+}
+
+function handleDeletedFolders({
+  deletedFolderUIDs,
+  thunkDispatch,
+  parentUID,
+  shouldRefetchParentChildren = false,
+  refreshDeletedParents = false,
+}: HandleDeletedFoldersArgs) {
+  if (deletedFolderUIDs.length === 0) {
+    return;
+  }
+
+  deletedFoldersState.markDeleted(deletedFolderUIDs);
+  // Deleting a folder also deletes its dashboards, so bust the deleted dashboards cache.
+  deletedDashboardsCache.clear();
+
+  if (shouldRefetchParentChildren) {
+    thunkDispatch(
+      refetchChildren({
+        parentUID,
+        pageSize: PAGE_SIZE,
+      })
+    );
+  }
+
+  if (refreshDeletedParents) {
+    thunkDispatch(refreshParents(deletedFolderUIDs));
+  }
+
+  invalidateQuotaUsage(thunkDispatch);
+}
 
 export const {
   endpoints,
