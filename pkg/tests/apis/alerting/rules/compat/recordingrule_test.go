@@ -7,6 +7,10 @@ import (
 	"testing"
 	"time"
 
+	prom_model "github.com/prometheus/common/model"
+	"github.com/stretchr/testify/require"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -15,9 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	prom_model "github.com/prometheus/common/model"
-	"github.com/stretchr/testify/require"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestMain(m *testing.M) {
@@ -62,7 +63,7 @@ func TestIntegrationRecordingRuleCompatCreateViaK8s(t *testing.T) {
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:  rule.Title,
-			Metric: rule.Record.Metric,
+			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
 					QueryType:     util.Pointer(rule.Data[0].QueryType),
