@@ -21,6 +21,7 @@ export interface Event {
 
 // Intermediate type used in findAllEvents to map factory names → their namespace
 export interface EventNamespace {
+  factoryName: string;
   eventPrefixProject: string;
   eventPrefixFeature: string;
 }

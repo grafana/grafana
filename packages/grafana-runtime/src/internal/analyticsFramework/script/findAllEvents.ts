@@ -1,31 +1,23 @@
-import { Project, Node, type SourceFile } from 'ts-morph';
+import { Node, type SourceFile } from 'ts-morph';
 
 import type { EventData, EventNamespace } from '../types';
 
-import { parseEvents } from './eventParser';
+import { parseEvents } from './eventParser.ts';
 
-export const findAllEvents = (tsConfigPath: string): EventData[] => {
-  const project = new Project({ tsConfigFilePath: tsConfigPath });
-  const allEvents: EventData[] = [];
-
-  for (const sourceFile of project.getSourceFiles()) {
-    // Step 1: does this file even use the framework?
-    const localName = getDefineFeatureEventsLocalName(sourceFile);
-    if (!localName) {
-      continue;
+export const findAllEvents = (files: SourceFile[], defineFeatureEventsPath: string): EventData[] => {
+  const allEvents: EventData[] = files.flatMap((file) => {
+    // Get the local imported name of defineFeatureEvents
+    const createEventFactoryImportedName = getDefineFeatureEventsLocalName(file, defineFeatureEventsPath);
+    if (!createEventFactoryImportedName) {
+      return [];
     }
+    // Find all calls to defineFeatureEvents and the namespaces they create
+    const eventNamespaces = findEventNamespaces(file, createEventFactoryImportedName);
 
-    // Step 2: find all factory variables in this file
-    //   const createNavEvent = defineFeatureEvents('grafana', 'navigation');
-    const eventNamespaces = findEventNamespaces(sourceFile, localName);
-    if (eventNamespaces.size === 0) {
-      continue;
-    }
-
-    // Step 3: parse all events defined with those factories and collect them
-    const events = parseEvents(sourceFile, eventNamespaces);
-    allEvents.push(...events);
-  }
+    // Find all events defined in the file
+    const events = parseEvents(file, eventNamespaces);
+    return events;
+  });
 
   return allEvents;
 };
@@ -37,7 +29,7 @@ export const findAllEvents = (tsConfigPath: string): EventData[] => {
  *   import { defineFeatureEvents as def } from '@grafana/runtime/internal'
  * would return "def", not "defineFeatureEvents".
  */
-const getDefineFeatureEventsLocalName = (sourceFile: SourceFile): string | null => {
+const getDefineFeatureEventsLocalName = (sourceFile: SourceFile, defineFeatureEventsPath: string): string | null => {
   const importDecl = sourceFile.getImportDeclaration(
     (decl) => decl.getModuleSpecifierValue() === '@grafana/runtime/internal'
   );
@@ -65,11 +57,8 @@ const getDefineFeatureEventsLocalName = (sourceFile: SourceFile): string | null 
  *
  * Returns Map { "createNavEvent" → { eventPrefixProject: "grafana", eventPrefixFeature: "navigation" } }
  */
-const findEventNamespaces = (
-  sourceFile: SourceFile,
-  defineFeatureEventsName: string
-): Map<string, Pick<EventNamespace, 'eventPrefixProject' | 'eventPrefixFeature'>> => {
-  const namespaces = new Map();
+const findEventNamespaces = (sourceFile: SourceFile, defineFeatureEventsName: string): Map<string, EventNamespace> => {
+  const namespaces = new Map<string, EventNamespace>();
 
   for (const variableDecl of sourceFile.getVariableDeclarations()) {
     const initializer = variableDecl.getInitializer();
@@ -90,7 +79,9 @@ const findEventNamespaces = (
       );
     }
 
-    namespaces.set(variableDecl.getName(), {
+    const factoryName = variableDecl.getName();
+    namespaces.set(factoryName, {
+      factoryName,
       eventPrefixProject: repoArg.getLiteralText(), // "grafana"
       eventPrefixFeature: featureArg.getLiteralText(), // "navigation"
     });

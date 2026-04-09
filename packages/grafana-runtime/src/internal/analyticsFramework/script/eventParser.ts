@@ -2,7 +2,7 @@ import { Node, type SourceFile, type ts, type Type, type VariableStatement } fro
 
 import type { EventData, EventNamespace, EventPropertySchema } from '../types';
 
-import { getMetadataFromJSDocs, resolveType } from './typeResolution';
+import { getMetadataFromJSDocs, resolveType } from './typeResolution.ts';
 
 /**
  * Finds all events - calls to the function returned by defineFeatureEvents - declared in a file
