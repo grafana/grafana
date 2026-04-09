@@ -3138,6 +3138,127 @@ func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
 	})
 }
 
+func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
+		BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second,
+	}
+	orgID := int64(1)
+	ruleGen := models.RuleGen.With(
+		models.RuleGen.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
+		models.RuleGen.WithOrgID(orgID),
+	)
+	b := &fakeBus{}
+
+	t.Run("ExcludeNamespaceUIDs", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		nsAGen := ruleGen.With(ruleGen.WithNamespaceUID("ns-a"))
+		nsBGen := ruleGen.With(ruleGen.WithNamespaceUID("ns-b"))
+
+		createRule(t, store, nsAGen)
+		createRule(t, store, nsAGen)
+		nsBRule1 := createRule(t, store, nsBGen)
+		nsBRule2 := createRule(t, store, nsBGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:                orgID,
+				ExcludeNamespaceUIDs: []string{"ns-a"},
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{nsBRule1.UID, nsBRule2.UID}, gotUIDs)
+	})
+
+	t.Run("ExcludeRuleGroups", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		group1Gen := ruleGen.With(ruleGen.WithGroupName("group-1"))
+		group2Gen := ruleGen.With(ruleGen.WithGroupName("group-2"))
+
+		createRule(t, store, group1Gen)
+		createRule(t, store, group1Gen)
+		g2Rule1 := createRule(t, store, group2Gen)
+		g2Rule2 := createRule(t, store, group2Gen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:             orgID,
+				ExcludeRuleGroups: []string{"group-1"},
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{g2Rule1.UID, g2Rule2.UID}, gotUIDs)
+	})
+
+	t.Run("RuleGroupExists=true", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		withGroupGen := ruleGen.With(ruleGen.WithGroupName("some-group"))
+		noGroupGen := ruleGen.With(ruleGen.WithGroupName(""))
+
+		withGroupRule := createRule(t, store, withGroupGen)
+		createRule(t, store, noGroupGen)
+
+		trueVal := true
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:           orgID,
+				RuleGroupExists: &trueVal,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		require.Equal(t, withGroupRule.UID, result[0].UID)
+	})
+
+	t.Run("RuleGroupExists=false", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		withGroupGen := ruleGen.With(ruleGen.WithGroupName("some-group"))
+		noGroupGen := ruleGen.With(ruleGen.WithGroupName(""))
+
+		createRule(t, store, withGroupGen)
+		noGroupRule := createRule(t, store, noGroupGen)
+
+		falseVal := false
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:           orgID,
+				RuleGroupExists: &falseVal,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		require.Equal(t, noGroupRule.UID, result[0].UID)
+	})
+}
+
 func TestIntegration_ListDeletedRules(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
