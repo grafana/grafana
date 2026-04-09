@@ -2113,6 +2113,72 @@ func TestRenameFolderPath(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorContains(t, err, "ensure new folder path")
 	})
+
+	t.Run("ancestor relocation opts bypass UID conflict for parent folder", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+
+		parentMeta := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"parent-uid"},"spec":{"title":"Parent"}}`)
+		childMeta := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"child-uid"},"spec":{"title":"Child"}}`)
+
+		rw.On("Read", mock.Anything, "old-parent/child/_folder.json", "ref-old").
+			Return(&repository.FileInfo{Data: childMeta}, nil)
+		rw.On("Read", mock.Anything, "new-parent/_folder.json", "ref-new").
+			Return(&repository.FileInfo{Data: parentMeta}, nil)
+		rw.On("Read", mock.Anything, "new-parent/child/_folder.json", "ref-new").
+			Return(&repository.FileInfo{Data: childMeta}, nil)
+
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "parent-uid", Title: "Parent", Path: "old-parent/"}, "")
+		tree.Add(Folder{ID: "child-uid", Title: "Child", Path: "old-parent/child/"}, "parent-uid")
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolder(name, "title", config.Name), nil
+			},
+			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
+
+		// Without WithRelocatingUIDs("parent-uid"), this would fail because
+		// parent-uid is still registered at old-parent/ in the tree.
+		oldID, err := fm.RenameFolderPath(ctx, "old-parent/child/", "ref-old", "new-parent/child/", "ref-new",
+			WithRelocatingUIDs("parent-uid"))
+		require.NoError(t, err)
+		require.Empty(t, oldID, "same UID means in-place update, no cleanup needed")
+	})
+
+	t.Run("nested folder rename without ancestor relocation opts fails on UID conflict", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+
+		parentMeta := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"parent-uid"},"spec":{"title":"Parent"}}`)
+		childMeta := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"child-uid"},"spec":{"title":"Child"}}`)
+
+		rw.On("Read", mock.Anything, "old-parent/child/_folder.json", "ref-old").
+			Return(&repository.FileInfo{Data: childMeta}, nil)
+		rw.On("Read", mock.Anything, "new-parent/child/_folder.json", "ref-new").
+			Return(&repository.FileInfo{Data: childMeta}, nil)
+		rw.On("Read", mock.Anything, "new-parent/_folder.json", "ref-new").
+			Return(&repository.FileInfo{Data: parentMeta}, nil)
+
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "parent-uid", Title: "Parent", Path: "old-parent/"}, "")
+		tree.Add(Folder{ID: "child-uid", Title: "Child", Path: "old-parent/child/"}, "parent-uid")
+
+		fm := NewFolderManager(rw, &fakeDynamicResourceClient{}, tree, FolderKind, WithFolderMetadataEnabled(true))
+
+		// Without ancestor relocation opts, EnsureFolderPathExist rejects the
+		// parent UID appearing at a new path.
+		_, err := fm.RenameFolderPath(ctx, "old-parent/child/", "ref-old", "new-parent/child/", "ref-new")
+		require.Error(t, err)
+		require.ErrorContains(t, err, "already used by folder")
+	})
 }
 
 // TestEnsureFolderPathExist_EarlyReturnCheckIDConflict covers the conflict check

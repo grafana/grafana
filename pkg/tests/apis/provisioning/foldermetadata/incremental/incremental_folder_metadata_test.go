@@ -1846,3 +1846,160 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDConflict(t *testing.T)
 		common.RequireRepoFolderUID(t, helper.Folders, ctx, repoName, thiefUID)
 	})
 }
+
+// TestIntegrationProvisioning_IncrementalSync_NestedFolderRenameWithStableUIDs
+// verifies that renaming a directory tree where both parent and child folders
+// have stable UIDs (via _folder.json) succeeds even when the child directory
+// rename is processed before the parent directory rename.
+func TestIntegrationProvisioning_IncrementalSync_NestedFolderRenameWithStableUIDs(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("parent and nested child folder rename preserves both stable UIDs", func(t *testing.T) {
+		helper := sharedGitHelper(t)
+		ctx := context.Background()
+
+		const repoName = "incr-nested-rename-stable"
+		const parentUID = "nrs-parent-uid"
+		const childUID = "nrs-child-uid"
+
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"team/_folder.json":         folderMetadataJSON(parentUID, "Team"),
+			"team/project/_folder.json": folderMetadataJSON(childUID, "Project"),
+			"team/project/dash.json":    common.DashboardJSON("nrs-dash", "Nested Dashboard", 1),
+		})
+
+		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"team", "team/project"})
+
+		parentBefore, err := helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		parentSnap := common.SnapshotObject(t, parentBefore)
+
+		childBefore, err := helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		childSnap := common.SnapshotObject(t, childBefore)
+
+		dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "nrs-dash", metav1.GetOptions{})
+		require.NoError(t, err)
+		dashSnap := common.SnapshotObject(t, dashBefore)
+
+		// Rename the entire tree: team/ -> squad/
+		_, err = local.Git("mv", "team", "squad")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "rename team to squad")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+
+		// Parent folder updated in place with new source path.
+		parentAfter, err := helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
+		require.NoError(t, err, "parent folder should still exist with same UID")
+		common.RequireUpdatedInPlace(t, "parent folder", parentSnap, common.SnapshotObject(t, parentAfter))
+
+		parentSP, _, _ := unstructured.NestedString(parentAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
+		require.Equal(t, "squad", parentSP)
+
+		// Child folder updated in place and still parented under the renamed parent.
+		childAfter, err := helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		require.NoError(t, err, "child folder should still exist with same UID")
+		common.RequireUpdatedInPlace(t, "child folder", childSnap, common.SnapshotObject(t, childAfter))
+
+		childSP, _, _ := unstructured.NestedString(childAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
+		require.Equal(t, "squad/project", childSP)
+		childParent, _, _ := unstructured.NestedString(childAfter.Object, "metadata", "annotations", "grafana.app/folder")
+		require.Equal(t, parentUID, childParent, "child should still be parented under renamed parent")
+
+		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"squad", "squad/project"})
+
+		// Dashboard updated in place under the renamed hierarchy.
+		dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "nrs-dash", metav1.GetOptions{})
+		require.NoError(t, err)
+		common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"nrs-dash": {Title: "Nested Dashboard", SourcePath: "squad/project/dash.json", Folder: childUID},
+		})
+	})
+
+	t.Run("three-level folder rename preserves all stable UIDs", func(t *testing.T) {
+		helper := sharedGitHelper(t)
+		ctx := context.Background()
+
+		const repoName = "incr-3level-rename-stable"
+		const grandparentUID = "3l-gp-uid"
+		const parentUID = "3l-parent-uid"
+		const childUID = "3l-child-uid"
+
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"org/_folder.json":              folderMetadataJSON(grandparentUID, "Org"),
+			"org/team/_folder.json":         folderMetadataJSON(parentUID, "Team"),
+			"org/team/project/_folder.json": folderMetadataJSON(childUID, "Project"),
+			"org/team/project/dash.json":    common.DashboardJSON("3l-dash", "Deep Dashboard", 1),
+		})
+
+		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{
+			"org", "org/team", "org/team/project",
+		})
+
+		gpBefore, err := helper.Folders.Resource.Get(ctx, grandparentUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		gpSnap := common.SnapshotObject(t, gpBefore)
+
+		parentBefore, err := helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		parentSnap := common.SnapshotObject(t, parentBefore)
+
+		childBefore, err := helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		childSnap := common.SnapshotObject(t, childBefore)
+
+		// Rename the entire tree: org/ -> corp/
+		_, err = local.Git("mv", "org", "corp")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "rename org to corp")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+
+		// Grandparent updated in place.
+		gpAfter, err := helper.Folders.Resource.Get(ctx, grandparentUID, metav1.GetOptions{})
+		require.NoError(t, err, "grandparent folder should still exist with same UID")
+		common.RequireUpdatedInPlace(t, "grandparent folder", gpSnap, common.SnapshotObject(t, gpAfter))
+
+		gpSP, _, _ := unstructured.NestedString(gpAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
+		require.Equal(t, "corp", gpSP)
+
+		// Parent updated in place.
+		parentAfter, err := helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
+		require.NoError(t, err, "parent folder should still exist with same UID")
+		common.RequireUpdatedInPlace(t, "parent folder", parentSnap, common.SnapshotObject(t, parentAfter))
+
+		parentSP, _, _ := unstructured.NestedString(parentAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
+		require.Equal(t, "corp/team", parentSP)
+		parentParent, _, _ := unstructured.NestedString(parentAfter.Object, "metadata", "annotations", "grafana.app/folder")
+		require.Equal(t, grandparentUID, parentParent)
+
+		// Child updated in place.
+		childAfter, err := helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		require.NoError(t, err, "child folder should still exist with same UID")
+		common.RequireUpdatedInPlace(t, "child folder", childSnap, common.SnapshotObject(t, childAfter))
+
+		childSP, _, _ := unstructured.NestedString(childAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
+		require.Equal(t, "corp/team/project", childSP)
+		childParent, _, _ := unstructured.NestedString(childAfter.Object, "metadata", "annotations", "grafana.app/folder")
+		require.Equal(t, parentUID, childParent)
+
+		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{
+			"corp", "corp/team", "corp/team/project",
+		})
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"3l-dash": {Title: "Deep Dashboard", SourcePath: "corp/team/project/dash.json", Folder: childUID},
+		})
+	})
+}

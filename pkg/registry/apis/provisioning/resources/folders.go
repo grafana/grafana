@@ -410,7 +410,7 @@ func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
 // there is no tree entry), and for the new path we fall back to the
 // path-derived UID. That gives delete+recreate semantics instead of preserving
 // a metadata-backed identity we can no longer trust.
-func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, error) {
+func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, previousRef, newPath, newRef string, opts ...EnsurePathOption) (string, error) {
 	oldFolder, err := ParseFolderWithMetadata(ctx, fm.repo, previousPath, previousRef, fm.folderMetadataEnabled)
 	if err != nil {
 		var invalidErr *InvalidFolderMetadata
@@ -431,7 +431,8 @@ func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, pre
 	// Pass the old UID as relocating so the ID conflict check does not reject
 	// the same stable UID appearing at a new path. The tree is only mutated
 	// after EnsureFolderPathExist succeeds, avoiding tree corruption on failure.
-	if _, err := fm.EnsureFolderPathExist(ctx, newPath, newRef, WithRelocatingUIDs(oldFolder.ID)); err != nil {
+	ensureOpts := append([]EnsurePathOption{WithRelocatingUIDs(oldFolder.ID)}, opts...)
+	if _, err := fm.EnsureFolderPathExist(ctx, newPath, newRef, ensureOpts...); err != nil {
 		return "", fmt.Errorf("ensure new folder path: %w", err)
 	}
 

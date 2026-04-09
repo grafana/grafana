@@ -276,7 +276,13 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			resultBuilder.WithPreviousPath(change.PreviousPath)
 			if safepath.IsDir(change.Path) {
 				renameFolderCtx, renameFolderSpan := tracer.Start(ctx, "provisioning.sync.incremental.rename_folder_path")
-				oldFolderID, err := repositoryResources.RenameFolderPath(renameFolderCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref)
+				var folderRenameOpts []resources.EnsurePathOption
+				for dir := safepath.Dir(change.Path); dir != ""; dir = safepath.Dir(dir) {
+					if uids, ok := relocations[dir]; ok {
+						folderRenameOpts = append(folderRenameOpts, resources.WithRelocatingUIDs(uids...))
+					}
+				}
+				oldFolderID, err := repositoryResources.RenameFolderPath(renameFolderCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, folderRenameOpts...)
 				if err != nil {
 					renameFolderSpan.RecordError(err)
 					resultBuilder.WithError(fmt.Errorf("renaming folder from %s to %s: %w", change.PreviousPath, change.Path, err))

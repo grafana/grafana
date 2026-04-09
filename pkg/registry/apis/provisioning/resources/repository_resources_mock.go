@@ -359,9 +359,16 @@ func (_c *MockRepositoryResources_RemoveFolder_Call) RunAndReturn(run func(conte
 	return _c
 }
 
-// RenameFolderPath provides a mock function with given fields: ctx, previousPath, previousRef, newPath, newRef
-func (_m *MockRepositoryResources) RenameFolderPath(ctx context.Context, previousPath string, previousRef string, newPath string, newRef string) (string, error) {
-	ret := _m.Called(ctx, previousPath, previousRef, newPath, newRef)
+// RenameFolderPath provides a mock function with given fields: ctx, previousPath, previousRef, newPath, newRef, opts
+func (_m *MockRepositoryResources) RenameFolderPath(ctx context.Context, previousPath string, previousRef string, newPath string, newRef string, opts ...EnsurePathOption) (string, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, previousPath, previousRef, newPath, newRef)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RenameFolderPath")
@@ -369,17 +376,17 @@ func (_m *MockRepositoryResources) RenameFolderPath(ctx context.Context, previou
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) (string, error)); ok {
-		return rf(ctx, previousPath, previousRef, newPath, newRef)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, ...EnsurePathOption) (string, error)); ok {
+		return rf(ctx, previousPath, previousRef, newPath, newRef, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) string); ok {
-		r0 = rf(ctx, previousPath, previousRef, newPath, newRef)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, ...EnsurePathOption) string); ok {
+		r0 = rf(ctx, previousPath, previousRef, newPath, newRef, opts...)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
-		r1 = rf(ctx, previousPath, previousRef, newPath, newRef)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string, ...EnsurePathOption) error); ok {
+		r1 = rf(ctx, previousPath, previousRef, newPath, newRef, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -398,13 +405,20 @@ type MockRepositoryResources_RenameFolderPath_Call struct {
 //   - previousRef string
 //   - newPath string
 //   - newRef string
-func (_e *MockRepositoryResources_Expecter) RenameFolderPath(ctx interface{}, previousPath interface{}, previousRef interface{}, newPath interface{}, newRef interface{}) *MockRepositoryResources_RenameFolderPath_Call {
-	return &MockRepositoryResources_RenameFolderPath_Call{Call: _e.mock.On("RenameFolderPath", ctx, previousPath, previousRef, newPath, newRef)}
+//   - opts ...EnsurePathOption
+func (_e *MockRepositoryResources_Expecter) RenameFolderPath(ctx interface{}, previousPath interface{}, previousRef interface{}, newPath interface{}, newRef interface{}, opts ...interface{}) *MockRepositoryResources_RenameFolderPath_Call {
+	return &MockRepositoryResources_RenameFolderPath_Call{Call: _e.mock.On("RenameFolderPath", append([]interface{}{ctx, previousPath, previousRef, newPath, newRef}, opts...)...)}
 }
 
-func (_c *MockRepositoryResources_RenameFolderPath_Call) Run(run func(ctx context.Context, previousPath string, previousRef string, newPath string, newRef string)) *MockRepositoryResources_RenameFolderPath_Call {
+func (_c *MockRepositoryResources_RenameFolderPath_Call) Run(run func(ctx context.Context, previousPath string, previousRef string, newPath string, newRef string, opts ...EnsurePathOption)) *MockRepositoryResources_RenameFolderPath_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		variadicArgs := make([]EnsurePathOption, len(args)-5)
+		for i, a := range args[5:] {
+			if a != nil {
+				variadicArgs[i] = a.(EnsurePathOption)
+			}
+		}
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string), variadicArgs...)
 	})
 	return _c
 }
@@ -414,7 +428,7 @@ func (_c *MockRepositoryResources_RenameFolderPath_Call) Return(_a0 string, _a1 
 	return _c
 }
 
-func (_c *MockRepositoryResources_RenameFolderPath_Call) RunAndReturn(run func(context.Context, string, string, string, string) (string, error)) *MockRepositoryResources_RenameFolderPath_Call {
+func (_c *MockRepositoryResources_RenameFolderPath_Call) RunAndReturn(run func(context.Context, string, string, string, string, ...EnsurePathOption) (string, error)) *MockRepositoryResources_RenameFolderPath_Call {
 	_c.Call.Return(run)
 	return _c
 }
