@@ -23,7 +23,7 @@ func (s *promDepAuthStep) Description() string {
 }
 
 func (s *promDepAuthStep) Resolution() string {
-	return fmt.Sprintf("Enable the feature toggle for 'prometheusTypeMigration'. If this feature toggle is already enabled, make sure that 'Azure Monitor Managed Service for Prometheus' and/or 'Amazon Managed Service for Prometheus' plugins are installed. If the data source is provisioned, edit data source type in the provisioning file to use '%s' or '%s'.", datasources.DS_AMAZON_PROMETHEUS, datasources.DS_AZURE_PROMETHEUS)
+	return fmt.Sprintf("Make sure that 'Azure Monitor Managed Service for Prometheus' and/or 'Amazon Managed Service for Prometheus' plugins are installed. If the data source is provisioned, edit data source type in the provisioning file to use '%s' or '%s'.", datasources.DS_AMAZON_PROMETHEUS, datasources.DS_AZURE_PROMETHEUS)
 }
 
 func (s *promDepAuthStep) ID() string {

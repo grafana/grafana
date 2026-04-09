@@ -31,7 +31,8 @@ func TestMain(m *testing.M) {
 
 // fakeRepo implements annotations.Repository for testing.
 type fakeRepo struct {
-	items []*annotations.ItemDTO
+	items     []*annotations.ItemDTO
+	lastQuery *annotations.ItemQuery
 }
 
 func newFakeRepo() *fakeRepo {
@@ -45,6 +46,7 @@ func (f *fakeRepo) addItem(item *annotations.ItemDTO) {
 }
 
 func (f *fakeRepo) Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+	f.lastQuery = query
 	start := int(query.Offset)
 	end := start + int(query.Limit)
 
@@ -81,6 +83,31 @@ func (f *fakeRepo) Delete(ctx context.Context, params *annotations.DeleteParams)
 
 func (f *fakeRepo) FindTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	return annotations.FindTagsResult{}, nil
+}
+
+func TestSQLAdapter_QueriesExcludeAlertAnnotations(t *testing.T) {
+	repo := newFakeRepo()
+	repo.addItem(&annotations.ItemDTO{ID: 1, Text: "test"})
+	adapter := NewSQLAdapter(repo, nil, annotations.CleanupSettings{})
+
+	ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{
+		OrgID: 1,
+	})
+
+	t.Run("List sets Type to annotation", func(t *testing.T) {
+		_, err := adapter.List(ctx, "default", ListOptions{Limit: 10})
+		require.NoError(t, err)
+		require.NotNil(t, repo.lastQuery)
+		assert.Equal(t, "annotation", repo.lastQuery.Type)
+		assert.Zero(t, repo.lastQuery.AlertID)
+	})
+
+	t.Run("Get sets Type to annotation", func(t *testing.T) {
+		_, _ = adapter.Get(ctx, "default", "a-1")
+		require.NotNil(t, repo.lastQuery)
+		assert.Equal(t, "annotation", repo.lastQuery.Type)
+		assert.Zero(t, repo.lastQuery.AlertID)
+	})
 }
 
 func TestSQLAdapter_ListPagination(t *testing.T) {

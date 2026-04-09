@@ -437,6 +437,38 @@ func TestStore_RegisterActionSet(t *testing.T) {
 			},
 			expectedErr: true,
 		},
+		{
+			desc:     "should support routes",
+			pluginID: "test-app",
+			coreActionSets: []ActionSet{
+				{
+					Action:  accesscontrol.AlertingRoutesKind + ":view",
+					Actions: []string{accesscontrol.ActionAlertingManagedRoutesRead},
+				},
+				{
+					Action: accesscontrol.AlertingRoutesKind + ":edit",
+					Actions: []string{
+						accesscontrol.ActionAlertingManagedRoutesRead,
+						accesscontrol.ActionAlertingManagedRoutesWrite,
+						accesscontrol.ActionAlertingManagedRoutesDelete,
+					},
+				},
+			},
+			expectedActionSets: []ActionSet{
+				{
+					Action:  accesscontrol.AlertingRoutesKind + ":view",
+					Actions: []string{accesscontrol.ActionAlertingManagedRoutesRead},
+				},
+				{
+					Action: accesscontrol.AlertingRoutesKind + ":edit",
+					Actions: []string{
+						accesscontrol.ActionAlertingManagedRoutesRead,
+						accesscontrol.ActionAlertingManagedRoutesWrite,
+						accesscontrol.ActionAlertingManagedRoutesDelete,
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {

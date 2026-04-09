@@ -29,7 +29,7 @@ Our Makefile imports `.citools/Variables.mk`, so you can call a tool binary usin
 
 ```make
 run:
-    $(bra) run
+    $(cue) run
 ```
 
 ### Using Tracked Tools Without the Makefile

@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
 import {
   FieldMatcherID,
@@ -12,7 +13,6 @@ import {
 import { t } from '@grafana/i18n';
 import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
 import darkImage from '../images/dark/configFromData.svg';
 import lightImage from '../images/light/configFromData.svg';
@@ -49,10 +49,7 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     onChange({ ...options, applyTo: { id: currentMatcher.id, options: matcherOption } });
   };
 
-  const matchers = fieldMatchersUI
-    .list()
-    .filter((o) => !o.excludeFromPicker)
-    .map<SelectableValue<string>>((i) => ({ label: i.name, value: i.id, description: i.description }));
+  const matchers = useMemo(() => fieldMatchersUI.selectOptions().options, []);
 
   return (
     <>
@@ -113,7 +110,6 @@ export const getConfigFromQueryTransformRegistryItem: () => TransformerRegistryI
       description: configFromDataTransformer.description,
       state: PluginState.beta,
       categories: new Set([TransformerCategory.CalculateNewFields]),
-      help: getTransformationContent(configFromDataTransformer.id).helperDocs,
       imageDark: darkImage,
       imageLight: lightImage,
     };

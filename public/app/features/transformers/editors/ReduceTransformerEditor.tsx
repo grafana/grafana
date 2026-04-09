@@ -14,7 +14,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { InlineField, Select, StatsPicker, InlineSwitch } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/reduce.svg';
 import lightImage from '../images/light/reduce.svg';
 
@@ -129,7 +128,6 @@ export const getReduceTransformRegistryItem: () => TransformerRegistryItem<Reduc
     'Reduce all rows or data points to a single value (ex. max, mean).'
   ),
   categories: new Set([TransformerCategory.CalculateNewFields]),
-  help: getTransformationContent(DataTransformerID.reduce).helperDocs,
   imageDark: darkImage,
   imageLight: lightImage,
 });

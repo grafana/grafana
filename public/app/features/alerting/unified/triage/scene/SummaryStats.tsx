@@ -11,7 +11,7 @@ import { FIELD_NAMES } from '../constants';
 
 import { normalizeFrame } from './dataTransform';
 import { summaryRuleCountQuery } from './queries';
-import { useQueryFilter } from './utils';
+import { cleanAlertStateFilter, useQueryFilter } from './utils';
 
 type AlertState = PromAlertingRuleState.Firing | PromAlertingRuleState.Pending;
 
@@ -88,11 +88,8 @@ function SummaryStatsContent() {
   const styles = useStyles2(getCompactStatStyles);
   const filter = useQueryFilter();
 
-  // Strip alertstate from filter since the dedup queries add their own alertstate matchers
-  const cleanFilter = filter
-    .replace(/alertstate\s*=~?\s*"(firing|pending)"[,\s]*/, '')
-    .replace(/,\s*$/, '')
-    .replace(/^\s*,/, '');
+  // Strip alertstate from filter since the dedup queries add their own alertstate matchers.
+  const cleanFilter = cleanAlertStateFilter(filter);
 
   const ruleDataProvider = useQueryRunner({
     queries: [summaryRuleCountQuery(cleanFilter)],

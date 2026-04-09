@@ -14,7 +14,7 @@ import {
   partitionVariablesByEditability,
 } from './DashboardVariablesList';
 
-jest.mock('../../settings/variables/VariableAddEditableElement', () => ({
+jest.mock('../../settings/variables/VariableTypeSelectionPane', () => ({
   openAddVariablePane: jest.fn(),
 }));
 
@@ -103,10 +103,7 @@ describe('<DashboardVariablesList />', () => {
 
         await user.click(getByText(visibleVar1.state.name));
 
-        expect(elements.dashboardScene.state.editPane.selectObject).toHaveBeenCalledWith(
-          visibleVar1,
-          visibleVar1.state.key
-        );
+        expect(elements.dashboardScene.state.editPane.selectObject).toHaveBeenCalledWith(visibleVar1);
       });
     });
 

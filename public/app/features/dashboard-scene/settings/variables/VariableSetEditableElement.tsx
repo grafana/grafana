@@ -22,7 +22,7 @@ import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../../variables/utils';
 
-import { openAddVariablePane } from './VariableAddEditableElement';
+import { openAddVariablePane } from './VariableTypeSelectionPane';
 import { isEditableVariableType } from './utils';
 
 function useEditPaneOptions(this: VariableSetEditableElement, set: SceneVariableSet): OptionsPaneCategoryDescriptor[] {
@@ -91,7 +91,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
   const onEditVariable = useCallback(
     (variable: SceneVariable) => {
       const { editPane } = getDashboardSceneFor(set).state;
-      editPane.selectObject(variable, variable.state.key!);
+      editPane.selectObject(variable);
     },
     [set]
   );

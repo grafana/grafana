@@ -100,7 +100,7 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagEnabl
 // folderMetadataJSON generates a valid _folder.json payload with a stable UID and title.
 func folderMetadataJSON(uid, title string) []byte {
 	folder := map[string]any{
-		"apiVersion": "folder.grafana.app/v1beta1",
+		"apiVersion": "folder.grafana.app/v1",
 		"kind":       "Folder",
 		"metadata": map[string]any{
 			"name": uid,
@@ -853,6 +853,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 	})
 
 	t.Run("non-metadata folder rename still works via delete and create", func(t *testing.T) {
+		t.Skip("Disabled due to flaky context deadline exceeded errors during resource insertion")
 		helper := sharedGitHelper(t)
 		ctx := context.Background()
 

@@ -82,9 +82,15 @@ export const useMenuFocus = ({
         setFocusedItem(menuItemsCount - 1);
         break;
       case 'Enter':
+      case ' ':
         event.preventDefault();
         event.stopPropagation();
-        menuItems?.[focusedItem]?.click();
+        const focusedElement = menuItems?.[focusedItem];
+        const hasSubMenu = Boolean(focusedElement?.querySelector('[data-role="menuitem"]'));
+
+        if (!hasSubMenu) {
+          focusedElement?.click();
+        }
         break;
       case 'Escape':
         onClose?.();
