@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	authtypes "github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -113,6 +114,17 @@ func NewAppInstaller(
 		return nil, err
 	}
 	installer.AppInstaller = i
+
+	evalCtx := openfeature.NewEvaluationContext(
+		"annotation.grafana.app",
+		map[string]any{"service": "annotation"},
+	)
+	details, evalErr := openfeature.NewDefaultClient().StringValueDetails(context.Background(), "annotationOpenFeatureTest", "off", evalCtx)
+	if evalErr != nil {
+		installer.logger.Warn("OpenFeature: annotationOpenFeatureTest eval error", "error", evalErr)
+	} else {
+		installer.logger.Info("OpenFeature: annotationOpenFeatureTest eval success", "details", details)
+	}
 
 	return installer, nil
 }
