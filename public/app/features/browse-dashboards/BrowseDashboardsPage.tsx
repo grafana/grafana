@@ -25,7 +25,6 @@ import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
 import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDetailsActions';
-import { OrgTemplatesBanner } from './components/OrgTemplatesBanner';
 import { QuotaLimitBanner } from './components/QuotaLimitBanner';
 import { RecentlyViewedDashboards } from './components/RecentlyViewedDashboards';
 import { SearchView } from './components/SearchView';
@@ -173,7 +172,6 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
           <OrphanedResourceBanner repositoryName={orphanedRepoName} />
         )}
         <QuotaLimitBanner />
-        {!folderUID && <OrgTemplatesBanner />}
         {/* only show recently viewed dashboards when in root and flag is enabled */}
         {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}
         <div>

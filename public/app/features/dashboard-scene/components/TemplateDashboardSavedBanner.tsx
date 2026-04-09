@@ -5,11 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, TextLink, useStyles2 } from '@grafana/ui';
 
-interface TemplateSavedBannerProps {
-  templateName: string;
-}
-
-export function TemplateSavedBanner({ templateName }: TemplateSavedBannerProps) {
+export function TemplateDashboardSavedBanner({ templateName }: { templateName: string }) {
   const styles = useStyles2(getStyles);
   const [searchParams, setSearchParams] = useSearchParams();
 
