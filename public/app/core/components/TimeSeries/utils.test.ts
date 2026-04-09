@@ -459,7 +459,7 @@ describe('colorblind line style patterns', () => {
   }
 
   it('should assign different patterns per series when colorblind line style is selected', () => {
-    const builder = buildWithLineStyle({ fill: 'auto' }, 3);
+    const builder = buildWithLineStyle({ fill: 'accessible' }, 3);
     const series = builder.getSeries();
 
     expect(series[0].props.lineStyle).toEqual({ fill: 'solid' });
@@ -468,7 +468,7 @@ describe('colorblind line style patterns', () => {
   });
 
   it('should cycle patterns after 9 series', () => {
-    const builder = buildWithLineStyle({ fill: 'auto' }, 10);
+    const builder = buildWithLineStyle({ fill: 'accessible' }, 10);
     const series = builder.getSeries();
 
     // 10th series (index 9) wraps to first pattern (9 % 9 = 0)
@@ -476,7 +476,7 @@ describe('colorblind line style patterns', () => {
   });
 
   it('should assign all 9 distinct patterns before cycling', () => {
-    const builder = buildWithLineStyle({ fill: 'auto' }, 9);
+    const builder = buildWithLineStyle({ fill: 'accessible' }, 9);
     const series = builder.getSeries();
     const styles = series.map((s) => JSON.stringify(s.props.lineStyle));
     const unique = new Set(styles);
@@ -484,7 +484,7 @@ describe('colorblind line style patterns', () => {
   });
 
   it('should use only solid and dash fills (no dot patterns)', () => {
-    const builder = buildWithLineStyle({ fill: 'auto' }, 9);
+    const builder = buildWithLineStyle({ fill: 'accessible' }, 9);
     const series = builder.getSeries();
 
     for (const s of series) {
@@ -519,7 +519,7 @@ describe('colorblind line style patterns', () => {
 
   it('should work with any color palette (decoupled from color mode)', () => {
     // Uses PaletteClassic (not colorblind palette) but colorblind line style
-    const builder = buildWithLineStyle({ fill: 'auto' }, 2);
+    const builder = buildWithLineStyle({ fill: 'accessible' }, 2);
     const series = builder.getSeries();
 
     expect(series[0].props.lineStyle).toEqual({ fill: 'solid' });
@@ -527,7 +527,7 @@ describe('colorblind line style patterns', () => {
   });
 
   it('should handle single series', () => {
-    const builder = buildWithLineStyle({ fill: 'auto' }, 1);
+    const builder = buildWithLineStyle({ fill: 'accessible' }, 1);
     const series = builder.getSeries();
 
     expect(series).toHaveLength(1);

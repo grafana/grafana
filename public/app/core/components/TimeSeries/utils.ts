@@ -32,7 +32,7 @@ import {
 } from '@grafana/schema';
 
 /**
- * Distinct line styles cycled per series when the "auto" line style is selected.
+ * Distinct line styles cycled per series when the "accessible" line style is selected.
  * 9 patterns to maximize distinguishable series before repeats.
  */
 const ALTERNATING_PATTERN_LINE_STYLES: LineStyle[] = [
@@ -48,11 +48,11 @@ const ALTERNATING_PATTERN_LINE_STYLES: LineStyle[] = [
 ];
 
 /**
- * Resolves the "auto" (alternating patterns) fill type into a concrete line style per series.
+ * Resolves the "accessible" (alternating patterns) fill type into a concrete line style per series.
  * Non auto line styles pass through unchanged.
  */
 function resolveLineStyle(lineStyle: LineStyle | undefined, seriesIndex: number): LineStyle | undefined {
-  if (!lineStyle || lineStyle.fill !== 'auto') {
+  if (!lineStyle || lineStyle.fill !== 'accessible') {
     return lineStyle;
   }
   return ALTERNATING_PATTERN_LINE_STYLES[seriesIndex % ALTERNATING_PATTERN_LINE_STYLES.length];
