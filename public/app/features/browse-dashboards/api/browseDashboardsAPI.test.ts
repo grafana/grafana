@@ -1,42 +1,28 @@
 import { configureStore } from '@reduxjs/toolkit';
+import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
-import { of, throwError } from 'rxjs';
 
+import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
+import { config, setBackendSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import server, { setupMockServer } from '@grafana/test-utils/server';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { deletedFoldersState } from 'app/features/search/service/deletedDashboardsCache';
 import { setStore } from 'app/store/store';
-import { type FolderDTO, type FolderListItemDTO } from 'app/types/folders';
+import { type FolderDTO } from 'app/types/folders';
 
 import { browseDashboardsAPI } from './browseDashboardsAPI';
 
-const mockGet = jest.fn().mockResolvedValue({});
-const mockFetch = jest.fn();
-const mockPut = jest.fn().mockResolvedValue({});
-const mockPost = jest.fn().mockResolvedValue({});
+setBackendSrv(backendSrv);
+setupMockServer();
 
 jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   getDashboardAPI: jest.fn(),
-}));
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => ({
-    fetch: mockFetch,
-    get: mockGet,
-    put: mockPut,
-    post: mockPost,
-  }),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    buildInfo: {
-      version: '11.5.0-test-version-string',
-    },
-  },
 }));
 
 describe('browseDashboardsAPI', () => {
@@ -56,13 +42,8 @@ describe('browseDashboardsAPI', () => {
 
   beforeEach(() => {
     getDashboardAPIMock.mockReset();
-    mockFetch.mockReset();
-    mockGet.mockResolvedValue({
-      versions: [{ version: 'v1beta1', groupVersion: 'folder.grafana.app/v1beta1' }],
-      preferredVersion: { version: 'v1beta1', groupVersion: 'folder.grafana.app/v1beta1' },
-    });
-    const runtime = jest.requireMock('@grafana/runtime');
-    runtime.config.featureToggles.provisioning = false;
+    folderAPIVersionResolver.set('v1beta1');
+    config.featureToggles.provisioning = false;
     deletedFoldersState.clear();
   });
 
@@ -128,21 +109,19 @@ describe('browseDashboardsAPI', () => {
     const store = createTestStore();
     const folderQueryArg = { folderUID: 'folder-1', accesscontrol: true, isLegacyCall: false };
 
-    mockFetch.mockImplementation(({ method, url }) => {
-      if (method === 'DELETE') {
-        return of({ data: {} });
-      }
+    const getFolderSpy = jest.fn();
+    const deleteFolderSpy = jest.fn();
 
-      if (url === '/api/folders/folder-1') {
-        return of({ data: { uid: 'folder-1' } });
-      }
-
-      if (url === '/api/folders') {
-        return of({ data: [] as FolderListItemDTO[] });
-      }
-
-      throw new Error(`Unexpected request: ${method} ${url}`);
-    });
+    server.use(
+      http.get('/api/folders/folder-1', () => {
+        getFolderSpy();
+        return HttpResponse.json({ uid: 'folder-1' });
+      }),
+      http.delete('/api/folders/folder-1', () => {
+        deleteFolderSpy();
+        return HttpResponse.json({});
+      })
+    );
 
     const subscription = store.dispatch(browseDashboardsAPI.endpoints.getFolder.initiate(folderQueryArg));
     await subscription;
@@ -150,15 +129,8 @@ describe('browseDashboardsAPI', () => {
       browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
     );
 
-    expect(mockFetch.mock.calls).toHaveLength(2);
-    expect(mockFetch).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({ method: 'GET', url: '/api/folders/folder-1' })
-    );
-    expect(mockFetch).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({ method: 'DELETE', url: '/api/folders/folder-1' })
-    );
+    expect(getFolderSpy).toHaveBeenCalledTimes(1);
+    expect(deleteFolderSpy).toHaveBeenCalledTimes(1);
     expect(deletedFoldersState.isDeleted('folder-1')).toBe(true);
 
     subscription.unsubscribe();
@@ -169,29 +141,12 @@ describe('browseDashboardsAPI', () => {
     const folderOneQueryArg = { folderUID: 'folder-1', accesscontrol: true, isLegacyCall: false };
     const folderTwoQueryArg = { folderUID: 'folder-2', accesscontrol: true, isLegacyCall: false };
 
-    mockFetch.mockImplementation(({ method, url }) => {
-      if (method === 'DELETE' && url === '/api/folders/folder-1') {
-        return of({ data: {} });
-      }
-
-      if (method === 'DELETE' && url === '/api/folders/folder-2') {
-        return throwError(() => ({ status: 404, data: { message: 'Folder not found' } }));
-      }
-
-      if (url === '/api/folders/folder-1') {
-        return of({ data: { uid: 'folder-1' } });
-      }
-
-      if (url === '/api/folders/folder-2') {
-        return of({ data: { uid: 'folder-2' } });
-      }
-
-      if (url === '/api/folders') {
-        return of({ data: [] as FolderListItemDTO[] });
-      }
-
-      throw new Error(`Unexpected request: ${method} ${url}`);
-    });
+    server.use(
+      http.get('/api/folders/folder-1', () => HttpResponse.json({ uid: 'folder-1' })),
+      http.get('/api/folders/folder-2', () => HttpResponse.json({ uid: 'folder-2' })),
+      http.delete('/api/folders/folder-1', () => HttpResponse.json({})),
+      http.delete('/api/folders/folder-2', () => HttpResponse.json({ message: 'Folder not found' }, { status: 404 }))
+    );
 
     const firstSubscription = store.dispatch(browseDashboardsAPI.endpoints.getFolder.initiate(folderOneQueryArg));
     const secondSubscription = store.dispatch(browseDashboardsAPI.endpoints.getFolder.initiate(folderTwoQueryArg));
@@ -200,7 +155,6 @@ describe('browseDashboardsAPI', () => {
       browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
     );
 
-    expect(mockFetch.mock.calls).toHaveLength(4);
     expect(deletedFoldersState.isDeleted('folder-1')).toBe(true);
     expect(deletedFoldersState.isDeleted('folder-2')).toBe(false);
 
@@ -210,41 +164,41 @@ describe('browseDashboardsAPI', () => {
 
   it('does not mark skipped provisioned folders as deleted', async () => {
     const store = createTestStore();
-    const runtime = jest.requireMock('@grafana/runtime');
-    runtime.config.featureToggles.provisioning = true;
+    config.featureToggles.provisioning = true;
 
-    mockFetch.mockImplementation(({ method, url }) => {
-      if (method === 'GET' && url === '/apis/folder.grafana.app/v1beta1/namespaces/default/folders/folder-1') {
-        return of({
-          data: {
-            metadata: {
-              name: 'folder-1',
-              annotations: {
-                [AnnoKeyManagerKind]: ManagerKind.Repo,
-              },
+    const deleteSpy = jest.fn();
+
+    server.use(
+      http.get('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/folder-1', () =>
+        HttpResponse.json({
+          apiVersion: 'folder.grafana.app/v1beta1',
+          kind: 'Folder',
+          metadata: {
+            name: 'folder-1',
+            namespace: 'default',
+            annotations: {
+              [AnnoKeyManagerKind]: ManagerKind.Repo,
             },
           },
-        });
-      }
-
-      throw new Error(`Unexpected request: ${method} ${url}`);
-    });
+          spec: { title: 'Folder 1' },
+        })
+      ),
+      http.delete('/api/folders/:uid', () => {
+        deleteSpy();
+        return HttpResponse.json({});
+      })
+    );
 
     await store.dispatch(browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1'] }));
 
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.objectContaining({
-        method: 'GET',
-        url: '/apis/folder.grafana.app/v1beta1/namespaces/default/folders/folder-1',
-      })
-    );
+    expect(deleteSpy).not.toHaveBeenCalled();
     expect(deletedFoldersState.isDeleted('folder-1')).toBe(false);
   });
 
   it('does not mark folders as deleted when single delete fails', async () => {
     const store = createTestStore();
-    mockFetch.mockImplementation(() => throwError(() => ({ status: 500, data: { message: 'boom' } })));
+
+    server.use(http.delete('/api/folders/:uid', () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
 
     await store.dispatch(
       browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
