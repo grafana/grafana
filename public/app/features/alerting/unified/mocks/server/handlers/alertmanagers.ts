@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 
 import alertmanagerConfigMock from 'app/features/alerting/unified/components/contact-points/__mocks__/alertmanager.config.mock.json';
+import { TemplatesTestPayload } from 'app/features/alerting/unified/api/templateApi';
 import receiversMock from 'app/features/alerting/unified/components/contact-points/__mocks__/receivers.mock.json';
 import { MOCK_SILENCE_ID_EXISTING, mockAlertmanagerAlert } from 'app/features/alerting/unified/mocks';
 import { defaultGrafanaAlertingConfigurationStatusResponse } from 'app/features/alerting/unified/mocks/alertmanagerApi';
@@ -110,9 +111,17 @@ const updateAlertmanagerConfigHandler = () =>
   });
 
 const getGrafanaAlertmanagerTemplatePreview = () =>
-  http.post('/api/alertmanager/grafana/config/api/v1/templates/test', () =>
-    // TODO: Scaffold out template preview response as needed by tests
-    HttpResponse.json({})
+  http.post<never, TemplatesTestPayload>(
+    '/api/alertmanager/grafana/config/api/v1/templates/test',
+    async ({ request }) => {
+      const body = await request.json();
+
+      if (body?.template.startsWith('{{')) {
+        return HttpResponse.json({ results: [{ name: 'asdasd', text: `some example preview for ${body.name}` }] });
+      }
+
+      return HttpResponse.json({});
+    }
   );
 
 const getReceiversHandler = () =>

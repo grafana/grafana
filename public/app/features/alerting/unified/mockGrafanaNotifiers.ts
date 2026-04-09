@@ -289,7 +289,7 @@ export const grafanaAlertNotifiers: Record<GrafanaNotifierType, NotifierDTO> = {
         label: 'Message',
         description:
           'Optional message. You can use templates to customize this field. Using a custom message will replace the default message',
-        placeholder: '',
+        placeholder: '{{ template "default.message" . }}',
         propertyName: 'message',
         selectOptions: null,
         showWhen: {

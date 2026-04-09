@@ -134,6 +134,7 @@
     "contact-point": "Contact Point",
     "contact-points": {
       "create": "Create contact point",
+      "custom-template-value": "Custom template value",
       "delete-reasons": {
         "heading": "Contact point cannot be deleted for the following reasons:",
         "no-permissions": "You do not have the required permission to delete this contact point",

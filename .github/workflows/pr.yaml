@@ -4,6 +4,28 @@ on:
  pull_request:
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Run tests
+        run: >-
+          npx jest --ci --passWithNoTests
+          --changedSince=origin/groundcover-main
+          --testPathIgnorePatterns="rule-editor/alert-rule-form"
+
   build:
     runs-on: ubuntu-latest
     permissions:
