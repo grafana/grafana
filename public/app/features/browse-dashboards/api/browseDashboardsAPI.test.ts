@@ -3,6 +3,7 @@ import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
 
 import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
+import * as quotasAPI from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { config, setBackendSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -13,6 +14,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
+import { deletedDashboardsCache } from 'app/features/search/service/deletedDashboardsCache';
 import { deletedFoldersState } from 'app/features/search/service/deletedFoldersState';
 import { setStore } from 'app/store/store';
 import { type FolderDTO } from 'app/types/folders';
@@ -211,30 +213,39 @@ describe('browseDashboardsAPI', () => {
   it('invalidates the folder list when bulk delete yields no successes', async () => {
     const store = createTestStore();
     const listFoldersSpy = jest.fn();
+    const clearDeletedDashboardsCacheSpy = jest.spyOn(deletedDashboardsCache, 'clear');
+    const invalidateQuotaUsageSpy = jest.spyOn(quotasAPI, 'invalidateQuotaUsage');
 
-    server.use(
-      http.get('/api/folders', () => {
-        listFoldersSpy();
-        return HttpResponse.json([{ uid: 'folder-1', title: 'Folder 1' }]);
-      }),
-      http.delete('/api/folders/folder-1', () => HttpResponse.json({ message: 'Folder not found' }, { status: 404 })),
-      http.delete('/api/folders/folder-2', () => HttpResponse.json({ message: 'Folder not found' }, { status: 404 }))
-    );
+    try {
+      server.use(
+        http.get('/api/folders', () => {
+          listFoldersSpy();
+          return HttpResponse.json([{ uid: 'folder-1', title: 'Folder 1' }]);
+        }),
+        http.delete('/api/folders/folder-1', () => HttpResponse.json({ message: 'Folder not found' }, { status: 404 })),
+        http.delete('/api/folders/folder-2', () => HttpResponse.json({ message: 'Folder not found' }, { status: 404 }))
+      );
 
-    const subscription = store.dispatch(
-      browseDashboardsAPI.endpoints.listFolders.initiate({ parentUid: undefined, limit: PAGE_SIZE, page: 1 })
-    );
+      const subscription = store.dispatch(
+        browseDashboardsAPI.endpoints.listFolders.initiate({ parentUid: undefined, limit: PAGE_SIZE, page: 1 })
+      );
 
-    await subscription;
-    await store.dispatch(
-      browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
-    );
+      await subscription;
+      await store.dispatch(
+        browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+      );
 
-    expect(listFoldersSpy).toHaveBeenCalledTimes(2);
-    expect(deletedFoldersState.isDeleted('folder-1')).toBe(false);
-    expect(deletedFoldersState.isDeleted('folder-2')).toBe(false);
+      expect(listFoldersSpy).toHaveBeenCalledTimes(2);
+      expect(clearDeletedDashboardsCacheSpy).toHaveBeenCalledTimes(1);
+      expect(invalidateQuotaUsageSpy).toHaveBeenCalledTimes(1);
+      expect(deletedFoldersState.isDeleted('folder-1')).toBe(false);
+      expect(deletedFoldersState.isDeleted('folder-2')).toBe(false);
 
-    subscription.unsubscribe();
+      subscription.unsubscribe();
+    } finally {
+      clearDeletedDashboardsCacheSpy.mockRestore();
+      invalidateQuotaUsageSpy.mockRestore();
+    }
   });
 
   it('refreshes parents for requested folders even when bulk delete yields no successes', async () => {

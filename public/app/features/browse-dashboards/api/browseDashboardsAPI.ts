@@ -364,6 +364,8 @@ export const browseDashboardsAPI = createApi({
             thunkDispatch: dispatch,
           });
           dispatch(refreshParents(requestedFolderUIDs));
+          deletedDashboardsCache.clear();
+          invalidateQuotaUsage(dispatch);
         });
       },
     }),
@@ -668,8 +670,6 @@ function handleDeletedFolders({
   }
 
   deletedFoldersState.markDeleted(deletedFolderUIDs);
-  // Deleting a folder also deletes its dashboards, so bust the deleted dashboards cache.
-  deletedDashboardsCache.clear();
 
   if (shouldRefetchParentChildren) {
     thunkDispatch(
@@ -679,8 +679,6 @@ function handleDeletedFolders({
       })
     );
   }
-
-  invalidateQuotaUsage(thunkDispatch);
 }
 
 export const {
