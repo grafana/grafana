@@ -93,7 +93,10 @@ func (s *Service) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUser
 
 func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
 	if s.isKubernetesTeamServiceEnabled(ctx) {
-		// Fall back to legacy during auth flows where no requester exists yet.
+		// GetTeamIDsByUser is called during authentication (e.g. middleware that
+		// resolves team-based permissions) before a requester has been attached to
+		// the context. The k8s service requires a requester to build the dynamic
+		// client, so we must use the legacy SQL path for these pre-auth calls.
 		if _, err := identity.GetRequester(ctx); err == nil {
 			return s.k8sService.GetTeamIDsByUser(ctx, query)
 		}

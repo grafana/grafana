@@ -1745,7 +1745,7 @@ func membershipServerHandlerWithPermission(t *testing.T, perm iamv0alpha1.TeamBi
 			})
 		case r.Method == http.MethodGet && strings.Contains(path, "/users/user-uid-42"):
 			_ = json.NewEncoder(w).Encode(mustToUnstructured(t, &userObj))
-		case r.Method == http.MethodGet && strings.Contains(path, "/teams") && !strings.Contains(path, "/teams/") && r.URL.Query().Get("labelSelector") != "":
+		case r.Method == http.MethodGet && strings.Contains(path, "/teams") && !strings.Contains(path, "/teams/") && (r.URL.Query().Get("labelSelector") != "" || r.URL.Query().Get("fieldSelector") != ""):
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
 				"kind":       "TeamList",

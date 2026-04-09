@@ -132,6 +132,67 @@ func (s *TeamK8sService) getUserByUID(ctx context.Context, namespace string, use
 	return &user, nil
 }
 
+func (s *TeamK8sService) listTeamsByUIDs(ctx context.Context, namespace string, uids []string) (map[string]*unstructured.Unstructured, error) {
+	if len(uids) == 0 {
+		return nil, nil
+	}
+
+	client, err := s.getClient(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	selectors := make([]fields.Selector, 0, len(uids))
+	for _, uid := range uids {
+		selectors = append(selectors, fields.OneTermEqualSelector("metadata.name", uid))
+	}
+	fieldSelector := fields.AndSelectors(selectors...).String()
+
+	result, err := client.List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
+	if err != nil {
+		return nil, err
+	}
+
+	teams := make(map[string]*unstructured.Unstructured, len(result.Items))
+	for i := range result.Items {
+		teams[result.Items[i].GetName()] = &result.Items[i]
+	}
+	return teams, nil
+}
+
+// listUsersByUIDs fetches multiple users in a single List call using metadata.name field selectors.
+func (s *TeamK8sService) listUsersByUIDs(ctx context.Context, namespace string, uids []string) (map[string]*iamv0alpha1.User, error) {
+	if len(uids) == 0 {
+		return nil, nil
+	}
+
+	client, err := s.getDynamicClient(ctx, namespace, userGVR)
+	if err != nil {
+		return nil, err
+	}
+
+	selectors := make([]fields.Selector, 0, len(uids))
+	for _, uid := range uids {
+		selectors = append(selectors, fields.OneTermEqualSelector("metadata.name", uid))
+	}
+	fieldSelector := fields.AndSelectors(selectors...).String()
+
+	result, err := client.List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
+	if err != nil {
+		return nil, err
+	}
+
+	users := make(map[string]*iamv0alpha1.User, len(result.Items))
+	for _, item := range result.Items {
+		var user iamv0alpha1.User
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &user); err != nil {
+			return nil, err
+		}
+		users[user.GetName()] = &user
+	}
+	return users, nil
+}
+
 func (s *TeamK8sService) listTeamBindings(ctx context.Context, namespace string, fieldSelector string) ([]iamv0alpha1.TeamBinding, error) {
 	client, err := s.getDynamicClient(ctx, namespace, teamBindingGVR)
 	if err != nil {
@@ -607,15 +668,16 @@ func (s *TeamK8sService) RemoveUsersMemberships(ctx context.Context, userID int6
 		return err
 	}
 
+	var errs []error
 	for _, b := range bindings {
 		if err := bindingClient.Delete(ctx, b.Name, metav1.DeleteOptions{}); err != nil {
 			if !apierrors.IsNotFound(err) {
-				return err
+				errs = append(errs, fmt.Errorf("failed to delete binding %s: %w", b.Name, err))
 			}
 		}
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
 func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*team.TeamMemberDTO, error) {
@@ -647,9 +709,14 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 		}
 	}
 
-	teamClient, err := s.getClient(ctx, namespace)
+	teamUIDs := make([]string, 0, len(bindings))
+	for _, b := range bindings {
+		teamUIDs = append(teamUIDs, b.Spec.TeamRef.Name)
+	}
+
+	teamsMap, err := s.listTeamsByUIDs(ctx, namespace, teamUIDs)
 	if err != nil {
-		return nil, err
+		s.logger.Warn("Failed to batch-fetch teams for team ID lookup", "error", err)
 	}
 
 	members := make([]*team.TeamMemberDTO, 0, len(bindings))
@@ -670,9 +737,7 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 			dto.AvatarURL = dtos.GetGravatarUrlWithDefault(s.cfg, k8sUser.Spec.Email, k8sUser.Spec.Login)
 		}
 
-		if teamResult, err := teamClient.Get(ctx, b.Spec.TeamRef.Name, metav1.GetOptions{}); err != nil {
-			s.logger.Warn("Failed to fetch team for team ID lookup", "teamUID", b.Spec.TeamRef.Name, "error", err)
-		} else {
+		if teamResult, ok := teamsMap[b.Spec.TeamRef.Name]; ok {
 			dto.TeamID = deprecatedInternalID(teamResult)
 		}
 
@@ -723,6 +788,16 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 		return nil, err
 	}
 
+	userUIDs := make([]string, 0, len(bindings))
+	for _, b := range bindings {
+		userUIDs = append(userUIDs, b.Spec.Subject.Name)
+	}
+
+	usersMap, err := s.listUsersByUIDs(ctx, namespace, userUIDs)
+	if err != nil {
+		s.logger.Warn("Failed to batch-fetch user details for team members", "error", err)
+	}
+
 	members := make([]*team.TeamMemberDTO, 0, len(bindings))
 	for _, b := range bindings {
 		userUID := b.Spec.Subject.Name
@@ -736,15 +811,12 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 			Permission: permissionFromBinding(b.Spec.Permission),
 		}
 
-		k8sUser, err := s.getUserByUID(ctx, namespace, userUID)
-		if err == nil {
+		if k8sUser, ok := usersMap[userUID]; ok {
 			dto.UserID = deprecatedInternalID(k8sUser)
 			dto.Email = k8sUser.Spec.Email
 			dto.Name = k8sUser.Spec.Title
 			dto.Login = k8sUser.Spec.Login
 			dto.AvatarURL = dtos.GetGravatarUrlWithDefault(s.cfg, k8sUser.Spec.Email, k8sUser.Spec.Login)
-		} else {
-			s.logger.Warn("Failed to fetch user details for team member", "userUID", userUID, "error", err)
 		}
 
 		members = append(members, dto)
