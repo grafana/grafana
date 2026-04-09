@@ -19,15 +19,17 @@ interface AlertRuleRowProps {
   rowKey: React.Key;
   depth?: number;
   enableFolderMeta?: boolean;
+  groupLabels?: Record<string, string>;
 }
 
-export const AlertRuleRow = ({
+export function AlertRuleRow({
   row,
   leftColumnWidth,
   rowKey,
   depth = 0,
   enableFolderMeta = true,
-}: AlertRuleRowProps) => {
+  groupLabels,
+}: AlertRuleRowProps) {
   const { ruleUID, folder, title } = row.metadata;
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -52,6 +54,7 @@ export const AlertRuleRow = ({
               <OpenDrawerButton
                 aria-label={t('alerting.triage.open-rule-details', 'Open rule details')}
                 onClick={handleDrawerOpen}
+                text={t('alerting.open-drawer-icon-button.rule-details', 'Rule details')}
               />
             }
           />
@@ -71,10 +74,10 @@ export const AlertRuleRow = ({
         showIndentBorder
         expandable={false}
       >
-        <AlertRuleInstances ruleUID={ruleUID} depth={depth} />
+        <AlertRuleInstances ruleUID={ruleUID} depth={depth} groupLabels={groupLabels} />
       </GenericRow>
 
       {isDrawerOpen && <RuleDetailsDrawer ruleUID={ruleUID} onClose={handleDrawerClose} />}
     </>
   );
-};
+}

@@ -897,9 +897,9 @@ type GrafanaOption func(opts *testinfra.GrafanaOpts)
 // Useful for debugging a test in development.
 //
 
-// WithProvisioningFolderMetadata enables the FlagProvisioningFolderMetadata feature toggle.
-func WithProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
-	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
+// WithoutProvisioningFolderMetadata disables the FlagProvisioningFolderMetadata feature toggle.
+func WithoutProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
+	opts.DisableFeatureToggles = append(opts.DisableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
 }
 
 func WithRepositoryTypes(types []string) GrafanaOption {
@@ -2794,4 +2794,42 @@ func SharedHelper(t *testing.T, env *SharedEnv) *ProvisioningTestHelper {
 	helper := env.GetCleanHelper(t)
 	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient()
 	return helper
+}
+
+// LabelPendingDelete is the label key written by the tenant watcher to mark
+// resources whose namespace is pending deletion.
+const LabelPendingDelete = "cloud.grafana.com/pending-delete"
+
+// SetPendingDeleteLabel adds the pending-delete label to the named resource.
+// It retries on 409 Conflict to handle concurrent status updates from the controller.
+func SetPendingDeleteLabel(t *testing.T, resource dynamic.ResourceInterface, name string) {
+	t.Helper()
+	err := RetryOnConflict(func() error {
+		obj, err := resource.Get(t.Context(), name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		labels := obj.GetLabels()
+		if labels == nil {
+			labels = make(map[string]string)
+		}
+		labels[LabelPendingDelete] = "true"
+		obj.SetLabels(labels)
+		_, err = resource.Update(t.Context(), obj, metav1.UpdateOptions{})
+		return err
+	})
+	require.NoError(t, err, "setting the pending-delete label on %q should be allowed", name)
+}
+
+// RetryOnConflict retries fn on 409 Conflict up to 5 times, returning the last
+// error (or nil on success).
+func RetryOnConflict(fn func() error) error {
+	var err error
+	for range 10 {
+		err = fn()
+		if !apierrors.IsConflict(err) {
+			return err
+		}
+	}
+	return err
 }

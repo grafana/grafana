@@ -21,6 +21,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -664,12 +665,24 @@ func (b *kvStorageBackend) garbageCollectionCutoffTimestamp(group, resourceName 
 	return cutoffTimestamp
 }
 
+func conflictError(event WriteEvent, message string) error {
+	return NewConflictStatusError(
+		event.Key.Group, event.Key.Resource, event.Key.Name, message,
+	)
+}
+
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
 //
 //nolint:gocyclo
 func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
 	if err := event.Validate(); err != nil {
-		return 0, fmt.Errorf("invalid event: %w", err)
+		return 0, apierrors.NewBadRequest(err.Error())
+	}
+
+	// If an RV was passed in the old (microsecond) format, convert it to snowflake.
+	// TODO: remove this once the KV backend has been deployed everywhere.
+	if event.PreviousRV > 0 && !isSnowflake(event.PreviousRV) {
+		event.PreviousRV = rvmanager.SnowflakeFromRV(event.PreviousRV)
 	}
 
 	rv := k.snowflake.Generate().Int64()
@@ -687,14 +700,14 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if err != nil {
 			if errors.Is(err, ErrNotFound) {
 				// Resource doesn't exist, but PreviousRV was provided
-				return 0, fmt.Errorf("optimistic locking failed: resource not found")
+				return 0, conflictError(event, "resource not found")
 			}
 			return 0, fmt.Errorf("failed to fetch latest resource: %w", err)
 		}
 
 		// Verify the current RV matches the PreviousRV
 		if latestKey.ResourceVersion != event.PreviousRV {
-			return 0, fmt.Errorf("optimistic locking failed: requested RV %d does not match saved RV %d", event.PreviousRV, latestKey.ResourceVersion)
+			return 0, conflictError(event, "requested RV does not match current RV")
 		}
 	}
 
@@ -803,13 +816,13 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if latestKey.ResourceVersion != dataKey.ResourceVersion {
 			// Delete the data we just wrote since it's not the latest
 			_ = k.dataStore.Delete(ctx, dataKey)
-			return 0, fmt.Errorf("optimistic locking failed: concurrent modification detected")
+			return 0, conflictError(event, "concurrent modification detected")
 		}
 
 		if !rvmanager.IsRvEqual(prevKey.ResourceVersion, event.PreviousRV) {
 			// Another concurrent write happened between our read and write
 			_ = k.dataStore.Delete(ctx, dataKey)
-			return 0, fmt.Errorf("optimistic locking failed: resource was modified concurrently (expected previous RV %d, found %d)", event.PreviousRV, prevKey.ResourceVersion)
+			return 0, conflictError(event, "resource was modified concurrently")
 		}
 	} else if event.Type == resourcepb.WatchEvent_ADDED {
 		// Create operations: verify our write is the latest version
@@ -829,14 +842,14 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if latestKey.ResourceVersion != dataKey.ResourceVersion {
 			// Delete the data we just wrote since it's not the latest
 			_ = k.dataStore.Delete(ctx, dataKey)
-			return 0, fmt.Errorf("optimistic locking failed: concurrent create detected")
+			return 0, conflictError(event, "concurrent create detected")
 		}
 
 		// Verify that the immediate predecessor is not a create
 		if prevKey.Action == DataActionCreated {
 			// Another concurrent create happened - delete our write and return error
 			_ = k.dataStore.Delete(ctx, dataKey)
-			return 0, fmt.Errorf("optimistic locking failed: concurrent create detected")
+			return 0, conflictError(event, "concurrent create attempts detected")
 		}
 	}
 
@@ -950,7 +963,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		Name:      req.Key.Name,
 	}, req.ResourceVersion)
 	if errors.Is(err, ErrNotFound) {
-		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "not found"}}
+		return &BackendReadResponse{Error: NewNotFoundError(req.Key)}
 	} else if err != nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
 	}
@@ -1793,6 +1806,43 @@ func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.
 	}
 }
 
+type kvBulkImportItem struct {
+	req        *resourcepb.BulkRequest
+	dataKey    DataKey
+	nameKey    string
+	microRV    int64
+	previousRV int64
+	generation int64
+}
+
+type singleBulkRequestBatchIterator struct {
+	iter  BulkRequestIterator
+	batch []*resourcepb.BulkRequest
+}
+
+func (s *singleBulkRequestBatchIterator) NextBatch() bool {
+	if !s.iter.Next() {
+		return false
+	}
+
+	req := s.iter.Request()
+	if req == nil {
+		s.batch = nil
+		return true
+	}
+
+	s.batch = []*resourcepb.BulkRequest{req}
+	return true
+}
+
+func (s *singleBulkRequestBatchIterator) Batch() []*resourcepb.BulkRequest {
+	return s.batch
+}
+
+func (s *singleBulkRequestBatchIterator) RollbackRequested() bool {
+	return s.iter.RollbackRequested()
+}
+
 //nolint:gocyclo
 func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
 	// rvManagerDB is the database handle for rvManager and legacy compat operations.
@@ -1825,17 +1875,23 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	summaries := make(map[string]*resourcepb.BulkResponse_Summary, len(setting.Collection))
 	rsp := &resourcepb.BulkResponse{}
 
+	reportError := func(err error, format string, args ...any) {
+		msg := fmt.Sprintf(format, args...)
+		b.log.Error(msg, "error", err)
+		rsp.Error = AsErrorResult(fmt.Errorf("%s: %w", msg, err))
+	}
+
 	for _, key := range setting.Collection {
 		events := make([]string, 0)
 		for evtKeyStr, err := range b.eventStore.ListKeysSince(ctx, 1, SortOrderAsc) {
 			if err != nil {
-				b.log.Error("failed to list event: %s", err)
+				reportError(err, "failed to list event")
 				return rsp
 			}
 
 			evtKey, err := ParseEventKey(evtKeyStr)
 			if err != nil {
-				b.log.Error("error parsing event key: %s", err)
+				reportError(err, "error parsing event key")
 				return rsp
 			}
 
@@ -1847,7 +1903,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		}
 
 		if err := b.eventStore.batchDelete(ctx, events); err != nil {
-			b.log.Error("failed to delete events: %s", err)
+			reportError(err, "failed to delete events")
 			return rsp
 		}
 
@@ -1859,7 +1915,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			Resource:  key.Resource,
 		}, SortOrderAsc) {
 			if err != nil {
-				b.log.Error("failed to list collection before delete: %s", err)
+				reportError(err, "failed to list collection before delete")
 				return rsp
 			}
 
@@ -1868,14 +1924,14 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 
 		previousCount := int64(len(historyKeys))
 		if err := b.dataStore.batchDelete(ctx, historyKeys); err != nil {
-			b.log.Error("failed to delete collection: %s", err)
+			reportError(err, "failed to delete collection")
 			return rsp
 		}
 
 		// Delete legacy resource rows for this collection so they can be re-synced after import.
 		if rvManagerDB != nil {
 			if err := b.dataStore.deleteLegacyResourceCollection(ctx, rvManagerDB, key.Namespace, key.Group, key.Resource); err != nil {
-				b.log.Error("failed to delete legacy resource collection", "error", err)
+				reportError(err, "failed to delete legacy resource collection")
 				return rsp
 			}
 		}
@@ -1900,115 +1956,179 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	updatedResources := make(map[NamespacedResource]bool)
 	// Track the last micro RV per resource name for computing previous_resource_version in compat mode.
 	lastMicroRV := make(map[string]int64)
+	recordSavedItem := func(item kvBulkImportItem) {
+		saved = append(saved, item.dataKey)
+		updatedResources[NamespacedResource{
+			Namespace: item.dataKey.Namespace,
+			Group:     item.dataKey.Group,
+			Resource:  item.dataKey.Resource,
+		}] = true
+	}
 
-	for iter.Next() {
-		if iter.RollbackRequested() {
+	batchIter, ok := iter.(BulkRequestBatchIterator)
+	if !ok {
+		batchIter = &singleBulkRequestBatchIterator{iter: iter}
+	}
+
+	for batchIter.NextBatch() {
+		if batchIter.RollbackRequested() {
 			rollback()
 			break
 		}
 
-		req := iter.Request()
-		if req == nil {
+		batch := batchIter.Batch()
+		if len(batch) == 0 {
 			rollback()
-			rsp.Error = AsErrorResult(fmt.Errorf("missing request"))
-			break
+			rsp.Error = AsErrorResult(fmt.Errorf("missing request batch"))
+			return rsp
 		}
 
-		rsp.Processed++
-
-		var action kv.DataAction
-		switch resourcepb.WatchEvent_Type(req.Action) {
-		case resourcepb.WatchEvent_ADDED:
-			action = DataActionCreated
-			// Check if resource already exists for create operations
-			_, err := b.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
-				Group:     req.Key.Group,
-				Resource:  req.Key.Resource,
-				Namespace: req.Key.Namespace,
-				Name:      req.Key.Name,
-			})
-			if err == nil {
-				rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
-					Key:    req.Key,
-					Action: req.Action,
-					Error:  "resource already exists",
-				})
-				continue
-			}
-			if !errors.Is(err, ErrNotFound) {
-				rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
-					Key:    req.Key,
-					Action: req.Action,
-					Error:  fmt.Sprintf("failed to check if resource exists: %s", err),
-				})
-				continue
-			}
-		case resourcepb.WatchEvent_MODIFIED:
-			action = DataActionUpdated
-		case resourcepb.WatchEvent_DELETED:
-			action = DataActionDeleted
-		default:
-			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
-				Key:    req.Key,
-				Action: req.Action,
-				Error:  "invalid event type",
-			})
-			continue
-		}
-
-		obj := &unstructured.Unstructured{}
-		err := obj.UnmarshalJSON(req.Value)
-		if err != nil {
-			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
-				Key:    req.Key,
-				Action: req.Action,
-				Error:  "unable to unmarshal json",
-			})
-			continue
-		}
-
-		dataKey := DataKey{
-			Group:           req.Key.Group,
-			Resource:        req.Key.Resource,
-			Namespace:       req.Key.Namespace,
-			Name:            req.Key.Name,
-			ResourceVersion: bulkRvGenerator.next(obj),
-			Action:          action,
-			Folder:          req.Folder,
-		}
-		err = b.dataStore.Save(ctx, dataKey, bytes.NewReader(req.Value))
-		if err != nil {
-			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
-				Key:    req.Key,
-				Action: req.Action,
-				Error:  fmt.Sprintf("failed to save resource: %s", err),
-			})
-			continue
-		}
-
-		saved = append(saved, dataKey)
-		updatedResources[NamespacedResource{Namespace: dataKey.Namespace, Group: dataKey.Group, Resource: dataKey.Resource}] = true
-
-		// Fill in legacy columns on the resource_history row that was just inserted with only key_path and value.
+		batchItems := make([]kvBulkImportItem, 0, len(batch))
+		batchRows := make([]kv.DataImportRow, 0, len(batch))
+		batchLastMicroRV := lastMicroRV
 		if rvManagerDB != nil {
-			microRV := rvmanager.RVFromSnowflake(dataKey.ResourceVersion)
-			generation := obj.GetGeneration()
-			if action == DataActionDeleted {
-				generation = 0
+			batchLastMicroRV = make(map[string]int64, len(lastMicroRV)+len(batch))
+			for key, value := range lastMicroRV {
+				batchLastMicroRV[key] = value
 			}
+		}
 
-			// For creates, previous RV is 0. For updates/deletes, it's the RV of the previous event for this resource.
-			nameKey := dataKey.Group + "/" + dataKey.Resource + "/" + dataKey.Namespace + "/" + dataKey.Name
-			var previousRV int64
-			if action != DataActionCreated {
-				previousRV = lastMicroRV[nameKey]
-			}
-
-			if err := b.dataStore.updateLegacyResourceHistoryBulk(ctx, rvManagerDB, dataKey, microRV, previousRV, generation); err != nil {
-				b.log.Error("failed to update legacy resource_history for bulk", "error", err)
+		for _, req := range batch {
+			if req == nil {
+				rollback()
+				rsp.Error = AsErrorResult(fmt.Errorf("missing request"))
 				return rsp
 			}
-			lastMicroRV[nameKey] = microRV
+
+			rsp.Processed++
+
+			var action kv.DataAction
+			switch resourcepb.WatchEvent_Type(req.Action) {
+			case resourcepb.WatchEvent_ADDED:
+				action = DataActionCreated
+			case resourcepb.WatchEvent_MODIFIED:
+				action = DataActionUpdated
+			case resourcepb.WatchEvent_DELETED:
+				action = DataActionDeleted
+			default:
+				rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
+					Key:    req.Key,
+					Action: req.Action,
+					Error:  "invalid event type",
+				})
+				continue
+			}
+
+			obj := &unstructured.Unstructured{}
+			err := obj.UnmarshalJSON(req.Value)
+			if err != nil {
+				rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
+					Key:    req.Key,
+					Action: req.Action,
+					Error:  "unable to unmarshal json",
+				})
+				continue
+			}
+
+			dataKey := DataKey{
+				Group:           req.Key.Group,
+				Resource:        req.Key.Resource,
+				Namespace:       req.Key.Namespace,
+				Name:            req.Key.Name,
+				ResourceVersion: bulkRvGenerator.next(obj),
+				Action:          action,
+				Folder:          req.Folder,
+			}
+
+			if err := validateDataKey(dataKey); err != nil {
+				rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
+					Key:    req.Key,
+					Action: req.Action,
+					Error:  fmt.Sprintf("failed to save resource: invalid data key: %s", err),
+				})
+				continue
+			}
+
+			item := kvBulkImportItem{
+				req:     req,
+				dataKey: dataKey,
+			}
+
+			if rvManagerDB != nil {
+				item.microRV = rvmanager.RVFromSnowflake(dataKey.ResourceVersion)
+				item.generation = obj.GetGeneration()
+				if action == DataActionDeleted {
+					item.generation = 0
+				}
+
+				nameKey := dataKey.Group + "/" + dataKey.Resource + "/" + dataKey.Namespace + "/" + dataKey.Name
+				item.nameKey = nameKey
+				if action != DataActionCreated {
+					item.previousRV = batchLastMicroRV[nameKey]
+				}
+				batchLastMicroRV[nameKey] = item.microRV
+			}
+
+			batchItems = append(batchItems, item)
+			importRow := kv.DataImportRow{
+				GUID:    uuid.New().String(),
+				KeyPath: kv.DataSection + "/" + dataKey.String(),
+				Value:   req.Value,
+			}
+			if rvManagerDB != nil {
+				legacyAction, err := kv.LegacyActionValue(action)
+				if err != nil {
+					rollback()
+					rsp.Error = AsErrorResult(fmt.Errorf("failed to map legacy action: %w", err))
+					return rsp
+				}
+				importRow.Legacy = &kv.DataImportLegacyFields{
+					Group:           dataKey.Group,
+					Resource:        dataKey.Resource,
+					Namespace:       dataKey.Namespace,
+					Name:            dataKey.Name,
+					Action:          legacyAction,
+					Folder:          dataKey.Folder,
+					ResourceVersion: item.microRV,
+					PreviousRV:      item.previousRV,
+					Generation:      item.generation,
+				}
+			}
+			batchRows = append(batchRows, importRow)
+		}
+
+		usedBatchWriter, err := b.dataStore.insertDataImportBatch(ctx, batchRows)
+		if err != nil {
+			rollback()
+			rsp.Error = AsErrorResult(fmt.Errorf("failed to save resource batch: %w", err))
+			return rsp
+		}
+
+		if !usedBatchWriter {
+			for _, item := range batchItems {
+				err := b.dataStore.Save(ctx, item.dataKey, bytes.NewReader(item.req.Value))
+				if err != nil {
+					rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
+						Key:    item.req.Key,
+						Action: item.req.Action,
+						Error:  fmt.Sprintf("failed to save resource: %s", err),
+					})
+					continue
+				}
+
+				recordSavedItem(item)
+				if item.nameKey != "" {
+					lastMicroRV[item.nameKey] = item.microRV
+				}
+			}
+			continue
+		}
+
+		for _, item := range batchItems {
+			recordSavedItem(item)
+			if item.nameKey != "" {
+				lastMicroRV[item.nameKey] = item.microRV
+			}
 		}
 	}
 
@@ -2017,7 +2137,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		// Check whether we're using the migration tx (no ExecWithRV — it uses its own connection).
 		for _, key := range setting.Collection {
 			if err := b.dataStore.syncLegacyResourceFromHistory(ctx, rvManagerDB, key.Namespace, key.Group, key.Resource); err != nil {
-				b.log.Error("failed to sync legacy resource from history", "error", err)
+				reportError(err, "failed to sync legacy resource from history")
 				return rsp
 			}
 
@@ -2053,7 +2173,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 				LastImportTime:     now,
 			})
 			if err != nil {
-				rsp.Error = AsErrorResult(fmt.Errorf("failed to save last import time for resource %s: %s", nsr.String(), err))
+				reportError(err, "failed to save last import time for resource %s", nsr.String())
 			}
 		}
 	}
