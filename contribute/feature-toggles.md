@@ -4,9 +4,9 @@ This guide helps you to add your feature behind a _feature flag_, code that lets
 
 Exhaustive documentation on OpenFeature can be found at [OpenFeature.dev](https://openfeature.dev/)
 
-## Steps to adding a feature toggle
+## Steps to adding a feature flag
 
-1. Define the feature toggle in [registry.go](../pkg/services/featuremgmt/registry.go).
+1. Define the feature flag in [registry.go](../pkg/services/featuremgmt/registry.go).
    - New flags must by named with a namespace, seperated by a dot. e.g `grafana.newPreferencesPage`.
    - Set the `Generate` field to control which clients are generated for your flag (see [Generation targets](#generation-targets) below).
    - To see what each feature stage means, look at the [related comments](../pkg/services/featuremgmt/features.go).
@@ -16,7 +16,7 @@ Exhaustive documentation on OpenFeature can be found at [OpenFeature.dev](https:
 
 ## Generation targets
 
-The `Generate` field on a `FeatureFlag` is a bitmask that controls which clients are generated. The available targets are:
+The `Generate` field on a `FeatureFlag` controls which clients are generated. The available targets are:
 
 | Target                   | Description                                                                                                             |
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
@@ -25,22 +25,22 @@ The `Generate` field on a `FeatureFlag` is a bitmask that controls which clients
 | `GenerateGo`             | Generates a Go constant in `toggles_gen.go`                                                                             |
 | `GenerateReact`          | Generates a typed React hook in `openfeature.gen.ts` via the OpenFeature CLI                                            |
 
-Targets can be combined with `|`, e.g.
+e.g.
 
 ```go
 {
     Name:        "grafana.newPreferencesPage",
     Description: "Whether to use the new SharedPreferences functional component",
     Stage:       FeatureStageExperimental,
-    Generate:    GenerateGo | GenerateReact,
+    Generate:    []GenerateTarget{GenerateGo, GenerateReact},
     Owner:       grafanaFrontendPlatformSquad,
     Expression:  "false",
 },
 ```
 
-## How to use the toggle in your code
+## How to use the flag in your code
 
-Once your feature toggle is defined, you can then wrap your feature around a check if the feature flag is enabled on that Grafana instance.
+Once your feature flag is defined, you can then wrap your feature around a check if the feature flag is enabled on that Grafana instance.
 
 Examples:
 
@@ -169,14 +169,14 @@ It is strongly preferred to use the React hooks instead of getting the client.
 ```ts
 import { getFeatureFlagClient, FlagKeys } from '@grafana/runtime/internal';
 
-// GOOD - The feature toggle should be called after app initialisation
+// GOOD - The feature flag should be called after app initialisation
 function doThing() {
   if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPreferencesPage, false)) {
     // do new things
   }
 }
 
-// BAD - Don't do this. The feature toggle must wait until app initialisation
+// BAD - Don't do this. The feature flag must wait until app initialisation
 const isEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPreferencesPage, false);
 
 function doThing() {
@@ -185,7 +185,7 @@ function doThing() {
   }
 }
 
-// BAD - Don't do this. The feature toggle will not change in response to updates
+// BAD - Don't do this. The feature flag will not change in response to updates
 class FooSrv {
   constructor() {
     this.isEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPreferencesPage, false);
@@ -201,7 +201,7 @@ class FooSrv {
 
 ## Enabling toggles in development
 
-Add the feature toggle to the feature_toggle section in your custom.ini, for example:
+Add the feature flag to the feature_toggle section in your custom.ini, for example:
 
 ```
 [feature_toggles]

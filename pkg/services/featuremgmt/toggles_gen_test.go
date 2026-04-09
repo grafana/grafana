@@ -217,7 +217,7 @@ func verifyFlagsConfiguration(t *testing.T) {
 		if err := verifyFlagName(flag); err != nil {
 			t.Error(err)
 		}
-		if flag.Generate == 0 {
+		if len(flag.Generate) == 0 {
 			t.Errorf("feature %s does not have any generation targets. please set the `Generate` property to specify which clients should be generated for this feature", flag.Name)
 		}
 	}
@@ -577,7 +577,7 @@ func getOpenFeatureCLIBin(t *testing.T) string {
 
 // Generates an OpenFeature flags manifest file for flags matching the given generation target
 // and returns the path to that manifest.
-func generateOpenFeatureManifest(t *testing.T, generationTarget FlagGenerationTarget) string {
+func generateOpenFeatureManifest(t *testing.T, generationTarget GenerateTarget) string {
 	t.Helper()
 
 	type flagDef struct {

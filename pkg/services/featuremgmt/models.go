@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"slices"
 )
 
 //go:generate mockery --name FeatureToggles --structname MockFeatureToggles --inpackage --filename feature_toggles_mock.go --with-expecter
@@ -126,12 +127,11 @@ func (s *FeatureFlagStage) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// FlagGenerationTarget is a bitwise flag that instructs codegen on what clients to generate for a feature flag.
-type FlagGenerationTarget uint8
+type GenerateTarget uint8
 
 const (
 	// GenerateLegacyGo generates the legacy Go client (constants in feature_toggles.go)
-	GenerateLegacyGo FlagGenerationTarget = 1 << iota
+	GenerateLegacyGo GenerateTarget = 1 << iota
 	// GenerateLegacyFrontend generates the legacy frontend client (constants in featureToggles.gen.ts)
 	GenerateLegacyFrontend
 	// GenerateGo generates constants in feature_toggles.go. The same as GenerateLegacyGo but with new name requirements
@@ -165,11 +165,11 @@ type FeatureFlag struct {
 	RequiresRestart bool `json:"requiresRestart,omitempty"`
 
 	// Generate instructs codegen on what clients to generate for this feature flag.
-	Generate FlagGenerationTarget `json:"-"`
+	Generate []GenerateTarget `json:"-"`
 }
 
-func (f FeatureFlag) ShouldGenerate(client FlagGenerationTarget) bool {
-	return f.Generate&client != 0
+func (f FeatureFlag) ShouldGenerate(client GenerateTarget) bool {
+	return slices.Contains(f.Generate, client)
 }
 
 type FeatureToggleWebhookPayload struct {
