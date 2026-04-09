@@ -274,6 +274,7 @@ export interface GrafanaConfig {
   liveNamespaced: boolean; // use namespace or orgId prefix
   anonymousEnabled: boolean;
   anonymousDeviceLimit: number;
+  /** @deprecated Use feature flags via OpenFeature instead */
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
