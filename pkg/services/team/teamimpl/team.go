@@ -138,11 +138,11 @@ func (s *Service) GetTeamMembers(ctx context.Context, query *team.GetTeamMembers
 }
 
 func (s *Service) RegisterDelete(query string) {
-	if s.isKubernetesTeamServiceEnabled(context.Background()) {
-		s.k8sService.RegisterDelete(query)
-		return
-	}
-
+	// Always register with legacy service since it manages SQL cleanup queries.
+	// The k8s service implementation is a no-op (k8s handles cascading deletes
+	// via its own mechanisms), so there is no need to gate on the feature flag.
+	// This is called at init time (Wire providers) where no request context
+	// exists, making feature flag evaluation with context.Background() unreliable.
 	s.legacyService.RegisterDelete(query)
 }
 
