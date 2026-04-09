@@ -20,10 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -253,12 +251,12 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		1: accesscontrol.GroupScopesByActionContext(
 			ctx,
 			[]accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersCreate, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionFoldersDelete, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-				{Action: accesscontrol.ActionAlertingRuleDelete, Scope: dashboards.ScopeFoldersAll},
-				{Action: accesscontrol.ActionLibraryPanelsDelete, Scope: dashboards.ScopeFoldersAll},
+				{Action: folder.ActionFoldersCreate, Scope: folder.ScopeFoldersAll},
+				{Action: folder.ActionFoldersWrite, Scope: folder.ScopeFoldersAll},
+				{Action: folder.ActionFoldersDelete, Scope: folder.ScopeFoldersAll},
+				{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersAll},
+				{Action: accesscontrol.ActionAlertingRuleDelete, Scope: folder.ScopeFoldersAll},
+				{Action: accesscontrol.ActionLibraryPanelsDelete, Scope: folder.ScopeFoldersAll},
 			}),
 	}}
 
@@ -286,10 +284,8 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		log:                    slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
 		unifiedStore:           unifiedStore,
 		features:               features,
-		bus:                    bus.ProvideBus(tracing.InitializeTracerForTest()),
 		accessControl:          acimpl.ProvideAccessControl(features),
 		registry:               make(map[string]folder.RegistryService),
-		metrics:                newFoldersMetrics(nil),
 		tracer:                 tracer,
 		k8sclient:              k8sCli,
 		dashboardK8sClient:     fakeK8sClient,
@@ -312,7 +308,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 					OrgID:        orgID,
 					SignedInUser: noPermUsr,
 				})
-				require.Equal(t, dashboards.ErrFolderAccessDenied, err)
+				require.Equal(t, folder.ErrAccessDenied, err)
 			})
 
 			t.Run("When get folder by uid should return access denied error", func(t *testing.T) {
@@ -321,7 +317,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 					OrgID:        orgID,
 					SignedInUser: noPermUsr,
 				})
-				require.Equal(t, dashboards.ErrFolderAccessDenied, err)
+				require.Equal(t, folder.ErrAccessDenied, err)
 			})
 
 			t.Run("When creating folder should return access denied error", func(t *testing.T) {
@@ -343,7 +339,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 					SignedInUser: noPermUsr,
 				})
 				require.Error(t, err)
-				require.Equal(t, dashboards.ErrFolderAccessDenied, err)
+				require.Equal(t, folder.ErrAccessDenied, err)
 			})
 
 			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
@@ -354,7 +350,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 					SignedInUser:     noPermUsr,
 				})
 				require.Error(t, err)
-				require.Equal(t, dashboards.ErrFolderAccessDenied, err)
+				require.Equal(t, folder.ErrAccessDenied, err)
 			})
 		})
 
@@ -388,7 +384,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 					UID:          "general",
 					SignedInUser: usr,
 				})
-				require.ErrorIs(t, err, dashboards.ErrFolderInvalidUID)
+				require.ErrorIs(t, err, folder.ErrInvalidUID)
 			})
 
 			t.Run("When updating folder should not return access denied error", func(t *testing.T) {

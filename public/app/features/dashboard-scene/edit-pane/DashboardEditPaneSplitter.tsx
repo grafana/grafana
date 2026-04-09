@@ -351,7 +351,8 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
     controlsWrapperSticky: css({
       [theme.breakpoints.up('md')]: {
         position: 'sticky',
-        zIndex: theme.zIndex.activePanel,
+        // above docked dashboard edit Sidebar (zIndex navBarFixed); otherwise time picker popover stays under it.
+        zIndex: theme.zIndex.sidemenu,
         background: theme.colors.background.canvas,
         top: headerHeight,
       },

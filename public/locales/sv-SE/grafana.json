@@ -2419,7 +2419,9 @@
       "recipient-notification-fires": "Välj vem som ska få en avisering när en larmregel utlöses."
     },
     "open-drawer-icon-button": {
-      "details": ""
+      "details": "",
+      "instance-details": "",
+      "rule-details": ""
     },
     "option-customfield": {
       "label-custom-template": "Anpassad mall",
@@ -3565,6 +3567,7 @@
       }
     },
     "triage": {
+      "clear-filters": "",
       "collapse": "",
       "collapse-all": "",
       "collapse-sidebar": "",
@@ -3581,6 +3584,7 @@
         "no-label": ""
       },
       "instance-details-drawer": {
+        "alert-instance-label": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Instansdetaljer",
@@ -3609,6 +3613,7 @@
           "folder-only": ""
         }
       },
+      "severity-filter-title": "",
       "show-fewer-values": "",
       "state-filter-title": "",
       "state-firing": "",
@@ -4918,6 +4923,9 @@
       "light-theme": "Ljus",
       "scopes": "Omfattningar"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "Sök med Grafana Assistant",
       "message": "Inga resultat hittades"
@@ -4993,24 +5001,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Anslut data till Grafana via datakällor, integrationer och appar",
-          "title": "Lägg till ny anslutning"
+          "subtitle": "Anslut data till Grafana via datakällor, integrationer och appar"
         },
         "collector": {
-          "subtitle": "Hantera konfigurationen av Grafana Alloy, vår distribution av OpenTelemetry Collector",
-          "title": ""
+          "subtitle": "Hantera konfigurationen av Grafana Alloy, vår distribution av OpenTelemetry Collector"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "Hantera dina befintliga datakällanslutningar",
-          "title": "Datakällor"
+          "subtitle": "Hantera dina befintliga datakällanslutningar"
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "Hantera dina aktiva integreringar",
-          "title": "Integreringar"
+          "subtitle": "Hantera dina aktiva integreringar"
         },
         "private-data-source-connections": {
-          "subtitle": "Hantera dina privata nätverksanslutningar för datakällor",
-          "title": "Anslutning av privat datakälla"
+          "subtitle": "Hantera dina privata nätverksanslutningar för datakällor"
         },
         "subtitle": "Anslut din infrastruktur till Grafana Cloud med hjälp av datakällor, integrationer och appar. Använd den här sidan för att lägga till och hantera allt från datainsamling till privata anslutningar och telemetripipelines."
       }
@@ -5070,11 +5082,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Anslut till en ny datakälla",
-          "title": "Lägg till ny anslutning"
+          "subtitle": "Anslut till en ny datakälla"
         },
         "data-sources": {
-          "subtitle": "Hantera dina befintliga datakällanslutningar",
           "title": "Visa konfigurerade datakällor"
         },
         "subtitle": "Hantera dina datakällanslutningar på ett ställe. Använd den här sidan för att lägga till en ny datakälla eller hantera dina befintliga anslutningar."
@@ -5124,10 +5134,6 @@
       "view-json-diff": "Visa JSON-diff för att se alla ändringar"
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "Lägg till ny",
     "alert": {
@@ -5169,6 +5175,14 @@
       "back-button": "Tillbaka",
       "next-button": "Nästa",
       "save-button": "Spara"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "Den valda måldatakällan måste exportera en frågeredigerare.",
@@ -5235,11 +5249,6 @@
       "transform-required": "Välj en omvandlingstyp",
       "type-label": "Typ",
       "type-tooltip": "Den typ av omvandling som kommer att tillämpas på källdata."
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "Kör fråga"
     }
   },
   "dashboard": {
@@ -7689,6 +7698,7 @@
       "placeholder-descriptive-text": "Beskrivande text",
       "placeholder-label-name": "Etikettnamn",
       "placeholder-variable-name": "Variabelnamn",
+      "run-query": "",
       "text-running-query": "Kör fråga …",
       "title": {
         "delete-variable": "Radera variabel"
@@ -11399,6 +11409,12 @@
       "show-search": "Resultat av sökning i loggar",
       "show-timestamps": "Visa tidsstämplar",
       "show-unique-labels": "Visa unika etiketter",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "Dölj tidsstämplar",
         "label": "Logga tidsstämplar",
@@ -12312,6 +12328,8 @@
       "description": "Aviseringar som du har fått visas här",
       "title": "Du är helt uppdaterad!"
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "Avvisa aviseringar",
       "title-alert": "Denna sida visar tidigare fel och varningar. När de väl har avfärdats kan de inte hämtas."

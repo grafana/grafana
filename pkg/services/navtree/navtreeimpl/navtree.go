@@ -7,13 +7,16 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	playlistregistry "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -105,7 +108,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	}
 
 	if c.IsPublicDashboardView() || hasAccess(ac.EvalAny(
-		ac.EvalPermission(dashboards.ActionFoldersRead), ac.EvalPermission(dashboards.ActionFoldersCreate),
+		ac.EvalPermission(folder.ActionFoldersRead), ac.EvalPermission(folder.ActionFoldersCreate),
 		ac.EvalPermission(dashboards.ActionDashboardsRead), ac.EvalPermission(dashboards.ActionDashboardsCreate)),
 	) {
 		dashboardChildLinks := s.buildDashboardNavLinks(c)
@@ -369,13 +372,18 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 	dashboardChildNavs := []*navtree.NavLink{}
 
 	if c.IsSignedIn {
-		if c.HasRole(org.RoleViewer) {
+		showPlaylist := c.HasRole(org.RoleViewer)
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPlaylistsRBAC) {
+			showPlaylist = hasAccess(ac.EvalPermission(playlistregistry.ActionPlaylistsRead))
+		}
+		if showPlaylist {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Playlists", SubTitle: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
 			})
 		}
 
-		if s.cfg.SnapshotEnabled && hasAccess(ac.EvalPermission(dashboards.ActionSnapshotsRead)) {
+		if s.cfg.SnapshotEnabled && hasAccess(ac.EvalPermission(dashboardsnapshots.ActionSnapshotsRead)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Snapshots",
 				SubTitle: "Interactive, publicly available, point-in-time representations of dashboards",
