@@ -32,7 +32,7 @@ import {
 } from 'app/types/folders';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
-import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
+import { deletedDashboardsCache, deletedFoldersState } from '../../search/service/deletedDashboardsCache';
 import { refetchChildren, refreshParents } from '../state/actions';
 
 import { isProvisionedDashboard } from './isProvisioned';
@@ -87,18 +87,88 @@ export interface ListFolderQueryArgs {
 }
 
 const folderListTag = { type: 'getFolder' as const, id: 'LIST' };
-
-// Exported for tests.
-export const getFolderDeleteInvalidationTags = (folderUIDs: string[]) =>
-  folderUIDs.length > 0
-    ? [folderListTag, ...folderUIDs.map((folderUID) => ({ type: 'getFolder' as const, id: folderUID }))]
-    : [];
-
 const invalidateFolderListOnSuccess = (_result: unknown, error: unknown) => (error ? [] : [folderListTag]);
-const invalidateDeletedFolderOnSuccess = (_result: unknown, error: unknown, { uid }: Pick<FolderDTO, 'uid'>) =>
-  error ? [] : getFolderDeleteInvalidationTags([uid]);
-const invalidateDeletedFoldersOnSuccess = (result: string[] | undefined, error: unknown) =>
-  error ? [] : getFolderDeleteInvalidationTags(result ?? []);
+const invalidateFolderListOnDelete = (result: string[] | undefined, error: unknown) =>
+  error || !result?.length ? [] : [folderListTag];
+
+type DeleteFolderBaseQuery = (args: {
+  url: string;
+  method: 'DELETE';
+  params: { forceDeleteRules: false };
+}) => Promise<{ data?: unknown; error?: unknown }>;
+
+const deleteFolderParams = {
+  forceDeleteRules: false,
+} as const;
+
+async function deleteFoldersByUID(
+  folderUIDOrUIDs: string | string[],
+  baseQuery: DeleteFolderBaseQuery,
+  thunkDispatch: typeof dispatch,
+  options?: { stopOnFirstError?: boolean }
+): Promise<{ deletedFolderUIDs: string[]; error?: unknown }> {
+  const folderUIDs = Array.isArray(folderUIDOrUIDs) ? folderUIDOrUIDs : [folderUIDOrUIDs];
+  const deletedFolderUIDs: string[] = [];
+
+  for (const folderUID of folderUIDs) {
+    if (await isProvisionedFolderCheck(thunkDispatch, folderUID)) {
+      continue;
+    }
+
+    const response = await baseQuery({
+      url: `/folders/${folderUID}`,
+      method: 'DELETE',
+      params: deleteFolderParams,
+    });
+
+    if ('error' in response && response.error) {
+      if (options?.stopOnFirstError) {
+        return { deletedFolderUIDs, error: response.error };
+      }
+      continue;
+    }
+
+    deletedFolderUIDs.push(folderUID);
+  }
+
+  return { deletedFolderUIDs };
+}
+
+function handleDeletedFolders({
+  deletedFolderUIDs,
+  thunkDispatch,
+  parentUID,
+  shouldRefetchParentChildren = false,
+  refreshDeletedParents = false,
+}: {
+  deletedFolderUIDs: string[];
+  thunkDispatch: typeof dispatch;
+  parentUID?: string;
+  shouldRefetchParentChildren?: boolean;
+  refreshDeletedParents?: boolean;
+}) {
+  if (deletedFolderUIDs.length === 0) {
+    return;
+  }
+
+  deletedFoldersState.markDeleted(deletedFolderUIDs);
+  deletedDashboardsCache.clear();
+
+  if (shouldRefetchParentChildren) {
+    thunkDispatch(
+      refetchChildren({
+        parentUID,
+        pageSize: PAGE_SIZE,
+      })
+    );
+  }
+
+  if (refreshDeletedParents) {
+    thunkDispatch(refreshParents(deletedFolderUIDs));
+  }
+
+  invalidateQuotaUsage(thunkDispatch);
+}
 
 export const browseDashboardsAPI = createApi({
   tagTypes: ['getFolder'],
@@ -206,27 +276,32 @@ export const browseDashboardsAPI = createApi({
     }),
 
     // delete an *individual* folder. used in the folder actions menu.
-    deleteFolder: builder.mutation<void, FolderDTO>({
-      invalidatesTags: invalidateDeletedFolderOnSuccess,
-      query: ({ uid }) => ({
-        url: `/folders/${uid}`,
-        method: 'DELETE',
-        params: {
-          // TODO: Once backend returns alert rule counts, set this back to true
-          // when this is merged https://github.com/grafana/grafana/pull/67259
-          forceDeleteRules: false,
-        },
-      }),
-      onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
-        queryFulfilled.then(() => {
-          dispatch(
-            refetchChildren({
-              parentUID: parentUid,
-              pageSize: PAGE_SIZE,
-            })
-          );
-          invalidateQuotaUsage(dispatch);
+    deleteFolder: builder.mutation<string[], FolderDTO>({
+      invalidatesTags: invalidateFolderListOnDelete,
+      queryFn: async ({ uid }, api, _extraOptions, baseQuery) => {
+        const deleteFolderBaseQuery: DeleteFolderBaseQuery = async (args) => await baseQuery(args);
+        const { deletedFolderUIDs, error } = await deleteFoldersByUID(uid, deleteFolderBaseQuery, api.dispatch, {
+          stopOnFirstError: true,
         });
+
+        if (error) {
+          return { error };
+        }
+
+        return { data: deletedFolderUIDs };
+      },
+      onQueryStarted: async ({ parentUid }, { queryFulfilled, dispatch }) => {
+        try {
+          const { data: deletedFolderUIDs } = await queryFulfilled;
+          handleDeletedFolders({
+            deletedFolderUIDs,
+            thunkDispatch: dispatch,
+            parentUID: parentUid,
+            shouldRefetchParentChildren: true,
+          });
+        } catch {
+          // Error handled by mutation caller
+        }
       },
     }),
 
@@ -348,43 +423,19 @@ export const browseDashboardsAPI = createApi({
 
     // delete *multiple* folders. used in the delete modal.
     deleteFolders: builder.mutation<string[], DeleteFoldersArgs>({
-      invalidatesTags: invalidateDeletedFoldersOnSuccess,
-      queryFn: async ({ folderUIDs }, _api, _extraOptions, baseQuery) => {
-        const deletedFolderUIDs: string[] = [];
-
-        // Delete all the folders sequentially
-        // TODO error handling here
-        for (const folderUID of folderUIDs) {
-          // This also shows warning alert
-          if (await isProvisionedFolderCheck(dispatch, folderUID)) {
-            continue;
-          }
-          const response = await baseQuery({
-            url: `/folders/${folderUID}`,
-            method: 'DELETE',
-            params: {
-              // TODO: Once backend returns alert rule counts, set this back to true
-              // when this is merged https://github.com/grafana/grafana/pull/67259
-              forceDeleteRules: false,
-            },
-          });
-
-          if (!('error' in response) || !response.error) {
-            deletedFolderUIDs.push(folderUID);
-          }
-        }
+      invalidatesTags: invalidateFolderListOnDelete,
+      queryFn: async ({ folderUIDs }, api, _extraOptions, baseQuery) => {
+        const deleteFolderBaseQuery: DeleteFolderBaseQuery = async (args) => await baseQuery(args);
+        const { deletedFolderUIDs } = await deleteFoldersByUID(folderUIDs, deleteFolderBaseQuery, api.dispatch);
         return { data: deletedFolderUIDs };
       },
       onQueryStarted: (_arg, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(({ data: deletedFolderUIDs }) => {
-          if (deletedFolderUIDs.length === 0) {
-            return;
-          }
-
-          dispatch(refreshParents(deletedFolderUIDs));
-          // Clear the deleted dashboards cache since deleting a folder also deletes its dashboards
-          deletedDashboardsCache.clear();
-          invalidateQuotaUsage(dispatch);
+          handleDeletedFolders({
+            deletedFolderUIDs,
+            thunkDispatch: dispatch,
+            refreshDeletedParents: true,
+          });
         });
       },
     }),

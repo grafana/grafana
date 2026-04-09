@@ -1,14 +1,16 @@
 import { configureStore } from '@reduxjs/toolkit';
+import { type Store } from 'redux';
 import { of, throwError } from 'rxjs';
 
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
+import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
+import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
-import { type FolderDTO } from 'app/types/folders';
-
-import { browseDashboardsAPI } from './browseDashboardsAPI';
+import { deletedFoldersState } from 'app/features/search/service/deletedDashboardsCache';
+import { setStore } from 'app/store/store';
+import { type FolderDTO, type FolderListItemDTO } from 'app/types/folders';
 
 const mockGet = jest.fn().mockResolvedValue({});
 const mockFetch = jest.fn();
@@ -17,11 +19,6 @@ const mockPost = jest.fn().mockResolvedValue({});
 
 jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   getDashboardAPI: jest.fn(),
-}));
-
-jest.mock('app/api/clients/folder/v1beta1/utils', () => ({
-  ...jest.requireActual('app/api/clients/folder/v1beta1/utils'),
-  isProvisionedFolderCheck: jest.fn(),
 }));
 
 jest.mock('@grafana/runtime', () => ({
@@ -40,21 +37,35 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+// Load after mocks so the module under test sees the mocked provisioned-folder helper.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { browseDashboardsAPI } = require('./browseDashboardsAPI');
+
 describe('browseDashboardsAPI', () => {
   const getDashboardAPIMock = jest.mocked(getDashboardAPI);
-  const isProvisionedFolderCheckMock = jest.mocked(isProvisionedFolderCheck);
-  const createTestStore = () =>
-    configureStore({
+  const createTestStore = () => {
+    const store = configureStore({
       reducer: {
         [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
+        [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
       },
-      middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(browseDashboardsAPI.middleware),
+      middleware: (getDefaultMiddleware) =>
+        getDefaultMiddleware().concat(browseDashboardsAPI.middleware, folderAPIv1beta1.middleware),
     });
+    setStore(store as unknown as Store);
+    return store;
+  };
 
   beforeEach(() => {
     getDashboardAPIMock.mockReset();
     mockFetch.mockReset();
-    isProvisionedFolderCheckMock.mockResolvedValue(false);
+    mockGet.mockResolvedValue({
+      versions: [{ version: 'v1beta1', groupVersion: 'folder.grafana.app/v1beta1' }],
+      preferredVersion: { version: 'v1beta1', groupVersion: 'folder.grafana.app/v1beta1' },
+    });
+    const runtime = jest.requireMock('@grafana/runtime');
+    runtime.config.featureToggles.provisioning = false;
+    deletedFoldersState.clear();
   });
 
   const createMockDashboardAPI = (saveDashboard: jest.Mock) =>
@@ -115,50 +126,132 @@ describe('browseDashboardsAPI', () => {
     expect(saveDashboardV1).not.toHaveBeenCalled();
   });
 
-  it('evicts a cached getFolder entry after deleting that folder', async () => {
+  it('does not refetch an active getFolder subscription after deleting that folder', async () => {
     const store = createTestStore();
     const folderQueryArg = { folderUID: 'folder-1', accesscontrol: true, isLegacyCall: false };
 
-    await store.dispatch(
-      browseDashboardsAPI.util.upsertQueryData('getFolder', folderQueryArg, { uid: 'folder-1' } as FolderDTO)
-    );
-    expect(browseDashboardsAPI.endpoints.getFolder.select(folderQueryArg)(store.getState()).status).toBe('fulfilled');
+    mockFetch.mockImplementation(({ method, url }) => {
+      if (method === 'DELETE') {
+        return of({ data: {} });
+      }
 
-    mockFetch.mockReturnValueOnce(of({ data: {} }));
+      if (url === '/api/folders/folder-1') {
+        return of({ data: { uid: 'folder-1' } });
+      }
+
+      if (url === '/api/folders') {
+        return of({ data: [] as FolderListItemDTO[] });
+      }
+
+      throw new Error(`Unexpected request: ${method} ${url}`);
+    });
+
+    const subscription = store.dispatch(browseDashboardsAPI.endpoints.getFolder.initiate(folderQueryArg));
+    await subscription;
+    await store.dispatch(
+      browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
+    );
+
+    expect(mockFetch.mock.calls).toHaveLength(2);
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ method: 'GET', url: '/api/folders/folder-1' })
+    );
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ method: 'DELETE', url: '/api/folders/folder-1' })
+    );
+    expect(deletedFoldersState.isDeleted('folder-1')).toBe(true);
+
+    subscription.unsubscribe();
+  });
+
+  it('marks only successfully deleted folders during bulk delete and does not refetch active folder queries', async () => {
+    const store = createTestStore();
+    const folderOneQueryArg = { folderUID: 'folder-1', accesscontrol: true, isLegacyCall: false };
+    const folderTwoQueryArg = { folderUID: 'folder-2', accesscontrol: true, isLegacyCall: false };
+
+    mockFetch.mockImplementation(({ method, url }) => {
+      if (method === 'DELETE' && url === '/api/folders/folder-1') {
+        return of({ data: {} });
+      }
+
+      if (method === 'DELETE' && url === '/api/folders/folder-2') {
+        return throwError(() => ({ status: 404, data: { message: 'Folder not found' } }));
+      }
+
+      if (url === '/api/folders/folder-1') {
+        return of({ data: { uid: 'folder-1' } });
+      }
+
+      if (url === '/api/folders/folder-2') {
+        return of({ data: { uid: 'folder-2' } });
+      }
+
+      if (url === '/api/folders') {
+        return of({ data: [] as FolderListItemDTO[] });
+      }
+
+      throw new Error(`Unexpected request: ${method} ${url}`);
+    });
+
+    const firstSubscription = store.dispatch(browseDashboardsAPI.endpoints.getFolder.initiate(folderOneQueryArg));
+    const secondSubscription = store.dispatch(browseDashboardsAPI.endpoints.getFolder.initiate(folderTwoQueryArg));
+    await Promise.all([firstSubscription, secondSubscription]);
+    await store.dispatch(
+      browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+    );
+
+    expect(mockFetch.mock.calls).toHaveLength(4);
+    expect(deletedFoldersState.isDeleted('folder-1')).toBe(true);
+    expect(deletedFoldersState.isDeleted('folder-2')).toBe(false);
+
+    firstSubscription.unsubscribe();
+    secondSubscription.unsubscribe();
+  });
+
+  it('does not mark skipped provisioned folders as deleted', async () => {
+    const store = createTestStore();
+    const runtime = jest.requireMock('@grafana/runtime');
+    runtime.config.featureToggles.provisioning = true;
+
+    mockFetch.mockImplementation(({ method, url }) => {
+      if (method === 'GET' && url === '/apis/folder.grafana.app/v1beta1/namespaces/default/folders/folder-1') {
+        return of({
+          data: {
+            metadata: {
+              name: 'folder-1',
+              annotations: {
+                [AnnoKeyManagerKind]: ManagerKind.Repo,
+              },
+            },
+          },
+        });
+      }
+
+      throw new Error(`Unexpected request: ${method} ${url}`);
+    });
+
+    await store.dispatch(browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1'] }));
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: 'GET',
+        url: '/apis/folder.grafana.app/v1beta1/namespaces/default/folders/folder-1',
+      })
+    );
+    expect(deletedFoldersState.isDeleted('folder-1')).toBe(false);
+  });
+
+  it('does not mark folders as deleted when single delete fails', async () => {
+    const store = createTestStore();
+    mockFetch.mockImplementation(() => throwError(() => ({ status: 500, data: { message: 'boom' } })));
 
     await store.dispatch(
       browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
     );
 
-    expect(browseDashboardsAPI.endpoints.getFolder.select(folderQueryArg)(store.getState()).status).toBe(
-      'uninitialized'
-    );
-  });
-
-  it('evicts only successfully deleted folders from the cache during bulk delete', async () => {
-    const store = createTestStore();
-    const folderOneQueryArg = { folderUID: 'folder-1', accesscontrol: true, isLegacyCall: false };
-    const folderTwoQueryArg = { folderUID: 'folder-2', accesscontrol: true, isLegacyCall: false };
-
-    await store.dispatch(
-      browseDashboardsAPI.util.upsertQueryData('getFolder', folderOneQueryArg, { uid: 'folder-1' } as FolderDTO)
-    );
-    await store.dispatch(
-      browseDashboardsAPI.util.upsertQueryData('getFolder', folderTwoQueryArg, { uid: 'folder-2' } as FolderDTO)
-    );
-
-    mockFetch.mockReturnValueOnce(of({ data: {} }));
-    mockFetch.mockReturnValueOnce(throwError(() => ({ status: 404, data: { message: 'Folder not found' } })));
-
-    await store.dispatch(
-      browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
-    );
-
-    expect(browseDashboardsAPI.endpoints.getFolder.select(folderOneQueryArg)(store.getState()).status).toBe(
-      'uninitialized'
-    );
-    expect(browseDashboardsAPI.endpoints.getFolder.select(folderTwoQueryArg)(store.getState()).status).toBe(
-      'fulfilled'
-    );
+    expect(deletedFoldersState.isDeleted('folder-1')).toBe(false);
   });
 });

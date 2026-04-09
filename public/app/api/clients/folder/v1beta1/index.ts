@@ -1,15 +1,10 @@
 import { generatedAPI } from '@grafana/api-clients/rtkq/folder/v1beta1';
+import { deletedFoldersState } from 'app/features/search/service/deletedDashboardsCache';
 import { type DescendantCount } from 'app/types/folders';
 
 import { getParsedCounts } from './utils';
 
 const folderListTag = { type: 'Folder' as const, id: 'LIST' };
-
-// Exported for tests.
-export const getFolderDeleteInvalidationTags = (folderUIDs: string[]) =>
-  folderUIDs.length > 0
-    ? [folderListTag, ...folderUIDs.map((folderUID) => ({ type: 'Folder' as const, id: folderUID }))]
-    : [];
 
 export const folderAPIv1beta1 = generatedAPI
   .enhanceEndpoints({
@@ -29,7 +24,15 @@ export const folderAPIv1beta1 = generatedAPI
             : [folderListTag],
       },
       deleteFolder: {
-        invalidatesTags: (_result, error, { name }) => (error ? [] : getFolderDeleteInvalidationTags([name])),
+        invalidatesTags: (_result, error) => (error ? [] : [folderListTag]),
+        async onQueryStarted({ name }, { queryFulfilled }) {
+          try {
+            await queryFulfilled;
+            deletedFoldersState.markDeleted(name);
+          } catch {
+            // Error handled by mutation caller
+          }
+        },
       },
     },
   })

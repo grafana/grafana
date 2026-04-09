@@ -6,6 +6,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, Field, Space, Text } from '@grafana/ui';
 
 import { FolderPicker } from '../../../core/components/Select/FolderPicker';
+import { deletedFoldersState } from '../../search/service/deletedDashboardsCache';
 import { useGetFolderQuery } from '../api/browseDashboardsAPI';
 
 export interface RestoreModalProps {
@@ -26,7 +27,8 @@ export const RestoreModal = ({
 }: RestoreModalProps) => {
   const [manualTarget, setManualTarget] = useState<string | undefined | null>(null);
   const numberOfDashboards = selectedDashboards.length;
-  const shouldValidateOrigin = originCandidate !== undefined && originCandidate !== '';
+  const originWasDeleted = deletedFoldersState.isDeleted(originCandidate);
+  const shouldValidateOrigin = originCandidate !== undefined && originCandidate !== '' && !originWasDeleted;
   const originValidation = useGetFolderQuery(
     shouldValidateOrigin
       ? {

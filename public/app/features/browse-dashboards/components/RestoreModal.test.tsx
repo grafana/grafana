@@ -1,5 +1,8 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import type { ComponentProps, ReactNode } from 'react';
 import { render, screen } from 'test/test-utils';
+
+import { deletedFoldersState } from 'app/features/search/service/deletedDashboardsCache';
 
 import { useGetFolderQuery } from '../api/browseDashboardsAPI';
 
@@ -66,6 +69,7 @@ describe('RestoreModal', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    deletedFoldersState.clear();
     folderQueryState = buildFolderQueryState();
     mockUseGetFolderQuery.mockImplementation(() => folderQueryState);
   });
@@ -84,6 +88,16 @@ describe('RestoreModal', () => {
 
     expect(screen.getByTestId('folder-picker-value')).toHaveTextContent('folder-1');
     expect(screen.getByRole('button', { name: 'Restore' })).toBeEnabled();
+  });
+
+  it('skips validation and leaves the picker empty when the origin folder was deleted in this session', () => {
+    deletedFoldersState.markDeleted('folder-1');
+
+    renderRestoreModal({ originCandidate: 'folder-1' });
+
+    expect(mockUseGetFolderQuery).toHaveBeenCalledWith(skipToken, { refetchOnMountOrArgChange: true });
+    expect(screen.getByTestId('folder-picker-value')).toHaveTextContent('undefined');
+    expect(screen.getByRole('button', { name: 'Restore' })).toBeDisabled();
   });
 
   it('leaves the picker empty when the refetch fails even if stale data exists', () => {
