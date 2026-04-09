@@ -10,6 +10,7 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
@@ -21,7 +22,6 @@ import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
-import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
 import { getRowFromClipboard } from '../layouts-shared/paste';
 import { showConvertMixedGridsModal, showUngroupConfirmation } from '../layouts-shared/ungroupConfirmation';
 import { generateUniqueTitle, GridLayoutType, mapIdToGridLayoutType, ungroupLayout } from '../layouts-shared/utils';
@@ -73,6 +73,10 @@ export class RowsLayoutManager
 
   public setIsDropTarget(isDropTarget: boolean): void {
     this.setState({ isDropTarget });
+  }
+
+  public getAllGridTypes(): string[] {
+    return this.state.rows.flatMap((row) => row.getLayout().getAllGridTypes());
   }
 
   public draggedGridItemInside(gridItem: SceneGridItemLike): void {
@@ -194,7 +198,7 @@ export class RowsLayoutManager
 
   public ungroupRows() {
     const hasNonGridLayout = this.state.rows.some((row) => !row.getLayout().descriptor.isGridLayout);
-    const gridTypes = new Set(findAllGridTypes(this));
+    const gridTypes = new Set(this.getAllGridTypes());
 
     showUngroupConfirmation({
       hasNonGridLayout,
