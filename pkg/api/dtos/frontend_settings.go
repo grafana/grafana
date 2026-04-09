@@ -206,6 +206,9 @@ type FrontendSettingsDTO struct {
 	RudderstackConfigUrl       string `json:"rudderstackConfigUrl"`
 	RudderstackIntegrationsUrl string `json:"rudderstackIntegrationsUrl"`
 
+	PostHogToken string `json:"postHogToken"`
+	PostHogHost  string `json:"postHogHost"`
+
 	AnalyticsConsoleReporting bool `json:"analyticsConsoleReporting"`
 
 	DashboardPerformanceMetrics []string `json:"dashboardPerformanceMetrics"`

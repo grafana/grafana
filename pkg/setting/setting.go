@@ -441,6 +441,8 @@ type Cfg struct {
 	RudderstackConfigURL                string
 	RudderstackIntegrationsURL          string
 	IntercomSecret                      string
+	PostHogToken                        string
+	PostHogHost                         string
 	FrontendAnalyticsConsoleReporting   bool
 
 	// LDAP
@@ -1499,6 +1501,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
 	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
 	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
+	cfg.PostHogToken = analytics.Key("posthog_token").String()
+	cfg.PostHogHost = analytics.Key("posthog_host").String()
 	cfg.FrontendAnalyticsConsoleReporting = analytics.Key("browser_console_reporter").MustBool(false)
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
