@@ -135,6 +135,7 @@ describe('when useMTPlugins flag is enabled', () => {
     describe('and initPluginMetas or refetchPanelPluginMetas returns an empty result', () => {
       beforeEach(() => {
         jest.resetAllMocks();
+        // can't use mockLogger here because that would cause a circular dependency between @grafana/runtime and @grafana/test-utils
         setLogger('grafana/runtime.plugins.meta', {
           logDebug: jest.fn(),
           logError: jest.fn(),

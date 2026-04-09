@@ -88,6 +88,7 @@ describe('when useMTPlugins flag is enabled', () => {
       beforeEach(() => {
         jest.resetAllMocks();
         initPluginMetasMock.mockResolvedValue({ items: [] });
+        // can't use mockLogger here because that would cause a circular dependency between @grafana/runtime and @grafana/test-utils
         setLogger('grafana/runtime.plugins.meta', {
           logDebug: jest.fn(),
           logError: jest.fn(),

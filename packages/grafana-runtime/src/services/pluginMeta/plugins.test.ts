@@ -11,6 +11,7 @@ const originalFetch = global.fetch;
 beforeEach(() => {
   jest.clearAllMocks();
   invalidateCache();
+  // can't use mockLogger here because that would cause a circular dependency between @grafana/runtime and @grafana/test-utils
   setLogger('grafana/runtime.utils.getCachedPromise', {
     logDebug: jest.fn(),
     logError: jest.fn(),

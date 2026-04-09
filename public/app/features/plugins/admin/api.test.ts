@@ -1,6 +1,5 @@
-import { getBackendSrv, setBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, type MonitoringLogger, setBackendSrv } from '@grafana/runtime';
 import { installPluginMeta, uninstallPluginMeta } from '@grafana/runtime/internal';
-import { getLogger } from '@grafana/runtime/unstable';
 import { mockLogger, setTestFlags } from '@grafana/test-utils/unstable';
 
 import { installPlugin, uninstallPlugin } from './api';
@@ -19,6 +18,7 @@ const uninstallPluginMetaMock = jest.mocked(uninstallPluginMeta);
 const originalFetch = global.fetch;
 
 describe('api', () => {
+  let logger: MonitoringLogger;
   beforeEach(() => {
     jest.clearAllMocks();
     setBackendSrv({
@@ -32,7 +32,7 @@ describe('api', () => {
       request: jest.fn(),
       datasourceRequest: jest.fn(),
     });
-    mockLogger('grafana/runtime.plugins.meta');
+    logger = mockLogger('grafana/runtime.plugins.meta');
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -97,8 +97,8 @@ describe('api', () => {
           { version: '1.5.0' },
           { showErrorAlert: false }
         );
-        expect(getLogger('grafana/runtime.plugins.meta').logError).toHaveBeenCalledTimes(1);
-        expect(getLogger('grafana/runtime.plugins.meta').logError).toHaveBeenCalledWith(
+        expect(logger.logError).toHaveBeenCalledTimes(1);
+        expect(logger.logError).toHaveBeenCalledWith(
           expect.objectContaining({
             message: 'PluginMeta: Failed to install plugin with id myorg-test-panel and version 1.5.0',
             cause: expect.objectContaining({
@@ -132,8 +132,8 @@ describe('api', () => {
         expect(uninstallPluginMetaMock).toHaveBeenCalledTimes(1);
         expect(uninstallPluginMetaMock).toHaveBeenCalledWith('myorg-test-panel');
         expect(getBackendSrv().post).toHaveBeenCalledTimes(1);
-        expect(getLogger('grafana/runtime.plugins.meta').logError).toHaveBeenCalledTimes(1);
-        expect(getLogger('grafana/runtime.plugins.meta').logError).toHaveBeenCalledWith(
+        expect(logger.logError).toHaveBeenCalledTimes(1);
+        expect(logger.logError).toHaveBeenCalledWith(
           expect.objectContaining({
             message: 'PluginMeta: Failed to uninstall plugin with id myorg-test-panel',
             cause: expect.objectContaining({

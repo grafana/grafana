@@ -172,6 +172,7 @@ describe('logging registry', () => {
 
   describe('setLogger', () => {
     it('should replace the registry entry with mocks', () => {
+      // can't use mockLogger here because that would cause a circular dependency between @grafana/runtime and @grafana/test-utils
       setLogger('grafana/runtime.plugins.meta', {
         logDebug: jest.fn(),
         logError: jest.fn(),
@@ -188,6 +189,7 @@ describe('logging registry', () => {
     });
 
     it('should provide mock functions for all log methods', () => {
+      // can't use mockLogger here because that would cause a circular dependency between @grafana/runtime and @grafana/test-utils
       setLogger('grafana/runtime.plugins.meta', {
         logDebug: jest.fn(),
         logError: jest.fn(),
