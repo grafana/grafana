@@ -131,7 +131,7 @@ export interface QueryEditorActions {
   bulkToggleQueriesHide: (refIds: readonly string[], hide: boolean) => void;
   bulkDeleteTransformations: (transformIds: readonly string[]) => void;
   bulkToggleTransformationsDisabled: (transformIds: readonly string[], disabled: boolean) => void;
-  bulkChangeDataSource: (refIds: readonly string[], settings: DataSourceInstanceSettings) => void;
+  bulkChangeDataSource: (refIds: readonly string[], settings: DataSourceInstanceSettings) => Promise<void>;
 }
 
 const DatasourceContext = createContext<DatasourceState | null>(null);

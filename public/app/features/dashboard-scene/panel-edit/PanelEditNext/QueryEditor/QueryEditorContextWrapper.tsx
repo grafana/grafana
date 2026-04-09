@@ -383,9 +383,8 @@ export function QueryEditorContextWrapper({
         const indices = transformIds.map((id) => findTransformationIndex(id)).filter((i) => i !== -1);
         dataPane.bulkToggleTransformationsDisabled(indices, disabled);
       },
-      bulkChangeDataSource: (refIds: readonly string[], settings: DataSourceInstanceSettings) => {
-        dataPane.bulkChangeDataSource(refIds, getDataSourceRef(settings));
-      },
+      bulkChangeDataSource: (refIds: readonly string[], settings: DataSourceInstanceSettings) =>
+        dataPane.bulkChangeDataSource(refIds, getDataSourceRef(settings)),
     }),
     [
       addTransformationAction,

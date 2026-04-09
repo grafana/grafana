@@ -191,10 +191,11 @@ describe('BulkActionsBar', () => {
         expect(screen.getByTestId('datasource-modal')).toBeInTheDocument();
       });
 
-      it('calls bulkChangeDataSource with the selected refIds and new settings when a DS is chosen', async () => {
+      it('calls bulkChangeDataSource and clearSelection when a DS is chosen', async () => {
         const bulkChangeDataSource = jest.fn();
+        const clearSelection = jest.fn();
         const { user } = renderBar({
-          uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] },
+          uiStateOverrides: { selectedQueryRefIds: ['A', 'B'], clearSelection },
           actionsOverrides: { bulkChangeDataSource },
         });
 
@@ -202,6 +203,7 @@ describe('BulkActionsBar', () => {
         await user.click(screen.getByRole('button', { name: /select ds/i }));
 
         expect(bulkChangeDataSource).toHaveBeenCalledWith(['A', 'B'], expect.objectContaining({ uid: 'new-ds' }));
+        expect(clearSelection).toHaveBeenCalled();
       });
 
       it('closes the DataSourceModal after selecting a datasource', async () => {

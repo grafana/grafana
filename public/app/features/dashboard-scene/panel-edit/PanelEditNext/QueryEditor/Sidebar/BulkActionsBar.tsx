@@ -35,7 +35,7 @@ function BulkActionButtons({
   children,
 }: BulkActionButtonsProps) {
   return (
-    <Stack direction="row">
+    <Stack direction="row" gap={0.5}>
       <Button
         size="sm"
         variant="destructive"
@@ -66,10 +66,11 @@ function BulkQueryActions({ barWidth }: BulkQueryActionsProps) {
   const [showDsModal, setShowDsModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const selectedQueries = queries.filter(({ refId }) => selectedQueryRefIds.includes(refId));
+  const selectedRefIdSet = new Set(selectedQueryRefIds);
+  const selectedQueries = queries.filter(({ refId }) => selectedRefIdSet.has(refId));
   const allHidden = selectedQueries.length > 0 && selectedQueries.every(({ hide }) => hide);
   const canChangeDatasource = selectedQueries.every(({ datasource }) => !isExpressionReference(datasource));
-  const compact = canChangeDatasource && barWidth > 0 && barWidth < 280;
+  const compact = barWidth > 0 && barWidth < 280;
 
   const handleConfirmedDelete = () => {
     bulkDeleteQueries(selectedQueryRefIds);
@@ -77,9 +78,10 @@ function BulkQueryActions({ barWidth }: BulkQueryActionsProps) {
     clearSelection();
   };
 
-  const handleDatasourceChange = (settings: DataSourceInstanceSettings) => {
-    bulkChangeDataSource(selectedQueryRefIds, settings);
+  const handleDatasourceChange = async (settings: DataSourceInstanceSettings) => {
+    await bulkChangeDataSource(selectedQueryRefIds, settings);
     setShowDsModal(false);
+    clearSelection();
   };
 
   return (
@@ -138,19 +140,23 @@ function BulkQueryActions({ barWidth }: BulkQueryActionsProps) {
   );
 }
 
-function BulkTransformationActions() {
+interface BulkTransformationActionsProps {
+  barWidth: number;
+}
+
+function BulkTransformationActions({ barWidth }: BulkTransformationActionsProps) {
   const { selectedTransformationIds, clearSelection } = useQueryEditorUIContext();
   const { bulkDeleteTransformations, bulkToggleTransformationsDisabled } = useActionsContext();
   const { transformations } = usePanelContext();
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const selectedTransformations = transformations.filter(({ transformId }) =>
-    selectedTransformationIds.includes(transformId)
-  );
+  const selectedIdSet = new Set(selectedTransformationIds);
+  const selectedTransformations = transformations.filter(({ transformId }) => selectedIdSet.has(transformId));
   const allDisabled =
     selectedTransformations.length > 0 &&
     selectedTransformations.every(({ transformConfig }) => transformConfig.disabled);
+  const compact = barWidth > 0 && barWidth < 280;
 
   const handleConfirmedDelete = () => {
     bulkDeleteTransformations(selectedTransformationIds);
@@ -163,6 +169,7 @@ function BulkTransformationActions() {
       <BulkActionButtons
         onDelete={() => setShowDeleteConfirm(true)}
         toggleIcon={allDisabled ? 'eye-slash' : 'eye'}
+        compact={compact}
         toggleLabel={
           allDisabled
             ? t('query-editor-next.bulk-actions.enable-all', 'Enable all')
@@ -213,7 +220,7 @@ export function BulkActionsBar() {
       aria-label={t('query-editor-next.bulk-actions.toolbar-label', 'Bulk actions')}
     >
       {hasMultipleQueriesSelected && <BulkQueryActions barWidth={barWidth} />}
-      {hasMultipleTransformationsSelected && <BulkTransformationActions />}
+      {hasMultipleTransformationsSelected && <BulkTransformationActions barWidth={barWidth} />}
       <Button
         size="sm"
         variant="secondary"
@@ -228,20 +235,16 @@ export function BulkActionsBar() {
   );
 }
 
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    bar: css({
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: theme.spacing(0.25),
-      padding: theme.spacing(0.75, 1),
-      background: theme.colors.background.canvas,
-      borderTop: `1px solid ${theme.colors.border.medium}`,
-      borderBottom: `1px solid ${theme.colors.border.medium}`,
-    }),
-    clearButton: css({
-      marginLeft: 'auto',
-    }),
-  };
-}
+const getStyles = (theme: GrafanaTheme2) => ({
+  bar: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+    padding: theme.spacing(0.75, 1.5),
+    background: theme.colors.background.canvas,
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+  }),
+  clearButton: css({
+    marginLeft: 'auto',
+  }),
+});
