@@ -40,6 +40,7 @@ The following pages help you set up and use the TestData data source:
 
 - [Configure the TestData data source](configure/) for setup and provisioning instructions.
 - [TestData query editor](query-editor/) for a reference of all 30 available scenarios and their options.
+- [TestData alerting](alerting/) for prototyping and testing alert rules with simulated data.
 - [TestData template variables](template-variables/) for using TestData with dashboard variables.
 - [Troubleshoot TestData](troubleshooting/) for solutions to common issues.
 
