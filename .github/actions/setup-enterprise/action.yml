@@ -33,7 +33,24 @@ runs:
       env:
         GH_TOKEN: ${{ steps.generate_token.outputs.token }}
       run: |
-        git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise;
+        RETRIES="5"
+        grafana_root="$PWD"
+
+        for i in $(seq 1 $RETRIES); do
+          echo "Attempt $i to clone..."
+
+          if git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise; then
+            echo "Clone succeeded on attempt $i"
+            break
+          fi
+
+          if [ $i -eq $RETRIES ]; then
+            echo "Clone failed after $RETRIES attempts, failing pipeline."
+            exit 1
+          fi
+
+          sleep "$i"
+        done
 
         cd ../grafana-enterprise
 
@@ -45,4 +62,4 @@ runs:
           git checkout main
         fi
 
-        QUIET=1 ./build.sh
+        QUIET=1 ./build.sh "$grafana_root"

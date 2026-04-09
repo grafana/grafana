@@ -31,6 +31,12 @@ outputs:
   dockerfile:
     description: Whether the dockerfile or self have changed in any way
     value: ${{ steps.changed-files.outputs.dockerfile_any_changed || 'true' }}
+  frontend-packages:
+    description: Whether any frontend packages have changed
+    value: ${{ steps.changed-files.outputs.frontend_packages_any_changed || 'true' }}
+  devenv:
+    description: Whether the devenv or self have changed in any way
+    value: ${{ steps.changed-files.outputs.devenv_any_changed || 'true' }}
 runs:
   using: composite
   steps:
@@ -136,6 +142,16 @@ runs:
             - 'LICENSE'
             - '.vale.ini'
             - '.github/actions/change-detection/**'
+            - '${{ inputs.self }}'
+          frontend_packages:
+            - '.github/actions/checkout/**'
+            - '.github/actions/change-detection/**'
+            - 'packages/**'
+            - './scripts/validate-npm-packages.sh'
+            - '${{ inputs.self }}'
+          devenv:
+            - 'devenv/**'
+            - '.dockerignore'
             - '${{ inputs.self }}'
     - name: Print all change groups
       shell: bash
