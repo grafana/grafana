@@ -196,6 +196,28 @@ describe('MultiCombobox', () => {
     ]);
   });
 
+  it('keeps the caret position when typing in the middle of the input', async () => {
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+      { label: 'C', value: 'c' },
+    ];
+
+    render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} />);
+    const input = screen.getByRole<HTMLInputElement>('combobox');
+
+    await user.click(input);
+    await user.type(input, 'hello');
+
+    input.setSelectionRange(3, 3);
+
+    await user.keyboard('X');
+
+    expect(input).toHaveValue('helXlo');
+    expect(input.selectionStart).toBe(4);
+    expect(input.selectionEnd).toBe(4);
+  });
+
   it('should remove value when clicking on the close icon of the pill', async () => {
     const options = [
       { label: 'A', value: 'a' },

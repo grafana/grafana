@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import { useCombobox, useMultipleSelection } from 'downshift';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -63,6 +63,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const styles = useStyles2(getComboboxStyles);
   const [inputValue, setInputValue] = useState('');
+  const pendingSelectionRef = useRef<{ start: number; end: number; value: string } | null>(null);
 
   const allOptionItem = useMemo(() => {
     return {
@@ -266,6 +267,19 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   const visibleItems = isOpen ? selectedItems.slice(0, MAX_SHOWN_ITEMS) : selectedItems.slice(0, shownItems);
 
   const { inputRef, inputWidth } = useMultiInputAutoSize(inputValue);
+
+  useLayoutEffect(() => {
+    const input = inputRef.current;
+    const pendingSelection = pendingSelectionRef.current;
+
+    if (!input || !pendingSelection || document.activeElement !== input || input.value !== pendingSelection.value) {
+      return;
+    }
+
+    input.setSelectionRange(pendingSelection.start, pendingSelection.end);
+    pendingSelectionRef.current = null;
+  }, [inputRef, inputValue]);
+
   return (
     <div className={multiStyles.container} ref={containerRef}>
       <div className={cx(multiStyles.wrapper, { [multiStyles.disabled]: disabled })} ref={measureRef}>
@@ -316,6 +330,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                 ref: inputRef,
                 style: { width: inputWidth },
               }),
+              onChange: (event) => {
+                pendingSelectionRef.current = {
+                  start: event.currentTarget.selectionStart ?? event.currentTarget.value.length,
+                  end: event.currentTarget.selectionEnd ?? event.currentTarget.value.length,
+                  value: event.currentTarget.value,
+                };
+              },
               'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
               'data-testid': dataTestId,
             })}
