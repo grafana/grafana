@@ -128,7 +128,7 @@ Zipkin annotations appear in the trace view as logs with the annotation value di
 
 ## Span filters
 
-![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters-v10-1.png)
+{{< figure src="/media/docs/tempo/screenshot-grafana-tempo-span-filters-v10-1.png" max-width="800px" class="docs-image--no-shadow" caption="Span filters in the trace timeline viewer" >}}
 
 Using span filters, you can filter spans in the trace timeline viewer. The more filters you add, the more specific the filtered spans are.
 

@@ -64,7 +64,7 @@ You can also configure custom headers and TLS settings in the **Advanced HTTP se
 
 ## Trace to logs
 
-![Trace to logs settings](/media/docs/tempo/tempo-trace-to-logs-9-4.png)
+{{< figure src="/media/docs/tempo/tempo-trace-to-logs-9-4.png" max-width="800px" class="docs-image--no-shadow" caption="Trace to logs settings" >}}
 
 {{< admonition type="note" >}}
 If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
@@ -154,7 +154,7 @@ Each linked query consists of:
 
 ## Additional settings
 
-The **Additional settings** section is collapsible and contains optional settings for the node graph, span bar, and advanced HTTP configuration.
+The **Additional settings** section is collapsible and contains optional settings for the node graph, span bar, advanced HTTP configuration, and secure SOCKS proxy (when enabled in your Grafana configuration).
 
 ### Node graph
 
