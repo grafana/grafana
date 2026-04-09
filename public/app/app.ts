@@ -51,6 +51,7 @@ import {
   setPanelRenderer,
   setPluginPage,
 } from '@grafana/runtime/internal';
+import { initializeLoggersRegistry } from '@grafana/runtime/unstable';
 import { loadResources as loadScenesResources, sceneUtils } from '@grafana/scenes';
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
@@ -139,6 +140,7 @@ export class GrafanaApp {
       window.parent.postMessage('GrafanaAppInit', '*');
 
       initSystemJSHooks();
+      initializeLoggersRegistry();
 
       // Currently the OpenFeature API requires a signed in user. This means feature flags cannot be used
       // on the login page.

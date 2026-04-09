@@ -6888,7 +6888,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "Delete",
-      "aria-label-edit": "Edit"
+      "aria-label-edit": "Edit",
+      "delete": {
+        "confirm": "Are you sure you want to delete: {{name}}?",
+        "text": "Delete {{type}}",
+        "title": "Delete {{type}}"
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "Show/hide rules will not work",
@@ -8565,7 +8570,6 @@
       "give-feedback": "Give feedback"
     },
     "logs-meta-row": {
-      "download": "Download",
       "label": {
         "deduplication-count": "Deduplication count",
         "showing-only-selected-fields": "Showing only selected fields"
@@ -8920,22 +8924,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "Show results in logs visualisation",
-        "show-results-in-table-visualisation": "Show results in table visualisation",
-        "show-results-newest-to-oldest": "Show results newest to oldest",
-        "show-results-oldest-to-newest": "Show results oldest to newest"
+        "show-results-in-table-visualisation": "Show results in table visualisation"
       },
       "label": {
         "logs": "Logs",
-        "newest-first": "Newest first",
-        "oldest-first": "Oldest first",
         "table": "Table"
       },
-      "label-deduplication": "Deduplication",
-      "label-display-results": "Display results",
-      "label-prettify-json": "Prettify JSON",
-      "label-time": "Time",
-      "label-unique-labels": "Unique labels",
-      "label-wrap-lines": "Wrap lines",
       "title-feedback": "Feedback",
       "title-logs": "Logs",
       "title-logs-volume": "Logs volume"
@@ -11441,9 +11435,6 @@
         "not-supported": "Columns are not supported with line wrapping enabled"
       },
       "wrap-lines": "Wrap lines"
-    },
-    "logs-navigation": {
-      "scroll-top": "Scroll to top"
     },
     "logs-panel": {
       "render-common-labels": {

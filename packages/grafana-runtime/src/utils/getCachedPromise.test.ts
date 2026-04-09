@@ -1,12 +1,12 @@
+import { getLogger, setLogger } from '../services/logging/registry';
+
 import {
   extractKeyFromArgs,
   getCachedPromise,
   getCachedPromiseWithArgs,
   invalidateCache,
   MAX_CACHE_SIZE,
-  setLogger,
 } from './getCachedPromise';
-import { type MonitoringLogger } from './logging';
 
 const TEST_ASYNC_DELAY = 10;
 
@@ -22,20 +22,18 @@ function simulateErrorRequest(): Promise<{ ok: boolean; status: number; statusTe
   });
 }
 
-let logger: MonitoringLogger;
-
 describe('cached promises', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     invalidateCache();
-    logger = {
+    // can't use mockLogger here because that would cause a circular dependency between @grafana/runtime and @grafana/test-utils
+    setLogger('grafana/runtime.utils.getCachedPromise', {
       logDebug: jest.fn(),
       logError: jest.fn(),
       logInfo: jest.fn(),
       logMeasurement: jest.fn(),
       logWarning: jest.fn(),
-    };
-    setLogger(logger);
+    });
   });
 
   // heads up that all jest.fn(any function) will get the name 'mockConstructor'
@@ -231,8 +229,8 @@ describe('cached promises', () => {
 
         expect(actual).toStrictEqual({ ok: false, status: 500, statusText: 'Internal Server Error' });
         expect(promise).toHaveBeenCalledTimes(1);
-        expect(logger.logError).toHaveBeenCalledTimes(1);
-        expect(logger.logError).toHaveBeenCalledWith(
+        expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledTimes(1);
+        expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledWith(
           new Error(`getCachedPromise: Something failed while resolving a cached promise`),
           {
             stack: expect.any(String),
@@ -424,7 +422,7 @@ describe('cached promises', () => {
       const actual = await cached('a');
 
       expect(actual).toBe('fallback');
-      expect(logger.logError).toHaveBeenCalledTimes(1);
+      expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledTimes(1);
     });
 
     test('should support onError option', async () => {
@@ -579,8 +577,8 @@ describe('cached promises', () => {
       expect(keyA).toMatch(/^uncacheable:/);
       expect(keyB).toMatch(/^uncacheable:/);
       expect(keyA).not.toBe(keyB);
-      expect(logger.logError).toHaveBeenCalledTimes(2);
-      expect(logger.logError).toHaveBeenCalledWith(
+      expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledTimes(2);
+      expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledWith(
         expect.objectContaining({ message: 'getCachedPromiseWithArgs: extractKeyFromArgs failed' }),
         expect.objectContaining({ baseName: 'test' })
       );
