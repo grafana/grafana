@@ -29,6 +29,11 @@ type ResourceStorageAuthorizer interface {
 	BeforeDelete(ctx context.Context, obj runtime.Object) error
 	AfterGet(ctx context.Context, obj runtime.Object) error
 	FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error)
+	// FilterWatch is called for each incoming watch event that carries resource data
+	// (Added, Modified, Deleted). It returns true if the event should be forwarded to
+	// the caller, and false if it should be silently dropped. Bookmark and Error events
+	// are always forwarded regardless of the return value.
+	FilterWatch(ctx context.Context, event watch.Event) bool
 }
 
 // Wrapper is a k8sStorage (e.g. registry.Store) wrapper that enforces authorization based on ResourceStorageAuthorizer.
@@ -223,10 +228,64 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 }
 
 func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
-	if watcher, ok := w.inner.(k8srest.Watcher); ok {
-		return watcher.Watch(w.storeCtx(ctx), options)
+	watcher, ok := w.inner.(k8srest.Watcher)
+	if !ok {
+		return nil, fmt.Errorf("watch is not supported on the underlying storage")
 	}
-	return nil, fmt.Errorf("watch is not supported on the underlying storage")
+	inner, err := watcher.Watch(w.storeCtx(ctx), options)
+	if err != nil {
+		return nil, err
+	}
+	return newFilteredWatcher(ctx, inner, w.authorizer), nil
+}
+
+// filteredWatcher wraps a watch.Interface and filters out events that the
+// authorizer rejects, forwarding only permitted events to the caller.
+type filteredWatcher struct {
+	inner  watch.Interface
+	result chan watch.Event
+	done   chan struct{}
+}
+
+func newFilteredWatcher(ctx context.Context, inner watch.Interface, authorizer ResourceStorageAuthorizer) *filteredWatcher {
+	fw := &filteredWatcher{
+		inner:  inner,
+		result: make(chan watch.Event, watch.DefaultChanSize),
+		done:   make(chan struct{}),
+	}
+	go fw.run(ctx, authorizer)
+	return fw
+}
+
+func (fw *filteredWatcher) run(ctx context.Context, authorizer ResourceStorageAuthorizer) {
+	defer close(fw.result)
+	for {
+		select {
+		case <-fw.done:
+			return
+		case event, ok := <-fw.inner.ResultChan():
+			if !ok {
+				return
+			}
+			// Always forward protocol events — they carry no resource data.
+			if event.Type == watch.Bookmark || event.Type == watch.Error {
+				fw.result <- event
+				continue
+			}
+			if authorizer.FilterWatch(ctx, event) {
+				fw.result <- event
+			}
+		}
+	}
+}
+
+func (fw *filteredWatcher) Stop() {
+	close(fw.done)
+	fw.inner.Stop()
+}
+
+func (fw *filteredWatcher) ResultChan() <-chan watch.Event {
+	return fw.result
 }
 
 // NoopAuthorizer is a no-op implementation of ResourceStorageAuthorizer.
@@ -255,6 +314,10 @@ func (b *NoopAuthorizer) FilterList(ctx context.Context, list runtime.Object) (r
 	return list, nil
 }
 
+func (b *NoopAuthorizer) FilterWatch(ctx context.Context, event watch.Event) bool {
+	return true
+}
+
 // DenyAuthorizer denies all storage operations.
 // Use this as a safe default when no explicit authorizer is provided
 // for cluster-scoped resources. This ensures fail-closed behavior.
@@ -278,4 +341,8 @@ func (d *DenyAuthorizer) AfterGet(ctx context.Context, obj runtime.Object) error
 
 func (d *DenyAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
 	return nil, ErrUnauthorized
+}
+
+func (d *DenyAuthorizer) FilterWatch(ctx context.Context, event watch.Event) bool {
+	return false
 }
