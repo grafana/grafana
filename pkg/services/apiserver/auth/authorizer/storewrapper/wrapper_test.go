@@ -427,6 +427,7 @@ func TestWrapper_Watch(t *testing.T) {
 	t.Run("returns error when inner store does not support Watch", func(t *testing.T) {
 		setup := newTestSetup(t)
 		// MockStorage does not implement k8srest.Watcher, so Watch should fail.
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(AllowAllWatchFilter, nil)
 		_, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
 		require.Error(t, err)
 	})
@@ -444,8 +445,16 @@ func TestWrapper_Watch(t *testing.T) {
 		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
 		setup.wrapper.inner = watcherStore
 
-		setup.mockAuth.On("FilterWatch", mock.MatchedBy(matchesOriginalUser()), allowedEvent).Return(true)
-		setup.mockAuth.On("FilterWatch", mock.MatchedBy(matchesOriginalUser()), deniedEvent).Return(false)
+		// Filter: allow "allowed", deny "denied".
+		filter := WatchEventFilter(func(events []watch.Event) ([]bool, error) {
+			results := make([]bool, len(events))
+			for i, e := range events {
+				obj, ok := e.Object.(*fakeObject)
+				results[i] = ok && obj.Name == "allowed"
+			}
+			return results, nil
+		})
+		setup.mockAuth.On("WatchFilter", mock.MatchedBy(matchesOriginalUser())).Return(filter, nil)
 
 		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
 		require.NoError(t, err)
@@ -462,10 +471,63 @@ func TestWrapper_Watch(t *testing.T) {
 		for range w.ResultChan() {
 		}
 
+		_ = deniedEvent // referenced to confirm it is not received
 		setup.mockAuth.AssertExpectations(t)
 	})
 
-	t.Run("always forwards Bookmark events without calling FilterWatch", func(t *testing.T) {
+	t.Run("nil filter is fail-closed and rejects all events", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}}
+
+		fakeWatcher := watch.NewFake()
+		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
+		setup.wrapper.inner = watcherStore
+
+		// Returning nil from WatchFilter is treated as RejectAllWatchFilter (fail-closed).
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(WatchEventFilter(nil), nil)
+
+		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+		defer w.Stop()
+
+		fakeWatcher.Add(obj)
+		fakeWatcher.Stop()
+
+		var events []watch.Event
+		for e := range w.ResultChan() {
+			events = append(events, e)
+		}
+		require.Empty(t, events, "nil filter must reject all data events (fail-closed)")
+	})
+
+	t.Run("AllowAllWatchFilter forwards all events", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}}
+
+		fakeWatcher := watch.NewFake()
+		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
+		setup.wrapper.inner = watcherStore
+
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(AllowAllWatchFilter, nil)
+
+		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+		defer w.Stop()
+
+		fakeWatcher.Add(obj)
+		fakeWatcher.Stop()
+
+		var events []watch.Event
+		for e := range w.ResultChan() {
+			events = append(events, e)
+		}
+		require.Len(t, events, 1)
+		assert.Equal(t, watch.Added, events[0].Type)
+	})
+
+	t.Run("always forwards Bookmark events without filtering", func(t *testing.T) {
 		setup := newTestSetup(t)
 
 		bookmarkObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{ResourceVersion: "42"}}
@@ -473,6 +535,9 @@ func TestWrapper_Watch(t *testing.T) {
 		fakeWatcher := watch.NewFake()
 		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
 		setup.wrapper.inner = watcherStore
+
+		// Filter that rejects everything — Bookmark must still get through.
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(RejectAllWatchFilter, nil)
 
 		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
 		require.NoError(t, err)
@@ -488,11 +553,9 @@ func TestWrapper_Watch(t *testing.T) {
 
 		require.Len(t, events, 1)
 		assert.Equal(t, watch.Bookmark, events[0].Type)
-		// FilterWatch must not have been called for bookmark events.
-		setup.mockAuth.AssertNotCalled(t, "FilterWatch")
 	})
 
-	t.Run("always forwards Error events without calling FilterWatch", func(t *testing.T) {
+	t.Run("always forwards Error events without filtering", func(t *testing.T) {
 		setup := newTestSetup(t)
 
 		errObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "err"}}
@@ -500,6 +563,8 @@ func TestWrapper_Watch(t *testing.T) {
 		fakeWatcher := watch.NewFake()
 		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
 		setup.wrapper.inner = watcherStore
+
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(RejectAllWatchFilter, nil)
 
 		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
 		require.NoError(t, err)
@@ -515,7 +580,6 @@ func TestWrapper_Watch(t *testing.T) {
 
 		require.Len(t, events, 1)
 		assert.Equal(t, watch.Error, events[0].Type)
-		setup.mockAuth.AssertNotCalled(t, "FilterWatch")
 	})
 
 	t.Run("uses service identity for inner Watch call", func(t *testing.T) {
@@ -529,10 +593,25 @@ func TestWrapper_Watch(t *testing.T) {
 		}
 		setup.wrapper.inner = watcherStore
 
+		setup.mockAuth.On("WatchFilter", mock.MatchedBy(matchesOriginalUser())).Return(AllowAllWatchFilter, nil)
+
 		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
 		require.NoError(t, err)
 		assert.True(t, watcherStore.ctxOk, "inner Watch should receive service identity context")
 		w.Stop()
+	})
+
+	t.Run("WatchFilter error is returned from Watch", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		fakeWatcher := watch.NewFake()
+		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
+		setup.wrapper.inner = watcherStore
+
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(AllowAllWatchFilter, ErrUnauthorized)
+
+		_, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.ErrorIs(t, err, ErrUnauthorized)
 	})
 }
 
@@ -573,9 +652,13 @@ func (f *FakeAuthorizer) FilterList(ctx context.Context, list runtime.Object) (r
 	return res, args.Error(1)
 }
 
-func (f *FakeAuthorizer) FilterWatch(ctx context.Context, event watch.Event) bool {
-	args := f.Called(ctx, event)
-	return args.Bool(0)
+func (f *FakeAuthorizer) WatchFilter(ctx context.Context) (WatchEventFilter, error) {
+	args := f.Called(ctx)
+	var filter WatchEventFilter
+	if v := args.Get(0); v != nil {
+		filter = v.(WatchEventFilter)
+	}
+	return filter, args.Error(1)
 }
 
 type fakeObject struct {

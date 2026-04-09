@@ -6,7 +6,6 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/watch"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -33,10 +32,9 @@ func (a *RoleBindingAuthorizer) FilterList(_ context.Context, list runtime.Objec
 	return list, nil
 }
 
-func (a *RoleBindingAuthorizer) FilterWatch(_ context.Context, _ watch.Event) bool {
-	return true
+func (a *RoleBindingAuthorizer) WatchFilter(_ context.Context) (storewrapper.WatchEventFilter, error) {
+	return storewrapper.AllowAllWatchFilter, nil
 }
-
 func (a *RoleBindingAuthorizer) BeforeDelete(_ context.Context, _ runtime.Object) error { return nil }
 
 // creates & updates need to check the role permissions
@@ -95,8 +93,8 @@ func (d *DenyCustomRoleRefsAuthorizer) FilterList(_ context.Context, list runtim
 	return list, nil
 }
 
-func (d *DenyCustomRoleRefsAuthorizer) FilterWatch(_ context.Context, _ watch.Event) bool {
-	return true
+func (d *DenyCustomRoleRefsAuthorizer) WatchFilter(_ context.Context) (storewrapper.WatchEventFilter, error) {
+	return storewrapper.AllowAllWatchFilter, nil
 }
 
 func (d *DenyCustomRoleRefsAuthorizer) BeforeDelete(_ context.Context, _ runtime.Object) error {

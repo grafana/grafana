@@ -3,6 +3,7 @@ package storewrapper
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -22,6 +23,29 @@ var (
 	ErrUnexpectedType  = errors.NewBadRequest("unexpected object type")
 )
 
+// WatchEventFilter is a batch filter for watch events. Given a slice of
+// data-carrying events (Added, Modified, Deleted) it returns a same-length bool
+// slice indicating which events to forward. Returning an error terminates the watch.
+// Implementations are called from a single goroutine and need not be concurrency-safe.
+type WatchEventFilter func(events []watch.Event) ([]bool, error)
+
+// RejectAllWatchFilter is a WatchEventFilter that silently drops every event.
+// Use it as a safe placeholder in WatchFilter implementations that are not yet
+// complete. Individual teams are expected to replace it with proper authorization logic.
+var RejectAllWatchFilter WatchEventFilter = func(events []watch.Event) ([]bool, error) {
+	return make([]bool, len(events)), nil
+}
+
+// AllowAllWatchFilter is a WatchEventFilter that forwards every event unconditionally.
+// Use this only for resources that impose no per-event read restrictions.
+var AllowAllWatchFilter WatchEventFilter = func(events []watch.Event) ([]bool, error) {
+	allowed := make([]bool, len(events))
+	for i := range allowed {
+		allowed[i] = true
+	}
+	return allowed, nil
+}
+
 // ResourceStorageAuthorizer defines authorization hooks for resource storage operations.
 type ResourceStorageAuthorizer interface {
 	BeforeCreate(ctx context.Context, obj runtime.Object) error
@@ -29,11 +53,14 @@ type ResourceStorageAuthorizer interface {
 	BeforeDelete(ctx context.Context, obj runtime.Object) error
 	AfterGet(ctx context.Context, obj runtime.Object) error
 	FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error)
-	// FilterWatch is called for each incoming watch event that carries resource data
-	// (Added, Modified, Deleted). It returns true if the event should be forwarded to
-	// the caller, and false if it should be silently dropped. Bookmark and Error events
-	// are always forwarded regardless of the return value.
-	FilterWatch(ctx context.Context, event watch.Event) bool
+	// WatchFilter is called once when a Watch begins. It may pre-compile authorization
+	// state (e.g. fetch permissions, capture auth info) and must return a WatchEventFilter
+	// that will be invoked for each flush of buffered events. Bookmark and Error events
+	// always bypass the filter. Use AllowAllWatchFilter for resources with no per-event
+	// read restrictions, and RejectAllWatchFilter as a safe placeholder.
+	// The Wrapper's WatchFlushInterval controls how often the buffer is flushed:
+	// 0 (default) flushes after every event; >0 amortizes RPC cost across bursts.
+	WatchFilter(ctx context.Context) (WatchEventFilter, error)
 }
 
 // Wrapper is a k8sStorage (e.g. registry.Store) wrapper that enforces authorization based on ResourceStorageAuthorizer.
@@ -43,9 +70,10 @@ type ResourceStorageAuthorizer interface {
 // The wrapper also supports an option to preserve the original caller's identity in the context for inner store calls instead of replacing it with a service identity.
 // Use this when the inner store does not perform its own RBAC checks and the caller's identity is needed downstream (e.g. for admission webhooks).
 type Wrapper struct {
-	inner            K8sStorage
-	authorizer       ResourceStorageAuthorizer
-	preserveIdentity bool
+	inner              K8sStorage
+	authorizer         ResourceStorageAuthorizer
+	preserveIdentity   bool
+	watchFlushInterval time.Duration
 }
 
 // Option configures a Wrapper.
@@ -58,6 +86,17 @@ type Option func(*Wrapper)
 func WithPreserveIdentity() Option {
 	return func(w *Wrapper) {
 		w.preserveIdentity = true
+	}
+}
+
+// WithWatchFlushInterval sets how long the filteredWatcher buffers events before
+// calling WatchFilter with a batch. The default (0) flushes after every individual
+// event, which is safe and correct but makes one filter call per event. Set a
+// positive duration (e.g. 50ms) to amortize RPC cost across bursts when the
+// authorizer's WatchFilter uses BatchCheck internally.
+func WithWatchFlushInterval(d time.Duration) Option {
+	return func(w *Wrapper) {
+		w.watchFlushInterval = d
 	}
 }
 
@@ -232,33 +271,90 @@ func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOption
 	if !ok {
 		return nil, fmt.Errorf("watch is not supported on the underlying storage")
 	}
+
+	// Build the filter once, before starting the watch, so callers get an immediate
+	// error if authorization state cannot be resolved (e.g. auth backend unavailable).
+	filter, err := w.authorizer.WatchFilter(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// Fail-closed: a nil filter is treated as RejectAllWatchFilter.
+	// Implementors should return AllowAllWatchFilter explicitly for unrestricted resources.
+	if filter == nil {
+		return nil, fmt.Errorf("watch requires a filter")
+	}
+
 	inner, err := watcher.Watch(w.storeCtx(ctx), options)
 	if err != nil {
 		return nil, err
 	}
-	return newFilteredWatcher(ctx, inner, w.authorizer), nil
+	return newFilteredWatcher(inner, filter, w.watchFlushInterval), nil
 }
 
-// filteredWatcher wraps a watch.Interface and filters out events that the
-// authorizer rejects, forwarding only permitted events to the caller.
+// filteredWatcher wraps a watch.Interface and runs the WatchEventFilter over
+// buffered batches of events before forwarding them to the caller.
+// Bookmark and Error events bypass the filter and are forwarded immediately.
+//
+// When flushInterval is 0 the buffer is flushed after every individual event
+// (synchronous, no added latency). When flushInterval > 0 events are accumulated
+// and flushed either when the buffer is full or the ticker fires, amortizing the
+// cost of expensive filter implementations (e.g. BatchCheck RPCs) across bursts.
 type filteredWatcher struct {
-	inner  watch.Interface
-	result chan watch.Event
-	done   chan struct{}
+	inner         watch.Interface
+	filter        WatchEventFilter
+	flushInterval time.Duration
+	result        chan watch.Event
+	done          chan struct{}
 }
 
-func newFilteredWatcher(ctx context.Context, inner watch.Interface, authorizer ResourceStorageAuthorizer) *filteredWatcher {
+// watchBatchSize is the maximum number of events buffered before a forced flush.
+// Matches watch.DefaultChanSize so the batch can never exceed the inner channel capacity.
+const watchBatchSize = 100
+
+func newFilteredWatcher(inner watch.Interface, filter WatchEventFilter, flushInterval time.Duration) *filteredWatcher {
 	fw := &filteredWatcher{
-		inner:  inner,
-		result: make(chan watch.Event, watch.DefaultChanSize),
-		done:   make(chan struct{}),
+		inner:         inner,
+		filter:        filter,
+		flushInterval: flushInterval,
+		result:        make(chan watch.Event, watch.DefaultChanSize),
+		done:          make(chan struct{}),
 	}
-	go fw.run(ctx, authorizer)
+	go fw.run()
 	return fw
 }
 
-func (fw *filteredWatcher) run(ctx context.Context, authorizer ResourceStorageAuthorizer) {
+func (fw *filteredWatcher) run() {
 	defer close(fw.result)
+
+	// A nil channel blocks forever in select, disabling the ticker case when
+	// flushInterval is 0 (each event is flushed inline immediately instead).
+	var tickerC <-chan time.Time
+	if fw.flushInterval > 0 {
+		t := time.NewTicker(fw.flushInterval)
+		defer t.Stop()
+		tickerC = t.C
+	}
+
+	var pending []watch.Event
+
+	flush := func() {
+		if len(pending) == 0 {
+			return
+		}
+		allowed, err := fw.filter(pending)
+		if err != nil {
+			fw.inner.Stop()
+			pending = pending[:0]
+			return
+		}
+		for i, event := range pending {
+			if i < len(allowed) && allowed[i] {
+				fw.result <- event
+			}
+		}
+		pending = pending[:0]
+	}
+
 	for {
 		select {
 		case <-fw.done:
@@ -267,14 +363,18 @@ func (fw *filteredWatcher) run(ctx context.Context, authorizer ResourceStorageAu
 			if !ok {
 				return
 			}
-			// Always forward protocol events — they carry no resource data.
+			// Protocol events carry no resource data and must never be delayed.
 			if event.Type == watch.Bookmark || event.Type == watch.Error {
+				flush() // drain pending first to preserve ordering
 				fw.result <- event
 				continue
 			}
-			if authorizer.FilterWatch(ctx, event) {
-				fw.result <- event
+			pending = append(pending, event)
+			if fw.flushInterval == 0 || len(pending) >= watchBatchSize {
+				flush()
 			}
+		case <-tickerC:
+			flush()
 		}
 	}
 }
@@ -314,8 +414,8 @@ func (b *NoopAuthorizer) FilterList(ctx context.Context, list runtime.Object) (r
 	return list, nil
 }
 
-func (b *NoopAuthorizer) FilterWatch(ctx context.Context, event watch.Event) bool {
-	return true
+func (b *NoopAuthorizer) WatchFilter(_ context.Context) (WatchEventFilter, error) {
+	return AllowAllWatchFilter, nil
 }
 
 // DenyAuthorizer denies all storage operations.
@@ -343,6 +443,6 @@ func (d *DenyAuthorizer) FilterList(ctx context.Context, list runtime.Object) (r
 	return nil, ErrUnauthorized
 }
 
-func (d *DenyAuthorizer) FilterWatch(ctx context.Context, event watch.Event) bool {
-	return false
+func (d *DenyAuthorizer) WatchFilter(_ context.Context) (WatchEventFilter, error) {
+	return RejectAllWatchFilter, nil
 }

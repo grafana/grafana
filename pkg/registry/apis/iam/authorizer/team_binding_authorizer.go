@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/watch"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -119,9 +118,10 @@ func (r *TeamBindingAuthorizer) beforeWrite(ctx context.Context, obj runtime.Obj
 	return nil
 }
 
-// FilterWatch implements ResourceStorageAuthorizer.
-func (r *TeamBindingAuthorizer) FilterWatch(ctx context.Context, event watch.Event) bool {
-	return r.AfterGet(ctx, event.Object) == nil
+// WatchFilter implements ResourceStorageAuthorizer.
+// TODO: implement proper watch filtering using Compile or BatchCheck.
+func (r *TeamBindingAuthorizer) WatchFilter(_ context.Context) (storewrapper.WatchEventFilter, error) {
+	return storewrapper.RejectAllWatchFilter, nil
 }
 
 // FilterList implements ResourceStorageAuthorizer.
