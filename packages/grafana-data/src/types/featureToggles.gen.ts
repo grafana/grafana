@@ -1771,4 +1771,14 @@ export interface FeatureToggles {
   * @default false
   */
   compiledBootScript?: boolean;
+  /**
+  * Enables validation on the InfluxDB data source configuration page
+  * @default false
+  */
+  influxDBConfigValidation?: boolean;
+  /**
+  * Enables validation on the ClickHouse data source configuration page
+  * @default false
+  */
+  clickHouseConfigValidation?: boolean;
 }
