@@ -177,7 +177,10 @@ export const TimeSeriesPanel = ({
                   };
 
                   const groupingFilters =
-                    seriesIdx !== null && config.featureToggles.perPanelFiltering && getFiltersBasedOnGrouping
+                    seriesIdx !== null &&
+                    (config.featureToggles.perPanelFiltering ||
+                      config.featureToggles.dashboardUnifiedDrilldownControls) &&
+                    getFiltersBasedOnGrouping
                       ? getGroupedFilters(alignedFrame, seriesIdx, getFiltersBasedOnGrouping)
                       : [];
 
@@ -196,7 +199,10 @@ export const TimeSeriesPanel = ({
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
                       filterByGroupedLabels={
-                        config.featureToggles.perPanelFiltering && groupingFilters.length && onAddAdHocFilters
+                        (config.featureToggles.perPanelFiltering ||
+                          config.featureToggles.dashboardUnifiedDrilldownControls) &&
+                        groupingFilters.length &&
+                        onAddAdHocFilters
                           ? {
                               onFilterForGroupedLabels: () => onAddAdHocFilters(groupingFilters),
                               onFilterOutGroupedLabels: () =>

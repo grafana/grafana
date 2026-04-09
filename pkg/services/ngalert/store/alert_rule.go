@@ -6,20 +6,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"slices"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/prometheus/alertmanager/pkg/labels"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -180,7 +179,7 @@ func (st DBstore) getFolderFullpaths(ctx context.Context, orgID int64, folderUID
 		return nil, fmt.Errorf("folder service is not configured")
 	}
 	bgUser := accesscontrol.BackgroundUser("ngalert", orgID, org.RoleAdmin, []accesscontrol.Permission{
-		{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+		{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersAll},
 	})
 	folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
 		OrgID:        orgID,
@@ -1425,13 +1424,13 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 				schedulerUser := accesscontrol.BackgroundUser("grafana_scheduler", orgID, org.RoleAdmin,
 					[]accesscontrol.Permission{
 						{
-							Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll,
+							Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersAll,
 						},
 					})
 
 				folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
 					OrgID:        orgID,
-					UIDs:         maps.Keys(uids),
+					UIDs:         slices.Collect(maps.Keys(uids)),
 					WithFullpath: true,
 					SignedInUser: schedulerUser,
 				})
@@ -1450,7 +1449,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
 func (st DBstore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
 	for _, folderUID := range folderUIDs {
-		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
+		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
 		canSave, err := st.AccessControl.Evaluate(ctx, user, evaluator)
 		if err != nil {
 			st.Logger.Error("Failed to evaluate access control", "error", err)
@@ -1458,7 +1457,7 @@ func (st DBstore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs [
 		}
 		if !canSave {
 			st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user")
-			return dashboards.ErrFolderAccessDenied
+			return folder.ErrAccessDenied
 		}
 
 		rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{

@@ -1,6 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
-import { API_GROUP, API_VERSION, type Receiver } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { API_GROUP, API_VERSION, type Receiver } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import {
   getAlertmanagerConfig,
   setAlertmanagerConfig,

@@ -2,6 +2,7 @@ import { ArgTypes, Canvas } from '@storybook/blocks';
 import { Input } from './Input';
 import { Field } from '../Forms/Field';
 import { Icon } from '../Icon/Icon';
+import { Button } from '../Button/Button';
 import * as InputStories from './Input.story';
 import { ExampleFrame } from '../../utils/storybook/ExampleFrame';
 
@@ -11,12 +12,32 @@ Used for regular text input. For an array of data or tree-structured data, consi
 
 <Canvas of={InputStories.Simple} />
 
+## When to use
+
+Use inputs in forms to help people enter, select, and search for text. Inputs are normally found within a form but can also be part of a modal, search, or card.
+
+## Placeholder text
+
+Input has the ability to have placeholder text. Use placeholder text sparingly, as placeholder text is often confused for actual text. Confusing placeholder text for text often results in higher error rates with users missing inputs that need filled out. When the input is used with [Field](/docs/forms-field--docs), placeholder text should not be used in favor of using the label and description.
+
 ## Prefix and suffix
 
 To add more context to the input you can add either text or an icon before or after the input. You can use the `prefix` and `suffix` props for this. Try some examples in the Preview!
 
 <ExampleFrame>
   <Input prefix={<Icon name="search" />} />
+</ExampleFrame>
+
+<ExampleFrame>
+  <Input suffix={<Icon name="plus-circle" />} />
+</ExampleFrame>
+
+## Addon before or after
+
+An accessory, commonly a button, that can occur before or after the input.
+
+<ExampleFrame>
+  <Input addonAfter={<Button variant="secondary">Load</Button>} />
 </ExampleFrame>
 
 ## Usage in forms with Field
@@ -31,6 +52,34 @@ To add more context to the input you can add either text or an icon before or af
     <Input name="importantInput" required />
   </Field>
 </ExampleFrame>
+
+## Types and behaviors
+
+### Text
+
+A text input allows users to enter text, numbers, and special characters into the input.
+
+### Number
+
+A number input limits users to only entering numerical characters into the input.
+
+### Password
+
+A password input masks the characters entered by the user.
+
+## States
+
+### Invalid
+
+The invalid state for the input signifies that the provided content needs correction or additional content needs to be added before the user is able to proceed.
+
+### Loading
+
+For some situations, the input is able to indicate that it is loading.
+
+### Disabled
+
+Depending on user permissions or if an input is synced with a datasource, an input can have a disabled state.
 
 ## Props
 
