@@ -1,13 +1,17 @@
 import { configureStore } from '@reduxjs/toolkit';
+import { of, throwError } from 'rxjs';
 
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
+import { type FolderDTO } from 'app/types/folders';
 
 import { browseDashboardsAPI } from './browseDashboardsAPI';
 
 const mockGet = jest.fn().mockResolvedValue({});
+const mockFetch = jest.fn();
 const mockPut = jest.fn().mockResolvedValue({});
 const mockPost = jest.fn().mockResolvedValue({});
 
@@ -15,9 +19,15 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   getDashboardAPI: jest.fn(),
 }));
 
+jest.mock('app/api/clients/folder/v1beta1/utils', () => ({
+  ...jest.requireActual('app/api/clients/folder/v1beta1/utils'),
+  isProvisionedFolderCheck: jest.fn(),
+}));
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
+    fetch: mockFetch,
     get: mockGet,
     put: mockPut,
     post: mockPost,
@@ -30,8 +40,9 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-describe('browseDashboardsAPI saveDashboard', () => {
+describe('browseDashboardsAPI', () => {
   const getDashboardAPIMock = jest.mocked(getDashboardAPI);
+  const isProvisionedFolderCheckMock = jest.mocked(isProvisionedFolderCheck);
   const createTestStore = () =>
     configureStore({
       reducer: {
@@ -42,6 +53,8 @@ describe('browseDashboardsAPI saveDashboard', () => {
 
   beforeEach(() => {
     getDashboardAPIMock.mockReset();
+    mockFetch.mockReset();
+    isProvisionedFolderCheckMock.mockResolvedValue(false);
   });
 
   const createMockDashboardAPI = (saveDashboard: jest.Mock) =>
@@ -100,5 +113,52 @@ describe('browseDashboardsAPI saveDashboard', () => {
     expect(getDashboardAPIMock).toHaveBeenCalledWith('v2');
     expect(saveDashboardV2).toHaveBeenCalledWith(cmd);
     expect(saveDashboardV1).not.toHaveBeenCalled();
+  });
+
+  it('evicts a cached getFolder entry after deleting that folder', async () => {
+    const store = createTestStore();
+    const folderQueryArg = { folderUID: 'folder-1', accesscontrol: true, isLegacyCall: false };
+
+    await store.dispatch(
+      browseDashboardsAPI.util.upsertQueryData('getFolder', folderQueryArg, { uid: 'folder-1' } as FolderDTO)
+    );
+    expect(browseDashboardsAPI.endpoints.getFolder.select(folderQueryArg)(store.getState()).status).toBe('fulfilled');
+
+    mockFetch.mockReturnValueOnce(of({ data: {} }));
+
+    await store.dispatch(
+      browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
+    );
+
+    expect(browseDashboardsAPI.endpoints.getFolder.select(folderQueryArg)(store.getState()).status).toBe(
+      'uninitialized'
+    );
+  });
+
+  it('evicts only successfully deleted folders from the cache during bulk delete', async () => {
+    const store = createTestStore();
+    const folderOneQueryArg = { folderUID: 'folder-1', accesscontrol: true, isLegacyCall: false };
+    const folderTwoQueryArg = { folderUID: 'folder-2', accesscontrol: true, isLegacyCall: false };
+
+    await store.dispatch(
+      browseDashboardsAPI.util.upsertQueryData('getFolder', folderOneQueryArg, { uid: 'folder-1' } as FolderDTO)
+    );
+    await store.dispatch(
+      browseDashboardsAPI.util.upsertQueryData('getFolder', folderTwoQueryArg, { uid: 'folder-2' } as FolderDTO)
+    );
+
+    mockFetch.mockReturnValueOnce(of({ data: {} }));
+    mockFetch.mockReturnValueOnce(throwError(() => ({ status: 404, data: { message: 'Folder not found' } })));
+
+    await store.dispatch(
+      browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+    );
+
+    expect(browseDashboardsAPI.endpoints.getFolder.select(folderOneQueryArg)(store.getState()).status).toBe(
+      'uninitialized'
+    );
+    expect(browseDashboardsAPI.endpoints.getFolder.select(folderTwoQueryArg)(store.getState()).status).toBe(
+      'fulfilled'
+    );
   });
 });

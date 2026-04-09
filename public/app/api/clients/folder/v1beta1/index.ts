@@ -3,6 +3,14 @@ import { type DescendantCount } from 'app/types/folders';
 
 import { getParsedCounts } from './utils';
 
+const folderListTag = { type: 'Folder' as const, id: 'LIST' };
+
+// Exported for tests.
+export const getFolderDeleteInvalidationTags = (folderUIDs: string[]) =>
+  folderUIDs.length > 0
+    ? [folderListTag, ...folderUIDs.map((folderUID) => ({ type: 'Folder' as const, id: folderUID }))]
+    : [];
+
 export const folderAPIv1beta1 = generatedAPI
   .enhanceEndpoints({
     endpoints: {
@@ -13,16 +21,15 @@ export const folderAPIv1beta1 = generatedAPI
         providesTags: (result) =>
           result
             ? [
-                { type: 'Folder', id: 'LIST' },
+                folderListTag,
                 ...result.items
                   .map((folder) => ({ type: 'Folder' as const, id: folder.metadata?.name }))
                   .filter(Boolean),
               ]
-            : [{ type: 'Folder', id: 'LIST' }],
+            : [folderListTag],
       },
       deleteFolder: {
-        // We don't want delete to invalidate getFolder tags, as that would lead to unnecessary 404s
-        invalidatesTags: (result, error) => (error ? [] : [{ type: 'Folder', id: 'LIST' }]),
+        invalidatesTags: (_result, error, { name }) => (error ? [] : getFolderDeleteInvalidationTags([name])),
       },
     },
   })

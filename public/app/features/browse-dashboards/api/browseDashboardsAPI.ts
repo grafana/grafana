@@ -86,9 +86,19 @@ export interface ListFolderQueryArgs {
   permission?: PermissionLevel;
 }
 
-// Don't invalidate individual getFolder tags — the resource no longer exists and refetching would 404
-const invalidateListOnSuccess = (result: unknown, error: unknown) =>
-  error ? [] : [{ type: 'getFolder' as const, id: 'LIST' }];
+const folderListTag = { type: 'getFolder' as const, id: 'LIST' };
+
+// Exported for tests.
+export const getFolderDeleteInvalidationTags = (folderUIDs: string[]) =>
+  folderUIDs.length > 0
+    ? [folderListTag, ...folderUIDs.map((folderUID) => ({ type: 'getFolder' as const, id: folderUID }))]
+    : [];
+
+const invalidateFolderListOnSuccess = (_result: unknown, error: unknown) => (error ? [] : [folderListTag]);
+const invalidateDeletedFolderOnSuccess = (_result: unknown, error: unknown, { uid }: Pick<FolderDTO, 'uid'>) =>
+  error ? [] : getFolderDeleteInvalidationTags([uid]);
+const invalidateDeletedFoldersOnSuccess = (result: string[] | undefined, error: unknown) =>
+  error ? [] : getFolderDeleteInvalidationTags(result ?? []);
 
 export const browseDashboardsAPI = createApi({
   tagTypes: ['getFolder'],
@@ -98,11 +108,8 @@ export const browseDashboardsAPI = createApi({
     listFolders: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
       providesTags: (result) =>
         result && result.length > 0
-          ? [
-              { type: 'getFolder', id: 'LIST' },
-              ...result.map((folder) => ({ type: 'getFolder' as const, id: folder.uid })),
-            ]
-          : [{ type: 'getFolder', id: 'LIST' }],
+          ? [folderListTag, ...result.map((folder) => ({ type: 'getFolder' as const, id: folder.uid }))]
+          : [folderListTag],
       query: ({ parentUid, limit, page, permission }) => ({
         url: '/folders',
         params: { parentUid, limit, page, permission },
@@ -200,7 +207,7 @@ export const browseDashboardsAPI = createApi({
 
     // delete an *individual* folder. used in the folder actions menu.
     deleteFolder: builder.mutation<void, FolderDTO>({
-      invalidatesTags: invalidateListOnSuccess,
+      invalidatesTags: invalidateDeletedFolderOnSuccess,
       query: ({ uid }) => ({
         url: `/folders/${uid}`,
         method: 'DELETE',
@@ -340,9 +347,11 @@ export const browseDashboardsAPI = createApi({
     }),
 
     // delete *multiple* folders. used in the delete modal.
-    deleteFolders: builder.mutation<void, DeleteFoldersArgs>({
-      invalidatesTags: invalidateListOnSuccess,
+    deleteFolders: builder.mutation<string[], DeleteFoldersArgs>({
+      invalidatesTags: invalidateDeletedFoldersOnSuccess,
       queryFn: async ({ folderUIDs }, _api, _extraOptions, baseQuery) => {
+        const deletedFolderUIDs: string[] = [];
+
         // Delete all the folders sequentially
         // TODO error handling here
         for (const folderUID of folderUIDs) {
@@ -350,7 +359,7 @@ export const browseDashboardsAPI = createApi({
           if (await isProvisionedFolderCheck(dispatch, folderUID)) {
             continue;
           }
-          await baseQuery({
+          const response = await baseQuery({
             url: `/folders/${folderUID}`,
             method: 'DELETE',
             params: {
@@ -359,12 +368,20 @@ export const browseDashboardsAPI = createApi({
               forceDeleteRules: false,
             },
           });
+
+          if (!('error' in response) || !response.error) {
+            deletedFolderUIDs.push(folderUID);
+          }
         }
-        return { data: undefined };
+        return { data: deletedFolderUIDs };
       },
-      onQueryStarted: ({ folderUIDs }, { queryFulfilled, dispatch }) => {
-        queryFulfilled.then(() => {
-          dispatch(refreshParents(folderUIDs));
+      onQueryStarted: (_arg, { queryFulfilled, dispatch }) => {
+        queryFulfilled.then(({ data: deletedFolderUIDs }) => {
+          if (deletedFolderUIDs.length === 0) {
+            return;
+          }
+
+          dispatch(refreshParents(deletedFolderUIDs));
           // Clear the deleted dashboards cache since deleting a folder also deletes its dashboards
           deletedDashboardsCache.clear();
           invalidateQuotaUsage(dispatch);
@@ -374,7 +391,7 @@ export const browseDashboardsAPI = createApi({
 
     // delete *multiple* dashboards. used in the delete modal.
     deleteDashboards: builder.mutation<void, DeleteDashboardsArgs>({
-      invalidatesTags: invalidateListOnSuccess,
+      invalidatesTags: invalidateFolderListOnSuccess,
       queryFn: async ({ dashboardUIDs }) => {
         const pageStateManager = getDashboardScenePageStateManager();
         const restoreDashboardsEnabled = config.featureToggles.restoreDashboards;
