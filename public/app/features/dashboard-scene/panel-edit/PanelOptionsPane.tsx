@@ -5,6 +5,7 @@ import { useToggle } from 'react-use';
 import {
   type FieldConfigSource,
   filterFieldConfigOverrides,
+  getPanelOptionsWithDefaults,
   type GrafanaTheme2,
   isStandardFieldProp,
   type PanelPluginMeta,
@@ -107,10 +108,27 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     }
 
     if (options.fieldConfig) {
+      const presetDefaults = options.fieldConfig.defaults;
+
+      // Force color adaptation for both cross and same-plugin suggestions/presets
+      let adaptedColor = panel.state.fieldConfig.defaults.color;
+      const plugin = panel.getPlugin();
+      if (plugin && !presetDefaults?.color) {
+        const adapted = getPanelOptionsWithDefaults({
+          plugin,
+          currentOptions: panel.state.options,
+          currentFieldConfig: panel.state.fieldConfig,
+          isAfterPluginChange: true,
+        });
+        adaptedColor = adapted.fieldConfig.defaults.color;
+      }
+
       const fieldConfigWithOverrides = {
         defaults: {
           ...newFieldConfig.defaults,
-          custom: options.fieldConfig.defaults?.custom ?? {},
+          color: presetDefaults?.color ?? adaptedColor,
+          custom: presetDefaults?.custom ?? {},
+          ...(presetDefaults?.thresholds && { thresholds: presetDefaults.thresholds }),
         },
         overrides: newFieldConfig.overrides,
       };
