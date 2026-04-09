@@ -2758,14 +2758,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "grafana.newPreferencesPage",
-			Description: "Whether to use the new SharedPreferences functional component",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{React: true},
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
-		},
-		{
 			Name:         "managedPluginsV2",
 			Description:  "Enables managed plugins v2 (expanded rollout, community plugin coverage)",
 			Stage:        FeatureStageExperimental,
@@ -3006,10 +2998,18 @@ var (
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
+		{
+			Name:        "grafana.newPreferencesPage",
+			Description: "Whether to use the new SharedPreferences functional component",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaFrontendPlatformSquad,
+			Expression:  "false",
+		},
+		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
-		// Adding a new feature toggle? Be sure to check out the updated docs at contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle
+		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle
 		// to follow new naming conventions and usage!
-		//
 	}
 )
 
