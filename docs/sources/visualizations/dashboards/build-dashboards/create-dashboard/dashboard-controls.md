@@ -31,6 +31,8 @@ Grafana Labs offers limited support, and breaking changes might occur prior to t
 
 This feature replaces ad hoc variables, and extends them by adding grouping for Prometheus and Loki data sources.
 However, in the dashboard schema, it is still referred to as `"kind": "AdhocVariable"`.
+
+To use this feature, enable the `dashboardUnifiedDrilldownControls` feature toggle in your Grafana configuration file.
 {{< /admonition >}}
 
 <!-- vale Grafana.Spelling = YES -->
