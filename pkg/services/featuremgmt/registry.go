@@ -2566,6 +2566,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertingNotificationHistoryTriage",
+			Description:  "Enables the notification history timeline in the triage instance details drawer",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingNotificationHistoryDetail",
 			Description:  "Enables the notification history detail page",
 			Stage:        FeatureStageExperimental,
