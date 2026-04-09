@@ -86,8 +86,6 @@ refs:
 
 # Add variables
 
-<!-- vale Grafana.Spelling = NO -->
-
 The following table lists the types of variables included with Grafana.
 
 <!-- prettier-ignore-start -->
@@ -110,7 +108,7 @@ The following table lists the types of variables included with Grafana.
 ## Enter General options
 
 You must enter general options for any type of variable that you create.
-To create filters, go to [Add filters and group by](a;dka;dfja;dfkj).
+To create a filter and group by variable, go to [Add filters and group by](#add-a-filter-and-group-by) for steps specific to that variable type.
 To create all other variable types, follow these steps:
 
 {{< docs/list >}}
@@ -365,16 +363,13 @@ You can also use switch variables in panel titles and other dashboard elements:
 
 ## Add a filter and group by
 
-{{< docs/public-preview product="The filter and group by variable" >}}
-<!-- {{< docs/public-preview product="public-preview-feature" featureFlag="its-feature-flag" >}} -->
-
-<!-- TODO: Think about how to refer to this in the context of panel/dashboard groupings -->
-
 <!-- vale Grafana.Spelling = NO -->
-The _Filter and Group by_ variable (formerly the **ad hoc variable**) is one of the most complex and flexible variable options available.
+
+The filter and group by variable (formerly the **ad hoc variable**) is one of the most complex and flexible variable options available.
 Instead of creating a variable for each dimension by which you want to filter, it automatically creates variables (key/value pairs) for all the dimensions returned by your data source query.
 This allows you to quickly apply filters dashboard-wide.
 The group by function allows you to then group data by label.
+
 <!-- vale Grafana.Spelling = YES -->
 
 Filter and group by variables let can add label/value filters that are automatically added to all metric queries that use the specified data source.
@@ -437,8 +432,6 @@ Now you can filter and group data on the dashboard.
 
 ### Filter any data using the Dashboard data source
 
-<!-- TODO: Review this section -->
-
 In cases where a data source doesn't support the use of filters, you can use the Dashboard data source to reference that data, and then filter it in a new panel.
 This allows you to bypass the limitations of the data source in the source panel.
 
@@ -448,10 +441,8 @@ To use filters on data from an unsupported data source, follow these steps:
 
 1. Navigate to the dashboard with the panel with the data you want to filter.
 1. Click **Edit** in top-right corner of the dashboard.
-
-Fix these steps
-
-1. At the top of the dashboard, click **Add** and select **Visualization** in the drop-down list.
+1. Click **Add new element** and click or drag a panel onto the dashboard.
+1. Click **Configure visualization**.
 1. In the **Queries** tab of the edit panel view, enter `Dashboard` in the **Data source** field and select **-- Dashboard --**.
 1. In the query configuration section, make the following selections:
    - **Source panel** - Choose the panel with the source data.
@@ -470,10 +461,8 @@ Add as many panels as you need.
 
 ### Dashboard drilldown with filters
 
-<!-- TODO: Review this section -->
-
 In table and bar chart visualizations, you can apply filters directly from the visualization.
-To quickly apply filter variables, follow these steps:
+To quickly apply filters, follow these steps:
 
 1. To display the filter icons, hover your cursor over the table cell with the value for which you want to filter. In this example, the cell value is `ConfigMap Updated`, which is in the `alertname` column:
 
@@ -498,7 +487,7 @@ For more information, refer to [Filter any data using the Dashboard data source]
 
 ### Use filters for "panel-to-panel filtering"
 
-You can use data links to link back to the dashboard you are currently on.
+You can use data links to link back to the same dashboard.
 This enables "panel-to-panel filtering," where clicking a data point in one panel updates the dashboard variables and filters the rest of the dashboard.
 
 To preserve the context of the current dashboard:
