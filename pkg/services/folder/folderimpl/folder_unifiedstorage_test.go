@@ -971,14 +971,12 @@ func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
 	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 	dashboardK8sclient := new(client.MockK8sHandler)
 	fakeFolderStore := folder.NewFakeStore()
-	dashboardStore := dashboards.NewFakeDashboardStore(t)
 	publicDashboardFakeService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 	tracer := noop.NewTracerProvider().Tracer("TestDeleteFoldersFromApiServer")
 	service := Service{
 		k8sclient:              fakeK8sClient,
 		dashboardK8sClient:     dashboardK8sclient,
 		unifiedStore:           fakeFolderStore,
-		dashboardStore:         dashboardStore,
 		publicDashboardService: publicDashboardFakeService,
 		accessControl:          actest.FakeAccessControl{ExpectedEvaluate: true},
 		registry:               make(map[string]folder.RegistryService),
@@ -1082,7 +1080,6 @@ func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
 			SignedInUser: user,
 		})
 		require.NoError(t, err)
-		dashboardStore.AssertExpectations(t)
 		publicDashboardFakeService.AssertExpectations(t)
 	})
 }
