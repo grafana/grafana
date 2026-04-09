@@ -58,6 +58,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
@@ -117,6 +118,10 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 func NewK8sTestHelperWithOpts(t *testing.T, opts K8sTestHelperOpts) *K8sTestHelper {
 	t.Helper()
 	opts = prepareK8sOpts(t, opts)
+	applyResourceVersionBatchTxnTestTimeout(&opts)
+	if opts.UnifiedStorageResourceVersionBatchTransactionTimeout > 0 {
+		t.Cleanup(func() { clearResourceVersionBatchTxnTestTimeout(&opts) })
+	}
 	listenerAddress, env, testDB := testinfra.StartGrafanaEnvWithDB(t, opts.Dir, opts.DirPath)
 	if !opts.DisableDBCleanup {
 		t.Cleanup(testDB.Cleanup)
@@ -132,6 +137,7 @@ func NewK8sTestHelperShared(t *testing.T, opts K8sTestHelperOpts) (*K8sTestHelpe
 	t.Helper()
 	ownsGrafDir := opts.Dir == "" && opts.DirPath == ""
 	opts = prepareK8sOptsShared(t, opts)
+	applyResourceVersionBatchTxnTestTimeout(&opts)
 	grafDir := opts.Dir
 	listenerAddress, env, testDB, serverShutdown := testinfra.StartGrafanaEnvWithManualCleanup(t, opts.Dir, opts.DirPath)
 	shutdownFunc := func() {
@@ -142,8 +148,23 @@ func NewK8sTestHelperShared(t *testing.T, opts K8sTestHelperOpts) (*K8sTestHelpe
 		if ownsGrafDir {
 			_ = os.RemoveAll(grafDir)
 		}
+		clearResourceVersionBatchTxnTestTimeout(&opts)
 	}
 	return buildK8sTestHelper(t, opts, listenerAddress, env), shutdownFunc
+}
+
+func applyResourceVersionBatchTxnTestTimeout(opts *K8sTestHelperOpts) {
+	if opts.UnifiedStorageResourceVersionBatchTransactionTimeout <= 0 {
+		return
+	}
+	rvmanager.SetDefaultBatchTransactionTimeout(opts.UnifiedStorageResourceVersionBatchTransactionTimeout)
+}
+
+func clearResourceVersionBatchTxnTestTimeout(opts *K8sTestHelperOpts) {
+	if opts.UnifiedStorageResourceVersionBatchTransactionTimeout <= 0 {
+		return
+	}
+	rvmanager.ClearDefaultBatchTransactionTimeout()
 }
 
 func prepareK8sOpts(t *testing.T, opts K8sTestHelperOpts) K8sTestHelperOpts {

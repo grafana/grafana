@@ -946,7 +946,9 @@ func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 				EnableMigration: true,
 			},
 		},
-		PermittedProvisioningPaths: ".|" + provisioningPath,
+		// Longer batched RV WithTx deadline via rvmanager default override (see apis/helper.go).
+		UnifiedStorageResourceVersionBatchTransactionTimeout: 60 * time.Second,
+		PermittedProvisioningPaths:                           ".|" + provisioningPath,
 		// Allow both folder and instance sync targets for tests
 		// (instance is needed for export jobs, folder for most operations)
 		ProvisioningAllowedTargets: []string{"folder", "instance"},

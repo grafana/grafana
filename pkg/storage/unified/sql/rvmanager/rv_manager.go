@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -62,8 +63,33 @@ var (
 const (
 	defaultMaxBatchSize     = 25
 	defaultMaxBatchWaitTime = 100 * time.Millisecond
-	defaultBatchTimeout     = 5 * time.Second
+	// defaultBatchTimeout bounds one batched WithTx (all WriteEventFunc calls,
+	// resource_version lock, RV stamp updates). Override per manager via
+	// ResourceManagerOptions.BatchTransactionTimeout, or process-wide when that
+	// is zero via SetDefaultBatchTransactionTimeout (integration tests).
+	defaultBatchTimeout = 5 * time.Second
 )
+
+// defaultBatchTxnTimeoutOverrideNs is used when BatchTransactionTimeout is zero.
+// Set with SetDefaultBatchTransactionTimeout; clear with ClearDefaultBatchTransactionTimeout.
+var defaultBatchTxnTimeoutOverrideNs atomic.Int64
+
+// SetDefaultBatchTransactionTimeout sets the batch transaction timeout for all ResourceVersionManager
+// instances that were created (or will be created) with BatchTransactionTimeout == 0.
+// Pass a value <= 0 to clear and restore the built-in default (defaultBatchTimeout).
+// Intended for integration tests; not synchronized across processes.
+func SetDefaultBatchTransactionTimeout(d time.Duration) {
+	if d <= 0 {
+		defaultBatchTxnTimeoutOverrideNs.Store(0)
+		return
+	}
+	defaultBatchTxnTimeoutOverrideNs.Store(d.Nanoseconds())
+}
+
+// ClearDefaultBatchTransactionTimeout removes a default set by SetDefaultBatchTransactionTimeout.
+func ClearDefaultBatchTransactionTimeout() {
+	defaultBatchTxnTimeoutOverrideNs.Store(0)
+}
 
 // ResourceVersionManager handles resource version operations
 type ResourceVersionManager struct {
@@ -74,6 +100,7 @@ type ResourceVersionManager struct {
 
 	maxBatchSize     int           // The maximum number of operations to batch together
 	maxBatchWaitTime time.Duration // The maximum time to wait for a batch to be ready
+	batchTxnTimeout  time.Duration // 0 = use defaultBatchTimeout for each batched WithTx
 }
 
 type writeOpResult struct {
@@ -104,6 +131,9 @@ type ResourceManagerOptions struct {
 	DB               db.DB               // The database to use
 	MaxBatchSize     int                 // The maximum number of operations to batch together
 	MaxBatchWaitTime time.Duration       // The maximum time to wait for a batch to be ready
+	// BatchTransactionTimeout is the maximum duration for one batched transaction
+	// (all writes, lock, RV updates). Zero selects defaultBatchTimeout.
+	BatchTransactionTimeout time.Duration
 }
 
 // NewResourceVersionManager creates a new ResourceVersionManager
@@ -126,7 +156,18 @@ func NewResourceVersionManager(opts ResourceManagerOptions) (*ResourceVersionMan
 		batchChMap:       make(map[string]chan *writeOp),
 		maxBatchSize:     opts.MaxBatchSize,
 		maxBatchWaitTime: opts.MaxBatchWaitTime,
+		batchTxnTimeout:  opts.BatchTransactionTimeout,
 	}, nil
+}
+
+func (m *ResourceVersionManager) batchTransactionTimeout() time.Duration {
+	if m.batchTxnTimeout > 0 {
+		return m.batchTxnTimeout
+	}
+	if ns := defaultBatchTxnTimeoutOverrideNs.Load(); ns > 0 {
+		return time.Duration(ns)
+	}
+	return defaultBatchTimeout
 }
 
 // DB returns the underlying db.DB for backwards compatibility queries.
@@ -254,7 +295,7 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 	}))
 	defer timer.ObserveDuration()
 
-	ctx, cancel := context.WithTimeout(ctx, defaultBatchTimeout)
+	ctx, cancel := context.WithTimeout(ctx, m.batchTransactionTimeout())
 	defer cancel()
 
 	guidToRV := make(map[string]int64, len(batch))

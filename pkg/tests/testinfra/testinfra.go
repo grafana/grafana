@@ -872,28 +872,32 @@ type GrafanaOpts struct {
 	UnifiedStorageDisableSearch           bool
 	SearchInjectFailuresPercent           int
 	UnifiedStorageMaxPageSizeBytes        int
-	PermittedProvisioningPaths            string
-	ProvisioningAllowedTargets            []string
-	ProvisioningRepositoryTypes           []string
-	ProvisioningMaxResourcesPerRepository int64
-	ProvisioningMaxRepositories           int64
-	ProvisioningFolderAPIVersion          string
-	GrafanaComSSOAPIToken                 string
-	LicensePath                           string
-	EnableRecordingRules                  bool
-	EnableSCIM                            bool
-	RBACSingleOrganization                bool
-	APIServerRuntimeConfig                string
-	DisableControllers                    bool
-	DisableDBCleanup                      bool
-	MigrationParquetBuffer                bool
-	EnableSQLKVBackend                    bool
-	SecretsManagerEnableDBMigrations      bool
-	OpenFeatureAPIEnabled                 bool
-	DisableAuthZClientCache               bool
-	ZanzanaReconciliationInterval         time.Duration
-	DisableZanzanaCache                   bool
-	DisableZanzanaServerCheckQueryCache   bool
+	// UnifiedStorageResourceVersionBatchTransactionTimeout, if > 0, is applied
+	// before the test server starts via rvmanager.SetDefaultBatchTransactionTimeout
+	// (batched RV WithTx deadline). Used by provisioning integration tests on slow CI.
+	UnifiedStorageResourceVersionBatchTransactionTimeout time.Duration
+	PermittedProvisioningPaths                           string
+	ProvisioningAllowedTargets                           []string
+	ProvisioningRepositoryTypes                          []string
+	ProvisioningMaxResourcesPerRepository                int64
+	ProvisioningMaxRepositories                          int64
+	ProvisioningFolderAPIVersion                         string
+	GrafanaComSSOAPIToken                                string
+	LicensePath                                          string
+	EnableRecordingRules                                 bool
+	EnableSCIM                                           bool
+	RBACSingleOrganization                               bool
+	APIServerRuntimeConfig                               string
+	DisableControllers                                   bool
+	DisableDBCleanup                                     bool
+	MigrationParquetBuffer                               bool
+	EnableSQLKVBackend                                   bool
+	SecretsManagerEnableDBMigrations                     bool
+	OpenFeatureAPIEnabled                                bool
+	DisableAuthZClientCache                              bool
+	ZanzanaReconciliationInterval                        time.Duration
+	DisableZanzanaCache                                  bool
+	DisableZanzanaServerCheckQueryCache                  bool
 
 	// If set to 0, the default (2) is used.
 	DBMaxConns int
