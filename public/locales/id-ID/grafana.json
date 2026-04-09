@@ -4893,6 +4893,9 @@
       "light-theme": "Terang",
       "scopes": "Lingkup"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "Cari dengan Grafana Assistant",
       "message": "Hasil tidak ditemukan"
@@ -4968,24 +4971,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Hubungkan data ke Grafana melalui sumber data, integrasi, dan aplikasi",
-          "title": "Tambah koneksi baru"
+          "subtitle": "Hubungkan data ke Grafana melalui sumber data, integrasi, dan aplikasi"
         },
         "collector": {
-          "subtitle": "Kelola konfigurasi Grafana Alloy, distribusi OpenTelemetry Collector kami",
-          "title": "Kolektor"
+          "subtitle": "Kelola konfigurasi Grafana Alloy, distribusi OpenTelemetry Collector kami"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "Kelola koneksi sumber data yang ada",
-          "title": "Sumber data"
+          "subtitle": "Kelola koneksi sumber data yang ada"
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "Kelola integrasi aktif Anda",
-          "title": "Integrasi"
+          "subtitle": "Kelola integrasi aktif Anda"
         },
         "private-data-source-connections": {
-          "subtitle": "Kelola koneksi jaringan pribadi Anda untuk sumber data",
-          "title": "Private data source connect"
+          "subtitle": "Kelola koneksi jaringan pribadi Anda untuk sumber data"
         },
         "subtitle": "Hubungkan infrastruktur Anda ke Grafana Cloud menggunakan sumber data, integrasi, dan aplikasi. Gunakan halaman ini untuk menambahkan untuk mengelola semuanya mulai dari asupan data hingga koneksi pribadi dan saluran telemetri."
       }
@@ -5045,11 +5052,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Hubungkan ke sumber data baru",
-          "title": "Tambah koneksi baru"
+          "subtitle": "Hubungkan ke sumber data baru"
         },
         "data-sources": {
-          "subtitle": "Kelola koneksi sumber data yang ada",
           "title": "Lihat sumber data yang dikonfigurasi"
         },
         "subtitle": "Kelola koneksi sumber data Anda di satu tempat. Gunakan halaman ini untuk menambahkan sumber data baru atau mengelola koneksi yang ada."
@@ -5099,10 +5104,6 @@
       "view-json-diff": "Lihat selisih JSON untuk melihat semua perubahan"
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "Tambahkan baru",
     "alert": {
@@ -5144,6 +5145,14 @@
       "back-button": "Kembali",
       "next-button": "Berikutnya",
       "save-button": "Simpan"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "Sumber data target yang dipilih harus mengekspor editor kueri.",
@@ -5210,11 +5219,6 @@
       "transform-required": "Pilih jenis transformasi",
       "type-label": "Jenis",
       "type-tooltip": "Jenis transformasi yang akan diterapkan ke data sumber."
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "Jalankan kueri"
     }
   },
   "dashboard": {
@@ -7655,6 +7659,7 @@
       "placeholder-descriptive-text": "Teks deskriptif",
       "placeholder-label-name": "Nama label",
       "placeholder-variable-name": "Nama variabel",
+      "run-query": "",
       "text-running-query": "Menjalankan kueri...",
       "title": {
         "delete-variable": "Hapus variabel"
@@ -11341,6 +11346,12 @@
       "show-search": "Cari di hasil log",
       "show-timestamps": "Tampilkan stempel waktu",
       "show-unique-labels": "Tampilkan label unik",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "Sembunyikan stempel waktu",
         "label": "Stempel waktu log",
@@ -12251,6 +12262,8 @@
       "description": "Pemberitahuan yang Anda terima akan muncul di sini",
       "title": "Anda sudah selesai!"
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "Tutup pemberitahuan",
       "title-alert": "Halaman ini menampilkan kesalahan dan peringatan sebelumnya. Setelah ditutup, notifikasi ini tidak dapat dilihat lagi."

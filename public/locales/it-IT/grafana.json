@@ -4923,6 +4923,9 @@
       "light-theme": "Chiaro",
       "scopes": "Ambiti di applicazione"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "Cerca con Grafana Assistant",
       "message": "Nessun risultato trovato"
@@ -4998,24 +5001,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Collega i dati a Grafana tramite origini dati, integrazioni e app",
-          "title": "Aggiungi nuovo collegamento"
+          "subtitle": "Collega i dati a Grafana tramite origini dati, integrazioni e app"
         },
         "collector": {
-          "subtitle": "Gestisci la configurazione di Grafana Alloy, la nostra distribuzione di OpenTelemetry Collector",
-          "title": ""
+          "subtitle": "Gestisci la configurazione di Grafana Alloy, la nostra distribuzione di OpenTelemetry Collector"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "Gestisci le connessioni alle origini dati esistenti",
-          "title": "Fonti dei dati"
+          "subtitle": "Gestisci le connessioni alle origini dati esistenti"
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "Gestisci le integrazioni attive",
-          "title": "Integrazioni"
+          "subtitle": "Gestisci le integrazioni attive"
         },
         "private-data-source-connections": {
-          "subtitle": "Gestisci le connessioni di rete private per le origini dati",
-          "title": "Private data source connect"
+          "subtitle": "Gestisci le connessioni di rete private per le origini dati"
         },
         "subtitle": "Connetti la tua infrastruttura a Grafana Cloud utilizzando origini dati, integrazioni e app. Utilizza questa pagina per aggiungere e gestire tutto, dall'acquisizione dei dati alle connessioni private e alle pipeline di telemetria."
       }
@@ -5075,11 +5082,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Connettiti a una nuova origine dati",
-          "title": "Aggiungi nuovo collegamento"
+          "subtitle": "Connettiti a una nuova origine dati"
         },
         "data-sources": {
-          "subtitle": "Gestisci le connessioni alle origini dati esistenti",
           "title": "Visualizza origini dati configurate"
         },
         "subtitle": "Gestisci le connessioni alle origini dati in un unico posto. Utilizza questa pagina per aggiungere una nuova origine dati o gestire le connessioni esistenti."
@@ -5129,10 +5134,6 @@
       "view-json-diff": "Visualizza la differenza JSON per vedere tutte le modifiche"
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "Aggiungi nuovo",
     "alert": {
@@ -5174,6 +5175,14 @@
       "back-button": "Indietro",
       "next-button": "Avanti",
       "save-button": "Salva"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "L'origine dati di destinazione selezionata deve esportare un editor di query.",
@@ -5240,11 +5249,6 @@
       "transform-required": "Seleziona un tipo di trasformazione",
       "type-label": "Tipo",
       "type-tooltip": "Il tipo di trasformazione che verrà applicato ai dati di origine."
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "Esegui query"
     }
   },
   "dashboard": {
@@ -7694,6 +7698,7 @@
       "placeholder-descriptive-text": "Testo descrittivo",
       "placeholder-label-name": "Nome etichetta",
       "placeholder-variable-name": "Nome variabile",
+      "run-query": "",
       "text-running-query": "Esecuzione della query in corso...",
       "title": {
         "delete-variable": "Elimina variabile"
@@ -11404,6 +11409,12 @@
       "show-search": "Cerca nel risultato dei registri",
       "show-timestamps": "Mostra marca temporale",
       "show-unique-labels": "Mostra etichette univoche",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "Nascondi marca temporale",
         "label": "Marche temporali del registro",
@@ -12317,6 +12328,8 @@
       "description": "Le notifiche che hai ricevuto verranno visualizzate qui",
       "title": "È tutto aggiornato!"
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "Ignora le notifiche",
       "title-alert": "Questa pagina mostra gli errori e gli avvisi passati. Una volta eliminati, non possono essere recuperati."
