@@ -70,10 +70,6 @@ func New(ctx context.Context, configDirectory string, provisioner dashboards.Das
 				reader.foldersInUnified = true
 			}
 		}
-
-		if !dual.ShouldManage(dashboardV1.DashboardResourceInfo.GroupResource()) {
-			dual = nil // not actively managed
-		}
 	}
 
 	d := &Provisioner{

@@ -1,12 +1,13 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
   type AbsoluteTimeRange,
+  CoreApp,
   type DataFrame,
   type EventBus,
-  EventBusSrv,
   type FieldConfigSource,
   type PanelData,
+  store,
   urlUtil,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -16,6 +17,8 @@ import { LogsTable } from 'app/plugins/panel/logstable/LogsTable';
 import { type Options } from 'app/plugins/panel/logstable/options/types';
 import { defaultOptions as logsTablePanelDefaultOptions } from 'app/plugins/panel/logstable/panelcfg.gen';
 import { type BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
+
+import { SETTING_KEY_ROOT } from './utils/logs';
 
 /**
  * New Logs Table panel
@@ -42,6 +45,7 @@ export function ExploreLogsTable(props: {
   const { onClickFilterLabel, onClickFilterOutLabel } = props;
   const frames = useMemo(() => props?.data.series ?? [], [props.data.series]);
   const frame = useMemo(() => frames[props.externalOptions.frameIndex], [frames, props.externalOptions.frameIndex]);
+  const [wrapText, setWrapText] = useState(store.getBool(`${SETTING_KEY_ROOT}.wrapText`, false));
 
   const onCellFilterAdded = useCallback(
     (filter: AdHocFilterItem) => {
@@ -76,6 +80,31 @@ export function ExploreLogsTable(props: {
     }
   }, []);
 
+  const onOptionsChange = useCallback(
+    (options: Options) => {
+      if (options.wrapText !== undefined && options.wrapText !== wrapText) {
+        setWrapText(options.wrapText);
+        store.set(`${SETTING_KEY_ROOT}.wrapText`, options.wrapText);
+      }
+      props.onOptionsChange(options);
+    },
+    [props, wrapText]
+  );
+
+  const options = useMemo(
+    () => ({
+      ...logsTablePanelDefaultOptions,
+      buildLinkToLogLine: props.buildLinkToLogLine,
+      showHeader: true,
+      showControls: true,
+      showCopyLogLink: true,
+      ...props.externalOptions,
+      permalinkedLogId: props.externalOptions.permalinkedLogId ?? selectedLogInfo?.id,
+      wrapText,
+    }),
+    [props.buildLinkToLogLine, props.externalOptions, selectedLogInfo?.id, wrapText]
+  );
+
   const fieldConfig = useMemo(
     () => ({
       defaults: {
@@ -88,25 +117,13 @@ export function ExploreLogsTable(props: {
     []
   );
 
-  const options = useMemo(
-    () => ({
-      ...logsTablePanelDefaultOptions,
-      buildLinkToLogLine: props.buildLinkToLogLine,
-      showHeader: true,
-      showControls: true,
-      showCopyLogLink: true,
-      ...props.externalOptions,
-      permalinkedLogId: props.externalOptions.permalinkedLogId ?? selectedLogInfo?.id,
-    }),
-    [props.buildLinkToLogLine, props.externalOptions, selectedLogInfo?.id]
-  );
-
   return (
     <PanelContextProvider
       value={{
         eventsScope: 'explore',
-        eventBus: props.eventBus ?? new EventBusSrv(),
+        eventBus: props.eventBus,
         onAddAdHocFilter: onCellFilterAdded,
+        app: CoreApp.Explore,
       }}
     >
       <LogsTable
@@ -121,7 +138,7 @@ export function ExploreLogsTable(props: {
         renderCounter={0}
         title={''}
         eventBus={props.eventBus}
-        onOptionsChange={props.onOptionsChange}
+        onOptionsChange={onOptionsChange}
         onFieldConfigChange={props.onFieldConfigChange}
         replaceVariables={getTemplateSrv().replace}
         onChangeTimeRange={props.onChangeTimeRange}

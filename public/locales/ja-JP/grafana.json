@@ -2406,7 +2406,9 @@
       "recipient-notification-fires": "アラートルールの発生時に通知を受け取る相手を選択してください。"
     },
     "open-drawer-icon-button": {
-      "details": ""
+      "details": "",
+      "instance-details": "",
+      "rule-details": ""
     },
     "option-customfield": {
       "label-custom-template": "カスタムテンプレート",
@@ -3546,6 +3548,7 @@
       }
     },
     "triage": {
+      "clear-filters": "",
       "collapse": "",
       "collapse-all": "",
       "collapse-sidebar": "",
@@ -3562,6 +3565,7 @@
         "no-label": ""
       },
       "instance-details-drawer": {
+        "alert-instance-label": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "インスタンスの詳細",
@@ -3590,6 +3594,7 @@
           "folder-only": ""
         }
       },
+      "severity-filter-title": "",
       "show-fewer-values": "",
       "state-filter-title": "",
       "state-firing": "",
@@ -4888,6 +4893,9 @@
       "light-theme": "ライト",
       "scopes": "スコープ"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "Grafanaアシスタントで検索",
       "message": "結果はありません"
@@ -4963,24 +4971,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "データソース、統合、アプリを介してデータをGrafanaに接続します",
-          "title": "新しい接続を追加"
+          "subtitle": "データソース、統合、アプリを介してデータをGrafanaに接続します"
         },
         "collector": {
-          "subtitle": "OpenTelemetryコレクターのディストリビューションであるGrafana Alloyの構成を管理します",
-          "title": ""
+          "subtitle": "OpenTelemetryコレクターのディストリビューションであるGrafana Alloyの構成を管理します"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "既存のデータソース接続を管理します",
-          "title": "データソース"
+          "subtitle": "既存のデータソース接続を管理します"
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "アクティブな統合を管理します",
-          "title": "統合"
+          "subtitle": "アクティブな統合を管理します"
         },
         "private-data-source-connections": {
-          "subtitle": "データソースのプライベートネットワーク接続を管理します",
-          "title": "プライベートデータソース接続"
+          "subtitle": "データソースのプライベートネットワーク接続を管理します"
         },
         "subtitle": "データソース、統合、アプリを使用して、インフラストラクチャをGrafana Cloudに接続します。このページを使用して、データの取り込みからプライベート接続、テレメトリパイプラインまで、すべてを管理します。"
       }
@@ -5040,11 +5052,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "新規データソースを接続します",
-          "title": "新しい接続を追加"
+          "subtitle": "新規データソースを接続します"
         },
         "data-sources": {
-          "subtitle": "既存のデータソース接続を管理します",
           "title": "設定されたデータソースを表示"
         },
         "subtitle": "データソース接続を一元管理できます。このページを使用して、新規データソースの追加や、既存の接続の管理を行います。"
@@ -5094,10 +5104,6 @@
       "view-json-diff": "JSON diffを表示してすべての変更を確認する"
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "新規追加",
     "alert": {
@@ -5139,6 +5145,14 @@
       "back-button": "戻る",
       "next-button": "次へ",
       "save-button": "保存"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "選択したターゲットデータソースは、クエリエディタをエクスポートする必要があります。",
@@ -5205,11 +5219,6 @@
       "transform-required": "変換タイプを選択してください",
       "type-label": "タイプ",
       "type-tooltip": "ソースデータに適用される変換のタイプ。"
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "クエリを実行"
     }
   },
   "dashboard": {
@@ -7650,6 +7659,7 @@
       "placeholder-descriptive-text": "説明用のテキスト",
       "placeholder-label-name": "ラベル名",
       "placeholder-variable-name": "変数名",
+      "run-query": "",
       "text-running-query": "クエリ実行中...",
       "title": {
         "delete-variable": "変数を削除"
@@ -11336,6 +11346,12 @@
       "show-search": "ログ結果内を検索",
       "show-timestamps": "タイムスタンプを表示",
       "show-unique-labels": "一意のラベルを表示",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "タイムスタンプを非表示",
         "label": "ログのタイムスタンプ",
@@ -12246,6 +12262,8 @@
       "description": "受信した通知はここに表示されます",
       "title": "すべて既読になっています！"
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "通知を閉じる",
       "title-alert": "このページには過去のエラーと警告が表示されます。一度消去すると、復元できません。"
@@ -14683,6 +14701,7 @@
   "splash-screen": {
     "aria-label": "",
     "assistant": {
+      "badge": "",
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -14690,9 +14709,11 @@
       "subtitle": "",
       "title": ""
     },
-    "badge": "",
+    "badge": {
+      "new": ""
+    },
     "close": "",
-    "explore": {
+    "dynamic-dashboards": {
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -14708,7 +14729,7 @@
       "subtitle": "",
       "title": ""
     },
-    "library": {
+    "library-of-things": {
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -16486,6 +16507,10 @@
   },
   "xychart": {
     "category-xychart": "XYチャート",
+    "errors": {
+      "nodata": "",
+      "unknown": ""
+    },
     "name-fill-opacity": "塗りつぶし不透明度",
     "name-line-style": "線のスタイル",
     "name-line-width": "線の太さ",

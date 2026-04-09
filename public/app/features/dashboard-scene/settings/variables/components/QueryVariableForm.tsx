@@ -124,10 +124,11 @@ export function QueryVariableEditorForm({
       <VariableLegend>
         <Trans i18nKey="dashboard-scene.query-variable-editor-form.query-options">Query options</Trans>
       </VariableLegend>
+
+      {/* eslint-disable-next-line @grafana/require-no-margin */}
       <Field
         label={t('dashboard-scene.query-variable-editor-form.label-data-source', 'Data source')}
         htmlFor="data-source-picker"
-        noMargin
       >
         <DataSourcePicker current={datasourceRef} onChange={datasourceChangeHandler} variables={true} width={30} />
       </Field>

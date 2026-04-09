@@ -2419,7 +2419,9 @@
       "recipient-notification-fires": "Selecciona quién debe recibir una notificación cuando se active una regla de alerta."
     },
     "open-drawer-icon-button": {
-      "details": ""
+      "details": "",
+      "instance-details": "",
+      "rule-details": ""
     },
     "option-customfield": {
       "label-custom-template": "Plantilla personalizada",
@@ -3565,6 +3567,7 @@
       }
     },
     "triage": {
+      "clear-filters": "",
       "collapse": "",
       "collapse-all": "",
       "collapse-sidebar": "",
@@ -3581,6 +3584,7 @@
         "no-label": ""
       },
       "instance-details-drawer": {
+        "alert-instance-label": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Detalles de la instancia",
@@ -3609,6 +3613,7 @@
           "folder-only": ""
         }
       },
+      "severity-filter-title": "",
       "show-fewer-values": "",
       "state-filter-title": "",
       "state-firing": "",
@@ -4918,6 +4923,9 @@
       "light-theme": "Claro",
       "scopes": "Alcances"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "Buscar con Grafana Assistant",
       "message": "No se han encontrado resultados"
@@ -4993,24 +5001,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Conecta datos a Grafana a través de fuentes de datos, integraciones y aplicaciones",
-          "title": "Añadir nueva conexión"
+          "subtitle": "Conecta datos a Grafana a través de fuentes de datos, integraciones y aplicaciones"
         },
         "collector": {
-          "subtitle": "Gestiona la configuración de Grafana Alloy, nuestra distribución del recolector de OpenTelemetry",
-          "title": ""
+          "subtitle": "Gestiona la configuración de Grafana Alloy, nuestra distribución del recolector de OpenTelemetry"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "Gestiona las conexiones de fuentes de datos existentes",
-          "title": "Fuentes de datos"
+          "subtitle": "Gestiona las conexiones de fuentes de datos existentes"
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "Gestiona las integraciones activas",
-          "title": "Integraciones"
+          "subtitle": "Gestiona las integraciones activas"
         },
         "private-data-source-connections": {
-          "subtitle": "Gestiona las conexiones de red privadas para las fuentes de datos",
-          "title": "Conexión de fuentes de datos privadas"
+          "subtitle": "Gestiona las conexiones de red privadas para las fuentes de datos"
         },
         "subtitle": "Conecta tu infraestructura a Grafana Cloud utilizando fuentes de datos, integraciones y aplicaciones. Utiliza esta página para añadir y gestionar todo, desde la ingesta de datos hasta las conexiones privadas y las segmentaciones de telemetría."
       }
@@ -5070,11 +5082,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Conéctate a una nueva fuente de datos",
-          "title": "Añadir nueva conexión"
+          "subtitle": "Conéctate a una nueva fuente de datos"
         },
         "data-sources": {
-          "subtitle": "Gestiona las conexiones de fuentes de datos existentes",
           "title": "Ver fuentes de datos configuradas"
         },
         "subtitle": "Gestiona las conexiones de fuentes de datos en un solo lugar. Utiliza esta página para añadir una nueva fuente de datos o gestionar las conexiones existentes."
@@ -5124,10 +5134,6 @@
       "view-json-diff": "Mostrar diferencia de JSON para ver todos los cambios"
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "Añadir nuevo",
     "alert": {
@@ -5169,6 +5175,14 @@
       "back-button": "Atrás",
       "next-button": "Siguiente",
       "save-button": "Guardar"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "La fuente de datos de destino seleccionada debe exportar un editor de consultas.",
@@ -5235,11 +5249,6 @@
       "transform-required": "Por favor, seleccione un tipo de transformación",
       "type-label": "Tipo",
       "type-tooltip": "El tipo de transformación que se aplicará a los datos de origen."
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "Ejecutar consulta"
     }
   },
   "dashboard": {
@@ -7689,6 +7698,7 @@
       "placeholder-descriptive-text": "Texto descriptivo",
       "placeholder-label-name": "Nombre de la etiqueta",
       "placeholder-variable-name": "Nombre de la variable",
+      "run-query": "",
       "text-running-query": "Ejecutando consulta...",
       "title": {
         "delete-variable": "Eliminar variable"
@@ -11399,6 +11409,12 @@
       "show-search": "Resultado de la búsqueda en logs",
       "show-timestamps": "Mostrar marcas temporales",
       "show-unique-labels": "Mostrar etiquetas únicas",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "Ocultar marcas de tiempo",
         "label": "Marcas de tiempo del log",
@@ -12312,6 +12328,8 @@
       "description": "Las notificaciones que has recibido aparecerán aquí",
       "title": "¡Ya estás al día!"
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "Descartar notificaciones",
       "title-alert": "Esta página muestra errores y advertencias anteriores. Una vez descartados, no se pueden recuperar."
@@ -14770,6 +14788,7 @@
   "splash-screen": {
     "aria-label": "",
     "assistant": {
+      "badge": "",
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -14777,9 +14796,11 @@
       "subtitle": "",
       "title": ""
     },
-    "badge": "",
+    "badge": {
+      "new": ""
+    },
     "close": "",
-    "explore": {
+    "dynamic-dashboards": {
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -14795,7 +14816,7 @@
       "subtitle": "",
       "title": ""
     },
-    "library": {
+    "library-of-things": {
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
@@ -16574,6 +16595,10 @@
   },
   "xychart": {
     "category-xychart": "Gráfico XY",
+    "errors": {
+      "nodata": "",
+      "unknown": ""
+    },
     "name-fill-opacity": "Opacidad de relleno",
     "name-line-style": "Estilo de línea",
     "name-line-width": "Espesor de la línea",

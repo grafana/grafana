@@ -29,11 +29,6 @@ export interface FeatureToggles {
   */
   publicDashboardsEmailSharing?: boolean;
   /**
-  * Enables public dashboard rendering using scenes
-  * @default true
-  */
-  publicDashboardsScene?: boolean;
-  /**
   * Support new streaming approach for loki (prototype, needs special loki build)
   * @default false
   */
@@ -254,11 +249,6 @@ export interface FeatureToggles {
   */
   useKubernetesShortURLsAPI?: boolean;
   /**
-  * Adds support for Kubernetes alerting and recording rules
-  * @default false
-  */
-  kubernetesAlertingRules?: boolean;
-  /**
   * Adds support for Kubernetes correlations
   * @default false
   */
@@ -404,13 +394,8 @@ export interface FeatureToggles {
   */
   annotationsClustering?: boolean;
   /**
-  * Enables dashboard rendering using scenes for all roles
-  * @default true
-  */
-  dashboardScene?: boolean;
-  /**
   * Enables new dashboard layouts
-  * @default false
+  * @default true
   */
   dashboardNewLayouts?: boolean;
   /**
@@ -660,7 +645,7 @@ export interface FeatureToggles {
   newSavedQueriesExperience?: boolean;
   /**
   * Enables the new unconfigured panel experience
-  * @default false
+  * @default true
   */
   newUnconfiguredPanel?: boolean;
   /**
@@ -809,6 +794,11 @@ export interface FeatureToggles {
   * @default false
   */
   groupAttributeSync?: boolean;
+  /**
+  * Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation
+  * @default false
+  */
+  groupToNestedTableV2?: boolean;
   /**
   * Enables step mode for alerting queries and expressions
   * @default true
@@ -1111,11 +1101,6 @@ export interface FeatureToggles {
   */
   unifiedNavbars?: boolean;
   /**
-  * Enables a control component for the logs panel in Explore
-  * @default true
-  */
-  logsPanelControls?: boolean;
-  /**
   * Enables creating metrics from profiles and storing them as recording rules
   * @default false
   */
@@ -1352,7 +1337,8 @@ export interface FeatureToggles {
   azureResourcePickerUpdates?: boolean;
   /**
   * Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources
-  * @default false
+  * @deprecated
+  * @default true
   */
   prometheusTypeMigration?: boolean;
   /**
@@ -1686,6 +1672,11 @@ export interface FeatureToggles {
   */
   datasourcesApiServerEnableHealthEndpointFrontend?: boolean;
   /**
+  * Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.
+  * @default false
+  */
+  datasourcesApiServerEnableHealthEndpointRedirect?: boolean;
+  /**
   * Enables the new Flame Graph UI containing the Call Tree view
   * @default false
   */
@@ -1727,7 +1718,7 @@ export interface FeatureToggles {
   frontendServiceSSOAutoLogin?: boolean;
   /**
   * Enables the splash screen modal for introducing new Grafana features on first session
-  * @default false
+  * @default true
   */
   splashScreen?: boolean;
   /**
@@ -1770,4 +1761,14 @@ export interface FeatureToggles {
   * @default false
   */
   enableColorblindSafePanelOptions?: boolean;
+  /**
+  * Enables cache configs data migration to unified storage
+  * @default false
+  */
+  cacheConfigUnifiedStorageMigration?: boolean;
+  /**
+  * Boots the frontend using the boot.js script built from TS instead of the embedded boot script
+  * @default false
+  */
+  compiledBootScript?: boolean;
 }

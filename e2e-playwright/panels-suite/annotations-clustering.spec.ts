@@ -60,7 +60,10 @@ const ALERT_ANNOTATIONS_COUNTS = {
   },
 };
 
-test.use({ viewport: { width: 1000, height: 1840 }, featureToggles: { annotationsClustering: true } });
+test.use({
+  viewport: { width: 1000, height: 1840 },
+  featureToggles: { annotationsClustering: true, dashboardNewLayouts: false },
+});
 
 test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, () => {
   test.describe('width: 1000', () => {
