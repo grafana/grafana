@@ -373,7 +373,8 @@ export function migrateFromValueOptions(old: any) {
     fieldOptions,
   };
 
-  const { valueMappings, thresholds, valueOptions, minValue, maxValue, ...cleanedOptions } = newOptions;
+  const { valueMappings: _vm, thresholds: _th, valueOptions: _vo, minValue: _min, maxValue: _mx, ...cleanedOptions } =
+    newOptions;
 
   return cleanedOptions;
 }
