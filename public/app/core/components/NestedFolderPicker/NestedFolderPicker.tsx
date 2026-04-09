@@ -7,7 +7,7 @@ import * as React from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, floatingUtils, Icon, Input, LoadingBar, Space, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getStatusFromError } from 'app/core/utils/errors';
 import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
@@ -338,38 +338,34 @@ export function NestedFolderPicker({
         }}
         {...getFloatingProps()}
       >
-        <div>
-          {error && (
-            <Alert
-              className={styles.error}
-              severity="warning"
-              title={t('browse-dashboards.folder-picker.error-title', 'Error loading folders')}
-            >
-              {error.message ||
-                error.toString?.() ||
-                t('browse-dashboards.folder-picker.unknown-error', 'Unknown error')}
-            </Alert>
-          )}
-          {isLoading && (
-            <div className={styles.loader}>
-              <LoadingBar width={600} />
-            </div>
-          )}
+        {error && (
+          <Alert
+            className={styles.error}
+            severity="warning"
+            title={t('browse-dashboards.folder-picker.error-title', 'Error loading folders')}
+          >
+            {error.message || error.toString?.() || t('browse-dashboards.folder-picker.unknown-error', 'Unknown error')}
+          </Alert>
+        )}
+        {isLoading && (
+          <div className={styles.loader}>
+            <LoadingBar width={600} />
+          </div>
+        )}
 
-          <NestedFolderList
-            items={flatTree}
-            selectedFolder={value}
-            focusedItemIndex={focusedItemIndex}
-            onFolderExpand={handleFolderExpand}
-            onFolderSelect={handleFolderSelect}
-            idPrefix={overlayId}
-            foldersAreOpenable={!(search && searchResults)}
-            isItemLoaded={isItemLoaded}
-            requestLoadMore={handleLoadMore}
-            emptyFolders={emptyFolders}
-            teamFolderOwnersByUid={teamFolderOwnersByUid}
-          />
-        </div>
+        <NestedFolderList
+          items={flatTree}
+          selectedFolder={value}
+          focusedItemIndex={focusedItemIndex}
+          onFolderExpand={handleFolderExpand}
+          onFolderSelect={handleFolderSelect}
+          idPrefix={overlayId}
+          foldersAreOpenable={!(search && searchResults)}
+          isItemLoaded={isItemLoaded}
+          requestLoadMore={handleLoadMore}
+          emptyFolders={emptyFolders}
+          teamFolderOwnersByUid={teamFolderOwnersByUid}
+        />
       </fieldset>
     </>
   );
