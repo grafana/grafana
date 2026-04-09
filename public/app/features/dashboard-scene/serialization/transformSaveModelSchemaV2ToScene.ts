@@ -1,6 +1,7 @@
 import { uniqueId } from 'lodash';
 
 import { config, getDataSourceSrv } from '@grafana/runtime';
+import { ReportInteractionBehaviour } from '../scene/ReportInteractionBehaviour';
 import {
   AdHocFiltersVariable,
   type AdHocFilterWithLabels,
@@ -376,6 +377,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       drilldownRecommendationsEnabled:
         config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
       layout: 'combobox',
+      $behaviors: [new ReportInteractionBehaviour({})],
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
       ),
@@ -611,6 +613,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
             enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
               ? (v.spec.enableGroupBy ?? false)
               : false,
+            $behaviors: [new ReportInteractionBehaviour({})],
           });
         }
         // for other variable types we are using the SnapshotVariable
