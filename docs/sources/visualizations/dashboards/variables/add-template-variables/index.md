@@ -426,9 +426,16 @@ To add a filter and group by variable, follow these steps:
 
 Now you can filter and group data on the dashboard.
 
-### Filter and group by examples
+You can remove and reset default filters and group by selections and see your recent ones:
 
-<!-- TODO: Show an example of both working together -->
+{{< figure src="/media/docs/grafana/dashboards/screenshot-reset-default-v13.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" caption="Reset default filters and group by selections" >}}
+
+{{< figure src="/media/docs/grafana/screenshot-filters-group-recent-v13.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" caption="Recent filter and group by settings" >}}
+
+To see every active filter and group by across the dashboard all at once, click the filter icon in the toolbar to open an overview.
+The overview lets you see your current filters and group by selections and adjust them without scrolling through the dashboard controls:
+
+{{< figure src="/media/docs/grafana/screenshot-filters-overview-v12.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" >}}
 
 ### Filter any data using the Dashboard data source
 
