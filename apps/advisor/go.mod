@@ -8,7 +8,7 @@ require (
 	github.com/google/go-github/v82 v82.0.0
 	github.com/grafana/authlib/types v0.0.0-20260316143530-e1d123886039
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.53.0
+	github.com/grafana/grafana-app-sdk v0.53.1
 	github.com/grafana/grafana-app-sdk/logging v0.53.0
 	github.com/grafana/grafana-plugin-sdk-go v0.291.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
