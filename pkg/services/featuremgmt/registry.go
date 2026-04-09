@@ -1513,6 +1513,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "teamLBACApiWriteFromAppPlatform",
+			Description:  "Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        identityAccessTeam,
+			Expression:   "false",
+		},
+		{
 			Name:        "grafanaAdvisor",
 			Description: "Enables Advisor app",
 			Stage:       FeatureStageGeneralAvailability,
