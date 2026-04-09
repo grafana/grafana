@@ -598,5 +598,3 @@ func (f *fakeWatcherStore) Watch(ctx context.Context, options *internalversion.L
 type fakeNonWatcherStore struct {
 	rest.MockStorage
 }
-
-// Explicitly don't implement Watch() to test the "not supported" path
