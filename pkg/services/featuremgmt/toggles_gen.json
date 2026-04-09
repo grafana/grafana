@@ -3458,7 +3458,8 @@
       "metadata": {
         "name": "logsPanelControls",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-07T14:38:55Z"
+        "creationTimestamp": "2025-04-07T14:38:55Z",
+        "deletionTimestamp": "2026-04-08T09:25:37Z"
       },
       "spec": {
         "description": "Enables a control component for the logs panel in Explore",

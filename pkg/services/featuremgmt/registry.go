@@ -1733,14 +1733,6 @@ var (
 			Expression:   "false", // enabled by default
 		},
 		{
-			Name:         "logsPanelControls",
-			Description:  "Enables a control component for the logs panel in Explore",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-			Expression:   "true",
-		},
-		{
 			Name:         "metricsFromProfiles",
 			Description:  "Enables creating metrics from profiles and storing them as recording rules",
 			Stage:        FeatureStageExperimental,

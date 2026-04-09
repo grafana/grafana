@@ -88,8 +88,10 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   }, [variable]);
 
   const editActions = useMemo(
-    () => <ControlEditActions onClickEdit={onClickEditVariable} onClickDelete={onClickDeleteVariable} />,
-    [onClickDeleteVariable, onClickEditVariable]
+    () => (
+      <ControlEditActions element={variable} onClickEdit={onClickEditVariable} onClickDelete={onClickDeleteVariable} />
+    ),
+    [variable, onClickDeleteVariable, onClickEditVariable]
   );
 
   // UNSAFE_renderAsHidden variables (like ScopesVariable) should always render invisibly
