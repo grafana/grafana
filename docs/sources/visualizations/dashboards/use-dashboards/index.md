@@ -355,4 +355,3 @@ Selecting the **Auto** interval schedules a refresh based on the query time rang
 ### Control the time range using a URL
 
 {{< docs/shared lookup="dashboards/time-range-URLs.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-

@@ -365,27 +365,29 @@ You can also use switch variables in panel titles and other dashboard elements:
 
 ## Add a filter and group by
 
+{{< docs/public-preview product="The filter and group by variable" >}}
+<!-- {{< docs/public-preview product="public-preview-feature" featureFlag="its-feature-flag" >}} -->
+
 <!-- TODO: Think about how to refer to this in the context of panel/dashboard groupings -->
 <!-- TODO: Figure out headings for this section; follow established pattern or no? -->
 
-_Filter and Group by_ is one of the most complex and flexible variable options available.
-Instead of creating a variable for each dimension by which you want to filter, filters automatically create variables (key/value pairs) for all the dimensions returned by your data source query.
-This allows you to apply filters dashboard-wide.
+The _Filter and Group by_ variable is one of the most complex and flexible variable options available.
+Instead of creating a variable for each dimension by which you want to filter, it automatically creates variables (key/value pairs) for all the dimensions returned by your data source query.
+This allows you to quickly apply filters dashboard-wide.
+The group by function allows you to then group data by label?
 
-Filters let you add label/value filters that are automatically added to all metric queries that use the specified data source.
-Unlike other variables, you don't use ad hoc filters in queries.
-Instead, you use ad hoc filters to write filters for existing queries.
+Filter and group by variables let you add label/value filters that are automatically added to all metric queries that use the specified data source.
+Unlike other variables, you don't use these filters in queries.
+Instead, you use them to write filters for existing queries.
 
-The following data sources support filters:
+The following data sources support filter and group by:
 
-- Dashboard - Use this special data source to [apply ad hoc filters to data from unsupported data sources](#filter-any-data-using-the-dashboard-data-source).
+- Dashboard - Use this special data source to [apply filters to data from unsupported data sources](#filter-any-data-using-the-dashboard-data-source).
 - Prometheus
 - Loki
 - InfluxDB
 - Elasticsearch
 - OpenSearch
-
-<!-- TODO: Add Group by explanation here -->
 
 <!-- ### Add filter and group by -->
 
