@@ -1,8 +1,8 @@
 import { reportInteraction } from '@grafana/runtime';
 import { type AdHocFilterInteractionHandler } from '@grafana/scenes';
 
-export function createReportInteractionBehavior(): AdHocFilterInteractionHandler {
-  return {
+export function createReportInteractionBehavior() {
+  const handler: AdHocFilterInteractionHandler = {
     isAdHocFilterInteractionHandler: true,
     onFilterAdded: (p) => reportInteraction('grafana_unified_drilldown_filter_added', p),
     onFilterRemoved: (p) => reportInteraction('grafana_unified_drilldown_filter_removed', p),
@@ -17,4 +17,5 @@ export function createReportInteractionBehavior(): AdHocFilterInteractionHandler
     onRecentGroupByApplied: (p) => reportInteraction('grafana_unified_drilldown_recent_groupby_applied', p),
     onRecommendedGroupByApplied: (p) => reportInteraction('grafana_unified_drilldown_recommended_groupby_applied', p),
   };
+  return Object.assign(() => {}, handler);
 }
