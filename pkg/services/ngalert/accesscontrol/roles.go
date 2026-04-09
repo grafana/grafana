@@ -2,9 +2,9 @@ package accesscontrol
 
 import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -19,7 +19,7 @@ var (
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingRuleRead,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 				{
 					Action: accesscontrol.ActionAlertingRuleExternalRead,
@@ -27,7 +27,7 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingSilencesRead,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 				// Following are needed for simplified notification policies
 				{
@@ -50,15 +50,15 @@ var (
 			Permissions: accesscontrol.ConcatPermissions(rulesReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingRuleCreate,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 				{
 					Action: accesscontrol.ActionAlertingRuleUpdate,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 				{
 					Action: accesscontrol.ActionAlertingRuleDelete,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 				{
 					Action: accesscontrol.ActionAlertingRuleExternalWrite,
@@ -66,11 +66,11 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingSilencesWrite,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 				{
 					Action: accesscontrol.ActionAlertingSilencesCreate,
-					Scope:  dashboards.ScopeFoldersAll,
+					Scope:  folder.ScopeFoldersAll,
 				},
 			}),
 		},
@@ -383,8 +383,8 @@ var (
 					Action: accesscontrol.ActionAlertingNotificationsProvisioningWrite, // organization scope
 				},
 				{
-					Action: dashboards.ActionFoldersRead,
-					Scope:  dashboards.ScopeFoldersAll,
+					Action: folder.ActionFoldersRead,
+					Scope:  folder.ScopeFoldersAll,
 				},
 			},
 		},

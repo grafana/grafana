@@ -63,13 +63,13 @@ describe('PlaylistForm', () => {
     it('then name field should have correct value', () => {
       getTestContext();
 
-      expect(screen.getByRole('textbox', { name: /playlist name/i })).toHaveValue('A test playlist');
+      expect(screen.getByRole('textbox', { name: /name/i })).toHaveValue('A test playlist');
     });
 
     it('then interval field should have correct value', () => {
       getTestContext();
 
-      expect(screen.getByRole('textbox', { name: /playlist interval/i })).toHaveValue('10m');
+      expect(screen.getByRole('textbox', { name: /interval/i })).toHaveValue('10m');
     });
 
     it('then items row count should be correct', () => {
@@ -130,7 +130,7 @@ describe('PlaylistForm', () => {
       it('then an alert should appear and nothing should be submitted', async () => {
         const { onSubmitMock } = getTestContext();
 
-        await userEvent.clear(screen.getByRole('textbox', { name: /playlist name/i }));
+        await userEvent.clear(screen.getByRole('textbox', { name: /name/i }));
         await userEvent.click(screen.getByRole('button', { name: /save/i }));
         expect(screen.getAllByRole('alert')).toHaveLength(1);
         expect(onSubmitMock).not.toHaveBeenCalled();
@@ -141,7 +141,7 @@ describe('PlaylistForm', () => {
       it('then an alert should appear and nothing should be submitted', async () => {
         const { onSubmitMock } = getTestContext();
 
-        await userEvent.clear(screen.getByRole('textbox', { name: /playlist interval/i }));
+        await userEvent.clear(screen.getByRole('textbox', { name: /interval/i }));
         await userEvent.click(screen.getByRole('button', { name: /save/i }));
         expect(screen.getAllByRole('alert')).toHaveLength(1);
         expect(onSubmitMock).not.toHaveBeenCalled();

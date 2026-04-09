@@ -72,6 +72,13 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       getCalculator: getShadedColor,
     },
     {
+      id: FieldColorModeId.Gradient,
+      name: 'Gradient',
+      description:
+        'Interpolate between two colors based on value order. The highest value gets the start color; the lowest gets the end color.',
+      getCalculator: getFixedColor,
+    },
+    {
       id: FieldColorModeId.Thresholds,
       name: 'From thresholds',
       isByValue: true,

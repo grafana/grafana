@@ -435,6 +435,10 @@ const (
 	// Enable the groupsync extension for managing Group Attribute Sync feature
 	FlagGroupAttributeSync = "groupAttributeSync"
 
+	// FlagGroupToNestedTableV2
+	// Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation
+	FlagGroupToNestedTableV2 = "groupToNestedTableV2"
+
 	// FlagImprovedExternalSessionHandling
 	// Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
 	FlagImprovedExternalSessionHandling = "improvedExternalSessionHandling"
@@ -925,4 +929,8 @@ const (
 	// FlagCacheConfigUnifiedStorageMigration
 	// Enables cache configs data migration to unified storage
 	FlagCacheConfigUnifiedStorageMigration = "cacheConfigUnifiedStorageMigration"
+
+	// FlagCompiledBootScript
+	// Boots the frontend using the boot.js script built from TS instead of the embedded boot script
+	FlagCompiledBootScript = "compiledBootScript"
 )

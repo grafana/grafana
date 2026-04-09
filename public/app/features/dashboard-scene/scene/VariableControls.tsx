@@ -48,20 +48,10 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
       (v.state.hide !== VariableHide.hideVariable || v.UNSAFE_renderAsHidden)
   );
 
-  const adHocVar = visibleVariables.find((v) => sceneUtils.isAdHocVariable(v));
-  const groupByVar = visibleVariables.find((v) => sceneUtils.isGroupByVariable(v));
-
-  const restVariables = visibleVariables.filter(
-    (v) => v.state.name !== adHocVar?.state.name && v.state.name !== groupByVar?.state.name
-  );
-
-  const hasDrilldownControls = config.featureToggles.dashboardAdHocAndGroupByWrapper && adHocVar && groupByVar;
-  const variablesToRender = hasDrilldownControls ? restVariables : visibleVariables;
-
   return (
     <>
-      {variablesToRender.length > 0 &&
-        variablesToRender.map((variable) => (
+      {visibleVariables.length > 0 &&
+        visibleVariables.map((variable) => (
           <VariableValueSelectWrapper
             key={variable.state.key}
             variable={variable}
@@ -87,7 +77,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
 
   const onClickEditVariable = useCallback(() => {
     const dashboard = sceneGraph.getAncestor(variable, DashboardScene);
-    dashboard.state.editPane.selectObject(variable, variable.state.key!);
+    dashboard.state.editPane.selectObject(variable);
   }, [variable]);
 
   const onClickDeleteVariable = useCallback(() => {

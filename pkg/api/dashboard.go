@@ -361,17 +361,7 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "Use folders endpoint for deleting folders.", nil)
 	}
 
-	// disconnect all library elements for this dashboard
-	err := hs.LibraryElementService.DisconnectElementsFromDashboard(c.Req.Context(), dash.ID)
-	if err != nil {
-		hs.log.Error(
-			"Failed to disconnect library elements",
-			"dashboard", dash.ID,
-			"identity", c.GetID(),
-			"error", err)
-	}
-
-	err = hs.DashboardService.DeleteDashboard(c.Req.Context(), dash.ID, dash.UID, c.GetOrgID())
+	err := hs.DashboardService.DeleteDashboard(c.Req.Context(), dash.ID, dash.UID, c.GetOrgID())
 	if err != nil {
 		return dashboardErrResponse(err, "Failed to delete dashboard")
 	}

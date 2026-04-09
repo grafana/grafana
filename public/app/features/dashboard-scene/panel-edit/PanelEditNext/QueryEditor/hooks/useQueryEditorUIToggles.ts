@@ -10,10 +10,6 @@ export interface UseQueryEditorUITogglesResult {
   transformTogglesState: TransformationToggleState;
   openSidebar: (focusField?: QueryOptionField) => void;
   closeSidebar: () => void;
-  /**
-   * Resets datasource help and transformation toggles.
-   * Does NOT close the query options sidebar — call closeSidebar() separately if needed.
-   */
   resetUIToggles: () => void;
   toggleDatasourceHelp: () => void;
   toggleHelp: () => void;

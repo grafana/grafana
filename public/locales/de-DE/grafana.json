@@ -2419,7 +2419,9 @@
       "recipient-notification-fires": "Wählen Sie aus, wer eine Benachrichtigung erhalten soll, wenn eine Warnregel ausgelöst wird."
     },
     "open-drawer-icon-button": {
-      "details": ""
+      "details": "",
+      "instance-details": "",
+      "rule-details": ""
     },
     "option-customfield": {
       "label-custom-template": "Individuelle Vorlage",
@@ -3565,6 +3567,7 @@
       }
     },
     "triage": {
+      "clear-filters": "",
       "collapse": "",
       "collapse-all": "",
       "collapse-sidebar": "",
@@ -3581,6 +3584,7 @@
         "no-label": ""
       },
       "instance-details-drawer": {
+        "alert-instance-label": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Instanzdetails",
@@ -3609,6 +3613,7 @@
           "folder-only": ""
         }
       },
+      "severity-filter-title": "",
       "show-fewer-values": "",
       "state-filter-title": "",
       "state-firing": "",
@@ -4918,6 +4923,9 @@
       "light-theme": "Hell",
       "scopes": "Bereiche"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "Mit Grafana Assistant suchen",
       "message": "Keine Ergebnisse gefunden"
@@ -4993,24 +5001,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Verbinden Sie Daten mit Grafana über Datenquellen, Integrationen und Apps",
-          "title": "Neue Verbindung hinzufügen"
+          "subtitle": "Verbinden Sie Daten mit Grafana über Datenquellen, Integrationen und Apps"
         },
         "collector": {
-          "subtitle": "Verwalten Sie die Konfiguration von Grafana Alloy, unserer Bereitstellung des OpenTelemetry Collector",
-          "title": ""
+          "subtitle": "Verwalten Sie die Konfiguration von Grafana Alloy, unserer Bereitstellung des OpenTelemetry Collector"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "Verwalten Sie Ihre vorhandenen Datenquellenverbindungen",
-          "title": "Datenquellen"
+          "subtitle": "Verwalten Sie Ihre vorhandenen Datenquellenverbindungen"
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "Verwalten Sie Ihre aktiven Integrationen",
-          "title": "Integrationen"
+          "subtitle": "Verwalten Sie Ihre aktiven Integrationen"
         },
         "private-data-source-connections": {
-          "subtitle": "Verwalten Sie Ihre privaten Netzwerkverbindungen für Datenquellen",
-          "title": "Private Datenquellenverbindung"
+          "subtitle": "Verwalten Sie Ihre privaten Netzwerkverbindungen für Datenquellen"
         },
         "subtitle": "Verbinden Sie Ihre Infrastruktur über Datenquellen, Integrationen und Apps mit Grafana Cloud. Nutzen Sie diese Seite, um alles zu verwalten, von der Datenaufnahme bis hin zu privaten Verbindungen und Telemetrie-Pipelines."
       }
@@ -5070,11 +5082,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Mit einer neuen Datenquelle verbinden",
-          "title": "Neue Verbindung hinzufügen"
+          "subtitle": "Mit einer neuen Datenquelle verbinden"
         },
         "data-sources": {
-          "subtitle": "Verwalten Sie Ihre vorhandenen Datenquellenverbindungen",
           "title": "Konfigurierte Datenquellen anzeigen"
         },
         "subtitle": "Verwalten Sie Ihre Datenquellenverbindungen an einem Ort. Nutzen Sie diese Seite, um eine neue Datenquelle hinzuzufügen oder Ihre vorhandenen Verbindungen zu verwalten."
@@ -5124,10 +5134,6 @@
       "view-json-diff": "JSON-Diff anzeigen, um alle Änderungen zu sehen"
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "Neu",
     "alert": {
@@ -5169,6 +5175,14 @@
       "back-button": "Zurück",
       "next-button": "Weiter",
       "save-button": "Speichern"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "Die ausgewählte Zieldatenquelle muss einen Abfrageeditor exportieren.",
@@ -5235,11 +5249,6 @@
       "transform-required": "Bitte wählen Sie einen Transformationstyp",
       "type-label": "Typ",
       "type-tooltip": "Die Art der Transformation, die auf die Quelldaten angewendet wird."
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "Abfrage ausführen"
     }
   },
   "dashboard": {
@@ -7689,6 +7698,7 @@
       "placeholder-descriptive-text": "Beschreibender Text",
       "placeholder-label-name": "Label-Name",
       "placeholder-variable-name": "Variablenname",
+      "run-query": "",
       "text-running-query": "Abfrage wird ausgeführt …",
       "title": {
         "delete-variable": "Variable löschen"
@@ -11399,6 +11409,12 @@
       "show-search": "Ergebnis der Suche in Logs",
       "show-timestamps": "Zeitstempel anzeigen",
       "show-unique-labels": "Eindeutige Labels anzeigen",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "Zeitstempel ausblenden",
         "label": "Zeitstempel loggen",
@@ -12312,6 +12328,8 @@
       "description": "Benachrichtigungen, die Sie erhalten haben, werden hier angezeigt",
       "title": "Sie sind auf dem neuesten Stand!"
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "Benachrichtigungen verwerfen",
       "title-alert": "Diese Seite zeigt vergangene Fehler und Warnungen an. Sobald sie verworfen wurden, können sie nicht wiederhergestellt werden."
@@ -14786,6 +14804,7 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
+      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -14793,6 +14812,7 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
+      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -14800,6 +14820,7 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
+      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -16574,6 +16595,10 @@
   },
   "xychart": {
     "category-xychart": "XY-Diagramm",
+    "errors": {
+      "nodata": "",
+      "unknown": ""
+    },
     "name-fill-opacity": "Fülldeckkraft",
     "name-line-style": "Linienstil",
     "name-line-width": "Linienbreite",
