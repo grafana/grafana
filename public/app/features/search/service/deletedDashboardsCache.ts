@@ -98,6 +98,7 @@ class DeletedDashboardsCache {
 /**
  * Track folders deleted in the current client session so restore can avoid
  * revalidating origins that are already known to be gone.
+ * This is intentionally session-scoped and only cleared on full page reload.
  */
 class DeletedFoldersState {
   private deletedFolderUIDs = new Set<string>();

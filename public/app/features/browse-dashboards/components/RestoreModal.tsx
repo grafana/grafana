@@ -23,7 +23,6 @@ export const RestoreModal = ({
   selectedDashboards,
   originCandidate,
   isLoading,
-  ...props
 }: RestoreModalProps) => {
   const [manualTarget, setManualTarget] = useState<string | undefined | null>(null);
   const numberOfDashboards = selectedDashboards.length;
@@ -96,7 +95,6 @@ export const RestoreModal = ({
       onConfirm={onRestore}
       title={t('recently-deleted.restore-modal.title', 'Restore Dashboards')}
       disabled={restoreTarget === undefined || isLoading}
-      {...props}
     />
   );
 };

@@ -12,6 +12,8 @@ import { deletedFoldersState } from 'app/features/search/service/deletedDashboar
 import { setStore } from 'app/store/store';
 import { type FolderDTO, type FolderListItemDTO } from 'app/types/folders';
 
+import { browseDashboardsAPI } from './browseDashboardsAPI';
+
 const mockGet = jest.fn().mockResolvedValue({});
 const mockFetch = jest.fn();
 const mockPut = jest.fn().mockResolvedValue({});
@@ -36,10 +38,6 @@ jest.mock('@grafana/runtime', () => ({
     },
   },
 }));
-
-// Load after mocks so the module under test sees the mocked provisioned-folder helper.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { browseDashboardsAPI } = require('./browseDashboardsAPI');
 
 describe('browseDashboardsAPI', () => {
   const getDashboardAPIMock = jest.mocked(getDashboardAPI);
