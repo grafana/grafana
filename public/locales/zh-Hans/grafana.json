@@ -4893,6 +4893,9 @@
       "light-theme": "浅色",
       "scopes": "范围"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "使用 Grafana 助手搜索",
       "message": "未找到结果"
@@ -4968,24 +4971,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "通过数据源、集成和应用将数据连接到 Grafana",
-          "title": "添加新连接"
+          "subtitle": "通过数据源、集成和应用将数据连接到 Grafana"
         },
         "collector": {
-          "subtitle": "管理 Grafana Alloy（我们定制的 OpenTelemetry 收集器发行版）的配置",
-          "title": ""
+          "subtitle": "管理 Grafana Alloy（我们定制的 OpenTelemetry 收集器发行版）的配置"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "管理现有数据源连接",
-          "title": "数据源"
+          "subtitle": "管理现有数据源连接"
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "管理您的活动集成",
-          "title": "集成"
+          "subtitle": "管理您的活动集成"
         },
         "private-data-source-connections": {
-          "subtitle": "管理数据源的专用网络连接",
-          "title": "私有数据源连接"
+          "subtitle": "管理数据源的专用网络连接"
         },
         "subtitle": "使用数据源、集成和应用将您的基础架构连接到 Grafana Cloud。使用此页面添加，以管理从数据摄取到私有连接和遥测管道的所有内容。"
       }
@@ -5045,11 +5052,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "连接新的数据源",
-          "title": "添加新连接"
+          "subtitle": "连接新的数据源"
         },
         "data-sources": {
-          "subtitle": "管理现有数据源连接",
           "title": "查看已配置的数据源"
         },
         "subtitle": "在一个地方管理您的数据源连接。使用此页面添加新数据源或管理现有连接。"
@@ -5099,10 +5104,6 @@
       "view-json-diff": "查看 JSON 差异以查看所有更改"
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "添加新的",
     "alert": {
@@ -5144,6 +5145,14 @@
       "back-button": "上一步",
       "next-button": "下一步",
       "save-button": "保存"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "选定的目标数据源必须导出查询编辑器。",
@@ -5210,11 +5219,6 @@
       "transform-required": "请选择转换类型",
       "type-label": "类型",
       "type-tooltip": "将应用于源数据的转换类型。"
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "运行查询"
     }
   },
   "dashboard": {
@@ -7655,6 +7659,7 @@
       "placeholder-descriptive-text": "描述性文本",
       "placeholder-label-name": "标签名称",
       "placeholder-variable-name": "变量名称",
+      "run-query": "",
       "text-running-query": "正在运行查询...",
       "title": {
         "delete-variable": "删除变量"
@@ -11341,6 +11346,12 @@
       "show-search": "在日志结果中搜索",
       "show-timestamps": "显示时间戳",
       "show-unique-labels": "显示唯一标签",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "隐藏时间戳",
         "label": "日志时间戳",
@@ -12251,6 +12262,8 @@
       "description": "您收到的通知将显示在此处",
       "title": "都完成了！"
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "关闭通知",
       "title-alert": "此页面显示过去的错误和警告。一旦被关闭，它们将无法检索。"

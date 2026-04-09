@@ -4923,6 +4923,9 @@
       "light-theme": "Claro",
       "scopes": "Escopos"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "Buscar com o Assistente da Grafana",
       "message": "Nenhum resultado encontrado"
@@ -4998,24 +5001,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Conecte dados ao Grafana por meio de fontes de dados, integrações e aplicativos",
-          "title": "Adicionar nova conexão"
+          "subtitle": "Conecte dados ao Grafana por meio de fontes de dados, integrações e aplicativos"
         },
         "collector": {
-          "subtitle": "Gerencie a configuração do Grafana Alloy, nossa distribuição do OpenTelemetry Collector",
-          "title": "Coletor"
+          "subtitle": "Gerencie a configuração do Grafana Alloy, nossa distribuição do OpenTelemetry Collector"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "Gerencie suas conexões de fonte de dados atuais",
-          "title": "Fontes de dados"
+          "subtitle": "Gerencie suas conexões de fonte de dados atuais"
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "Gerencie suas integrações ativas",
-          "title": "Integrações"
+          "subtitle": "Gerencie suas integrações ativas"
         },
         "private-data-source-connections": {
-          "subtitle": "Gerencie suas conexões de rede privadas para as fontes de dados",
-          "title": "Conexão de fonte de dados privada"
+          "subtitle": "Gerencie suas conexões de rede privadas para as fontes de dados"
         },
         "subtitle": "Conecte sua infraestrutura ao Grafana Cloud usando fontes de dados, integrações e aplicativos. Use esta página para adicionar e gerenciar tudo, desde a ingestão de dados até conexões privadas e pipelines de telemetria."
       }
@@ -5075,11 +5082,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Conectar a uma nova fonte de dados",
-          "title": "Adicionar nova conexão"
+          "subtitle": "Conectar a uma nova fonte de dados"
         },
         "data-sources": {
-          "subtitle": "Gerencie suas conexões de fonte de dados atuais",
           "title": "Ver fontes de dados configuradas"
         },
         "subtitle": "Gerencie suas conexões de fonte de dados em um só lugar. Use esta página para adicionar uma nova fonte de dados ou gerenciar as conexões existentes."
@@ -5129,10 +5134,6 @@
       "view-json-diff": "Visualizar JSON diff para ver todas as alterações"
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "Adicionar novo",
     "alert": {
@@ -5174,6 +5175,14 @@
       "back-button": "Voltar",
       "next-button": "Avançar",
       "save-button": "Salvar"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "A fonte de dados de destino selecionada deve exportar um editor de consulta.",
@@ -5240,11 +5249,6 @@
       "transform-required": "Selecione um tipo de transformação",
       "type-label": "Tipo",
       "type-tooltip": "O tipo de transformação que será aplicado a fonte de dados."
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "Executar consulta"
     }
   },
   "dashboard": {
@@ -7694,6 +7698,7 @@
       "placeholder-descriptive-text": "Texto descritivo",
       "placeholder-label-name": "Nome do rótulo",
       "placeholder-variable-name": "Nome da variável",
+      "run-query": "",
       "text-running-query": "Executando consulta…",
       "title": {
         "delete-variable": "Excluir variável"
@@ -11404,6 +11409,12 @@
       "show-search": "Resultado da busca nos logs",
       "show-timestamps": "Exibir data e hora",
       "show-unique-labels": "Exibir rótulos únicos",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "Ocultar data e hora",
         "label": "Registrar data e hora",
@@ -12317,6 +12328,8 @@
       "description": "As suas notificações aparecerão aqui",
       "title": "Vocês está com tudo em dia!"
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "Descartar notificações",
       "title-alert": "Esta página exibe erros e avisos anteriores. Após descartados, eles não podem ser recuperados."
