@@ -215,7 +215,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-03-27,alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,false
 2025-04-02,multiTenantTempCredentials,experimental,@grafana/data-sources-plugins,false,false,false
 2025-04-09,unifiedNavbars,GA,@grafana/plugins-platform-backend,false,false,true
-2025-04-07,logsPanelControls,preview,@grafana/observability-logs,false,false,true
 2025-04-09,metricsFromProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2025-07-31,grafanaAssistantInProfilesDrilldown,GA,@grafana/observability-traces-and-profiling,false,false,true
 2025-07-15,tempoAlerting,experimental,@grafana/data-sources-plugins,false,false,false
@@ -330,6 +329,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-26,datasourcesApiServerEnableHealthEndpoint,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-02-27,analyticsFramework,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-03-03,datasourcesApiServerEnableHealthEndpointFrontend,experimental,@grafana/grafana-datasources-core-services,false,false,true
+2026-03-26,datasourcesApiServerEnableHealthEndpointRedirect,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-03-10,flameGraphWithCallTree,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2026-03-11,advisorDatasourceIntegration,experimental,@grafana/plugins-platform-backend,false,false,false
 2026-03-04,inlineLogDetailsNoScrolls,experimental,@grafana/observability-logs,false,false,false

@@ -4923,6 +4923,9 @@
       "light-theme": "Világos",
       "scopes": "Hatókörök"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "Keresés a Grafana Asszisztenssel",
       "message": "Nincs eredmény"
@@ -4998,24 +5001,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Adatok csatlakoztatása a Grafanához adatforrásokon, integrációkon és alkalmazásokon keresztül",
-          "title": "Új kapcsolat hozzáadása"
+          "subtitle": "Adatok csatlakoztatása a Grafanához adatforrásokon, integrációkon és alkalmazásokon keresztül"
         },
         "collector": {
-          "subtitle": "A Grafana Alloy konfigurációjának kezelése, amely az OpenTelemetry Collector saját disztribúciója",
-          "title": ""
+          "subtitle": "A Grafana Alloy konfigurációjának kezelése, amely az OpenTelemetry Collector saját disztribúciója"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "Meglévő adatforrás-kapcsolatok kezelése",
-          "title": "Adatforrások"
+          "subtitle": "Meglévő adatforrás-kapcsolatok kezelése"
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "Aktív integrációk kezelése",
-          "title": "Integrációk"
+          "subtitle": "Aktív integrációk kezelése"
         },
         "private-data-source-connections": {
-          "subtitle": "Adatforrások privát hálózati kapcsolatainak kezelése",
-          "title": "Private Data Source Connect"
+          "subtitle": "Adatforrások privát hálózati kapcsolatainak kezelése"
         },
         "subtitle": "Csatlakoztassa infrastruktúráját a Grafana Cloudhoz adatforrások, integrációk és alkalmazások segítségével. Erről az oldalról mindent kezelhet, az adatok beérkezésétől kezdve a privát kapcsolatokon át a telemetriai folyamatokig."
       }
@@ -5075,11 +5082,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Csatlakozás új adatforráshoz",
-          "title": "Új kapcsolat hozzáadása"
+          "subtitle": "Csatlakozás új adatforráshoz"
         },
         "data-sources": {
-          "subtitle": "Meglévő adatforrás-kapcsolatok kezelése",
           "title": "Konfigurált adatforrások megtekintése"
         },
         "subtitle": "Kezelje egy helyen az adatforrás-kapcsolatait. Ezen az oldalon új adatforrást adhat meg, vagy kezelheti a meglévő kapcsolatait."
@@ -5129,10 +5134,6 @@
       "view-json-diff": "JSON-különbség megjelenítése az összes változás megtekintéséhez"
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "Új hozzáadása",
     "alert": {
@@ -5174,6 +5175,14 @@
       "back-button": "Vissza",
       "next-button": "Következő",
       "save-button": "Mentés"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "A kijelölt céladatforrásnak lekérdezésszerkesztőt kell exportálnia.",
@@ -5240,11 +5249,6 @@
       "transform-required": "Jelöljön ki egy transzformációtípust",
       "type-label": "Típus",
       "type-tooltip": "A forrásadatokra alkalmazott transzformáció típusa."
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "Lekérdezés futtatása"
     }
   },
   "dashboard": {
@@ -7694,6 +7698,7 @@
       "placeholder-descriptive-text": "Leírószöveg",
       "placeholder-label-name": "Címkenév",
       "placeholder-variable-name": "Változónév",
+      "run-query": "",
       "text-running-query": "Lekérdezés futtatása…",
       "title": {
         "delete-variable": "Változó törlése"
@@ -11404,6 +11409,12 @@
       "show-search": "Keresés a naplóeredményekben",
       "show-timestamps": "Időbélyegek megjelenítése",
       "show-unique-labels": "Egyedi címkék megjelenítése",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "Időbélyegek elrejtése",
         "label": "Időbélyegek naplózása",
@@ -12317,6 +12328,8 @@
       "description": "Itt jelennek meg a kapott értesítések",
       "title": "Minden üzenetet elolvasott!"
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "Értesítések elvetése",
       "title-alert": "Ez az oldal megjeleníti a múltbeli hibákat és figyelmeztetéseket. A bezárásuk után nem jeleníthetők meg újra."
