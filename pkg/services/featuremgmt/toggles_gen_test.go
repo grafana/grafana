@@ -171,10 +171,10 @@ func readFeatureList(t *testing.T) map[string]featuretoggleapi.Feature {
 func verifyFlagName(flag FeatureFlag) error {
 	name := flag.Name
 
-	// Flags should be in the format `namespace.flagName`, except legacy feature toggles
+	// Flags should be in the format `component.flagName`, except legacy feature toggles
 	isLegacy := flag.Generate.LegacyFrontend || flag.Generate.LegacyGo
 	if !isLegacy && !strings.Contains(name, ".") {
-		return fmt.Errorf("flag name %q must contain a flag namespace, separated with a dot", name)
+		return fmt.Errorf("flag name %q must be in the format of component.flagName", name)
 	}
 
 	for part := range strings.SplitSeq(name, ".") {
