@@ -82,11 +82,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/#add-a-data-source
-  filter-dashboard:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#filter-dashboard-data
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/use-dashboards/#filter-dashboard-data
 ---
 
 # Add variables
@@ -420,7 +415,7 @@ To create a filter and grouping, follow these steps:
    | ------ | ----------- |
    | Data source | Select a target data source in the drop-down list. You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source](ref:add-a-data-source). |
    | Default filters | Set a default key/value pair. Optional. |
-   | Enable group by | This option only appears if you set a Prometheus or Loki data source. Toggle the switch on to enable the grouping. |
+   | Enable group by | This option only appears if you selected a Prometheus or Loki data source. Toggle the switch on to enable data grouping. |
    | Default group by | Set a default group by selection for the dashboard. Optional. |
    | Use static key dimensions | To provide the filter dimensions as comma-separated values (CSV), toggle the switch on, and then enter the values in the space provided. Optional. |
    | Allow custom values | Toggle the switch on to allow dashboard users to add custom values to the filter and group by lists. Optional. |
@@ -429,7 +424,9 @@ To create a filter and grouping, follow these steps:
 1. Enter an optional description of your dashboard changes, and then click **Save**.
 1. Click **Exit edit**.
 
-Now you can [filter and group data on the dashboard](ref:filter-dashboard).
+Now you can filter and group data on the dashboard.
+
+<!-- TODO: Should this tip be a section and should it live here? -->
 
 {{< admonition type="tip" >}}
 You can use data links to link back to the dashboard you are currently on. This enables "panel-to-panel filtering," where clicking a data point in one panel updates the dashboard variables and filters the rest of the dashboard.
@@ -453,6 +450,8 @@ Learn more in:
 <!-- TODO: Show an example of both working together -->
 
 ### Filter any data using the Dashboard data source
+
+<!-- TODO: Review this section -->
 
 In cases where a data source doesn't support the use of filters, you can use the Dashboard data source to reference that data, and then filter it in a new panel.
 This allows you to bypass the limitations of the data source in the source panel.
@@ -484,6 +483,8 @@ Now you can filter the data from the source panel by way of the Dashboard data s
 Add as many panels as you need.
 
 ### Dashboard drilldown with filters
+
+<!-- TODO: Review this section -->
 
 In table and bar chart visualizations, you can apply filters directly from the visualization.
 To quickly apply filter variables, follow these steps:
@@ -894,7 +895,7 @@ For example, if you have a series of four linked variables (country, region, ser
 
 Using the **Regex** query option, you filter the list of options returned by the variable query or modify the options returned.
 
-This page shows how to use a regular expression to filter/modify values in the variable dropdown.
+This page shows how to use a regular expression to filter/modify values in the variable drop-down.
 
 Using the **Regex** query option, you filter the list of options returned by the Variable query or modify the options returned. For more information, refer to the Mozilla guide on [Regular expressions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions).
 
