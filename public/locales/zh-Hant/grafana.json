@@ -4893,6 +4893,9 @@
       "light-theme": "淺色",
       "scopes": "範圍"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "使用 Grafana 助理搜尋",
       "message": "未找到結果"
@@ -4968,24 +4971,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "透過資料來源、整合及應用程式將資料連接到 Grafana",
-          "title": "新增連線"
+          "subtitle": "透過資料來源、整合及應用程式將資料連接到 Grafana"
         },
         "collector": {
-          "subtitle": "管理 Grafana Alloy 的設定，即 OpenTelemetry 收集器的分佈",
-          "title": ""
+          "subtitle": "管理 Grafana Alloy 的設定，即 OpenTelemetry 收集器的分佈"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "管理您現有的資料來源連線",
-          "title": "資料來源"
+          "subtitle": "管理您現有的資料來源連線"
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "管理您的有效整合",
-          "title": "整合"
+          "subtitle": "管理您的有效整合"
         },
         "private-data-source-connections": {
-          "subtitle": "管理資料來源的私人網路連線",
-          "title": "私人資料來源連接"
+          "subtitle": "管理資料來源的私人網路連線"
         },
         "subtitle": "使用資料來源、整合及應用程式，將基礎設施連接到 Grafana Cloud。使用此頁面新增，以管理從資料擷取到私人連線及遙測管線的所有內容。"
       }
@@ -5045,11 +5052,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "連線到新的資料來源",
-          "title": "新增連線"
+          "subtitle": "連線到新的資料來源"
         },
         "data-sources": {
-          "subtitle": "管理您現有的資料來源連線",
           "title": "檢視已設定的資料來源"
         },
         "subtitle": "集中一處管理您的資料來源連線。使用此頁面新增資料來源或管理現有連線。"
@@ -5099,10 +5104,6 @@
       "view-json-diff": "檢視 JSON diff 以查看所有變更"
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "新增",
     "alert": {
@@ -5144,6 +5145,14 @@
       "back-button": "返回",
       "next-button": "繼續",
       "save-button": "儲存"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "所選目標資料來源必須匯出查詢編輯器。",
@@ -5210,11 +5219,6 @@
       "transform-required": "請選擇轉換類型",
       "type-label": "類型",
       "type-tooltip": "將套用至來源資料的轉換類型。"
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "執行查詢"
     }
   },
   "dashboard": {
@@ -7655,6 +7659,7 @@
       "placeholder-descriptive-text": "描述性文字",
       "placeholder-label-name": "標籤名稱",
       "placeholder-variable-name": "變數名稱",
+      "run-query": "",
       "text-running-query": "正在執行查詢…",
       "title": {
         "delete-variable": "刪除變數"
@@ -11341,6 +11346,12 @@
       "show-search": "在紀錄結果中搜尋",
       "show-timestamps": "顯示時間戳記",
       "show-unique-labels": "顯示唯一標籤",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "隱藏時間戳記",
         "label": "記錄時間戳記",
@@ -12251,6 +12262,8 @@
       "description": "您收到的通知將顯示在此處",
       "title": "您已追上所有進度！"
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "關閉通知",
       "title-alert": "此頁面顯示過去的錯誤和警告。一旦被關閉，它們便無法被檢索。"
