@@ -199,7 +199,6 @@ function DashboardCardComponent({
               <Button
                 variant="secondary"
                 className={styles.overlayButton}
-                icon="pencil"
                 onClick={onEdit}
                 aria-label={t('dashboard-library.card.edit-template-button-label', 'Edit template: {{title}}', {
                   title,

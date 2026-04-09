@@ -6662,6 +6662,13 @@
       "tab-custom": "Custom templates",
       "tab-grafana": "Grafana-provisioned",
       "title": "Start a dashboard from a template"
+    },
+    "template-filters": {
+      "creator-placeholder": "Filter by created by",
+      "search-placeholder": "Search",
+      "sort-az": "Title A-Z",
+      "sort-placeholder": "Sort",
+      "sort-za": "Title Z-A"
     }
   },
   "dashboard-links": {

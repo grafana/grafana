@@ -30,7 +30,7 @@ export interface TemplateContextData {
  */
 export function buildTemplateContextData(
   dashboard: PluginDashboard | GnetDashboard,
-  kind: 'template_dashboard' | 'suggested_dashboard'
+  kind: 'template_dashboard' | 'suggested_dashboard' | 'org_template'
 ): TemplateContextData {
   const isGnet = isGnetDashboard(dashboard);
 
@@ -106,7 +106,7 @@ export function buildTemplateContextData(
  */
 export function buildTemplateContextTitle(
   dashboard: PluginDashboard | GnetDashboard,
-  kind: 'template_dashboard' | 'suggested_dashboard'
+  kind: 'template_dashboard' | 'suggested_dashboard' | 'org_template'
 ): string {
   const isGnet = isGnetDashboard(dashboard);
   const name = isGnet ? dashboard.name : dashboard.title;
