@@ -6,7 +6,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, Field, Space, Text } from '@grafana/ui';
 
 import { FolderPicker } from '../../../core/components/Select/FolderPicker';
-import { deletedFoldersState } from '../../search/service/deletedDashboardsCache';
+import { deletedFoldersState } from '../../search/service/deletedFoldersState';
 import { useGetFolderQuery } from '../api/browseDashboardsAPI';
 
 export interface RestoreModalProps {

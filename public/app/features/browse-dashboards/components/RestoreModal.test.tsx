@@ -2,7 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import type { ComponentProps, ReactNode } from 'react';
 import { render, screen } from 'test/test-utils';
 
-import { deletedFoldersState } from 'app/features/search/service/deletedDashboardsCache';
+import { deletedFoldersState } from 'app/features/search/service/deletedFoldersState';
 
 import { useGetFolderQuery } from '../api/browseDashboardsAPI';
 

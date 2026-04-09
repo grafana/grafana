@@ -12,7 +12,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
-import { deletedFoldersState } from 'app/features/search/service/deletedDashboardsCache';
+import { deletedFoldersState } from 'app/features/search/service/deletedFoldersState';
 import { setStore } from 'app/store/store';
 import { type FolderDTO } from 'app/types/folders';
 

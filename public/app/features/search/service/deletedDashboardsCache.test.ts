@@ -1,4 +1,5 @@
-import { deletedDashboardsCache, deletedFoldersState } from './deletedDashboardsCache';
+import { deletedDashboardsCache } from './deletedDashboardsCache';
+import { deletedFoldersState } from './deletedFoldersState';
 
 describe('deleted dashboard trash state', () => {
   beforeEach(() => {

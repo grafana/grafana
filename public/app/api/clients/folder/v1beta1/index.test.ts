@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { of } from 'rxjs';
 
-import { deletedFoldersState } from 'app/features/search/service/deletedDashboardsCache';
+import { deletedFoldersState } from 'app/features/search/service/deletedFoldersState';
 
 import { folderAPIv1beta1 } from './index';
 

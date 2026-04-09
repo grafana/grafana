@@ -32,7 +32,8 @@ import {
 } from 'app/types/folders';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
-import { deletedDashboardsCache, deletedFoldersState } from '../../search/service/deletedDashboardsCache';
+import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
+import { deletedFoldersState } from '../../search/service/deletedFoldersState';
 import { refetchChildren, refreshParents } from '../state/actions';
 
 import { isProvisionedDashboard } from './isProvisioned';

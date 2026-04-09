@@ -1,5 +1,5 @@
 import { generatedAPI } from '@grafana/api-clients/rtkq/folder/v1beta1';
-import { deletedFoldersState } from 'app/features/search/service/deletedDashboardsCache';
+import { deletedFoldersState } from 'app/features/search/service/deletedFoldersState';
 import { type DescendantCount } from 'app/types/folders';
 
 import { getParsedCounts } from './utils';
