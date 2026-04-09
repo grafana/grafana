@@ -20,13 +20,62 @@ review_date: "2026-04-08"
 
 # TestData query editor
 
-Instead of a traditional query language, the TestData data source uses **scenarios** to generate simulated data. Each scenario produces a different type of data suited for testing specific visualizations, behaviors, or edge cases.
+Instead of a traditional query language, the TestData data source uses **scenarios** to generate simulated data. Each scenario produces a different type of data suited for testing specific visualizations, behaviors, or edge cases. TestData includes 30 scenarios covering time series, logs, traces, graphs, streaming, and error simulation.
 
-For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
+Use scenarios to:
+
+- **Prototype dashboards** without connecting to a real data source.
+- **Reproduce bugs** with controlled, deterministic data that other developers can replicate.
+- **Test panel behavior** with edge cases like empty results, timestamps outside the visible range, or mixed data and errors.
+- **Validate alerting pipelines** using predictable patterns that fire and resolve on a known schedule.
+- **Simulate streaming** to verify how panels handle real-time data updates.
+
+To build a query, select a scenario from the **Scenario** drop-down. The query editor updates to show fields specific to that scenario. Click **Run queries** or use the keyboard shortcut to execute.
+
+{{< admonition type="note" >}}
+Some scenarios run entirely in the browser (Streaming Client, Grafana Live, Grafana API, Steps, No Data Points). These scenarios don't send queries to the backend, which means they can't be used with [Grafana Alerting](../alerting/) or in any context that requires server-side evaluation.
+{{< /admonition >}}
+
+## Scenario reference
+
+The scenarios are organized into the following categories. Use the table below to find the right scenario for your use case.
+
+| Scenario | Category | Purpose |
+| --- | --- | --- |
+| [Random Walk](#random-walk) | Data generation | Random walk time series (default scenario). |
+| [Random Walk Table](#random-walk-table) | Data generation | Random walk in table format with state enum. |
+| [Random Walk (with error)](#random-walk-with-error) | Data generation | Random walk that also returns an error. |
+| [Predictable Pulse](#predictable-pulse) | Data generation | Repeating on/off wave based on absolute time. |
+| [Predictable CSV Wave](#predictable-csv-wave) | Data generation | Custom repeating waveforms from CSV values. |
+| [Simulation](#simulation) | Data generation | Continuous simulation engine (flight, sine, tank). |
+| [USA generated data](#usa-generated-data) | Data generation | Multi-dimensional data with US state dimensions. |
+| [CSV Content](#csv-content) | Manual input | Paste or type CSV data directly. |
+| [Steps](#steps) | Manual input | Step-function data from CSV input. |
+| [CSV File](#csv-file) | Manual input | Select from built-in CSV data files. |
+| [CSV Metric Values](#csv-metric-values) | Manual input | Time series from comma-separated values. |
+| [Raw Frames](#raw-frames) | Manual input | Define data frames in JSON format. |
+| [Load Apache Arrow Data](#load-apache-arrow-data) | Manual input | Render base64-encoded Arrow payloads. |
+| [Table Static](#table-static) | Manual input | Static table with predefined columns. |
+| [Logs](#logs) | Visualization testing | Simulated log data with random levels. |
+| [Node Graph](#node-graph) | Visualization testing | Data for node graph visualizations. |
+| [Flame Graph](#flame-graph) | Visualization testing | Data for flame graph visualizations. |
+| [Trace](#trace) | Visualization testing | Simulated distributed trace data. |
+| [Annotations](#annotations) | Visualization testing | Annotation data points. |
+| [Exponential heatmap bucket data](#exponential-heatmap-bucket-data) | Visualization testing | Heatmap data with exponential buckets. |
+| [Linear heatmap bucket data](#linear-heatmap-bucket-data) | Visualization testing | Heatmap data with linear buckets. |
+| [Streaming Client](#streaming-client) | Streaming | Browser-side streaming (signal, logs, traces). |
+| [Grafana Live](#grafana-live) | Streaming | Server-side streaming via live channels. |
+| [Grafana API](#grafana-api) | Data retrieval | Fetch data from internal Grafana endpoints. |
+| [Conditional Error](#conditional-error) | Error testing | Configurable error or CSV data. |
+| [Error with source](#error-with-source) | Error testing | Error with plugin or downstream classification. |
+| [No Data Points](#no-data-points) | Error testing | Empty result with no data. |
+| [Datapoints Outside Range](#datapoints-outside-range) | Error testing | Data point outside the visible time range. |
+| [Slow Query](#slow-query) | Error testing | Configurable delay before returning data. |
+| [Query Metadata](#query-metadata) | Metadata | Returns query context metadata. |
 
 ## Shared query options
 
-Most scenarios share the following fields in the query editor. Scenario-specific options appear when you select a scenario.
+Every scenario displays the **Scenario** drop-down. Most scenarios also show an **Alias** field and, when the scenario defines a default, a **String Input** field. Some scenarios expose additional shared controls. Scenario-specific options appear below these fields.
 
 | Field            | Description                                                                                                                                                                                              |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -47,7 +96,7 @@ Generates random walk time-series data. This is the default scenario.
 | Field            | Description                                                    |
 | ---------------- | -------------------------------------------------------------- |
 | **Series count** | Number of series to generate. Default: `1`.                    |
-| **Start value**  | Initial value for the walk. Default: random.                   |
+| **Start value**  | Initial value for the walk. Default: auto (random).            |
 | **Min**          | Minimum value the walk can reach. Default: none.               |
 | **Max**          | Maximum value the walk can reach. Default: none.               |
 | **Spread**       | Controls how far each step can deviate. Default: `1`.          |
@@ -69,12 +118,14 @@ Generates a predictable pulse wave based on absolute time from the epoch, making
 | Field         | Description                                                                     |
 | ------------- | ------------------------------------------------------------------------------- |
 | **Step**      | Seconds between data points. Default: `60`.                                     |
-| **On Count**  | Number of data points at the start of each cycle that use the on value.         |
-| **Off Count** | Number of data points in each cycle that use the off value.                     |
-| **On Value**  | The value for "on" data points. Can be a number, `null`, or `nan`.              |
-| **Off Value** | The value for "off" data points. Can be a number, `null`, or `nan`.             |
+| **On Count**  | Number of data points at the start of each cycle that use the on value. Default: `3`. |
+| **Off Count** | Number of data points in each cycle that use the off value. Default: `3`.       |
+| **On Value**  | The value for "on" data points. Can be a number, `null`, or `nan`. Default: `2`.|
+| **Off Value** | The value for "off" data points. Can be a number, `null`, or `nan`. Default: `1`.|
 
 The wave cycles at `Step * (On Count + Off Count)` seconds. Timestamps align evenly on the step interval.
+
+With the defaults (Step=60, On Count=3, Off Count=3), the wave completes a full cycle every 6 minutes. The on value (`2`) holds for the first 3 data points, then the off value (`1`) holds for the next 3.
 
 ### Predictable CSV Wave
 
@@ -82,27 +133,29 @@ Generates one or more predictable waves from CSV-defined values. Each wave cycle
 
 | Field      | Description                                                                          |
 | ---------- | ------------------------------------------------------------------------------------ |
-| **Values** | Comma-separated numeric values for the wave. Supports `null` and `nan`.              |
-| **Step**   | Seconds between data points.                                                         |
+| **Values** | Comma-separated numeric values for the wave. Supports `null` and `nan`. Default: `0,0,2,2,1,1`. |
+| **Step**   | Seconds between data points. Default: `60`.                                          |
 | **Name**   | Optional name for the series.                                                        |
 | **Labels** | Optional labels in key=value format.                                                 |
 
-Click **Add** to define additional waves. Click the trash icon to remove a wave.
+Click the **+** button on the last wave row to add another wave. Click the **-** button on any other row to remove it.
 
-### Steps
+For example, to create two overlapping waves for comparison:
 
-Generates step data from CSV content. The query editor provides a CSV text area where you enter the step values.
+- Wave 1: Values `0,1,2,3,4,5`, Step `60`, Name `rising`
+- Wave 2: Values `5,4,3,2,1,0`, Step `60`, Name `falling`
 
 ### Simulation
 
 Runs a simulation engine that generates data continuously. Simulation supports streaming data through Grafana Live.
 
-| Field          | Description                                                                      |
-| -------------- | -------------------------------------------------------------------------------- |
-| **Type**       | Simulation type: `flight` (flight path), `sine` (sine wave), or `tank` (tank).   |
-| **Stream**     | Toggle to stream data through Grafana Live instead of returning a static result.  |
-| **Interval**   | Tick frequency in Hz.                                                            |
-| **UID**        | Optional unique identifier for the simulation instance.                          |
+| Field          | Description                                                                              |
+| -------------- | ---------------------------------------------------------------------------------------- |
+| **Simulation** | Simulation type: `Flight` (circling flight path), `Sine` (sine wave), or `Tank` (fill and drain a water tank). |
+| **Stream**     | Toggle to stream data through Grafana Live instead of returning a static result.          |
+| **Interval**   | Tick frequency in Hz. Default: `10`.                                                      |
+| **Last**       | Toggle to return only the most recent value instead of the full time range.                |
+| **UID**        | Optional unique identifier. Allows multiple instances of the same simulation type to run concurrently. |
 
 ### USA generated data
 
@@ -117,11 +170,24 @@ Generates data with US state dimensions. Useful for testing geo-map visualizatio
 
 ## Manual input scenarios
 
-These scenarios let you provide your own data directly.
+These scenarios let you provide your own data directly instead of generating it.
 
 ### CSV Content
 
 Provides a text editor where you paste or type CSV data directly. The first row is treated as headers. Use the **Drop percent** field to randomly exclude a percentage of data points.
+
+For example, enter the following to create a time series with two value columns:
+
+```
+Time,Temperature,Humidity
+2024-01-01 00:00:00,22.5,45
+2024-01-01 01:00:00,21.8,48
+2024-01-01 02:00:00,20.1,52
+```
+
+### Steps
+
+Provides a CSV text area (the same editor as CSV Content) for defining step-function data. The default content is `a`, `b`, `c`. This scenario is handled entirely in the browser.
 
 ### CSV File
 
@@ -140,7 +206,9 @@ Available files:
 
 ### CSV Metric Values
 
-Generates time-series data from comma-separated values entered in the **String Input** field. Values are evenly distributed across the dashboard time range. Default: `1,20,90,30,5,0`.
+Generates time-series data from comma-separated values entered in the **String Input** field. Values are evenly distributed across the selected time range. Default: `1,20,90,30,5,0`.
+
+For example, with the default values and a 6-hour time range, the six values (`1`, `20`, `90`, `30`, `5`, `0`) are spread across the range at equal intervals.
 
 ### Raw Frames
 
@@ -211,7 +279,7 @@ Generates heatmap data with linearly distributed bucket boundaries (0, 10, 20, 3
 
 ## Streaming scenarios
 
-These scenarios produce real-time streaming data.
+These scenarios produce real-time streaming data. Data updates continuously in the browser without requiring manual query execution.
 
 ### Streaming Client
 
@@ -231,16 +299,28 @@ Additional fields depend on the selected type:
 
 Connects to a Grafana Live channel that streams random data from the server.
 
-| Channel                   | Description                              |
-| ------------------------- | ---------------------------------------- |
-| `random-2s-stream`        | Random stream with points every 2s.      |
-| `random-flakey-stream`    | Stream that returns data at random intervals. |
-| `random-labeled-stream`   | Value with moving labels.                |
-| `random-20Hz-stream`      | Random stream with points at 20 Hz.      |
+| Field       | Description                                       |
+| ----------- | ------------------------------------------------- |
+| **Channel** | The live channel to subscribe to. Options:         |
+
+| Channel                   | Description                                        |
+| ------------------------- | -------------------------------------------------- |
+| `random-2s-stream`        | Random stream with points every 2s.                |
+| `random-flakey-stream`    | Stream that returns data at random intervals.      |
+| `random-labeled-stream`   | Value with moving labels.                          |
+| `random-20Hz-stream`      | Random stream with points at 20 Hz.                |
+
+## Data retrieval scenarios
+
+These scenarios fetch data from internal Grafana endpoints.
 
 ### Grafana API
 
-Fetches data from internal Grafana API endpoints and returns the result as a data frame.
+Fetches data from internal Grafana API endpoints and returns the result as a data frame. This scenario runs in the browser.
+
+| Field        | Description                                                  |
+| ------------ | ------------------------------------------------------------ |
+| **Endpoint** | The API endpoint to query. Options:                          |
 
 | Endpoint         | Description                             |
 | ---------------- | --------------------------------------- |
@@ -254,11 +334,13 @@ These scenarios help test how Grafana handles errors, empty data, and slow respo
 
 ### Conditional Error
 
-Produces an error or data depending on the **String Input** field. When the field is empty, the scenario triggers a server panic. When the field contains CSV values (default: `1,20,90,30,5,0`), it behaves like the CSV Metric Values scenario.
+Produces an error or data depending on the **String Input** and **Error type** fields. When the **String Input** field is empty, the scenario triggers the selected error type. When the field contains CSV values (default: `1,20,90,30,5,0`), it returns time-series data like the CSV Metric Values scenario, regardless of the error type.
 
 | Field          | Description                                                                                           |
 | -------------- | ----------------------------------------------------------------------------------------------------- |
-| **Error type** | Type of error to simulate: `Server panic`, `Frontend exception`, or `Frontend observable`.             |
+| **Error type** | Type of error to simulate: `Server panic` (backend panic), `Frontend exception` (uncaught error in the browser), or `Frontend observable` (error emitted through the query observable). |
+
+To trigger an error, clear the **String Input** field and select the error type you want to test.
 
 ### Error with source
 
