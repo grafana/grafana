@@ -75,6 +75,7 @@ export type { HttpSettingsBaseProps, AzureAuthSettings } from '../components/Dat
 export { TimeZoneOffset, formatUtcOffset } from '../components/DateTimePickers/TimeZonePicker/TimeZoneOffset';
 export { TimeZoneTitle } from '../components/DateTimePickers/TimeZonePicker/TimeZoneTitle';
 export type { CodeEditorProps } from '../components/Monaco/types';
+export { UiwCodeMirrorPoc, type UiwCodeMirrorPocProps } from '../components/CodeMirror/UiwCodeMirrorPoc';
 export { type Props as InlineFieldProps } from '../components/Forms/InlineField';
 export { DataLinkSuggestions } from '../components/DataLinks/DataLinkSuggestions';
 export { type Props as AlertProps } from '../components/Alert/Alert';
