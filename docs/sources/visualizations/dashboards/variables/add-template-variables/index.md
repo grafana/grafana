@@ -391,8 +391,17 @@ The following data sources support filters. Data sources with an asterisk also s
 
 To add a filter and group by variable, follow these steps:
 
+{{< docs/list >}}
+
 1. Click **Edit** in the top-right corner of the dashboard.
 1. Click the **Add new element** icon (blue plus sign).
+
+   {{< admonition type="tip" >}}
+   You can only add the filter and group by variable using the **Add new element** icon. This variable can't be added in the dashboard settings.
+   {{< /admonition >}}
+
+{{< shared id="add-filter" >}}
+
 1. Click **Filter and Group by**.
 1. Enter a **Name** for the filter.
 1. (Optional) In the **Label** field, enter the display name for the filter drop-down list.
@@ -423,6 +432,10 @@ To add a filter and group by variable, follow these steps:
 1. Click **Save**.
 1. Enter an optional description of your dashboard changes, and then click **Save**.
 1. Click **Exit edit**.
+
+{{< /shared >}}
+
+{{< /docs/list >}}
 
 Now you can filter and group data on the dashboard.
 
