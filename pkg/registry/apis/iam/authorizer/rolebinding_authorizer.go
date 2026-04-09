@@ -36,7 +36,8 @@ func (a *RoleBindingAuthorizer) BeforeDelete(_ context.Context, _ runtime.Object
 // BeforeWatch implements ResourceStorageAuthorizer.
 // TODO: Implement proper authorization for Watch
 func (a *RoleBindingAuthorizer) BeforeWatch(ctx context.Context) error {
-	return nil // No authorization for now
+	// Deny by default until proper authorization is implemented
+	return storewrapper.ErrUnauthorized
 }
 
 // creates & updates need to check the role permissions
@@ -101,7 +102,8 @@ func (d *DenyCustomRoleRefsAuthorizer) BeforeDelete(_ context.Context, _ runtime
 // BeforeWatch implements ResourceStorageAuthorizer.
 // TODO: Implement proper authorization for Watch
 func (d *DenyCustomRoleRefsAuthorizer) BeforeWatch(ctx context.Context) error {
-	return nil // No authorization for now
+	// Deny by default until proper authorization is implemented
+	return storewrapper.ErrUnauthorized
 }
 
 func (d *DenyCustomRoleRefsAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) error {

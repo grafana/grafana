@@ -153,5 +153,6 @@ func (r *ExternalGroupMappingAuthorizer) FilterList(ctx context.Context, list ru
 // BeforeWatch implements ResourceStorageAuthorizer.
 // TODO: Implement proper authorization for Watch
 func (r *ExternalGroupMappingAuthorizer) BeforeWatch(ctx context.Context) error {
-	return nil // No authorization for now
+	// Deny by default until proper authorization is implemented
+	return storewrapper.ErrUnauthorized
 }
