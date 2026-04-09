@@ -934,6 +934,10 @@ const (
 	// Enables cache configs data migration to unified storage
 	FlagCacheConfigUnifiedStorageMigration = "cacheConfigUnifiedStorageMigration"
 
+	// FlagKubernetesQueryCachingRedirect
+	// Redirect query cache config reads from legacy storage to K8s API in the caching handler
+	FlagKubernetesQueryCachingRedirect = "kubernetesQueryCachingRedirect"
+
 	// FlagCompiledBootScript
 	// Boots the frontend using the boot.js script built from TS instead of the embedded boot script
 	FlagCompiledBootScript = "compiledBootScript"

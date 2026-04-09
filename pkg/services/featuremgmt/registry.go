@@ -2804,6 +2804,14 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "kubernetesQueryCachingRedirect",
+			Description:     "Redirect query cache config reads from legacy storage to K8s API in the caching handler",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
+			Expression:      "false",
+			RequiresRestart: true,
+		},
+		{
 			Name:         "compiledBootScript",
 			Description:  "Boots the frontend using the boot.js script built from TS instead of the embedded boot script",
 			Stage:        FeatureStageExperimental,
