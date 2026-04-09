@@ -1617,11 +1617,6 @@ export interface FeatureToggles {
   */
   alertingNotificationHistoryGlobal?: boolean;
   /**
-  * Enables the notification history timeline in the triage instance details drawer
-  * @default false
-  */
-  alertingNotificationHistoryTriage?: boolean;
-  /**
   * Enables the notification history detail page
   * @default false
   */
@@ -1771,4 +1766,14 @@ export interface FeatureToggles {
   * @default false
   */
   compiledBootScript?: boolean;
+  /**
+  * Enables validation on the InfluxDB data source configuration page
+  * @default false
+  */
+  influxDBConfigValidation?: boolean;
+  /**
+  * Enables validation on the ClickHouse data source configuration page
+  * @default false
+  */
+  clickHouseConfigValidation?: boolean;
 }

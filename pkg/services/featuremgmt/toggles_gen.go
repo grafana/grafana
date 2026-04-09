@@ -854,10 +854,6 @@ const (
 	// Enables the notification history global menu item viewer
 	FlagAlertingNotificationHistoryGlobal = "alertingNotificationHistoryGlobal"
 
-	// FlagAlertingNotificationHistoryTriage
-	// Enables the notification history timeline in the triage instance details drawer
-	FlagAlertingNotificationHistoryTriage = "alertingNotificationHistoryTriage"
-
 	// FlagAlertingNotificationHistoryDetail
 	// Enables the notification history detail page
 	FlagAlertingNotificationHistoryDetail = "alertingNotificationHistoryDetail"
@@ -937,4 +933,12 @@ const (
 	// FlagCompiledBootScript
 	// Boots the frontend using the boot.js script built from TS instead of the embedded boot script
 	FlagCompiledBootScript = "compiledBootScript"
+
+	// FlagInfluxDBConfigValidation
+	// Enables validation on the InfluxDB data source configuration page
+	FlagInfluxDBConfigValidation = "influxDBConfigValidation"
+
+	// FlagClickHouseConfigValidation
+	// Enables validation on the ClickHouse data source configuration page
+	FlagClickHouseConfigValidation = "clickHouseConfigValidation"
 )
