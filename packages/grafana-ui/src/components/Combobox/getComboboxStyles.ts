@@ -19,9 +19,6 @@ export const POPOVER_MAX_HEIGHT = MENU_OPTION_HEIGHT * 8.5;
 
 export const getComboboxStyles = (theme: GrafanaTheme2) => {
   return {
-    menuClosed: css({
-      display: 'none',
-    }),
     menu: css({
       label: 'combobox-menu',
       background: theme.components.dropdown.background,

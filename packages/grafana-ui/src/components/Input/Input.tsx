@@ -48,7 +48,7 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
     suffix: suffixProp,
     invalid,
     loading,
-    width = 0,
+    width,
     ...restProps
   } = props;
   /**
@@ -80,7 +80,7 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
       className={cx(styles.wrapper, className)}
       // If the component is in an AutoSizeInput, set the width here to prevent emotion doing stuff
       // on every keypress
-      style={autoSizeWidth ? { width: theme.spacing(autoSizeWidth) } : undefined}
+      style={{ width: autoSizeWidth ? theme.spacing(autoSizeWidth) : width }}
       data-testid="input-wrapper"
     >
       {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
