@@ -98,7 +98,6 @@ export default function CreateNewButton({
   };
 
   const dashboardIconColor = theme.visualization.getColorByName(DASHBOARD_GROUP_COLOR_NAME);
-  const showImport = !isProvisionedInstance && parentFolder?.managedBy !== ManagerKind.Repo;
 
   const newMenu = (
     <Menu>
@@ -135,7 +134,7 @@ export default function CreateNewButton({
               url={buildUrl('/dashboards?templateDashboards=true&source=createNewButton', parentFolder?.uid)}
             />
           )}
-          {showImport && (
+          {!isProvisionedInstance && parentFolder?.managedBy !== ManagerKind.Repo && (
             <Menu.Item
               label={getImportPhrase()}
               icon={ITEM_ICONS['dashboards/import']}
@@ -158,6 +157,7 @@ export default function CreateNewButton({
             onClick={() => setShowNewFolderDrawer(true)}
             label={getNewFolderPhrase()}
             icon={ITEM_ICONS['folder']}
+            // folder action use default grey, so no need to set icon color
           />
         </>
       )}
