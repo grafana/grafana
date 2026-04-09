@@ -70,6 +70,11 @@ const (
 	defaultBatchTimeout = 5 * time.Second
 )
 
+// HACK: Process-wide mutable default for batched RV transaction deadlines. Prefer wiring an explicit
+// BatchTransactionTimeout per ResourceVersionManager / server options; this exists so integration tests
+// (and overloaded CI, e.g. SQLite Enterprise shards) can raise the limit without an ini key. Not safe
+// with parallel packages or multiple servers expecting different values in one process.
+//
 // defaultBatchTxnTimeoutOverrideNs is used when BatchTransactionTimeout is zero.
 // Set with SetDefaultBatchTransactionTimeout; clear with ClearDefaultBatchTransactionTimeout.
 var defaultBatchTxnTimeoutOverrideNs atomic.Int64

@@ -153,6 +153,8 @@ func NewK8sTestHelperShared(t *testing.T, opts K8sTestHelperOpts) (*K8sTestHelpe
 	return buildK8sTestHelper(t, opts, listenerAddress, env), shutdownFunc
 }
 
+// HACK: Uses rvmanager global override (see rvmanager package) so slow integration tests can extend
+// the batched RV WithTx deadline without adding unified_storage ini or Cfg fields.
 func applyResourceVersionBatchTxnTestTimeout(opts *K8sTestHelperOpts) {
 	if opts.UnifiedStorageResourceVersionBatchTransactionTimeout <= 0 {
 		return
