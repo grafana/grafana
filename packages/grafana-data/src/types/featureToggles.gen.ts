@@ -1672,6 +1672,11 @@ export interface FeatureToggles {
   */
   datasourcesApiServerEnableHealthEndpointFrontend?: boolean;
   /**
+  * Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.
+  * @default false
+  */
+  datasourcesApiServerEnableHealthEndpointRedirect?: boolean;
+  /**
   * Enables the new Flame Graph UI containing the Call Tree view
   * @default false
   */
