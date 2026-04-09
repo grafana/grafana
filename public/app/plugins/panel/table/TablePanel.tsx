@@ -125,12 +125,7 @@ export function TablePanel(props: Props) {
     <div className={tableStyles.wrapper}>
       {tableElement}
       <div className={tableStyles.selectWrapper}>
-        <Combobox
-          tabIndex={options.disableKeyboardEvents ? -1 : 0}
-          options={names}
-          value={names[currentIndex]}
-          onChange={(val) => onChangeTableSelection(val, props)}
-        />
+        <Combobox options={names} value={names[currentIndex]} onChange={(val) => onChangeTableSelection(val, props)} />
       </div>
     </div>
   );
