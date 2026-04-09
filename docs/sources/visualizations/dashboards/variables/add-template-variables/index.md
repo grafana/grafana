@@ -440,9 +440,11 @@ To add a filter and group by variable, follow these steps:
 
 {{< /docs/list >}}
 
+{{< shared id="filter-management" >}}
+
 Now you can filter and group data on the dashboard.
 
-You can remove and reset default filters and group by selections and see your recent ones:
+You can remove and reset default filters and group by selections, and see your recent ones:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-reset-default-v13.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" caption="Reset default filters and group by selections" >}}
 
@@ -452,6 +454,10 @@ To see every active filter and group by across the dashboard all at once, click 
 The overview lets you see your current filters and group by selections and adjust them without scrolling through the dashboard controls:
 
 {{< figure src="/media/docs/grafana/screenshot-filters-overview-v12.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" >}}
+
+{{< /shared >}}
+
+{{< shared id="panel-filter" >}}
 
 ### Group and filter from the panel
 
@@ -477,6 +483,8 @@ However, you can create overrides to address specific fields.
 With the override in place, you can click a series on the panel and filter it in or out.
 
 <!-- TODO: Add screenshot here when feature is working properly -->
+
+{{< /shared >}}
 
 ### Filter any data using the Dashboard data source
 

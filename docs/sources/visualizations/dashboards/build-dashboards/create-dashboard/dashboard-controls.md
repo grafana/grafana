@@ -35,6 +35,10 @@ To add a filter and group by, follow these steps:
 
 {{< /docs/list >}}
 
+{{< shared-snippet path="/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/index.md" id="filter-management" >}}
+
+{{< shared-snippet path="/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/index.md" id="panel-filter" >}}
+
 ## Add variables
 
 To add a variable, follow these steps:
