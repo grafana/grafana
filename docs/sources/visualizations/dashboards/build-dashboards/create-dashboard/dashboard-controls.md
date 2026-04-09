@@ -23,6 +23,18 @@ In the **Dashboard controls** section of the sidebar, you can add variables, ann
 
 ## Add filters and group by
 
+<!-- vale Grafana.Spelling = NO -->
+
+{{< admonition type="note" >}}
+Filter and group by is currently in public preview.
+Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+
+This feature replaces ad hoc variables, and extends them by adding grouping for Prometheus and Loki data sources.
+However, in the dashboard schema, it is still referred to as `"kind": "AdhocVariable"`.
+{{< /admonition >}}
+
+<!-- vale Grafana.Spelling = YES -->
+
 To add a filter and group by, follow these steps:
 
 {{< docs/list >}}

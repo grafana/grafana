@@ -365,6 +365,14 @@ You can also use switch variables in panel titles and other dashboard elements:
 
 <!-- vale Grafana.Spelling = NO -->
 
+{{< admonition type="note" >}}
+Filter and group by is currently in public preview.
+Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+
+This feature replaces ad hoc variables, and extends them by adding grouping for Prometheus and Loki data sources.
+However, in the dashboard schema, it is still referred to as `"kind": "AdhocVariable"`.
+{{< /admonition >}}
+
 The filter and group by variable (formerly the **ad hoc variable**) is one of the most complex and flexible variable options available.
 Instead of creating a variable for each dimension by which you want to filter, it automatically creates variables (key/value pairs) for all the dimensions returned by your data source query.
 This allows you to quickly apply filters dashboard-wide.
