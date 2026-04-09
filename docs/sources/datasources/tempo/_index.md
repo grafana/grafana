@@ -136,6 +136,6 @@ After you've connected Grafana to Tempo, you can configure correlations between 
 - [Best practices for traces](https://grafana.com/docs/tempo/<TEMPO_VERSION>/set-up-for-tracing/instrument-send/best-practices/): Guidance on planning spans, attributes, and trace structure for effective tracing data.
 - [TraceQL query examples](query-editor/traceql-query-examples/)
 - [TraceQL query language reference](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/)
-If you encounter issues with the Tempo data source, refer to [Troubleshoot Tempo data source issues](ref:troubleshooting).
+  If you encounter issues with the Tempo data source, refer to [Troubleshoot Tempo data source issues](ref:troubleshooting).
 
 {{< section withDescriptions="true">}}
