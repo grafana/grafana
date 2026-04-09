@@ -4,10 +4,12 @@ import (
 	"cmp"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -15,7 +17,10 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/registry/apps/playlist"
+	playlist "github.com/grafana/grafana/pkg/registry/apps/playlist"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -41,7 +46,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 		h := doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true, // do not start extra port 6443
 			DisableAnonymous:     true,
-			EnableFeatureToggles: []string{},
+			EnableFeatureToggles: []string{"playlistsRBAC"},
 		}))
 
 		// The accepted verbs will change when dual write is enabled
@@ -158,7 +163,6 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 	})
 
 	t.Run("Check CRUD operations with None role", func(t *testing.T) {
-		// Create a playlist with admin user
 		clientAdmin := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: helper.Org1.Admin,
 			GVR:  gvr,
@@ -168,32 +172,105 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			metav1.CreateOptions{},
 		)
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = clientAdmin.Resource.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
+		})
 
 		clientNone := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: helper.Org1.None,
 			GVR:  gvr,
 		})
 
-		// Now check if None user can perform a Get to start a playlist
-		_, err = clientNone.Resource.Get(context.Background(), created.GetName(), metav1.GetOptions{})
-		require.NoError(t, err)
+		// Without any RBAC grant, a None-role user is denied all playlist operations.
+		t.Run("None role denied by default", func(t *testing.T) {
+			_, err = clientNone.Resource.Get(context.Background(), created.GetName(), metav1.GetOptions{})
+			require.Error(t, err)
 
-		// None role can get but can not create edit or delete a playlist
-		_, err = clientNone.Resource.Create(context.Background(),
-			helper.LoadYAMLOrJSONFile("testdata/playlist-generate.yaml"),
-			metav1.CreateOptions{},
-		)
-		require.Error(t, err)
+			_, err = clientNone.Resource.List(context.Background(), metav1.ListOptions{})
+			require.Error(t, err)
 
-		_, err = clientNone.Resource.Update(context.Background(), created, metav1.UpdateOptions{})
-		require.Error(t, err)
+			_, err = clientNone.Resource.Create(context.Background(),
+				helper.LoadYAMLOrJSONFile("testdata/playlist-generate.yaml"),
+				metav1.CreateOptions{},
+			)
+			require.Error(t, err)
 
-		err = clientNone.Resource.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
-		require.Error(t, err)
+			_, err = clientNone.Resource.Update(context.Background(), created, metav1.UpdateOptions{})
+			require.Error(t, err)
 
-		// delete created resource
-		err = clientAdmin.Resource.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
-		require.NoError(t, err)
+			err = clientNone.Resource.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
+			require.Error(t, err)
+		})
+
+		// When a None-role user is explicitly granted playlists:read via RBAC, they can
+		// read playlists — this is the proper fix for the customer use case described in
+		// https://github.com/grafana/grafana/issues/115712.
+		//
+		// Note: we create a fresh user and use a managed: role name so the permission is
+		// visible to GetUserPermissions (which filters by OSSRolesPrefixes = ["managed:", "extsvc:"]).
+		// AddUserPermissionToDB uses "test:role" which is silently filtered out.
+		t.Run("None role with explicit playlists:read can read but not write", func(t *testing.T) {
+			noneWithRead := helper.CreateUser("none-with-read", apis.Org1, org.RoleNone, nil)
+			noneUserID, err := noneWithRead.Identity.GetInternalID()
+			require.NoError(t, err)
+
+			orgID := noneWithRead.Identity.GetOrgID()
+			err = helper.GetEnv().SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+				roleName := accesscontrol.ManagedUserRoleName(noneUserID)
+				role := &accesscontrol.Role{
+					OrgID:   orgID,
+					UID:     fmt.Sprintf("managed_user_%d_permissions", noneUserID),
+					Name:    roleName,
+					Updated: time.Now(),
+					Created: time.Now(),
+				}
+				if _, err := sess.Insert(role); err != nil {
+					return err
+				}
+				if _, err := sess.Insert(accesscontrol.UserRole{
+					OrgID:   orgID,
+					RoleID:  role.ID,
+					UserID:  noneUserID,
+					Created: time.Now(),
+				}); err != nil {
+					return err
+				}
+				perm := accesscontrol.Permission{
+					RoleID:  role.ID,
+					Action:  playlist.ActionPlaylistsRead,
+					Scope:   "playlists:*",
+					Created: time.Now(),
+					Updated: time.Now(),
+				}
+				perm.Kind, perm.Attribute, perm.Identifier = perm.SplitScope()
+				_, err := sess.Insert(&perm)
+				return err
+			})
+			require.NoError(t, err)
+
+			clientNoneWithRead := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: noneWithRead,
+				GVR:  gvr,
+			})
+
+			_, err = clientNoneWithRead.Resource.Get(context.Background(), created.GetName(), metav1.GetOptions{})
+			require.NoError(t, err, "None user with playlists:read should be able to get a playlist")
+
+			_, err = clientNoneWithRead.Resource.List(context.Background(), metav1.ListOptions{})
+			require.NoError(t, err, "None user with playlists:read should be able to list playlists")
+
+			_, err = clientNoneWithRead.Resource.Create(context.Background(),
+				helper.LoadYAMLOrJSONFile("testdata/playlist-generate.yaml"),
+				metav1.CreateOptions{},
+			)
+			require.Error(t, err, "None user with only playlists:read should not be able to create")
+
+			_, err = clientNoneWithRead.Resource.Update(context.Background(), created, metav1.UpdateOptions{})
+			require.Error(t, err, "None user with only playlists:read should not be able to update")
+
+			err = clientNoneWithRead.Resource.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
+			require.Error(t, err, "None user with only playlists:read should not be able to delete")
+		})
 	})
 
 	t.Run("Check k8s client-go List from different org users", func(t *testing.T) {

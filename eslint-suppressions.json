@@ -4,16 +4,6 @@
       "count": 1
     }
   },
-  "e2e/old-arch/utils/support/localStorage.ts": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 2
-    }
-  },
-  "e2e/old-arch/utils/support/types.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "e2e/utils/support/localStorage.ts": {
     "@grafana/no-direct-local-storage-access": {
       "count": 2
