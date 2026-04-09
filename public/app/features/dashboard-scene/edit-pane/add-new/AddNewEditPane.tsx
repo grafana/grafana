@@ -150,17 +150,22 @@ function getStyles(theme: GrafanaTheme2) {
     imageContainer: css({
       cursor: 'pointer',
       width: '100%',
-      border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
+      opacity: 0.8,
       overflow: 'hidden',
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.colors.border.medium}`,
+      background: theme.colors.background.secondary,
       '&:hover': {
-        background: theme.colors.background.elevated,
-        boxShadow: theme.shadows.z1,
+        opacity: 1,
       },
       img: {
         display: 'block',
-        width: '100%',
-        padding: theme.spacing(1.5),
+        width: 'auto',
+        maxWidth: '100%',
+        height: 'auto',
+        maxHeight: theme.spacing(9),
+        marginLeft: 'auto',
+        marginRight: 'auto',
       },
     }),
     pasteButton: css({
