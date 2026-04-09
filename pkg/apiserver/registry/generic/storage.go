@@ -47,16 +47,19 @@ func NewRegistryStoreWithSelectableFields(scheme *runtime.Scheme, resourceInfo u
 	}
 
 	var keyFunc func(ctx context.Context, name string) (string, error)
+	var keyRootFunc func(ctx context.Context) string
 	if resourceInfo.IsClusterScoped() {
 		keyFunc = ClusterScopedKeyFunc(resourceInfo.GroupResource())
+		keyRootFunc = ClusterKeyRootFunc(resourceInfo.GroupResource())
 	} else {
 		keyFunc = NamespaceKeyFunc(resourceInfo.GroupResource())
+		keyRootFunc = KeyRootFunc(resourceInfo.GroupResource())
 	}
 
 	store := &registry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
-		KeyRootFunc:               KeyRootFunc(resourceInfo.GroupResource()),
+		KeyRootFunc:               keyRootFunc,
 		KeyFunc:                   keyFunc,
 		PredicateFunc:             predicateFunc,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),

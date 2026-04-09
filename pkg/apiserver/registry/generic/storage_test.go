@@ -126,6 +126,28 @@ func TestNewRegistryStore_KeyFuncSelection(t *testing.T) {
 	}
 }
 
+func TestKeyRootFunc_ClusterScoped(t *testing.T) {
+	gr := schema.GroupResource{Group: "iam.grafana.app", Resource: "globalroles"}
+
+	// ClusterKeyRootFunc should never include namespace, even when context has one.
+	clusterRoot := ClusterKeyRootFunc(gr)
+	ctx := genericapirequest.WithNamespace(context.Background(), "stacks-4060")
+	key := clusterRoot(ctx)
+	if strings.Contains(key, "namespace") || strings.Contains(key, "stacks-4060") {
+		t.Errorf("ClusterKeyRootFunc key %q should not contain namespace", key)
+	}
+	if !strings.Contains(key, "globalroles") {
+		t.Errorf("ClusterKeyRootFunc key %q should contain resource name", key)
+	}
+
+	// KeyRootFunc should include namespace when context has one.
+	namespacedRoot := KeyRootFunc(gr)
+	key = namespacedRoot(ctx)
+	if !strings.Contains(key, "stacks-4060") {
+		t.Errorf("KeyRootFunc key %q should contain namespace stacks-4060", key)
+	}
+}
+
 type mockObject struct {
 	metav1.TypeMeta
 	metav1.ObjectMeta
