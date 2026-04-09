@@ -3843,6 +3843,7 @@ __metadata:
     rxjs: "npm:7.8.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.9.2"
+    uuid: "npm:11.1.0"
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0

@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 import { type LogContext } from '@grafana/faro-web-sdk';
 
 import { createMonitoringLogger, type MonitoringLogger } from './logging';
@@ -68,7 +70,7 @@ function logError({ error, key }: LogErrorArgs): void {
     context.stack = err.stack;
   }
 
-  getLogger().logError(new Error(`Something failed while resolving a cached promise`), context);
+  getLogger().logError(new Error(`getCachedPromise: Something failed while resolving a cached promise`), context);
 }
 
 function checkCacheSize() {
@@ -160,4 +162,42 @@ export function invalidateCache() {
   }
 
   cache.clear();
+}
+
+export function extractKeyFromArgs<TArgs extends unknown[]>(args: TArgs, baseName: string): string {
+  try {
+    return JSON.stringify(args);
+  } catch (error) {
+    const key = `uncacheable:${uuidv4()}`;
+    getLogger().logError(new Error(`getCachedPromiseWithArgs: extractKeyFromArgs failed`, { cause: error }), {
+      baseName,
+      key,
+    });
+    return key;
+  }
+}
+
+/**
+ * Utility function that generates a cached version of a promise-returning function. The generated function will cache the result of the promise based on the provided options.
+ * It uses the getCachedPromise function internally to handle caching logic and error handling.
+ *
+ * @template TArgs - The type of the arguments for the promise function
+ * @template T - The type of the resolved promise value
+ * @param fn - The promise-returning function to be cached
+ * @param options - Options for caching behavior
+ * @returns A function that returns a cached promise when invoked with the same arguments
+ */
+export function getCachedPromiseWithArgs<T, TArgs extends unknown[]>(
+  fn: (...args: TArgs) => Promise<T>,
+  options?: CachedPromiseOptions<T>
+): (...args: TArgs) => Promise<T> {
+  const baseName = options?.cacheKey ?? fn.name;
+  if (!baseName) {
+    throw new Error(`getCachedPromiseWithArgs function must be invoked with a named function or cacheKey`);
+  }
+
+  return (...args: TArgs) => {
+    const key = `${baseName}:${extractKeyFromArgs(args, baseName)}`;
+    return getCachedPromise(() => fn(...args), { ...options, cacheKey: key });
+  };
 }
