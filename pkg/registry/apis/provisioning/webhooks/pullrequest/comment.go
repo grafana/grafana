@@ -12,12 +12,12 @@ import (
 const maxErrorLength = 256
 
 type commenter struct {
-	templateDashboard     	 *template.Template
-	templateTable         	 *template.Template
-	templateRenderInfo    	 *template.Template
-	templateFooter        	 *template.Template
+	templateDashboard        *template.Template
+	templateTable            *template.Template
+	templateRenderInfo       *template.Template
+	templateFooter           *template.Template
 	templateValidationErrors *template.Template
-	showImageRendererNote bool
+	showImageRendererNote    bool
 }
 
 func NewCommenter(showImageRendererNote bool) Commenter {
@@ -25,9 +25,9 @@ func NewCommenter(showImageRendererNote bool) Commenter {
 		templateDashboard:        template.Must(template.New("dashboard").Parse(commentTemplateSingleDashboard)),
 		templateTable:            template.Must(template.New("table").Parse(commentTemplateTable)),
 		templateRenderInfo:       template.Must(template.New("setup").Parse(commentTemplateMissingImageRenderer)),
-		templateFooter:        	  template.Must(template.New("footer").Parse(commentTemplateFooter)),
+		templateFooter:           template.Must(template.New("footer").Parse(commentTemplateFooter)),
 		templateValidationErrors: template.Must(template.New("errors").Parse(commentTemplateValidationErrors)),
-		showImageRendererNote: 	  showImageRendererNote,
+		showImageRendererNote:    showImageRendererNote,
 	}
 }
 
@@ -55,11 +55,11 @@ func (c *commenter) generateComment(_ context.Context, info changeInfo) (string,
 			return "", fmt.Errorf("unable to execute template: %w", err)
 		}
 	} else {
-		if err := c.templateTable.Execute(&buf, info); err != nil {
+		if err := c.templateTable.Execute(&buf, &info); err != nil {
 			return "", fmt.Errorf("unable to execute template: %w", err)
 		}
 		if info.HasErrors() {
-			if err := c.templateValidationErrors.Execute(&buf, info); err != nil {
+			if err := c.templateValidationErrors.Execute(&buf, &info); err != nil {
 				return "", fmt.Errorf("unable to execute validation errors template: %w", err)
 			}
 		}
@@ -82,7 +82,7 @@ func (c *commenter) generateComment(_ context.Context, info changeInfo) (string,
 	return result, nil
 }
 
-const commentTemplateSingleDashboard = `Hey there! 🎉
+const commentTemplateSingleDashboard = `Hey there! 👋
 Grafana spotted some changes to your dashboard.
 {{- if and .GrafanaScreenshotURL .PreviewScreenshotURL}}
 
@@ -114,20 +114,29 @@ See the [preview]({{.PreviewURL}}) of {{.Parsed.Info.Path}}.
 {{- end}}
 `
 
-const commentTemplateTable = `Hey there! 🎉
-Grafana spotted some changes.
+const commentTemplateTable = `Hey there! 👋
+{{- if .HasErrors}}
+Grafana spotted {{.TotalChanges}} changes ({{.ErrorCount}} with issues).
+{{- else}}
+Grafana spotted {{.TotalChanges}} changes.
+{{- end}}
 
-| Action | Kind | Resource | Preview | |
-|--------|------|----------|---------|-|
+| Action | Kind | Resource | Preview | Status |
+|--------|------|----------|---------|--------|
 {{- range .Changes}}
 | {{.Parsed.Action}} | {{.Kind}} | {{.ExistingLink}} | {{ if .PreviewURL}}[preview]({{.PreviewURL}}){{ end }} | {{.StatusIcon}} |
 {{- end -}}
 {{- if .SkippedFiles}}
 
 and {{ .SkippedFiles }} more files.
+{{- end}}
+{{- if not .HasErrors}}
+
+All resources passed validation. ✅
 {{- end}}`
 
 const commentTemplateValidationErrors = `
+
 ### ⚠️ Validation Issues
 
 | File | Error |
@@ -192,4 +201,18 @@ func (c *changeInfo) HasErrors() bool {
 		}
 	}
 	return false
+}
+
+func (c *changeInfo) TotalChanges() int {
+	return len(c.Changes)
+}
+
+func (c *changeInfo) ErrorCount() int {
+	n := 0
+	for i := range c.Changes {
+		if c.Changes[i].Error != "" {
+			n++
+		}
+	}
+	return n
 }
