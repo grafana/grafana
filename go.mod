@@ -66,7 +66,7 @@ require (
 	github.com/go-logfmt/logfmt v0.6.1 // @grafana/data-sources-plugins
 	github.com/go-openapi/loads v0.23.3 // @grafana/alerting-backend
 	github.com/go-openapi/runtime v0.28.0 // @grafana/alerting-backend
-	github.com/go-openapi/strfmt v0.26.0 // @grafana/alerting-backend
+	github.com/go-openapi/strfmt v0.26.1 // @grafana/alerting-backend
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // @grafana/grafana-backend-group
 	github.com/go-sql-driver/mysql v1.9.3 // @grafana/grafana-search-and-storage
 	github.com/go-stack/stack v1.8.1 // @grafana/grafana-backend-group
@@ -101,7 +101,7 @@ require (
 	github.com/grafana/grafana-cloud-migration-snapshot v1.10.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-google-sdk-go v0.4.2 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
-	github.com/grafana/grafana-plugin-sdk-go v0.291.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.291.1-0.20260410042753-93dac6816eb3 // @grafana/plugins-platform-backend
 	github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 // @grafana/alerting-backend
 	github.com/grafana/loki/v3 v3.5.11 // @grafana/observability-logs
 	github.com/grafana/nanogit/gittest v0.10.2 // @grafana/grafana-git-ui-sync-team
@@ -393,7 +393,6 @@ require (
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/centrifugal/protocol v0.17.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/chromedp/cdproto v0.0.0-20250803210736-d308e07a266d // indirect
 	github.com/clipperhouse/displaywidth v0.10.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.6.0 // indirect

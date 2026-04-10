@@ -4,7 +4,7 @@ go 1.25.9
 
 require (
 	github.com/emicklei/go-restful/v3 v3.13.0
-	github.com/grafana/grafana-plugin-sdk-go v0.291.0
+	github.com/grafana/grafana-plugin-sdk-go v0.291.1-0.20260410042753-93dac6816eb3
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20260118065639-60cb766a97d6
 	github.com/mattbaird/jsonpatch v0.0.0-20240118010651-0ba75a80ca38
@@ -29,7 +29,6 @@ require (
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/clipperhouse/displaywidth v0.10.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.6.0 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
