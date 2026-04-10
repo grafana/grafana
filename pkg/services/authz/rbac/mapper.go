@@ -370,6 +370,21 @@ func NewMapperRegistry() MapperRegistry {
 					utils.VerbGetPermissions:   "playlists:read",
 					utils.VerbSetPermissions:   "playlists:write",
 				},
+				actionSetMapping: map[string][]string{
+					// Compatibility aliases:
+					// - legacy fixed-role actions use playlists:read / playlists:write
+					// - explicit grants may use playlists:reader / playlists:writer
+					utils.VerbGet:              {"playlists:reader", "playlists:writer"},
+					utils.VerbList:             {"playlists:reader", "playlists:writer"},
+					utils.VerbWatch:            {"playlists:reader", "playlists:writer"},
+					utils.VerbCreate:           {"playlists:writer"},
+					utils.VerbUpdate:           {"playlists:writer"},
+					utils.VerbPatch:            {"playlists:writer"},
+					utils.VerbDelete:           {"playlists:writer"},
+					utils.VerbDeleteCollection: {"playlists:writer"},
+					utils.VerbGetPermissions:   {"playlists:reader", "playlists:writer"},
+					utils.VerbSetPermissions:   {"playlists:writer"},
+				},
 				folderSupport: false,
 			},
 		},

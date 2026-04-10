@@ -46,36 +46,36 @@ func installerWithToggle(on bool, ac authlib.AccessClient) *AppInstaller {
 	}
 	return &AppInstaller{
 		features:      features,
-		accessService: &fakeAccessService{},
+		accessService: &mockAccessService{},
 		accessClient:  ac,
 		logger:        log.NewNopLogger(),
 	}
 }
 
-type fakeAccessService struct {
+type mockAccessService struct {
 	accesscontrol.Service
 }
 
-func (f *fakeAccessService) GetUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+func (f *mockAccessService) GetUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	return nil, nil
 }
 
-type fakeAccessClient struct {
+type mockAccessClient struct {
 	checkFunc func(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error)
 }
 
-func (m *fakeAccessClient) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+func (m *mockAccessClient) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 	if m.checkFunc != nil {
 		return m.checkFunc(ctx, id, req, folder)
 	}
 	return authlib.CheckResponse{Allowed: false}, nil
 }
 
-func (m *fakeAccessClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+func (m *mockAccessClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
 	return nil, authlib.NoopZookie{}, nil
 }
 
-func (m *fakeAccessClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+func (m *mockAccessClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
 	return authlib.BatchCheckResponse{}, nil
 }
 
@@ -206,7 +206,7 @@ func TestGetAuthorizer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var checkedReq authlib.CheckRequest
-			mockAC := &fakeAccessClient{
+			mockAC := &mockAccessClient{
 				checkFunc: func(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 					checkedReq = req
 					if tt.checkError {
@@ -268,7 +268,7 @@ func TestGetAuthorizer(t *testing.T) {
 }
 
 func TestGetAuthorizerToggleOff(t *testing.T) {
-	mockAC := &fakeAccessClient{}
+	mockAC := &mockAccessClient{}
 	installer := installerWithToggle(false, mockAC)
 	auth := installer.GetAuthorizer()
 
@@ -290,12 +290,12 @@ func TestGetAuthorizerToggleOff(t *testing.T) {
 		assert.Equal(t, authorizer.DecisionNoOpinion, decision)
 	})
 
-	t.Run("None role with read verb allows (hotfix)", func(t *testing.T) {
+	t.Run("None role defers to roleAuthorizer", func(t *testing.T) {
 		for _, verb := range []string{"get", "list", "watch"} {
 			attrs := &mockAttributes{isResourceRequest: true, verb: verb}
 			decision, _, err := auth.Authorize(noneCtx, attrs)
 			require.NoError(t, err)
-			assert.Equal(t, authorizer.DecisionAllow, decision, "verb: %s", verb)
+			assert.Equal(t, authorizer.DecisionNoOpinion, decision, "verb: %s", verb)
 		}
 	})
 

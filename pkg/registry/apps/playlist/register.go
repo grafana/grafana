@@ -94,17 +94,9 @@ func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			if !p.features.IsEnabledGlobally(featuremgmt.FlagPlaylistsRBAC) {
-				// Hotfix: grant None-role users viewer-level access until the toggle is enabled.
-				// All other roles are handled by the default role authorizer.
-				if user.GetOrgRole() != org.RoleNone {
-					return authorizer.DecisionNoOpinion, "", nil
-				}
-				switch attr.GetVerb() {
-				case "get", "list", "watch":
-					return authorizer.DecisionAllow, "", nil
-				default:
-					return authorizer.DecisionNoOpinion, "", nil
-				}
+				// Toggle-off path: this app authorizer defers entirely to the legacy role authorizer.
+				// The temporary "None-as-viewer" hotfix is enforced there (role.go), not in this file.
+				return authorizer.DecisionNoOpinion, "", nil
 			}
 
 			authInfo, ok := authlib.AuthInfoFrom(ctx)
@@ -127,10 +119,12 @@ func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 			if !checkRsp.Allowed {
 				// For built-in org roles, defer to the default role authorizer when
 				// AccessClient denies. This keeps legacy role behavior intact while
-				// still allowing explicit RBAC grants for None-role users.
+				// preserving existing authorization behavior for non-None roles.
 				if user.GetOrgRole() != org.RoleNone {
 					return authorizer.DecisionNoOpinion, "", nil
 				}
+				// Toggle-on path only: temporary compatibility fallback for None-role users
+				// with explicit playlist RBAC permissions, while AccessClient parity is finalized.
 				legacyAllowed, legacyErr := p.checkNoneRoleFallback(ctx, user, attr)
 				if legacyErr != nil {
 					return authorizer.DecisionDeny, "permission evaluation failed", legacyErr
