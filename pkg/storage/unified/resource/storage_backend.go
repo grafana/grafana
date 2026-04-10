@@ -1936,12 +1936,14 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			}
 		}
 
-		summaries[NSGR(key)] = &resourcepb.BulkResponse_Summary{
+		summary := &resourcepb.BulkResponse_Summary{
 			Namespace:     key.Namespace,
 			Group:         key.Group,
 			Resource:      key.Resource,
 			PreviousCount: previousCount,
 		}
+		summaries[NSGR(key)] = summary
+		rsp.Summary = append(rsp.Summary, summary)
 	}
 
 	saved := make([]DataKey, 0)
@@ -1963,6 +1965,14 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			Group:     item.dataKey.Group,
 			Resource:  item.dataKey.Resource,
 		}] = true
+		nsgr := NSGR(&resourcepb.ResourceKey{
+			Namespace: item.dataKey.Namespace,
+			Group:     item.dataKey.Group,
+			Resource:  item.dataKey.Resource,
+		})
+		if summary, ok := summaries[nsgr]; ok {
+			summary.Count++
+		}
 	}
 
 	batchIter, ok := iter.(BulkRequestBatchIterator)

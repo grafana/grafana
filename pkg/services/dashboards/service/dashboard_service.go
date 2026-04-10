@@ -308,7 +308,7 @@ func (dr *DashboardServiceImpl) getLastResourceVersion(ctx context.Context, orgI
 	}
 
 	if !ok {
-		dr.log.Info("No last resource version found, starting from scratch", "orgID", orgID)
+		dr.log.Debug("No last deleted resource version found, skipping", "orgID", orgID)
 		return "0", nil
 	}
 
@@ -705,7 +705,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	if dash.IsFolder && strings.EqualFold(dash.Title, dashboards.RootFolderName) {
-		return nil, dashboards.ErrDashboardFolderNameExists
+		return nil, folder.ErrNameExists
 	}
 
 	if err := dr.ValidateDashboardRefreshInterval(dr.cfg.MinRefreshInterval, dash.Data.Get("refresh").MustString("")); err != nil {

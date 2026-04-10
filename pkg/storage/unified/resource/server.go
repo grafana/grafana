@@ -904,6 +904,11 @@ func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resource
 	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
+		if apierrors.IsConflict(err) {
+			// Retryable concurrent-create conflict. Return as gRPC Aborted
+			// so client retry interceptors can handle it.
+			return nil, status.Error(codes.Aborted, err.Error())
+		}
 		rsp.Error = AsErrorResult(err)
 	}
 	s.log.FromContext(ctx).Debug("server.WriteEvent", "type", event.Type, "rv", rsp.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "name", event.Key.Name, "resource", event.Key.Resource)

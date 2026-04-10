@@ -566,7 +566,8 @@
       "metadata": {
         "name": "alertingNotificationHistoryTriage",
         "resourceVersion": "1772614382283",
-        "creationTimestamp": "2026-03-04T08:53:02Z"
+        "creationTimestamp": "2026-03-04T08:53:02Z",
+        "deletionTimestamp": "2026-04-09T17:07:43Z"
       },
       "spec": {
         "description": "Enables the notification history timeline in the triage instance details drawer",
@@ -924,13 +925,17 @@
     {
       "metadata": {
         "name": "analyticsFramework",
-        "resourceVersion": "1772205128141",
-        "creationTimestamp": "2026-02-27T15:12:08Z"
+        "resourceVersion": "1775746176648",
+        "creationTimestamp": "2026-02-27T15:12:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-09 14:49:36.648721 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables new analytics framework",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -1239,6 +1244,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "clickHouseConfigValidation",
+        "resourceVersion": "1775754463440",
+        "creationTimestamp": "2026-04-09T17:07:43Z"
+      },
+      "spec": {
+        "description": "Enables validation on the ClickHouse data source configuration page",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -1780,6 +1799,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasourcesApiServerEnableHealthEndpointRedirect",
+        "resourceVersion": "1774543694579",
+        "creationTimestamp": "2026-03-26T16:48:14Z"
+      },
+      "spec": {
+        "description": "Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
         "expression": "false"
       }
     },
@@ -2352,7 +2384,22 @@
       "metadata": {
         "name": "functionalSharedPreferences",
         "resourceVersion": "1771763406238",
-        "creationTimestamp": "2026-02-22T12:30:06Z"
+        "creationTimestamp": "2026-02-22T12:30:06Z",
+        "deletionTimestamp": "2026-04-04T12:16:21Z"
+      },
+      "spec": {
+        "description": "Whether to use the new SharedPreferences functional component",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.newPreferencesPage",
+        "resourceVersion": "1775304981849",
+        "creationTimestamp": "2026-04-04T12:16:21Z"
       },
       "spec": {
         "description": "Whether to use the new SharedPreferences functional component",
@@ -2583,6 +2630,23 @@
     },
     {
       "metadata": {
+        "name": "influxDBConfigValidation",
+        "resourceVersion": "1775754463440",
+        "creationTimestamp": "2026-02-13T15:53:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-09 17:07:43.440663 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables validation on the InfluxDB data source configuration page",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "influxdbBackendMigration",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2022-02-09T18:26:16Z",
@@ -2625,13 +2689,17 @@
     {
       "metadata": {
         "name": "inlineLogDetailsNoScrolls",
-        "resourceVersion": "1772636622548",
-        "creationTimestamp": "2026-03-04T15:03:42Z"
+        "resourceVersion": "1775746176648",
+        "creationTimestamp": "2026-03-04T15:03:42Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-09 14:49:36.648721 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables an inline version of Log Details that creates no new scrolls",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -3458,7 +3526,8 @@
       "metadata": {
         "name": "logsPanelControls",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-07T14:38:55Z"
+        "creationTimestamp": "2025-04-07T14:38:55Z",
+        "deletionTimestamp": "2026-04-08T09:25:37Z"
       },
       "spec": {
         "description": "Enables a control component for the logs panel in Explore",
@@ -4642,7 +4711,8 @@
       "metadata": {
         "name": "rendererDisableAppPluginsPreload",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-02-24T14:43:06Z"
+        "creationTimestamp": "2025-02-24T14:43:06Z",
+        "deletionTimestamp": "2026-04-09T15:47:18Z"
       },
       "spec": {
         "description": "Disable pre-loading app plugins when the request is coming from the renderer",

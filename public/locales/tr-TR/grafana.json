@@ -4923,6 +4923,9 @@
       "light-theme": "Açık",
       "scopes": "Kapsamlar"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "Grafana Asistanı ile arayın",
       "message": "Sonuç bulunamadı"
@@ -4998,24 +5001,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Verileri veri kaynakları, entegrasyonlar ve uygulamalar aracılığıyla Grafana'ya bağlayın",
-          "title": "Yeni bağlantı ekle"
+          "subtitle": "Verileri veri kaynakları, entegrasyonlar ve uygulamalar aracılığıyla Grafana'ya bağlayın"
         },
         "collector": {
-          "subtitle": "OpenTelemetry Collector'ın dağıtımı olan Grafana Alloy'un yapılandırmasını yönetin",
-          "title": "Toplayıcı"
+          "subtitle": "OpenTelemetry Collector'ın dağıtımı olan Grafana Alloy'un yapılandırmasını yönetin"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "Mevcut veri kaynağı bağlantılarınızı yönetin",
-          "title": "Veri kaynakları"
+          "subtitle": "Mevcut veri kaynağı bağlantılarınızı yönetin"
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "Etkin entegrasyonlarınızı yönetin",
-          "title": "Entegrasyonlar"
+          "subtitle": "Etkin entegrasyonlarınızı yönetin"
         },
         "private-data-source-connections": {
-          "subtitle": "Veri kaynakları için özel ağ bağlantılarınızı yönetin",
-          "title": "Özel veri kaynağı bağlantısı"
+          "subtitle": "Veri kaynakları için özel ağ bağlantılarınızı yönetin"
         },
         "subtitle": "Veri kaynakları, entegrasyonlar ve uygulamalar aracılığıyla altyapınızı Grafana Cloud'a bağlayın. Bu sayfayı kullanarak veri alımından özel bağlantılara ve telemetri işlem hatlarına kadar her şeyi ekleyip yönetebilirsiniz."
       }
@@ -5075,11 +5082,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Yeni bir veri kaynağına bağlanın",
-          "title": "Yeni bağlantı ekle"
+          "subtitle": "Yeni bir veri kaynağına bağlanın"
         },
         "data-sources": {
-          "subtitle": "Mevcut veri kaynağı bağlantılarınızı yönetin",
           "title": "Yapılandırılmış veri kaynaklarını görüntüleyin"
         },
         "subtitle": "Veri kaynağı bağlantılarınızı tek bir yerden yönetin. Yeni bir veri kaynağı eklemek veya mevcut bağlantılarınızı yönetmek için bu sayfayı kullanın."
@@ -5129,10 +5134,6 @@
       "view-json-diff": "Tüm değişiklikleri görmek için JSON farklarını görüntüleyin"
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "Yeni ekle",
     "alert": {
@@ -5174,6 +5175,14 @@
       "back-button": "Geri",
       "next-button": "İleri",
       "save-button": "Kaydet"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "Seçilen hedef veri kaynağı bir sorgu düzenleyici dışa aktarmalıdır.",
@@ -5240,11 +5249,6 @@
       "transform-required": "Lütfen bir dönüşüm türü seçin",
       "type-label": "Tür",
       "type-tooltip": "Kaynak verilere uygulanacak dönüşüm türünü seçin."
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "Sorgu çalıştır"
     }
   },
   "dashboard": {
@@ -6884,7 +6888,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "Göster/gizle kuralları çalışmayacaktır",
@@ -7694,6 +7703,7 @@
       "placeholder-descriptive-text": "Açıklayıcı metin",
       "placeholder-label-name": "Etiket adı",
       "placeholder-variable-name": "Değişken adı",
+      "run-query": "",
       "text-running-query": "Sorgu çalıştırılıyor...",
       "title": {
         "delete-variable": "Değişkeni sil"
@@ -8560,7 +8570,6 @@
       "give-feedback": "Geri bildirim gönder"
     },
     "logs-meta-row": {
-      "download": "İndir",
       "label": {
         "deduplication-count": "Yinelenenleri kaldırma sayısı",
         "showing-only-selected-fields": "Sadece seçilen alanlar gösteriliyor"
@@ -8915,22 +8924,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "Sonuçları günlük kaydı görselleştirmesinde göster",
-        "show-results-in-table-visualisation": "Sonuçları tablo görselleştirmesinde göster",
-        "show-results-newest-to-oldest": "Sonuçları yeniden eskiye sıralayarak göster",
-        "show-results-oldest-to-newest": "Sonuçları eskiden yeniye sıralayarak göster"
+        "show-results-in-table-visualisation": "Sonuçları tablo görselleştirmesinde göster"
       },
       "label": {
         "logs": "Günlük kayıtları",
-        "newest-first": "Yeniden eskiye",
-        "oldest-first": "Eskiden yeniye",
         "table": "Tablo"
       },
-      "label-deduplication": "Yinelenenleri kaldırma",
-      "label-display-results": "Sonuçları görüntüle",
-      "label-prettify-json": "JSON'u düzenle",
-      "label-time": "Zaman",
-      "label-unique-labels": "Benzersiz etiketler",
-      "label-wrap-lines": "Satırları kaydır",
       "title-feedback": "Geri Bildirim",
       "title-logs": "Günlük kayıtları",
       "title-logs-volume": "Günlük kaydı birimi"
@@ -9025,8 +9024,7 @@
       "tooltip-s-m-h": "10 sn, 1 dk, 30 dk, 1 sa"
     },
     "sql-expr": {
-      "button-run-query": "Sorgu çalıştır",
-      "tooltip-experimental": "SQL İfadeleri LLM entegrasyonu deneyseldir. Karşılaştığınız sorunları lütfen Grafana ekibine bildirin."
+      "button-run-query": "Sorgu çalıştır"
     },
     "sql-schema": {
       "error-title": "Hata",
@@ -11404,6 +11402,12 @@
       "show-search": "Günlük sonuçlarında ara",
       "show-timestamps": "Zaman damgalarını göster",
       "show-unique-labels": "Benzersiz etiketleri göster",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "Zaman damgalarını gizle",
         "label": "Günlük kaydı zaman damgaları",
@@ -11430,9 +11434,6 @@
         "not-supported": ""
       },
       "wrap-lines": "Satırları kaydır"
-    },
-    "logs-navigation": {
-      "scroll-top": "En üste kaydır"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12226,7 +12227,7 @@
     },
     "quick-add": {
       "aria-label": "Yeni",
-      "new-template-dashboard-button": "Şablondan pano"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "Blog'tan son gönderiler"
   },
@@ -12317,6 +12318,8 @@
       "description": "Aldığınız bildirimler burada görünecek",
       "title": "Tüm bildirimleri gördünüz."
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "Bildirimleri kapat",
       "title-alert": "Bu sayfa geçmişteki hata ve uyarıları gösterir. Kapatıldıktan sonra geri getirilemezler."
@@ -13378,6 +13381,7 @@
       "token-label": "Proje Erişim Belirteci",
       "token-required": "GitLab belirteci gereklidir",
       "url-description": "GitLab depo URL'si",
+      "url-pattern": "",
       "url-required": "Depo URL'si gereklidir"
     },
     "history-view": {
@@ -14818,19 +14822,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "SQL önerileri oluşturmak için en az bir veri sorgusu ekleyin",
-    "ai-explain-title": "Yapay zekâ destekli SQL ifadesi açıklaması",
-    "ai-suggestions-title": "Yapay zekâ destekli SQL ifadesi önerileri",
-    "apply": "Uygula",
-    "code-label": "{{ language }}",
-    "copy": "Kopyala",
-    "explain-empty-query-tooltip": "Açıklama almak için bir SQL ifadesi girin",
     "explain-query": "Sorguyu açıkla",
-    "explanation-modal-title": "SQL Sorgu Açıklaması",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "SQL Öneri Geçmişi",
-    "suggestions": "Öneriler",
-    "view-explanation": "Açıklamayı göster"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "Favori olarak işaretle",

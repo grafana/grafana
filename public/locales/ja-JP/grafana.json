@@ -4893,6 +4893,9 @@
       "light-theme": "ライト",
       "scopes": "スコープ"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "Grafanaアシスタントで検索",
       "message": "結果はありません"
@@ -4968,24 +4971,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "データソース、統合、アプリを介してデータをGrafanaに接続します",
-          "title": "新しい接続を追加"
+          "subtitle": "データソース、統合、アプリを介してデータをGrafanaに接続します"
         },
         "collector": {
-          "subtitle": "OpenTelemetryコレクターのディストリビューションであるGrafana Alloyの構成を管理します",
-          "title": ""
+          "subtitle": "OpenTelemetryコレクターのディストリビューションであるGrafana Alloyの構成を管理します"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "既存のデータソース接続を管理します",
-          "title": "データソース"
+          "subtitle": "既存のデータソース接続を管理します"
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "アクティブな統合を管理します",
-          "title": "統合"
+          "subtitle": "アクティブな統合を管理します"
         },
         "private-data-source-connections": {
-          "subtitle": "データソースのプライベートネットワーク接続を管理します",
-          "title": "プライベートデータソース接続"
+          "subtitle": "データソースのプライベートネットワーク接続を管理します"
         },
         "subtitle": "データソース、統合、アプリを使用して、インフラストラクチャをGrafana Cloudに接続します。このページを使用して、データの取り込みからプライベート接続、テレメトリパイプラインまで、すべてを管理します。"
       }
@@ -5045,11 +5052,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "新規データソースを接続します",
-          "title": "新しい接続を追加"
+          "subtitle": "新規データソースを接続します"
         },
         "data-sources": {
-          "subtitle": "既存のデータソース接続を管理します",
           "title": "設定されたデータソースを表示"
         },
         "subtitle": "データソース接続を一元管理できます。このページを使用して、新規データソースの追加や、既存の接続の管理を行います。"
@@ -5099,10 +5104,6 @@
       "view-json-diff": "JSON diffを表示してすべての変更を確認する"
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "新規追加",
     "alert": {
@@ -5144,6 +5145,14 @@
       "back-button": "戻る",
       "next-button": "次へ",
       "save-button": "保存"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "選択したターゲットデータソースは、クエリエディタをエクスポートする必要があります。",
@@ -5210,11 +5219,6 @@
       "transform-required": "変換タイプを選択してください",
       "type-label": "タイプ",
       "type-tooltip": "ソースデータに適用される変換のタイプ。"
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "クエリを実行"
     }
   },
   "dashboard": {
@@ -6852,7 +6856,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "ルールの表示/非表示は機能しません",
@@ -7655,6 +7664,7 @@
       "placeholder-descriptive-text": "説明用のテキスト",
       "placeholder-label-name": "ラベル名",
       "placeholder-variable-name": "変数名",
+      "run-query": "",
       "text-running-query": "クエリ実行中...",
       "title": {
         "delete-variable": "変数を削除"
@@ -8517,7 +8527,6 @@
       "give-feedback": "フィードバックを送信"
     },
     "logs-meta-row": {
-      "download": "ダウンロード",
       "label": {
         "deduplication-count": "重複排除カウント",
         "showing-only-selected-fields": "選択されたフィールドのみ表示"
@@ -8870,22 +8879,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "ログの視覚化で結果を表示",
-        "show-results-in-table-visualisation": "テーブルの視覚化で結果を表示",
-        "show-results-newest-to-oldest": "結果を新しい順に表示",
-        "show-results-oldest-to-newest": "結果を古い順に表示"
+        "show-results-in-table-visualisation": "テーブルの視覚化で結果を表示"
       },
       "label": {
         "logs": "ログ",
-        "newest-first": "新しいものから表示",
-        "oldest-first": "古いものから表示",
         "table": "テーブル"
       },
-      "label-deduplication": "重複排除",
-      "label-display-results": "結果を表示",
-      "label-prettify-json": "JSONの整形",
-      "label-time": "時間",
-      "label-unique-labels": "一意のラベル",
-      "label-wrap-lines": "行を折り返す",
       "title-feedback": "フィードバック",
       "title-logs": "ログ",
       "title-logs-volume": "ログ量"
@@ -8980,8 +8979,7 @@
       "tooltip-s-m-h": "10秒、1分、30分、1時間"
     },
     "sql-expr": {
-      "button-run-query": "クエリを実行",
-      "tooltip-experimental": "SQL Expressions LLMの統合は実験的です。問題が発生した場合は、Grafanaチームに報告してください。"
+      "button-run-query": "クエリを実行"
     },
     "sql-schema": {
       "error-title": "エラー",
@@ -11341,6 +11339,12 @@
       "show-search": "ログ結果内を検索",
       "show-timestamps": "タイムスタンプを表示",
       "show-unique-labels": "一意のラベルを表示",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "タイムスタンプを非表示",
         "label": "ログのタイムスタンプ",
@@ -11367,9 +11371,6 @@
         "not-supported": ""
       },
       "wrap-lines": "行を折り返す"
-    },
-    "logs-navigation": {
-      "scroll-top": "一番上までスクロール"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12163,7 +12164,7 @@
     },
     "quick-add": {
       "aria-label": "新規",
-      "new-template-dashboard-button": "テンプレートからダッシュボードを作成"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "最新ブログから"
   },
@@ -12251,6 +12252,8 @@
       "description": "受信した通知はここに表示されます",
       "title": "すべて既読になっています！"
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "通知を閉じる",
       "title-alert": "このページには過去のエラーと警告が表示されます。一度消去すると、復元できません。"
@@ -13306,6 +13309,7 @@
       "token-label": "プロジェクトアクセストークン",
       "token-required": "GitLabトークンが必要です",
       "url-description": "GitLabリポジトリURL",
+      "url-pattern": "",
       "url-required": "リポジトリURLが必要です"
     },
     "history-view": {
@@ -14731,19 +14735,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "SQL候補を生成するために少なくとも1つのデータクエリを追加します",
-    "ai-explain-title": "AIを活用したSQL式の説明",
-    "ai-suggestions-title": "AIを活用したSQL式の提案",
-    "apply": "適用",
-    "code-label": "{{ language }}",
-    "copy": "コピー",
-    "explain-empty-query-tooltip": "説明を取得するには、SQL式を入力します",
     "explain-query": "クエリを説明",
-    "explanation-modal-title": "SQLクエリの説明",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "SQL提案履歴",
-    "suggestions": "提案",
-    "view-explanation": "説明を表示"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "お気に入りに登録",
