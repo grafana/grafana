@@ -24,7 +24,7 @@ const makeMarkdownTable = (properties: Array<Record<string, string | undefined>>
   return [header, border, ...rows].join('\n');
 };
 
-export const formatEventAsMarkdown = (event: EventData): string => {
+export const formatEventAsMarkdown = (event: EventData, index?: number): string => {
   const preparedProperties =
     event.properties?.map((property) => {
       return {
@@ -37,10 +37,10 @@ export const formatEventAsMarkdown = (event: EventData): string => {
   const propertiesTable = event.properties && event.properties.length > 0 ? makeMarkdownTable(preparedProperties) : '';
 
   const markdownRows = [
-    `#### ${event.fullEventName}`,
-    event.description,
+    `### ${index !== undefined ? index + 1 : 'Event'}: *${event.fullEventName}*`,
+    `**Description**: ${event.description}`,
     event.owner ? `**Owner:** ${event.owner}` : undefined,
-    ...(event.properties ? [`##### Properties`, propertiesTable] : []),
+    ...(event.properties ? [`**Properties**:`, propertiesTable] : []),
   ].filter(Boolean);
 
   return markdownRows.join('\n\n');
@@ -57,7 +57,7 @@ export async function formatEventsAsMarkdown(events: EventData[]): Promise<strin
 
   const markdownPerFeature = Object.entries(byFeature)
     .map(([feature, events]) => {
-      const markdownPerEvent = events.map(formatEventAsMarkdown).join('\n');
+      const markdownPerEvent = events.map((event, index) => formatEventAsMarkdown(event, index)).join('\n');
 
       return `
 ### ${feature}
