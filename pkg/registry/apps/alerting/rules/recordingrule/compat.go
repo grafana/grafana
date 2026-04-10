@@ -49,8 +49,8 @@ func convertToK8sResource(
 				Interval: model.RecordingRulePromDuration(interval.String()),
 			},
 			Labels:              make(map[string]model.RecordingRuleTemplateString),
-			Metric:              rule.Record.Metric,
-			TargetDatasourceUID: rule.Record.TargetDatasourceUID,
+			Metric:              model.RecordingRuleMetricName(rule.Record.Metric),
+			TargetDatasourceUID: model.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
 		},
 	}
 
@@ -169,8 +169,8 @@ func convertToBaseDomainModel(orgID int64, k8sRule *model.RecordingRule) (*ngmod
 		Labels:   make(map[string]string),
 
 		Record: &ngmodels.Record{
-			Metric:              k8sRule.Spec.Metric,
-			TargetDatasourceUID: k8sRule.Spec.TargetDatasourceUID,
+			Metric:              string(k8sRule.Spec.Metric),
+			TargetDatasourceUID: string(k8sRule.Spec.TargetDatasourceUID),
 		},
 	}
 

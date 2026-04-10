@@ -27,8 +27,10 @@ AlertRuleSpec: #RuleSpec & {
 	panelID:      int & >0
 }
 
-// TODO(@moustafab): this should be imported from the notifications package
-#NotificationSettings: {
+#NotificationSettingsType: "SimplifiedRouting" | "NamedRoutingTree"
+
+#SimplifiedRouting: {
+	type:     #NotificationSettingsType & "SimplifiedRouting"
 	receiver: string
 	groupBy?: [...string]
 	groupWait?:      #PromDuration
@@ -37,3 +39,11 @@ AlertRuleSpec: #RuleSpec & {
 	muteTimeIntervals?: [...#TimeIntervalRef]
 	activeTimeIntervals?: [...#TimeIntervalRef]
 }
+
+#NamedRoutingTree: {
+	type:        #NotificationSettingsType & "NamedRoutingTree"
+	routingTree: string
+}
+
+// TODO(@moustafab): this should be imported from the notifications package
+#NotificationSettings: #SimplifiedRouting | #NamedRoutingTree

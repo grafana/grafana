@@ -62,7 +62,7 @@ func TestIntegrationRecordingRuleCompatCreateViaK8s(t *testing.T) {
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:  rule.Title,
-			Metric: rule.Record.Metric,
+			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
 					QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -90,7 +90,7 @@ func TestIntegrationRecordingRuleCompatCreateViaK8s(t *testing.T) {
 		require.NotNil(t, retrievedRule)
 		require.Equal(t, 200, status)
 		require.Equal(t, created.Spec.Title, retrievedRule.Title)
-		require.Equal(t, created.Spec.Metric, retrievedRule.Record.Metric)
+		require.Equal(t, string(created.Spec.Metric), retrievedRule.Record.Metric)
 		require.Equal(t, "A", retrievedRule.Data[0].RefID)
 
 		model := map[string]interface{}{}
@@ -239,7 +239,7 @@ func TestIntegrationRecordingRuleCompatCreateViaProvisioning(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, retrievedRule)
 			require.Equal(t, r.Title, retrievedRule.Spec.Title)
-			require.Equal(t, r.Record.Metric, retrievedRule.Spec.Metric)
+			require.Equal(t, r.Record.Metric, string(retrievedRule.Spec.Metric))
 			require.Equal(t, r.FolderUID, retrievedRule.Annotations["grafana.app/folder"])
 			require.Equal(t, created.Title, retrievedRule.Labels[v0alpha1.GroupLabelKey])
 			require.Equal(t, fmt.Sprintf("%d", i), retrievedRule.Labels[v0alpha1.GroupIndexLabelKey])
@@ -381,7 +381,7 @@ func TestIntegrationRecordingRuleCompatCreateViaProvisioningChangeGroupInK8s(t *
 			require.NoError(t, err)
 			require.NotNil(t, retrievedRule)
 			require.Equal(t, r.Title, retrievedRule.Spec.Title)
-			require.Equal(t, r.Record.Metric, retrievedRule.Spec.Metric)
+			require.Equal(t, r.Record.Metric, string(retrievedRule.Spec.Metric))
 			require.Equal(t, r.FolderUID, retrievedRule.Annotations["grafana.app/folder"])
 			require.Equal(t, created.Title, retrievedRule.Labels[v0alpha1.GroupLabelKey])
 			require.Equal(t, fmt.Sprintf("%d", i), retrievedRule.Labels[v0alpha1.GroupIndexLabelKey])
