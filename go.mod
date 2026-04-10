@@ -57,7 +57,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // @grafana/observability-traces-and-profiling
 	github.com/emicklei/go-restful/v3 v3.13.0 // @grafana/grafana-app-platform-squad
 	github.com/fatih/color v1.18.0 // @grafana/grafana-backend-group
-	github.com/fullstorydev/grpchan v1.1.1 // @grafana/grafana-backend-group
+	github.com/fullstorydev/grpchan v1.1.2 // @grafana/grafana-backend-group
 	github.com/gchaincl/sqlhooks v1.3.0 // @grafana/grafana-search-and-storage
 	github.com/getkin/kin-openapi v0.134.0 // @grafana/grafana-app-platform-squad
 	github.com/go-jose/go-jose/v4 v4.1.4 // @grafana/identity-access-team
