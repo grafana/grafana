@@ -203,7 +203,7 @@ export function InteractiveTable<TableData extends object>({
   const tableColumns = useMemo(() => {
     return getColumns<TableData>(columns, showExpandAll);
   }, [columns, showExpandAll]);
-  const id = useUniqueId();
+  const id = useId();
   const getRowHTMLID = useCallback(
     (row: Row<TableData>) => {
       return `${id}-${row.id}`.replace(/\s/g, '');
@@ -340,10 +340,6 @@ export function InteractiveTable<TableData extends object>({
     </div>
   );
 }
-
-const useUniqueId = () => {
-  return useId();
-};
 
 const getColumnHeaderStyles = (theme: GrafanaTheme2) => ({
   sortIcon: css({
