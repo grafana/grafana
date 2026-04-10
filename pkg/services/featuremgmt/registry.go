@@ -992,15 +992,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "dashboardAdHocAndGroupByWrapper",
-			Description:  "Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDashboardsSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "dashboardUnifiedDrilldownControls",
 			Description:  "Renders ad hoc filters and group by in a single unified control",
 			Stage:        FeatureStagePrivatePreview,
@@ -2978,6 +2969,14 @@ var (
 			Expression:      "false",
 			RequiresRestart: true,
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:        "querycaching.redirectToK8SApi",
+			Description: "Redirect caching service cache config reads from legacy storage to K8s API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
 		},
 		{
 			Name:         "compiledBootScript",
