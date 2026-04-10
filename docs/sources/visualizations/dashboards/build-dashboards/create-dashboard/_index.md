@@ -284,11 +284,15 @@ This only applies to queries that include a multi-value variable.
 
 To configure repeats, follow these steps:
 
+{{< docs/list >}}
+
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
 1. Click the panel, row, or tab you want to update to open the sidebar, or click the **Dashboard options** icon to open it.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
+
+{{< shared id="configure-repeat" >}}
 
 1. Expand the **Repeat options** section.
 1. Select the **Repeat by variable**.
@@ -303,6 +307,10 @@ To configure repeats, follow these steps:
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Click **Exit edit**.
+
+{{< /shared >}}
+
+{{< /docs/list >}}
 
 ### Repeating rows and tabs and the Dashboard special data source
 
