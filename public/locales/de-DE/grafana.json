@@ -6888,7 +6888,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "Regeln zum Ein-/Ausblenden funktionieren nicht",
@@ -8565,7 +8570,6 @@
       "give-feedback": "Feedback geben"
     },
     "logs-meta-row": {
-      "download": "Download",
       "label": {
         "deduplication-count": "Anzahl der Deduplizierungen",
         "showing-only-selected-fields": "Nur ausgewählte Felder werden angezeigt"
@@ -8920,22 +8924,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "Ergebnisse in der Logs-Visualisierung anzeigen",
-        "show-results-in-table-visualisation": "Ergebnisse in der Tabellenvisualisierung anzeigen",
-        "show-results-newest-to-oldest": "Ergebnisse vom neuesten bis ältesten anzeigen",
-        "show-results-oldest-to-newest": "Ergebnisse vom ältesten bis neuesten anzeigen"
+        "show-results-in-table-visualisation": "Ergebnisse in der Tabellenvisualisierung anzeigen"
       },
       "label": {
         "logs": "Logs",
-        "newest-first": "Neueste zuerst",
-        "oldest-first": "Älteste zuerst",
         "table": "Tabelle"
       },
-      "label-deduplication": "Deduplizierung",
-      "label-display-results": "Ergebnisse anzeigen",
-      "label-prettify-json": "JSON verschönern",
-      "label-time": "Zeit",
-      "label-unique-labels": "Eindeutige Labels",
-      "label-wrap-lines": "Zeilen umbrechen",
       "title-feedback": "Feedback",
       "title-logs": "Logs",
       "title-logs-volume": "Logs-Volumen"
@@ -9030,8 +9024,7 @@
       "tooltip-s-m-h": "10 s, 1 min., 30 min., 1 h"
     },
     "sql-expr": {
-      "button-run-query": "Abfrage ausführen",
-      "tooltip-experimental": "Die Integration des SQL Expressions LLM ist experimentell. Bitte melden Sie Probleme dem Grafana-Team."
+      "button-run-query": "Abfrage ausführen"
     },
     "sql-schema": {
       "error-title": "Fehler",
@@ -11442,9 +11435,6 @@
       },
       "wrap-lines": "Zeilen umbrechen"
     },
-    "logs-navigation": {
-      "scroll-top": "Nach oben scrollen"
-    },
     "logs-panel": {
       "render-common-labels": {
         "common-labels": "Allgemeine Labels:"
@@ -12237,7 +12227,7 @@
     },
     "quick-add": {
       "aria-label": "Neu",
-      "new-template-dashboard-button": "Dashboard aus Vorlage"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "Das Neueste aus dem Blog"
   },
@@ -13391,6 +13381,7 @@
       "token-label": "Projektzugriffstoken",
       "token-required": "GitLab-Token erforderlich",
       "url-description": "Die GitLab-Repository-URL",
+      "url-pattern": "",
       "url-required": "Repository-URL erforderlich"
     },
     "history-view": {
@@ -14831,19 +14822,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "Fügen Sie mindestens eine Datenabfrage hinzu, um SQL-Vorschläge zu generieren.",
-    "ai-explain-title": "KI-gestützte Erklärung von SQL-Ausdrücken",
-    "ai-suggestions-title": "KI-gestützte Vorschläge für SQL-Ausdrücke",
-    "apply": "Anwenden",
-    "code-label": "{{ language }}",
-    "copy": "Kopieren",
-    "explain-empty-query-tooltip": "Geben Sie einen SQL-Ausdruck ein, um eine Erklärung zu erhalten",
     "explain-query": "Abfrage erklären",
-    "explanation-modal-title": "Erklärung der SQL-Abfrage",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "Verlauf der SQL-Vorschläge",
-    "suggestions": "Vorschläge",
-    "view-explanation": "Erklärung anzeigen"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "Als Favorit markieren",
