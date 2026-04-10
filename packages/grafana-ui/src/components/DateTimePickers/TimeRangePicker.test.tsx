@@ -130,6 +130,30 @@ describe('TimePicker', () => {
   });
 });
 
+it('does not submit wrapping forms', async () => {
+  const onSubmit = jest.fn();
+  render(
+    <form onSubmit={onSubmit}>
+      <TimeRangePicker
+        onChangeTimeZone={() => {}}
+        onChange={(value) => {}}
+        value={value}
+        onMoveBackward={() => {}}
+        onMoveForward={() => {}}
+        onZoom={() => {}}
+      />
+    </form>
+  );
+
+  const buttons = screen.getAllByRole('button');
+
+  for (const button of buttons) {
+    await userEvent.click(button);
+  }
+
+  expect(onSubmit).not.toHaveBeenCalled();
+});
+
 it('shows CTRL+Z in zoom out tooltip when feature flag is disabled', async () => {
   window.grafanaBootData = {
     settings: {

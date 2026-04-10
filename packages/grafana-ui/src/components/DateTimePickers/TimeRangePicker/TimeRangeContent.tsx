@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useId, useState } from 'react';
+import { type KeyboardEvent, useCallback, useEffect, useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import {
@@ -77,7 +77,7 @@ export const TimeRangeContent = (props: Props) => {
   const {
     handleSubmit,
     register,
-    formState: { errors, isValid: formValid },
+    formState: { errors },
     setValue,
     getValues,
   } = useForm<FormState>({
@@ -99,17 +99,12 @@ export const TimeRangeContent = (props: Props) => {
   const onOpen = () => setOpen(true);
 
   const onApply = useCallback(() => {
-    if (!formValid) {
-      return;
-    }
-    const from = getValues('from');
-    const to = getValues('to');
-
-    const raw: RawTimeRange = { from, to };
-    const timeRange = rangeUtil.convertRawToRange(raw, timeZone, fiscalYearStartMonth, commonFormat);
-
-    onApplyFromProps(timeRange);
-  }, [timeZone, fiscalYearStartMonth, onApplyFromProps, getValues, formValid]);
+    handleSubmit((data) => {
+      const raw: RawTimeRange = { from: data.from, to: data.to };
+      const timeRange = rangeUtil.convertRawToRange(raw, timeZone, fiscalYearStartMonth, commonFormat);
+      onApplyFromProps(timeRange);
+    })();
+  }, [handleSubmit, timeZone, fiscalYearStartMonth, onApplyFromProps]);
 
   const onChange = useCallback(
     (from: DateTime | string, to: DateTime | string) => {
@@ -118,6 +113,12 @@ export const TimeRangeContent = (props: Props) => {
     },
     [setValue, timeZone]
   );
+
+  const submitOnEnter = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      onApply();
+    }
+  };
 
   const onCopy = () => {
     const rawSource: RawTimeRange = value.raw;
@@ -171,7 +172,7 @@ export const TimeRangeContent = (props: Props) => {
   );
 
   return (
-    <form onSubmit={handleSubmit(onApply)}>
+    <div>
       <div className={style.fieldContainer}>
         <Field
           label={t('time-picker.range-content.from-input', 'From')}
@@ -198,6 +199,7 @@ export const TimeRangeContent = (props: Props) => {
             })}
             id={fromFieldId}
             onClick={(event) => event.stopPropagation()}
+            onKeyDown={submitOnEnter}
             addonAfter={icon}
             data-testid={selectors.components.TimePicker.fromField}
           />
@@ -225,6 +227,7 @@ export const TimeRangeContent = (props: Props) => {
             })}
             id={toFieldId}
             onClick={(event) => event.stopPropagation()}
+            onKeyDown={submitOnEnter}
             addonAfter={icon}
             data-testid={selectors.components.TimePicker.toField}
           />
@@ -248,7 +251,7 @@ export const TimeRangeContent = (props: Props) => {
           type="button"
           onClick={onPaste}
         />
-        <Button data-testid={selectors.components.TimePicker.applyTimeRange} type="submit" onClick={onApply}>
+        <Button data-testid={selectors.components.TimePicker.applyTimeRange} type="button" onClick={onApply}>
           <Trans i18nKey="time-picker.range-content.apply-button">Apply time range</Trans>
         </Button>
       </div>
@@ -265,7 +268,7 @@ export const TimeRangeContent = (props: Props) => {
         isReversed={isReversed}
         weekStart={weekStart}
       />
-    </form>
+    </div>
   );
 };
 
