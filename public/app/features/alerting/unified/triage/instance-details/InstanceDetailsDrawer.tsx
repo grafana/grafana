@@ -19,6 +19,7 @@ import {
   Text,
   TextLink,
   useStyles2,
+  useTheme2,
 } from '@grafana/ui';
 import { type AlertQuery, GrafanaAlertState, type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
@@ -47,7 +48,6 @@ import { formatTimelineDate, noop } from './timelineUtils';
 
 const { useGetAlertRuleQuery } = alertRuleApi;
 const { useGetRuleHistoryQuery } = stateHistoryApi;
-const SILENCE_DRAWER_CLOSE_ANIMATION_MS = 180;
 
 function DrawerBackButton({ onClick }: { onClick: () => void }) {
   const backLabel = t('alerting.triage.instance-details-drawer.back', 'Back');
@@ -83,13 +83,14 @@ type DrawerView =
 export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, onClose }: InstanceDetailsDrawerProps) {
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
   const [timeRange] = useTimeRange();
+  const theme = useTheme2();
   const { rightColumnWidth } = useWorkbenchContext();
   const [viewStack, setViewStack] = useState<DrawerView[]>([{ type: 'instance-details' }]);
   const closeSilenceTimerRef = useRef<number | undefined>(undefined);
-  const silencePanelContentRef = useRef<HTMLDivElement>(null);
   const [isClosingSilenceDrawer, setIsClosingSilenceDrawer] = useState(false);
 
   const drawerWidth = calculateDrawerWidth(rightColumnWidth);
+  const silenceDrawerCloseAnimationMs = Number(theme.transitions.duration.standard ?? 180);
   const activeView = viewStack[viewStack.length - 1];
   const canGoBack = viewStack.length > 1;
 
@@ -134,13 +135,18 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     return isDrawerRangeShorterThanQuery(rule.grafana_alert, timeRange);
   }, [rule, timeRange]);
 
+  const getTopDrawerContentWrapper = useCallback(() => {
+    const wrappers = document.querySelectorAll<HTMLElement>('.main-view .rc-drawer-content-wrapper');
+    return wrappers.item(wrappers.length - 1) ?? null;
+  }, []);
+
   const resetSilencePanelStyles = useCallback(() => {
-    const el = silencePanelContentRef.current;
+    const el = getTopDrawerContentWrapper();
     if (el) {
       el.style.removeProperty('transition');
       el.style.removeProperty('transform');
     }
-  }, []);
+  }, [getTopDrawerContentWrapper]);
 
   const handleDrawerClose = () => {
     if (closeSilenceTimerRef.current !== undefined) {
@@ -171,14 +177,14 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     });
   };
 
-  const animateCloseSilenceDrawer = () => {
+  const animateCloseSilenceDrawer = useCallback(() => {
     if (isClosingSilenceDrawer) {
       return;
     }
 
-    const el = silencePanelContentRef.current;
+    const el = getTopDrawerContentWrapper();
     if (el) {
-      el.style.transition = `transform ${SILENCE_DRAWER_CLOSE_ANIMATION_MS}ms ease-in`;
+      el.style.transition = `transform ${silenceDrawerCloseAnimationMs}ms ease-in`;
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           el.style.transform = 'translateX(100%)';
@@ -192,8 +198,8 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
       popTopView();
       setIsClosingSilenceDrawer(false);
       closeSilenceTimerRef.current = undefined;
-    }, SILENCE_DRAWER_CLOSE_ANIMATION_MS);
-  };
+    }, silenceDrawerCloseAnimationMs);
+  }, [getTopDrawerContentWrapper, isClosingSilenceDrawer, silenceDrawerCloseAnimationMs, resetSilencePanelStyles]);
 
   const handleBack = () => {
     if (activeView.type === 'silence') {
@@ -362,13 +368,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
           onClose={handleDrawerClose}
           width={drawerWidth}
         >
-          <Box ref={silencePanelContentRef}>
-            <InstanceSilenceForm
-              ruleUid={ruleUID}
-              instanceLabels={instanceLabels}
-              onClose={animateCloseSilenceDrawer}
-            />
-          </Box>
+          <InstanceSilenceForm ruleUid={ruleUID} instanceLabels={instanceLabels} onClose={animateCloseSilenceDrawer} />
         </Drawer>
       </>
     );
