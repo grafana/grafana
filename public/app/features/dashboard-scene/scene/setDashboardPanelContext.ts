@@ -99,7 +99,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     context.eventBus.publish(new AnnotationChangeEvent(anno));
   };
 
-  context.onAnnotationDelete = async (id: number) => {
+  context.onAnnotationDelete = async (id: string) => {
     await annotationServer().delete({ id });
 
     reRunBuiltInAnnotationsLayer(getDashboardSceneFor(vizPanel));

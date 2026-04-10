@@ -259,6 +259,9 @@ export function getAnnotationsFromData(
             if (f.split && typeof v === 'string') {
               v = v.split(',');
             }
+            if (f.key === 'id') {
+              v = String(v);
+            }
             anno[f.key] = v;
           }
         }

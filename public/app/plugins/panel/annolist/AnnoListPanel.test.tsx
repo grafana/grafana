@@ -39,7 +39,7 @@ const defaultResult = {
   time: Date.UTC(2021, 0, 1, 0, 0, 0, 0),
   panelId: 13,
   dashboardId: 14, // deliberately different from panelId
-  id: 14,
+  id: '14',
   uid: '7MeksYbmk',
   dashboardUID: '7MeksYbmk',
   url: '/d/asdkjhajksd/some-dash',

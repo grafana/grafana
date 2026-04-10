@@ -121,8 +121,8 @@ function getTestContext() {
   const getMock = jest.spyOn(backendSrv, 'get').mockResolvedValue(getResults);
   const executeAnnotationQueryMock = jest
     .spyOn(annotationsSrv, 'executeAnnotationQuery')
-    .mockReturnValue(toAsyncOfResult({ events: [{ id: 2 }] }));
-  const annotationQueryMock = jest.fn().mockResolvedValue([{ id: 1 }]);
+    .mockReturnValue(toAsyncOfResult({ events: [{ id: '2' }] }));
+  const annotationQueryMock = jest.fn().mockResolvedValue([{ id: '1' }]);
   const dataSourceSrvMock = {
     get: async (name: string) => {
       if (name === LEGACY_DS_NAME) {
@@ -196,7 +196,7 @@ describe('DashboardQueryRunnerImpl', () => {
     it('then it should return the empty results', (done) => {
       const { runner, options, annotationQueryMock, executeAnnotationQueryMock, dispatchMock } = getTestContext();
       const wait = 201;
-      executeAnnotationQueryMock.mockReturnValue(toAsyncOfResult({ events: [{ id: 2 }] }).pipe(delay(wait)));
+      executeAnnotationQueryMock.mockReturnValue(toAsyncOfResult({ events: [{ id: '2' }] }).pipe(delay(wait)));
       dispatchMock.mockResolvedValue({ data: nameSpaces });
       expectOnResults({
         runner,
@@ -324,7 +324,7 @@ describe('DashboardQueryRunnerImpl', () => {
     it('then it should cancel previous run', (done) => {
       const { runner, options, annotationQueryMock, executeAnnotationQueryMock, dispatchMock } = getTestContext();
       dispatchMock.mockResolvedValue({ data: nameSpaces });
-      executeAnnotationQueryMock.mockReturnValueOnce(toAsyncOfResult({ events: [{ id: 2 }] }).pipe(delay(10000)));
+      executeAnnotationQueryMock.mockReturnValueOnce(toAsyncOfResult({ events: [{ id: '2' }] }).pipe(delay(10000)));
 
       expectOnResults({
         runner,
@@ -351,7 +351,7 @@ describe('DashboardQueryRunnerImpl', () => {
     it('then it should cancel matching workers', (done) => {
       const { runner, options, annotationQueryMock, executeAnnotationQueryMock, dispatchMock } = getTestContext();
       dispatchMock.mockResolvedValue({ data: nameSpaces });
-      executeAnnotationQueryMock.mockReturnValueOnce(toAsyncOfResult({ events: [{ id: 2 }] }).pipe(delay(10000)));
+      executeAnnotationQueryMock.mockReturnValueOnce(toAsyncOfResult({ events: [{ id: '2' }] }).pipe(delay(10000)));
 
       expectOnResults({
         runner,
@@ -387,7 +387,7 @@ function getExpectedForAllResult(): DashboardQueryRunnerResult {
     annotations: [
       {
         color: '#ffc0cb',
-        id: 1,
+        id: '1',
         isRegion: false,
         source: {
           datasource: 'Legacy',
@@ -402,7 +402,7 @@ function getExpectedForAllResult(): DashboardQueryRunnerResult {
       },
       {
         color: '#ffc0cb',
-        id: 2,
+        id: '2',
         isRegion: false,
         source: {
           datasource: 'NextGen',
@@ -421,7 +421,7 @@ function getExpectedForAllResult(): DashboardQueryRunnerResult {
           enable: true,
           hide: false,
           iconColor: 'pink',
-          id: 3,
+          id: 'Snapshotted',
           name: 'Test',
         },
         color: '#ffc0cb',
@@ -431,7 +431,7 @@ function getExpectedForAllResult(): DashboardQueryRunnerResult {
           enable: true,
           hide: false,
           iconColor: 'pink',
-          id: 3,
+          id: 'Snapshotted',
           name: 'Test',
         },
         time: 1,

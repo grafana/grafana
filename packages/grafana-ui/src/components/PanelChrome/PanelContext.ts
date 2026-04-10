@@ -42,7 +42,7 @@ export interface PanelContext {
   canExecuteActions?: () => boolean;
   onAnnotationCreate?: (annotation: AnnotationEventUIModel) => void;
   onAnnotationUpdate?: (annotation: AnnotationEventUIModel) => void;
-  onAnnotationDelete?: (id: number) => void;
+  onAnnotationDelete?: (id: string) => void;
 
   /**
    * Called when a user selects an area on the panel, if defined will override the default behavior of the panel,

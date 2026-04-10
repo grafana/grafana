@@ -23,7 +23,7 @@ export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> extends S
 }
 
 export interface AnnotationEvent {
-  id?: number;
+  id?: string;
   annotation?: any;
   dashboardId?: number;
   /** May be null if it isn't set via the HTTP API */
@@ -49,8 +49,7 @@ export interface AnnotationEvent {
 }
 
 export interface AnnotationEventUIModel {
-  // Numeric identifier; optional because new events do not have an id until they are persisted.
-  id?: number;
+  id?: string;
   from: number;
   to: number;
   tags: string[];

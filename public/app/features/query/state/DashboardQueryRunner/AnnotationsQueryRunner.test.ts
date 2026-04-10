@@ -24,7 +24,7 @@ function getDefaultOptions(): AnnotationQueryRunnerOptions {
   return { annotation, datasource, dashboard, range };
 }
 
-function getTestContext(result: Observable<AnnotationQueryResponse> = toAsyncOfResult({ events: [{ id: 1 }] })) {
+function getTestContext(result: Observable<AnnotationQueryResponse> = toAsyncOfResult({ events: [{ id: '1' }] })) {
   jest.clearAllMocks();
   const dispatchMock = jest.spyOn(store, 'dispatch');
   const options = getDefaultOptions();
@@ -88,7 +88,7 @@ describe('AnnotationsQueryRunner', () => {
       await expect(runner.run(options)).toEmitValuesWith((received) => {
         expect(received).toHaveLength(1);
         const results = received[0];
-        expect(results).toEqual([{ id: 1 }]);
+        expect(results).toEqual([{ id: '1' }]);
         expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
       });
     });

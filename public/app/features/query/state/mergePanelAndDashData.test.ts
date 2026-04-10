@@ -4,7 +4,7 @@ import { AlertState, DataTopic, getDefaultTimeRange, LoadingState, PanelData, to
 
 import { mergePanelAndDashData } from './mergePanelAndDashData';
 
-function toAnnotationFrame(data: Array<Record<'id', number>>) {
+function toAnnotationFrame(data: Array<Record<'id', number | string>>) {
   let frame = toDataFrame(data);
   frame.meta = { dataTopic: DataTopic.Annotations };
   return frame;
@@ -32,7 +32,7 @@ describe('mergePanelAndDashboardData', () => {
 
       scheduler.run(({ cold, expectObservable }) => {
         const panelObservable = cold('a', { a: panelData });
-        const dashObservable = cold('a', { a: { annotations: [{ id: 2 }] } });
+        const dashObservable = cold('a', { a: { annotations: [{ id: '2' }] } });
 
         const result = mergePanelAndDashData(panelObservable, dashObservable);
 
@@ -40,7 +40,7 @@ describe('mergePanelAndDashboardData', () => {
           a: {
             state: LoadingState.Done,
             series: [],
-            annotations: [toAnnotationFrame([{ id: 1 }]), toAnnotationFrame([{ id: 2 }])],
+            annotations: [toAnnotationFrame([{ id: 1 }]), toAnnotationFrame([{ id: '2' }])],
             timeRange,
           },
         });

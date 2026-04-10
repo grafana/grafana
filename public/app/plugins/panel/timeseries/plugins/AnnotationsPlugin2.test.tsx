@@ -411,7 +411,7 @@ describe('AnnotationsPlugin2', () => {
         });
 
         it.each([userEvent.hover, userEvent.click])('delete', async (event) => {
-          const onAnnotationDelete: (id: number) => void = jest.fn().mockImplementation((id: number) => {});
+          const onAnnotationDelete: (id: string) => void = jest.fn().mockImplementation((id: string) => {});
           mockUsePanelContext.mockReturnValue({
             canExecuteActions: () => true,
             canEditAnnotations: () => true,
@@ -435,7 +435,7 @@ describe('AnnotationsPlugin2', () => {
           expect(onAnnotationDelete).not.toHaveBeenCalled();
           await userEvent.click(deleteButton);
           // from the 'id' field
-          expect(onAnnotationDelete).toHaveBeenCalledWith(4683);
+          expect(onAnnotationDelete).toHaveBeenCalledWith('4683');
         });
       });
     });
