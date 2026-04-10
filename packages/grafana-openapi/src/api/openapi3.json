@@ -4569,9 +4569,6 @@
           "isSnapshot": {
             "type": "boolean"
           },
-          "isStarred": {
-            "type": "boolean"
-          },
           "provisioned": {
             "type": "boolean"
           },

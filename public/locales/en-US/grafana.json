@@ -4331,6 +4331,9 @@
       "total_one": "{{count}} item",
       "total_other": "{{count}} item"
     },
+    "create-new": {
+      "dashboard-group": "Dashboard"
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "This item is not in the same repository as the selected items."
@@ -8142,8 +8145,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Not supported",
+      "badge-text-success": "Success",
       "badge-text-supported": "Supported",
       "label": {
+        "advisor": "Advisor",
         "alerting": "Alerting",
         "type": "Type"
       }
@@ -9024,8 +9029,7 @@
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
     },
     "sql-expr": {
-      "button-run-query": "Run query",
-      "tooltip-experimental": "SQL Expressions LLM integration is experimental. Please report any issues to the Grafana team."
+      "button-run-query": "Run query"
     },
     "sql-schema": {
       "error-title": "Error",
@@ -12228,7 +12232,7 @@
     },
     "quick-add": {
       "aria-label": "New",
-      "new-template-dashboard-button": "Dashboard from template"
+      "new-template-dashboard-button": "From template"
     },
     "rss-button": "Latest from the blog"
   },
@@ -14317,11 +14321,11 @@
       "view-as-list": "View as list"
     },
     "dashboard-actions": {
-      "import": "Import",
+      "import": "Import dashboard",
       "new": "New",
       "new-dashboard": "New dashboard",
       "new-folder": "New folder",
-      "new-template-dashboard": "Dashboard from template"
+      "new-template-dashboard": "Use template"
     },
     "generate-columns": {
       "score": "Score"
@@ -14823,19 +14827,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "Add at least one data query to generate SQL suggestions",
-    "ai-explain-title": "AI-powered SQL expression explanation",
-    "ai-suggestions-title": "AI-powered SQL expression suggestions",
-    "apply": "Apply",
-    "code-label": "{{ language }}",
-    "copy": "Copy",
-    "explain-empty-query-tooltip": "Enter a SQL expression to get an explanation",
     "explain-query": "Explain query",
-    "explanation-modal-title": "SQL Query Explanation",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "SQL Suggestion History",
-    "suggestions": "Suggestions",
-    "view-explanation": "View explanation"
+    "generate-suggestion": "Generate suggestion",
+    "improve-query": "Improve query"
   },
   "stars": {
     "mark-as-starred": "Mark as favorite",
@@ -15296,11 +15290,12 @@
     },
     "range-content": {
       "apply-button": "Apply time range",
-      "default-error": "Please enter a past date or \"{{now}}\"",
+      "default-error": "Enter a date ({{dateExample}}) or relative time ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
       "fiscal-year": "Fiscal year: {{from}} - {{to}}",
       "from-input": "From",
       "open-input-calendar": "Open calendar",
-      "range-error": "\"From\" can't be after \"To\"",
+      "range-error": "\"From\" date must be before \"To\" date",
+      "required-error": "This field is required",
       "to-input": "To"
     },
     "range-picker": {

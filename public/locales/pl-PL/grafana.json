@@ -6952,7 +6952,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "Reguły pokazywania/ukrywania nie będą działać",
@@ -8651,7 +8656,6 @@
       "give-feedback": "Przekaż opinię"
     },
     "logs-meta-row": {
-      "download": "Pobierz",
       "label": {
         "deduplication-count": "Liczba deduplikacji",
         "showing-only-selected-fields": "Wyświetlanie tylko wybranych pól"
@@ -9010,22 +9014,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "Pokaż wyniki w wizualizacji logów",
-        "show-results-in-table-visualisation": "Pokaż wyniki w wizualizacji tabeli",
-        "show-results-newest-to-oldest": "Pokaż wyniki od najnowszych do najstarszych",
-        "show-results-oldest-to-newest": "Pokaż wyniki od najstarszych do najnowszych"
+        "show-results-in-table-visualisation": "Pokaż wyniki w wizualizacji tabeli"
       },
       "label": {
         "logs": "Logi",
-        "newest-first": "Od najnowszych",
-        "oldest-first": "Od najstarszych",
         "table": "Tabela"
       },
-      "label-deduplication": "Deduplikacja",
-      "label-display-results": "Wyświetl wyniki",
-      "label-prettify-json": "Formatowanie JSON",
-      "label-time": "Czas",
-      "label-unique-labels": "Unikalne etykiety",
-      "label-wrap-lines": "Zawijaj wiersze",
       "title-feedback": "Opinia",
       "title-logs": "Logi",
       "title-logs-volume": "Wolumin logów"
@@ -9120,8 +9114,7 @@
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
     },
     "sql-expr": {
-      "button-run-query": "Uruchom zapytanie",
-      "tooltip-experimental": "Integracja LLM z wyrażeniami SQL jest eksperymentalna. Wszelkie problemy zgłaszaj zespołowi Grafana."
+      "button-run-query": "Uruchom zapytanie"
     },
     "sql-schema": {
       "error-title": "Błąd",
@@ -11568,9 +11561,6 @@
       },
       "wrap-lines": "Zawijaj wiersze"
     },
-    "logs-navigation": {
-      "scroll-top": "Przewiń w górę"
-    },
     "logs-panel": {
       "render-common-labels": {
         "common-labels": "Typowe etykiety:"
@@ -12363,7 +12353,7 @@
     },
     "quick-add": {
       "aria-label": "Nowy",
-      "new-template-dashboard-button": "Pulpit z szablonu"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "Najnowsze na blogu"
   },
@@ -13535,6 +13525,7 @@
       "token-label": "Token dostępu do projektu",
       "token-required": "Wymagany jest token GitLab",
       "url-description": "Adres URL repozytorium GitLab",
+      "url-pattern": "",
       "url-required": "Adres URL repozytorium jest wymagany"
     },
     "history-view": {
@@ -15005,19 +14996,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "Aby wygenerować sugestie SQL, dodaj co najmniej jedno zapytanie o dane",
-    "ai-explain-title": "Wyjaśnienie wyrażenia SQL oparte na AI",
-    "ai-suggestions-title": "Sugestie wyrażeń SQL oparte na AI",
-    "apply": "Zastosuj",
-    "code-label": "{{ language }}",
-    "copy": "Kopiuj",
-    "explain-empty-query-tooltip": "Wprowadź wyrażenie SQL, aby otrzymać wyjaśnienie",
     "explain-query": "Wyjaśnij zapytanie",
-    "explanation-modal-title": "Wyjaśnienie zapytania SQL",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "Historia sugestii SQL",
-    "suggestions": "Sugestie",
-    "view-explanation": "Pokaż wyjaśnienie"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "Dodaj do ulubionych",
