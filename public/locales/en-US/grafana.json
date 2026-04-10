@@ -3585,11 +3585,19 @@
       },
       "instance-details-drawer": {
         "alert-instance-label": "Alert Instance",
+        "back": "Back",
+        "contact-point-list-title": "Contact point list",
         "declare-incident": "Declare incident",
         "declare-incident-no-permission": "You do not have permission to access Incident",
+        "declare-incident-title": "Declare incident",
+        "drilldown-coming-soon": "Coming soon",
+        "drilldown-coming-soon-description": "This drawer drilldown step will be added in a follow-up change.",
         "instance-details": "Instance details",
+        "notification-history-details-title": "Notification details",
         "silence-button": "Silence",
-        "silence-no-permission": "You do not have permission to create silences"
+        "silence-no-permission": "You do not have permission to create silences",
+        "silence-title": "Silence",
+        "silence-title-with-name": "Silence {{name}}"
       },
       "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
