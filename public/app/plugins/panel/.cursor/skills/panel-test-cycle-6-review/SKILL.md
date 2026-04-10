@@ -1,15 +1,15 @@
 ---
 name: panel-test-cycle-6-review
 description: >-
-  Meta cycle 6 — final review for Grafana panel test work (draft PR, diff read,
-  coverage sanity, optional second review). Use when the user mentions meta Cycle 6,
+  Review Cycle (6) — final review for Grafana panel test work (draft PR, diff read,
+  coverage sanity, optional second review). Use when the user mentions Review Cycle (6),
   PR review, test coverage review, or finishing panel tests under
   public/app/plugins/panel.
 ---
 
-# Panel testing — Meta cycle 6: Review
+# Panel testing — Review Cycle (6)
 
-Canonical methodology: [AGENTS.md](../../../AGENTS.md) (section **“Cycle 5”** — review; AGENTS cycle numbers are unchanged).
+Canonical methodology: [AGENTS.md](../../../AGENTS.md) (**Review Cycle (6)** in this meta workflow; AGENTS labels that section **“Cycle 5”** — review; AGENTS section titles are unchanged).
 
 ## Input before “LGTM”
 

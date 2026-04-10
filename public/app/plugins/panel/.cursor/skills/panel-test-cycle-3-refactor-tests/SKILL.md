@@ -2,13 +2,14 @@
 name: panel-test-cycle-3-refactor-tests
 description: >-
   Guides refactoring Grafana panel test files (describe grouping, setUp/helpers, DRY)
-  with an approved plan before edits. Use when the user mentions Cycle 3, test
-  refactor, describe blocks, setUp, or cleaning panel tests under public/app/plugins/panel.
+  with an approved plan before edits. Use when the user mentions Refactor tests Cycle (3),
+  test refactor, describe blocks, setUp, or cleaning panel tests under
+  public/app/plugins/panel.
 ---
 
-# Panel testing — Cycle 3: Refactor tests
+# Panel testing — Refactor tests Cycle (3)
 
-Canonical methodology: [AGENTS.md](../../../AGENTS.md) (section “Cycle 3” and example).
+Canonical methodology: [AGENTS.md](../../../AGENTS.md) (**Refactor tests Cycle (3)**; AGENTS section “Cycle 3” and example).
 
 ## Non-negotiable: plan approval before edits
 
@@ -37,5 +38,5 @@ Ask: **Approve this plan?** Revise until yes.
 
 ## Anti-patterns
 
-- “Cleaning up” production code in Cycle 3—**avoid**; test-only refactors here.
+- “Cleaning up” production code in **Refactor tests Cycle (3)**—**avoid**; test-only refactors here.
 - Changing assertion meaning while “renaming” tests without prompter sign-off.

@@ -1,18 +1,19 @@
 ---
 name: panel-test-cycle-2-testing
 description: >-
-  Guides Grafana panel test Cycle 2 (smoke test, simple tests, it.todo stubs) with
-  explicit human approval for each test case before it is added. Use when adding
-  initial tests, stubbing scenarios, Cycle 2, or panel test todos under public/app/plugins/panel.
+  Guides Grafana panel test Testing Cycle (2) (smoke test, simple tests, it.todo stubs)
+  with explicit human approval for each test case before it is added. Use when adding
+  initial tests, stubbing scenarios, Testing Cycle (2), or panel test todos under
+  public/app/plugins/panel.
 ---
 
-# Panel testing — Cycle 2: Testing (each test case requires approval)
+# Panel testing — Testing Cycle (2) (each test case requires approval)
 
-Canonical methodology: [AGENTS.md](../../../AGENTS.md) (section “Cycle 2”).
+Canonical methodology: [AGENTS.md](../../../AGENTS.md) (**Testing Cycle (2)**; AGENTS section “Cycle 2”).
 
 ## Non-negotiable: input before edits
 
-1. **Confirm scope** with the prompter: target test file path(s), panel entry, and alignment with Cycle 1 summary (if available).
+1. **Confirm scope** with the prompter: target test file path(s), panel entry, and alignment with **Human context Cycle (1)** summary (if available).
 2. **Plan before code**: Outline intended **`it('renders')`** (or equivalent smoke test) and **simple tests without new mocks** (defer heavy **uPlot** hook setup until needed).
 3. **Get approval on the plan** before creating or editing test files.
 
@@ -40,6 +41,6 @@ If the prompter prefers batch review, they may approve a **numbered list** of te
 
 ## Anti-patterns
 
-- Filling in implementation for `it.todo` in Cycle 2 (that is **Cycle 4**).
+- Filling in implementation for `it.todo` in **Testing Cycle (2)** (that is **Agent assistance Cycle (4)**).
 - Adding mocks for **uPlot** / **EventsCanvas** here unless the prompter explicitly moves complexity forward—default is **defer**.
 - Adding several `it(...)` or `it.todo(...)` blocks in a single edit without prior approval for **each** case (unless the prompter explicitly batch-approved the list).

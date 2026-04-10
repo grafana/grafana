@@ -1,13 +1,13 @@
 ---
 name: panel-test-cycle-5-github-regression-hunt
 description: >-
-  Meta cycle 5 — prompts searching GitHub (grafana/grafana) for related bugfix PRs that
-  may lack test coverage; always return full HTTPS links for every PR and issue
-  candidate; ask whether to add a regression test. Use with panel test meta workflow,
-  regression discovery, or public/app/plugins/panel.
+  Regression tests Cycle (5) — prompts searching GitHub (grafana/grafana) for related
+  bugfix PRs that may lack test coverage; always return full HTTPS links for every PR
+  and issue candidate; ask whether to add a regression test. Use with panel test meta
+  workflow, regression discovery, or public/app/plugins/panel.
 ---
 
-# Panel testing — Meta cycle 5: GitHub bugfix regression candidates
+# Panel testing — Regression tests Cycle (5): GitHub bugfix regression candidates
 
 **AGENTS.md** still lists regression discovery under **Regression tests** (not renumbered). Canonical follow-up: [AGENTS.md](../../../AGENTS.md) (**Regression tests**).
 
