@@ -14,6 +14,7 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { LokiQueryType, LokiQueryDirection } from './dataquery.gen';
 import { type LokiDatasource } from './datasource';
@@ -143,7 +144,7 @@ export function runSplitGroupedQueries(
   const shardQueryIndex = options.shardQueryIndex ?? 0;
 
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, requestN: number, requestGroup: number) => {
-    if (config.featureToggles.lokiQueryLimitsContext) {
+    if (getFeatureFlagClient().getBooleanValue('lokiQueryLimitsContext', false)) {
       requests = addLimitsToSplitRequests(splitQueryIndex, shardQueryIndex, requests);
     }
 

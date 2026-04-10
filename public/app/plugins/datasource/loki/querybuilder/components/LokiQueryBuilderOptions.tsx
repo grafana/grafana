@@ -9,8 +9,8 @@ import { AutoSizeInput, Box, RadioButtonGroup } from '@grafana/ui';
 
 import {
   getQueryDirectionLabel,
+  getQueryDirections,
   preprocessMaxLines,
-  queryDirections,
   queryTypeOptions,
 } from '../../components/LokiOptionFields';
 import { placeHolderScopedVars } from '../../components/monaco-query-field/monaco-completion-provider/validation';
@@ -171,7 +171,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
               </EditorField>
               <EditorField label="Direction" tooltip="Direction to search for logs.">
                 <RadioButtonGroup
-                  options={queryDirections}
+                  options={getQueryDirections()}
                   value={query.direction ?? getDefaultQueryDirection(app)}
                   onChange={onQueryDirectionChange}
                 />

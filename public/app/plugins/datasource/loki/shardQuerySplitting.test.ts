@@ -1,7 +1,6 @@
 import { of } from 'rxjs';
 
 import { type DataQueryRequest, type DataQueryResponse, dateTime, LoadingState } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { LokiQueryDirection, LokiQueryType } from './dataquery.gen';
 import { type LokiDatasource } from './datasource';
@@ -11,11 +10,26 @@ import { LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX, LOKI_TIMEOUT_ERROR_MSG } fr
 import { runShardSplitQuery } from './shardQuerySplitting';
 import { type LokiQuery } from './types';
 
+jest.mock('@grafana/runtime/internal', () => {
+  const actual = jest.requireActual('@grafana/runtime/internal');
+  const realClient = actual.getFeatureFlagClient();
+  return {
+    ...actual,
+    getFeatureFlagClient: () => ({
+      ...realClient,
+      getBooleanValue(key: string, defaultValue: boolean) {
+        if (key === 'lokiQueryLimitsContext') {
+          return true;
+        }
+        return realClient.getBooleanValue(key, defaultValue);
+      },
+    }),
+  };
+});
+
 jest.mock('uuid', () => ({
   v4: jest.fn().mockReturnValue('uuid'),
 }));
-
-const originalLokiQueryLimitsContextState = config.featureToggles.lokiQueryLimitsContext;
 
 const originalLog = console.log;
 const originalWarn = console.warn;
@@ -25,14 +39,10 @@ beforeEach(() => {
   jest.spyOn(console, 'warn').mockImplementation(() => {});
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
-beforeAll(() => {
-  config.featureToggles.lokiQueryLimitsContext = true;
-});
 afterAll(() => {
   console.log = originalLog;
   console.warn = originalWarn;
   console.error = originalErr;
-  config.featureToggles.lokiQueryLimitsContext = originalLokiQueryLimitsContextState;
 });
 
 describe('runShardSplitQuery()', () => {

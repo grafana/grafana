@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, LogSortOrderChangeEvent, LogsSortOrder, store } from '@grafana/data';
-import { config, getAppEvents } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
 
 import { LokiQueryType, LokiQueryDirection } from '../../dataquery.gen';
 import { createLokiDatasource } from '../../mocks/datasource';
@@ -10,21 +10,30 @@ import { type LokiQuery } from '../../types';
 
 import { LokiQueryBuilderOptions, type Props } from './LokiQueryBuilderOptions';
 
+jest.mock('@grafana/runtime/internal', () => {
+  const actual = jest.requireActual('@grafana/runtime/internal');
+  const realClient = actual.getFeatureFlagClient();
+  return {
+    ...actual,
+    getFeatureFlagClient: () => ({
+      ...realClient,
+      getBooleanValue(key: string, defaultValue: boolean) {
+        if (key === 'lokiShardSplitting') {
+          return true;
+        }
+        return realClient.getBooleanValue(key, defaultValue);
+      },
+    }),
+  };
+});
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    featureToggles: {
-      ...jest.requireActual('@grafana/runtime').featureToggles,
-      lokiShardSplitting: true,
-    },
-  },
   getAppEvents: jest.fn(),
 }));
 
 const subscribeMock = jest.fn();
 beforeAll(() => {
-  config.featureToggles.lokiShardSplitting = true;
   subscribeMock.mockImplementation(() => ({ unsubscribe: jest.fn() }));
   jest.mocked(getAppEvents).mockReturnValue({
     publish: jest.fn(),

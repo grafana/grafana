@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { type SelectableValue } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { InlineField, Input, Stack } from '@grafana/ui';
 
 import { LokiQueryType, LokiQueryDirection } from '../dataquery.gen';
@@ -25,22 +26,26 @@ export const queryTypeOptions: Array<SelectableValue<LokiQueryType>> = [
   },
 ];
 
-export const queryDirections: Array<SelectableValue<LokiQueryDirection>> = [
-  { value: LokiQueryDirection.Backward, label: 'Backward', description: 'Search in backward direction.' },
-  {
-    value: LokiQueryDirection.Forward,
-    label: 'Forward',
-    description: 'Search in forward direction.',
-  },
-];
+export function getQueryDirections(): Array<SelectableValue<LokiQueryDirection>> {
+  const directions: Array<SelectableValue<LokiQueryDirection>> = [
+    { value: LokiQueryDirection.Backward, label: 'Backward', description: 'Search in backward direction.' },
+    {
+      value: LokiQueryDirection.Forward,
+      label: 'Forward',
+      description: 'Search in forward direction.',
+    },
+  ];
 
-if (config.featureToggles.lokiShardSplitting) {
-  queryDirections.push({
-    value: LokiQueryDirection.Scan,
-    label: 'Scan',
-    description: 'Experimental. Split the query into smaller units and stop at the requested log line limit.',
-    icon: 'exclamation-triangle',
-  });
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.LokiShardSplitting, false)) {
+    directions.push({
+      value: LokiQueryDirection.Scan,
+      label: 'Scan',
+      description: 'Experimental. Split the query into smaller units and stop at the requested log line limit.',
+      icon: 'exclamation-triangle',
+    });
+  }
+
+  return directions;
 }
 
 if (config.featureToggles.lokiExperimentalStreaming) {
@@ -52,7 +57,7 @@ if (config.featureToggles.lokiExperimentalStreaming) {
 }
 
 export function getQueryDirectionLabel(direction: LokiQueryDirection) {
-  return queryDirections.find((queryDirection) => queryDirection.value === direction)?.label ?? 'Unknown';
+  return getQueryDirections().find((queryDirection) => queryDirection.value === direction)?.label ?? 'Unknown';
 }
 
 export function LokiOptionFields(props: LokiOptionFieldsProps) {

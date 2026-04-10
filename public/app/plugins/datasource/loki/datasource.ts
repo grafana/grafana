@@ -53,6 +53,7 @@ import {
   getTemplateSrv,
   type TemplateSrv,
 } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 
 import LanguageProvider from './LanguageProvider';
@@ -375,7 +376,7 @@ export class LokiDatasource
       return this.runLiveQueryThroughBackend(fixedRequest);
     }
 
-    if (config.featureToggles.lokiShardSplitting && requestSupportsSharding(fixedRequest.targets)) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.LokiShardSplitting, false) && requestSupportsSharding(fixedRequest.targets)) {
       return runShardSplitQuery(this, fixedRequest);
     } else if (config.featureToggles.lokiQuerySplitting && requestSupportsSplitting(fixedRequest.targets)) {
       return runSplitQuery(this, fixedRequest);
