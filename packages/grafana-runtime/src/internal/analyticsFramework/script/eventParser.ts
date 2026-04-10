@@ -83,6 +83,20 @@ const parseEventFromCall = (
   }
 
   const eventName = arg.getLiteralText();
+  const ownProperties = resolveEventProperties(type);
+
+  // Merge namespace-level default properties (from the third arg of defineFeatureEvents)
+  // with event-specific properties. Defaults come first; event-specific ones take precedence
+  // if there's a name collision, matching runtime spread semantics: { ...defaultProps, ...props }
+  const defaultProperties = eventNamespace.defaultProperties ?? [];
+  const mergedProperties =
+    defaultProperties.length > 0 || (ownProperties && ownProperties.length > 0)
+      ? [
+          ...defaultProperties,
+          ...(ownProperties ?? []).filter((p) => !defaultProperties.some((d) => d.name === p.name)),
+        ]
+      : undefined;
+
   return {
     fullEventName: `${eventNamespace.eventPrefixProject}_${eventNamespace.eventPrefixFeature}_${eventName}`,
     repo: eventNamespace.eventPrefixProject,
@@ -90,7 +104,7 @@ const parseEventFromCall = (
     eventName,
     description,
     owner,
-    properties: resolveEventProperties(type),
+    properties: mergedProperties,
   };
 };
 

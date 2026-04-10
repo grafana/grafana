@@ -1,8 +1,9 @@
 import { Node, type SourceFile } from 'ts-morph';
 
-import type { EventData, EventNamespace } from '../types';
+import type { EventData, EventNamespace, EventPropertySchema } from '../types';
 
 import { parseEvents } from './eventParser.ts';
+import { resolveType } from './typeResolution.ts';
 
 export const findAllEvents = (files: SourceFile[], defineFeatureEventsPath: string): EventData[] => {
   const allEvents: EventData[] = files.flatMap((file) => {
@@ -71,12 +72,28 @@ const findEventNamespaces = (sourceFile: SourceFile, defineFeatureEventsName: st
       continue;
     }
 
-    // Extract the two string literal args: ('grafana', 'navigation')
-    const [repoArg, featureArg] = initializer.getArguments();
+    // Extract the two required string literal args: ('grafana', 'navigation')
+    const [repoArg, featureArg, defaultPropsArg] = initializer.getArguments();
     if (!repoArg || !featureArg || !Node.isStringLiteral(repoArg) || !Node.isStringLiteral(featureArg)) {
       throw new Error(
         `defineFeatureEvents must be called with two string literal arguments at ${sourceFile.getFilePath()}`
       );
+    }
+
+    // Extract the optional third argument's type as default properties.
+    // e.g. defineFeatureEvents('grafana', 'navigation', { schema_version: 1 })
+    // would produce [{ name: 'schema_version', type: 'number' }]
+    let defaultProperties: EventPropertySchema[] | undefined;
+    if (defaultPropsArg) {
+      const defaultPropsType = defaultPropsArg.getType();
+      defaultProperties = defaultPropsType.getProperties().map((prop) => {
+        const decl = prop.getDeclarations()[0];
+        const propType = decl ? prop.getTypeAtLocation(decl) : prop.getDeclaredType();
+        return {
+          name: prop.getName(),
+          type: resolveType(propType),
+        };
+      });
     }
 
     const factoryName = variableDecl.getName();
@@ -84,6 +101,7 @@ const findEventNamespaces = (sourceFile: SourceFile, defineFeatureEventsName: st
       factoryName,
       eventPrefixProject: repoArg.getLiteralText(), // "grafana"
       eventPrefixFeature: featureArg.getLiteralText(), // "navigation"
+      defaultProperties,
     });
   }
 

@@ -24,6 +24,9 @@ export interface EventNamespace {
   factoryName: string;
   eventPrefixProject: string;
   eventPrefixFeature: string;
+  // Properties that are merged into every event in this namespace via the third
+  // argument of defineFeatureEvents (e.g. { schema_version: 1 })
+  defaultProperties?: EventPropertySchema[];
 }
 
 // The full event descriptor produced by the script
