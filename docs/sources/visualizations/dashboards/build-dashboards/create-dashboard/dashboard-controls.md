@@ -38,11 +38,11 @@ While that documentation reflects the generally available experience, the inform
 <!-- vale Grafana.Spelling = YES -->
 
 The filter and group by is one of the most complex and flexible variable options available.
-Instead of creating a variable for each dimension by which you want to filter, it automatically creates variables (key/value pairs) for all the dimensions returned by your data source query.
+Instead of creating a variable for each dimension by which you want to filter, they automatically query your data source for available dimensions and let users add or remove filters and groupings on the dashboard dynamically.
 This allows you to quickly apply filters dashboard-wide.
 
 The group by function allows you to then group data by keys, letting you split it up.
-Group by functionality works when you have queries that are aggregators, such as `sum(your_metric_here)`.
+Group by is typically used with aggregation queries, such as `sum(your_metric_here)`, to split aggregated results by the selected dimensions.
 Then, you can use filters within panels to filter data in or out, drilling down further into the data.
 
 The filter and group by feature lets you add label/value filters that are automatically added to all queries that use the specified data source.
@@ -139,7 +139,7 @@ In the following example, the override:
 {{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filter-override-v13.0.png" max-width="400px" alt="Field override making all fields filterable" >}}
 
 However, you can create overrides to address specific fields.
-Be sure to also set your data as filterable by either returning the dataframe with the appropriate `filterable` property on the desired fields
+You can also do this programmatically by returning the data frame with the appropriate `filterable` property on the desired fields.
 
 With the override in place, you can click a series on a time series panel and filter it in or out.
 The new filter is shown in the dashboard filter control and the it's applied to the whole dashboard.
