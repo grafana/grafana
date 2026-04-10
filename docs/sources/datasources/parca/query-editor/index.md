@@ -73,17 +73,9 @@ The **Both** option is only available in [Explore](https://grafana.com/docs/graf
 
 ## Use template variables in queries
 
-The label selector field supports [Grafana template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/). You can use template variables in the label selector to create dynamic, reusable dashboards.
+The label selector field supports Grafana template variables. You can use variables like `$job` or `$instance` in the label selector to create dynamic, reusable dashboards.
 
-For example:
-
-```text
-{job="$job", instance="$instance"}
-```
-
-{{< admonition type="note" >}}
-Template variable interpolation applies only to the label selector field. The profile type selector doesn't support template variables.
-{{< /admonition >}}
+For more information about supported variable types, examples, and limitations, refer to [Parca template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/parca/template-variables/).
 
 ## Profile query results
 
