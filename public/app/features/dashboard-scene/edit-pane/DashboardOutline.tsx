@@ -71,7 +71,7 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
       if (sceneObject instanceof LinkEdit || sceneObject instanceof DashboardLinksSet) {
         // Select directly via editPane.selectObject because link objects are not
         // in the scene graph, so sceneGraph.findByKey (used by onSelect) can't find them.
-        editPane.selectObject(sceneObject, key!);
+        editPane.selectObject(sceneObject);
       } else {
         onSelect?.(e);
       }

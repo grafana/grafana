@@ -1,9 +1,16 @@
-import { createTheme, FieldType, createDataFrame, toDataFrame, type PanelData } from '@grafana/data';
+import { createTheme, FieldType, createDataFrame, toDataFrame } from '@grafana/data';
+import { TooltipDisplayMode } from '@grafana/schema';
 import { LineInterpolation } from '@grafana/ui';
 
 import { type AdHocFilterItem } from '../../../../../packages/grafana-ui/src/components/Table/TableNG/types';
 
-import { getGroupedFilters, LTTB_THRESHOLD, lttbPreviewData, prepareGraphableFields } from './utils';
+import {
+  getGroupedFilters,
+  getTimezones,
+  isTooltipScrollable,
+  prepareGraphableFields,
+  setClassicPaletteIdxs,
+} from './utils';
 
 describe('prepare timeseries graph', () => {
   it('errors with no time fields', () => {
@@ -277,123 +284,120 @@ describe('prepare timeseries graph', () => {
   });
 });
 
-describe('lttbPreviewData', () => {
-  const range = (n: number) => Array.from({ length: n }, (_, i) => i);
-
-  const makeFrame = (length: number, extraFields?: Array<{ name: string; type: FieldType; values: unknown[] }>) => {
-    return createDataFrame({
-      fields: [
-        { name: 'time', type: FieldType.time, values: range(length) },
-        { name: 'value', type: FieldType.number, values: range(length) },
-        ...(extraFields ?? []),
-      ],
-    });
-  };
-
-  it('returns frames unchanged when below the threshold', () => {
-    const result = lttbPreviewData({ series: [makeFrame(3)] } as PanelData);
-
-    expect(result.series[0].length).toBe(3);
-    expect(result.series[0].fields[0].values).toEqual([0, 1, 2]);
+describe('getTimezones', () => {
+  it('returns defaultTimezone when timezones is undefined', () => {
+    expect(getTimezones(undefined, 'browser')).toEqual(['browser']);
   });
 
-  it('returns frames unchanged when there is no time field', () => {
-    const frame = createDataFrame({
+  it('returns defaultTimezone when timezones is empty', () => {
+    expect(getTimezones([], 'browser')).toEqual(['browser']);
+  });
+
+  it('replaces empty strings with the default timezone', () => {
+    expect(getTimezones(['', 'UTC', ''], 'browser')).toEqual(['browser', 'UTC', 'browser']);
+  });
+
+  it('returns all provided timezones unchanged when non-empty', () => {
+    expect(getTimezones(['UTC', 'America/New_York'], 'browser')).toEqual(['UTC', 'America/New_York']);
+  });
+});
+
+describe('isTooltipScrollable', () => {
+  it('returns false when mode is Single', () => {
+    expect(isTooltipScrollable({ mode: TooltipDisplayMode.Single, maxHeight: 200 })).toBe(false);
+  });
+
+  it('returns false when mode is Multi but maxHeight is undefined', () => {
+    expect(isTooltipScrollable({ mode: TooltipDisplayMode.Multi })).toBe(false);
+  });
+
+  it('returns true when mode is Multi and maxHeight is set', () => {
+    expect(isTooltipScrollable({ mode: TooltipDisplayMode.Multi, maxHeight: 200 })).toBe(true);
+  });
+});
+
+describe('setClassicPaletteIdxs', () => {
+  it('assigns sequential seriesIndex to number and boolean fields', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'a', type: FieldType.number, values: [1, 2, 3] },
+          { name: 'b', type: FieldType.boolean, values: [true, false, true] },
+        ],
+      }),
+    ];
+    setClassicPaletteIdxs(frames, createTheme(), 0);
+    expect(frames[0].fields[1].state?.seriesIndex).toBe(0);
+    expect(frames[0].fields[2].state?.seriesIndex).toBe(1);
+  });
+
+  it('skips the field at skipFieldIdx', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'a', type: FieldType.number, values: [1, 2, 3] },
+          { name: 'b', type: FieldType.number, values: [4, 5, 6] },
+        ],
+      }),
+    ];
+    // Skip field index 1 ('a')
+    setClassicPaletteIdxs(frames, createTheme(), 1);
+    expect(frames[0].fields[1].state?.seriesIndex).toBeUndefined();
+    expect(frames[0].fields[2].state?.seriesIndex).toBe(0);
+  });
+
+  it('matches compare frame series indices to the corresponding main frame', () => {
+    const mainFrame = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'value', type: FieldType.number, values: [10, 20] },
+      ],
+    });
+    const compareFrame = toDataFrame({
+      refId: 'A-compare',
+      meta: { timeCompare: { isTimeShiftQuery: true, timeShift: '1d' } },
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'value', type: FieldType.number, values: [5, 15] },
+      ],
+    });
+
+    setClassicPaletteIdxs([mainFrame, compareFrame], createTheme(), 0);
+
+    // Main frame gets index 0
+    expect(mainFrame.fields[1].state?.seriesIndex).toBe(0);
+    // Compare frame should match the main frame's series index
+    expect(compareFrame.fields[1].state?.seriesIndex).toBe(0);
+  });
+});
+
+describe('prepareGraphableFields with xNumFieldIdx', () => {
+  it('uses numeric x axis when xNumFieldIdx is provided', () => {
+    const df = createDataFrame({
+      fields: [
+        { name: 'x', type: FieldType.number, values: [1, 2, 3] },
+        { name: 'y', type: FieldType.number, values: [10, 20, 30] },
+      ],
+    });
+    const frames = prepareGraphableFields([df], createTheme(), undefined, 0);
+    expect(frames).not.toBeNull();
+    expect(frames![0].fields[0].name).toBe('x');
+  });
+
+  it('reorders fields so the numeric x field is first', () => {
+    const df = createDataFrame({
       fields: [
         { name: 'a', type: FieldType.number, values: [1, 2, 3] },
+        { name: 'x', type: FieldType.number, values: [10, 20, 30] },
         { name: 'b', type: FieldType.number, values: [4, 5, 6] },
       ],
     });
-    const result = lttbPreviewData({ series: [frame] } as PanelData);
 
-    expect(result.series[0].length).toBe(3);
-  });
-
-  it('returns frames unchanged when there is no numeric field', () => {
-    const frame = createDataFrame({
-      fields: [
-        { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-        { name: 'label', type: FieldType.string, values: ['a', 'b', 'c'] },
-      ],
-    });
-    const result = lttbPreviewData({ series: [frame] } as PanelData);
-
-    expect(result.series[0].length).toBe(3);
-  });
-
-  it('downsamples frames exceeding the threshold to LTTB_THRESHOLD points', () => {
-    const result = lttbPreviewData({ series: [makeFrame(1000)] } as PanelData);
-
-    expect(result.series[0].length).toBe(LTTB_THRESHOLD);
-    expect(result.series[0].fields[0].values).toHaveLength(LTTB_THRESHOLD);
-    expect(result.series[0].fields[1].values).toHaveLength(LTTB_THRESHOLD);
-  });
-
-  it('always preserves the first and last data points', () => {
-    const result = lttbPreviewData({ series: [makeFrame(1000)] } as PanelData);
-
-    const outTimes = result.series[0].fields[0].values;
-    expect(outTimes[0]).toBe(0);
-    expect(outTimes[outTimes.length - 1]).toBe(999);
-  });
-
-  it('processes each frame independently', () => {
-    const result = lttbPreviewData({ series: [makeFrame(3), makeFrame(500)] } as PanelData);
-
-    expect(result.series[0].length).toBe(3);
-    expect(result.series[1].length).toBe(LTTB_THRESHOLD);
-  });
-
-  it('does not mutate the original data', () => {
-    const frame = makeFrame(500);
-    const data = { series: [frame] } as PanelData;
-    lttbPreviewData(data);
-
-    expect(data.series[0].fields[0].values).toHaveLength(500);
-    expect(data.series[0].length).toBe(500);
-  });
-
-  it('downsamples to a custom threshold when provided', () => {
-    const result = lttbPreviewData({ series: [makeFrame(100)] } as PanelData, 30);
-
-    expect(result.series[0].length).toBe(30);
-    expect(result.series[0].fields[0].values).toHaveLength(30);
-    expect(result.series[0].fields[1].values).toHaveLength(30);
-
-    const outTimes = result.series[0].fields[0].values;
-    expect(outTimes[0]).toBe(0);
-    expect(outTimes[outTimes.length - 1]).toBe(99);
-  });
-
-  it('skips frames at or below the custom threshold', () => {
-    const result = lttbPreviewData({ series: [makeFrame(30)] } as PanelData, 30);
-
-    expect(result.series[0].length).toBe(30);
-    expect(result.series[0].fields[0].values).toEqual(range(30));
-  });
-
-  it('clears interval on the time field to prevent gaps', () => {
-    const frame = createDataFrame({
-      fields: [
-        { name: 'time', type: FieldType.time, values: range(500), config: { interval: 10000 } },
-        { name: 'value', type: FieldType.number, values: range(500) },
-      ],
-    });
-    const result = lttbPreviewData({ series: [frame] } as PanelData);
-
-    const timeField = result.series[0].fields[0];
-    expect(timeField.config.interval).toBeUndefined();
-  });
-
-  it('does not modify config on frames below the threshold', () => {
-    const frame = createDataFrame({
-      fields: [
-        { name: 'time', type: FieldType.time, values: range(3), config: { interval: 10000 } },
-        { name: 'value', type: FieldType.number, values: range(3) },
-      ],
-    });
-    const result = lttbPreviewData({ series: [frame] } as PanelData);
-
-    expect(result.series[0].fields[0].config.interval).toBe(10000);
+    const frames = prepareGraphableFields([df], createTheme(), undefined, 1);
+    expect(frames).not.toBeNull();
+    expect(frames![0].fields[0].name).toBe('x');
   });
 });

@@ -366,8 +366,8 @@ const DraggableFieldName = ({
   return (
     <Draggable draggableId={fieldName} index={index} isDragDisabled={isDragDisabled}>
       {(provided) => (
-        <Box display="flex" gap={0} ref={provided.innerRef} {...provided.draggableProps}>
-          <InlineLabel width={60} as="div">
+        <Box display="flex" gap={0} marginBottom={0.5} ref={provided.innerRef} {...provided.draggableProps}>
+          <InlineLabel as="div" className={styles.flexLabel}>
             <Stack gap={0} justifyContent="flex-start" alignItems="center" width="100%">
               {!isDragDisabled && (
                 <span {...provided.dragHandleProps}>
@@ -399,6 +399,7 @@ const DraggableFieldName = ({
             </Stack>
           </InlineLabel>
           <Input
+            className={styles.flexInput}
             defaultValue={renamedFieldName || ''}
             placeholder={t('transformers.draggable-field-name.rename-placeholder', 'Rename {{fieldName}}', {
               fieldName,
@@ -428,7 +429,7 @@ const DraggableUIOrderByItem = ({ index, item, onChangeSort }: DraggableUIOrderB
     <Draggable draggableId={draggableId} index={index} isDragDisabled={item.order === Order.Off}>
       {(provided) => (
         <Box marginBottom={0.5} display="flex" gap={0} ref={provided.innerRef} {...provided.draggableProps}>
-          <InlineLabel width={60} as="div">
+          <InlineLabel as="div" className={styles.flexLabel}>
             <Stack gap={3} justifyContent="flex-start" alignItems="center" width="100%">
               <span {...provided.dragHandleProps}>
                 <Icon
@@ -466,6 +467,15 @@ const DraggableUIOrderByItem = ({ index, item, onChangeSort }: DraggableUIOrderB
 DraggableUIOrderByItem.displayName = 'DraggableUIOrderByItem';
 
 const getFieldNameStyles = (theme: GrafanaTheme2) => ({
+  flexLabel: css({
+    flex: '1 1 0',
+    width: 'auto',
+    overflow: 'hidden',
+  }),
+  flexInput: css({
+    flex: '1 1 0',
+    width: 'auto',
+  }),
   toggle: css({
     margin: theme.spacing(0, 1),
     color: theme.colors.text.secondary,
