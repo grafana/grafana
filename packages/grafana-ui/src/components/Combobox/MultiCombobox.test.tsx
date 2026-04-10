@@ -319,6 +319,32 @@ describe('MultiCombobox', () => {
     });
   });
 
+  describe('duplicate and undefined values', () => {
+    it('should render only unique pills when value array contains duplicates', () => {
+      const options = [
+        { label: 'A', value: 'a' },
+        { label: 'B', value: 'b' },
+        { label: 'C', value: 'c' },
+      ];
+      render(<MultiCombobox width={200} options={options} value={['a', 'a', 'b']} onChange={jest.fn()} />);
+      expect(screen.getByText('A')).toBeInTheDocument();
+      expect(screen.getByText('B')).toBeInTheDocument();
+      expect(screen.queryByText('C')).not.toBeInTheDocument();
+      expect(screen.getAllByText('A')).toHaveLength(1);
+    });
+
+    it('should render fallback pills for duplicate values not present in options', () => {
+      const options = [
+        { label: 'A', value: 'a' },
+        { label: 'B', value: 'b' },
+      ];
+      render(<MultiCombobox width={200} options={options} value={['d', 'd', 'a']} onChange={jest.fn()} />);
+      expect(screen.getByText('A')).toBeInTheDocument();
+      // 'd' is not in options but should appear once as a fallback pill, not twice
+      expect(screen.getAllByText('d')).toHaveLength(1);
+    });
+  });
+
   describe('async', () => {
     const onChangeHandler = jest.fn();
     let user: ReturnType<typeof userEvent.setup>;
