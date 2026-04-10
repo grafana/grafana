@@ -6856,7 +6856,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "ルールの表示/非表示は機能しません",
@@ -8522,7 +8527,6 @@
       "give-feedback": "フィードバックを送信"
     },
     "logs-meta-row": {
-      "download": "ダウンロード",
       "label": {
         "deduplication-count": "重複排除カウント",
         "showing-only-selected-fields": "選択されたフィールドのみ表示"
@@ -8875,22 +8879,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "ログの視覚化で結果を表示",
-        "show-results-in-table-visualisation": "テーブルの視覚化で結果を表示",
-        "show-results-newest-to-oldest": "結果を新しい順に表示",
-        "show-results-oldest-to-newest": "結果を古い順に表示"
+        "show-results-in-table-visualisation": "テーブルの視覚化で結果を表示"
       },
       "label": {
         "logs": "ログ",
-        "newest-first": "新しいものから表示",
-        "oldest-first": "古いものから表示",
         "table": "テーブル"
       },
-      "label-deduplication": "重複排除",
-      "label-display-results": "結果を表示",
-      "label-prettify-json": "JSONの整形",
-      "label-time": "時間",
-      "label-unique-labels": "一意のラベル",
-      "label-wrap-lines": "行を折り返す",
       "title-feedback": "フィードバック",
       "title-logs": "ログ",
       "title-logs-volume": "ログ量"
@@ -8985,8 +8979,7 @@
       "tooltip-s-m-h": "10秒、1分、30分、1時間"
     },
     "sql-expr": {
-      "button-run-query": "クエリを実行",
-      "tooltip-experimental": "SQL Expressions LLMの統合は実験的です。問題が発生した場合は、Grafanaチームに報告してください。"
+      "button-run-query": "クエリを実行"
     },
     "sql-schema": {
       "error-title": "エラー",
@@ -11379,9 +11372,6 @@
       },
       "wrap-lines": "行を折り返す"
     },
-    "logs-navigation": {
-      "scroll-top": "一番上までスクロール"
-    },
     "logs-panel": {
       "render-common-labels": {
         "common-labels": "共通ラベル:"
@@ -12174,7 +12164,7 @@
     },
     "quick-add": {
       "aria-label": "新規",
-      "new-template-dashboard-button": "テンプレートからダッシュボードを作成"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "最新ブログから"
   },
@@ -13319,6 +13309,7 @@
       "token-label": "プロジェクトアクセストークン",
       "token-required": "GitLabトークンが必要です",
       "url-description": "GitLabリポジトリURL",
+      "url-pattern": "",
       "url-required": "リポジトリURLが必要です"
     },
     "history-view": {
@@ -14744,19 +14735,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "SQL候補を生成するために少なくとも1つのデータクエリを追加します",
-    "ai-explain-title": "AIを活用したSQL式の説明",
-    "ai-suggestions-title": "AIを活用したSQL式の提案",
-    "apply": "適用",
-    "code-label": "{{ language }}",
-    "copy": "コピー",
-    "explain-empty-query-tooltip": "説明を取得するには、SQL式を入力します",
     "explain-query": "クエリを説明",
-    "explanation-modal-title": "SQLクエリの説明",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "SQL提案履歴",
-    "suggestions": "提案",
-    "view-explanation": "説明を表示"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "お気に入りに登録",

@@ -52,7 +52,6 @@ export interface DashboardMeta {
   canMakeEditable?: boolean;
   provisioned?: boolean;
   provisionedExternalId?: string;
-  isStarred?: boolean;
   showSettings?: boolean;
   expires?: string;
   isFolder?: boolean;
