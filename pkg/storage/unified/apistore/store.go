@@ -803,7 +803,9 @@ func (s *Storage) validateMinimumResourceVersion(minimumResourceVersion string, 
 	// Enforce the storage.Interface guarantee that the resource version of the returned data
 	// "will be at least 'resourceVersion'".
 	if minimumRV > actualRevision {
-		return storage.NewTooLargeResourceVersionError(minimumRV, actualRevision, 0)
+		return apierrors.NewResourceExpired(
+			fmt.Sprintf("too large resource version: %d (current %d)", minimumRV, actualRevision),
+		)
 	}
 	return nil
 }
