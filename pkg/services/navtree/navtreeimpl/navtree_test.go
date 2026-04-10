@@ -9,12 +9,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/navtree"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/star/startest"
@@ -164,107 +161,6 @@ func TestBuildStarredItemsNavLinks(t *testing.T) {
 	})
 }
 
-func TestHasConnectionsPluginItems(t *testing.T) {
-	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
-	reqCtx := &contextmodel.ReqContext{
-		SignedInUser: &user.SignedInUser{
-			UserID: 1,
-			OrgID:  1,
-		},
-		Context: &web.Context{Req: httpReq},
-	}
-
-	t.Run("Should return false when plugin item exists but user lacks RBAC permission", func(t *testing.T) {
-		accessControl := actest.FakeAccessControl{
-			ExpectedEvaluate: false, // No RBAC action access
-		}
-		mockPluginStore := &pluginstore.FakePluginStore{
-			PluginList: []pluginstore.Plugin{
-				{
-					JSONData: plugins.JSONData{
-						ID: "grafana-pdc-app",
-						Includes: []*plugins.Includes{
-							{
-								Type:   "page",
-								Path:   "/connections/private-data-source-connections",
-								Action: "grafana-pdc-app.private-networks:read",
-							},
-						},
-					},
-				},
-			},
-		}
-
-		service := ServiceImpl{
-			accessControl: &accessControl,
-			pluginStore:   mockPluginStore,
-		}
-
-		treeRoot := &navtree.NavTreeRoot{
-			Children: []*navtree.NavLink{
-				{
-					Id: "connections",
-					Children: []*navtree.NavLink{
-						{
-							Id:       "standalone-plugin-page-/connections/private-data-source-connections",
-							Url:      "/connections/private-data-source-connections",
-							PluginID: "grafana-pdc-app",
-						},
-					},
-				},
-			},
-		}
-
-		result := service.hasConnectionsPluginItems(reqCtx, treeRoot)
-		require.False(t, result)
-	})
-
-	t.Run("Should return true when user has RBAC permission", func(t *testing.T) {
-		accessControl := actest.FakeAccessControl{
-			ExpectedEvaluate: true, // Has RBAC access
-		}
-		mockPluginStore := &pluginstore.FakePluginStore{
-			PluginList: []pluginstore.Plugin{
-				{
-					JSONData: plugins.JSONData{
-						ID: "grafana-pdc-app",
-						Includes: []*plugins.Includes{
-							{
-								Type:   "page",
-								Path:   "/connections/private-data-source-connections",
-								Action: "grafana-pdc-app.private-networks:read",
-							},
-						},
-					},
-				},
-			},
-		}
-
-		service := ServiceImpl{
-			accessControl: &accessControl,
-			pluginStore:   mockPluginStore,
-		}
-
-		treeRoot := &navtree.NavTreeRoot{
-			Children: []*navtree.NavLink{
-				{
-					Id: "connections",
-					Children: []*navtree.NavLink{
-						{
-							Id:       "standalone-plugin-page-/connections/private-data-source-connections",
-							Url:      "/connections/private-data-source-connections",
-							PluginID: "grafana-pdc-app",
-						},
-					},
-				},
-			},
-		}
-
-		result := service.hasConnectionsPluginItems(reqCtx, treeRoot)
-		require.True(t, result)
-	})
-}
-
 func TestBuildDataConnectionsNavLink(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	reqCtx := &contextmodel.ReqContext{
@@ -275,74 +171,53 @@ func TestBuildDataConnectionsNavLink(t *testing.T) {
 		Context: &web.Context{Req: httpReq},
 	}
 
-	t.Run("Should return nil when no access and no plugin items", func(t *testing.T) {
+	t.Run("Should always return connections section", func(t *testing.T) {
 		accessControl := actest.FakeAccessControl{}
-		mockPluginStore := &pluginstore.FakePluginStore{}
 
 		service := ServiceImpl{
 			cfg:           &setting.Cfg{AppSubURL: ""},
 			accessControl: &accessControl,
-			pluginStore:   mockPluginStore,
 		}
 
-		treeRoot := &navtree.NavTreeRoot{}
-
-		result := service.buildDataConnectionsNavLink(reqCtx, treeRoot)
-		require.Nil(t, result)
+		result := service.buildDataConnectionsNavLink(reqCtx)
+		require.NotNil(t, result)
+		require.Equal(t, "Connections", result.Text)
+		require.Equal(t, "connections", result.Id)
+		require.Empty(t, result.Children)
 	})
 
-	t.Run("Should return connections nav with datasource items when user has access", func(t *testing.T) {
+	t.Run("Should include datasource items when user has access", func(t *testing.T) {
 		accessControl := actest.FakeAccessControl{
 			ExpectedEvaluate: true,
 		}
-		mockPluginStore := &pluginstore.FakePluginStore{}
 
 		service := ServiceImpl{
 			cfg:           &setting.Cfg{AppSubURL: ""},
 			accessControl: &accessControl,
-			pluginStore:   mockPluginStore,
 		}
 
-		treeRoot := &navtree.NavTreeRoot{}
-
-		result := service.buildDataConnectionsNavLink(reqCtx, treeRoot)
+		result := service.buildDataConnectionsNavLink(reqCtx)
 		require.NotNil(t, result)
 		require.Equal(t, "Connections", result.Text)
 		require.Equal(t, "connections", result.Id)
 		require.Len(t, result.Children, 2)
+		require.Equal(t, "connections-add-new-connection", result.Children[0].Id)
+		require.Equal(t, "connections-datasources", result.Children[1].Id)
 	})
 
-	t.Run("Should return connections nav when plugin items exist", func(t *testing.T) {
+	t.Run("Should have no datasource items when user lacks access", func(t *testing.T) {
 		accessControl := actest.FakeAccessControl{
-			ExpectedEvaluate: false, // No datasources access
+			ExpectedEvaluate: false,
 		}
-		mockPluginStore := &pluginstore.FakePluginStore{}
 
 		service := ServiceImpl{
 			cfg:           &setting.Cfg{AppSubURL: ""},
 			accessControl: &accessControl,
-			pluginStore:   mockPluginStore,
 		}
 
-		// TreeRoot with plugin items (non-plugin item for simplicity)
-		treeRoot := &navtree.NavTreeRoot{
-			Children: []*navtree.NavLink{
-				{
-					Id: "some-section",
-					Children: []*navtree.NavLink{
-						{
-							Id:  "standalone-plugin-page-/connections/infrastructure",
-							Url: "/connections/infrastructure",
-							// No PluginID - non-plugin item
-						},
-					},
-				},
-			},
-		}
-
-		result := service.buildDataConnectionsNavLink(reqCtx, treeRoot)
+		result := service.buildDataConnectionsNavLink(reqCtx)
 		require.NotNil(t, result)
-		require.Equal(t, "Connections", result.Text)
-		require.Empty(t, result.Children) // No datasource items, but section exists for plugins
+		require.Equal(t, "connections", result.Id)
+		require.Empty(t, result.Children)
 	})
 }
