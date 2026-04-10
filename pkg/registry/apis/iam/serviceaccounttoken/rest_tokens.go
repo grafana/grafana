@@ -21,8 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccounttoken/tokenstore"
-
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
@@ -123,14 +121,14 @@ var (
 //   - saGetter: the registered storage for ServiceAccount (DualWriter or UniStore).
 //   - legacyStore: reads/writes tokens in the legacy api_key table.
 //   - customStore: writes to the dedicated token DB (Mode5/MT). May be nil.
-func NewTokensREST(saGetter rest.Getter, legacyStore legacy.LegacyIdentityStore, customStore tokenstore.TokenSecretStore) *TokensREST {
-	return &TokensREST{saGetter: saGetter, legacyStore: legacyStore, customStore: customStore}
+func NewTokensREST(saGetter rest.Getter, legacyStore legacy.LegacyIdentityStore) *TokensREST {
+	return &TokensREST{saGetter: saGetter, legacyStore: legacyStore}
 }
 
 type TokensREST struct {
-	saGetter    rest.Getter                 // reads ServiceAccount from DualWriter / UniStore
-	legacyStore legacy.LegacyIdentityStore  // reads/writes tokens in legacy api_key
-	customStore tokenstore.TokenSecretStore // writes hash to custom DB; nil in ST/Mode0-1
+	saGetter    rest.Getter                // reads ServiceAccount from DualWriter / UniStore
+	legacyStore legacy.LegacyIdentityStore // reads/writes tokens in legacy api_key
+	// customStore tokenstore.TokenSecretStore // writes hash to custom DB; nil in ST/Mode0-1
 }
 
 func (s *TokensREST) New() runtime.Object {
@@ -344,12 +342,8 @@ func (s *TokensREST) handleDelete(ctx context.Context, ns claims.NamespaceInfo, 
 	}
 
 	// --- Delete from custom DB (Mode5 / MT) ---
-	if s.customStore != nil {
-		if err := s.customStore.Delete(ctx, ns.Value, tokenName); err != nil {
-			responder.Error(fmt.Errorf("failed to delete token (custom db): %w", err))
-			return
-		}
-	}
+	// Delete from the custom store if configured in Mode1 and Mode5.
+	// In Mode1 this is best effort since the token may not exist in the custom DB.
 
 	resp := &iamv0alpha1.DeleteSATokenResponse{
 		DeleteTokenBody: iamv0alpha1.DeleteTokenBody{

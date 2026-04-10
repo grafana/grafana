@@ -639,7 +639,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts 
 		saStore = dw
 	}
 
-	storage[saResource.StoragePath("tokens")] = serviceaccounttoken.NewTokensREST(saStore, b.store, nil)
+	storage[saResource.StoragePath("tokens")] = serviceaccounttoken.NewTokensREST(saStore, b.store)
 
 	return nil
 }
