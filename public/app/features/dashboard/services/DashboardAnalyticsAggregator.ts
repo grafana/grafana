@@ -54,6 +54,7 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
   private panelMetrics = new Map<string, PanelAnalyticsMetrics>();
   private dashboardUID = '';
   private dashboardTitle = '';
+  private currentOperationId = '';
 
   public initialize(uid: string, title: string) {
     // Clear previous dashboard data and set new context
@@ -85,8 +86,8 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
 
   // Dashboard-level events (we don't need to track these for panel analytics)
   onDashboardInteractionStart = (data: performanceUtils.DashboardInteractionStartData): void => {
-    // Clear metrics when new dashboard interaction starts
     this.clearMetrics();
+    this.currentOperationId = data.operationId;
   };
 
   onDashboardInteractionMilestone = (_data: performanceUtils.DashboardInteractionMilestoneData): void => {
@@ -105,7 +106,6 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
   };
 
   onPanelOperationComplete = (data: performanceUtils.PanelPerformanceData): void => {
-    // Aggregate panel metrics without verbose logging (handled by ScenePerformanceLogger)
     const panel = this.panelMetrics.get(data.panelKey);
     if (!panel) {
       console.warn('Panel not found for operation completion:', data.panelKey);
@@ -153,6 +153,26 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
       case 'plugin-load':
         panel.pluginLoadTime += duration;
         break;
+    }
+
+    // Send individual panel_operation measurement immediately for correct Faro timestamps
+    if (this.currentOperationId) {
+      const context: Record<string, string> = {
+        panelKey: data.panelKey,
+        pluginId: data.pluginId,
+        panelId: data.panelId,
+        operationId: this.currentOperationId,
+        operationType: data.operation,
+      };
+
+      if (data.operation === 'query' && data.metadata.queryType) {
+        context.queryType = data.metadata.queryType;
+      }
+      if (data.operation === 'transform' && data.metadata.transformationId) {
+        context.transformationId = data.metadata.transformationId;
+      }
+
+      logMeasurement('panel_operation', { duration: Math.round(duration * 10) / 10 }, context);
     }
   };
 
@@ -231,59 +251,6 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
         panelId: panel.panelId,
         operationId: data.operationId, // Shared operationId for correlating with dashboard_render
       });
-
-      // Send individual panel_operation measurements for granular per-operation analytics
-      const panelContext = {
-        panelKey: panel.panelKey,
-        pluginId: panel.pluginId,
-        panelId: panel.panelId,
-        operationId: data.operationId,
-      };
-
-      for (const op of panel.queryOperations) {
-        logMeasurement(
-          'panel_operation',
-          { duration: Math.round(op.duration * 10) / 10 },
-          {
-            ...panelContext,
-            operationType: 'query',
-            ...(op.queryType && { queryType: op.queryType }),
-          }
-        );
-      }
-
-      for (const op of panel.transformationOperations) {
-        logMeasurement(
-          'panel_operation',
-          { duration: Math.round(op.duration * 10) / 10 },
-          {
-            ...panelContext,
-            operationType: 'transform',
-            ...(op.transformationId && { transformationId: op.transformationId }),
-          }
-        );
-      }
-
-      for (const op of panel.renderOperations) {
-        logMeasurement('panel_operation', { duration: Math.round(op.duration * 10) / 10 }, {
-          ...panelContext,
-          operationType: 'render',
-        });
-      }
-
-      for (const op of panel.fieldConfigOperations) {
-        logMeasurement('panel_operation', { duration: Math.round(op.duration * 10) / 10 }, {
-          ...panelContext,
-          operationType: 'fieldConfig',
-        });
-      }
-
-      if (panel.pluginLoadTime > 0) {
-        logMeasurement('panel_operation', { duration: Math.round(panel.pluginLoadTime * 10) / 10 }, {
-          ...panelContext,
-          operationType: 'plugin-load',
-        });
-      }
     });
   }
 
