@@ -26,12 +26,13 @@ For an introduction to template variables, refer to the [Variables](https://graf
 
 ## Supported variable types
 
-| Variable type | Supported |
-| ------------- | --------- |
-| Query         | No        |
-| Custom        | Yes       |
-| Data source   | Yes       |
-| Constant      | Yes       |
+| Variable type | Supported | Notes                                                                        |
+| ------------- | --------- | ---------------------------------------------------------------------------- |
+| Custom        | Yes       | Define a static list of values manually.                                     |
+| Text box      | Yes       | Enter a free-form value at the top of the dashboard.                         |
+| Constant      | Yes       | Define a hidden, fixed value.                                                |
+| Data source   | Yes       | Select a data source instance by name.                                       |
+| Query         | No        | Parca doesn't implement variable queries to dynamically populate drop-downs. |
 
 {{< admonition type="note" >}}
 Parca doesn't support query-type variables. You can't use the Parca data source to dynamically populate variable drop-downs. Use custom variables to define values manually, or use another data source to populate query variables.
@@ -39,7 +40,7 @@ Parca doesn't support query-type variables. You can't use the Parca data source 
 
 ## Use variables in the label selector
 
-The Parca query editor's label selector field supports template variable interpolation. Use the standard `$variablename` or `${variablename}` syntax.
+The Parca query editor's label selector field supports template variable interpolation. Use the standard `$variablename` or `${variablename}` syntax. Variables are interpolated in the label selector only -- the profile type drop-down doesn't support them.
 
 ### Variable syntax options
 
@@ -48,10 +49,6 @@ The Parca query editor's label selector field supports template variable interpo
 | `$variablename`          | Simple syntax for most cases.                                                    |
 | `${variablename}`        | Use when the variable is adjacent to other text (for example, `${host}_suffix`). |
 | `${variablename:format}` | Apply a specific format to the variable value.                                   |
-
-### Where variables work
-
-Variables can be used in the **label selector** field only. The profile type selector doesn't support template variable interpolation.
 
 ## Example: Filter profiles by service
 
@@ -74,7 +71,7 @@ When you change the drop-down selection, the panel refreshes to show profiles fo
 
 ## Example: Filter by service and instance
 
-Create two custom variables for cascading filters.
+Create two custom variables to filter by multiple dimensions.
 
 1. Create a variable named `service` with custom values `frontend, backend, api-gateway`.
 1. Create a second variable named `instance` with custom values for your instance addresses, for example `10.0.0.1:7070, 10.0.0.2:7070, 10.0.0.3:7070`.
@@ -85,14 +82,24 @@ In your Parca query's label selector, reference both variables:
 {job="$service", instance="$instance"}
 ```
 
-## Example: Use an interval variable for comparisons
+## Example: Use a text box variable for ad hoc filtering
 
-You can use Grafana's built-in interval variables alongside Parca queries to create time-shifted comparisons across dashboard panels.
+Create a text box variable for free-form label filtering.
 
-| Variable         | Description                                                            |
-| ---------------- | ---------------------------------------------------------------------- |
-| `$__interval`    | Automatically calculated interval based on time range and panel width. |
-| `$__interval_ms` | Same as `$__interval` but in milliseconds.                             |
+1. Navigate to **Dashboard settings** > **Variables**.
+1. Click **Add variable**.
+1. Set **Type** to **Text box**.
+1. Enter a **Name**, for example `label_filter`.
+1. Optionally set a default value, for example `job="my-service"`.
+1. Click **Apply**.
+
+In your Parca query's label selector, reference the variable:
+
+```text
+{$label_filter}
+```
+
+This lets you type any label matcher directly into the variable input at the top of the dashboard without editing the panel query.
 
 ## Limitations
 
