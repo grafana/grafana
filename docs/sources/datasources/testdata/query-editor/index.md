@@ -69,7 +69,7 @@ The scenarios are organized into the following categories. Use the table below t
 | [Conditional Error](#conditional-error) | Error testing | Configurable error or CSV data. |
 | [Error with source](#error-with-source) | Error testing | Error with plugin or downstream classification. |
 | [No Data Points](#no-data-points) | Error testing | Empty result with no data. |
-| [Datapoints Outside Range](#datapoints-outside-range) | Error testing | Data point outside the visible time range. |
+| [Data Points Outside Range](#datapoints-outside-range) | Error testing | Data point outside the visible time range. |
 | [Slow Query](#slow-query) | Error testing | Configurable delay before returning data. |
 | [Query Metadata](#query-metadata) | Metadata | Returns query context metadata. |
 
