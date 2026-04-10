@@ -184,13 +184,13 @@ func (c *ShadowRBACClient) compareRBACBatchCheckResults(zanzanaRes, rbacRes auth
 
 		if !ok {
 			c.metrics.evaluationStatusTotal.WithLabelValues("error", "batch_check", formatBatchCheck(checkItem), req.Namespace).Inc()
-			c.logger.Warn("RBAC batch check missing result", "item", checkItem, "user", id.GetUID())
+			c.logger.Warn("RBAC batch check missing result", "item", checkItem, "user", id.GetUID(), "req_namespace", req.Namespace)
 			continue
 		}
 
 		if zanzanaResult.Allowed != rbacResult.Allowed {
 			c.metrics.evaluationStatusTotal.WithLabelValues("error", "batch_check", formatBatchCheck(checkItem), req.Namespace).Inc()
-			c.logger.Warn("RBAC batch check result does not match zanzana", "expected", zanzanaResult.Allowed, "actual", rbacResult.Allowed, "item", checkItem, "user", id.GetUID())
+			c.logger.Warn("RBAC batch check result does not match zanzana", "expected", zanzanaResult.Allowed, "actual", rbacResult.Allowed, "item", checkItem, "user", id.GetUID(), "req_namespace", req.Namespace)
 		} else {
 			c.metrics.evaluationStatusTotal.WithLabelValues("success", "batch_check", formatBatchCheck(checkItem), req.Namespace).Inc()
 		}

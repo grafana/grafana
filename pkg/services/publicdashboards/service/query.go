@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -460,6 +461,29 @@ func sanitizeData(data *simplejson.Json) {
 			target.Del("rawSql")
 		}
 	}
+}
+
+// sanitizeDataV2 removes query expression fields from a v2 dashboard's elements.
+// V2 dashboards use the path: elements[key].spec.data.spec.queries[].spec.query.spec
+func sanitizeDataV2(data *simplejson.Json) {
+	for _, elemObj := range data.Get("elements").MustMap() {
+		elem := simplejson.NewFromAny(elemObj)
+		queries := elem.Get("spec").Get("data").Get("spec").Get("queries").MustArray()
+		for _, queryObj := range queries {
+			query := simplejson.NewFromAny(queryObj)
+			dataQuerySpec := query.Get("spec").Get("query").Get("spec")
+			dataQuerySpec.Del("expr")
+			dataQuerySpec.Del("query")
+			dataQuerySpec.Del("rawSql")
+		}
+	}
+}
+
+// isDashboardV2 returns true for dashboard API versions v2 and above.
+// v0/v1 (including empty, which implies legacy v1) use the panels schema.
+func isDashboardV2(dash *dashboards.Dashboard) bool {
+	v := dash.APIVersion
+	return v != "" && !strings.HasPrefix(v, "v0") && !strings.HasPrefix(v, "v1")
 }
 
 // NewTimeRange declared to be able to stub this function in tests

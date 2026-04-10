@@ -12,7 +12,6 @@ import {
   systemDateFormats,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString, sortLogRows } from '../../utils';
@@ -72,7 +71,16 @@ export class LogListModel implements LogRowModel {
 
   constructor(
     log: LogRowModel,
-    { escape, getFieldLinks, grammar, prettifyJSON, timeZone, virtualization, wrapLogMessage }: PreProcessLogOptions
+    {
+      escape,
+      getFieldLinks,
+      grammar,
+      otelLogsFormattingEnabled = false,
+      prettifyJSON,
+      timeZone,
+      virtualization,
+      wrapLogMessage,
+    }: PreProcessLogOptions
   ) {
     // LogRowModel
     this.datasourceType = log.datasourceType;
@@ -117,7 +125,7 @@ export class LogListModel implements LogRowModel {
     }
     this.raw = log.raw;
 
-    if (config.featureToggles.otelLogsFormatting && this.otelLanguage) {
+    if (otelLogsFormattingEnabled && this.otelLanguage) {
       this.labels[OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME] = getOtelAttributesField(this, wrapLogMessage);
     }
   }
@@ -284,6 +292,7 @@ export class LogListModel implements LogRowModel {
 export interface PreProcessOptions {
   escape: boolean;
   getFieldLinks?: GetFieldLinksFn;
+  otelLogsFormattingEnabled?: boolean;
   order: LogsSortOrder;
   prettifyJSON?: boolean;
   timeZone: string;
@@ -293,7 +302,16 @@ export interface PreProcessOptions {
 
 export const preProcessLogs = (
   logs: LogRowModel[],
-  { escape, getFieldLinks, order, prettifyJSON, timeZone, virtualization, wrapLogMessage }: PreProcessOptions,
+  {
+    escape,
+    getFieldLinks,
+    otelLogsFormattingEnabled,
+    order,
+    prettifyJSON,
+    timeZone,
+    virtualization,
+    wrapLogMessage,
+  }: PreProcessOptions,
   grammar?: Grammar
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
@@ -302,6 +320,7 @@ export const preProcessLogs = (
       escape,
       getFieldLinks,
       grammar,
+      otelLogsFormattingEnabled,
       prettifyJSON,
       timeZone,
       virtualization,
@@ -314,6 +333,7 @@ interface PreProcessLogOptions {
   escape: boolean;
   getFieldLinks?: GetFieldLinksFn;
   grammar?: Grammar;
+  otelLogsFormattingEnabled?: boolean;
   prettifyJSON?: boolean;
   timeZone: string;
   virtualization?: LogLineVirtualization;

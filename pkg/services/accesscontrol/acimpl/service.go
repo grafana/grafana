@@ -33,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/seeding"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
@@ -48,8 +47,8 @@ const (
 )
 
 var SharedWithMeFolderPermission = accesscontrol.Permission{
-	Action: dashboards.ActionFoldersRead,
-	Scope:  dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.SharedWithMeFolderUID),
+	Action: folder.ActionFoldersRead,
+	Scope:  folder.ScopeFoldersProvider.GetResourceScopeUID(folder.SharedWithMeFolderUID),
 }
 
 var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
@@ -80,6 +79,13 @@ func ProvideService(
 	// Migrating to remove deprecated permissions from the database
 	if err := migrator.MigrateRemoveDeprecatedPermissions(db, service.log); err != nil {
 		return nil, err
+	}
+
+	// Clean up plugin RBAC data for configured plugins
+	if len(cfg.RBAC.PluginsCleanup) > 0 {
+		if err := service.CleanupPluginRBAC(context.Background(), cfg.RBAC.PluginsCleanup...); err != nil {
+			return nil, err
+		}
 	}
 
 	return service, nil
@@ -889,6 +895,11 @@ func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalService
 
 func (s *Service) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRolesCommand) error {
 	return nil
+}
+
+// CleanupPluginRBAC removes all RBAC data (roles, permissions, assignments) for the given plugin IDs.
+func (s *Service) CleanupPluginRBAC(ctx context.Context, pluginIDs ...string) error {
+	return s.store.CleanupPluginRBAC(ctx, pluginIDs)
 }
 
 func (s *Service) GetStaticRoles(ctx context.Context) map[string]*accesscontrol.RoleDTO {
