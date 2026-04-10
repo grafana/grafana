@@ -320,17 +320,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
         // Silence step uses a second overlaid drawer for the form; body stays the instance details underneath.
         return getInstanceDetailsBody();
       default:
-        return (
-          <Alert
-            severity="info"
-            title={t('alerting.triage.instance-details-drawer.drilldown-coming-soon', 'Coming soon')}
-          >
-            {t(
-              'alerting.triage.instance-details-drawer.drilldown-coming-soon-description',
-              'This drawer drilldown step will be added in a follow-up change.'
-            )}
-          </Alert>
-        );
+        return getInstanceDetailsBody();
     }
   };
 

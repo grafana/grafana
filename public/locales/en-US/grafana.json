@@ -3590,8 +3590,6 @@
         "declare-incident": "Declare incident",
         "declare-incident-no-permission": "You do not have permission to access Incident",
         "declare-incident-title": "Declare incident",
-        "drilldown-coming-soon": "Coming soon",
-        "drilldown-coming-soon-description": "This drawer drilldown step will be added in a follow-up change.",
         "instance-details": "Instance details",
         "notification-history-details-title": "Notification details",
         "silence-button": "Silence",
