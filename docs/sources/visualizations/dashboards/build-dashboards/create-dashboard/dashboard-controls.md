@@ -71,9 +71,51 @@ To add a filter and group by, follow these steps:
 1. Enter an optional description of your dashboard changes, and then click **Save**.
 1. Click **Exit edit**.
 
-{{< shared-snippet path="/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/index.md" id="filter-management" >}}
+Now you can filter and group data on the dashboard.
 
-{{< shared-snippet path="/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/index.md" id="panel-filter" >}}
+You can remove and reset default filters and group by selections, and see your recent ones:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-reset-default-v13.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" caption="Reset default filters and group by selections" >}}
+
+{{< figure src="/media/docs/grafana/screenshot-filters-group-recent-v13.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" caption="Recent filter and group by settings" >}}
+
+To see every active filter and group by across the dashboard all at once, click the filter icon in the toolbar to open an overview.
+The overview lets you see your current filters and group by selections, search for specific keys, and adjust them without scrolling through the dashboard controls:
+
+{{< figure src="/media/docs/grafana/screenshot-filters-overview-v12.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" >}}
+
+Add an operator and value for a key to add it as a filter or select the **Group by** checkbox to set a group by key:
+You can use a key for both a filter and a group by.
+
+### Group and filter from the panel
+
+When the **Group by** switch is toggled on, you can also set a group by from a panel rather than from the dashboard-level control.
+Hover the cursor over any panel using the data source of the filter to show the **Group by** selector:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-panel-groupby-v13.0.png" max-width="550px" alt="Group by control on a panel" >}}
+
+This can be helpful when you're working with a panel that's far away from the dashboard controls.
+Your selection is applied to the all the panels in the dashboard with the same data source.
+
+You can also further filter a time series panel, which allows you to drill down further into your data.
+After setting your group by and splitting your data, click on a series in a panel and click `Filter on this value` or `Filter out this value` which will filter by the labels found on that series, which are related to the set group by values.
+
+
+To enable this functionality, you need to add one or more overrides for the panel.
+In the following example, the override:
+
+- Adds a regular expression, so that all fields are filterable
+- Enables the **Ad-hoc filterable** switch
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filter-override-v13.0.png" max-width="400px" alt="Field override making all fields filterable" >}}
+
+However, you can create overrides to address specific fields.
+Be sure to also set your data as filterable by either returning the dataframe with the appropriate `filterable` property on the desired fields
+
+With the override in place, you can click a series on a time series panel and filter it in or out.
+The new filter is shown in the dashboard filter control and the it's applied to the whole dashboard.
+
+<!-- TODO: Add screenshot here when feature is working properly -->
 
 ## Add variables
 
