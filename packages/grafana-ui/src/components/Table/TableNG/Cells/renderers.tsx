@@ -16,7 +16,7 @@ import { ActionsCell, getStyles as getActionsCellStyles } from './ActionsCell';
 import { AutoCell, getStyles as getAutoCellStyles, getJsonCellStyles } from './AutoCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { DataLinksCell, getStyles as getDataLinksStyles } from './DataLinksCell';
-import { GeoCell, getStyles as getGeoCellStyles } from './GeoCell';
+// import { GeoCell, getStyles as getGeoCellStyles } from './GeoCell';
 import { ImageCell, getStyles as getImageStyles } from './ImageCell';
 import { MarkdownCell, getStyles as getMarkdownCellStyles } from './MarkdownCell';
 import { PillCell, getStyles as getPillStyles } from './PillCell';
@@ -115,12 +115,18 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
     ),
     getStyles: getSparklineCellStyles,
   },
+  // [TableCellDisplayMode.Geo]: {
+  //   renderer: wrapComponentInMemo(
+  //     (props: TableCellRendererProps) => <GeoCell value={props.value} height={props.height} />,
+  //     'GeoCellRenderer'
+  //   ),
+  //   getStyles: getGeoCellStyles,
+  // },
   [TableCellDisplayMode.Geo]: {
     renderer: wrapComponentInMemo(
-      (props: TableCellRendererProps) => <GeoCell value={props.value} height={props.height} />,
+      (props: TableCellRendererProps) => null,
       'GeoCellRenderer'
     ),
-    getStyles: getGeoCellStyles,
   },
   [TableCellDisplayMode.Image]: {
     renderer: wrapComponentInMemo(

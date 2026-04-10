@@ -2,8 +2,8 @@ import { css } from '@emotion/react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
-import 'ol/ol.css';
-import 'ol-ext/dist/ol-ext.css';
+// import 'ol/ol.css';
+// import 'ol-ext/dist/ol-ext.css';
 
 /**
  * Will be loaded *after* the css above

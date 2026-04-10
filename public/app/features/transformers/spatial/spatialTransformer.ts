@@ -2,7 +2,6 @@ import { mergeMap, from } from 'rxjs';
 
 import { type DataFrame, DataTransformerID, type DataTransformerInfo, FieldType } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { createGeometryCollection, createLineBetween } from 'app/features/geo/format/utils';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 
 import { SpatialOperation, SpatialAction, type SpatialTransformOptions } from './models.gen';
@@ -25,6 +24,8 @@ export function isLineBuilderOption(options: SpatialTransformOptions): boolean {
 }
 
 async function doSetGeometry(frames: DataFrame[], options: SpatialTransformOptions): Promise<DataFrame[]> {
+  const { createGeometryCollection, createLineBetween } = await import('app/features/geo/format/utils');
+
   const location = await getLocationMatchers(options.source);
   if (isLineBuilderOption(options)) {
     const targetLocation = await getLocationMatchers(options.modify?.target);

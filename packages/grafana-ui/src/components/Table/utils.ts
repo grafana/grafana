@@ -37,7 +37,7 @@ import { ActionsCell } from './ActionsCell';
 import { BarGaugeCell } from './Cells/BarGaugeCell';
 import { DataLinksCell } from './Cells/DataLinksCell';
 import { DefaultCell } from './Cells/DefaultCell';
-import { GeoCell } from './Cells/GeoCell';
+// import { GeoCell } from './Cells/GeoCell';
 import { ImageCell } from './Cells/ImageCell';
 import { JSONViewCell } from './Cells/JSONViewCell';
 import { SparklineCell } from './Cells/SparklineCell';
@@ -205,9 +205,9 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
       return DefaultCell; // Legacy table doesn't support pill cells, fallback to default
   }
 
-  if (field.type === FieldType.geo) {
-    return GeoCell;
-  }
+  // if (field.type === FieldType.geo) {
+  //   return GeoCell;
+  // }
 
   if (field.type === FieldType.frame) {
     const firstValue = field.values[0];
