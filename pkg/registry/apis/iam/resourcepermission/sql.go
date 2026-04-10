@@ -20,6 +20,16 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
+// resolveScope returns the legacy db scope for the given resource name.
+// For id-scoped resources (teams, users, service accounts), translates uid→id via the identity store.
+func resolveScope(ctx context.Context, ns types.NamespaceInfo, store IdentityStore, mapper Mapper, name string) (string, error) {
+	scope := mapper.Scope(name)
+	if isIDScoped(mapper) && store != nil {
+		return legacy.ResolveUIDScopeForWrite(ctx, store, ns, scope)
+	}
+	return scope, nil
+}
+
 // List
 func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, pagination *common.Pagination) (*listIterator, error) {
 	var (
@@ -83,7 +93,7 @@ func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *
 		return &listIterator{}, nil
 	}
 
-	v0ResourcePermissions, err := s.toV0ResourcePermissions(assignments, ns.Value)
+	v0ResourcePermissions, err := s.toV0ResourcePermissions(ctx, ns, assignments)
 	if err != nil {
 		return nil, err
 	}
@@ -209,8 +219,13 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 		return nil, apierrors.NewInternalError(err)
 	}
 
+	scope, err := resolveScope(ctx, ns, s.identityStore, mapper, grn.Name)
+	if err != nil {
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("resolving scope for %q: %v", grn.Name, err))
+	}
+
 	resourceQuery := &ListResourcePermissionsQuery{
-		Scopes:     []string{mapper.Scope(grn.Name)},
+		Scopes:     []string{scope},
 		OrgID:      ns.OrgID,
 		ActionSets: mapper.ActionSets(),
 	}
@@ -224,11 +239,11 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 		return nil, apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), name)
 	}
 
-	resourcePermission, err := s.toV0ResourcePermissions(assignments, ns.Value)
+	resourcePermission, err := s.toV0ResourcePermissions(ctx, ns, assignments)
 	if err != nil {
 		return nil, apierrors.NewInternalError(err)
 	}
-	if resourcePermission == nil {
+	if len(resourcePermission) == 0 {
 		return nil, apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), name)
 	}
 
@@ -422,14 +437,19 @@ func (s *ResourcePermSqlBackend) existsResourcePermission(ctx context.Context, t
 func (s *ResourcePermSqlBackend) createResourcePermission(
 	ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, mapper Mapper, grn *groupResourceName, v0ResourcePerm *v0alpha1.ResourcePermission,
 ) (int64, error) {
-	assignments, err := s.buildRbacAssignments(ctx, ns, mapper, v0ResourcePerm.Spec.Permissions, mapper.Scope(grn.Name), datasourcek8s.DSTypeFromDatasourceAPIGroup(grn.Group))
+	rbacScope, err := resolveScope(ctx, ns, s.identityStore, mapper, grn.Name)
+	if err != nil {
+		return 0, apierrors.NewBadRequest(fmt.Sprintf("resolving scope for %q: %v", grn.Name, err))
+	}
+
+	assignments, err := s.buildRbacAssignments(ctx, ns, mapper, v0ResourcePerm.Spec.Permissions, rbacScope, datasourcek8s.DSTypeFromDatasourceAPIGroup(grn.Group))
 	if err != nil {
 		return 0, err
 	}
 
 	err = dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
 		// Check if a resource permission for the same resource already exists
-		if err = s.existsResourcePermission(ctx, tx, dbHelper, ns.OrgID, mapper.Scope(grn.Name)); err != nil {
+		if err = s.existsResourcePermission(ctx, tx, dbHelper, ns.OrgID, rbacScope); err != nil {
 			return err
 		}
 
@@ -462,9 +482,13 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 		}
 
 		permissionsToAdd, permissionsToRemove := diffPermissions(currentPerms.Spec.Permissions, v0ResourcePerm.Spec.Permissions)
+		rbacScope, err := resolveScope(ctx, ns, s.identityStore, mapper, grn.Name)
+		if err != nil {
+			return fmt.Errorf("resolving scope for %q: %w", grn.Name, err)
+		}
 
 		if len(permissionsToRemove) > 0 {
-			permsToRemove, err := s.buildRbacAssignments(ctx, ns, mapper, permissionsToRemove, mapper.Scope(grn.Name), datasourcek8s.DSTypeFromDatasourceAPIGroup(grn.Group))
+			permsToRemove, err := s.buildRbacAssignments(ctx, ns, mapper, permissionsToRemove, rbacScope, datasourcek8s.DSTypeFromDatasourceAPIGroup(grn.Group))
 			if err != nil {
 				return err
 			}
@@ -489,7 +513,7 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 		}
 
 		if len(permissionsToAdd) > 0 {
-			permsToAdd, err := s.buildRbacAssignments(ctx, ns, mapper, permissionsToAdd, mapper.Scope(grn.Name), datasourcek8s.DSTypeFromDatasourceAPIGroup(grn.Group))
+			permsToAdd, err := s.buildRbacAssignments(ctx, ns, mapper, permissionsToAdd, rbacScope, datasourcek8s.DSTypeFromDatasourceAPIGroup(grn.Group))
 			if err != nil {
 				return err
 			}
@@ -554,8 +578,11 @@ func (s *ResourcePermSqlBackend) deleteResourcePermission(ctx context.Context, s
 	if err != nil {
 		return err
 	}
-	scope := mapper.Scope(grn.Name)
 
+	scope, err := resolveScope(ctx, ns, s.identityStore, mapper, grn.Name)
+	if err != nil {
+		return fmt.Errorf("resolving scope for %q: %w", grn.Name, err)
+	}
 	resourceQuery := &DeleteResourcePermissionsQuery{
 		Scope: scope,
 		OrgID: ns.OrgID,
@@ -588,9 +615,9 @@ func (s *ResourcePermSqlBackend) ListDirectPermissionsForSubject(ctx context.Con
 	if ns.OrgID <= 0 {
 		return nil, errInvalidNamespace
 	}
+	logger := s.logger.FromContext(ctx)
 	dbHelper, err := s.dbProvider(ctx)
 	if err != nil {
-		logger := s.logger.FromContext(ctx)
 		if errors.Is(err, legacysql.ErrNamespaceNotFound) {
 			logger.Warn("Namespace not found", "error", err)
 			return nil, apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), namespace)
@@ -611,9 +638,17 @@ func (s *ResourcePermSqlBackend) ListDirectPermissionsForSubject(ctx context.Con
 	if err != nil {
 		return nil, err
 	}
-	result := make([]v0alpha1.PermissionSpec, len(assignments))
-	for i, a := range assignments {
-		result[i] = v0alpha1.PermissionSpec{Action: a.Action, Scope: a.Scope}
+	result := make([]v0alpha1.PermissionSpec, 0, len(assignments))
+	for _, a := range assignments {
+		grn, err := s.mappers.ParseScopeCtx(ctx, ns, s.identityStore, a.Scope, a.DatasourceType)
+		if err != nil {
+			logger.Warn("Dropping permission with unresolvable scope", "scope", a.Scope, "action", a.Action, "error", err)
+			continue
+		}
+		result = append(result, v0alpha1.PermissionSpec{
+			Action: a.Action,
+			Scope:  grn.Resource + ":uid:" + grn.Name,
+		})
 	}
 	return result, nil
 }

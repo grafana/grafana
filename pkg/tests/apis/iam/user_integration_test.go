@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -46,6 +47,7 @@ func TestIntegrationUsers(t *testing.T) {
 			doUserCRUDTestsUsingTheNewAPIs(t, helper)
 			doHiddenUsersTests(t, helper)
 			doUserFieldSelectorTests(t, helper)
+			doUserStatusUpdateTests(t, helper)
 
 			if mode < 3 {
 				doUserCRUDTestsUsingTheLegacyAPIs(t, helper)
@@ -536,4 +538,70 @@ func doUserFieldSelectorTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, err)
 		require.Empty(t, listByUnknownEmail.Items)
 	})
+}
+
+func doUserStatusUpdateTests(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("should update lastSeenAt via status subresource with the provided value", func(t *testing.T) {
+		ctx := context.Background()
+
+		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrUsers,
+		})
+
+		// Create a user
+		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+		createdUID := created.GetName()
+		t.Cleanup(func() {
+			_ = userClient.Resource.Delete(context.Background(), createdUID, metav1.DeleteOptions{})
+		})
+
+		// Get the user and check initial lastSeenAt (should be old — set to 10 years ago on creation)
+		fetched, err := userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		status := fetched.Object["status"].(map[string]interface{})
+		initialLastSeenAt := toInt64(t, status["lastSeenAt"])
+
+		initialTime := time.Unix(initialLastSeenAt, 0)
+		require.True(t, initialTime.Before(time.Now().Add(-1*time.Hour)),
+			"expected initial lastSeenAt to be in the past, got %v", initialTime)
+
+		// Use a specific timestamp — the API should store exactly this value, not time.Now()
+		wantLastSeenAt := time.Date(2025, 3, 15, 12, 30, 0, 0, time.UTC).Unix()
+
+		// Update status subresource with the chosen timestamp
+		statusObj := fetched.DeepCopy()
+		statusMap := statusObj.Object["status"].(map[string]interface{})
+		statusMap["lastSeenAt"] = wantLastSeenAt
+		statusObj.Object["status"] = statusMap
+
+		updated, err := userClient.Resource.UpdateStatus(ctx, statusObj, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, updated)
+
+		// Fetch the user and verify the exact value was persisted
+		fetchedAfter, err := userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		statusAfter := fetchedAfter.Object["status"].(map[string]interface{})
+		gotLastSeenAt := toInt64(t, statusAfter["lastSeenAt"])
+		require.Equal(t, wantLastSeenAt, gotLastSeenAt,
+			"lastSeenAt should match the value provided in the status update")
+	})
+}
+
+// toInt64 converts a value from unstructured JSON (which may be float64 or int64) to int64.
+func toInt64(t *testing.T, v interface{}) int64 {
+	t.Helper()
+	switch n := v.(type) {
+	case int64:
+		return n
+	case float64:
+		return int64(n)
+	default:
+		t.Fatalf("expected numeric type, got %T", v)
+		return 0
+	}
 }

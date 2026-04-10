@@ -189,19 +189,18 @@ To export a JSON file, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-1. Click the **Export** drop-down list in the toolbar and select **Export as code**.
+1. In the toolbar, click the **Export** icon and select **Export as code**.
 
    The **Export dashboard** drawer opens.
 
-1. (Optional) Click **Advanced options** to expand the section and choose whether the dashboard export is in **JSON** or **YAML**.
+1. (Optional) Click **Advanced options** to expand the section, and then make the following selections:
+   - **Model**: Choose from **Classic** or **V2 Resource**
+   - **Format**: For the V2 Resource only, choose from **JSON** or **YAML**
+
 1. (Optional) Toggle the **Share dashboard with another instance** switch to remove details specific to your Grafana instance.
 1. Click **Download file** or **Copy to clipboard**.
+1. Paste the JSON in another location.
 1. Click the **X** at the top-right corner to close the share drawer.
-
-The generated file uses one of the following schema models:
-
-- **V1 Resource** - For dashboards created using the [current dashboard schema](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/) wrapped in the `spec` property of the [V1 Kubernetes-style resource](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2alpha1).
-- **V2 Resource** - For dashboards created using the [V2 Resource schema](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2beta1).
 
 ### Export a dashboard as an image
 

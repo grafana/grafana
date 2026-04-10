@@ -281,7 +281,7 @@ describe('DashboardPage', () => {
         dashboard: getTestDashboard(),
       });
       expect(await screen.findAllByTestId(selectors.pages.Dashboard.DashNav.navV2)).toHaveLength(1);
-      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
+      expect(screen.queryAllByTestId(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
     });
   });
 
@@ -290,7 +290,7 @@ describe('DashboardPage', () => {
       setup({ dashboard: getTestDashboard(), queryParams: { kiosk: true } });
       await waitFor(() => {
         expect(screen.queryAllByTestId(selectors.pages.Dashboard.DashNav.navV2)).toHaveLength(0);
-        expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
+        expect(screen.queryAllByTestId(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
       });
     });
   });

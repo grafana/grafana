@@ -34,7 +34,7 @@ export function DashboardVariablesList({ variableSet }: { variableSet: SceneVari
 
   const onClickVariable = useCallback((variable: SceneVariable) => {
     const { editPane } = getDashboardSceneFor(variable).state;
-    editPane.selectObject(variable, variable.state.key!);
+    editPane.selectObject(variable);
   }, []);
 
   const onDragEnd = useCallback(

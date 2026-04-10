@@ -476,7 +476,7 @@ func TestSimpleServer(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		// Update should return an ErrOptimisticLockingFailed the second time
+		// Update should return a conflict error the second time
 
 		_, err = server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
@@ -484,12 +484,13 @@ func TestSimpleServer(t *testing.T) {
 			ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
 
-		rsp, _ := server.Update(ctx, &resourcepb.UpdateRequest{
+		rsp, err := server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
-		require.Equal(t, rsp.Error.Code, ErrOptimisticLockingFailed.Code)
-		require.Equal(t, rsp.Error.Message, ErrOptimisticLockingFailed.Message)
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusConflict), rsp.Error.Code)
+		require.Contains(t, rsp.Error.Message, "requested RV does not match current RV")
 	})
 }
 
@@ -614,7 +615,6 @@ func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
 	s := &server{
 		artificialSuccessfulWriteDelay: 1 * time.Millisecond,
 		log:                            log.NewNopLogger(),
-		ctx:                            ctx,
 	}
 
 	check := func(t *testing.T, expectedSleep bool, res responseWithErrorResult, err error) {

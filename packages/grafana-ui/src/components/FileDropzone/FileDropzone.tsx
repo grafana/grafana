@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { uniqueId } from 'lodash';
 import { type ReactNode, useCallback, useState } from 'react';
 import {
   type Accept,
@@ -15,6 +14,7 @@ import { formattedValueToString, getValueFormat, type GrafanaTheme2 } from '@gra
 import { t, Trans } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
+import { uniqueId } from '../../utils/uniqueId';
 import { Alert } from '../Alert/Alert';
 import { Icon } from '../Icon/Icon';
 

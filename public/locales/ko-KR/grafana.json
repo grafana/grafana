@@ -2406,7 +2406,9 @@
       "recipient-notification-fires": "경고 규칙이 발생될 때 알림을 받을 사람을 선택하세요."
     },
     "open-drawer-icon-button": {
-      "details": ""
+      "details": "",
+      "instance-details": "",
+      "rule-details": ""
     },
     "option-customfield": {
       "label-custom-template": "사용자 정의 템플릿",
@@ -3546,6 +3548,7 @@
       }
     },
     "triage": {
+      "clear-filters": "",
       "collapse": "",
       "collapse-all": "",
       "collapse-sidebar": "",
@@ -3562,6 +3565,7 @@
         "no-label": ""
       },
       "instance-details-drawer": {
+        "alert-instance-label": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "인스턴스 세부 정보",
@@ -3590,6 +3594,7 @@
           "folder-only": ""
         }
       },
+      "severity-filter-title": "",
       "show-fewer-values": "",
       "state-filter-title": "",
       "state-firing": "",
@@ -4888,6 +4893,9 @@
       "light-theme": "라이트",
       "scopes": "범위"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "Grafana Assistant로 검색",
       "message": "찾은 결과 없음"
@@ -4963,24 +4971,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "데이터 소스, 통합 기능 및 앱을 통해 데이터를 Grafana에 연결합니다.",
-          "title": "새 연결 추가"
+          "subtitle": "데이터 소스, 통합 기능 및 앱을 통해 데이터를 Grafana에 연결합니다."
         },
         "collector": {
-          "subtitle": "Grafana Alloy(당사의 OpenTelemetry Collector 배포판)의 구성 관리",
-          "title": ""
+          "subtitle": "Grafana Alloy(당사의 OpenTelemetry Collector 배포판)의 구성 관리"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "기존 데이터 소스 연결을 관리합니다.",
-          "title": "데이터 소스"
+          "subtitle": "기존 데이터 소스 연결을 관리합니다."
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "활성 통합을 관리합니다.",
-          "title": "통합"
+          "subtitle": "활성 통합을 관리합니다."
         },
         "private-data-source-connections": {
-          "subtitle": "데이터 소스에 대한 사설망 연결을 관리합니다.",
-          "title": "비공개 데이터 소스 연결"
+          "subtitle": "데이터 소스에 대한 사설망 연결을 관리합니다."
         },
         "subtitle": "Grafana 클라우드에 인프라를 연결하려면 데이터 소스, 통합 기능 및 앱을 사용하세요. 이 페이지를 통해 데이터 수집부터 비공개 연결과 원격 측정 파이프라인에 이르기까지 모든 기능을 추가 및 관리할 수 있습니다."
       }
@@ -5040,11 +5052,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "새 데이터 소스에 연결",
-          "title": "새 연결 추가"
+          "subtitle": "새 데이터 소스에 연결"
         },
         "data-sources": {
-          "subtitle": "기존 데이터 소스 연결을 관리합니다.",
           "title": "구성된 데이터 소스 보기"
         },
         "subtitle": "데이터 소스 연결을 편리하게 한 곳에서 관리하세요. 이 페이지를 사용하여 새로운 데이터 소스를 추가하거나 기존 연결을 관리할 수 있습니다. "
@@ -5094,10 +5104,6 @@
       "view-json-diff": "모든 변경 내용을 보려면 JSON 차이를 확인하세요."
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "새로 추가",
     "alert": {
@@ -5139,6 +5145,14 @@
       "back-button": "뒤로가기",
       "next-button": "다음",
       "save-button": "저장"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "선택한 대상 데이터 소스는 쿼리 편집기를 내보내야 합니다.",
@@ -5205,11 +5219,6 @@
       "transform-required": "변환 유형을 선택하세요.",
       "type-label": "유형",
       "type-tooltip": "소스 데이터에 적용될 변환 유형입니다."
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "쿼리 실행"
     }
   },
   "dashboard": {
@@ -6847,7 +6856,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "규칙 표시/숨기기가 작동하지 않습니다",
@@ -7650,6 +7664,7 @@
       "placeholder-descriptive-text": "설명 텍스트",
       "placeholder-label-name": "라벨 이름",
       "placeholder-variable-name": "변수 이름",
+      "run-query": "",
       "text-running-query": "쿼리 실행 중...",
       "title": {
         "delete-variable": "변수 삭제"
@@ -8512,7 +8527,6 @@
       "give-feedback": "피드백 제출하기"
     },
     "logs-meta-row": {
-      "download": "다운로드",
       "label": {
         "deduplication-count": "중복 제거 횟수",
         "showing-only-selected-fields": "선택한 필드만 표시 중"
@@ -8865,22 +8879,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "로그 시각화에 결과 표시",
-        "show-results-in-table-visualisation": "테이블 시각화에 결과 표시",
-        "show-results-newest-to-oldest": "최신순으로 결과 표시",
-        "show-results-oldest-to-newest": "오래된 순으로 결과 표시"
+        "show-results-in-table-visualisation": "테이블 시각화에 결과 표시"
       },
       "label": {
         "logs": "로그",
-        "newest-first": "최신순",
-        "oldest-first": "오래된 순",
         "table": "표"
       },
-      "label-deduplication": "중복 제거",
-      "label-display-results": "결과 표시",
-      "label-prettify-json": "JSON을 보기 좋게 정리",
-      "label-time": "시간",
-      "label-unique-labels": "고유 라벨",
-      "label-wrap-lines": "줄 바꿈",
       "title-feedback": "피드백",
       "title-logs": "로그",
       "title-logs-volume": "로그 볼륨"
@@ -8975,8 +8979,7 @@
       "tooltip-s-m-h": "10초, 1분, 30분, 1시간"
     },
     "sql-expr": {
-      "button-run-query": "쿼리 실행",
-      "tooltip-experimental": "SQL 표현식 LLM 통합 기능은 실험 단계입니다. 문제가 발생하면 Grafana 팀에 보고해 주세요."
+      "button-run-query": "쿼리 실행"
     },
     "sql-schema": {
       "error-title": "오류",
@@ -11336,6 +11339,12 @@
       "show-search": "로그 결과에서 검색",
       "show-timestamps": "타임스탬프 표시",
       "show-unique-labels": "고유 라벨 표시",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "타임스탬프 숨기기",
         "label": "로그 타임스탬프",
@@ -11362,9 +11371,6 @@
         "not-supported": ""
       },
       "wrap-lines": "줄 바꿈"
-    },
-    "logs-navigation": {
-      "scroll-top": "맨 위로 스크롤"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12158,7 +12164,7 @@
     },
     "quick-add": {
       "aria-label": "신규",
-      "new-template-dashboard-button": "템플릿 기반 대시보드"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "블로그 최근 글"
   },
@@ -12246,6 +12252,8 @@
       "description": "받은 알림이 여기에 표시됩니다.",
       "title": "모두 확인했습니다!"
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "알림 무시",
       "title-alert": "이 페이지는 과거의 오류와 경고를 표시합니다. 한 번 무시한 경고는 검색할 수 없습니다."
@@ -13301,6 +13309,7 @@
       "token-label": "프로젝트 액세스 토큰",
       "token-required": "GitLab 토큰은 필수 항목입니다",
       "url-description": "GitLab 리포지토리 URL",
+      "url-pattern": "",
       "url-required": "리포지토리 URL은 필수 항목입니다"
     },
     "history-view": {
@@ -14699,6 +14708,7 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
+      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -14706,6 +14716,7 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
+      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -14713,6 +14724,7 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
+      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -14723,19 +14735,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "SQL 제안을 생성하려면, 최소 하나 이상의 데이터 쿼리를 추가하세요.",
-    "ai-explain-title": "AI 기반 SQL 표현식 설명",
-    "ai-suggestions-title": "AI 기반 SQL 표현식 제안",
-    "apply": "적용",
-    "code-label": "{{ language }}",
-    "copy": "복사",
-    "explain-empty-query-tooltip": "설명을 확인하려면 SQL 표현식을 입력하세요.",
     "explain-query": "쿼리 설명",
-    "explanation-modal-title": "SQL 쿼리 설명",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "SQL 제안 내역",
-    "suggestions": "제안",
-    "view-explanation": "설명 보기"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "즐겨찾기로 표시",
@@ -16486,6 +16488,10 @@
   },
   "xychart": {
     "category-xychart": "XY 차트",
+    "errors": {
+      "nodata": "",
+      "unknown": ""
+    },
     "name-fill-opacity": "채우기 불투명도",
     "name-line-style": "선 유형",
     "name-line-width": "선 너비",
