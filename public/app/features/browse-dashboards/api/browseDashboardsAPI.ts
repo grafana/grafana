@@ -339,6 +339,8 @@ export const browseDashboardsAPI = createApi({
     deleteFolders: builder.mutation<void, DeleteFoldersArgs>({
       invalidatesTags: invalidateFolderListOnSuccess,
       queryFn: async ({ folderUIDs }, api, _extraOptions, baseQuery) => {
+        // Delete all the folders sequentially
+        // TODO error handling here
         for (const folderUID of folderUIDs) {
           if (await isProvisionedFolderCheck(api.dispatch, folderUID)) {
             continue;
@@ -356,6 +358,7 @@ export const browseDashboardsAPI = createApi({
       onQueryStarted: ({ folderUIDs }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
           dispatch(refreshParents(folderUIDs));
+          // Clear the deleted dashboards cache since deleting a folder also deletes its dashboards
           deletedDashboardsCache.clear();
           invalidateQuotaUsage(dispatch);
         });
