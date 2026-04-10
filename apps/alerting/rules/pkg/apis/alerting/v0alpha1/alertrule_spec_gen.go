@@ -266,7 +266,7 @@ func (resource *AlertRuleSimplifiedRoutingOrNamedRoutingTree) UnmarshalJSON(raw 
 
 	discriminator, found := parsedAsMap["type"]
 	if !found {
-		return nil
+		discriminator = "SimplifiedRouting"
 	}
 
 	switch discriminator {
