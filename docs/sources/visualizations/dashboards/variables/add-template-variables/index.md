@@ -91,9 +91,9 @@ refs:
 
 # Add variables
 
-<!-- vale Grafana.Spelling = NO -->
-
 The following table lists the types of variables shipped with Grafana.
+
+<!-- vale Grafana.Spelling = NO -->
 
 <!-- prettier-ignore-start -->
 
@@ -105,7 +105,7 @@ The following table lists the types of variables shipped with Grafana.
 | Constant          | Define a hidden constant. [Add a constant variable](#add-a-constant-variable).                                                                                                          |
 | Data source       | Quickly change the data source for an entire dashboard. [Add a data source variable](#add-a-data-source-variable).                                                                      |
 | Interval          | Interval variables represent time spans. [Add an interval variable](#add-an-interval-variable).                                                                                         |
-| Ad hoc filters    | Key/value filters that are automatically added to all metric queries for a data source (Prometheus, Loki, InfluxDB, and Elasticsearch only). [Add ad hoc filters](#add-ad-hoc-filters). |
+| Filters    | Key/value filters that are automatically added to all metric queries for a data source (Prometheus, Loki, InfluxDB, and Elasticsearch only). [Add filters](#add-ad-hoc-filters). |
 | Switch            | Display a switch that allows you to toggle between two configurable values for enabled and disabled states. [Add a switch variable](#add-a-switch-variable).                            |
 | Global variables  | Built-in variables that can be used in expressions in the query editor. Refer to [Global variables](#global-variables).                                                                 |
 | Chained variables | Variable queries can contain other variables. Refer to [Chained variables](#chained-variables).                                                                                         |
@@ -152,7 +152,7 @@ To create a variable, follow these steps:
    - [Constant](#add-a-constant-variable)
    - [Data source](#add-a-data-source-variable)
    - [Interval](#add-an-interval-variable)
-   - [Ad hoc filters](#add-ad-hoc-filters)
+   - [Filters](#add-ad-hoc-filters)
    - [Switch](#add-a-switch-variable)
 
 {{< /docs/list >}}
@@ -327,7 +327,7 @@ groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5
 <!-- vale Grafana.WordList = NO -->
 <!-- vale Grafana.Spelling = NO -->
 
-## Add ad hoc filters
+## Add filters
 
 {{< admonition type="note" >}}
 In Grafana v13, we released the filter and group by feature in public preview.
@@ -339,17 +339,17 @@ To use this feature, enable the `dashboardUnifiedDrilldownControls` feature togg
 For more information on filter and group by, refer to the [Dashboard controls documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/).
 {{< /admonition >}}
 
-_Ad hoc filters_ are one of the most complex and flexible variable options available.
-Instead of creating a variable for each dimension by which you want to filter, ad hoc filters automatically create variables (key/value pairs) for all the dimensions returned by your data source query.
+_Filters_ are one of the most complex and flexible variable options available.
+Instead of creating a variable for each dimension by which you want to filter, filters automatically create variables (key/value pairs) for all the dimensions returned by your data source query.
 This allows you to apply filters dashboard-wide.
 
-Ad hoc filters let you add label/value filters that are automatically added to all metric queries that use the specified data source.
-Unlike other variables, you don't use ad hoc filters in queries.
-Instead, you use ad hoc filters to write filters for existing queries.
+Filters let you add label/value filters that are automatically added to all metric queries that use the specified data source.
+Unlike other variables, you don't use filters in queries.
+Instead, you use filters to write filters for existing queries.
 
-The following data sources support ad hoc filters:
+The following data sources support filters:
 
-- Dashboard - Use this special data source to [apply ad hoc filters to data from unsupported data sources](#filter-any-data-using-the-dashboard-data-source).
+- Dashboard - Use this special data source to [apply filters to data from unsupported data sources](#filter-any-data-using-the-dashboard-data-source).
 - Prometheus
 - Loki
 - InfluxDB
@@ -380,22 +380,22 @@ To preserve the context of the current dashboard:
 - **Variables:** You must enable **Include all variables** to preserve existing selections.
 - **Ordering:** Ensure that **Include all variables** is placed before the specific variable you are defining in the link.
 
-Ad hoc filters on the current dashboard are automatically preserved.
+Filters on the current dashboard are automatically preserved.
 
 Learn more in:
 
 - [Configure data links and actions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-data-links/)
-- [Create dashboard URL variables – Ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard-url-variables/#ad-hoc-filters)
+- [Create dashboard URL variables – Filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard-url-variables/#ad-hoc-filters)
   {{< /admonition >}}
 
 ### Filter any data using the Dashboard data source
 
-In cases where a data source doesn't support the use of ad hoc filters, you can use the Dashboard data source to reference that data, and then filter it in a new panel.
+In cases where a data source doesn't support the use of filters, you can use the Dashboard data source to reference that data, and then filter it in a new panel.
 This allows you to bypass the limitations of the data source in the source panel.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-dashboard-ds-v12.2.png" max-width="750px" alt="The query section of a panel with the Dashboard data source configured" >}}
 
-To use ad hoc filters on data from an unsupported data source, follow these steps:
+To use filters on data from an unsupported data source, follow these steps:
 
 1. Navigate to the dashboard with the panel with the data you want to filter.
 1. Click **Edit** in top-right corner of the dashboard.
@@ -419,9 +419,9 @@ To use ad hoc filters on data from an unsupported data source, follow these step
 Now you can filter the data from the source panel by way of the Dashboard data source.
 Add as many panels as you need.
 
-### Dashboard drilldown with ad hoc filters
+### Dashboard drilldown with filters
 
-In table and bar chart visualizations, you can apply ad hoc filters directly from the visualization.
+In table and bar chart visualizations, you can apply filters directly from the visualization.
 To quickly apply ad hoc filter variables, follow these steps:
 
 1. To display the filter icons, hover your cursor over the table cell with the value for which you want to filter. In this example, the cell value is `ConfigMap Updated`, which is in the `alertname` column:

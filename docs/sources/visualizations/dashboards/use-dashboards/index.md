@@ -67,7 +67,7 @@ image_maps:
         content: |
           **Variables**
 
-          Use [variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/), including ad hoc filters, to create more interactive and dynamic dashboards.
+          Use [variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/), including filters, to create more interactive and dynamic dashboards.
       - x_coord: 45
         y_coord: 23
         content: |
@@ -370,7 +370,8 @@ To filter dashboard data, follow these steps:
 
 1. Repeat this process as needed until you have all the filters you need.
 
-   ![Ad hoc filters](/media/docs/grafana/dashboards/screenshot-adhoc-filters-v11.3.png)
+   ![Filters](/media/docs/grafana/dashboards/screenshot-adhoc-filters-v11.3.png)
+   <!-- TODO: Update screenshot -->
 
 ### Edit or delete filters
 
