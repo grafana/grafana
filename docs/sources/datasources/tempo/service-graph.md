@@ -125,7 +125,7 @@ You can also use TraceQL to query the same data programmatically. Refer to [Trac
 
 ## Troubleshoot
 
-If the Service Graph isn't displaying data, the table is empty, or you see high cardinality warnings, refer to [Service graph issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/troubleshoot/#service-graph-issues) in the troubleshooting guide.
+If the Service Graph isn't displaying data, the table is empty, or you see high cardinality warnings, refer to [Service graph issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/troubleshooting/#service-graph-issues) in the troubleshooting guide.
 
 ## Next steps
 
