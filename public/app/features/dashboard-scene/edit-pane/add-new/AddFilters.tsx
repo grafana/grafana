@@ -15,7 +15,7 @@ import { dashboardEditActions } from '../shared';
 
 import { AddButton } from './AddButton';
 
-function openAddFilterPane(dashboard: DashboardScene) {
+export function openAddFilterPane(dashboard: DashboardScene) {
   const variablesSet = sceneGraph.getVariables(dashboard);
 
   if (!(variablesSet instanceof SceneVariableSet)) {
