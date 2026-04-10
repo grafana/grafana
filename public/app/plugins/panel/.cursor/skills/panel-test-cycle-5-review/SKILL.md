@@ -8,7 +8,7 @@ description: >-
 
 # Panel testing — Cycle 5: Review
 
-Canonical methodology: [public/app/plugins/panel/AGENTS.md](../../../public/app/plugins/panel/AGENTS.md) (section “Cycle 5”).
+Canonical methodology: [AGENTS.md](../../../AGENTS.md) (section “Cycle 5”).
 
 ## Input before “LGTM”
 

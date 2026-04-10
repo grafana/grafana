@@ -8,7 +8,7 @@ description: >-
 
 # Panel testing — Cycle 1: Human context
 
-Canonical methodology: [public/app/plugins/panel/AGENTS.md](../../../public/app/plugins/panel/AGENTS.md) (section “Cycle 1”).
+Canonical methodology: [AGENTS.md](../../../AGENTS.md) (section “Cycle 1”).
 
 ## Non-negotiable: input before edits
 

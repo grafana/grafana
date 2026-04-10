@@ -8,7 +8,7 @@ description: >-
 
 # Panel testing — Cycle 4: Agent assistance
 
-Canonical methodology: [public/app/plugins/panel/AGENTS.md](../../../public/app/plugins/panel/AGENTS.md) (sections “Cycle 4”, “Technical reference”, “Layered tests”, “uPlot plugin patterns”).
+Canonical methodology: [AGENTS.md](../../../AGENTS.md) (sections “Cycle 4”, “Technical reference”, “Layered tests”, “uPlot plugin patterns”).
 
 ## Input before implementation
 
@@ -18,7 +18,7 @@ Canonical methodology: [public/app/plugins/panel/AGENTS.md](../../../public/app/
 
 ## Implementation rules
 
-1. Replace **`it.todo`** with a real test **or** split into `it` + helpers; follow [contribute/style-guides/testing.md](../../../contribute/style-guides/testing.md) for RTL/user-event.
+1. Replace **`it.todo`** with a real test **or** split into `it` + helpers; follow [contribute/style-guides/testing.md](../../../../../../../contribute/style-guides/testing.md) for RTL/user-event.
 2. Use panel patterns from AGENTS.md: **`getPanelProps`**, `*.integration.test.tsx` + mocked **uPlot** when hooks matter, fake **UPlotConfigBuilder** per existing panel examples.
 3. **Stop after one scenario** is done: show the diff summary and ask whether to **commit** before the next `it.todo`.
 

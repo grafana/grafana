@@ -8,7 +8,7 @@ description: >-
 
 # Panel testing — Cycle 2: Testing (stubs require approval)
 
-Canonical methodology: [public/app/plugins/panel/AGENTS.md](../../../public/app/plugins/panel/AGENTS.md) (section “Cycle 2”).
+Canonical methodology: [AGENTS.md](../../../AGENTS.md) (section “Cycle 2”).
 
 ## Non-negotiable: input before edits
 

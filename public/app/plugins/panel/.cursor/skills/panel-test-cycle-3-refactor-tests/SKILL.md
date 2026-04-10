@@ -8,7 +8,7 @@ description: >-
 
 # Panel testing — Cycle 3: Refactor tests
 
-Canonical methodology: [public/app/plugins/panel/AGENTS.md](../../../public/app/plugins/panel/AGENTS.md) (section “Cycle 3” and example).
+Canonical methodology: [AGENTS.md](../../../AGENTS.md) (section “Cycle 3” and example).
 
 ## Non-negotiable: plan approval before edits
 
