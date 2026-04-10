@@ -371,7 +371,6 @@ To filter dashboard data, follow these steps:
 1. Repeat this process as needed until you have all the filters you need.
 
    ![Filters](/media/docs/grafana/dashboards/screenshot-adhoc-filters-v11.3.png)
-   <!-- TODO: Update screenshot -->
 
 ### Edit or delete filters
 
@@ -381,7 +380,7 @@ To edit or delete filters, follow these steps:
 1. Do one of the following:
    - To edit the operator or value of a filter, click anywhere on the filter and update it.
 
-     ![Editing an ad hoc filter](/media/docs/grafana/dashboards/screenshot-edit-filters-v11.3.png)
+     ![Editing a filter](/media/docs/grafana/dashboards/screenshot-edit-filters-v11.3.png)
 
    - To change the filter label, you must delete the filter and create a new one.
    - To delete a filter, click the **X** next to it.

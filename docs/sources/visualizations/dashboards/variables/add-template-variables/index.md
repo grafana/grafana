@@ -339,6 +339,8 @@ To use this feature, enable the `dashboardUnifiedDrilldownControls` feature togg
 For more information on filter and group by, refer to the [Dashboard controls documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/).
 {{< /admonition >}}
 
+<!--TODO: -->
+
 _Filters_ are one of the most complex and flexible variable options available.
 Instead of creating a variable for each dimension by which you want to filter, filters automatically create variables (key/value pairs) for all the dimensions returned by your data source query.
 This allows you to apply filters dashboard-wide.
