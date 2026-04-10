@@ -18,6 +18,10 @@ This file focuses on **panel-specific** concerns: `PanelProps`, `DataFrame` fixt
 
 Treat LLMs and coding agents as tools: learn what works for your workflow. Aim to **raise quality and deepen understanding**, not only to ship tests quickly. Prefer **user interaction–driven** tests (what the user sees and does) that hold up better under refactors and extraction than tests that pin internal structure. **Limit unit tests that are tightly coupled to implementation**; when you must touch implementation for tests, restrict changes to **`data-testid`**, stable selectors, or clarifying comments—avoid refactoring production logic solely to satisfy a test. If you are blocked, get a human reviewer involved.
 
+## React and JSX
+
+- **Do not** call **`React.createElement`** when returning a **component** with JSX would work instead (e.g. `<MyComponent />` or `<MyComponent {...props} />`). Prefer JSX for readability and consistency with the rest of the codebase. Reserve `createElement` for cases where JSX is awkward or impossible (e.g. a dynamic intrinsic tag name, or unavoidable library patterns)—not as a default.
+
 ## Working effectively with agents
 
 - Prefer **better context in the code** (mocks, comments, small helpers) over endlessly refining a single prompt.

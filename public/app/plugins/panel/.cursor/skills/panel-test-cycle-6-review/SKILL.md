@@ -2,9 +2,9 @@
 name: panel-test-cycle-6-review
 description: >-
   Review Cycle (6) — final review for Grafana panel test work (draft PR, diff read,
-  coverage sanity, optional second review). Use when the user mentions Review Cycle (6),
-  PR review, test coverage review, or finishing panel tests under
-  public/app/plugins/panel.
+  typecheck, ESLint, Prettier, coverage sanity, optional second review). Use when the
+  user mentions Review Cycle (6), PR review, test coverage review, or finishing panel
+  tests under public/app/plugins/panel.
 ---
 
 # Panel testing — Review Cycle (6)
@@ -20,6 +20,16 @@ Ask the prompter for:
 
 **Coverage**: You may run **coverage** again **without** asking for approval; align paths with the PR/diff scope when obvious, or infer from changed test files.
 
+## Tooling checks (repo root)
+
+Run these from the **Grafana repo root** before treating the branch as merge-ready. **Do not** ask for approval to run them—**fix failures** (or report them) before LGTM.
+
+1. **TypeScript**: `yarn typecheck`
+2. **ESLint**: `yarn lint` (use `yarn lint:fix` where auto-fixes apply)
+3. **Prettier**: `yarn prettier:check` — if it fails, run **`yarn prettier:write`** on the changed files (or the paths from the PR scope), then re-run `yarn prettier:check`
+
+Aligns with repo-wide commands in [AGENTS.md](../../../../../../../AGENTS.md).
+
 ## Review checklist
 
 1. **Diff narrative**: Do tests match what they claim? Names align with data and UI (see AGENTS “Naming and clarity”).
@@ -34,4 +44,5 @@ Ask the prompter for:
 ## Anti-patterns
 
 - Approving without reading the full test diff.
+- Skipping **`yarn typecheck`**, **`yarn lint`**, or **`yarn prettier:check`** when the branch is meant to merge (CI will fail the same checks).
 - Demanding 100% coverage instead of targeting meaningful gaps.
