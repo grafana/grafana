@@ -2419,7 +2419,9 @@
       "recipient-notification-fires": "Selecione quem deve receber uma notificação quando uma regra de alerta for acionada."
     },
     "open-drawer-icon-button": {
-      "details": ""
+      "details": "",
+      "instance-details": "",
+      "rule-details": ""
     },
     "option-customfield": {
       "label-custom-template": "Modelo personalizado",
@@ -3565,6 +3567,7 @@
       }
     },
     "triage": {
+      "clear-filters": "",
       "collapse": "",
       "collapse-all": "",
       "collapse-sidebar": "",
@@ -3581,6 +3584,7 @@
         "no-label": ""
       },
       "instance-details-drawer": {
+        "alert-instance-label": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Detalhes da instância",
@@ -3609,6 +3613,7 @@
           "folder-only": ""
         }
       },
+      "severity-filter-title": "",
       "show-fewer-values": "",
       "state-filter-title": "",
       "state-firing": "",
@@ -4918,6 +4923,9 @@
       "light-theme": "Claro",
       "scopes": "Escopos"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "Buscar com o Assistente da Grafana",
       "message": "Nenhum resultado encontrado"
@@ -4993,24 +5001,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Conecte dados ao Grafana por meio de fontes de dados, integrações e aplicativos",
-          "title": "Adicionar nova conexão"
+          "subtitle": "Conecte dados ao Grafana por meio de fontes de dados, integrações e aplicativos"
         },
         "collector": {
-          "subtitle": "Gerencie a configuração do Grafana Alloy, nossa distribuição do OpenTelemetry Collector",
-          "title": "Coletor"
+          "subtitle": "Gerencie a configuração do Grafana Alloy, nossa distribuição do OpenTelemetry Collector"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "Gerencie suas conexões de fonte de dados atuais",
-          "title": "Fontes de dados"
+          "subtitle": "Gerencie suas conexões de fonte de dados atuais"
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "Gerencie suas integrações ativas",
-          "title": "Integrações"
+          "subtitle": "Gerencie suas integrações ativas"
         },
         "private-data-source-connections": {
-          "subtitle": "Gerencie suas conexões de rede privadas para as fontes de dados",
-          "title": "Conexão de fonte de dados privada"
+          "subtitle": "Gerencie suas conexões de rede privadas para as fontes de dados"
         },
         "subtitle": "Conecte sua infraestrutura ao Grafana Cloud usando fontes de dados, integrações e aplicativos. Use esta página para adicionar e gerenciar tudo, desde a ingestão de dados até conexões privadas e pipelines de telemetria."
       }
@@ -5070,11 +5082,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Conectar a uma nova fonte de dados",
-          "title": "Adicionar nova conexão"
+          "subtitle": "Conectar a uma nova fonte de dados"
         },
         "data-sources": {
-          "subtitle": "Gerencie suas conexões de fonte de dados atuais",
           "title": "Ver fontes de dados configuradas"
         },
         "subtitle": "Gerencie suas conexões de fonte de dados em um só lugar. Use esta página para adicionar uma nova fonte de dados ou gerenciar as conexões existentes."
@@ -5124,10 +5134,6 @@
       "view-json-diff": "Visualizar JSON diff para ver todas as alterações"
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "Adicionar novo",
     "alert": {
@@ -5169,6 +5175,14 @@
       "back-button": "Voltar",
       "next-button": "Avançar",
       "save-button": "Salvar"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "A fonte de dados de destino selecionada deve exportar um editor de consulta.",
@@ -5235,11 +5249,6 @@
       "transform-required": "Selecione um tipo de transformação",
       "type-label": "Tipo",
       "type-tooltip": "O tipo de transformação que será aplicado a fonte de dados."
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "Executar consulta"
     }
   },
   "dashboard": {
@@ -6879,7 +6888,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "As regras de exibição/ocultação não funcionarão",
@@ -7689,6 +7703,7 @@
       "placeholder-descriptive-text": "Texto descritivo",
       "placeholder-label-name": "Nome do rótulo",
       "placeholder-variable-name": "Nome da variável",
+      "run-query": "",
       "text-running-query": "Executando consulta…",
       "title": {
         "delete-variable": "Excluir variável"
@@ -8555,7 +8570,6 @@
       "give-feedback": "Dar feedback"
     },
     "logs-meta-row": {
-      "download": "Baixar",
       "label": {
         "deduplication-count": "Contagem de desduplicação",
         "showing-only-selected-fields": "Exibindo apenas os campos selecionados"
@@ -8910,22 +8924,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "Exibir resultados na visualização de logs",
-        "show-results-in-table-visualisation": "Exibir resultados na visualização da tabela",
-        "show-results-newest-to-oldest": "Exibir resultados do mais recente ao mais antigo",
-        "show-results-oldest-to-newest": "Exibir resultados do mais antigo ao mais recente"
+        "show-results-in-table-visualisation": "Exibir resultados na visualização da tabela"
       },
       "label": {
         "logs": "Logs",
-        "newest-first": "Mais recentes primeiro",
-        "oldest-first": "Mais antigos primeiro",
         "table": "Tabela"
       },
-      "label-deduplication": "Desduplicação",
-      "label-display-results": "Exibir resultados",
-      "label-prettify-json": "Embelezar JSON",
-      "label-time": "Tempo",
-      "label-unique-labels": "Rótulos exclusivos",
-      "label-wrap-lines": "Aplicar quebra de linha",
       "title-feedback": "Feedback",
       "title-logs": "Logs",
       "title-logs-volume": "Volume de logs"
@@ -9020,8 +9024,7 @@
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
     },
     "sql-expr": {
-      "button-run-query": "Executar consulta",
-      "tooltip-experimental": "A integração do LLM de expressões SQL está em fase de testes. Informe à equipe do Grafana se surgir algum problema."
+      "button-run-query": "Executar consulta"
     },
     "sql-schema": {
       "error-title": "Erro",
@@ -11399,6 +11402,12 @@
       "show-search": "Resultado da busca nos logs",
       "show-timestamps": "Exibir data e hora",
       "show-unique-labels": "Exibir rótulos únicos",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "Ocultar data e hora",
         "label": "Registrar data e hora",
@@ -11425,9 +11434,6 @@
         "not-supported": ""
       },
       "wrap-lines": "Aplicar quebra de linha"
-    },
-    "logs-navigation": {
-      "scroll-top": "Rolar para cima"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12221,7 +12227,7 @@
     },
     "quick-add": {
       "aria-label": "Novo",
-      "new-template-dashboard-button": "Painel do modelo"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "Mais recentes do blog"
   },
@@ -12312,6 +12318,8 @@
       "description": "As suas notificações aparecerão aqui",
       "title": "Vocês está com tudo em dia!"
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "Descartar notificações",
       "title-alert": "Esta página exibe erros e avisos anteriores. Após descartados, eles não podem ser recuperados."
@@ -13373,6 +13381,7 @@
       "token-label": "Token de acesso ao projeto",
       "token-required": "O token do GitLab é obrigatório",
       "url-description": "O URL do repositório do GitLab",
+      "url-pattern": "",
       "url-required": "O URL do repositório é obrigatório"
     },
     "history-view": {
@@ -14813,19 +14822,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "Adicione pelo menos uma consulta de dados para gerar sugestões de SQL",
-    "ai-explain-title": "Explicação da expressão SQL com tecnologia de IA",
-    "ai-suggestions-title": "Sugestões de expressões SQL com tecnologia de IA",
-    "apply": "Aplicar",
-    "code-label": "{{ language }}",
-    "copy": "Copiar",
-    "explain-empty-query-tooltip": "Insira uma expressão SQL para obter uma explicação",
     "explain-query": "Explicar consulta",
-    "explanation-modal-title": "Explicação da consulta SQL",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "Histórico de sugestões de SQL",
-    "suggestions": "Sugestões",
-    "view-explanation": "Ver explicação"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "Marcar como favorito",

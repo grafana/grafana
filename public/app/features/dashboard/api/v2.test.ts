@@ -495,6 +495,49 @@ describe('v2 dashboard API', () => {
     });
   });
 
+  describe('restoreDashboardVersion', () => {
+    it('should use current folder, not the historical version folder', async () => {
+      // History list: version 3 was in 'old-folder'
+      mockGet.mockResolvedValueOnce({
+        metadata: { resourceVersion: '1' },
+        items: [
+          {
+            ...mockDashboardDto,
+            metadata: {
+              ...mockDashboardDto.metadata,
+              generation: 3,
+              annotations: { [AnnoKeyFolder]: 'old-folder' },
+            },
+          },
+        ],
+      });
+
+      // Current dashboard is in 'current-folder'
+      mockGet.mockResolvedValueOnce({
+        ...mockDashboardDto,
+        metadata: {
+          ...mockDashboardDto.metadata,
+          annotations: { [AnnoKeyFolder]: 'current-folder' },
+        },
+      });
+
+      const api = new K8sDashboardV2API();
+      await api.restoreDashboardVersion('dash-uid', 3);
+
+      expect(mockPut).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            annotations: expect.objectContaining({
+              [AnnoKeyFolder]: 'current-folder',
+            }),
+          }),
+        }),
+        expect.anything()
+      );
+    });
+  });
+
   describe('restoreDashboard', () => {
     it('should reset resource version and return created dashboard', async () => {
       const dashboardToRestore = {

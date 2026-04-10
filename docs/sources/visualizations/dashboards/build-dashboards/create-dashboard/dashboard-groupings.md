@@ -15,7 +15,7 @@ description: Group dashboard panels
 weight: 300
 image_maps:
   - key: panel-groupings
-    src: /media/docs/grafana/dashboards/screenshot-dashboard-groupings-v13.0.png
+    src: /media/docs/grafana/dashboards/screenshot-dashboard-w-groupings-v13.0.png
     alt: Dashboard with nested groupings
     points:
       - x_coord: 15
@@ -23,11 +23,11 @@ image_maps:
         content: |
           You can only have one type of grouping at the first level. In this case, that's two rows: **Row with tabs** and **Another row, collapsed**.
       - x_coord: 21
-        y_coord: 93
+        y_coord: 92
         content: |
           Inside of those first-level groupings however, you have the freedom to add different dashboard elements. There are tabs nested in **Row with tabs**, but you could nest rows, tabs, or panels inside **Another row, collapsed**.
       - x_coord: 26
-        y_coord: 22.5
+        y_coord: 22
         content: |
           Also, you can have different panel layouts in within a row or tab. In this dashboard, one tab contains two rows that have two different layouts.
   - key: ungrouping
@@ -203,19 +203,14 @@ To remove groupings, follow these steps:
 1. Click **Save**.
 1. Click **Exit edit**.
 
-## Move tabs between rows
+## Drag tabs between rows
 
 In dashboards that include multiple rows with nested tabs, you can drag and drop nested tabs between rows.
-To do this, the receiving row just needs to have one nested tab already:
-
-You can also move tabs to a row that has no nested tabs as long as:
-
-- It previously had nested tabs.
-- The last tab was moved out of the row rather than deleted.
+To do this, the receiving row just needs to have one nested tab already.
 
 ## Place panels outside of groupings with headerless rows
 
-If you have a panel that includes grouped panels already and you want some panels to appear ungrouped, you can use the **Hide row header** switch in the row configuration to achieve this.
+If you have a row with panels, but you want the panels to appear ungrouped, you can use the **Hide row header** switch in the row configuration to achieve this.
 
 In view mode, the row header is hidden, so that the panels in that row appear ungrouped.
 In the following image, the panels are grouped into two rows, but the header of the second row is hidden:

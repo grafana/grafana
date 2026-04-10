@@ -156,9 +156,13 @@ Hover your cursor over the numbers to display descriptions of the toolbar option
 
 {{< image-map key="sidebar-toolbar" >}}
 
-{{< admonition type="note" >}}
 The toolbar is displayed in both edit and view mode, but the **Dashboard options** and **Feedback** icons aren't available in view mode.
-{{< /admonition >}}
+
+The available configuration options in the sidebar differ depending on the selected dashboard element:
+
+- Dashboards: High-level options are in the sidebar and further configuration options are in the **Settings** page.
+- Groupings (rows and tabs): All configuration options are available in the sidebar.
+- Panels: High-level options are in the sidebar and further configuration options are in the **Edit panel** view.
 
 You can close the sidebar by clicking the following icons in the toolbar a second time:
 
@@ -166,17 +170,27 @@ You can close the sidebar by clicking the following icons in the toolbar a secon
 - Edit as code
 - Content outline
 
+#### Docked and undocked sidebar
+
 You can choose to use the sidebar docked or undocked by clicking the Dock/Undock icon in the toolbar.
 When the sidebar is docked, the content of the dashboard resizes to accommodate the sidebar.
 When it's undocked, the sidebar floats on top of the dashboard content.
 In edit mode, the sidebar is docked by default and in view mode, it's undocked.
 
+{{< admonition type="note" >}}
+On mobile devices, the sidebar is docked by default in edit mode.
+{{< /admonition >}}
+
 The following table describes how the sidebar behaves when docked or undocked in _edit mode_:
 
-| Docked                                                                      | Undocked                                                                                   |
-| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| After the sidebar is open, it remains open regardless of where you click.   | The sidebar closes if you don't select a dashboard element.                                |
+<!-- prettier-ignore-start -->
+
+| Docked  | Undocked |
+| ------- | -------- |
+| After the sidebar is open, it remains open regardless of where you click. | The sidebar closes if you don't select a dashboard element. |
 | The sidebar displays dashboard options when you click the dashboard canvas. | The sidebar only displays dashboard options when you click the **Dashboard options** icon. |
+
+<!-- prettier-ignore-end -->
 
 When you dock or undock the sidebar, your choice is persisted for all dashboards you use in that Grafana instance, across sessions, by way of your browser's local storage.
 You can clear this selection by clearing the following keys in your local storage:
@@ -189,12 +203,6 @@ You can clear this selection by clearing the following keys in your local storag
 You can also resize the sidebar and toolbar.
 You can only resize the toolbar when the sidebar is closed, however, you can do so in view or edit mode.
 Your resizing changes persist until you change them.
-
-The available configuration options in the sidebar differ depending on the selected dashboard element:
-
-- Dashboards: High-level options are in the sidebar and further configuration options are in the **Settings** page.
-- Groupings (rows and tabs): All configuration options are available in the sidebar.
-- Panels: High-level options are in the sidebar and further configuration options are in the **Edit panel** view.
 
 ### Navigate using the content outline
 

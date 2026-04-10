@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { type SceneComponentProps, UrlSyncContextProvider } from '@grafana/scenes';
 import { Alert, Box, Icon, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -37,10 +38,17 @@ export function PublicDashboardScenePage({ route }: Props) {
   const { dashboard, isLoading, loadError } = stateManager.useState();
 
   useEffect(() => {
+    // Full page loads set this via boot data, but client-side navigation must set it here or panel queries will not use /api/public/dashboards/{token}/...
+    const previousToken = config.publicDashboardAccessToken;
+    if (accessToken) {
+      config.publicDashboardAccessToken = accessToken;
+    }
+
     stateManager.loadDashboard({ uid: accessToken, route: DashboardRoutes.Public });
 
     return () => {
       stateManager.clearState();
+      config.publicDashboardAccessToken = previousToken;
     };
   }, [stateManager, accessToken, route.routeName]);
 

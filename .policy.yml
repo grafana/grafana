@@ -31,6 +31,7 @@ policy:
             - Workflow .github/workflows/pr-commands.yml succeeded or skipped
             - Workflow .github/workflows/pr-dependabot-update-go-workspace.yml succeeded or skipped
             - Workflow .github/workflows/pr-e2e-tests.yml succeeded or skipped
+            - Workflow .github/workflows/pr-endpoint-feature-toggle.yml succeeded or skipped
             - Workflow .github/workflows/pr-frontend-unit-tests.yml succeeded or skipped
             - Workflow .github/workflows/pr-go-workspace-check.yml succeeded or skipped
             - Workflow .github/workflows/pr-k8s-codegen-check.yml succeeded or skipped
@@ -437,6 +438,21 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/pr-e2e-tests.yml
+  - name: Workflow .github/workflows/pr-endpoint-feature-toggle.yml succeeded or skipped
+    if:
+      file_not_deleted:
+        paths:
+          - ^\.github\/workflows\/pr-endpoint-feature-toggle\.yml$
+      targets_branch:
+        pattern: (^main$)
+    requires:
+      conditions:
+        has_workflow_result:
+          conclusions:
+            - skipped
+            - success
+          workflows:
+            - .github/workflows/pr-endpoint-feature-toggle.yml
   - name: Workflow .github/workflows/pr-frontend-unit-tests.yml succeeded or skipped
     if:
       file_not_deleted:

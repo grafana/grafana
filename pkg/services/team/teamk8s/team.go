@@ -9,6 +9,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -40,18 +41,16 @@ type TeamK8sService struct {
 	cfg             *setting.Cfg
 	namespaceMapper request.NamespaceMapper
 	configProvider  apiserver.DirectRestConfigProvider
-	legacyService   team.Service
 }
 
 var _ team.Service = (*TeamK8sService)(nil)
 
-func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, legacyService team.Service) *TeamK8sService {
+func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider) *TeamK8sService {
 	return &TeamK8sService{
 		logger:          logger,
 		cfg:             cfg,
 		namespaceMapper: request.GetNamespaceMapper(cfg),
 		configProvider:  configProvider,
-		legacyService:   legacyService,
 	}
 }
 
@@ -71,6 +70,23 @@ func (s *TeamK8sService) getClient(ctx context.Context, namespace string) (dynam
 	}
 
 	return dyn.Resource(teamGVR).Namespace(namespace), nil
+}
+
+func resolveTeamByLegacyID(ctx context.Context, client dynamic.ResourceInterface, id int64) (*unstructured.Unstructured, error) {
+	selector := labels.SelectorFromSet(labels.Set{
+		utils.LabelKeyDeprecatedInternalID: strconv.FormatInt(id, 10),
+	})
+	list, err := client.List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
+	if err != nil {
+		return nil, err
+	}
+	if len(list.Items) == 0 {
+		return nil, team.ErrTeamNotFound
+	}
+	if len(list.Items) > 1 {
+		return nil, team.ErrMultipleTeamsFound
+	}
+	return &list.Items[0], nil
 }
 
 func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
@@ -139,30 +155,26 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 	}
 	orgID := requester.GetOrgID()
 
-	uid, _ := ctx.Value(team.TeamUIDCtxKey{}).(string)
-	if uid == "" {
-		legacyTeam, err := s.legacyService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
-			ID:    cmd.ID,
-			OrgID: orgID,
-		})
-		if err != nil {
-			return err
-		}
-		uid = legacyTeam.UID
-	}
-
 	namespace := s.namespaceMapper(orgID)
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		return err
 	}
 
-	result, err := client.Get(ctx, uid, metav1.GetOptions{})
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return team.ErrTeamNotFound
+	var result *unstructured.Unstructured
+	if uid, ok := team.TeamUIDFrom(ctx); ok {
+		result, err = client.Get(ctx, uid, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return team.ErrTeamNotFound
+			}
+			return err
 		}
-		return err
+	} else {
+		result, err = resolveTeamByLegacyID(ctx, client, cmd.ID)
+		if err != nil {
+			return err
+		}
 	}
 
 	updated := result.DeepCopy()
@@ -181,7 +193,36 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 }
 
 func (s *TeamK8sService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
-	return errors.New("not implemented")
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return err
+	}
+	orgID := requester.GetOrgID()
+
+	namespace := s.namespaceMapper(orgID)
+	client, err := s.getClient(ctx, namespace)
+	if err != nil {
+		return err
+	}
+
+	uid, ok := team.TeamUIDFrom(ctx)
+	if !ok {
+		resolved, resolveErr := resolveTeamByLegacyID(ctx, client, cmd.ID)
+		if resolveErr != nil {
+			return resolveErr
+		}
+		uid = resolved.GetName()
+	}
+
+	err = client.Delete(ctx, uid, metav1.DeleteOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return team.ErrTeamNotFound
+		}
+		return err
+	}
+
+	return nil
 }
 
 func (s *TeamK8sService) getRESTClient(ctx context.Context) (*rest.RESTClient, error) {
@@ -290,30 +331,31 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 	}
 	orgID := requester.GetOrgID()
 
-	uid := query.UID
-	if uid == "" {
-		uid, _ = ctx.Value(team.TeamUIDCtxKey{}).(string)
-	}
-	if uid == "" && query.ID != 0 {
-		teamDTO, err := s.legacyService.GetTeamByID(ctx, query)
-		if err != nil {
-			return nil, err
-		}
-		uid = teamDTO.UID
-	}
-
 	namespace := s.namespaceMapper(orgID)
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := client.Get(ctx, uid, metav1.GetOptions{})
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil, team.ErrTeamNotFound
+	uid := query.UID
+	if uid == "" {
+		uid, _ = team.TeamUIDFrom(ctx)
+	}
+
+	var result *unstructured.Unstructured
+	if uid != "" {
+		result, err = client.Get(ctx, uid, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return nil, team.ErrTeamNotFound
+			}
+			return nil, err
 		}
-		return nil, err
+	} else {
+		result, err = resolveTeamByLegacyID(ctx, client, query.ID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var fetched iamv0alpha1.Team

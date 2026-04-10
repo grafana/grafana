@@ -7,7 +7,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneObject } from '@grafana/scenes';
 import { ScrollContainer, Sidebar, useStyles2 } from '@grafana/ui';
-import addPanelImg from 'img/dashboards/add-panel.png';
+import addPanelSvg from 'img/dashboards/add-panel.svg';
 
 import { useClipboardState } from '../../scene/layouts-shared/useClipboardState';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -73,7 +73,7 @@ export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard, selectedEl
                         >
                           <img
                             alt={t('dashboard.add.new-panel.button', 'Add new panel button')}
-                            src={addPanelImg}
+                            src={addPanelSvg}
                             draggable={false}
                           />
                         </div>
@@ -149,12 +149,23 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     imageContainer: css({
       cursor: 'pointer',
+      width: '100%',
       opacity: 0.8,
       overflow: 'hidden',
-      borderRadius: theme.shape.radius.sm,
-      width: '100%',
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.colors.border.medium}`,
+      background: theme.colors.background.secondary,
       '&:hover': {
         opacity: 1,
+      },
+      img: {
+        display: 'block',
+        width: 'auto',
+        maxWidth: '100%',
+        height: 'auto',
+        maxHeight: theme.spacing(9),
+        marginLeft: 'auto',
+        marginRight: 'auto',
       },
     }),
     pasteButton: css({
