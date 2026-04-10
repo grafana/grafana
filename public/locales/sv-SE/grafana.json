@@ -6888,7 +6888,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "Visa/dölj regler fungerar inte",
@@ -8565,7 +8570,6 @@
       "give-feedback": "Ge feedback"
     },
     "logs-meta-row": {
-      "download": "Ladda ner",
       "label": {
         "deduplication-count": "Antal dedupliceringar",
         "showing-only-selected-fields": "Visar endast markerade fält"
@@ -8920,22 +8924,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "Visa resultat i loggvisualisering",
-        "show-results-in-table-visualisation": "Visa resultat i tabellvisualisering",
-        "show-results-newest-to-oldest": "Visa resultat från nyaste till äldsta",
-        "show-results-oldest-to-newest": "Visa resultat från äldsta till nyaste"
+        "show-results-in-table-visualisation": "Visa resultat i tabellvisualisering"
       },
       "label": {
         "logs": "Loggar",
-        "newest-first": "Nyaste först",
-        "oldest-first": "Äldsta först",
         "table": "Tabell"
       },
-      "label-deduplication": "Avduplicering",
-      "label-display-results": "Visa resultat",
-      "label-prettify-json": "Gör JSON snyggare",
-      "label-time": "Tid",
-      "label-unique-labels": "Unika etiketter",
-      "label-wrap-lines": "Radbryt linjer",
       "title-feedback": "Feedback",
       "title-logs": "Loggar",
       "title-logs-volume": "Loggvolym"
@@ -9030,8 +9024,7 @@
       "tooltip-s-m-h": "10 s, 1 m, 30 m, 1 h"
     },
     "sql-expr": {
-      "button-run-query": "Kör fråga",
-      "tooltip-experimental": "Integreringen för SQL Expressions LLM är i ett experimentellt skede. Rapportera alla problem du stöter på till Grafana-teamet."
+      "button-run-query": "Kör fråga"
     },
     "sql-schema": {
       "error-title": "Fel",
@@ -11442,9 +11435,6 @@
       },
       "wrap-lines": "Radbryt linjer"
     },
-    "logs-navigation": {
-      "scroll-top": "Skrolla till toppen"
-    },
     "logs-panel": {
       "render-common-labels": {
         "common-labels": "Vanliga etiketter:"
@@ -12237,7 +12227,7 @@
     },
     "quick-add": {
       "aria-label": "Nyhet",
-      "new-template-dashboard-button": "Instrumentpanel från mall"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "Senaste från bloggen"
   },
@@ -13391,6 +13381,7 @@
       "token-label": "Projektåtkomsttoken",
       "token-required": "GitLab-token krävs",
       "url-description": "Webbadress för GitLab-lagringsplatsen",
+      "url-pattern": "",
       "url-required": "Webbadress för lagringsplats krävs"
     },
     "history-view": {
@@ -14831,19 +14822,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "Lägg till minst en datafråga för att generera SQL-förslag",
-    "ai-explain-title": "AI-driven förklaring av SQL-uttryck",
-    "ai-suggestions-title": "AI-drivna SQL-uttrycksförslag",
-    "apply": "Tillämpa",
-    "code-label": "{{ language }}",
-    "copy": "Kopiera",
-    "explain-empty-query-tooltip": "Ange ett SQL-uttryck för att få en förklaring",
     "explain-query": "Förklara fråga",
-    "explanation-modal-title": "Förklaring av SQL-fråga",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "SQL-förslagshistorik",
-    "suggestions": "Förslag",
-    "view-explanation": "Visa förklaring"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "Markera som favorit",

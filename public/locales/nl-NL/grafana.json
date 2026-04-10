@@ -6888,7 +6888,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "Regels tonen/verbergen werkt niet",
@@ -8565,7 +8570,6 @@
       "give-feedback": "Feedback geven"
     },
     "logs-meta-row": {
-      "download": "Downloaden",
       "label": {
         "deduplication-count": "Deduplicatieaantal",
         "showing-only-selected-fields": "Alleen geselecteerde velden weergeven"
@@ -8920,22 +8924,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "Resultaten weergeven in logvisualisatie",
-        "show-results-in-table-visualisation": "Resultaten weergeven in tabelvisualisatie",
-        "show-results-newest-to-oldest": "Resultaten weergeven van nieuwste naar oudste",
-        "show-results-oldest-to-newest": "Resultaten weergeven van oudste naar nieuwste"
+        "show-results-in-table-visualisation": "Resultaten weergeven in tabelvisualisatie"
       },
       "label": {
         "logs": "Logs",
-        "newest-first": "Nieuwste eerst",
-        "oldest-first": "Oudste eerst",
         "table": "Tabel"
       },
-      "label-deduplication": "Dedupliceren",
-      "label-display-results": "Resultaten weergeven",
-      "label-prettify-json": "JSON verfraaien",
-      "label-time": "Tijd",
-      "label-unique-labels": "Unieke labels",
-      "label-wrap-lines": "Lijnen omsluiten",
       "title-feedback": "Feedback",
       "title-logs": "Logs",
       "title-logs-volume": "Logvolume"
@@ -9030,8 +9024,7 @@
       "tooltip-s-m-h": "10s, 1m, 30m, 1u"
     },
     "sql-expr": {
-      "button-run-query": "Query uitvoeren",
-      "tooltip-experimental": "SQL Expressions LLM-integratie is experimenteel. Meld eventuele problemen aan het Grafana-team."
+      "button-run-query": "Query uitvoeren"
     },
     "sql-schema": {
       "error-title": "Fout",
@@ -11442,9 +11435,6 @@
       },
       "wrap-lines": "Lijnen omsluiten"
     },
-    "logs-navigation": {
-      "scroll-top": "Naar boven scrollen"
-    },
     "logs-panel": {
       "render-common-labels": {
         "common-labels": "Gemeenschappelijke labels:"
@@ -12237,7 +12227,7 @@
     },
     "quick-add": {
       "aria-label": "Nieuw",
-      "new-template-dashboard-button": "Dashboard van sjabloon"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "Laatste blogberichten"
   },
@@ -13391,6 +13381,7 @@
       "token-label": "Projecttoegangstoken",
       "token-required": "GitLab-token is vereist",
       "url-description": "De GitLab-repository-URL",
+      "url-pattern": "",
       "url-required": "Repository-URL is vereist"
     },
     "history-view": {
@@ -14831,19 +14822,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "Voeg ten minste één gegevensquery toe om SQL-suggesties te genereren",
-    "ai-explain-title": "Uitleg van SQL-expressies met behulp van AI",
-    "ai-suggestions-title": "Suggesties voor SQL-expressies met behulp van AI",
-    "apply": "Toepassen",
-    "code-label": "{{ language }}",
-    "copy": "Kopiëren",
-    "explain-empty-query-tooltip": "Voer een SQL-expressie in om een uitleg te krijgen",
     "explain-query": "Query uitleggen",
-    "explanation-modal-title": "Uitleg SQL-query",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "Geschiedenis SQL-suggesties",
-    "suggestions": "Suggesties",
-    "view-explanation": "Uitleg bekijken"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "Markeren als favoriet",
