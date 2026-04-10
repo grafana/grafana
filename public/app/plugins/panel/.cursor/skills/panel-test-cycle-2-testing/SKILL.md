@@ -2,11 +2,11 @@
 name: panel-test-cycle-2-testing
 description: >-
   Guides Grafana panel test Cycle 2 (smoke test, simple tests, it.todo stubs) with
-  explicit human approval for each it.todo before it is written. Use when adding
+  explicit human approval for each test case before it is added. Use when adding
   initial tests, stubbing scenarios, Cycle 2, or panel test todos under public/app/plugins/panel.
 ---
 
-# Panel testing — Cycle 2: Testing (stubs require approval)
+# Panel testing — Cycle 2: Testing (each test case requires approval)
 
 Canonical methodology: [AGENTS.md](../../../AGENTS.md) (section “Cycle 2”).
 
@@ -16,23 +16,30 @@ Canonical methodology: [AGENTS.md](../../../AGENTS.md) (section “Cycle 2”).
 2. **Plan before code**: Outline intended **`it('renders')`** (or equivalent smoke test) and **simple tests without new mocks** (defer heavy **uPlot** hook setup until needed).
 3. **Get approval on the plan** before creating or editing test files.
 
-## `it.todo` — one approval at a time
+## Each test case — one approval at a time
 
-For **each** proposed `it.todo` (or equivalent skipped/future test marker):
+A **test case** is any distinct scenario: an implemented **`it('...')`** (with assertions), a skipped/future marker like **`it.todo('...')`**, or equivalent (`it.skip`, `test.concurrent` only if the methodology allows—default is one scenario per approval).
 
-1. Present **exactly one** stub to the prompter: the **full `it.todo('...')` title string** and **one line** of what behavior it will eventually assert (optional but recommended).
-2. Ask explicitly: **Approve adding this stub?** (yes / no / revise).
-3. **Only after approval** for that single stub, apply an edit that adds **only that** `it.todo` (or the approved revision).
-4. Repeat for the next stub. **Do not** add multiple new `it.todo` entries in one edit without **per-stub** approval.
+For **each** proposed test case:
 
-If the user prefers batch review, they may approve a **numbered list** of stubs in one message: still confirm **each line** in the list is approved (e.g. “Confirm all 5 lines” is acceptable as one gate **only if** they state that explicitly).
+1. Present **exactly one** test case to the prompter: the **full title string** (`it('...')` or `it.todo('...')`) and **one line** of what it asserts or will eventually assert (recommended).
+2. Ask explicitly: **Approve adding this test case?** (yes / no / revise).
+3. **Only after approval** for that single test case, apply an edit that adds **only that** test (or the approved revision).
+4. Repeat for the next test case. **Do not** add multiple new `it` / `it.todo` entries in one edit without **per-test-case** approval.
 
-## After stubs
+If the prompter prefers batch review, they may approve a **numbered list** of test cases in one message: that is acceptable as one gate **only if** they state that explicitly (e.g. “Confirm all 5 lines” or “approve cases 1–5”). Otherwise treat missing explicit batch consent as requiring approval per case.
+
+## `it.todo` (same rule as other test cases)
+
+`it.todo` entries follow the **same** one-approval-per-test-case flow above. Present the full `it.todo('...')` title and the intended future assertion; ask **Approve adding this stub?**; add only that stub per approved item.
+
+## After adding test cases
 
 1. Run or suggest **`yarn jest path/to/file.test.tsx --no-watch --watchAll=false`** (and coverage if requested). **Ask before running** if not already agreed.
-2. Propose additional stubs only where coverage gaps matter; repeat the **per-`it.todo` approval** rule.
+2. Propose additional test cases only where coverage gaps matter; repeat the **per-test-case approval** rule.
 
 ## Anti-patterns
 
 - Filling in implementation for `it.todo` in Cycle 2 (that is **Cycle 4**).
 - Adding mocks for **uPlot** / **EventsCanvas** here unless the prompter explicitly moves complexity forward—default is **defer**.
+- Adding several `it(...)` or `it.todo(...)` blocks in a single edit without prior approval for **each** case (unless the prompter explicitly batch-approved the list).
