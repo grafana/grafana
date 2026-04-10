@@ -2980,6 +2980,14 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:        "querycaching.redirectToK8SApi",
+			Description: "Redirect caching service cache config reads from legacy storage to K8s API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:         "compiledBootScript",
 			Description:  "Boots the frontend using the boot.js script built from TS instead of the embedded boot script",
 			Stage:        FeatureStageExperimental,
