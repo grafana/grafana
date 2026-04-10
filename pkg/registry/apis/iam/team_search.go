@@ -286,12 +286,14 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 		offset = (page - 1) * limit
 	}
 
+	namespace := request.NamespaceValue(ctx)
+
 	searchRequest := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
 				Group:     iamv0alpha1.TeamResourceInfo.GroupResource().Group,
 				Resource:  iamv0alpha1.TeamResourceInfo.GroupResource().Resource,
-				Namespace: requester.GetNamespace(),
+				Namespace: namespace,
 			},
 		},
 		Query:   queryParams.Get("query"),
@@ -397,7 +399,7 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 	}
 
 	if queryParams.Get("membercount") == "true" && s.teamBindingStore != nil {
-		if err := s.enrichWithMemberCounts(ctx, requester.GetNamespace(), searchResults.Hits); err != nil {
+		if err := s.enrichWithMemberCounts(ctx, namespace, searchResults.Hits); err != nil {
 			errhttp.Write(ctx, err, w)
 			return
 		}

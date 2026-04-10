@@ -654,7 +654,7 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 	cfg := setting.NewCfg()
 	tracer := tracing.InitializeTracerForTest()
 
-	teamSvc, err := teamimpl.ProvideService(sql, cfg, tracer, nil)
+	teamSvc, err := teamimpl.ProvideService(sql, cfg, tracer, nil, nil)
 	require.NoError(t, err)
 
 	orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))

@@ -37,34 +37,58 @@ var teamGVR = schema.GroupVersionResource{
 }
 
 type TeamK8sService struct {
-	logger          log.Logger
-	cfg             *setting.Cfg
-	namespaceMapper request.NamespaceMapper
-	configProvider  apiserver.DirectRestConfigProvider
+	logger             log.Logger
+	cfg                *setting.Cfg
+	namespaceMapper    request.NamespaceMapper
+	configProvider     apiserver.DirectRestConfigProvider
+	restConfigProvider apiserver.RestConfigProvider
 }
 
 var _ team.Service = (*TeamK8sService)(nil)
 
-func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider) *TeamK8sService {
+func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, restConfigProvider apiserver.RestConfigProvider) *TeamK8sService {
 	return &TeamK8sService{
-		logger:          logger,
-		cfg:             cfg,
-		namespaceMapper: request.GetNamespaceMapper(cfg),
-		configProvider:  configProvider,
+		logger:             logger,
+		cfg:                cfg,
+		namespaceMapper:    request.GetNamespaceMapper(cfg),
+		configProvider:     configProvider,
+		restConfigProvider: restConfigProvider,
 	}
 }
 
+func (s *TeamK8sService) getRestConfig(ctx context.Context) (*rest.Config, error) {
+	if reqCtx := contexthandler.FromContext(ctx); reqCtx != nil {
+		// HTTP request path — always use DirectRestConfig with the user's identity.
+		// Never fall through to the loopback config for HTTP requests.
+		if s.configProvider == nil {
+			return nil, errors.New("direct rest config provider not initialized")
+		}
+		cfg := s.configProvider.GetDirectRestConfig(reqCtx)
+		if cfg == nil {
+			return nil, errors.New("direct rest config not available")
+		}
+		return cfg, nil
+	}
+
+	// Non-HTTP path (background jobs, service-to-service calls) — use loopback config.
+	if s.restConfigProvider != nil {
+		return s.restConfigProvider.GetRestConfig(ctx)
+	}
+
+	return nil, errors.New("no request context and no rest config provider available")
+}
+
 func (s *TeamK8sService) getClient(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
-	if s.configProvider == nil {
+	if s.configProvider == nil && s.restConfigProvider == nil {
 		return nil, errors.New("config provider not initialized")
 	}
 
-	reqCtx := contexthandler.FromContext(ctx)
-	if reqCtx == nil {
-		return nil, errors.New("no request context")
+	cfg, err := s.getRestConfig(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	dyn, err := dynamic.NewForConfig(s.configProvider.GetDirectRestConfig(reqCtx))
+	dyn, err := dynamic.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -226,16 +250,16 @@ func (s *TeamK8sService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCom
 }
 
 func (s *TeamK8sService) getRESTClient(ctx context.Context) (*rest.RESTClient, error) {
-	if s.configProvider == nil {
+	if s.configProvider == nil && s.restConfigProvider == nil {
 		return nil, errors.New("config provider not initialized")
 	}
 
-	reqCtx := contexthandler.FromContext(ctx)
-	if reqCtx == nil {
-		return nil, errors.New("no request context")
+	restCfg, err := s.getRestConfig(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	cfg := dynamic.ConfigFor(s.configProvider.GetDirectRestConfig(reqCtx))
+	cfg := dynamic.ConfigFor(restCfg)
 	cfg.GroupVersion = &iamv0alpha1.GroupVersion
 	return rest.RESTClientFor(cfg)
 }

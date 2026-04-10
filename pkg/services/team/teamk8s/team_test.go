@@ -3,6 +3,7 @@ package teamk8s
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -171,7 +172,7 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 			var svc *TeamK8sService
 
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil, nil)
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
@@ -179,7 +180,7 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 				provider := &mockDirectRestConfigProvider{
 					restConfig: &clientrest.Config{Host: ts.URL},
 				}
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, nil)
 			}
 
 			var ctx context.Context
@@ -402,7 +403,7 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 			var svc *TeamK8sService
 
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil, nil)
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if tt.serverResponse != nil {
@@ -414,7 +415,7 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 				provider := &mockDirectRestConfigProvider{
 					restConfig: &clientrest.Config{Host: ts.URL},
 				}
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, nil)
 			}
 
 			var ctx context.Context
@@ -596,7 +597,7 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 			var svc *TeamK8sService
 
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil, nil)
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
@@ -604,7 +605,7 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 				provider := &mockDirectRestConfigProvider{
 					restConfig: &clientrest.Config{Host: ts.URL},
 				}
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, nil)
 			}
 
 			var ctx context.Context
@@ -936,7 +937,7 @@ func TestTeamK8sService_SearchTeams(t *testing.T) {
 			cfg := setting.NewCfg()
 
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), cfg, nil)
+				svc = NewTeamK8sService(log.NewNopLogger(), cfg, nil, nil)
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if tt.serverResponse != nil {
@@ -948,7 +949,7 @@ func TestTeamK8sService_SearchTeams(t *testing.T) {
 				provider := &mockDirectRestConfigProvider{
 					restConfig: &clientrest.Config{Host: ts.URL},
 				}
-				svc = NewTeamK8sService(log.NewNopLogger(), cfg, provider)
+				svc = NewTeamK8sService(log.NewNopLogger(), cfg, provider, nil)
 			}
 
 			var ctx context.Context
@@ -1130,7 +1131,7 @@ func TestTeamK8sService_DeleteTeam(t *testing.T) {
 			var svc *TeamK8sService
 
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil, nil)
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
@@ -1138,7 +1139,7 @@ func TestTeamK8sService_DeleteTeam(t *testing.T) {
 				provider := &mockDirectRestConfigProvider{
 					restConfig: &clientrest.Config{Host: ts.URL},
 				}
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, nil)
 			}
 
 			var ctx context.Context
@@ -1166,6 +1167,163 @@ func TestTeamK8sService_DeleteTeam(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+func TestTeamK8sService_RestConfigFallback(t *testing.T) {
+	t.Run("falls back to RestConfigProvider when no request context", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+			resp := iamv0alpha1.Team{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: iamv0alpha1.GroupVersion.Identifier(),
+					Kind:       "Team",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "some-uid",
+					Namespace:         "org-1",
+					CreationTimestamp: metav1.NewTime(now),
+				},
+				Spec: iamv0alpha1.TeamSpec{
+					Title: "Test Team",
+					Email: "team@example.com",
+				},
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(resp)
+		}))
+		defer ts.Close()
+
+		restProvider := &mockRestConfigProvider{
+			restConfig: &clientrest.Config{Host: ts.URL},
+		}
+		// No DirectRestConfigProvider — only RestConfigProvider
+		svc := NewTeamK8sService(log.NewNopLogger(), nil, nil, restProvider)
+
+		// context.Background() has no ReqContext — should fall back to RestConfigProvider
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgID: 1})
+		result, err := svc.CreateTeam(ctx, &team.CreateTeamCommand{
+			Name:  "Test Team",
+			Email: "team@example.com",
+		})
+
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), result.OrgID)
+		assert.Equal(t, "Test Team", result.Name)
+		assert.Equal(t, "team@example.com", result.Email)
+	})
+
+	t.Run("prefers DirectRestConfigProvider when request context is available", func(t *testing.T) {
+		directCalled := false
+		restCalled := false
+
+		directTS := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			directCalled = true
+			resp := iamv0alpha1.Team{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: iamv0alpha1.GroupVersion.Identifier(),
+					Kind:       "Team",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "some-uid",
+					Namespace: "org-1",
+				},
+				Spec: iamv0alpha1.TeamSpec{Title: "Direct Team"},
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(resp)
+		}))
+		defer directTS.Close()
+
+		restTS := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			restCalled = true
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer restTS.Close()
+
+		directProvider := &mockDirectRestConfigProvider{
+			restConfig: &clientrest.Config{Host: directTS.URL},
+		}
+		restProvider := &mockRestConfigProvider{
+			restConfig: &clientrest.Config{Host: restTS.URL},
+		}
+		svc := NewTeamK8sService(log.NewNopLogger(), nil, directProvider, restProvider)
+
+		ctx := contextWithReqContext()
+		ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: 1})
+		result, err := svc.CreateTeam(ctx, &team.CreateTeamCommand{Name: "Direct Team"})
+
+		require.NoError(t, err)
+		assert.Equal(t, "Direct Team", result.Name)
+		assert.True(t, directCalled, "DirectRestConfigProvider should have been used")
+		assert.False(t, restCalled, "RestConfigProvider should NOT have been used")
+	})
+
+	t.Run("returns error when no request context and no RestConfigProvider", func(t *testing.T) {
+		directProvider := &mockDirectRestConfigProvider{
+			restConfig: &clientrest.Config{Host: "http://unused"},
+		}
+		svc := NewTeamK8sService(log.NewNopLogger(), nil, directProvider, nil)
+
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgID: 1})
+		_, err := svc.CreateTeam(ctx, &team.CreateTeamCommand{Name: "Test"})
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "no request context and no rest config provider available")
+	})
+
+	t.Run("never falls back to loopback when ReqContext is present but DirectRestConfig returns nil", func(t *testing.T) {
+		// Simulate apiserver not ready: DirectRestConfigProvider returns nil config.
+		// Even with a loopback RestConfigProvider available, the code must NOT fall
+		// through to it — that would escalate a normal user to admin.
+		nilDirectProvider := &mockDirectRestConfigProvider{
+			restConfig: nil, // simulates apiserver not ready
+		}
+		loopbackCalled := false
+		loopbackTS := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			loopbackCalled = true
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer loopbackTS.Close()
+
+		restProvider := &mockRestConfigProvider{
+			restConfig: &clientrest.Config{Host: loopbackTS.URL},
+		}
+		svc := NewTeamK8sService(log.NewNopLogger(), nil, nilDirectProvider, restProvider)
+
+		// Context has ReqContext (HTTP request) — should NOT fall back to loopback
+		ctx := contextWithReqContext()
+		ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: 1})
+		_, err := svc.CreateTeam(ctx, &team.CreateTeamCommand{Name: "Test"})
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "direct rest config not available")
+		assert.False(t, loopbackCalled, "loopback RestConfigProvider must NEVER be used for HTTP requests")
+	})
+
+	t.Run("never falls back to loopback when ReqContext is present but DirectRestConfigProvider is nil", func(t *testing.T) {
+		// DirectRestConfigProvider is nil (misconfiguration) but ReqContext is present.
+		// Must error, not silently escalate to admin via loopback.
+		loopbackCalled := false
+		loopbackTS := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			loopbackCalled = true
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer loopbackTS.Close()
+
+		restProvider := &mockRestConfigProvider{
+			restConfig: &clientrest.Config{Host: loopbackTS.URL},
+		}
+		// nil DirectRestConfigProvider, but restConfigProvider is available
+		svc := NewTeamK8sService(log.NewNopLogger(), nil, nil, restProvider)
+
+		ctx := contextWithReqContext()
+		ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: 1})
+		_, err := svc.CreateTeam(ctx, &team.CreateTeamCommand{Name: "Test"})
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "direct rest config provider not initialized")
+		assert.False(t, loopbackCalled, "loopback RestConfigProvider must NEVER be used for HTTP requests")
+	})
 }
 
 func teamListResponse(name, namespace, title, email string) map[string]any {
@@ -1239,4 +1397,15 @@ func (m *mockDirectRestConfigProvider) IsReady() bool {
 func contextWithReqContext() context.Context {
 	reqCtx := &contextmodel.ReqContext{}
 	return context.WithValue(context.Background(), ctxkey.Key{}, reqCtx)
+}
+
+type mockRestConfigProvider struct {
+	restConfig *clientrest.Config
+}
+
+func (m *mockRestConfigProvider) GetRestConfig(_ context.Context) (*clientrest.Config, error) {
+	if m.restConfig == nil {
+		return nil, errors.New("rest config not available")
+	}
+	return m.restConfig, nil
 }

@@ -27,13 +27,13 @@ func (s *Service) LegacySearchService() team.Service {
 	return s.legacyService
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider) (*Service, error) {
+func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider, restConfigProvider apiserver.RestConfigProvider) (*Service, error) {
 	legacyService, err := NewLegacyService(db, cfg, tracer)
 	if err != nil {
 		return nil, err
 	}
 
-	k8sService := teamk8s.NewTeamK8sService(log.New("team.k8s"), cfg, configProvider)
+	k8sService := teamk8s.NewTeamK8sService(log.New("team.k8s"), cfg, configProvider, restConfigProvider)
 
 	return &Service{
 		legacyService:     legacyService,
