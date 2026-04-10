@@ -20,7 +20,7 @@ review_date: 2026-04-10
 
 # Parca query editor
 
-This page explains how to use the Parca query editor to query and visualize continuous profiling data.
+This document explains how to use the Parca query editor to query and visualize continuous profiling data.
 
 The query editor gives you access to a profile type selector, a label selector with autocomplete, and collapsible options for controlling query behavior.
 

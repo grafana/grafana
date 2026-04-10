@@ -14,7 +14,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Configure Parca
+menuTitle: Configure 
 title: Configure the Parca data source
 weight: 200
 review_date: 2026-04-10
@@ -22,7 +22,7 @@ review_date: 2026-04-10
 
 # Configure the Parca data source
 
-This page explains how to configure the Parca data source in Grafana.
+This document explains how to configure the Parca data source in Grafana.
 
 You can configure the data source using the Grafana UI, a YAML provisioning file, or Terraform.
 If you make any changes in the UI, select **Save & test** to preserve those changes.
@@ -31,7 +31,7 @@ If you make any changes in the UI, select **Save & test** to preserve those chan
 
 Before configuring the data source, ensure you have:
 
-- **Grafana permissions:** Organization administrator role.
+- **Grafana permissions:** `Organization administrator` role.
 - **Parca instance:** A running Parca instance (v0.19 or later) accessible from your Grafana server.
 
 If you're provisioning the data source, you also need administrative rights on the server hosting your Grafana instance.
@@ -116,7 +116,9 @@ This section is only visible when the Grafana server has the secure SOCKS proxy 
 
 ## Verify the connection
 
-Click **Save & test** to verify that Grafana can connect to your Parca instance. The health check queries the available profile types from the Parca server. If the connection is successful, a confirmation message appears.
+Click **Save & test** to verify that Grafana can connect to your Parca instance. The health check queries the available profile types from the Parca server. A successful connection displays the message 
+
+**Data source is working**.
 
 If the test fails, verify that the URL is correct and that your Parca instance is running and accessible from the Grafana server. For more help, refer to [Troubleshoot Parca data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/parca/troubleshooting/).
 
