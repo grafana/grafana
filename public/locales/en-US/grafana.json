@@ -15287,11 +15287,12 @@
     },
     "range-content": {
       "apply-button": "Apply time range",
-      "default-error": "Please enter a past date or \"{{now}}\"",
+      "default-error": "Enter a date ({{dateExample}}) or relative time ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
       "fiscal-year": "Fiscal year: {{from}} - {{to}}",
       "from-input": "From",
       "open-input-calendar": "Open calendar",
-      "range-error": "\"From\" can't be after \"To\"",
+      "range-error": "\"From\" date must be before \"To\" date",
+      "required-error": "This field is required",
       "to-input": "To"
     },
     "range-picker": {
