@@ -566,6 +566,7 @@ module.exports = [
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@grafana/no-aria-label-selectors': 'error',
+      '@grafana/no-legacy-feature-toggles': 'error',
     },
   },
   {
@@ -585,7 +586,6 @@ module.exports = [
       '@grafana/no-gf-form': 'error',
       '@grafana/no-config-apps': 'error',
       '@grafana/no-config-panels': 'error',
-      '@grafana/no-legacy-feature-toggles': 'error',
     },
   },
   {
@@ -598,7 +598,6 @@ module.exports = [
     rules: {
       '@grafana/no-config-apps': 'error',
       '@grafana/no-config-panels': 'error',
-      '@grafana/no-legacy-feature-toggles': 'error',
     },
     plugins: {
       '@grafana': grafanaPlugin,
@@ -609,7 +608,6 @@ module.exports = [
     rules: {
       '@grafana/no-config-apps': 'error',
       '@grafana/no-config-panels': 'error',
-      '@grafana/no-legacy-feature-toggles': 'error',
     },
   },
   {

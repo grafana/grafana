@@ -1035,7 +1035,7 @@
   },
   "public/app/app.ts": {
     "@grafana/no-legacy-feature-toggles": {
-      "count": 5
+      "count": 4
     }
   },
   "public/app/core/TableModel.ts": {
@@ -2244,12 +2244,12 @@
       "count": 1
     }
   },
-  "public/app/features/connections/hooks/useDatasourceAdvisorChecks.test.ts": {
+  "public/app/features/connections/hooks/useDatasourceAdvisorChecks.test.tsx": {
     "@grafana/no-legacy-feature-toggles": {
-      "count": 8
+      "count": 12
     }
   },
-  "public/app/features/connections/hooks/useDatasourceAdvisorChecks.ts": {
+  "public/app/features/connections/hooks/useDatasourceAdvisorChecks.tsx": {
     "@grafana/no-legacy-feature-toggles": {
       "count": 2
     }
