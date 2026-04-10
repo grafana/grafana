@@ -121,7 +121,7 @@ describe('Unified Storage Searcher', () => {
       ])
     );
 
-    const searcher = new UnifiedSearcher(mockFallbackSearcher);
+    const searcher = new UnifiedSearcher();
 
     const response = await searcher.search({
       query: '*',
@@ -215,7 +215,7 @@ describe('toDashboardResults', () => {
         ])
       );
 
-      const searcher = new UnifiedSearcher(mockFallbackSearcher);
+      const searcher = new UnifiedSearcher();
       const response = await searcher.search({ query: 'test', limit: 50 });
 
       const locationInfo = response.view.dataFrame.meta?.custom?.locationInfo;
@@ -233,7 +233,7 @@ describe('toDashboardResults', () => {
         ])
       );
 
-      const searcher = new UnifiedSearcher(mockFallbackSearcher);
+      const searcher = new UnifiedSearcher();
       const response = await searcher.search({ query: 'test', limit: 50 });
 
       const locationInfo = response.view.dataFrame.meta?.custom?.locationInfo;

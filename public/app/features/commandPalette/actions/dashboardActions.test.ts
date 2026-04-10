@@ -1,19 +1,17 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
-import { type DataFrame, DataFrameView, FieldType } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
+import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import server, { setupMockServer } from '@grafana/test-utils/server';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { type ContextSrv, contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { type DashboardQueryResult, type QueryResponse } from 'app/features/search/service/types';
 
 import { getRecentDashboardActions, getSearchResultActions, useSearchResults } from './dashboardActions';
 
 setBackendSrv(backendSrv);
 setupMockServer();
-
-// const searchRoute = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search';
 
 describe('dashboardActions', () => {
   const mockContextSrv: jest.MockedObjectDeep<ContextSrv> = jest.mocked(contextSrv);
@@ -21,7 +19,15 @@ describe('dashboardActions', () => {
 
   beforeEach(() => {
     server.use(
-      getCustomSearchHandler([{ resource: 'dashboards', name: 'my-dashboard-1', title: 'My dashboard 1', field: {} }])
+      getCustomSearchHandler([
+        {
+          resource: 'dashboards',
+          name: 'my-dashboard-1',
+          title: 'My dashboard 1',
+          field: {},
+          managedBy: { kind: ManagerKind.Repo },
+        },
+      ])
     );
   });
 
@@ -63,27 +69,15 @@ describe('dashboardActions', () => {
             priority: 6,
             section: 'Recent dashboards',
             url: '/d/my-dashboard-1/my-dashboard-1',
+            managedBy: 'repo',
           },
         ]);
       });
 
       it('includes managedBy when present in search results', async () => {
-        const searchDataWithManagedBy: DataFrame = {
-          ...searchData,
-          fields: [
-            ...searchData.fields,
-            { name: 'managedBy', type: FieldType.string, config: {}, values: [ManagerKind.Repo] },
-          ],
-        };
-        grafanaSearcherSpy.mockResolvedValueOnce({
-          ...mockSearchResult,
-          view: new DataFrameView<DashboardQueryResult>(searchDataWithManagedBy),
-        });
-
         const results = await getRecentDashboardActions();
         expect(results).toEqual([
           expect.objectContaining({
-            id: 'recent-dashboards/my-dashboard-1',
             managedBy: ManagerKind.Repo,
           }),
         ]);
@@ -122,6 +116,7 @@ describe('dashboardActions', () => {
             section: 'Dashboards',
             subtitle: 'Dashboards',
             url: '/d/my-dashboard-1/my-dashboard-1',
+            managedBy: 'repo',
           },
         ]);
       });
@@ -143,27 +138,15 @@ describe('dashboardActions', () => {
             section: 'Dashboards',
             subtitle: 'Dashboards',
             url: '/d/my-dashboard-1/my-dashboard-1',
+            managedBy: 'repo',
           },
         ]);
       });
 
       it('includes managedBy in search result actions when present', async () => {
-        const searchDataWithManagedBy: DataFrame = {
-          ...searchData,
-          fields: [
-            ...searchData.fields,
-            { name: 'managedBy', type: FieldType.string, config: {}, values: [ManagerKind.Repo] },
-          ],
-        };
-        grafanaSearcherSpy.mockResolvedValueOnce({
-          ...mockSearchResult,
-          view: new DataFrameView<DashboardQueryResult>(searchDataWithManagedBy),
-        });
-
         const results = await getSearchResultActions('mySearchQuery');
         expect(results).toEqual([
           expect.objectContaining({
-            id: 'go/dashboard/my-dashboard-1',
             managedBy: ManagerKind.Repo,
           }),
         ]);
@@ -203,6 +186,7 @@ describe('dashboardActions', () => {
             section: 'Dashboards',
             subtitle: 'Dashboards',
             url: '/d/my-dashboard-1/my-dashboard-1',
+            managedBy: 'repo',
           },
         ]);
       });

@@ -1,12 +1,9 @@
-import { DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { type DataFrame, DataFrameView, FieldType } from '@grafana/data';
-import { type BackendSrv, config, getBackendSrv, setBackendSrv } from '@grafana/runtime';
+import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { config, setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler, apiFoldersHandlers } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { type DashboardQueryResult, type QueryResponse } from 'app/features/search/service/types';
 
 import { listDashboards, listFolders } from './services';
 
@@ -165,12 +162,9 @@ describe('browse-dashboards services', () => {
       });
 
       it('does not add shared with me folder on subsequent pages', async () => {
-        const mockFolders = [{ uid: 'folder-1', name: 'Folder 1' }];
-        searchMock.mockResolvedValue(createSearchData(mockFolders));
-
         const result = await listFolders(undefined, undefined, 2, PAGE_SIZE);
 
-        expect(result).toHaveLength(1);
+        expect(result).toHaveLength(2);
         expect(result.find((f) => f.uid === 'sharedwithme')).toBeUndefined();
       });
 

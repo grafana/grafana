@@ -4,12 +4,12 @@ import { type ReactNode } from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { render, screen, waitFor, act, getWrapper } from 'test/test-utils';
 
-import { type DataFrame, DataFrameView, FieldType } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
+import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import server, { setupMockServer } from '@grafana/test-utils/server';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { type DashboardQueryResult, type QueryResponse } from 'app/features/search/service/types';
 
+import { backendSrv } from '../../services/backend_srv';
 import { Page } from '../Page/Page';
 
 import { AppChrome } from './AppChrome';
