@@ -202,6 +202,7 @@ func NewAPIService(
 	return &IdentityAccessManagementAPIBuilder{
 		store:                      store,
 		userLegacyStore:            user.NewLegacyStore(store, accessClient, tracingService),
+		saLegacyStore:              serviceaccount.NewLegacyStore(store, accessClient, tracingService),
 		teamBindingLegacyStore:     teambinding.NewLegacyBindingStore(store, tracingService),
 		display:                    user.NewLegacyDisplayREST(store),
 		tracing:                    tracingService,
@@ -391,7 +392,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	if enableServiceAccountsApi {
-		if err := b.UpdateServiceAccountsAPIGroup(opts, storage); err != nil {
+		if err := b.UpdateServiceAccountsAPIGroup(opts, storage, enableZanzanaSync); err != nil {
 			return err
 		}
 	}
@@ -611,12 +612,20 @@ func (b *IdentityAccessManagementAPIBuilder) useStatusDualWriter(resourceInfo ut
 	return true
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync bool) error {
 	saResource := iamv0.ServiceAccountResourceInfo
 	saUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, saResource, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
+
+	if enableZanzanaSync {
+		b.logger.Info("Enabling hooks for ServiceAccount to sync basic role assignments to Zanzana")
+		saUniStore.AfterCreate = b.AfterServiceAccountCreate
+		saUniStore.BeginUpdate = b.BeginServiceAccountUpdate
+		saUniStore.AfterDelete = b.AfterServiceAccountDelete
+	}
+
 	storage[saResource.StoragePath()] = saUniStore
 
 	var saStore storewrapper.K8sStorage = saUniStore

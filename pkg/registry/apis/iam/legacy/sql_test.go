@@ -208,6 +208,13 @@ func TestIdentityQueries(t *testing.T) {
 						},
 					}),
 				},
+				{
+					Name: "teams_id",
+					Data: listTeams(&ListTeamQuery{
+						ID:         42,
+						Pagination: common.Pagination{Limit: 1},
+					}),
+				},
 			},
 			sqlQueryUsersTemplate: {
 				{
