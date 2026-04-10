@@ -31,10 +31,9 @@ const (
 
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
-	features      featuremgmt.FeatureToggles
-	accessService accesscontrol.Service
-	accessClient  authlib.AccessClient
-	logger        log.Logger
+	features     featuremgmt.FeatureToggles
+	accessClient authlib.AccessClient
+	logger       log.Logger
 }
 
 func RegisterAppInstaller(
@@ -55,10 +54,9 @@ func RegisterAppInstaller(
 	}
 
 	installer := &AppInstaller{
-		features:      features,
-		accessService: accessControlService,
-		accessClient:  accessClient,
-		logger:        log.New("playlist.api"),
+		features:     features,
+		accessClient: accessClient,
+		logger:       log.New("playlist.api"),
 	}
 	specificConfig := any(&playlistapp.PlaylistConfig{
 		//nolint:staticcheck // not yet migrated to OpenFeature
@@ -123,50 +121,10 @@ func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 				if user.GetOrgRole() != org.RoleNone {
 					return authorizer.DecisionNoOpinion, "", nil
 				}
-				// Toggle-on path only: temporary compatibility fallback for None-role users
-				// with explicit playlist RBAC permissions, while AccessClient parity is finalized.
-				legacyAllowed, legacyErr := p.checkNoneRoleFallback(ctx, user, attr)
-				if legacyErr != nil {
-					return authorizer.DecisionDeny, "permission evaluation failed", legacyErr
-				}
-				if legacyAllowed {
-					return authorizer.DecisionAllow, "", nil
-				}
 				return authorizer.DecisionDeny, "insufficient permissions", nil
 			}
 
 			return authorizer.DecisionAllow, "", nil
 		},
 	)
-}
-
-func (p *AppInstaller) checkNoneRoleFallback(ctx context.Context, user identity.Requester, attr authorizer.Attributes) (bool, error) {
-	var action string
-	switch attr.GetVerb() {
-	case "get", "list", "watch":
-		action = ActionPlaylistsRead
-	case "create", "update", "patch", "delete", "deletecollection":
-		action = ActionPlaylistsWrite
-	default:
-		return false, nil
-	}
-
-	perms, err := p.accessService.GetUserPermissions(ctx, user, accesscontrol.Options{})
-	if err != nil {
-		return false, err
-	}
-
-	name := attr.GetName()
-	for _, perm := range perms {
-		if perm.Action != action {
-			continue
-		}
-		if perm.Scope == "*" || perm.Scope == "playlists:*" || perm.Scope == "playlists:uid:*" {
-			return true, nil
-		}
-		if name != "" && perm.Scope == "playlists:uid:"+name {
-			return true, nil
-		}
-	}
-	return false, nil
 }

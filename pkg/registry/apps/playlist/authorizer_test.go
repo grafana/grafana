@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -45,19 +44,10 @@ func installerWithToggle(on bool, ac authlib.AccessClient) *AppInstaller {
 		features = featuremgmt.WithFeatures()
 	}
 	return &AppInstaller{
-		features:      features,
-		accessService: &mockAccessService{},
-		accessClient:  ac,
-		logger:        log.NewNopLogger(),
+		features:     features,
+		accessClient: ac,
+		logger:       log.NewNopLogger(),
 	}
-}
-
-type mockAccessService struct {
-	accesscontrol.Service
-}
-
-func (f *mockAccessService) GetUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
-	return nil, nil
 }
 
 type mockAccessClient struct {
@@ -264,6 +254,31 @@ func TestGetAuthorizer(t *testing.T) {
 				assert.Equal(t, "", checkedReq.Subresource)
 			}
 		})
+	}
+}
+
+// TestGetAuthorizerNonNoneRoleFallback verifies that when AccessClient denies a user
+// with a built-in org role (Viewer, Editor, Admin), the authorizer defers to the
+// default role authorizer rather than denying outright.
+func TestGetAuthorizerNonNoneRoleFallback(t *testing.T) {
+	mockAC := &mockAccessClient{
+		checkFunc: func(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+			return authlib.CheckResponse{Allowed: false}, nil
+		},
+	}
+	installer := installerWithToggle(true, mockAC)
+	auth := installer.GetAuthorizer()
+
+	for _, role := range []identity.RoleType{identity.RoleViewer, identity.RoleEditor, identity.RoleAdmin} {
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+			OrgID:   1,
+			UserID:  1,
+			OrgRole: role,
+		})
+		attrs := &mockAttributes{isResourceRequest: true, verb: "get", namespace: "default"}
+		decision, _, err := auth.Authorize(ctx, attrs)
+		require.NoError(t, err)
+		assert.Equal(t, authorizer.DecisionNoOpinion, decision, "role=%s should defer to role authorizer when AccessClient denies", role)
 	}
 }
 
