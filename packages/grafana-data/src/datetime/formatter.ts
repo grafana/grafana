@@ -170,8 +170,10 @@ export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc, opti
  *
  * @public
  */
-export const timeZoneAbbrevation: DateTimeFormatter = (dateInUtc, options?) =>
-  toTz(dateInUtc, getTimeZone(options)).format('z');
+export const timeZoneAbbrevation: DateTimeFormatter = (dateInUtc, options?) => {
+  const abbreviation = toTz(dateInUtc, getTimeZone(options)).format('z');
+  return /^(\+|\-).+/.test(abbreviation) ? `UTC${abbreviation}` : abbreviation;
+};
 
 const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => {
   if (options?.defaultWithMS) {
