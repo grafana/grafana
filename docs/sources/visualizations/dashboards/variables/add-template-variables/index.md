@@ -328,6 +328,16 @@ groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5
 
 ## Add ad hoc filters
 
+{{< admonition type="note" >}}
+In Grafana v13, we released the filter and group by feature in public preview.
+It renames ad hoc filters and extends them by adding grouping for Prometheus and Loki data sources.
+However, in the dashboard schema, it is still referred to as `"kind": "AdhocVariable"`.
+
+To use this feature, enable the `dashboardUnifiedDrilldownControls` feature toggle in your Grafana configuration file.
+
+For more information on filter and group by, refer to the [Dashboard controls documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/).
+{{< /admonition >}}
+
 _Ad hoc filters_ are one of the most complex and flexible variable options available.
 Instead of creating a variable for each dimension by which you want to filter, ad hoc filters automatically create variables (key/value pairs) for all the dimensions returned by your data source query.
 This allows you to apply filters dashboard-wide.
