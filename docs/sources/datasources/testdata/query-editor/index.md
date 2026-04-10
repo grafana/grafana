@@ -43,7 +43,7 @@ The scenarios are organized into the following categories. Use the table below t
 | Scenario | Category | Purpose |
 | --- | --- | --- |
 | [Random Walk](#random-walk) | Data generation | Random walk time series (default scenario). |
-| [Random Walk Table](#random-walk-table) | Data generation | Random walk in table format with state enum. |
+| [Random Walk Table](#random-walk-table) | Data generation | Random walk in table format with Enum state. |
 | [Random Walk (with error)](#random-walk-with-error) | Data generation | Random walk that also returns an error. |
 | [Predictable Pulse](#predictable-pulse) | Data generation | Repeating on/off wave based on absolute time. |
 | [Predictable CSV Wave](#predictable-csv-wave) | Data generation | Custom repeating waveforms from CSV values. |
