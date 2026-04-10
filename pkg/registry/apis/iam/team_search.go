@@ -340,9 +340,8 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
-			// The SEARCH_FIELD_TITLE_PHRASE field performs an exact match on the title.
-			Key:      resource.SEARCH_FIELD_TITLE_PHRASE,
-			Operator: string(selection.Equals),
+			Key:      resource.SEARCH_FIELD_TITLE,
+			Operator: string(selection.DoubleEquals), // exact match on title
 			Values:   []string{title},
 		})
 	}
