@@ -4631,7 +4631,8 @@
       "metadata": {
         "name": "querycaching.handlersReadFromK8SApi",
         "resourceVersion": "1775842665327",
-        "creationTimestamp": "2026-04-10T17:37:45Z"
+        "creationTimestamp": "2026-04-10T17:37:45Z",
+        "deletionTimestamp": "2026-04-10T18:24:54Z"
       },
       "spec": {
         "description": "Redirect caching service cache config reads from legacy storage to K8s API",
@@ -4646,6 +4647,33 @@
         "resourceVersion": "1775842639855",
         "creationTimestamp": "2026-04-10T17:37:19Z",
         "deletionTimestamp": "2026-04-10T17:37:45Z"
+      },
+      "spec": {
+        "description": "Redirect caching service cache config reads from legacy storage to K8s API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "querycaching.redirectToK8SApi",
+        "resourceVersion": "1775845520196",
+        "creationTimestamp": "2026-04-10T18:25:20Z"
+      },
+      "spec": {
+        "description": "Redirect caching service cache config reads from legacy storage to K8s API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "querycaching.redirectToK8sApi",
+        "resourceVersion": "1775845494083",
+        "creationTimestamp": "2026-04-10T18:24:54Z",
+        "deletionTimestamp": "2026-04-10T18:25:20Z"
       },
       "spec": {
         "description": "Redirect caching service cache config reads from legacy storage to K8s API",

@@ -2980,7 +2980,7 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "querycaching.handlersReadFromK8SApi",
+			Name:        "querycaching.redirectToK8SApi",
 			Description: "Redirect caching service cache config reads from legacy storage to K8s API",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaOperatorExperienceSquad,
