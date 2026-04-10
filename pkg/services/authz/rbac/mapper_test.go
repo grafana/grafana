@@ -237,8 +237,8 @@ func TestMapperRegistry_PlaylistActionMapping(t *testing.T) {
 		require.True(t, ok, "verb=%s", verb)
 		assert.Equal(t, expectedAction, action, "verb=%s", verb)
 	}
-	assert.ElementsMatch(t, []string{"playlists:reader", "playlists:writer"}, mapping.ActionSets(utils.VerbList))
-	assert.ElementsMatch(t, []string{"playlists:writer"}, mapping.ActionSets(utils.VerbCreate))
+	assert.Empty(t, mapping.ActionSets(utils.VerbList))
+	assert.Empty(t, mapping.ActionSets(utils.VerbCreate))
 	assert.False(t, mapping.SkipScope(utils.VerbCreate))
 
 	// Explicit playlist mapping avoids fallback to k8s-native actions.
