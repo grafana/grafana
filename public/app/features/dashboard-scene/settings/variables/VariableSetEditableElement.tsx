@@ -5,6 +5,7 @@ import { useCallback, useId, useMemo } from 'react';
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { type SceneObject, type SceneVariable, type SceneVariableSet } from '@grafana/scenes';
 import { Box, Button, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -56,11 +57,15 @@ export class VariableSetEditableElement implements EditableDashboardElement {
   }
 
   public getOutlineChildren() {
-    const { visible, controlsMenu, hidden } = partitionVariablesByDisplay(
-      filterSectionRepeatLocalVariables(this.set.state.variables, this.set)
-        // filter out system and snapshot variables
-        .filter((variable) => isEditableVariableType(variable.state.type))
+    let variables = filterSectionRepeatLocalVariables(this.set.state.variables, this.set).filter((variable) =>
+      isEditableVariableType(variable.state.type)
     );
+
+    if (config.featureToggles.dashboardUnifiedDrilldownControls) {
+      variables = variables.filter((variable) => variable.state.type !== 'adhoc');
+    }
+
+    const { visible, controlsMenu, hidden } = partitionVariablesByDisplay(variables);
     return [...visible, ...controlsMenu, ...hidden];
   }
 
@@ -100,10 +105,12 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
     const editableVariables: SceneVariable[] = [];
     const nonEditableVariables: SceneVariable[] = [];
     filterSectionRepeatLocalVariables(variables, set).forEach((variable) => {
-      if (isEditableVariableType(variable.state.type)) {
-        editableVariables.push(variable);
-      } else {
+      if (!isEditableVariableType(variable.state.type)) {
         nonEditableVariables.push(variable);
+      } else if (config.featureToggles.dashboardUnifiedDrilldownControls && variable.state.type === 'adhoc') {
+        nonEditableVariables.push(variable);
+      } else {
+        editableVariables.push(variable);
       }
     });
     return {
