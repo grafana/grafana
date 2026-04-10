@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { orderBy } from 'lodash';
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { type GrafanaTheme2, type Labels } from '@grafana/data';
@@ -49,6 +49,17 @@ const { useGetAlertRuleQuery } = alertRuleApi;
 const { useGetRuleHistoryQuery } = stateHistoryApi;
 const SILENCE_DRAWER_CLOSE_ANIMATION_MS = 180;
 
+function DrawerBackButton({ onClick }: { onClick: () => void }) {
+  const backLabel = t('alerting.triage.instance-details-drawer.back', 'Back');
+  return (
+    <Stack direction="row" alignItems="center">
+      <Button variant="secondary" size="sm" fill="text" icon="arrow-left" onClick={onClick} aria-label={backLabel}>
+        {backLabel}
+      </Button>
+    </Stack>
+  );
+}
+
 function calculateDrawerWidth(rightColumnWidth: number): number {
   const calculatedWidth = rightColumnWidth + 32;
   return Math.max(700, Math.min(calculatedWidth, 1400));
@@ -61,6 +72,7 @@ interface InstanceDetailsDrawerProps {
   onClose: () => void;
 }
 
+/** Stacked drilldown views inside the instance drawer. Only `instance-details` and `silence` are wired today; to do: contact point list, notification details, declare incident. */
 type DrawerView =
   | { type: 'instance-details' }
   | { type: 'contact-point-list'; receiverName: string }
@@ -74,6 +86,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
   const { rightColumnWidth } = useWorkbenchContext();
   const [viewStack, setViewStack] = useState<DrawerView[]>([{ type: 'instance-details' }]);
   const closeSilenceTimerRef = useRef<number | undefined>(undefined);
+  const silencePanelContentRef = useRef<HTMLDivElement>(null);
   const [isClosingSilenceDrawer, setIsClosingSilenceDrawer] = useState(false);
 
   const drawerWidth = calculateDrawerWidth(rightColumnWidth);
@@ -121,11 +134,20 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     return isDrawerRangeShorterThanQuery(rule.grafana_alert, timeRange);
   }, [rule, timeRange]);
 
+  const resetSilencePanelStyles = useCallback(() => {
+    const el = silencePanelContentRef.current;
+    if (el) {
+      el.style.removeProperty('transition');
+      el.style.removeProperty('transform');
+    }
+  }, []);
+
   const handleDrawerClose = () => {
     if (closeSilenceTimerRef.current !== undefined) {
       window.clearTimeout(closeSilenceTimerRef.current);
       closeSilenceTimerRef.current = undefined;
     }
+    resetSilencePanelStyles();
     setIsClosingSilenceDrawer(false);
     setViewStack([{ type: 'instance-details' }]);
     onClose();
@@ -136,8 +158,9 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
       if (closeSilenceTimerRef.current !== undefined) {
         window.clearTimeout(closeSilenceTimerRef.current);
       }
+      resetSilencePanelStyles();
     };
-  }, []);
+  }, [resetSilencePanelStyles]);
 
   const popTopView = () => {
     setViewStack((current) => {
@@ -153,17 +176,19 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
       return;
     }
 
-    const drawers = document.querySelectorAll('.main-view .rc-drawer');
-    const topDrawer = drawers.item(drawers.length - 1);
-    const wrapper = topDrawer?.querySelector('.rc-drawer-content-wrapper');
-
-    if (wrapper instanceof HTMLElement) {
-      wrapper.style.transition = `transform ${SILENCE_DRAWER_CLOSE_ANIMATION_MS}ms ease-in`;
-      wrapper.style.transform = 'translateX(100%)';
+    const el = silencePanelContentRef.current;
+    if (el) {
+      el.style.transition = `transform ${SILENCE_DRAWER_CLOSE_ANIMATION_MS}ms ease-in`;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          el.style.transform = 'translateX(100%)';
+        });
+      });
     }
 
     setIsClosingSilenceDrawer(true);
     closeSilenceTimerRef.current = window.setTimeout(() => {
+      resetSilencePanelStyles();
       popTopView();
       setIsClosingSilenceDrawer(false);
       closeSilenceTimerRef.current = undefined;
@@ -179,16 +204,19 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     popTopView();
   };
 
-  const handleOpenSilence = () => {
+  const handleOpenSilence = useCallback(() => {
     setViewStack((current) => [...current, { type: 'silence' }]);
-  };
+  }, []);
 
-  const sharedTitleProps = {
-    instanceLabels,
-    commonLabels,
-    alertState: instanceState,
-    onOpenSilence: handleOpenSilence,
-  };
+  const sharedTitleProps = useMemo(
+    () => ({
+      instanceLabels,
+      commonLabels,
+      alertState: instanceState,
+      onOpenSilence: handleOpenSilence,
+    }),
+    [instanceLabels, commonLabels, instanceState, handleOpenSilence]
+  );
 
   const getDrawerTitle = () => {
     switch (activeView.type) {
@@ -282,9 +310,8 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
   const getDrawerBody = () => {
     switch (activeView.type) {
       case 'instance-details':
-        return getInstanceDetailsBody();
       case 'silence':
-        // Silence is rendered as a second overlaid drawer.
+        // Silence step uses a second overlaid drawer for the form; body stays the instance details underneath.
         return getInstanceDetailsBody();
       default:
         return (
@@ -301,15 +328,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     }
   };
 
-  if (error) {
-    return (
-      <Drawer title={getDrawerTitle()} onClose={handleDrawerClose} width={drawerWidth}>
-        {getDrawerBody()}
-      </Drawer>
-    );
-  }
-
-  if (loading || !rule) {
+  if (error || loading || !rule) {
     return (
       <Drawer title={getDrawerTitle()} onClose={handleDrawerClose} width={drawerWidth}>
         {getDrawerBody()}
@@ -337,24 +356,19 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
               })}
               hideActions
               showAlertState={false}
-              titleSection={
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  fill="text"
-                  icon="arrow-left"
-                  onClick={handleBack}
-                  aria-label={t('alerting.triage.instance-details-drawer.back', 'Back')}
-                >
-                  {t('alerting.triage.instance-details-drawer.back', 'Back')}
-                </Button>
-              }
+              titleSection={<DrawerBackButton onClick={handleBack} />}
             />
           }
           onClose={handleDrawerClose}
           width={drawerWidth}
         >
-          <InstanceSilenceForm ruleUid={ruleUID} instanceLabels={instanceLabels} onClose={animateCloseSilenceDrawer} />
+          <Box ref={silencePanelContentRef}>
+            <InstanceSilenceForm
+              ruleUid={ruleUID}
+              instanceLabels={instanceLabels}
+              onClose={animateCloseSilenceDrawer}
+            />
+          </Box>
         </Drawer>
       </>
     );
@@ -364,20 +378,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     <Drawer
       title={
         <Stack direction="column" gap={1}>
-          {canGoBack && (
-            <Stack direction="row" alignItems="center">
-              <Button
-                variant="secondary"
-                size="sm"
-                fill="text"
-                icon="arrow-left"
-                onClick={handleBack}
-                aria-label={t('alerting.triage.instance-details-drawer.back', 'Back')}
-              >
-                {t('alerting.triage.instance-details-drawer.back', 'Back')}
-              </Button>
-            </Stack>
-          )}
+          {canGoBack && <DrawerBackButton onClick={handleBack} />}
           {getDrawerTitle()}
         </Stack>
       }
