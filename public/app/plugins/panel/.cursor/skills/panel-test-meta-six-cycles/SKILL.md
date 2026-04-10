@@ -16,14 +16,14 @@ This skill does **not** replace the per-cycle skills; it defines **how to assign
 
 ## The six cycles
 
-| Methodology cycle | Focus | Skill (`panel/.cursor/skills/`) |
-| ----- | ----- | ----- |
-| Human context Cycle (1) | Human context | [`panel-test-cycle-1-human-context`](../panel-test-cycle-1-human-context/SKILL.md) |
-| Testing Cycle (2) | Testing | [`panel-test-cycle-2-testing`](../panel-test-cycle-2-testing/SKILL.md) |
-| Refactor tests Cycle (3) | Refactor tests | [`panel-test-cycle-3-refactor-tests`](../panel-test-cycle-3-refactor-tests/SKILL.md) |
-| Agent assistance Cycle (4) | Agent assistance | [`panel-test-cycle-4-agent-assistance`](../panel-test-cycle-4-agent-assistance/SKILL.md) |
+| Methodology cycle          | Focus            | Skill (`panel/.cursor/skills/`)                                                                                                                                                                                                |
+| -------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Human context Cycle (1)    | Human context    | [`panel-test-cycle-1-human-context`](../panel-test-cycle-1-human-context/SKILL.md)                                                                                                                                             |
+| Testing Cycle (2)          | Testing          | [`panel-test-cycle-2-testing`](../panel-test-cycle-2-testing/SKILL.md)                                                                                                                                                         |
+| Refactor tests Cycle (3)   | Refactor tests   | [`panel-test-cycle-3-refactor-tests`](../panel-test-cycle-3-refactor-tests/SKILL.md)                                                                                                                                           |
+| Agent assistance Cycle (4) | Agent assistance | [`panel-test-cycle-4-agent-assistance`](../panel-test-cycle-4-agent-assistance/SKILL.md)                                                                                                                                       |
 | Regression tests Cycle (5) | Regression tests | [`panel-test-cycle-5-github-regression-hunt`](../panel-test-cycle-5-github-regression-hunt/SKILL.md) (GitHub discovery) **then** [AGENTS.md § Regression tests](../../../AGENTS.md) (revert-fix confirmation, implementation). |
-| Review Cycle (6) | Review | [`panel-test-cycle-6-review`](../panel-test-cycle-6-review/SKILL.md) |
+| Review Cycle (6)           | Review           | [`panel-test-cycle-6-review`](../panel-test-cycle-6-review/SKILL.md)                                                                                                                                                           |
 
 At the **start** of a full panel-test effort, **plan for six dedicated agents** (six separate chats/threads), one per cycle above. **Name or label** them consistently (e.g. `Human context Cycle (1)` … `Review Cycle (6)`) so loop-backs are unambiguous.
 

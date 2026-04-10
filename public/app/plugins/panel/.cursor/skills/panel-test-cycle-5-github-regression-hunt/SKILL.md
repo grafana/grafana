@@ -32,14 +32,14 @@ This skill is **discovery and triage**: it does **not** replace writing tests—
 3. For **each candidate** the prompter confirms (or that you help shortlist), **deliver to the prompter**:
    - **Pull request**: **Always** include the full HTTPS URL on its own (copy-pasteable), e.g. `https://github.com/grafana/grafana/pull/<number>`. Never substitute bare `#123` or `PR 123` without the URL in the same deliverable.
    - **Linked issue** (if available): **Always** include the full HTTPS URL when an issue exists, e.g. `https://github.com/grafana/grafana/issues/<number>`. If none is linked, say **no linked issue found** and still keep the PR URL above.
-4. **Ask explicitly** (per candidate, or once for a batch): *Do you want to add a regression test that would fail if this bug came back?* If yes, point them to AGENTS **Regression tests** (revert fix locally → test fails → restore fix) and the right test layer for that code path.
+4. **Ask explicitly** (per candidate, or once for a batch): _Do you want to add a regression test that would fail if this bug came back?_ If yes, point them to AGENTS **Regression tests** (revert fix locally → test fails → restore fix) and the right test layer for that code path.
 
 ## Deliverable format
 
 Use a small table or bullet list so the prompter can scan. **Every row must use full `https://github.com/grafana/grafana/...` URLs** in the PR column (and Issue column when applicable)—never only issue/PR numbers.
 
-| Candidate | PR (full URL, always) | Issue (full URL or —) |
-| --------- | --------------------- | --------------------- |
+| Candidate                               | PR (full URL, always)                           | Issue (full URL or —)                                  |
+| --------------------------------------- | ----------------------------------------------- | ------------------------------------------------------ |
 | Short label (e.g. “threshold drag bug”) | `https://github.com/grafana/grafana/pull/12345` | `https://github.com/grafana/grafana/issues/67890` or — |
 
 Also acceptable: a **bulleted list** where each bullet repeats the candidate label and **embeds or follows with the PR URL** (and issue URL if any), so nothing is number-only.
