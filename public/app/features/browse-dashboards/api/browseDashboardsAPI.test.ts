@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
+import { testWithFeatureToggles } from 'test/test-utils';
 
 import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import * as quotasAPI from '@grafana/api-clients/rtkq/quotas/v0alpha1';
@@ -49,10 +50,11 @@ describe('browseDashboardsAPI', () => {
     return store;
   };
 
+  testWithFeatureToggles({ disable: ['provisioning'] });
+
   beforeEach(() => {
     getDashboardAPIMock.mockReset();
     folderAPIVersionResolver.set('v1beta1');
-    config.featureToggles.provisioning = false;
     deletedFoldersState.clear();
     server.use(http.get('/api/access-control/user/actions', () => HttpResponse.json({})));
   });
