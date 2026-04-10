@@ -218,6 +218,11 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
         renderCount: panel.renderOperations.length,
         fieldConfigCount: panel.fieldConfigOperations.length,
         pluginLoadCount: panel.pluginLoadTime > 0 ? 1 : 0,
+        queryTime: Math.round(panel.totalQueryTime * 10) / 10,
+        transformTime: Math.round(panel.totalTransformationTime * 10) / 10,
+        renderTime: Math.round(panel.totalRenderTime * 10) / 10,
+        fieldConfigTime: Math.round(panel.totalFieldConfigTime * 10) / 10,
+        pluginLoadTime: Math.round(panel.pluginLoadTime * 10) / 10,
       };
 
       logMeasurement('panel_render', measurementValues, {
@@ -226,6 +231,59 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
         panelId: panel.panelId,
         operationId: data.operationId, // Shared operationId for correlating with dashboard_render
       });
+
+      // Send individual panel_operation measurements for granular per-operation analytics
+      const panelContext = {
+        panelKey: panel.panelKey,
+        pluginId: panel.pluginId,
+        panelId: panel.panelId,
+        operationId: data.operationId,
+      };
+
+      for (const op of panel.queryOperations) {
+        logMeasurement(
+          'panel_operation',
+          { duration: Math.round(op.duration * 10) / 10 },
+          {
+            ...panelContext,
+            operationType: 'query',
+            ...(op.queryType && { queryType: op.queryType }),
+          }
+        );
+      }
+
+      for (const op of panel.transformationOperations) {
+        logMeasurement(
+          'panel_operation',
+          { duration: Math.round(op.duration * 10) / 10 },
+          {
+            ...panelContext,
+            operationType: 'transform',
+            ...(op.transformationId && { transformationId: op.transformationId }),
+          }
+        );
+      }
+
+      for (const op of panel.renderOperations) {
+        logMeasurement('panel_operation', { duration: Math.round(op.duration * 10) / 10 }, {
+          ...panelContext,
+          operationType: 'render',
+        });
+      }
+
+      for (const op of panel.fieldConfigOperations) {
+        logMeasurement('panel_operation', { duration: Math.round(op.duration * 10) / 10 }, {
+          ...panelContext,
+          operationType: 'fieldConfig',
+        });
+      }
+
+      if (panel.pluginLoadTime > 0) {
+        logMeasurement('panel_operation', { duration: Math.round(panel.pluginLoadTime * 10) / 10 }, {
+          ...panelContext,
+          operationType: 'plugin-load',
+        });
+      }
     });
   }
 
