@@ -462,9 +462,9 @@ All `panel_render` measurements share the same `operationId` as their parent `da
 
 #### Panel Operation Measurements
 
-After each `panel_render` measurement, individual `panel_operation` measurements are sent for each operation that occurred during the panel's render lifecycle. This provides per-query, per-transform, and per-render timing data for fine-grained performance analysis.
+Individual `panel_operation` measurements are sent in real-time as each operation completes during the panel's render lifecycle. This provides per-query, per-transform, and per-render timing data for fine-grained performance analysis with accurate Faro ingestion timestamps.
 
-**When sent**: After `panel_render` measurement, one `panel_operation` measurement per individual operation
+**When sent**: Immediately when each panel operation completes (not batched at interaction end)
 
 **Correlation**: All `panel_operation` measurements share the same `operationId` as their parent `dashboard_render` and sibling `panel_render` measurements, enabling full correlation across dashboard, panel, and operation levels.
 
@@ -493,13 +493,13 @@ After each `panel_render` measurement, individual `panel_operation` measurements
 
 **Operation types**:
 
-| operationType | Source | When sent |
-| --- | --- | --- |
-| `query` | `panel.queryOperations` | One per query executed by the panel |
-| `transform` | `panel.transformationOperations` | One per transformation applied |
-| `render` | `panel.renderOperations` | One per render cycle |
-| `fieldConfig` | `panel.fieldConfigOperations` | One per field config application |
-| `plugin-load` | `panel.pluginLoadTime` | One measurement if plugin load time > 0 |
+| operationType | When sent |
+| --- | --- |
+| `query` | One per query executed by the panel |
+| `transform` | One per transformation applied |
+| `render` | One per render cycle |
+| `fieldConfig` | One per field config application |
+| `plugin-load` | One measurement if plugin load time > 0 |
 
 ## Debugging and Development
 

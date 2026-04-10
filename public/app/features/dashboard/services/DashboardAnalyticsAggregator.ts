@@ -172,7 +172,7 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
         context.transformationId = data.metadata.transformationId;
       }
 
-      logMeasurement('panel_operation', { duration: Math.round(duration * 10) / 10 }, context);
+      logMeasurement('panel_operation', { duration }, context);
     }
   };
 
@@ -232,17 +232,17 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
 
       // logMeasurement requires numeric values in second parameter, metadata in third
       const measurementValues = {
-        totalTime: Math.round(totalPanelTime * 10) / 10,
+        totalTime: totalPanelTime,
         queryCount: panel.queryOperations.length,
         transformCount: panel.transformationOperations.length,
         renderCount: panel.renderOperations.length,
         fieldConfigCount: panel.fieldConfigOperations.length,
         pluginLoadCount: panel.pluginLoadTime > 0 ? 1 : 0,
-        queryTime: Math.round(panel.totalQueryTime * 10) / 10,
-        transformTime: Math.round(panel.totalTransformationTime * 10) / 10,
-        renderTime: Math.round(panel.totalRenderTime * 10) / 10,
-        fieldConfigTime: Math.round(panel.totalFieldConfigTime * 10) / 10,
-        pluginLoadTime: Math.round(panel.pluginLoadTime * 10) / 10,
+        queryTime: panel.totalQueryTime,
+        transformTime: panel.totalTransformationTime,
+        renderTime: panel.totalRenderTime,
+        fieldConfigTime: panel.totalFieldConfigTime,
+        pluginLoadTime: panel.pluginLoadTime,
       };
 
       logMeasurement('panel_render', measurementValues, {
