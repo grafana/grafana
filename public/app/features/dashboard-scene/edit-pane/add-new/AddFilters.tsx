@@ -34,7 +34,7 @@ export function openAddFilterPane(dashboard: DashboardScene) {
 export function AddFilters({ dashboardScene }: { dashboardScene: DashboardScene }) {
   const onAddFiltersClick = useCallback(() => {
     openAddFilterPane(dashboardScene);
-    DashboardInteractions.addVariableButtonClicked({ source: 'edit_pane' });
+    DashboardInteractions.addFilterButtonClicked({ source: 'edit_pane' });
   }, [dashboardScene]);
 
   return (

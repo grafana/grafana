@@ -101,27 +101,21 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
     [set]
   );
 
-  const { editableVariables, nonEditableVariables } = useMemo(() => {
-    const editableVariables: SceneVariable[] = [];
-    const nonEditableVariables: SceneVariable[] = [];
-    filterSectionRepeatLocalVariables(variables, set).forEach((variable) => {
+  const editableVariables = useMemo(() => {
+    return filterSectionRepeatLocalVariables(variables, set).filter((variable) => {
       if (!isEditableVariableType(variable.state.type)) {
-        nonEditableVariables.push(variable);
-      } else if (config.featureToggles.dashboardUnifiedDrilldownControls && variable.state.type === 'adhoc') {
-        nonEditableVariables.push(variable);
-      } else {
-        editableVariables.push(variable);
+        return false;
       }
+      if (config.featureToggles.dashboardUnifiedDrilldownControls && variable.state.type === 'adhoc') {
+        return false;
+      }
+      return true;
     });
-    return {
-      editableVariables,
-      nonEditableVariables,
-    };
   }, [variables, set]);
 
   const { visible, controlsMenu, hidden } = partitionVariablesByDisplay(editableVariables);
 
-  const nonEditableSet = useMemo(() => new Set(nonEditableVariables), [nonEditableVariables]);
+  const editableSet = useMemo(() => new Set(editableVariables), [editableVariables]);
 
   const createDragEndHandler = useCallback(
     (sourceList: SceneVariable[], mergeLists: (updatedList: SceneVariable[]) => SceneVariable[]) => {
@@ -147,7 +141,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
 
             const reordered = mergeLists(updatedList);
             let reorderedIdx = 0;
-            const merged = currentList.map((v) => (nonEditableSet.has(v) ? v : reordered[reorderedIdx++]));
+            const merged = currentList.map((v) => (editableSet.has(v) ? reordered[reorderedIdx++] : v));
 
             set.setState({ variables: merged });
           },
@@ -157,7 +151,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
         });
       };
     },
-    [nonEditableSet, set]
+    [editableSet, set]
   );
 
   const onVisibleDragEnd = useMemo(
