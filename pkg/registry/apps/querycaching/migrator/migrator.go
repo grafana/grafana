@@ -76,10 +76,10 @@ func (m *queryCacheConfigMigrator) MigrateQueryCacheConfigs(ctx context.Context,
 				Spec: queryCacheConfigSpec{
 					DatasourceUID:  row.dataSourceUID,
 					PluginID:       row.pluginID,
-					Enabled:        row.enabled != 0,
+					Enabled:        row.enabled,
 					TtlQueriesMs:   row.ttlMS,
 					TtlResourcesMs: row.ttlResourcesMS,
-					UseDefaultTtl:  row.useDefaultTTL != 0,
+					UseDefaultTtl:  row.useDefaultTTL,
 				},
 			})
 			if err != nil {
@@ -145,10 +145,10 @@ type queryCacheConfigObject struct {
 type cacheConfigRow struct {
 	id             int64
 	dataSourceUID  string
-	enabled        int64
+	enabled        bool
 	ttlMS          int64
 	ttlResourcesMS int64
-	useDefaultTTL  int64
+	useDefaultTTL  bool
 	createdEpoch   int64
 	pluginID       string
 	orgID          int64
