@@ -121,6 +121,8 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
 
   const { visible, controlsMenu, hidden } = partitionVariablesByDisplay(editableVariables);
 
+  const nonEditableSet = useMemo(() => new Set(nonEditableVariables), [nonEditableVariables]);
+
   const createDragEndHandler = useCallback(
     (sourceList: SceneVariable[], mergeLists: (updatedList: SceneVariable[]) => SceneVariable[]) => {
       return (result: DropResult) => {
@@ -143,9 +145,11 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
             const [movedVariable] = updatedList.splice(result.source.index, 1);
             updatedList.splice(result.destination.index, 0, movedVariable);
 
-            set.setState({
-              variables: [...nonEditableVariables, ...mergeLists(updatedList)],
-            });
+            const reordered = mergeLists(updatedList);
+            let reorderedIdx = 0;
+            const merged = currentList.map((v) => (nonEditableSet.has(v) ? v : reordered[reorderedIdx++]));
+
+            set.setState({ variables: merged });
           },
           undo: () => {
             set.setState({ variables: currentList });
@@ -153,7 +157,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
         });
       };
     },
-    [nonEditableVariables, set]
+    [nonEditableSet, set]
   );
 
   const onVisibleDragEnd = useMemo(

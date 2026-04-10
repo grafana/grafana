@@ -2,7 +2,7 @@ import { fireEvent, render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
-import { AdHocFiltersVariable, SceneVariableSet, type SceneVariable } from '@grafana/scenes';
+import { AdHocFiltersVariable, ConstantVariable, SceneVariableSet, type SceneVariable } from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { activateFullSceneTree } from '../../utils/test-utils';
@@ -143,6 +143,31 @@ describe('<DashboardFiltersList />', () => {
 
         const aboveNames = Array.from(elements.aboveListItems()).map((item) => item.textContent);
         expect(aboveNames).toEqual(['visibleFilter2', 'visibleFilter1']);
+      });
+
+      test('drag-reorder does not move non-filter variables from their original positions', async () => {
+        const { visibleFilter1, visibleFilter2 } = buildTestFilters();
+        const nonFilterVar = new ConstantVariable({ name: 'queryVar', hide: VariableHide.dontHide });
+        const variableSet = new SceneVariableSet({
+          variables: [visibleFilter1, nonFilterVar, visibleFilter2],
+        });
+        const dashboardScene = new DashboardScene({ $variables: variableSet, isEditing: true });
+        activateFullSceneTree(dashboardScene);
+
+        const { container, findByText } = render(<DashboardFiltersList variableSet={variableSet} />);
+
+        const dragHandles = container.querySelectorAll('[data-rfd-drag-handle-draggable-id]');
+        const handle = dragHandles[0] as HTMLElement;
+        handle.focus();
+        fireEvent.keyDown(handle, { keyCode: 32 });
+        await findByText(/you have lifted an item/i);
+        fireEvent.keyDown(handle, { keyCode: 40 });
+        await findByText(/you have moved the item/i);
+        fireEvent.keyDown(handle, { keyCode: 32 });
+        await findByText(/you have dropped the item/i);
+
+        const names = variableSet.state.variables.map((v) => v.state.name);
+        expect(names).toEqual(['visibleFilter2', 'queryVar', 'visibleFilter1']);
       });
     });
   });
