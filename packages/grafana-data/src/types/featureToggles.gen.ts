@@ -1752,11 +1752,6 @@ export interface FeatureToggles {
   */
   cacheConfigUnifiedStorageMigration?: boolean;
   /**
-  * Redirect caching service cache config reads from legacy storage to K8s API
-  * @default false
-  */
-  kubernetesQueryCachingRedirect?: boolean;
-  /**
   * Boots the frontend using the boot.js script built from TS instead of the embedded boot script
   * @default false
   */

@@ -2972,12 +2972,12 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "kubernetesQueryCachingRedirect",
-			Description:     "Redirect caching service cache config reads from legacy storage to K8s API",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaOperatorExperienceSquad,
-			Expression:      "false",
-			RequiresRestart: true,
+			Name:        "querycaching.handlersReadFromK8SApi",
+			Description: "Redirect caching service cache config reads from legacy storage to K8s API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
 		},
 		{
 			Name:         "compiledBootScript",
