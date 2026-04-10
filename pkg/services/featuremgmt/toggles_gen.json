@@ -5238,6 +5238,19 @@
     },
     {
       "metadata": {
+        "name": "teamLBACApiWriteFromAppPlatform",
+        "resourceVersion": "1775774995035",
+        "creationTimestamp": "2026-04-09T22:49:55Z"
+      },
+      "spec": {
+        "description": "Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "tempoAlerting",
         "resourceVersion": "1774957674648",
         "creationTimestamp": "2025-07-15T13:36:36Z",
