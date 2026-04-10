@@ -2,11 +2,6 @@ import { createDataFrame, FieldType, toDataFrame } from '@grafana/data';
 
 import { prepSeries } from './utils';
 
-jest.mock('../timeseries/utils', () => ({
-  ...jest.requireActual('../timeseries/utils'),
-  prepareGraphableFields: jest.fn((frames) => frames),
-}));
-
 describe('prepSeries', () => {
   describe('multiple frames', () => {
     it('returns a warning when more than one frame is provided', () => {

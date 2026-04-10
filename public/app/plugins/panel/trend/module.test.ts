@@ -1,13 +1,6 @@
 import { createDataFrame, FieldType, getPanelDataSummary, VisualizationSuggestionScore } from '@grafana/data';
 import { GraphDrawStyle } from '@grafana/schema';
 
-jest.mock('./TrendPanel', () => ({ TrendPanel: () => null }));
-
-jest.mock('../timeseries/utils', () => ({
-  ...jest.requireActual('../timeseries/utils'),
-  prepareGraphableFields: jest.fn((frames) => frames),
-}));
-
 import { plugin } from './module';
 
 const suggestionsSupplier = (plugin as unknown as { suggestionsSupplier: Function }).suggestionsSupplier;
