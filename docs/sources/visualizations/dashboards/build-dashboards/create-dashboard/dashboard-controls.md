@@ -19,6 +19,8 @@ weight: 200
 
 In the **Dashboard controls** section of the sidebar, you can add variables, annotation queries, dashboard links, and controls to filter and group data, without leaving the dashboard.
 
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-controls-v13.0.png" max-width="400px" alt="Dashboard controls in the Dashboard options sidebar view" >}}
+
 ## Filter and group by
 
 <!-- vale Grafana.Spelling = NO -->
@@ -175,7 +177,7 @@ To add a variable, follow these steps:
 
 {{< /docs/list >}}
 
-For more detailed information on variables, refer to the full [Variables documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/).
+For more detailed information on variables, refer to the full [Variables documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/).
 
 ## Add annotation queries
 
@@ -263,7 +265,9 @@ To add a URL link to your dashboard, follow these steps:
 ## Manage dashboard controls
 
 After you add dashboard controls, you can manage them from the dashboard options.
-In this view, the sidebar includes collapsible sections for variables (including filter and group by), annotations, and links, including hidden controls that aren't otherwise visible on the dashboard.
+In this view, the sidebar includes collapsible sections for variables (including filter and group by), annotations, and links, including hidden controls that aren't otherwise visible on the dashboard:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-controls-mgmt-v13.0.png" max-width="450px" alt="Dashboard controls in the Dashboard options sidebar view" >}}
 
 To manage dashboard controls, follow these steps:
 

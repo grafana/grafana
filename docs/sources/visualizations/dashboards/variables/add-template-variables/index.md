@@ -161,6 +161,7 @@ To create a variable, follow these steps:
 
 {{< admonition type="tip" >}}
 To add variables without leaving the dashboard, click the **Add new element** icon in the dashboard toolbar, and select **Variable**.
+For more information, refer to the [Dashboard controls documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/).
 {{< /admonition >}}
 
 ### Variable best practices
