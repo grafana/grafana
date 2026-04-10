@@ -239,6 +239,8 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 	}
 
 	if queryResult.External {
+		// TODO: construct the delete URL on demand from config + deleteKey instead of
+		// using the stored ExternalDeleteURL, which may have an outdated format.
 		err := dashboardsnapshots.DeleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL, hs.Cfg.ExternalSnapshotToken)
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "Failed to delete external dashboard", err)

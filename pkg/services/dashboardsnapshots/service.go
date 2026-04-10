@@ -90,6 +90,9 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SnapshotSh
 		cmd.Key = resp.Key
 		cmd.DeleteKey = resp.DeleteKey
 		cmd.ExternalURL = resp.Url
+		// TODO: stop storing the full ExternalDeleteURL. The delete URL should be constructed
+		// on demand from ExternalSnapshotURL (domain) + deleteKey, since the URL format can
+		// change (e.g. legacy vs K8s API paths).
 		cmd.ExternalDeleteURL = resp.DeleteUrl
 		cmd.Dashboard = &common.Unstructured{}
 		snapshotURL = resp.Url
@@ -265,6 +268,8 @@ func DeleteWithKey(ctx context.Context, key string, svc Service, token string) e
 	}
 
 	if queryResult.External {
+		// TODO: construct the delete URL on demand from config + deleteKey instead of
+		// using the stored ExternalDeleteURL, which may have an outdated format.
 		err := DeleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL, token)
 		if err != nil {
 			return err
