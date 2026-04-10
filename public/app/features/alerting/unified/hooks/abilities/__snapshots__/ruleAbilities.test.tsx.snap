@@ -1,141 +1,94 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`ruleAbilities should report no permissions while loading data for cloud rule 1`] = `
+exports[`useRuleEditAbility matches snapshot for a Grafana rule with all permissions granted 1`] = `
 {
-  "create-alert-rule": {
+  "delete": {
+    "granted": true,
+  },
+  "duplicate": {
+    "granted": true,
+  },
+  "loading": false,
+  "pause": {
+    "granted": true,
+  },
+  "restore": {
+    "granted": true,
+  },
+  "update": {
+    "granted": true,
+  },
+}
+`;
+
+exports[`useRuleEditAbility matches snapshot for a cloud rule in loading state 1`] = `
+{
+  "delete": {
+    "cause": "LOADING",
+    "granted": false,
+  },
+  "duplicate": {
+    "cause": "LOADING",
+    "granted": false,
+  },
+  "loading": true,
+  "pause": {
     "cause": "NOT_SUPPORTED",
     "granted": false,
   },
-  "delete-alert-rule": {
-    "cause": "LOADING",
-    "granted": false,
-  },
-  "delete-alert-rule-permanently": {
+  "restore": {
     "cause": "NOT_SUPPORTED",
     "granted": false,
   },
-  "duplicate-alert-rule": {
-    "cause": "LOADING",
-    "granted": false,
-  },
-  "explore-alert-rule": {
-    "cause": "LOADING",
-    "granted": false,
-  },
-  "export-grafana-managed-rules": {
-    "cause": "LOADING",
-    "granted": false,
-  },
-  "modify-export-rule": {
-    "cause": "NOT_SUPPORTED",
-    "granted": false,
-  },
-  "pause-alert-rule": {
-    "cause": "NOT_SUPPORTED",
-    "granted": false,
-  },
-  "restore-alert-rule": {
-    "cause": "NOT_SUPPORTED",
-    "granted": false,
-  },
-  "silence-alert-rule": {
-    "cause": "LOADING",
-    "granted": false,
-  },
-  "update-alert-rule": {
-    "cause": "LOADING",
-    "granted": false,
-  },
-  "view-alert-rule": {
+  "update": {
     "cause": "LOADING",
     "granted": false,
   },
 }
 `;
 
-exports[`ruleAbilities should report that all actions are applicable for a Grafana Managed alert rule 1`] = `
+exports[`useRuleEditAbility returns PROVISIONED for provisioned Grafana rules — duplicate remains grantable 1`] = `
 {
-  "create-alert-rule": {
-    "cause": "NOT_SUPPORTED",
+  "delete": {
+    "cause": "PROVISIONED",
     "granted": false,
   },
-  "delete-alert-rule": {
-    "anyOfPermissions": [
-      "alert.rules:delete",
-    ],
-    "cause": "INSUFFICIENT_PERMISSIONS",
+  "duplicate": {
+    "granted": true,
+  },
+  "loading": false,
+  "pause": {
+    "cause": "PROVISIONED",
     "granted": false,
   },
-  "delete-alert-rule-permanently": {
-    "anyOfPermissions": [
-      "alert.rules:delete",
-    ],
-    "cause": "INSUFFICIENT_PERMISSIONS",
+  "restore": {
+    "cause": "PROVISIONED",
     "granted": false,
   },
-  "duplicate-alert-rule": {
-    "anyOfPermissions": [
-      "alert.rules:create",
-    ],
-    "cause": "INSUFFICIENT_PERMISSIONS",
+  "update": {
+    "cause": "PROVISIONED",
     "granted": false,
   },
-  "explore-alert-rule": {
-    "anyOfPermissions": [
-      "datasources:explore",
-    ],
-    "cause": "INSUFFICIENT_PERMISSIONS",
-    "granted": false,
-  },
-  "export-grafana-managed-rules": {
-    "anyOfPermissions": [
-      "alert.rules:read",
-    ],
-    "cause": "INSUFFICIENT_PERMISSIONS",
-    "granted": false,
-  },
-  "modify-export-rule": {
-    "anyOfPermissions": [
-      "alert.rules:read",
-    ],
-    "cause": "INSUFFICIENT_PERMISSIONS",
-    "granted": false,
-  },
-  "pause-alert-rule": {
-    "anyOfPermissions": [
-      "alert.rules:write",
-    ],
-    "cause": "INSUFFICIENT_PERMISSIONS",
-    "granted": false,
-  },
-  "restore-alert-rule": {
-    "anyOfPermissions": [
-      "alert.rules:write",
-    ],
-    "cause": "INSUFFICIENT_PERMISSIONS",
-    "granted": false,
-  },
-  "silence-alert-rule": {
-    "anyOfPermissions": [
-      "alert.silences:create",
-      "alert.instances:create",
-    ],
-    "cause": "INSUFFICIENT_PERMISSIONS",
-    "granted": false,
-  },
-  "update-alert-rule": {
-    "anyOfPermissions": [
-      "alert.rules:write",
-    ],
-    "cause": "INSUFFICIENT_PERMISSIONS",
-    "granted": false,
-  },
-  "view-alert-rule": {
-    "anyOfPermissions": [
-      "alert.rules:read",
-    ],
-    "cause": "INSUFFICIENT_PERMISSIONS",
-    "granted": false,
-  },
+}
+`;
+
+exports[`useRuleExploreAbility returns INSUFFICIENT_PERMISSIONS when user lacks DataSourcesExplore 1`] = `
+{
+  "anyOfPermissions": [
+    "datasources:explore",
+  ],
+  "cause": "INSUFFICIENT_PERMISSIONS",
+  "granted": false,
+}
+`;
+
+exports[`useRuleSilenceAbility matches snapshot for denied silence — freezes the anyOfPermissions list 1`] = `
+{
+  "anyOfPermissions": [
+    "alert.silences:create",
+    "alert.instances:create",
+  ],
+  "cause": "INSUFFICIENT_PERMISSIONS",
+  "granted": false,
 }
 `;

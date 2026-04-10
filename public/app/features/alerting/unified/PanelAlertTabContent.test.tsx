@@ -13,7 +13,8 @@ import { type AlertQuery, type PromRulesResponse } from 'app/types/unified-alert
 import { PanelAlertTabContent } from './PanelAlertTabContent';
 import * as apiRuler from './api/ruler';
 import * as alertingAbilities from './hooks/abilities/ruleAbilities';
-import { type AbilityStates, Granted, RuleAction } from './hooks/abilities/types';
+import { type RuleEditAbilityResult } from './hooks/abilities/ruleAbilities';
+import { Granted } from './hooks/abilities/types';
 import { mockAlertRuleApi, setupMswServer } from './mockApi';
 import {
   grantUserPermissions,
@@ -32,7 +33,7 @@ jest.mock('./api/ruler');
 jest.mock('@grafana/assistant', () => ({
   useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
 }));
-jest.spyOn(alertingAbilities, 'useAllRulerRuleAbilityStates');
+jest.spyOn(alertingAbilities, 'useRuleEditAbility');
 
 const prometheusModuleSettings = { alerting: true, module: 'core:plugin/prometheus' };
 
@@ -67,7 +68,7 @@ const dataSources = {
 };
 
 const mocks = {
-  useAlertRuleAbilityMock: jest.mocked(alertingAbilities.useAllRulerRuleAbilityStates),
+  useAlertRuleAbilityMock: jest.mocked(alertingAbilities.useRuleEditAbility),
   rulerBuilderMock: jest.mocked(apiRuler.rulerUrlBuilder),
 };
 
@@ -210,9 +211,15 @@ describe('PanelAlertTabContent', () => {
       namespace: () => ({ path: 'ruler' }),
       namespaceGroup: () => ({ path: 'ruler' }),
     });
-    mocks.useAlertRuleAbilityMock.mockReturnValue(
-      Object.fromEntries(Object.values(RuleAction).map((action) => [action, Granted])) as AbilityStates<RuleAction>
-    );
+    const granted = Granted;
+    mocks.useAlertRuleAbilityMock.mockReturnValue({
+      update: granted,
+      delete: granted,
+      restore: granted,
+      pause: granted,
+      duplicate: granted,
+      loading: false,
+    } satisfies RuleEditAbilityResult);
 
     mockAlertRuleApi(server).prometheusRuleNamespaces(GRAFANA_RULES_SOURCE_NAME, promResponse);
     mockAlertRuleApi(server).rulerRules(GRAFANA_RULES_SOURCE_NAME, rulerResponse);

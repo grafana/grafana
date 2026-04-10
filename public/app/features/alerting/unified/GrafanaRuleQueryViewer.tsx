@@ -32,8 +32,7 @@ import { ExpressionResult } from './components/expressions/Expression';
 import { type ThresholdDefinition, getThresholdsForQueries } from './components/rule-editor/util';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { DatasourceModelPreview } from './components/rule-viewer/tabs/Query/DataSourceModelPreview';
-import { useAllRulerRuleAbilityStates } from './hooks/abilities/ruleAbilities';
-import { RuleAction } from './hooks/abilities/types';
+import { useRuleExploreAbility } from './hooks/abilities/ruleAbilities';
 import { groupIdentifier as groupIdentifierUtil } from './utils/groupIdentifier';
 
 interface GrafanaRuleViewerProps {
@@ -113,7 +112,7 @@ export function QueryPreview({
   const styles = useStyles2(getQueryPreviewStyles);
   const isExpression = isExpressionQuery(model);
   const groupId = useMemo(() => groupIdentifierUtil.fromCombinedRule(rule), [rule]);
-  const { granted: canExplore } = useAllRulerRuleAbilityStates(rule.rulerRule, groupId)[RuleAction.Explore];
+  const { granted: canExplore } = useRuleExploreAbility(rule.rulerRule, groupId);
 
   const headerItems: React.ReactNode[] = [];
 

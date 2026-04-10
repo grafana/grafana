@@ -7,7 +7,8 @@ import { config, locationService, setPluginLinksHook } from '@grafana/runtime';
 import * as ruler from 'app/features/alerting/unified/api/ruler';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import * as alertingAbilities from 'app/features/alerting/unified/hooks/abilities/ruleAbilities';
-import { type AbilityStates, Granted, RuleAction } from 'app/features/alerting/unified/hooks/abilities/types';
+import { type RuleEditAbilityResult } from 'app/features/alerting/unified/hooks/abilities/ruleAbilities';
+import { Granted } from 'app/features/alerting/unified/hooks/abilities/types';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   grantUserPermissions,
@@ -47,7 +48,7 @@ jest.mock('@grafana/assistant', () => ({
 
 jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
 jest.spyOn(ruler, 'rulerUrlBuilder');
-jest.spyOn(alertingAbilities, 'useAllRulerRuleAbilityStates');
+jest.spyOn(alertingAbilities, 'useRuleEditAbility');
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
@@ -80,7 +81,7 @@ const dataSources = {
 };
 
 const mocks = {
-  useAlertRuleAbilityMock: jest.mocked(alertingAbilities.useAllRulerRuleAbilityStates),
+  useAlertRuleAbilityMock: jest.mocked(alertingAbilities.useRuleEditAbility),
   rulerBuilderMock: jest.mocked(ruler.rulerUrlBuilder),
 };
 
@@ -197,9 +198,15 @@ describe('PanelAlertTabContent', () => {
       namespace: () => ({ path: 'ruler' }),
       namespaceGroup: () => ({ path: 'ruler' }),
     });
-    mocks.useAlertRuleAbilityMock.mockReturnValue(
-      Object.fromEntries(Object.values(RuleAction).map((action) => [action, Granted])) as AbilityStates<RuleAction>
-    );
+    const granted = Granted;
+    mocks.useAlertRuleAbilityMock.mockReturnValue({
+      update: granted,
+      delete: granted,
+      restore: granted,
+      pause: granted,
+      duplicate: granted,
+      loading: false,
+    } satisfies RuleEditAbilityResult);
 
     mockAlertRuleApi(server).prometheusRuleNamespaces(GRAFANA_RULES_SOURCE_NAME, promResponse);
     mockAlertRuleApi(server).rulerRules(GRAFANA_RULES_SOURCE_NAME, {

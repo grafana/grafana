@@ -18,7 +18,13 @@ import {
 import { PromAlertingRuleState, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { useEnrichmentAbilityState } from '../../hooks/abilities/otherAbilities';
-import { skipToken, usePromRuleAbilityStates, useRulerRuleAbilityStates } from '../../hooks/abilities/ruleAbilities';
+import {
+  skipToken,
+  usePromRuleAbilityStates,
+  useRuleEditAbility,
+  useRuleExportAbility,
+  useRuleSilenceAbility,
+} from '../../hooks/abilities/ruleAbilities';
 import { EnrichmentAction, RuleAction } from '../../hooks/abilities/types';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
@@ -66,22 +72,15 @@ const AlertRuleMenu = ({
   buttonSize,
   fill,
 }: Props) => {
-  // check all abilities and permissions using rulerRule
-  const [
-    { granted: canPauseRuler },
-    { granted: canDeleteRuler },
-    { granted: canDuplicateRuler },
-    { granted: canSilenceRuler },
-    { granted: canExportRuler },
-  ] = useRulerRuleAbilityStates(rulerRule, groupIdentifier, [
-    RuleAction.Pause,
-    RuleAction.Delete,
-    RuleAction.Duplicate,
-    RuleAction.Silence,
-    RuleAction.ModifyExport,
-  ]);
+  // Ruler-path abilities — focused hooks per concern
+  const rulerEditAbility = useRuleEditAbility(rulerRule, groupIdentifier);
+  const { granted: canPauseRuler } = rulerEditAbility.pause;
+  const { granted: canDeleteRuler } = rulerEditAbility.delete;
+  const { granted: canDuplicateRuler } = rulerEditAbility.duplicate;
+  const { granted: canSilenceRuler } = useRuleSilenceAbility(rulerRule);
+  const { granted: canExportRuler } = useRuleExportAbility(rulerRule, groupIdentifier);
 
-  // check all abilities and permissions using promRule
+  // Prom-path abilities — used when the list view has removed all ruler API requests
   const [
     { granted: canPauseGrafana },
     { granted: canDeleteGrafana },

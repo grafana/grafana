@@ -111,8 +111,10 @@ export type Action =
  * - `LOADING`                   — async checks (folder metadata, plugin settings) are still in flight
  * - `NOT_SUPPORTED`             — the feature or action doesn't exist in this context
  *                                 (wrong alertmanager type, disabled feature flag, wrong rule type)
- * - `IMMUTABLE`                 — the resource exists but cannot be mutated
- *                                 (provisioned via Terraform/Ansible, plugin-managed)
+ * - `PROVISIONED`               — the resource is read-only because it is provisioned
+ *                                 (via Terraform, Ansible, or the provisioning API)
+ * - `IS_PLUGIN_MANAGED`         — the resource is owned by an installed plugin and cannot be
+ *                                 mutated through the Grafana UI
  * - `INSUFFICIENT_PERMISSIONS`  — the user lacks the required RBAC permissions;
  *                                 `anyOfPermissions` lists the permissions that would grant access
  *                                 (user needs **any one** of them)
@@ -135,7 +137,8 @@ export type AbilityState =
   | { granted: true }
   | { granted: false; cause: 'LOADING' }
   | { granted: false; cause: 'NOT_SUPPORTED' }
-  | { granted: false; cause: 'IMMUTABLE' }
+  | { granted: false; cause: 'PROVISIONED' }
+  | { granted: false; cause: 'IS_PLUGIN_MANAGED' }
   | { granted: false; cause: 'INSUFFICIENT_PERMISSIONS'; anyOfPermissions: AccessControlAction[] };
 
 /** Map of every action in domain T to its {@link AbilityState}. */
@@ -157,11 +160,16 @@ export const Loading: AbilityState = { granted: false, cause: 'LOADING' };
 export const NotSupported: AbilityState = { granted: false, cause: 'NOT_SUPPORTED' };
 
 /**
- * The resource cannot be mutated because it is read-only.
- * Use for provisioned resources (Terraform, Ansible) or plugin-managed rules.
- * UI convention: show the button disabled with a tooltip explaining it is read-only.
+ * The resource cannot be mutated because it is provisioned (Terraform, Ansible, provisioning API).
+ * UI convention: show the button disabled with a tooltip explaining it is provisioned.
  */
-export const Immutable: AbilityState = { granted: false, cause: 'IMMUTABLE' };
+export const Provisioned: AbilityState = { granted: false, cause: 'PROVISIONED' };
+
+/**
+ * The resource is owned by an installed plugin and cannot be mutated through the Grafana UI.
+ * UI convention: show the button disabled with a tooltip naming the owning plugin.
+ */
+export const IsPluginManaged: AbilityState = { granted: false, cause: 'IS_PLUGIN_MANAGED' };
 
 /**
  * The user lacks the RBAC permissions required to perform the action.
@@ -204,9 +212,14 @@ export function isNotSupported(ability: AbilityState): boolean {
   return !ability.granted && ability.cause === 'NOT_SUPPORTED';
 }
 
-/** True when the resource is read-only (provisioned, plugin-managed). */
-export function isImmutable(ability: AbilityState): boolean {
-  return !ability.granted && ability.cause === 'IMMUTABLE';
+/** True when the resource is provisioned and read-only (Terraform, Ansible, provisioning API). */
+export function isProvisioned(ability: AbilityState): boolean {
+  return !ability.granted && ability.cause === 'PROVISIONED';
+}
+
+/** True when the resource is owned by an installed plugin and cannot be mutated via the UI. */
+export function isPluginManaged(ability: AbilityState): boolean {
+  return !ability.granted && ability.cause === 'IS_PLUGIN_MANAGED';
 }
 
 /**
@@ -223,5 +236,10 @@ export function isImmutable(ability: AbilityState): boolean {
  * )}
  */
 export function isApplicable(ability: AbilityState): boolean {
-  return ability.granted || ability.cause === 'IMMUTABLE' || ability.cause === 'INSUFFICIENT_PERMISSIONS';
+  return (
+    ability.granted ||
+    ability.cause === 'PROVISIONED' ||
+    ability.cause === 'IS_PLUGIN_MANAGED' ||
+    ability.cause === 'INSUFFICIENT_PERMISSIONS'
+  );
 }

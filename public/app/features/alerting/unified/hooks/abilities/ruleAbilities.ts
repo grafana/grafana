@@ -26,19 +26,19 @@ import {
   type AbilityStates,
   ExternalRuleAction,
   Granted,
-  Immutable,
   InsufficientPermissions,
+  IsPluginManaged,
   Loading,
   NotSupported,
+  Provisioned,
   RuleAction,
 } from './types';
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
 /**
- * Builds the AbilityState for a silence action from the three conditions that
- * determine it. Extracted to avoid repeating the same if-chain in both the
- * Ruler and Prom rule paths.
+ * Builds the AbilityState for a silence action.
+ * Extracted to avoid repeating the same if-chain in both the Ruler and Prom paths.
  */
 function buildSilenceAbility(loading: boolean, supported: boolean, canSilence: boolean): AbilityState {
   if (loading) {
@@ -64,16 +64,13 @@ function fromPermissions(
   if (loading) {
     return Loading;
   }
-
   if (!supported) {
     return NotSupported;
   }
-
   const hasAny = anyOfPermissions.some((p) => p && ctx.hasPermission(p));
   if (!hasAny) {
     return InsufficientPermissions(anyOfPermissions);
   }
-
   return Granted;
 }
 
@@ -161,18 +158,45 @@ function useRulePluginImmutability(rule: RulerRuleDTO | GrafanaPromRuleDTO | und
   );
 }
 
-// ── Per-rule edit ability (Ruler path) ────────────────────────────────────────
+// ── Per-rule edit ability ─────────────────────────────────────────────────────
 
-interface RuleEditAbilityResult {
+export interface RuleEditAbilityResult {
+  /**
+   * Edit (update) the rule. Denied when: loading, ruler unavailable, provisioned
+   * (`PROVISIONED`), plugin-managed (`IS_PLUGIN_MANAGED`), or no folder edit permission.
+   */
   update: AbilityState;
+  /** Delete the rule. Same conditions as `update` but checks delete permission. */
   delete: AbilityState;
-  isPluginManaged: boolean;
+  /**
+   * Restore the rule to a previous version. Same as `update` but additionally
+   * returns `NOT_SUPPORTED` for non-Grafana-managed rules (cloud/recording rules
+   * do not have version history).
+   */
+  restore: AbilityState;
+  /**
+   * Pause / resume the rule. Same as `restore` — only applicable to Grafana-managed
+   * alerting rules; returns `NOT_SUPPORTED` for recording rules and cloud rules.
+   */
+  pause: AbilityState;
+  /**
+   * Duplicate the rule. Not blocked by provisioning (a provisioned rule can be
+   * duplicated to create a new editable copy). Returns `IS_PLUGIN_MANAGED` when
+   * the rule is plugin-owned, otherwise checks the create permission.
+   */
+  duplicate: AbilityState;
+  /** True while async checks (ruler, plugin settings) are still in flight. */
   loading: boolean;
 }
 
 /**
- * Combines editability and immutability into per-action AbilityState values.
- * Priority: LOADING > NOT_SUPPORTED (ruler unavailable) > IMMUTABLE > INSUFFICIENT_PERMISSIONS.
+ * Resolves the per-rule edit abilities for a RulerRule, combining:
+ * - Ruler API availability
+ * - Provisioning state (`PROVISIONED`)
+ * - Plugin ownership (`IS_PLUGIN_MANAGED`)
+ * - Folder-scoped RBAC permissions
+ *
+ * Priority: LOADING > NOT_SUPPORTED > PROVISIONED > IS_PLUGIN_MANAGED > INSUFFICIENT_PERMISSIONS
  */
 export function useRuleEditAbility(rule: RulerRuleDTO | undefined, id: RuleGroupIdentifierV2): RuleEditAbilityResult {
   const rulesSourceName = getGroupOriginName(id);
@@ -188,19 +212,22 @@ export function useRuleEditAbility(rule: RulerRuleDTO | undefined, id: RuleGroup
     const isProvisioned = rule ? isProvisionedRule(rule) : false;
     // TODO: Add support for federated rules
     const isFederated = false;
-    const immutableRule = isProvisioned || isFederated || isPluginManaged;
+    const isGrafanaManagedRule = rulerRuleType.grafana.rule(rule);
     const loading = editableLoading || pluginLoading;
     const rulesPermissions = getRulesPermissions(rulesSourceName);
 
-    function compute(hasPermission: boolean, permission: AccessControlAction): AbilityState {
+    function computeEdit(hasPermission: boolean, permission: AccessControlAction): AbilityState {
       if (loading) {
         return Loading;
       }
       if (!isRulerAvailable) {
         return NotSupported;
       }
-      if (immutableRule) {
-        return Immutable;
+      if (isProvisioned || isFederated) {
+        return Provisioned;
+      }
+      if (isPluginManaged) {
+        return IsPluginManaged;
       }
       if (!hasPermission) {
         return InsufficientPermissions([permission]);
@@ -208,10 +235,29 @@ export function useRuleEditAbility(rule: RulerRuleDTO | undefined, id: RuleGroup
       return Granted;
     }
 
+    const update = computeEdit(isEditable ?? false, rulesPermissions.update);
+    const del = computeEdit(isRemovable ?? false, rulesPermissions.delete);
+
+    // Restore and pause only apply to Grafana-managed rules.
+    const grafanaOnlyUpdate = isGrafanaManagedRule ? update : NotSupported;
+
+    // Duplicate is not blocked by provisioning — a provisioned rule can be copied.
+    function computeDuplicate(): AbilityState {
+      if (loading) {
+        return Loading;
+      }
+      if (isPluginManaged) {
+        return IsPluginManaged;
+      }
+      return fromPermissions(true, false, rulesPermissions.create);
+    }
+
     return {
-      update: compute(isEditable ?? false, rulesPermissions.update),
-      delete: compute(isRemovable ?? false, rulesPermissions.delete),
-      isPluginManaged,
+      update,
+      delete: del,
+      restore: grafanaOnlyUpdate,
+      pause: grafanaOnlyUpdate,
+      duplicate: computeDuplicate(),
       loading,
     };
   }, [
@@ -226,108 +272,37 @@ export function useRuleEditAbility(rule: RulerRuleDTO | undefined, id: RuleGroup
   ]);
 }
 
-// ── Per-rule (RulerRule) abilities ────────────────────────────────────────────
+// ── Focused per-rule ability hooks ────────────────────────────────────────────
 
-export function useAllRulerRuleAbilityStates(
-  rule: RulerRuleDTO | undefined,
-  id: RuleGroupIdentifierV2
-): AbilityStates<RuleAction> {
-  const rulesSourceName = getGroupOriginName(id);
-  const {
-    update: updateAbility,
-    delete: deleteAbility,
-    isPluginManaged,
-    loading: editLoading,
-  } = useRuleEditAbility(rule, id);
-  const exportAbility = useRuleAbilityState(RuleAction.ExportRules);
+/**
+ * Returns the silence `AbilityState` for a rule.
+ * Checks alertmanager configuration and folder-level silence permissions.
+ */
+export function useRuleSilenceAbility(rule: RulerRuleDTO | undefined): AbilityState {
   const { silenceSupported, canSilenceInFolder, silenceLoading } = useCanSilence(rule);
-
-  return useMemo<AbilityStates<RuleAction>>(() => {
-    const combinedLoading = editLoading || silenceLoading;
-    const isGrafanaManagedRule = rulerRuleType.grafana.rule(rule);
-    const rulesPermissions = getRulesPermissions(rulesSourceName);
-
-    const silenceAbility = buildSilenceAbility(silenceLoading, silenceSupported, canSilenceInFolder);
-
-    const grafanaOnlyUpdate: AbilityState = isGrafanaManagedRule ? updateAbility : NotSupported;
-
-    const deletePermanentlyAbility: AbilityState = (() => {
-      if (!isGrafanaManagedRule) {
-        return NotSupported;
-      }
-
-      if (!deleteAbility.granted) {
-        return deleteAbility;
-      }
-
-      if (!isAdmin()) {
-        return InsufficientPermissions([rulesPermissions.delete]);
-      }
-
-      return Granted;
-    })();
-
-    const duplicateAbility: AbilityState = (() => {
-      if (editLoading) {
-        return Loading;
-      }
-      if (isPluginManaged) {
-        return NotSupported;
-      }
-      return fromPermissions(true, false, rulesPermissions.create);
-    })();
-
-    return {
-      [RuleAction.Create]: NotSupported,
-      [RuleAction.View]: fromPermissions(true, combinedLoading, rulesPermissions.read),
-      [RuleAction.Update]: updateAbility,
-      [RuleAction.Delete]: deleteAbility,
-      [RuleAction.ExportRules]: fromPermissions(true, combinedLoading, rulesPermissions.read),
-      [RuleAction.Duplicate]: duplicateAbility,
-      [RuleAction.Explore]: fromPermissions(true, combinedLoading, AccessControlAction.DataSourcesExplore),
-      [RuleAction.Silence]: silenceAbility,
-      [RuleAction.ModifyExport]: isGrafanaManagedRule ? exportAbility : NotSupported,
-      [RuleAction.Pause]: grafanaOnlyUpdate,
-      [RuleAction.Restore]: grafanaOnlyUpdate,
-      [RuleAction.DeletePermanently]: deletePermanentlyAbility,
-    };
-  }, [
-    rule,
-    rulesSourceName,
-    updateAbility,
-    deleteAbility,
-    exportAbility,
-    isPluginManaged,
-    editLoading,
-    silenceLoading,
-    silenceSupported,
-    canSilenceInFolder,
-  ]);
-}
-
-export function useRulerRuleAbilityState(
-  rule: RulerRuleDTO | undefined,
-  id: RuleGroupIdentifierV2,
-  action: RuleAction
-): AbilityState {
-  const all = useAllRulerRuleAbilityStates(rule, id);
-  return useMemo(() => all[action], [all, action]);
+  return useMemo(
+    () => buildSilenceAbility(silenceLoading, silenceSupported, canSilenceInFolder),
+    [silenceLoading, silenceSupported, canSilenceInFolder]
+  );
 }
 
 /**
- * Returns AbilityState for multiple RuleActions on the same RulerRule.
- *
- * IMPORTANT: callers should stabilize the `actions` array reference (e.g. via a
- * module-level constant or `useMemo`) so that this hook's inner `useMemo` is not
- * defeated by a new array reference on every render.
+ * Returns the explore `AbilityState` for a rule.
+ * Requires the DataSourcesExplore permission; reflects loading state from the edit check.
  */
-export function useRulerRuleAbilityStates(
-  rule: RulerRuleDTO | undefined,
-  id: RuleGroupIdentifierV2,
-  actions: RuleAction[]
-): AbilityState[] {
-  const all = useAllRulerRuleAbilityStates(rule, id);
-  return useMemo(() => actions.map((a) => all[a]), [all, actions]);
+export function useRuleExploreAbility(rule: RulerRuleDTO | undefined, id: RuleGroupIdentifierV2): AbilityState {
+  const { loading } = useRuleEditAbility(rule, id);
+  return useMemo(() => fromPermissions(true, loading, AccessControlAction.DataSourcesExplore), [loading]);
+}
+
+/**
+ * Returns the export/modify-export `AbilityState` for a rule.
+ * Only applicable to Grafana-managed alerting rules; returns `NOT_SUPPORTED` for cloud rules.
+ */
+export function useRuleExportAbility(rule: RulerRuleDTO | undefined, id: RuleGroupIdentifierV2): AbilityState {
+  const isGrafanaManagedRule = rulerRuleType.grafana.rule(rule);
+  const exportAbility = useRuleAbilityState(RuleAction.ExportRules);
+  return useMemo(() => (isGrafanaManagedRule ? exportAbility : NotSupported), [isGrafanaManagedRule, exportAbility]);
 }
 
 // ── Per-rule (PromRule) abilities ─────────────────────────────────────────────
@@ -343,7 +318,6 @@ export function useAllPromRuleAbilityStates(rule: GrafanaPromRuleDTO | undefined
     const isProvisioned = rule ? isProvisionedPromRule(rule) : false;
     const isFederated = false;
     const isAlertingRule = prometheusRuleType.grafana.alertingRule(rule);
-    const immutableRule = isProvisioned || isFederated || isPluginManaged;
     const combinedLoading = editableLoading || silenceLoading || pluginLoading;
 
     const rulesPermissions = getRulesPermissions('grafana');
@@ -352,15 +326,15 @@ export function useAllPromRuleAbilityStates(rule: GrafanaPromRuleDTO | undefined
       if (combinedLoading) {
         return Loading;
       }
-
-      if (immutableRule) {
-        return Immutable;
+      if (isProvisioned || isFederated) {
+        return Provisioned;
       }
-
+      if (isPluginManaged) {
+        return IsPluginManaged;
+      }
       if (!hasPermission) {
         return InsufficientPermissions([permission]);
       }
-
       return Granted;
     }
 
@@ -389,7 +363,7 @@ export function useAllPromRuleAbilityStates(rule: GrafanaPromRuleDTO | undefined
         return Loading;
       }
       if (isPluginManaged) {
-        return NotSupported;
+        return IsPluginManaged;
       }
       return fromPermissions(true, false, rulesPermissions.create);
     })();

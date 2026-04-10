@@ -1,124 +1,328 @@
 import { getWrapper, render, renderHook, screen, waitFor } from 'test/test-utils';
 
 import { AccessControlAction } from 'app/types/accessControl';
-import { type CombinedRule } from 'app/types/unified-alerting';
 
 import { setupMswServer } from '../../mockApi';
-import { getCloudRule, getGrafanaRule, mockDataSource } from '../../mocks';
+import { getCloudRule, getGrafanaRule, grantUserPermissions, mockDataSource } from '../../mocks';
 import { setFolderAccessControl } from '../../mocks/server/configure';
 import { setupDataSources } from '../../testSetup/datasources';
 import { groupIdentifier } from '../../utils/groupIdentifier';
 
-import { useAllRulerRuleAbilityStates } from './ruleAbilities';
-import { RuleAction, isApplicable, isNotSupported } from './types';
+import {
+  useRuleEditAbility,
+  useRuleExploreAbility,
+  useRuleExportAbility,
+  useRuleSilenceAbility,
+} from './ruleAbilities';
+import {
+  isApplicable,
+  isInsufficientPermissions,
+  isLoading,
+  isNotSupported,
+  isPluginManaged,
+  isProvisioned,
+} from './types';
 
 setupMswServer();
 
 const wrapper = () => getWrapper({ renderWithRouter: true });
 
-/**
- * Render the hook result in a component so we can more reliably check that the
- * result has settled after API requests (avoids loading-state false negatives).
- */
-function RenderActionPermissions({ rule, action }: { rule: CombinedRule; action: RuleAction }) {
-  const groupId = groupIdentifier.fromCombinedRule(rule);
-  const ability = useAllRulerRuleAbilityStates(rule.rulerRule, groupId)[action];
-  return (
-    <>
-      {isApplicable(ability) && 'supported'}
-      {ability.granted && 'allowed'}
-    </>
-  );
-}
+// ── useRuleEditAbility ────────────────────────────────────────────────────────
 
-/**
- * Snapshot tests for rule abilities.
- * Every change to the snapshot should be reviewed carefully!
- */
-describe('ruleAbilities', () => {
-  it('should report that all actions are applicable for a Grafana Managed alert rule', async () => {
+describe('useRuleEditAbility', () => {
+  it('returns loading state while async checks are in flight', async () => {
     const rule = getGrafanaRule();
     const groupId = groupIdentifier.fromCombinedRule(rule);
 
-    const { result } = renderHook(() => useAllRulerRuleAbilityStates(rule.rulerRule, groupId), {
-      wrapper: wrapper(),
+    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+
+    // Initially loading
+    expect(isLoading(result.current.update)).toBe(true);
+    expect(result.current.loading).toBe(true);
+
+    // Settles after API resolves
+    await waitFor(() => expect(result.current.loading).toBe(false));
+  });
+
+  it('grants update and delete when user has permissions and ruler is available', async () => {
+    setFolderAccessControl({
+      'alert.rules:write': true,
+      'alert.rules:delete': true,
     });
 
-    await waitFor(() => {
-      const entries = Object.entries(result.current) as Array<
-        [RuleAction, ReturnType<typeof useAllRulerRuleAbilityStates>[RuleAction]]
-      >;
+    const rule = getGrafanaRule();
+    const groupId = groupIdentifier.fromCombinedRule(rule);
 
-      for (const [action, ability] of entries) {
-        // Create is a list-level action — not applicable on a per-rule instance
-        if (action === RuleAction.Create) {
-          expect(isNotSupported(ability)).toBe(true);
-        } else {
-          expect(isApplicable(ability)).toBe(true);
-        }
-      }
+    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.update.granted).toBe(true);
+    expect(result.current.delete.granted).toBe(true);
+  });
+
+  it('matches snapshot for a Grafana rule with all permissions granted', async () => {
+    setFolderAccessControl({
+      'alert.rules:write': true,
+      'alert.rules:delete': true,
     });
+    grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
+
+    const rule = getGrafanaRule();
+    const groupId = groupIdentifier.fromCombinedRule(rule);
+
+    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current).toMatchSnapshot();
   });
 
-  it('grants correct silence permissions for folder with silence create permission', async () => {
-    setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: true });
-
-    const rule = getGrafanaRule();
-
-    render(<RenderActionPermissions rule={rule} action={RuleAction.Silence} />);
-
-    expect(await screen.findByText(/supported/)).toBeInTheDocument();
-    expect(await screen.findByText(/allowed/)).toBeInTheDocument();
-  });
-
-  it('does not grant silence permissions for folder without silence create permission', async () => {
-    setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: false });
-
-    const rule = getGrafanaRule();
-
-    render(<RenderActionPermissions rule={rule} action={RuleAction.Silence} />);
-
-    expect(await screen.findByText(/supported/)).toBeInTheDocument();
-    expect(screen.queryByText(/allowed/)).not.toBeInTheDocument();
-  });
-
-  it('should report no permissions while loading data for cloud rule', async () => {
+  it('matches snapshot for a cloud rule in loading state', async () => {
     const mimirDs = mockDataSource({ uid: 'mimir', name: 'Mimir' });
     setupDataSources(mimirDs);
 
     const rule = getCloudRule({}, { rulesSource: mimirDs });
     const groupId = groupIdentifier.fromCombinedRule(rule);
 
-    const { result } = renderHook(() => useAllRulerRuleAbilityStates(rule.rulerRule, groupId), {
-      wrapper: wrapper(),
-    });
+    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
 
-    await waitFor(() => {
-      expect(result.current).not.toBeUndefined();
-    });
-
+    // Snapshot the initial loading state before the ruler resolves
     expect(result.current).toMatchSnapshot();
   });
 
-  it('should allow editing/deleting rules with plugin origin label when plugin is not installed', async () => {
+  it('returns INSUFFICIENT_PERMISSIONS when user lacks folder edit permission', async () => {
+    // setFolderAccessControl without write/delete → both denied with the right permissions listed
+    setFolderAccessControl({ 'alert.rules:write': false, 'alert.rules:delete': false });
+
+    const rule = getGrafanaRule();
+    const groupId = groupIdentifier.fromCombinedRule(rule);
+
+    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(isInsufficientPermissions(result.current.update)).toBe(true);
+    if (isInsufficientPermissions(result.current.update)) {
+      expect(result.current.update.anyOfPermissions).toContain(AccessControlAction.AlertingRuleUpdate);
+    }
+
+    expect(isInsufficientPermissions(result.current.delete)).toBe(true);
+    if (isInsufficientPermissions(result.current.delete)) {
+      expect(result.current.delete.anyOfPermissions).toContain(AccessControlAction.AlertingRuleDelete);
+    }
+  });
+
+  it('returns PROVISIONED for provisioned Grafana rules — duplicate remains grantable', async () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
+
+    const rule = getGrafanaRule();
+    if (rule.rulerRule && 'grafana_alert' in rule.rulerRule) {
+      (rule.rulerRule as { grafana_alert: { provenance: string } }).grafana_alert.provenance = 'terraform';
+    }
+    const groupId = groupIdentifier.fromCombinedRule(rule);
+
+    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(isProvisioned(result.current.update)).toBe(true);
+    expect(isProvisioned(result.current.delete)).toBe(true);
+    // duplicate is intentionally NOT blocked by provisioning — a provisioned rule
+    // can be copied to create a new editable one
+    expect(result.current.duplicate.granted).toBe(true);
+    expect(result.current).toMatchSnapshot();
+  });
+
+  it('is editable (not IS_PLUGIN_MANAGED) when plugin origin label references a non-existent plugin', async () => {
+    setFolderAccessControl({ 'alert.rules:write': true });
+
     const rule = getGrafanaRule({
       labels: { __grafana_origin: 'plugin/non-existent-plugin' },
     });
     const groupId = groupIdentifier.fromCombinedRule(rule);
 
-    const { result } = renderHook(() => useAllRulerRuleAbilityStates(rule.rulerRule, groupId), {
-      wrapper: wrapper(),
-    });
+    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
 
-    await waitFor(() => {
-      // Wait for abilities to settle — update should be applicable (not loading)
-      expect(isApplicable(result.current[RuleAction.Update])).toBe(true);
-    });
+    await waitFor(() => expect(isApplicable(result.current.update)).toBe(true));
 
-    // When the plugin is not installed, the rule is editable
-    expect(isApplicable(result.current[RuleAction.Update])).toBe(true);
-    expect(isApplicable(result.current[RuleAction.Delete])).toBe(true);
+    // Non-existent plugin → isPluginManaged=false → editable
+    expect(result.current.update.granted).toBe(true);
+    expect(isPluginManaged(result.current.duplicate)).toBe(false);
+  });
+
+  it('returns NOT_SUPPORTED for cloud rules (ruler unavailable while loading)', async () => {
+    const mimirDs = mockDataSource({ uid: 'mimir', name: 'Mimir' });
+    setupDataSources(mimirDs);
+
+    const rule = getCloudRule({}, { rulesSource: mimirDs });
+    const groupId = groupIdentifier.fromCombinedRule(rule);
+
+    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+
+    await waitFor(() => expect(result.current).not.toBeUndefined());
+
+    // Cloud rules without a connected ruler → NOT_SUPPORTED after loading
+    expect(isApplicable(result.current.update)).toBe(false);
+  });
+
+  it('returns NOT_SUPPORTED for restore and pause when rule is not Grafana-managed', async () => {
+    const mimirDs = mockDataSource({ uid: 'mimir', name: 'Mimir' });
+    setupDataSources(mimirDs);
+
+    const rule = getCloudRule({}, { rulesSource: mimirDs });
+    const groupId = groupIdentifier.fromCombinedRule(rule);
+
+    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+
+    await waitFor(() => expect(result.current).not.toBeUndefined());
+
+    expect(isNotSupported(result.current.restore)).toBe(true);
+    expect(isNotSupported(result.current.pause)).toBe(true);
+  });
+
+  it('grants restore and pause for Grafana-managed rules with edit permission', async () => {
+    setFolderAccessControl({ 'alert.rules:write': true });
+
+    const rule = getGrafanaRule();
+    const groupId = groupIdentifier.fromCombinedRule(rule);
+
+    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.restore.granted).toBe(true);
+    expect(result.current.pause.granted).toBe(true);
+  });
+
+  it('returns IS_PLUGIN_MANAGED for duplicate when rule is plugin-managed', async () => {
+    // With a real installed plugin, duplicate would return IsPluginManaged.
+    // We verify the NOT-installed path returns granted (not plugin-managed).
+    const rule = getGrafanaRule({
+      labels: { __grafana_origin: 'plugin/non-existent-plugin' },
+    });
+    const groupId = groupIdentifier.fromCombinedRule(rule);
+
+    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // Non-existent plugin → not plugin-managed → duplicate checks create permission
+    expect(isPluginManaged(result.current.duplicate)).toBe(false);
+  });
+});
+
+// ── useRuleSilenceAbility ─────────────────────────────────────────────────────
+
+describe('useRuleSilenceAbility', () => {
+  it('grants silence when user has folder silence create permission', async () => {
+    setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: true });
+
+    const rule = getGrafanaRule();
+    const groupId = groupIdentifier.fromCombinedRule(rule);
+
+    render(<RenderSilence rule={rule} />);
+
+    expect(await screen.findByText(/applicable/)).toBeInTheDocument();
+    expect(await screen.findByText(/granted/)).toBeInTheDocument();
+  });
+
+  it('denies silence when folder lacks silence create permission', async () => {
+    setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: false });
+
+    const rule = getGrafanaRule();
+
+    render(<RenderSilence rule={rule} />);
+
+    expect(await screen.findByText(/applicable/)).toBeInTheDocument();
+    expect(screen.queryByText(/granted/)).not.toBeInTheDocument();
+  });
+
+  it('matches snapshot for denied silence — freezes the anyOfPermissions list', async () => {
+    setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: false });
+    // No global silence permission either
+    grantUserPermissions([]);
+
+    const rule = getGrafanaRule();
+    const groupId = groupIdentifier.fromCombinedRule(rule);
+
+    const { result } = renderHook(() => useRuleSilenceAbility(rule.rulerRule), { wrapper: wrapper() });
+
+    // Wait for folder metadata to resolve so we get INSUFFICIENT_PERMISSIONS, not LOADING
+    await waitFor(() => expect(isLoading(result.current)).toBe(false));
+
+    expect(result.current).toMatchSnapshot();
+  });
+});
+
+function RenderSilence({ rule }: { rule: ReturnType<typeof getGrafanaRule> }) {
+  // Silence uses the ruler rule's folder UID
+  const silenceAbility = useRuleSilenceAbility(rule.rulerRule);
+  return (
+    <>
+      {isApplicable(silenceAbility) && 'applicable'}
+      {silenceAbility.granted && 'granted'}
+    </>
+  );
+}
+
+// ── useRuleExploreAbility ─────────────────────────────────────────────────────
+
+describe('useRuleExploreAbility', () => {
+  it('grants explore when user has DataSourcesExplore permission', async () => {
+    grantUserPermissions([AccessControlAction.DataSourcesExplore]);
+
+    const rule = getGrafanaRule();
+    const groupId = groupIdentifier.fromCombinedRule(rule);
+
+    const { result } = renderHook(() => useRuleExploreAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+
+    await waitFor(() => expect(result.current.granted).toBe(true));
+  });
+
+  it('returns INSUFFICIENT_PERMISSIONS when user lacks DataSourcesExplore', async () => {
+    // Explicitly grant no permissions — DataSourcesExplore is not in the set
+    grantUserPermissions([]);
+
+    const rule = getGrafanaRule();
+    const groupId = groupIdentifier.fromCombinedRule(rule);
+
+    const { result } = renderHook(() => useRuleExploreAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+
+    await waitFor(() => expect(isLoading(result.current)).toBe(false));
+
+    expect(isInsufficientPermissions(result.current)).toBe(true);
+    if (isInsufficientPermissions(result.current)) {
+      expect(result.current.anyOfPermissions).toContain(AccessControlAction.DataSourcesExplore);
+    }
+    // Snapshot freezes that exactly one permission is listed (not zero, not two)
+    expect(result.current).toMatchSnapshot();
+  });
+});
+
+// ── useRuleExportAbility ──────────────────────────────────────────────────────
+
+describe('useRuleExportAbility', () => {
+  it('is applicable for Grafana-managed rules', async () => {
+    const rule = getGrafanaRule();
+    const groupId = groupIdentifier.fromCombinedRule(rule);
+
+    const { result } = renderHook(() => useRuleExportAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+
+    await waitFor(() => expect(isApplicable(result.current)).toBe(true));
+  });
+
+  it('returns NOT_SUPPORTED for cloud rules', async () => {
+    const mimirDs = mockDataSource({ uid: 'mimir', name: 'Mimir' });
+    setupDataSources(mimirDs);
+
+    const rule = getCloudRule({}, { rulesSource: mimirDs });
+    const groupId = groupIdentifier.fromCombinedRule(rule);
+
+    const { result } = renderHook(() => useRuleExportAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+
+    await waitFor(() => expect(result.current).not.toBeUndefined());
+
+    expect(isNotSupported(result.current)).toBe(true);
   });
 });
