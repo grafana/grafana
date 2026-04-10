@@ -16,6 +16,39 @@ export type TemplateString = string;
 
 export const defaultTemplateString = (): TemplateString => ("");
 
+export enum NoDataState {
+	NoData = "NoData",
+	Ok = "Ok",
+	Alerting = "Alerting",
+	KeepLast = "KeepLast",
+}
+
+export const defaultNoDataState = (): NoDataState => (NoDataState.NoData);
+
+export enum ExecErrState {
+	Error = "Error",
+	Ok = "Ok",
+	Alerting = "Alerting",
+	KeepLast = "KeepLast",
+}
+
+export const defaultExecErrState = (): ExecErrState => (ExecErrState.Error);
+
+// TODO(@moustafab): this should be imported from the notifications package
+export interface NotificationSettings {
+	receiver: string;
+	groupBy?: string[];
+	groupWait?: PromDuration;
+	groupInterval?: PromDuration;
+	repeatInterval?: PromDuration;
+	muteTimeIntervals?: TimeIntervalRef[];
+	activeTimeIntervals?: TimeIntervalRef[];
+}
+
+export const defaultNotificationSettings = (): NotificationSettings => ({
+	receiver: "",
+});
+
 // TODO(@moustafab): validate regex for time interval ref
 export type TimeIntervalRef = string;
 
@@ -63,6 +96,16 @@ export type DatasourceUID = string;
 
 export const defaultDatasourceUID = (): DatasourceUID => ("");
 
+export interface PanelRef {
+	dashboardUID: string;
+	panelID: number;
+}
+
+export const defaultPanelRef = (): PanelRef => ({
+	dashboardUID: "",
+	panelID: 0,
+});
+
 export interface Spec {
 	title: string;
 	paused?: boolean;
@@ -72,29 +115,18 @@ export interface Spec {
 	for?: string;
 	keepFiringFor?: string;
 	missingSeriesEvalsToResolve?: number;
-	noDataState: string;
-	execErrState: string;
-	notificationSettings?: {
-		receiver: string;
-		groupBy?: string[];
-		groupWait?: PromDuration;
-		groupInterval?: PromDuration;
-		repeatInterval?: PromDuration;
-		muteTimeIntervals?: TimeIntervalRef[];
-		activeTimeIntervals?: TimeIntervalRef[];
-	};
+	noDataState: NoDataState;
+	execErrState: ExecErrState;
+	notificationSettings?: NotificationSettings;
 	expressions: ExpressionMap;
-	panelRef?: {
-		dashboardUID: string;
-		panelID: number;
-	};
+	panelRef?: PanelRef;
 }
 
 export const defaultSpec = (): Spec => ({
 	title: "",
 	trigger: defaultIntervalTrigger(),
-	noDataState: "NoData",
-	execErrState: "Error",
+	noDataState: NoDataState.NoData,
+	execErrState: ExecErrState.Error,
 	expressions: defaultExpressionMap(),
 });
 
