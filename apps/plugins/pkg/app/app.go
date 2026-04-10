@@ -45,7 +45,12 @@ func New(cfg app.Config) (app.App, error) {
 		reconcilerLogger := logger.With("component", "reconciler.children")
 		clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig())
 		registrar := install.NewInstallRegistrar(reconcilerLogger, clientGenerator)
-		pluginKind.Reconciler = install.NewChildPluginReconciler(reconcilerLogger, specificConfig.MetaProviderManager, registrar)
+		pluginKind.Reconciler = install.NewChildPluginReconciler(
+			reconcilerLogger,
+			specificConfig.MetaProviderManager,
+			registrar,
+			specificConfig.ChildReconciler.OwnershipFilter,
+		)
 	}
 
 	simpleConfig := simple.AppConfig{
@@ -81,6 +86,9 @@ func New(cfg app.Config) (app.App, error) {
 
 	// Register MetaProviderManager as a runnable so its cleanup goroutine is managed by the app lifecycle
 	a.AddRunnable(specificConfig.MetaProviderManager)
+	if runnable, ok := specificConfig.ChildReconciler.OwnershipFilter.(app.Runnable); ok {
+		a.AddRunnable(runnable)
+	}
 
 	return a, nil
 }
@@ -93,6 +101,7 @@ type PluginAppConfig struct {
 type ChildReconcilerConfig struct {
 	Enabled           bool
 	MemcachedSelector operator.MemcachedServerSelector
+	OwnershipFilter   install.OwnershipFilter
 }
 
 type PluginAppInstallerConfig struct {
@@ -111,6 +120,7 @@ func NewPluginsAppInstaller(config PluginAppInstallerConfig) (*PluginAppInstalle
 		ChildReconciler: ChildReconcilerConfig{
 			Enabled:           config.ChildReconciler.Enabled,
 			MemcachedSelector: config.ChildReconciler.MemcachedSelector,
+			OwnershipFilter:   config.ChildReconciler.OwnershipFilter,
 		},
 	}
 	provider := simple.NewAppProvider(pluginsappapis.LocalManifest(), specificConfig, New)

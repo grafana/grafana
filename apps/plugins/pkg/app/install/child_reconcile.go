@@ -42,17 +42,24 @@ func actionLabel(action operator.ReconcileAction) string {
 // ChildPluginReconciler reconciles Plugin resources and creates child plugin records.
 type ChildPluginReconciler struct {
 	operator.TypedReconciler[*pluginsv0alpha1.Plugin]
-	metaManager *meta.ProviderManager
-	registrar   Registrar
-	logger      logging.Logger
+	metaManager     *meta.ProviderManager
+	registrar       Registrar
+	ownershipFilter OwnershipFilter
+	logger          logging.Logger
 }
 
 // NewChildPluginReconciler creates a new ChildPluginReconciler instance.
-func NewChildPluginReconciler(logger logging.Logger, metaManager *meta.ProviderManager, registrar Registrar) *ChildPluginReconciler {
+func NewChildPluginReconciler(logger logging.Logger, metaManager *meta.ProviderManager, registrar Registrar, ownershipFilters ...OwnershipFilter) *ChildPluginReconciler {
+	ownershipFilter := NewNoopOwnershipFilter()
+	if len(ownershipFilters) > 0 && ownershipFilters[0] != nil {
+		ownershipFilter = ownershipFilters[0]
+	}
+
 	reconciler := &ChildPluginReconciler{
 		TypedReconciler: operator.TypedReconciler[*pluginsv0alpha1.Plugin]{},
 		metaManager:     metaManager,
 		registrar:       registrar,
+		ownershipFilter: ownershipFilter,
 		logger:          logger,
 	}
 	reconciler.ReconcileFunc = reconciler.reconcile
@@ -96,6 +103,18 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 
 	if plugin.Spec.ParentId != nil && *plugin.Spec.ParentId != "" {
 		logger.Debug("Plugin is a child plugin, skipping child discovery")
+		return operator.ReconcileResult{}, nil
+	}
+
+	ownsPlugin, err := r.ownershipFilter.OwnsPlugin(ctx, plugin)
+	if err != nil {
+		logger.Error("Failed to determine child reconciler shard ownership", "error", err)
+		metrics.ChildReconciliationTotal.WithLabelValues("error", actionLabel(req.Action)).Inc()
+		return operator.ReconcileResult{}, err
+	}
+	if !ownsPlugin {
+		logger.Debug("Plugin assigned to a different child reconciler shard, skipping")
+		metrics.ChildReconciliationTotal.WithLabelValues("success", actionLabel(req.Action)).Inc()
 		return operator.ReconcileResult{}, nil
 	}
 

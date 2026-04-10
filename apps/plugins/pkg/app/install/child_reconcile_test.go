@@ -420,6 +420,73 @@ func TestChildPluginReconciler_ReconcileInvalidAction(t *testing.T) {
 	require.Equal(t, operator.ReconcileResult{}, result)
 }
 
+func TestChildPluginReconciler_SkipsWhenOwnedByAnotherShard(t *testing.T) {
+	mockProv := &mockMetaProvider{
+		getMetaFunc: func(context.Context, meta.PluginRef) (*meta.Result, error) {
+			t.Fatal("GetMeta should not be called when the plugin belongs to a different shard")
+			return nil, nil
+		},
+	}
+	metaManager := meta.NewProviderManager(mockProv)
+
+	mockReg := newMockPluginRegistrar()
+	reconciler := NewChildPluginReconciler(
+		&logging.NoOpLogger{},
+		metaManager,
+		mockReg,
+		mockOwnershipFilter{
+			ownsFunc: func(context.Context, *pluginsv0alpha1.Plugin) (bool, error) {
+				return false, nil
+			},
+		},
+	)
+
+	result, err := reconciler.reconcile(context.Background(), operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]{
+		Action: operator.ReconcileActionCreated,
+		Object: newTestPlugin("test-plugin", "1.0.0"),
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, operator.ReconcileResult{}, result)
+	require.Empty(t, mockReg.registered)
+	require.Empty(t, mockReg.unregistered)
+	require.Empty(t, mockReg.updatedStatuses)
+}
+
+func TestChildPluginReconciler_ReturnsOwnershipErrors(t *testing.T) {
+	expectedErr := errors.New("ring unavailable")
+	mockProv := &mockMetaProvider{
+		getMetaFunc: func(context.Context, meta.PluginRef) (*meta.Result, error) {
+			t.Fatal("GetMeta should not be called when shard ownership resolution fails")
+			return nil, nil
+		},
+	}
+	metaManager := meta.NewProviderManager(mockProv)
+
+	mockReg := newMockPluginRegistrar()
+	reconciler := NewChildPluginReconciler(
+		&logging.NoOpLogger{},
+		metaManager,
+		mockReg,
+		mockOwnershipFilter{
+			ownsFunc: func(context.Context, *pluginsv0alpha1.Plugin) (bool, error) {
+				return false, expectedErr
+			},
+		},
+	)
+
+	result, err := reconciler.reconcile(context.Background(), operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]{
+		Action: operator.ReconcileActionCreated,
+		Object: newTestPlugin("test-plugin", "1.0.0"),
+	})
+
+	require.ErrorIs(t, err, expectedErr)
+	require.Equal(t, operator.ReconcileResult{}, result)
+	require.Empty(t, mockReg.registered)
+	require.Empty(t, mockReg.unregistered)
+	require.Empty(t, mockReg.updatedStatuses)
+}
+
 func TestChildPluginReconciler_UpdateRemovesStaleChildren(t *testing.T) {
 	mockProv := &mockMetaProvider{
 		getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
@@ -607,6 +674,17 @@ func newMockPluginRegistrar() *mockPluginRegistrar {
 		registered:   make(map[string]*PluginInstall),
 		unregistered: make(map[string]bool),
 	}
+}
+
+type mockOwnershipFilter struct {
+	ownsFunc func(context.Context, *pluginsv0alpha1.Plugin) (bool, error)
+}
+
+func (m mockOwnershipFilter) OwnsPlugin(ctx context.Context, plugin *pluginsv0alpha1.Plugin) (bool, error) {
+	if m.ownsFunc != nil {
+		return m.ownsFunc(ctx, plugin)
+	}
+	return true, nil
 }
 
 func (m *mockPluginRegistrar) Register(ctx context.Context, namespace string, install *PluginInstall) error {
