@@ -182,7 +182,7 @@ To add a variable, follow these steps:
 
 {{< /docs/list >}}
 
-For more detailed information on variables, refer to the full [Variables documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/).
+For more detailed information on variables, refer to the full [Variables documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/).
 
 ## Add annotation queries
 

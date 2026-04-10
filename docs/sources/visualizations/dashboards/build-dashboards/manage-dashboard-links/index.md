@@ -101,6 +101,7 @@ The default link type is **Dashboards**.
 
 {{< admonition type="tip" >}}
 To add links without leaving the dashboard, click the **Add new element** icon in the dashboard toolbar, and select **Link**.
+For more information, refer to the [Dashboard controls documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/).
 {{< /admonition >}}
 
 ### Add a URL link to a dashboard

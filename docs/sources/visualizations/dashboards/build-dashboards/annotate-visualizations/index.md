@@ -169,6 +169,7 @@ To add a new annotation query to a dashboard, follow these steps:
 
 {{< admonition type="tip" >}}
 To create annotation queries without leaving the dashboard, click the **Add new element** icon in the dashboard toolbar, and select **Annotation query**.
+For more information, refer to the [Dashboard controls documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/).
 {{< /admonition >}}
 
 ## Built-in query
