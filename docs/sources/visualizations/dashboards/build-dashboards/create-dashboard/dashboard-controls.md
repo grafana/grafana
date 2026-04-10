@@ -31,14 +31,39 @@ This feature replaces ad hoc filters and extends them by adding grouping for Pro
 However, in the dashboard schema, it is still referred to as `"kind": "AdhocVariable"`.
 To use this feature, enable the `dashboardUnifiedDrilldownControls` feature toggle in your Grafana configuration file.
 
-For information on ad hoc filters, refer to the [Variables documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-ad-hoc-filters), which still reflects the generally available experience.
+For information on ad hoc filters, refer to the [Variables documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
+While that documentation reflects the generally available experience, the information applies to the filter and group by feature.
 {{< /admonition >}}
 
 <!-- vale Grafana.Spelling = YES -->
 
-<!-- TODO: conceptual content here -->
+The filter and group by is one of the most complex and flexible variable options available.
+Instead of creating a variable for each dimension by which you want to filter, it automatically creates variables (key/value pairs) for all the dimensions returned by your data source query.
+This allows you to quickly apply filters dashboard-wide.
 
-### Add filters and group by
+The group by function allows you to then group data by keys, letting you further narrow your scope.
+Group by functionality works when you have queries that are aggregators, such as `sum(your_metric_here)`.
+Then, you can filter further with panel-level filters that let you drill down into your data.
+
+The filter and group by feature lets you add label/value filters that are automatically added to all metric queries that use the specified data source.
+Unlike other variables, you don't use these filters in queries.
+Instead, you use them to write filters for existing queries.
+
+The following data sources support filters.
+Data sources with an asterisk also support group by:
+
+{{< column-list >}}
+
+- Prometheus*
+- Loki*
+- InfluxDB
+- Elasticsearch
+- OpenSearch.
+- Special Dashboard data source - Use this to [apply filters to data from unsupported data sources](#filter-any-data-using-the-dashboard-data-source).
+
+{{< /column-list >}}
+
+### Add a filter and group by
 
 To add a filter and group by, follow these steps:
 
@@ -65,7 +90,7 @@ To add a filter and group by, follow these steps:
 
    | Option | Description |
    | ------ | ----------- |
-   | Data source | Select a target data source in the drop-down list. You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source](ref:add-a-data-source). |
+   | Data source | Select a target data source in the drop-down list. You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/). |
    | Default filters | Set a default key/value pair. Optional. In the dashboard filter control, the default value is indicated with an information icon. |
    | Enable group by | This option only appears if you selected a Prometheus or Loki data source. Toggle the switch on to enable data grouping. |
    | Default group by | Set a default key for the dashboard. Optional. In the dashboard filter control, the default value is indicated with an information icon. |
@@ -89,7 +114,7 @@ The overview lets you see your current filters and group by selections, search f
 
 {{< figure src="/media/docs/grafana/screenshot-filters-overview-v12.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" >}}
 
-Add an operator and value for a key to add it as a filter or select the **Group by** checkbox to set a group by key:
+Add an operator and value for a key to add it as a filter or select the **Group by** checkbox to set a group by key.
 You can use a key for both a filter and a group by.
 
 ### Group and filter from the panel
