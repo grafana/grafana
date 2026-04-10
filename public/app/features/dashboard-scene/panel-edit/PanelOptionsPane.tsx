@@ -110,23 +110,24 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     if (options.fieldConfig) {
       const presetDefaults = options.fieldConfig.defaults;
 
-      // Force color adaptation for both cross and same-plugin suggestions/presets
-      let adaptedColor = panel.state.fieldConfig.defaults.color;
+      // if the preset doesn't specify a color, derive it from the plugin's preferred scheme
       const plugin = panel.getPlugin();
-      if (plugin && !presetDefaults?.color) {
-        const adapted = getPanelOptionsWithDefaults({
-          plugin,
-          currentOptions: panel.state.options,
-          currentFieldConfig: panel.state.fieldConfig,
-          isAfterPluginChange: true,
-        });
-        adaptedColor = adapted.fieldConfig.defaults.color;
-      }
+      const color =
+        presetDefaults?.color ??
+        (plugin
+          ? getPanelOptionsWithDefaults({
+              plugin,
+              currentOptions: panel.state.options,
+              currentFieldConfig: { defaults: {}, overrides: [] },
+              isAfterPluginChange: true,
+            }).fieldConfig.defaults.color
+          : undefined) ??
+        panel.state.fieldConfig.defaults.color;
 
       const fieldConfigWithOverrides = {
         defaults: {
           ...newFieldConfig.defaults,
-          color: presetDefaults?.color ?? adaptedColor,
+          color,
           custom: presetDefaults?.custom ?? {},
           ...(presetDefaults?.thresholds && { thresholds: presetDefaults.thresholds }),
         },

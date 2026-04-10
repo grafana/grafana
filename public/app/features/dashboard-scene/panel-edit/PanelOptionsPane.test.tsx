@@ -210,11 +210,8 @@ describe('PanelOptionsPane', () => {
       expect(mergedConfig.defaults.unit).toBe('bytes');
     });
 
-    it('Should use adapted color from changePluginType instead of previous panel color', () => {
+    it('Should use plugin preferred color when suggestion has no color', () => {
       const { optionsPane, panel } = setupTest('panel-1');
-
-      // panel starts with palette-classic color
-      expect(panel.state.fieldConfig.defaults.color?.mode).toBe('palette-classic');
 
       const mockOnFieldConfigChange = jest.fn();
       panel.onFieldConfigChange = mockOnFieldConfigChange;
@@ -230,7 +227,6 @@ describe('PanelOptionsPane', () => {
       expect(mockOnFieldConfigChange).toHaveBeenCalled();
       const mergedConfig = mockOnFieldConfigChange.mock.calls[0][0];
 
-      // color should be adapted to the plugin's preferred color scheme (thresholds)
       expect(mergedConfig.defaults.color?.mode).toBe('thresholds');
     });
 
@@ -253,7 +249,32 @@ describe('PanelOptionsPane', () => {
       expect(mockOnFieldConfigChange).toHaveBeenCalled();
       const mergedConfig = mockOnFieldConfigChange.mock.calls[0][0];
 
-      // enforce the plugin's preferred color scheme
+      expect(mergedConfig.defaults.color?.mode).toBe('thresholds');
+    });
+
+    it('Should use plugin preferred color over any current user color when suggestion has no color', () => {
+      const { optionsPane, panel } = setupTest('panel-1');
+
+      panel.setState({
+        fieldConfig: {
+          defaults: { ...panel.state.fieldConfig.defaults, color: { mode: 'fixed', fixedColor: 'blue' } },
+          overrides: [],
+        },
+      });
+
+      const mockOnFieldConfigChange = jest.fn();
+      panel.onFieldConfigChange = mockOnFieldConfigChange;
+
+      optionsPane.onChangePanel({
+        pluginId: 'table',
+        fieldConfig: {
+          defaults: { custom: {} },
+          overrides: [],
+        },
+      });
+
+      expect(mockOnFieldConfigChange).toHaveBeenCalled();
+      const mergedConfig = mockOnFieldConfigChange.mock.calls[0][0];
       expect(mergedConfig.defaults.color?.mode).toBe('thresholds');
     });
 
@@ -283,7 +304,6 @@ describe('PanelOptionsPane', () => {
       const mockOnFieldConfigChange = jest.fn();
       panel.onFieldConfigChange = mockOnFieldConfigChange;
 
-      // Call without fieldConfig
       optionsPane.onChangePanel({
         pluginId: 'table',
         options: { showHeader: false },
