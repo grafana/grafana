@@ -308,7 +308,7 @@ func (dr *DashboardServiceImpl) getLastResourceVersion(ctx context.Context, orgI
 	}
 
 	if !ok {
-		dr.log.Info("No last resource version found, starting from scratch", "orgID", orgID)
+		dr.log.Debug("No last deleted resource version found, skipping", "orgID", orgID)
 		return "0", nil
 	}
 
