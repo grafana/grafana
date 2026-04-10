@@ -1796,7 +1796,16 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (Runner, error) {
 	actionSetService := resourcepermissions.NewActionSetService()
 	permissionRegistry := permreg.ProvidePermissionRegistry()
 	serverLockService := serverlock.ProvideService(sqlStore, tracingService)
-	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService)
+	storeProvider := store2.ProvideDefaultStoreProvider()
+	server, err := authz.ProvideEmbeddedZanzanaServer(cfg, sqlStore, tracingService, featureToggles, registerer, eventualRestConfigProvider, storeProvider)
+	if err != nil {
+		return Runner{}, err
+	}
+	zanzanaClient, err := authz.ProvideZanzanaClient(cfg, sqlStore, server, featureToggles, registerer)
+	if err != nil {
+		return Runner{}, err
+	}
+	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient)
 	if err != nil {
 		return Runner{}, err
 	}
