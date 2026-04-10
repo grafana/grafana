@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { groupBy, capitalize } from 'lodash';
+import { capitalize } from 'lodash';
 import { useRef, useMemo } from 'react';
 import * as React from 'react';
 import { useClickAway } from 'react-use';
@@ -65,7 +65,14 @@ export const DataLinkSuggestions = ({ suggestions, ...otherProps }: DataLinkSugg
   });
 
   const groupedSuggestions = useMemo(() => {
-    return groupBy(suggestions, (s) => s.origin);
+    return suggestions.reduce<Record<string, VariableSuggestion[]>>((acc, s) => {
+      const key = s.origin;
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(s);
+      return acc;
+    }, {});
   }, [suggestions]);
 
   const styles = useStyles2(getStyles);
