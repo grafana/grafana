@@ -32,6 +32,11 @@ export function resolveType(type: Type): string {
     }
   }
 
+  // If it's an array type, resolve the element type and append []
+  if (type.isArray()) {
+    return `${resolveType(type.getArrayElementTypeOrThrow())}[]`;
+  }
+
   // If it's a union type, resolve each member recursively
   if (type.isUnion()) {
     return type
