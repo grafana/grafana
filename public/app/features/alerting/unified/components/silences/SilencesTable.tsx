@@ -22,8 +22,9 @@ import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from 'app/features/ale
 import { type AlertmanagerAlert, type Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { isAvailable } from '../../hooks/abilities/abilityUtils';
 import { useAlertmanagerAbilityState } from '../../hooks/abilities/notificationAbilities';
-import { AlertmanagerAction, isAvailable } from '../../hooks/abilities/types';
+import { AlertmanagerAction } from '../../hooks/abilities/types';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
 import { getSilenceFiltersFromUrlParams, makeAMLink, stringifyErrorLike } from '../../utils/misc';

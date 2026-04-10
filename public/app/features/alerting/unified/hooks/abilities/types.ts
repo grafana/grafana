@@ -180,12 +180,7 @@ export function InsufficientPermissions(anyOfPermissions: AccessControlAction[])
   return { granted: false, cause: 'INSUFFICIENT_PERMISSIONS', anyOfPermissions };
 }
 
-// ── Utility / type-guard functions ────────────────────────────────────────────
-
-/** Narrows to the granted variant. Equivalent to `ability.granted`. */
-export function isGranted(ability: AbilityState): ability is { granted: true } {
-  return ability.granted;
-}
+// ── Type-guard functions ──────────────────────────────────────────────────────
 
 /**
  * Narrows to the `INSUFFICIENT_PERMISSIONS` variant.
@@ -200,46 +195,4 @@ export function isInsufficientPermissions(
   ability: AbilityState
 ): ability is { granted: false; cause: 'INSUFFICIENT_PERMISSIONS'; anyOfPermissions: AccessControlAction[] } {
   return !ability.granted && ability.cause === 'INSUFFICIENT_PERMISSIONS';
-}
-
-/** True while async checks are still resolving. */
-export function isLoading(ability: AbilityState): boolean {
-  return !ability.granted && ability.cause === 'LOADING';
-}
-
-/** True when the action doesn't exist in this context (wrong AM type, disabled feature flag). */
-export function isNotSupported(ability: AbilityState): boolean {
-  return !ability.granted && ability.cause === 'NOT_SUPPORTED';
-}
-
-/** True when the resource is provisioned and read-only (Terraform, Ansible, provisioning API). */
-export function isProvisioned(ability: AbilityState): boolean {
-  return !ability.granted && ability.cause === 'PROVISIONED';
-}
-
-/** True when the resource is owned by an installed plugin and cannot be mutated via the UI. */
-export function isPluginManaged(ability: AbilityState): boolean {
-  return !ability.granted && ability.cause === 'IS_PLUGIN_MANAGED';
-}
-
-/**
- * True when the action is applicable in this context — it exists and makes sense here —
- * regardless of whether the current user can perform it.
- *
- * Replaces the old `supported: true` semantics. Use this for the **show-but-disable**
- * pattern: render a button (possibly disabled) only when `isAvailable`, and hide it
- * entirely when `isNotSupported` or `isLoading`.
- *
- * @example
- * {isAvailable(exportAbility) && (
- *   <Button disabled={!exportAbility.granted} onClick={handleExport}>Export</Button>
- * )}
- */
-export function isAvailable(ability: AbilityState): boolean {
-  return (
-    ability.granted ||
-    ability.cause === 'PROVISIONED' ||
-    ability.cause === 'IS_PLUGIN_MANAGED' ||
-    ability.cause === 'INSUFFICIENT_PERMISSIONS'
-  );
 }

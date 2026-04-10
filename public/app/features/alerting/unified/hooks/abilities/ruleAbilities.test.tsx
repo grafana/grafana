@@ -8,20 +8,14 @@ import { setFolderAccessControl } from '../../mocks/server/configure';
 import { setupDataSources } from '../../testSetup/datasources';
 import { groupIdentifier } from '../../utils/groupIdentifier';
 
+import { isAvailable, isLoading, isNotSupported, isPluginManaged, isProvisioned } from './abilityUtils';
 import {
   useRuleAdministrationAbility,
   useRuleExploreAbility,
   useRuleExportAbility,
   useRuleSilenceAbility,
 } from './ruleAbilities';
-import {
-  isAvailable,
-  isInsufficientPermissions,
-  isLoading,
-  isNotSupported,
-  isPluginManaged,
-  isProvisioned,
-} from './types';
+import { isInsufficientPermissions } from './types';
 
 setupMswServer();
 

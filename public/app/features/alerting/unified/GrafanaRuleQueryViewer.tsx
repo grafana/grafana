@@ -32,6 +32,7 @@ import { ExpressionResult } from './components/expressions/Expression';
 import { type ThresholdDefinition, getThresholdsForQueries } from './components/rule-editor/util';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { DatasourceModelPreview } from './components/rule-viewer/tabs/Query/DataSourceModelPreview';
+import { isGranted } from './hooks/abilities/abilityUtils';
 import { useRuleExploreAbility } from './hooks/abilities/ruleAbilities';
 import { groupIdentifier as groupIdentifierUtil } from './utils/groupIdentifier';
 
@@ -112,7 +113,7 @@ export function QueryPreview({
   const styles = useStyles2(getQueryPreviewStyles);
   const isExpression = isExpressionQuery(model);
   const groupId = useMemo(() => groupIdentifierUtil.fromCombinedRule(rule), [rule]);
-  const { granted: canExplore } = useRuleExploreAbility(rule.rulerRule, groupId);
+  const exploreAbility = useRuleExploreAbility(rule.rulerRule, groupId);
 
   const headerItems: React.ReactNode[] = [];
 
@@ -132,7 +133,7 @@ export function QueryPreview({
   }
 
   let exploreLink: string | undefined = undefined;
-  if (!isExpression && canExplore) {
+  if (!isExpression && isGranted(exploreAbility)) {
     exploreLink = dataSource && createExploreLink(dataSource, model);
   }
 

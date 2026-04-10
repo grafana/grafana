@@ -7,8 +7,9 @@ import { setupMswServer } from '../../mockApi';
 import { grantPermissionsHelper } from '../../test/test-utils';
 import * as misc from '../../utils/misc';
 
+import { isNotSupported } from './abilityUtils';
 import { useEnrichmentAbilityState, useEnrichmentAbilityStates } from './otherAbilities';
-import { EnrichmentAction, isInsufficientPermissions, isNotSupported } from './types';
+import { EnrichmentAction, isInsufficientPermissions } from './types';
 
 setupMswServer();
 

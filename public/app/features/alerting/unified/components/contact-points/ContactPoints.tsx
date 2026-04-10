@@ -18,8 +18,9 @@ import {
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
+import { isAvailable } from '../../hooks/abilities/abilityUtils';
 import { useAlertmanagerAbilityState } from '../../hooks/abilities/notificationAbilities';
-import { AlertmanagerAction, isAvailable } from '../../hooks/abilities/types';
+import { AlertmanagerAction } from '../../hooks/abilities/types';
 import { useCanViewContactPoints } from '../../hooks/useNotificationAbilities';
 import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';

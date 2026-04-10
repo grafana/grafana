@@ -5,8 +5,9 @@ import { Badge, ConfirmModal, LinkButton, Stack } from '@grafana/ui';
 import { useExportMuteTimingsDrawer } from 'app/features/alerting/unified/components/mute-timings/useExportMuteTimingsDrawer';
 
 import { AbilityAny } from '../../components/AbilityGuards';
+import { isAvailable } from '../../hooks/abilities/abilityUtils';
 import { useAlertmanagerAbilityState } from '../../hooks/abilities/notificationAbilities';
-import { AlertmanagerAction, isAvailable } from '../../hooks/abilities/types';
+import { AlertmanagerAction } from '../../hooks/abilities/types';
 import { isLoading } from '../../hooks/useAsync';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';

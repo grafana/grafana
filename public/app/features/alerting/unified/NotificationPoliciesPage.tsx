@@ -19,8 +19,9 @@ import {
   useCreatePolicyAction,
   useListNotificationPolicyRoutes,
 } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
+import { isAvailable } from 'app/features/alerting/unified/hooks/abilities/abilityUtils';
 import { useAlertmanagerAbilityState } from 'app/features/alerting/unified/hooks/abilities/notificationAbilities';
-import { AlertmanagerAction, isAvailable } from 'app/features/alerting/unified/hooks/abilities/types';
+import { AlertmanagerAction } from 'app/features/alerting/unified/hooks/abilities/types';
 import { useRouteGroupsMatcher } from 'app/features/alerting/unified/useRouteGroupsMatcher';
 import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 

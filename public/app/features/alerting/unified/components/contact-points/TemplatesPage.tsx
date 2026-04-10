@@ -1,8 +1,9 @@
 import { Trans } from '@grafana/i18n';
 import { LinkButton, Stack, Text } from '@grafana/ui';
 
+import { isAvailable } from '../../hooks/abilities/abilityUtils';
 import { useAlertmanagerAbilityState } from '../../hooks/abilities/notificationAbilities';
-import { AlertmanagerAction, isAvailable } from '../../hooks/abilities/types';
+import { AlertmanagerAction } from '../../hooks/abilities/types';
 import { useTemplatesNav } from '../../navigation/useNotificationConfigNav';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
