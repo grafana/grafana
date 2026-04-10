@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -691,13 +692,17 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 	checks := make([]claims.BatchCheckItem, len(scanned))
 	namespace := a.namespacer(query.OrgID)
 	for i, pw := range scanned {
+		folder := pw.p.FolderUID.String
+		if folder == "" {
+			folder = accesscontrol.GeneralFolderUID
+		}
 		checks[i] = claims.BatchCheckItem{
 			CorrelationID: strconv.Itoa(i),
 			Verb:          utils.VerbGet,
 			Group:         dashboardV0.GROUP,
 			Resource:      dashboardV0.LIBRARY_PANEL_RESOURCE,
 			Name:          pw.item.Name,
-			Folder:        pw.p.FolderUID.String,
+			Folder:        folder,
 		}
 	}
 
