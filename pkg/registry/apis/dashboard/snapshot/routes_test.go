@@ -426,6 +426,133 @@ func TestCreateExternalSnapshot(t *testing.T) {
 	})
 }
 
+func TestDeleteExternalSnapshot(t *testing.T) {
+	t.Run("sends DELETE request with Bearer token", func(t *testing.T) {
+		var receivedReq *http.Request
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			receivedReq = r
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
+
+		err := deleteExternalSnapshot(server.URL+"/delete/mykey", "test-token")
+		require.NoError(t, err)
+		assert.Equal(t, http.MethodDelete, receivedReq.Method)
+		assert.Equal(t, "Bearer test-token", receivedReq.Header.Get("Authorization"))
+	})
+
+	t.Run("sends no Authorization header when token is empty", func(t *testing.T) {
+		var receivedReq *http.Request
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			receivedReq = r
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
+
+		err := deleteExternalSnapshot(server.URL+"/delete/mykey", "")
+		require.NoError(t, err)
+		assert.Empty(t, receivedReq.Header.Get("Authorization"))
+	})
+
+	t.Run("returns auth error on 403", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusForbidden)
+		}))
+		defer server.Close()
+
+		err := deleteExternalSnapshot(server.URL+"/delete/mykey", "bad-token")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "403")
+	})
+
+	t.Run("returns error on unexpected status", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer server.Close()
+
+		err := deleteExternalSnapshot(server.URL+"/delete/mykey", "token")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "500")
+	})
+}
+
+func TestStripSensitiveFields(t *testing.T) {
+	deleteKey := "secret-key"
+	dashboard := map[string]any{"uid": "dash-1", "title": "test"}
+
+	t.Run("strips deleteKey and dashboard from snapshot", func(t *testing.T) {
+		snap := &dashv0.Snapshot{
+			Spec: dashv0.SnapshotSpec{
+				DeleteKey: &deleteKey,
+				Dashboard: dashboard,
+			},
+		}
+		result := stripSensitiveFields(snap)
+		stripped := result.(*dashv0.Snapshot)
+		assert.Nil(t, stripped.Spec.DeleteKey)
+		assert.Nil(t, stripped.Spec.Dashboard)
+	})
+
+	t.Run("does not modify original snapshot", func(t *testing.T) {
+		snap := &dashv0.Snapshot{
+			Spec: dashv0.SnapshotSpec{
+				DeleteKey: &deleteKey,
+				Dashboard: dashboard,
+			},
+		}
+		_ = stripSensitiveFields(snap)
+		assert.Equal(t, &deleteKey, snap.Spec.DeleteKey)
+		assert.Equal(t, dashboard, snap.Spec.Dashboard)
+	})
+
+	t.Run("strips from list", func(t *testing.T) {
+		list := &dashv0.SnapshotList{
+			Items: []dashv0.Snapshot{
+				{Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey, Dashboard: dashboard}},
+				{Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey, Dashboard: dashboard}},
+			},
+		}
+		result := stripSensitiveFieldsFromList(list)
+		stripped := result.(*dashv0.SnapshotList)
+		for _, item := range stripped.Items {
+			assert.Nil(t, item.Spec.DeleteKey)
+			assert.Nil(t, item.Spec.Dashboard)
+		}
+	})
+}
+
+func TestSnapshotGetAttrs(t *testing.T) {
+	deleteKey := "my-delete-key"
+
+	t.Run("returns spec.deleteKey in field set", func(t *testing.T) {
+		snap := &dashv0.Snapshot{}
+		snap.Name = "snap-1"
+		snap.Namespace = "org-1"
+		snap.Spec.DeleteKey = &deleteKey
+
+		_, fieldSet, err := SnapshotGetAttrs(snap)
+		require.NoError(t, err)
+		assert.Equal(t, "my-delete-key", fieldSet.Get("spec.deleteKey"))
+		assert.Equal(t, "snap-1", fieldSet.Get("metadata.name"))
+	})
+
+	t.Run("returns empty string for nil deleteKey", func(t *testing.T) {
+		snap := &dashv0.Snapshot{}
+		snap.Name = "snap-2"
+		snap.Namespace = "org-1"
+
+		_, fieldSet, err := SnapshotGetAttrs(snap)
+		require.NoError(t, err)
+		assert.Equal(t, "", fieldSet.Get("spec.deleteKey"))
+	})
+
+	t.Run("returns error for non-Snapshot object", func(t *testing.T) {
+		_, _, err := SnapshotGetAttrs(&dashv0.SnapshotList{})
+		require.Error(t, err)
+	})
+}
+
 // testAttributes implements authorizer.Attributes for testing
 type testAttributes struct {
 	verb        string
@@ -522,5 +649,53 @@ func TestSnapshotAuthorizer(t *testing.T) {
 		})
 		require.NoError(t, err)
 		assert.Equal(t, authorizer.DecisionAllow, decision)
+	})
+
+	t.Run("authenticated user can access delete/{deleteKey} custom route", func(t *testing.T) {
+		auth := NewSnapshotAuthorizer(
+			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsDelete}}),
+			false,
+		)
+
+		ctx := identity.WithRequester(context.Background(), testUser)
+		// K8s parses snapshots/delete/{deleteKey} as name="delete", subresource="{deleteKey}"
+		decision, _, err := auth.Authorize(ctx, &testAttributes{
+			isResource:  true,
+			resource:    "snapshots",
+			verb:        "delete",
+			name:        "delete",
+			subresource: "randomDeleteKeyString123",
+		})
+		require.NoError(t, err)
+		assert.Equal(t, authorizer.DecisionAllow, decision)
+	})
+
+	t.Run("public mode denies anonymous delete/{deleteKey}", func(t *testing.T) {
+		auth := NewSnapshotAuthorizer(acmock.New(), true)
+
+		decision, _, _ := auth.Authorize(context.Background(), &testAttributes{
+			isResource:  true,
+			resource:    "snapshots",
+			verb:        "delete",
+			name:        "delete",
+			subresource: "randomDeleteKeyString123",
+		})
+		assert.Equal(t, authorizer.DecisionDeny, decision)
+	})
+
+	t.Run("authenticated user without permissions is denied", func(t *testing.T) {
+		auth := NewSnapshotAuthorizer(
+			acmock.New().WithPermissions([]accesscontrol.Permission{}),
+			false,
+		)
+
+		ctx := identity.WithRequester(context.Background(), testUser)
+		decision, _, _ := auth.Authorize(ctx, &testAttributes{
+			isResource: true,
+			resource:   "snapshots",
+			verb:       "create",
+			name:       "create",
+		})
+		assert.Equal(t, authorizer.DecisionDeny, decision)
 	})
 }
