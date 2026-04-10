@@ -124,8 +124,8 @@ func TestParseScope(t *testing.T) {
 			},
 		},
 		{
-			name:        "invalid scope format",
-			scope:       "dashboards:someotherformat",
+			name:        "scope with no colon returns error",
+			scope:       "dashboards",
 			expected:    nil,
 			expectError: errInvalidScope,
 		},

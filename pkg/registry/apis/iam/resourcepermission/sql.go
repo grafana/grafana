@@ -9,6 +9,7 @@ import (
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -645,9 +646,15 @@ func (s *ResourcePermSqlBackend) ListDirectPermissionsForSubject(ctx context.Con
 			logger.Warn("Dropping permission with unresolvable scope", "scope", a.Scope, "action", a.Action, "error", err)
 			continue
 		}
+		// use mapper.Scope to reconstruct the scope so resources with non-standard scope formats
+		// (e.g. routing trees: "notifications.alerting.grafana.app/routingtrees:*") are preserved correctly.
+		scopeStr := grn.Resource + ":uid:" + grn.Name
+		if mapper, ok := s.mappers.Get(schema.GroupResource{Group: grn.Group, Resource: grn.Resource}); ok {
+			scopeStr = mapper.Scope(grn.Name)
+		}
 		result = append(result, v0alpha1.PermissionSpec{
 			Action: a.Action,
-			Scope:  grn.Resource + ":uid:" + grn.Name,
+			Scope:  scopeStr,
 		})
 	}
 	return result, nil

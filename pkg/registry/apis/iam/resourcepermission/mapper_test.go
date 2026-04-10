@@ -115,9 +115,13 @@ func TestMappersRegistry_ParseScope(t *testing.T) {
 		assert.ErrorIs(t, err, errInvalidScope)
 	})
 
-	t.Run("only two parts returns error", func(t *testing.T) {
-		_, err := m.ParseScope("folders:uid", "")
-		assert.ErrorIs(t, err, errInvalidScope)
+	t.Run("routing tree two-part scope succeeds", func(t *testing.T) {
+		// routing trees use a non-standard 2-part scope format; ParseScope must accept this
+		grn, err := m.ParseScope("notifications.alerting.grafana.app/routingtrees:*", "")
+		require.NoError(t, err)
+		assert.Equal(t, "notifications.alerting.grafana.app", grn.Group)
+		assert.Equal(t, "routingtrees", grn.Resource)
+		assert.Equal(t, "*", grn.Name)
 	})
 }
 

@@ -84,7 +84,40 @@ type MappersRegistry struct {
 	reverse map[string]schema.GroupResource // scope prefix -> GroupResource
 }
 
-// NewMappersRegistry initialises the registry with folders and dashboards (always enabled).
+// routingTreeMapper implements Mapper for alerting routing tree permissions.
+// Routing trees use a non-standard 2-part scope format (e.g. "notifications.alerting.grafana.app/routingtrees:*")
+// rather than the standard 3-part "resource:uid:name" format used by folders/dashboards.
+// The action names are the full K8s-style actions stored directly in the DB (not expandable action sets).
+type routingTreeMapper struct{}
+
+const routingTreeScopePrefix = "notifications.alerting.grafana.app/routingtrees"
+
+func (m routingTreeMapper) ActionSets() []string {
+	return []string{
+		routingTreeScopePrefix + ":get",
+		routingTreeScopePrefix + ":create",
+		routingTreeScopePrefix + ":update",
+		routingTreeScopePrefix + ":delete",
+	}
+}
+
+func (m routingTreeMapper) Scope(name string) string {
+	return routingTreeScopePrefix + ":" + name
+}
+
+func (m routingTreeMapper) ActionSet(level string) (string, error) {
+	actionSet := routingTreeScopePrefix + ":" + strings.ToLower(level)
+	if !slices.Contains(m.ActionSets(), actionSet) {
+		return "", fmt.Errorf("invalid level (%s): %w", level, errInvalidSpec)
+	}
+	return actionSet, nil
+}
+
+func (m routingTreeMapper) ScopePattern() string {
+	return routingTreeScopePrefix + ":%"
+}
+
+// NewMappersRegistry initialises the registry with folders, dashboards and alerting routing trees (always enabled).
 func NewMappersRegistry() *MappersRegistry {
 	m := &MappersRegistry{
 		entries: make(map[schema.GroupResource]mapperEntry),
@@ -97,6 +130,10 @@ func NewMappersRegistry() *MappersRegistry {
 	m.RegisterMapper(
 		schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"},
 		NewMapper("dashboards", defaultLevels), nil,
+	)
+	m.RegisterMapper(
+		schema.GroupResource{Group: "notifications.alerting.grafana.app", Resource: "routingtrees"},
+		routingTreeMapper{}, nil,
 	)
 	return m
 }
@@ -178,7 +215,9 @@ func (m *MappersRegistry) IsEnabled(gr schema.GroupResource) bool {
 // datasourceType is the datasource type from the permission row, used to resolve the concrete group.
 func (m *MappersRegistry) ParseScope(scope, datasourceType string) (*groupResourceName, error) {
 	parts := strings.SplitN(scope, ":", 3)
-	if len(parts) != 3 {
+	// accept both 3-part (resource:uid:name) and 2-part (resource-prefix:name) scopes;
+	// routing tree scopes use the 2-part format: "notifications.alerting.grafana.app/routingtrees:*"
+	if len(parts) < 2 {
 		return nil, fmt.Errorf("%w: %s", errInvalidScope, scope)
 	}
 	gr, ok := m.reverse[parts[0]]
@@ -186,12 +225,13 @@ func (m *MappersRegistry) ParseScope(scope, datasourceType string) (*groupResour
 		return nil, fmt.Errorf("%w: %s", errUnknownGroupResource, parts[0])
 	}
 
+	name := parts[len(parts)-1]
 	group := gr.Group
-	if parts[2] != "*" || datasourceType != "" {
+	if name != "*" || datasourceType != "" {
 		group = resolveGroup(group, datasourceType)
 	}
 
-	return &groupResourceName{Group: group, Resource: gr.Resource, Name: parts[2]}, nil
+	return &groupResourceName{Group: group, Resource: gr.Resource, Name: name}, nil
 }
 
 // resolveGroup resolves a wildcard group (e.g. "*.datasource.grafana.app") to a concrete group
@@ -277,7 +317,9 @@ func (m idMapper) ScopePattern() string {
 // For uid-scoped resources (folders, dashboards) it behaves identically to ParseScope.
 func (m *MappersRegistry) ParseScopeCtx(ctx context.Context, ns types.NamespaceInfo, store IdentityStore, scope, datasourceType string) (*groupResourceName, error) {
 	parts := strings.SplitN(scope, ":", 3)
-	if len(parts) != 3 {
+	// accept both 3-part (resource:uid:name) and 2-part (resource-prefix:name) scopes;
+	// routing tree scopes use the 2-part format: "notifications.alerting.grafana.app/routingtrees:*"
+	if len(parts) < 2 {
 		return nil, fmt.Errorf("%w: %s", errInvalidScope, scope)
 	}
 	gr, ok := m.reverse[parts[0]]
@@ -286,12 +328,12 @@ func (m *MappersRegistry) ParseScopeCtx(ctx context.Context, ns types.NamespaceI
 	}
 
 	entry := m.entries[gr]
+	name := parts[len(parts)-1]
 	group := gr.Group
-	if parts[2] != "*" || datasourceType != "" {
+	if name != "*" || datasourceType != "" {
 		group = resolveGroup(group, datasourceType)
 	}
 
-	name := parts[2]
 	if isIDScoped(entry.mapper) && store != nil {
 		uid, err := legacy.ResolveIDScopeToUIDName(ctx, store, ns, scope)
 		if err != nil {
