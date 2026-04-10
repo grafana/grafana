@@ -113,7 +113,7 @@ For issues with Tempo itself (not the data source), refer to the Tempo product d
 
 Additional resources for Grafana Cloud:
 
-- [Troubleshoot Grafana Cloud Traces](https://grafana.com/docs/grafana-cloud/send-data/traces/troubleshoot/), which covers quick checks, ingestion issues, TraceQL and search, service graph, exemplars, and rate limiting and retry.
+- [Troubleshoot Grafana Cloud Traces](https://grafana.com/docs/grafana-cloud/send-data/traces/troubleshooting/), which covers quick checks, ingestion issues, TraceQL and search, service graph, exemplars, and rate limiting and retry.
 - [Investigate traces with Grafana Assistant](https://grafana.com/docs/grafana-cloud/send-data/traces/investigate-traces-with-assistant/) - Use Grafana Assistant to help troubleshoot any issues.
 - [Troubleshoot traces collection with Alloy](https://grafana.com/docs/grafana-cloud/send-data/traces/set-up/traces-with-alloy/#troubleshoot)
 - [Troubleshoot errors with metrics-generator in Cloud Traces](https://grafana.com/docs/grafana-cloud/send-data/traces/configure/metrics-generator/#troubleshoot-errors)
@@ -243,7 +243,7 @@ These errors occur when there are issues with TraceQL queries or trace lookups.
 
    If this returns results, traces are being ingested but your specific trace ID may have been dropped by sampling or aged out. For more query examples, refer to the [TraceQL cookbook](https://grafana.com/docs/grafana-cloud/send-data/traces/traces-query-editor/traceql-cookbook/).
 
-1. For Grafana Cloud users, refer to [Troubleshoot TraceQL and search](https://grafana.com/docs/grafana-cloud/send-data/traces/troubleshoot/#traceql-and-search) for TraceQL queries that can help investigate missing traces.
+1. For Grafana Cloud users, refer to [Troubleshoot TraceQL and search](https://grafana.com/docs/grafana-cloud/send-data/traces/troubleshooting/#traceql-and-search) for TraceQL queries that can help investigate missing traces.
 
 ### TraceQL syntax errors
 
@@ -382,7 +382,7 @@ The Service Graph visualizes service dependencies and highlights request rate, e
    ```
 
 1. Check the Prometheus data source connection is working.
-1. For Grafana Cloud Traces users, refer to [Troubleshoot service graph and RED metrics](https://grafana.com/docs/grafana-cloud/send-data/traces/troubleshoot/#troubleshoot-service-graph-and-red-metrics).
+1. For Grafana Cloud Traces users, refer to [Troubleshoot service graph and RED metrics](https://grafana.com/docs/grafana-cloud/send-data/traces/troubleshooting/#troubleshoot-service-graph-and-red-metrics).
 
 ### Service Graph view table is empty
 
