@@ -19,7 +19,7 @@ weight: 200
 
 In the **Dashboard controls** section of the sidebar in add mode, you can add filters and group by keys, variables, annotation queries, and dashboard links without leaving the dashboard.
 
-## Filters and group by
+## Filter and group by
 
 <!-- vale Grafana.Spelling = NO -->
 
@@ -59,7 +59,7 @@ Data sources with an asterisk also support group by:
 - InfluxDB
 - Elasticsearch
 - OpenSearch.
-- Special Dashboard data source - Use this to [apply filters to data from unsupported data sources](#filter-any-data-using-the-dashboard-data-source).
+- Special Dashboard data source - Use this to [apply filters to data from unsupported data sources](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#filter-any-data-using-the-dashboard-data-source).
 
 {{< /column-list >}}
 
@@ -268,9 +268,7 @@ To add a URL link to your dashboard, follow these steps:
 ## Manage dashboard controls
 
 After you add dashboard controls, you can manage them from the dashboard options.
-In this view, the sidebar includes collapsible sections for variables (including filter and group by), annotations, and links, including hidden controls that aren't otherwise visible on the dashboard:
-
-{{< figure src="../screenshot-dashboard-controls-mgmt-2-v13.0.png" alt="Dashboard controls in the Dashboard options sidebar view" max-width="500px" >}}
+In this view, the sidebar includes collapsible sections for variables (including filter and group by), annotations, and links, including hidden controls that aren't otherwise visible on the dashboard.
 
 To manage dashboard controls, follow these steps:
 
