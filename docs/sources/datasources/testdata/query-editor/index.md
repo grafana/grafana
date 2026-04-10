@@ -43,7 +43,7 @@ The scenarios are organized into the following categories. Use the table below t
 | Scenario | Category | Purpose |
 | --- | --- | --- |
 | [Random Walk](#random-walk) | Data generation | Random walk time series (default scenario). |
-| [Random Walk Table](#random-walk-table) | Data generation | Random walk in table format with Enum state. |
+| [Random Walk Table](#random-walk-table) | Data generation | Random walk in table format with `Enum` state. |
 | [Random Walk (with error)](#random-walk-with-error) | Data generation | Random walk that also returns an error. |
 | [Predictable Pulse](#predictable-pulse) | Data generation | Repeating on/off wave based on absolute time. |
 | [Predictable CSV Wave](#predictable-csv-wave) | Data generation | Custom repeating waveforms from CSV values. |
@@ -105,7 +105,7 @@ Generates random walk time-series data. This is the default scenario.
 
 ### Random Walk Table
 
-Generates random walk data in table format with columns for Time, Value, Min, Max, Info, and State. The State column uses an enum field with values Unknown, Up, and Down. Optionally includes null values when **withNil** is enabled.
+Generates random walk data in table format with columns for Time, Value, Min, Max, Info, and State. The State column uses an `enum` field with values Unknown, Up, and Down. Optionally includes null values when **withNil** is enabled.
 
 ### Random Walk (with error)
 
@@ -358,7 +358,7 @@ Use this to test how Grafana differentiates between plugin errors and downstream
 
 Returns an empty result with no data points. Use this to test how panels display when there's no data.
 
-### Datapoints Outside Range
+### Data points Outside Range
 
 Returns a single data point with a timestamp one hour before the query time range. Use this to test how panels handle data outside the visible range.
 
