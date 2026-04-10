@@ -26,15 +26,9 @@ func NewSnapshotAuthorizer(accessControl ac.AccessControl, publicMode bool) auth
 			//   the K8s request resolver as name={route}, subresource={param}.
 			//   Authentication for these is handled by the route handlers themselves.
 			if publicMode {
-				sub := attr.GetSubresource()
 				verb := attr.GetVerb()
-				name := attr.GetName()
+				sub := attr.GetSubresource()
 				if verb == "get" && (sub == "" || sub == "dashboard") {
-					return authorizer.DecisionAllow, "", nil
-				}
-				// Custom routes: snapshots/create, snapshots/delete/{deleteKey}, snapshots/settings
-				// are parsed as name="create"|"delete"|"settings" with optional subresource
-				if name == "create" || name == "delete" || name == "settings" {
 					return authorizer.DecisionAllow, "", nil
 				}
 			}
