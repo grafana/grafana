@@ -100,9 +100,7 @@ To display the filter button, hover your cursor over the bar that has the value 
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-bar-v12.2.png" max-width="300px" alt="The filter button in a bar chart tooltip">}}
 
-For more information about applying filters this way, refer to [Dashboard drilldown with filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#dashboard-drilldown-with-filters).
-
-<!-- TODO: Confirm this link works -->
+For more information about applying filters this way, refer to [Dashboard drilldown with filters](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#dashboard-drilldown-with-filters).
 
 <!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->
