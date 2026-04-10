@@ -432,10 +432,9 @@ To configure repeats, follow these steps:
 1. When you've finished setting the repeat option, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
+1. Click **Exit edit**.
 
 {{< /shared >}}
-
-1. Click **Exit edit**.
 
 {{< /docs/list >}}
 
