@@ -46,39 +46,6 @@ func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*Ren
 	return renderUser, found
 }
 
-func (rs *RenderingService) getRenderUserFromJWT(key string) *RenderUser {
-	claims := new(renderJWT)
-	tkn, err := jwt.ParseWithClaims(key, claims, func(_ *jwt.Token) (any, error) {
-		return []byte(rs.Cfg.RendererAuthToken), nil
-	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS512.Alg()}))
-
-	if err != nil || !tkn.Valid {
-		rs.log.Error("Could not get render user from JWT", "err", err)
-		return nil
-	}
-
-	return claims.RenderUser
-}
-
-func (rs *RenderingService) getRenderUserFromCache(ctx context.Context, key string) *RenderUser {
-	val, err := rs.RemoteCacheService.Get(ctx, fmt.Sprintf(renderKeyPrefix, key))
-	if err != nil {
-		rs.log.Error("Could not get render user from remote cache", "err", err)
-		return nil
-	}
-
-	ru := new(RenderUser)
-	buf := bytes.NewBuffer(val)
-
-	err = gob.NewDecoder(buf).Decode(&ru)
-	if err != nil {
-		rs.log.Error("Could not decode render user from remote cache", "err", err)
-		return nil
-	}
-
-	return ru
-}
-
 func setRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts AuthOpts, renderKey string, expiry time.Duration) error {
 	buf := bytes.NewBuffer(nil)
 	err := gob.NewEncoder(buf).Encode(&RenderUser{
@@ -182,7 +149,7 @@ func (j *jwtRenderKeyProvider) validate(_ context.Context, key string) (*RenderU
 
 	claims := new(renderJWT)
 	tkn, err := jwt.ParseWithClaims(key, claims, func(_ *jwt.Token) (any, error) {
-		return []byte(j.authToken), nil
+		return j.authToken, nil
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS512.Alg()}))
 
 	if err != nil || !tkn.Valid {
