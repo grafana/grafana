@@ -59,6 +59,7 @@ describe('NestedFolderPicker', () => {
 
   afterEach(() => {
     jest.resetAllMocks();
+    jest.restoreAllMocks();
     config.featureToggles = { ...featureTogglesBackup };
   });
 
