@@ -39,7 +39,7 @@ type Elector interface {
 	// Run blocks, calling fn when this instance acquires leadership.
 	// fn receives a context cancelled when leadership is lost.
 	// Run returns when ctx is cancelled.
-	Run(ctx context.Context, fn func(ctx context.Context)) error
+	Run(ctx context.Context, fn func(ctx context.Context), opts ...RunOption) error
 }
 
 // NoopElector always acts as the leader (single-instance / backward compat).
@@ -51,7 +51,8 @@ func NewNoopElector() *NoopElector {
 }
 
 // Run calls fn immediately and blocks until ctx is cancelled.
-func (n *NoopElector) Run(ctx context.Context, fn func(ctx context.Context)) error {
+// RunOption values are accepted for interface compatibility but ignored.
+func (n *NoopElector) Run(ctx context.Context, fn func(ctx context.Context), _ ...RunOption) error {
 	fn(ctx)
 	return ctx.Err()
 }
@@ -105,7 +106,32 @@ func NewKubernetesElector(
 // Run participates in leader election and calls fn when leadership is acquired.
 // fn receives a context that is cancelled when leadership is lost.
 // Run blocks until ctx is cancelled.
-func (k *KubernetesElector) Run(ctx context.Context, fn func(ctx context.Context)) error {
+func (k *KubernetesElector) Run(ctx context.Context, fn func(ctx context.Context), opts ...RunOption) error {
+	o := &runOptions{
+		releaseOnCancel: true,
+		onStartedLeading: func(ctx context.Context) {
+			k.logger.Info("Acquired leader lease, starting leader work",
+				"identity", k.identity,
+				"lease", k.leaseName,
+				"namespace", k.namespace,
+			)
+		},
+		onStoppedLeading: func() {
+			k.logger.Info("Lost leader lease, stopping leader work",
+				"identity", k.identity,
+			)
+		},
+		onNewLeader: func(identity string) {
+			if identity != k.identity {
+				k.logger.Info("New leader elected", "leader", identity)
+			}
+		},
+	}
+
+	for _, opt := range opts {
+		opt(o)
+	}
+
 	lock := &resourcelock.LeaseLock{
 		LeaseMeta: metav1.ObjectMeta{
 			Name:      k.leaseName,
@@ -122,26 +148,14 @@ func (k *KubernetesElector) Run(ctx context.Context, fn func(ctx context.Context
 		LeaseDuration:   k.leaseDuration,
 		RenewDeadline:   k.renewDeadline,
 		RetryPeriod:     k.retryPeriod,
-		ReleaseOnCancel: true,
+		ReleaseOnCancel: o.releaseOnCancel,
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(ctx context.Context) {
-				k.logger.Info("Acquired leader lease, starting leader work",
-					"identity", k.identity,
-					"lease", k.leaseName,
-					"namespace", k.namespace,
-				)
+				o.onStartedLeading(ctx)
 				fn(ctx)
 			},
-			OnStoppedLeading: func() {
-				k.logger.Info("Lost leader lease, stopping leader work",
-					"identity", k.identity,
-				)
-			},
-			OnNewLeader: func(identity string) {
-				if identity != k.identity {
-					k.logger.Info("New leader elected", "leader", identity)
-				}
-			},
+			OnStoppedLeading: o.onStoppedLeading,
+			OnNewLeader:      o.onNewLeader,
 		},
 	})
 	if err != nil {
