@@ -586,17 +586,13 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		// Explicitly configure the query for dashboard+folder matching.
 		searchRequest.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
 			{
-				Name:  resource.SEARCH_FIELD_TITLE,
-				Type:  resourcepb.QueryFieldType_KEYWORD,
-				Boost: 10, // exact match -- includes ngrams! If they lived on their own field, we could score them differently
-			}, {
-				Name:  resource.SEARCH_FIELD_TITLE,
-				Type:  resourcepb.QueryFieldType_TEXT,
-				Boost: 2, // standard analyzer (with ngrams!)
-			}, {
 				Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
+				Type:  resourcepb.QueryFieldType_KEYWORD,
+				Boost: 10, // exact title match (case-insensitive via pre-lowered title_phrase)
+			}, {
+				Name:  resource.SEARCH_FIELD_TITLE,
 				Type:  resourcepb.QueryFieldType_TEXT,
-				Boost: 5, // standard analyzer
+				Boost: 2, // standard analyzer (word-level matching with ngrams)
 			},
 		}
 

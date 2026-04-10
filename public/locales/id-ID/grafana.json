@@ -6856,7 +6856,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "Tampilkan/sembunyikan aturan tidak akan berfungsi",
@@ -8522,7 +8527,6 @@
       "give-feedback": "Berikan umpan balik"
     },
     "logs-meta-row": {
-      "download": "Unduh",
       "label": {
         "deduplication-count": "Jumlah deduplikasi",
         "showing-only-selected-fields": "Hanya menampilkan bidang yang dipilih"
@@ -8875,22 +8879,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "Tampilkan hasil dalam visualisasi log",
-        "show-results-in-table-visualisation": "Tampilkan hasil di visualisasi tabel",
-        "show-results-newest-to-oldest": "Tampilkan hasil dari terbaru hingga terlama",
-        "show-results-oldest-to-newest": "Tampilkan hasil dari terlama hingga terbaru"
+        "show-results-in-table-visualisation": "Tampilkan hasil di visualisasi tabel"
       },
       "label": {
         "logs": "Log",
-        "newest-first": "Terbaru lebih dulu",
-        "oldest-first": "Terlama lebih dulu",
         "table": "Tabel"
       },
-      "label-deduplication": "Deduplikasi",
-      "label-display-results": "Tampilkan hasil",
-      "label-prettify-json": "Rapikan JSON",
-      "label-time": "Waktu",
-      "label-unique-labels": "Label unik",
-      "label-wrap-lines": "Terapkan wrap pada baris",
       "title-feedback": "Umpan balik",
       "title-logs": "Log",
       "title-logs-volume": "Volume log"
@@ -8985,8 +8979,7 @@
       "tooltip-s-m-h": "10 dtk, 1 mnt, 30 mnt, 1 jm"
     },
     "sql-expr": {
-      "button-run-query": "Jalankan kueri",
-      "tooltip-experimental": "Integrasi LLM Ekspresi SQL bersifat eksperimental. Harap laporkan masalah apa pun kepada tim Grafana."
+      "button-run-query": "Jalankan kueri"
     },
     "sql-schema": {
       "error-title": "Kesalahan",
@@ -11379,9 +11372,6 @@
       },
       "wrap-lines": "Terapkan wrap pada baris"
     },
-    "logs-navigation": {
-      "scroll-top": "Gulir ke atas"
-    },
     "logs-panel": {
       "render-common-labels": {
         "common-labels": "Label umum:"
@@ -12174,7 +12164,7 @@
     },
     "quick-add": {
       "aria-label": "Baru",
-      "new-template-dashboard-button": "Dasbor dari templat"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "Terbaru dari blog"
   },
@@ -13319,6 +13309,7 @@
       "token-label": "Token Akses Proyek",
       "token-required": "Token GitLab diperlukan",
       "url-description": "URL repositori GitLab",
+      "url-pattern": "",
       "url-required": "URL repositori wajib diisi"
     },
     "history-view": {
@@ -14744,19 +14735,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "Tambahkan setidaknya satu kueri data untuk membuat saran SQL",
-    "ai-explain-title": "Penjelasan ekspresi SQL yang didukung AI",
-    "ai-suggestions-title": "Saran ekspresi SQL yang didukung AI",
-    "apply": "Terapkan",
-    "code-label": "{{ language }}",
-    "copy": "Salin",
-    "explain-empty-query-tooltip": "Masukkan ekspresi SQL untuk mendapatkan penjelasan",
     "explain-query": "Jelaskan kueri",
-    "explanation-modal-title": "Penjelasan Kueri SQL",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "Riwayat Saran SQL",
-    "suggestions": "Saran",
-    "view-explanation": "Lihat penjelasan"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "Tandai sebagai favorit",
