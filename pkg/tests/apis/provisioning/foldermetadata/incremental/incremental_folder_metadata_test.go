@@ -30,7 +30,7 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagEnabl
 		})
 
 		// Full sync the root dashboard.
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		// Add a dashboard inside a folder that has no _folder.json.
 		require.NoError(t, local.CreateFile("myfolder/dashboard2.json", string(common.DashboardJSON("folder-dash", "Folder Dashboard", 1))))
@@ -68,7 +68,7 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagEnabl
 			"myfolder/dashboard.json": common.DashboardJSON("noop-dash", "Noop Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithWarning(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 
 		// Trigger incremental sync with no new commits — same ref.
 		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
@@ -128,7 +128,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"dashboard.json": common.DashboardJSON("root-dash", "Root Dashboard", 1),
 		})
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		// Push a folder with _folder.json that has a custom title different from the directory name.
 		require.NoError(t, local.CreateFile("my-team/_folder.json", string(folderMetadataJSON("stable-uid-1", "My Team Display Name"))))
@@ -141,7 +141,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		require.NoError(t, err)
 
 		// Incremental sync.
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		// Verify the Grafana folder was created with the metadata title, not the directory name.
 		common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "My Team Display Name")
@@ -156,7 +156,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"dashboard.json": common.DashboardJSON("root-dash-2", "Root Dashboard", 1),
 		})
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		// Push a folder with _folder.json that has an empty title — should fall back to dir name.
 		require.NoError(t, local.CreateFile("reports/_folder.json", string(folderMetadataJSON("stable-uid-2", ""))))
@@ -168,7 +168,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		// Should use directory name "reports" as the title.
 		common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "reports")
@@ -183,7 +183,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"dashboard.json": common.DashboardJSON("root-dash-3", "Root Dashboard", 1),
 		})
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		// Push a folder without _folder.json.
 		require.NoError(t, local.CreateFile("analytics/dash.json", string(common.DashboardJSON("analytics-dash", "Analytics Dashboard", 1))))
@@ -194,7 +194,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 
 		// Should use directory name "analytics" as the title.
 		common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "analytics")
@@ -209,7 +209,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"dashboard.json": common.DashboardJSON("root-dash-4", "Root Dashboard", 1),
 		})
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		// Push nested folders, each with their own _folder.json and custom titles.
 		require.NoError(t, local.CreateFile("parent/_folder.json", string(folderMetadataJSON("parent-uid", "Parent Display"))))
@@ -222,7 +222,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		// Both folders should use their metadata titles.
 		common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "Parent Display")
@@ -287,7 +287,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 			"dashboard.json": common.DashboardJSON("root-dash", "Root Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		require.NoError(t, local.CreateFile("empty-team/_folder.json", string(folderMetadataJSON("empty-team-uid", "Empty Team"))))
 		_, err := local.Git("add", ".")
@@ -297,7 +297,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		common.RequireFolderState(t, helper.Folders, "empty-team-uid", "Empty Team", "empty-team", "")
 		common.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
@@ -328,7 +328,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		common.RequireRepoFolderUID(t, helper.Folders, ctx, repoName, "stable-uid")
 		common.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
@@ -364,7 +364,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 
 		common.RequireRepoFolderUID(t, helper.Folders, ctx, repoName, "stable-uid")
 		childUID = common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "child")
@@ -401,7 +401,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		common.RequireRepoFolderUID(t, helper.Folders, ctx, repoName, "stable-uid")
 		common.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
@@ -438,7 +438,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		_, err = helper.Folders.Resource.Get(ctx, oldParentUID, metav1.GetOptions{})
 		require.True(t, apierrors.IsNotFound(err), "old parent folder should be deleted")
@@ -471,7 +471,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *te
 			"alpha/dash.json":    common.DashboardJSON("alpha-dash", "Alpha Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "Alpha")
 
 		require.NoError(t, local.UpdateFile("alpha/_folder.json", string(folderMetadataJSON("alpha-uid", "Alpha Renamed"))))
@@ -482,7 +482,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *te
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "Alpha Renamed")
 	})
@@ -499,7 +499,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *te
 			"parent/child/dash.json":    common.DashboardJSON("nested-upd-dash", "Nested Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "Parent Title")
 		common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "Child Title")
 
@@ -511,7 +511,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *te
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "Parent Title")
 		common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "Child Title Updated")
@@ -528,7 +528,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *te
 			"team/dash.json":    common.DashboardJSON("combo-dash", "Original Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "Original Team")
 		common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "combo-dash", "Original Dashboard")
 
@@ -541,7 +541,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *te
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "Updated Team")
 		common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "combo-dash", "Updated Dashboard")
@@ -568,7 +568,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 			"old-team/dashboard1.json": common.DashboardJSON("rr-dash-001", "Team Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"old-team"})
 
 		folderBefore, err := helper.Folders.Resource.Get(ctx, folderUID, metav1.GetOptions{})
@@ -586,7 +586,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		folderAfter, err := helper.Folders.Resource.Get(ctx, folderUID, metav1.GetOptions{})
 		require.NoError(t, err, "folder should still exist with same UID")
@@ -622,7 +622,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 			"parent/old-child/dashboard1.json": common.DashboardJSON("nn-dash-001", "Child Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"parent", "parent/old-child"})
 
 		childBefore, err := helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
@@ -640,7 +640,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		childAfter, err := helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
 		require.NoError(t, err, "child folder should still exist with same UID")
@@ -676,7 +676,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 			"my-folder/dashboard1.json": common.DashboardJSON("rn-dash-001", "Moved Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"parent", "my-folder"})
 
 		folderBefore, err := helper.Folders.Resource.Get(ctx, movedUID, metav1.GetOptions{})
@@ -694,7 +694,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		folderAfter, err := helper.Folders.Resource.Get(ctx, movedUID, metav1.GetOptions{})
 		require.NoError(t, err, "moved folder should still exist with same UID")
@@ -731,7 +731,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 			"parent/my-folder/dashboard1.json": common.DashboardJSON("nr-dash-001", "Moved Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"parent", "parent/my-folder"})
 
 		folderBefore, err := helper.Folders.Resource.Get(ctx, movedUID, metav1.GetOptions{})
@@ -749,7 +749,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		folderAfter, err := helper.Folders.Resource.Get(ctx, movedUID, metav1.GetOptions{})
 		require.NoError(t, err, "moved folder should still exist with same UID")
@@ -787,7 +787,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 			"old-parent/child/child-dash.json": common.DashboardJSON("mx-child-dash", "Child Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"old-parent", "old-parent/child"})
 
 		parentBefore, err := helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
@@ -814,7 +814,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		// Verify parent folder updated in place.
 		parentAfter, err := helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
@@ -863,7 +863,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 			"old-team/dashboard1.json": common.DashboardJSON("gr-nometa-001", "No Meta Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithWarning(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"old-team"})
 
 		_, err := local.Git("mv", "old-team", "new-team")
@@ -873,7 +873,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 
 		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"new-team"})
 
@@ -1044,7 +1044,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 			"team/dash.json":    common.DashboardJSON("chain-dash", "Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
 
 		// v1 -> v2
@@ -1056,7 +1056,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		_, err = helper.Folders.Resource.Get(ctx, "uid-v2", metav1.GetOptions{})
 		require.NoError(t, err, "v2 folder should exist")
@@ -1073,7 +1073,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		_, err = helper.Folders.Resource.Get(ctx, "uid-v3", metav1.GetOptions{})
 		require.NoError(t, err, "v3 folder should exist")
@@ -1099,7 +1099,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 			"team/dash.json":    common.DashboardJSON("cleanup-dash", "Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
 
 		// Change UID via incremental sync
@@ -1111,7 +1111,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 		common.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
 
 		// A subsequent full sync should be idempotent — still exactly 1 folder
@@ -1374,7 +1374,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 			"old-team/dash.json":    common.DashboardJSON("rename-orphan-dash", "Team Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireFolderState(t, helper.Folders, folderUID, "Old Team", "old-team", "")
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"rename-orphan-dash": {Title: "Team Dashboard", SourcePath: "old-team/dash.json", Folder: folderUID},
@@ -1392,7 +1392,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		// The folder should now be at new-team with the same UID (identity preserved).
 		common.RequireFolderState(t, helper.Folders, folderUID, "Old Team", "new-team", "")
@@ -1422,7 +1422,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 
 		// dst/ has no _folder.json, so the initial sync produces a
 		// missing-metadata warning.
-		common.SyncAndWaitWithWarning(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 		common.RequireFolderState(t, helper.Folders, folderUID, "Source Folder", "src", "")
 		// dst/ gets a hash-derived UID since it has no metadata.
 		dstAutoUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "dst")
@@ -1436,7 +1436,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 
 		// dst/ should now carry the metadata UID and title.
 		common.RequireFolderState(t, helper.Folders, folderUID, "Source Folder", "dst", "")
@@ -1470,7 +1470,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 			"dst/dash-d.json":  common.DashboardJSON("dash-d", "Dst Dash", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireFolderState(t, helper.Folders, srcUID, "Source", "src", "")
 		common.RequireFolderState(t, helper.Folders, dstUID, "Destination", "dst", "")
 
@@ -1490,7 +1490,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 		// loses its _folder.json (triggering a missing-metadata warning).
 		// The src UID is NOT scheduled for deletion because it is being
 		// actively written to dst/_folder.json.
-		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 
 		// dst/ should now carry the source UID.
 		common.RequireFolderState(t, helper.Folders, srcUID, "Source", "dst", "")
@@ -1519,7 +1519,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 			"old-empty/_folder.json": folderMetadataJSON(folderUID, "Empty Folder"),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireFolderState(t, helper.Folders, folderUID, "Empty Folder", "old-empty", "")
 
 		// Move the _folder.json to a new path — this is a pure file rename.
@@ -1531,7 +1531,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		// The folder should now be at new-empty with the same UID.
 		common.RequireFolderState(t, helper.Folders, folderUID, "Empty Folder", "new-empty", "")
