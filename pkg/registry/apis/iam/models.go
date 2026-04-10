@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/configprovider"
-	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
@@ -117,12 +116,6 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	cfgProvider    configprovider.ConfigProvider
 	settingService settingsvc.Service
-
-	// leaderElector gates GlobalRole background jobs (file-watcher CRUD, basic
-	// role aggregation) so that only one replica runs them at a time in
-	// multi-replica deployments. In single-instance mode this is a NoopElector.
-	// TODO: pass to GlobalRoleApiInstaller and wrap background jobs with leaderElector.Run()
-	leaderElector leaderelection.Elector
 
 	apiConfig Config
 }

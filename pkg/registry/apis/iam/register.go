@@ -33,7 +33,6 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
@@ -120,18 +119,6 @@ func RegisterAPIService(
 		resourcePermsSearchAuthorizer = iamauthorizer.NewResourcePermissionsAuthorizer(accessClient, resourceParentProvider)
 	}
 
-	le := leaderelection.Elector(leaderelection.NewNoopElector())
-	if cfg.IAMLeaderElection.Enabled {
-		restCfg, err := restConfig.GetRestConfig(context.Background())
-		if err != nil {
-			return nil, fmt.Errorf("get REST config for IAM leader election: %w", err)
-		}
-		le, err = leaderelection.NewKubernetesElector(restCfg, cfg.IAMLeaderElection, log.New("iam.leader-election"))
-		if err != nil {
-			return nil, fmt.Errorf("create IAM leader elector: %w", err)
-		}
-	}
-
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                             store,
 		userLegacyStore:                   user.NewLegacyStore(store, accessClient, tracing),
@@ -169,7 +156,6 @@ func RegisterAPIService(
 		resourcePermissionsSearchHandler: newResourcePermissionsSearchHandler(resourcePermsSearchBackend, resourcePermsSearchAuthorizer),
 		tracing:                          tracing,
 		cfgProvider:                      cfgProvider,
-		leaderElector:                    le,
 		apiConfig: Config{
 			SingleOrganization: cfg.RBAC.SingleOrganization,
 		},

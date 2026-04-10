@@ -29,7 +29,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/util"
@@ -573,7 +572,6 @@ type Cfg struct {
 	ZanzanaServer     ZanzanaServerSettings
 	ZanzanaReconciler ZanzanaReconcilerSettings
 	ZanzanaGRPCStore  ZanzanaGRPCStoreSettings
-	IAMLeaderElection leaderelection.Config
 
 	// GRPC Server.
 	GRPCServer GRPCServerSettings
@@ -1474,7 +1472,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.readRBACSettings()
 
 	cfg.readZanzanaSettings()
-	cfg.readIAMSettings()
 
 	cfg.readRenderingSettings(iniFile)
 
