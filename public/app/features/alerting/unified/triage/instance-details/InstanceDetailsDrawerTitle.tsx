@@ -51,6 +51,7 @@ interface InstanceDetailsDrawerTitleProps {
   titleText?: string;
   hideActions?: boolean;
   titleSection?: ReactNode;
+  showAlertState?: boolean;
 }
 
 export function InstanceDetailsDrawerTitle({
@@ -62,6 +63,7 @@ export function InstanceDetailsDrawerTitle({
   titleText,
   hideActions = false,
   titleSection,
+  showAlertState = true,
 }: InstanceDetailsDrawerTitleProps) {
   const { folder } = useFolder(rule?.namespace_uid);
   const { pluginId, installed, settings } = useIrmPlugin(SupportedPlugin.Incident);
@@ -107,7 +109,9 @@ export function InstanceDetailsDrawerTitle({
                 <Trans i18nKey="alerting.triage.instance-details-drawer.instance-details">Instance details</Trans>
               )}
             </Text>
-            {alertState && <StateText type="alerting" {...grafanaAlertStateToStateTextProps(alertState)} />}
+            {showAlertState && alertState && (
+              <StateText type="alerting" {...grafanaAlertStateToStateTextProps(alertState)} />
+            )}
           </Stack>
           {!hideActions && (
             <Stack direction="row" gap={1} alignItems="center">

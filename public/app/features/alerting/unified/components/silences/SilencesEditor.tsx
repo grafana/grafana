@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { pickBy } from 'lodash';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 import { useDebounce } from 'react-use';
@@ -131,7 +131,6 @@ type SilencesEditorProps = {
   onSilenceCreated?: (response: SilenceCreatedResponse) => void;
   onCancel?: () => void;
   ruleUid?: string;
-  onFormValuesChange?: (values: SilenceFormFields) => void;
   showCancelButton?: boolean;
 };
 
@@ -145,7 +144,6 @@ export const SilencesEditor = ({
   onSilenceCreated,
   onCancel,
   ruleUid,
-  onFormValuesChange,
   showCancelButton = true,
 }: SilencesEditorProps) => {
   const [previewAlertsSupported, previewAlertsAllowed] = useAlertmanagerAbility(
@@ -158,13 +156,8 @@ export const SilencesEditor = ({
   const styles = useStyles2(getStyles);
 
   const { register, handleSubmit, formState, watch, setValue, clearErrors } = formAPI;
-  const allValues = watch();
 
   const [duration, startsAt, endsAt, matchers] = watch(['duration', 'startsAt', 'endsAt', 'matchers']);
-
-  useEffect(() => {
-    onFormValuesChange?.(allValues);
-  }, [allValues, onFormValuesChange]);
 
   /** Default action taken after creation or cancellation, if corresponding method is not defined */
   const defaultHandler = () => {
