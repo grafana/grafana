@@ -212,9 +212,10 @@ type ActionListEntry struct {
 	Verb     string
 }
 
-// SupportedActions returns every RBAC action that Zanzana can resolve,
-// derived from the resource translation table.
-func SupportedActions() []ActionListEntry {
+// supportedActions is the memoized result of building the action list from
+// resourceTranslations. The translation table is constant at runtime, so this
+// slice can be computed once and reused.
+var supportedActions = func() []ActionListEntry {
 	translationTypes := make([]string, 0, len(resourceTranslations))
 	for typ := range resourceTranslations {
 		translationTypes = append(translationTypes, typ)
@@ -252,4 +253,10 @@ func SupportedActions() []ActionListEntry {
 		}
 	}
 	return out
+}()
+
+// SupportedActions returns every RBAC action that Zanzana can resolve,
+// derived from the resource translation table.
+func SupportedActions() []ActionListEntry {
+	return supportedActions
 }
