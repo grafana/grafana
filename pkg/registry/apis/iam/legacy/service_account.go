@@ -225,13 +225,15 @@ type ListServiceAccountTokenResult struct {
 }
 
 type ServiceAccountToken struct {
-	ID       int64
-	Name     string
-	Revoked  bool
-	Expires  *int64
-	LastUsed *time.Time
-	Created  time.Time
-	Updated  time.Time
+	ID                int64
+	Name              string
+	Revoked           bool
+	Expires           *int64
+	LastUsed          *time.Time
+	Created           time.Time
+	Updated           time.Time
+	ServiceAccountUID string // populated by get query (joins user table)
+	ServiceAccountID  int64  // populated by get query (api_key.service_account_id)
 }
 
 var sqlQueryServiceAccountTokensTemplate = mustTemplate("service_account_tokens_query.sql")
@@ -259,6 +261,9 @@ func (listServiceAccountTokensQuery) Validate() error {
 }
 
 func (s *legacySQLStore) ListServiceAccountTokens(ctx context.Context, ns claims.NamespaceInfo, query ListServiceAccountTokenQuery) (*ListServiceAccountTokenResult, error) {
+	if query.Pagination.Limit < 1 {
+		query.Pagination.Limit = common.DefaultListLimit
+	}
 	// for continue
 	query.Pagination.Limit += 1
 	query.OrgID = ns.OrgID
@@ -292,7 +297,7 @@ func (s *legacySQLStore) ListServiceAccountTokens(ctx context.Context, ns claims
 	var lastID int64
 	for rows.Next() {
 		var t ServiceAccountToken
-		err := rows.Scan(&t.ID, &t.Name, &t.Revoked, &t.LastUsed, &t.Expires, &t.Created, &t.Updated)
+		err := rows.Scan(&t.ID, &t.Name, &t.Revoked, &t.LastUsed, &t.Expires, &t.Created, &t.Updated, &t.ServiceAccountUID, &t.ServiceAccountID)
 		if err != nil {
 			return res, err
 		}

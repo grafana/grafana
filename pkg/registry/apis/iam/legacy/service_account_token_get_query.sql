@@ -13,11 +13,8 @@ SELECT
   INNER JOIN {{ .Ident .OrgUserTable }} as o ON u.id = o.user_id
 WHERE o.org_id = {{ .Arg .Query.OrgID }}
    AND u.is_service_account
-{{ if .Query.UID }}
-   AND u.uid = {{ .Arg .Query.UID }}
+   AND t.name = {{ .Arg .Query.Name }}
+{{ if .Query.ServiceAccountUID }}
+   AND u.uid = {{ .Arg .Query.ServiceAccountUID }}
 {{ end }}
-{{ if .Query.Pagination.Continue }}
-   AND t.id >= {{ .Arg .Query.Pagination.Continue }}
-{{ end }}
- ORDER BY t.id asc
- LIMIT {{ .Arg .Query.Pagination.Limit }}
+ LIMIT 1

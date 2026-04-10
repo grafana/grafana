@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccounttoken"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
@@ -359,7 +360,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	enableTeamsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(ctx))
 	enableUserApi := b.isSingleOrgSetup() && client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
 	enableServiceAccountsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountsApi, false, openfeature.TransactionContext(ctx))
-	enableServiceAccountTokensApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountTokensApi, false, openfeature.TransactionContext(ctx))
+	// enableServiceAccountTokensApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountTokensApi, false, openfeature.TransactionContext(ctx))
 	enableExternalGroupMappingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesExternalGroupMappingsApi, false, openfeature.TransactionContext(ctx))
 	enableSsoSettingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesSsoSettingsApi, false, openfeature.TransactionContext(ctx))
 
@@ -390,7 +391,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	if enableServiceAccountsApi {
-		if err := b.UpdateServiceAccountsAPIGroup(opts, storage, enableServiceAccountTokensApi); err != nil {
+		if err := b.UpdateServiceAccountsAPIGroup(opts, storage); err != nil {
 			return err
 		}
 	}
@@ -610,7 +611,7 @@ func (b *IdentityAccessManagementAPIBuilder) useStatusDualWriter(resourceInfo ut
 	return true
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableServiceAccountTokensApi bool) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage) error {
 	saResource := iamv0.ServiceAccountResourceInfo
 	saUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, saResource, opts.OptsGetter)
 	if err != nil {
@@ -618,17 +619,18 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts 
 	}
 	storage[saResource.StoragePath()] = saUniStore
 
+	var saStore storewrapper.K8sStorage = saUniStore
+
 	if b.saLegacyStore != nil {
 		dw, err := opts.DualWriteBuilder(saResource.GroupResource(), b.saLegacyStore, saUniStore)
 		if err != nil {
 			return err
 		}
 		storage[saResource.StoragePath()] = dw
+		saStore = dw
 	}
 
-	if enableServiceAccountTokensApi {
-		storage[saResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
-	}
+	storage[saResource.StoragePath("tokens")] = serviceaccounttoken.NewTokensREST(saStore, b.store, nil)
 
 	return nil
 }
@@ -790,6 +792,9 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 				},
 			}},
 	}
+
+	// Patch /tokens endpoints: add request/response schemas, rename {path} to {tokenName}.
+	serviceaccounttoken.PostProcessOpenAPI(oas)
 
 	if oas.Paths != nil && oas.Paths.Paths != nil {
 		pathsToUpdate := []string{

@@ -686,6 +686,22 @@ func (m *mockLegacyStore) ListServiceAccountTokens(ctx context.Context, ns claim
 	return nil, nil
 }
 
+func (m *mockLegacyStore) GetServiceAccountToken(ctx context.Context, ns claims.NamespaceInfo, query legacy.GetServiceAccountTokenQuery) (*legacy.ServiceAccountToken, error) {
+	return nil, nil
+}
+
+func (m *mockLegacyStore) CreateServiceAccountToken(ctx context.Context, ns claims.NamespaceInfo, cmd legacy.CreateServiceAccountTokenCommand) (*legacy.ServiceAccountToken, error) {
+	return nil, nil
+}
+
+func (m *mockLegacyStore) DeleteServiceAccountToken(ctx context.Context, ns claims.NamespaceInfo, cmd legacy.DeleteServiceAccountTokenCommand) error {
+	return nil
+}
+
+func (m *mockLegacyStore) SaveServiceAccountTokenHash(ctx context.Context, ns claims.NamespaceInfo, cmd legacy.SaveServiceAccountTokenHashCommand) error {
+	return nil
+}
+
 func (m *mockLegacyStore) GetTeamInternalID(ctx context.Context, ns claims.NamespaceInfo, query legacy.GetTeamInternalIDQuery) (*legacy.GetTeamInternalIDResult, error) {
 	return nil, nil
 }

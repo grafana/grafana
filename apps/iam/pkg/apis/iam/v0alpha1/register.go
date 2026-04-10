@@ -373,6 +373,10 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 		&GetTeamGroupsResponse{},
 		&GetTeamMembersResponse{},
 		&GetUserTeamsResponse{},
+		&ListSATokenResponse{},
+		&SATokenResponse{},
+		&CreateSATokenResponse{},
+		&DeleteSATokenResponse{},
 		// For now these are registered in pkg/apis/iam/v0alpha1/register.go
 		// &UserTeamList{},
 		// &ServiceAccountTokenList{},

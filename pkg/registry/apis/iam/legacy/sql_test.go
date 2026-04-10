@@ -163,6 +163,24 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	getServiceAccountToken := func(q *GetServiceAccountTokenQuery) sqltemplate.SQLTemplate {
+		v := newGetServiceAccountToken(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	createServiceAccountToken := func(cmd *CreateServiceAccountTokenCommand) sqltemplate.SQLTemplate {
+		v := newCreateServiceAccountToken(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	deleteServiceAccountToken := func(cmd *DeleteServiceAccountTokenCommand) sqltemplate.SQLTemplate {
+		v := newDeleteServiceAccountToken(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir:        "testdata",
 		SQLTemplatesFS: sqlTemplatesFS,
@@ -697,6 +715,48 @@ func TestIdentityQueries(t *testing.T) {
 						OrgID:            1,
 						ID:               55,
 						IsServiceAccount: true,
+					}),
+				},
+			},
+			sqlQueryServiceAccountTokenGetTemplate: {
+				{
+					Name: "get_token_by_name",
+					Data: getServiceAccountToken(&GetServiceAccountTokenQuery{
+						Name:  "my-token",
+						OrgID: 1,
+					}),
+				},
+				{
+					Name: "get_token_by_name_and_sa",
+					Data: getServiceAccountToken(&GetServiceAccountTokenQuery{
+						Name:              "my-token",
+						ServiceAccountUID: "sa-1",
+						OrgID:             1,
+					}),
+				},
+			},
+			sqlCreateServiceAccountTokenTemplate: {
+				{
+					Name: "create_token_basic",
+					Data: createServiceAccountToken(&CreateServiceAccountTokenCommand{
+						Name:             "my-token",
+						HashedKey:        "hashed123",
+						Role:             "Viewer",
+						OrgID:            1,
+						ServiceAccountID: 42,
+						IsRevoked:        false,
+						Created:          legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						Updated:          legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+					}),
+				},
+			},
+			sqlDeleteServiceAccountTokenTemplate: {
+				{
+					Name: "delete_token_basic",
+					Data: deleteServiceAccountToken(&DeleteServiceAccountTokenCommand{
+						Name:             "my-token",
+						OrgID:            1,
+						ServiceAccountID: 42,
 					}),
 				},
 			},
