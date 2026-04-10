@@ -65,7 +65,8 @@ export function RadioButtonGroup<T>({
     [onClick]
   );
 
-  const internalId = id ?? useId();
+  const generatedId = useId();
+  const internalId = id ?? generatedId;
   const groupName = useRef(internalId);
   const styles = useStyles2(getStyles);
 

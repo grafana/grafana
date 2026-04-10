@@ -25,7 +25,8 @@ export const Switch = forwardRef<HTMLInputElement, Props>(
     }
 
     const styles = useStyles2(getSwitchStyles);
-    const switchId = id ? id : useId();
+    const generatedId = useId();
+    const switchId = id ? id : generatedId;
 
     return (
       <div className={cx(styles.switch, invalid && styles.invalid)}>
