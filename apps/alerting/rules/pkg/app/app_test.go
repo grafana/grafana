@@ -6,10 +6,11 @@ import (
 	"testing"
 	"time"
 
-	appsdk "github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	appsdk "github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resource"
 
 	v1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/alertrule"

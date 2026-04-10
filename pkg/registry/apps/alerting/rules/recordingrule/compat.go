@@ -7,6 +7,9 @@ import (
 	"strconv"
 	"time"
 
+	prom_model "github.com/prometheus/common/model"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/expr"
@@ -14,8 +17,6 @@ import (
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
-	prom_model "github.com/prometheus/common/model"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (

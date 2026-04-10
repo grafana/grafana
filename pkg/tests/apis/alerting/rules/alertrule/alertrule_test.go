@@ -17,13 +17,14 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	prom_model "github.com/prometheus/common/model"
+
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	prom_model "github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/tests/apis"
 )
