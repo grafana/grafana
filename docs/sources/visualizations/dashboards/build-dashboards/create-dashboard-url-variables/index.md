@@ -85,7 +85,7 @@ Grafana interprets `var-example=value1&var-example=value2` as the dashboard vari
 
 Filters apply key/value filters to all metric queries that use the specified data source. For more information, refer to [Add filters](ref:ad-hoc-filters).
 
-To pass an ad hoc filter as a query parameter, use the variable syntax to pass the ad hoc filter variable. Then provide the key, operator, and value as a pipe-separated list.
+To pass a filter as a query parameter, use the variable syntax to pass the filter variable. Then provide the key, operator, and value as a pipe-separated list.
 
 For example:
 
@@ -93,7 +93,7 @@ For example:
 https://${your-domain}/path/to/your/dashboard?var-adhoc=example_key|=|example_value
 ```
 
-In this URL, the query parameter `var-adhoc=key|=|value` applies the ad hoc filter configured as the `adhoc` dashboard variable using the `example_key` key, the `=` operator, and the `example_value` value.
+In this URL, the query parameter `var-adhoc=key|=|value` applies the filter configured as the `adhoc` dashboard variable using the `example_key` key, the `=` operator, and the `example_value` value.
 
 {{< admonition type="note" >}}
 When sharing URLs with filters, remember to encode the URL. In the preceding example, replace the pipes (`|`) with `%7C` and the equality operator (`=`) with `%3D`.

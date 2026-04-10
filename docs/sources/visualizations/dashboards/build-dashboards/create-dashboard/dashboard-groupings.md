@@ -248,3 +248,5 @@ Also, grouping-level variables carry over when you convert between rows and tabs
 Grouping-level variables are supported for all variable types except **Filter and group by** (formerly ad hoc variables).
 
 <!-- vale Grafana.Spelling = YES -->
+
+<!-- TODO: -->
