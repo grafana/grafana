@@ -233,14 +233,18 @@ export class K8sDashboardV2API
 
   async restoreDashboardVersion(uid: string, version: number): Promise<SaveDashboardResponseDTO> {
     // get version to restore to, and save as new one
-    const [historicalVersion] = await this.getDashboardHistoryVersions(uid, [version]);
+    // fetch current dashboard in parallel to preserve its folder location
+    const [historicalVersion, currentDashboard] = await Promise.all([
+      this.getDashboardHistoryVersions(uid, [version]).then((v) => v[0]),
+      this.client.get(uid),
+    ]);
     return await this.saveDashboard({
       dashboard: historicalVersion.spec,
       k8s: {
         name: uid,
       },
       message: `Restored from version ${version}`,
-      folderUid: historicalVersion.metadata?.annotations?.[AnnoKeyFolder],
+      folderUid: currentDashboard.metadata?.annotations?.[AnnoKeyFolder],
     });
   }
 

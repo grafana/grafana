@@ -36,7 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -45,28 +44,6 @@ import (
 const (
 	anonString = "Anonymous"
 )
-
-func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashUID string) (bool, error) {
-	ctx, span := tracer.Start(c.Req.Context(), "api.isDashboardStarredByUser")
-	defer span.End()
-	c.Req = c.Req.WithContext(ctx)
-
-	if !c.IsSignedIn {
-		return false, nil
-	}
-
-	if !c.IsIdentityType(claims.TypeUser) {
-		return false, nil
-	}
-
-	userID, err := c.GetInternalID()
-	if err != nil {
-		return false, err
-	}
-
-	query := star.IsStarredByUserQuery{UserID: userID, OrgID: c.OrgID, DashboardUID: dashUID}
-	return hs.starService.IsStarredByUser(c.Req.Context(), &query)
-}
 
 // swagger:route GET /dashboards/uid/{uid} dashboards getDashboardByUID
 //
@@ -148,10 +125,6 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	adminEvaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsPermissionsWrite, dashScope)
 	canAdmin, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, adminEvaluator)
 
-	isStarred, err := hs.isDashboardStarredByUser(c, dash.UID)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Error while checking if dashboard was starred by user", err)
-	}
 	// Finding creator and last updater of the dashboard
 	updater, creator := anonString, anonString
 	if dash.UpdatedBy > 0 {
@@ -165,7 +138,6 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID))
 
 	meta := dtos.DashboardMeta{
-		IsStarred:              isStarred,
 		Slug:                   dash.Slug,
 		Type:                   dashboards.DashTypeDB,
 		CanStar:                c.IsSignedIn,
@@ -361,17 +333,7 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "Use folders endpoint for deleting folders.", nil)
 	}
 
-	// disconnect all library elements for this dashboard
-	err := hs.LibraryElementService.DisconnectElementsFromDashboard(c.Req.Context(), dash.ID)
-	if err != nil {
-		hs.log.Error(
-			"Failed to disconnect library elements",
-			"dashboard", dash.ID,
-			"identity", c.GetID(),
-			"error", err)
-	}
-
-	err = hs.DashboardService.DeleteDashboard(c.Req.Context(), dash.ID, dash.UID, c.GetOrgID())
+	err := hs.DashboardService.DeleteDashboard(c.Req.Context(), dash.ID, dash.UID, c.GetOrgID())
 	if err != nil {
 		return dashboardErrResponse(err, "Failed to delete dashboard")
 	}

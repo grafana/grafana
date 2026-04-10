@@ -2406,7 +2406,9 @@
       "recipient-notification-fires": "選擇當警報規則觸發時應該收到通知的人。"
     },
     "open-drawer-icon-button": {
-      "details": ""
+      "details": "",
+      "instance-details": "",
+      "rule-details": ""
     },
     "option-customfield": {
       "label-custom-template": "自訂範本",
@@ -3546,6 +3548,7 @@
       }
     },
     "triage": {
+      "clear-filters": "",
       "collapse": "",
       "collapse-all": "",
       "collapse-sidebar": "",
@@ -3562,6 +3565,7 @@
         "no-label": ""
       },
       "instance-details-drawer": {
+        "alert-instance-label": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "執行個體詳細資料",
@@ -3590,6 +3594,7 @@
           "folder-only": ""
         }
       },
+      "severity-filter-title": "",
       "show-fewer-values": "",
       "state-filter-title": "",
       "state-firing": "",
@@ -4888,6 +4893,9 @@
       "light-theme": "淺色",
       "scopes": "範圍"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "使用 Grafana 助理搜尋",
       "message": "未找到結果"
@@ -4963,24 +4971,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "透過資料來源、整合及應用程式將資料連接到 Grafana",
-          "title": "新增連線"
+          "subtitle": "透過資料來源、整合及應用程式將資料連接到 Grafana"
         },
         "collector": {
-          "subtitle": "管理 Grafana Alloy 的設定，即 OpenTelemetry 收集器的分佈",
-          "title": ""
+          "subtitle": "管理 Grafana Alloy 的設定，即 OpenTelemetry 收集器的分佈"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "管理您現有的資料來源連線",
-          "title": "資料來源"
+          "subtitle": "管理您現有的資料來源連線"
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "管理您的有效整合",
-          "title": "整合"
+          "subtitle": "管理您的有效整合"
         },
         "private-data-source-connections": {
-          "subtitle": "管理資料來源的私人網路連線",
-          "title": "私人資料來源連接"
+          "subtitle": "管理資料來源的私人網路連線"
         },
         "subtitle": "使用資料來源、整合及應用程式，將基礎設施連接到 Grafana Cloud。使用此頁面新增，以管理從資料擷取到私人連線及遙測管線的所有內容。"
       }
@@ -5040,11 +5052,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "連線到新的資料來源",
-          "title": "新增連線"
+          "subtitle": "連線到新的資料來源"
         },
         "data-sources": {
-          "subtitle": "管理您現有的資料來源連線",
           "title": "檢視已設定的資料來源"
         },
         "subtitle": "集中一處管理您的資料來源連線。使用此頁面新增資料來源或管理現有連線。"
@@ -5094,10 +5104,6 @@
       "view-json-diff": "檢視 JSON diff 以查看所有變更"
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "新增",
     "alert": {
@@ -5139,6 +5145,14 @@
       "back-button": "返回",
       "next-button": "繼續",
       "save-button": "儲存"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "所選目標資料來源必須匯出查詢編輯器。",
@@ -5205,11 +5219,6 @@
       "transform-required": "請選擇轉換類型",
       "type-label": "類型",
       "type-tooltip": "將套用至來源資料的轉換類型。"
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "執行查詢"
     }
   },
   "dashboard": {
@@ -6847,7 +6856,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "顯示／隱藏規則將無法運作",
@@ -7650,6 +7664,7 @@
       "placeholder-descriptive-text": "描述性文字",
       "placeholder-label-name": "標籤名稱",
       "placeholder-variable-name": "變數名稱",
+      "run-query": "",
       "text-running-query": "正在執行查詢…",
       "title": {
         "delete-variable": "刪除變數"
@@ -8512,7 +8527,6 @@
       "give-feedback": "提供意見回饋"
     },
     "logs-meta-row": {
-      "download": "下載",
       "label": {
         "deduplication-count": "去除重複項目計數",
         "showing-only-selected-fields": "僅顯示選取的欄位"
@@ -8865,22 +8879,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "在日誌視覺化中顯示結果",
-        "show-results-in-table-visualisation": "在表格視覺化中顯示結果",
-        "show-results-newest-to-oldest": "顯示結果（最新至最舊）",
-        "show-results-oldest-to-newest": "顯示結果（最舊至最新）"
+        "show-results-in-table-visualisation": "在表格視覺化中顯示結果"
       },
       "label": {
         "logs": "紀錄",
-        "newest-first": "最新排前",
-        "oldest-first": "最舊排前",
         "table": "表格"
       },
-      "label-deduplication": "重複資料",
-      "label-display-results": "顯示結果",
-      "label-prettify-json": "美化 JSON",
-      "label-time": "時間",
-      "label-unique-labels": "唯一標籤",
-      "label-wrap-lines": "換行",
       "title-feedback": "意見回饋",
       "title-logs": "紀錄",
       "title-logs-volume": "紀錄容量"
@@ -8975,8 +8979,7 @@
       "tooltip-s-m-h": "10 秒、1 分鐘、30 分鐘、1 小時"
     },
     "sql-expr": {
-      "button-run-query": "執行查詢",
-      "tooltip-experimental": "SQL 運算式 LLM 整合為實驗性功能。如有任何問題，請向 Grafana 團隊回報。"
+      "button-run-query": "執行查詢"
     },
     "sql-schema": {
       "error-title": "錯誤",
@@ -11336,6 +11339,12 @@
       "show-search": "在紀錄結果中搜尋",
       "show-timestamps": "顯示時間戳記",
       "show-unique-labels": "顯示唯一標籤",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "隱藏時間戳記",
         "label": "記錄時間戳記",
@@ -11362,9 +11371,6 @@
         "not-supported": ""
       },
       "wrap-lines": "換行"
-    },
-    "logs-navigation": {
-      "scroll-top": "捲動回頂部"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12158,7 +12164,7 @@
     },
     "quick-add": {
       "aria-label": "新",
-      "new-template-dashboard-button": "來自範本的儀表板"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "部落格的最新消息"
   },
@@ -12246,6 +12252,8 @@
       "description": "您收到的通知將顯示在此處",
       "title": "您已追上所有進度！"
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "關閉通知",
       "title-alert": "此頁面顯示過去的錯誤和警告。一旦被關閉，它們便無法被檢索。"
@@ -13301,6 +13309,7 @@
       "token-label": "專案存取權杖",
       "token-required": "GitLab 權杖為必填",
       "url-description": "GitLab 儲存庫網址",
+      "url-pattern": "",
       "url-required": "儲存庫網址為必填"
     },
     "history-view": {
@@ -14726,19 +14735,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "新增至少一個資料查詢以產生 SQL 建議",
-    "ai-explain-title": "AI 驅動的 SQL 運算式解釋",
-    "ai-suggestions-title": "AI 驅動的 SQL 運算式建議",
-    "apply": "套用",
-    "code-label": "{{ language }}",
-    "copy": "複製",
-    "explain-empty-query-tooltip": "輸入 SQL 運算式以取得解釋",
     "explain-query": "解釋查詢",
-    "explanation-modal-title": "SQL 查詢解釋",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "SQL 建議歷史紀錄",
-    "suggestions": "建議",
-    "view-explanation": "檢視解釋"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "標記為「我的最愛」",
