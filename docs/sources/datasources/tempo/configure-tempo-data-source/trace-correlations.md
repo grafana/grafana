@@ -13,7 +13,9 @@ labels:
     - oss
 menuTitle: Trace correlations
 title: Trace correlations
-weight: 1000
+weight: 900
+aliases:
+  - ../traces-in-grafana/trace-correlations/
 ---
 
 # Trace correlations
@@ -36,7 +38,7 @@ To use trace correlations, you need:
 
 ## Set up a trace correlation
 
-1. Log in to Grafana with an admin account.
+1. Log in to Grafana with an administrator account.
 
 1. Go to **Configuration** > **Plugins & data** > **Correlations**.
 
@@ -129,7 +131,7 @@ In this example, you configure trace to logs by service name and a trace identif
 
 ### Example 2: Trace to custom URL
 
-In this example, you configure trace corrections with a custom URL.
+In this example, you configure trace correlations with a custom URL.
 
 1. On step 1, add a new correlation with the label **Open custom URL** and an optional description.
 
