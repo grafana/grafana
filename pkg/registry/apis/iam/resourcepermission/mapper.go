@@ -183,7 +183,10 @@ func (m *MappersRegistry) ParseScope(scope, datasourceType string) (*groupResour
 		return nil, fmt.Errorf("%w: %s", errUnknownGroupResource, parts[0])
 	}
 
-	group := resolveGroup(gr.Group, datasourceType)
+	group := gr.Group
+	if parts[2] != "*" || datasourceType != "" {
+		group = resolveGroup(group, datasourceType)
+	}
 
 	return &groupResourceName{Group: group, Resource: gr.Resource, Name: parts[2]}, nil
 }
