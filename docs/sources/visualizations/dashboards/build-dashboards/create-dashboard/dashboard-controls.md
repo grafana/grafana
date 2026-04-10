@@ -19,7 +19,7 @@ weight: 200
 
 In the **Dashboard controls** section of the sidebar in add mode, you can add filters and group by keys, variables, annotation queries, and dashboard links without leaving the dashboard.
 
-## Add filters and group by
+## Filters and group by
 
 <!-- vale Grafana.Spelling = NO -->
 
@@ -27,13 +27,18 @@ In the **Dashboard controls** section of the sidebar in add mode, you can add fi
 Filter and group by is currently in public preview.
 Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 
-This feature replaces ad hoc filters, and extends them by adding grouping for Prometheus and Loki data sources.
+This feature replaces ad hoc filters and extends them by adding grouping for Prometheus and Loki data sources.
 However, in the dashboard schema, it is still referred to as `"kind": "AdhocVariable"`.
-
 To use this feature, enable the `dashboardUnifiedDrilldownControls` feature toggle in your Grafana configuration file.
+
+For information on ad hoc filters, refer to the [Variables documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-ad-hoc-filters), which still reflects the generally available experience.
 {{< /admonition >}}
 
 <!-- vale Grafana.Spelling = YES -->
+
+<!-- TODO: conceptual content here -->
+
+### Add filters and group by
 
 To add a filter and group by, follow these steps:
 
@@ -99,7 +104,6 @@ Your selection is applied to the all the panels in the dashboard with the same d
 
 You can also further filter a time series panel, which allows you to drill down further into your data.
 After setting your group by and splitting your data, click on a series in a panel and click `Filter on this value` or `Filter out this value` which will filter by the labels found on that series, which are related to the set group by values.
-
 
 To enable this functionality, you need to add one or more overrides for the panel.
 In the following example, the override:
