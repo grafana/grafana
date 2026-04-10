@@ -212,9 +212,6 @@ jobs:
           mkdir -p grafana-server/data/plugins
           cp -r e2e-playwright/test-plugins/. grafana-server/data/plugins/
 
-      - name: Start image renderer
-        run: docker run -d --name=grafana-image-renderer -p 8081:8081 grafana/grafana-image-renderer:latest
-
       # Start Grafana from the standalone directory
       # The server is immediately backgrounded so it can initialise in parallel while the Playwright browsers are installing 🤓
       - name: Start Grafana server
@@ -222,8 +219,6 @@ jobs:
           grafana-server/bin/grafana server \
             --homepath="$PWD/grafana-server" \
             cfg:server.http_port=3001 \
-            cfg:rendering.server_url=http://localhost:8081/render \
-            cfg:rendering.callback_url=http://localhost:3001/ \
             > grafana-server/grafana.log 2>&1 &
 
           printf "\nThe Grafana server is starting in the background.\n"
