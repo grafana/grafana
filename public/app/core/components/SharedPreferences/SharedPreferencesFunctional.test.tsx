@@ -1,6 +1,6 @@
 import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
-import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
+import { render, screen, userEvent, waitFor, within, testWithFeatureToggles } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
@@ -8,7 +8,7 @@ import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 
-import { SharedPreferences } from './SharedPreferences';
+import { SharedPreferencesFunctional } from './SharedPreferencesFunctional';
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -29,37 +29,30 @@ const selectComboboxOptionInTest = async (input: HTMLElement, optionOrOptions: s
 };
 
 const setup = async () => {
-  const view = render(<SharedPreferences resourceUri="user" preferenceType="user" />);
-  const themeSelect = await screen.findByRole('combobox', { name: 'Interface theme' });
+  const view = render(<SharedPreferencesFunctional resourceUri="user" preferenceType="user" />);
+  const themeSelect = await screen.findByRole('combobox', { name: /Interface theme/ });
   await waitFor(() => expect(themeSelect).not.toBeDisabled());
   return view;
 };
 
-const original = window.location;
 const mockReload = jest.fn();
+const originalLocation = window.location;
+
+testWithFeatureToggles({ enable: ['grafanaconThemes'] });
 
 beforeAll(() => {
-  Object.defineProperty(window, 'location', {
-    writable: true,
-    value: {
-      ...original,
-      reload: mockReload,
-    },
-  });
+  jest.spyOn(window, 'location', 'get').mockReturnValue({ ...originalLocation, reload: mockReload });
   comboboxTestSetup();
 });
 
 afterAll(() => {
-  Object.defineProperty(window, 'location', {
-    writable: true,
-    value: original,
-  });
+  jest.restoreAllMocks();
 });
 
-describe('SharedPreferences', () => {
+describe('SharedPreferencesFunctional', () => {
   it('renders the theme preference', async () => {
     await setup();
-    const themeSelect = await screen.findByRole('combobox', { name: 'Interface theme' });
+    const themeSelect = await screen.findByRole('combobox', { name: /Interface theme/ });
     await waitFor(() => expect(themeSelect).toHaveValue('Light'));
   });
 
@@ -112,7 +105,7 @@ describe('SharedPreferences', () => {
     const capture = captureRequests();
     const { user } = await setup();
 
-    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: 'Interface theme' }), 'Dark');
+    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /Interface theme/ }), 'Dark');
     await selectComboboxOptionInTest(
       await screen.findByRole('combobox', { name: /home dashboard/i }),
       new RegExp(dashboardToSelect.title)
@@ -131,21 +124,33 @@ describe('SharedPreferences', () => {
       weekStart: 'saturday',
       theme: 'dark',
       homeDashboardUID: dashboardToSelect.uid,
-      queryHistory: {
-        homeTab: '',
-      },
+      queryHistory: { homeTab: '' },
       language: 'fr-FR',
       regionalFormat: '',
-      navbar: {
-        bookmarkUrls: [],
-      },
+      navbar: { bookmarkUrls: [] },
+    });
+  });
+
+  it('saves an experimental theme preference', async () => {
+    const capture = captureRequests();
+    const { user } = await setup();
+
+    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /Interface theme/ }), 'Sapphire dusk');
+
+    await user.click(screen.getByText('Save preferences'));
+
+    const requests = await capture;
+    const newPreferences = await getPrefsUpdateRequest(requests);
+
+    expect(newPreferences).toMatchObject({
+      theme: 'sapphiredusk',
     });
   });
 
   it('saves the users default preferences', async () => {
     const capture = captureRequests();
     const { user } = await setup();
-    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: 'Interface theme' }), 'Default');
+    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /Interface theme/ }), 'Default');
 
     // there's no default option in this dropdown - there's a clear selection button
     // get the parent container, and find the "Clear value" button
@@ -153,27 +158,22 @@ describe('SharedPreferences', () => {
     await user.click(within(dashboardSelect).getByRole('button', { name: 'Clear value' }));
 
     await selectOptionInTest(screen.getByLabelText('Timezone'), 'Default');
-
     await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: 'Week start' }), 'Default');
-
     await selectComboboxOptionInTest(screen.getByRole('combobox', { name: /language/i }), 'Default');
 
     await user.click(screen.getByText('Save preferences'));
     const requests = await capture;
     const newPreferences = await getPrefsUpdateRequest(requests);
+
     expect(newPreferences).toEqual({
       timezone: '',
       weekStart: '',
       theme: '',
       homeDashboardUID: '',
-      queryHistory: {
-        homeTab: '',
-      },
+      queryHistory: { homeTab: '' },
       language: '',
       regionalFormat: '',
-      navbar: {
-        bookmarkUrls: [],
-      },
+      navbar: { bookmarkUrls: [] },
     });
   });
 
