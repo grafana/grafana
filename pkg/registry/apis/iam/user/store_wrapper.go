@@ -9,6 +9,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/configprovider"
@@ -214,9 +215,10 @@ func (f *StoreWrapper) BeforeDelete(ctx context.Context, obj runtime.Object) err
 	return nil
 }
 
-// BeforeWatch implements ResourceStorageAuthorizer.
+// FilterWatch implements ResourceStorageAuthorizer.
 // TODO: Implement proper authorization for Watch
-func (f *StoreWrapper) BeforeWatch(ctx context.Context) error {
+func (f *StoreWrapper) FilterWatch(ctx context.Context, w watch.Interface, listObj runtime.Object) (watch.Interface, error) {
 	// Deny by default until proper authorization is implemented
-	return storewrapper.ErrUnauthorized
+	w.Stop()
+	return nil, storewrapper.ErrUnauthorized
 }

@@ -5,12 +5,13 @@ import (
 	"fmt"
 
 	"github.com/grafana/authlib/types"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type ExternalGroupMappingAuthorizer struct {
@@ -150,9 +151,10 @@ func (r *ExternalGroupMappingAuthorizer) FilterList(ctx context.Context, list ru
 	return l, nil
 }
 
-// BeforeWatch implements ResourceStorageAuthorizer.
+// FilterWatch implements ResourceStorageAuthorizer.
 // TODO: Implement proper authorization for Watch
-func (r *ExternalGroupMappingAuthorizer) BeforeWatch(ctx context.Context) error {
+func (r *ExternalGroupMappingAuthorizer) FilterWatch(ctx context.Context, w watch.Interface, listObj runtime.Object) (watch.Interface, error) {
 	// Deny by default until proper authorization is implemented
-	return storewrapper.ErrUnauthorized
+	w.Stop()
+	return nil, storewrapper.ErrUnauthorized
 }

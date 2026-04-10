@@ -9,6 +9,7 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/watch"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -296,37 +297,41 @@ func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list run
 	}
 }
 
-// BeforeWatch implements ResourceStorageAuthorizer.
-// Watch is a privileged operation for ResourcePermissions that reveals all permission changes
-// across the organization in real-time. Only users with users.permissions:read (typically admins)
-// are allowed to watch.
-func (r *ResourcePermissionsAuthorizer) BeforeWatch(ctx context.Context) error {
+// FilterWatch implements ResourceStorageAuthorizer.
+// Watch events are filtered based on the user's permissions to view each ResourcePermission.
+func (r *ResourcePermissionsAuthorizer) FilterWatch(ctx context.Context, w watch.Interface, listObj runtime.Object) (watch.Interface, error) {
 	authInfo, ok := types.AuthInfoFrom(ctx)
 	if !ok {
-		return storewrapper.ErrUnauthenticated
+		w.Stop()
+		return nil, storewrapper.ErrUnauthenticated
 	}
 
 	if isAccessPolicy(authInfo) {
-		return nil
+		return w, nil
 	}
 
-	namespace := "default"
-	if ns, err := types.ParseNamespace(authInfo.GetNamespace()); err == nil && ns.OrgID > 0 {
-		namespace = ns.Value
+	// Filter events based on user's access to the target resource
+	filterFunc := func(event watch.Event) (bool, error) {
+		if event.Type == watch.Error {
+			return true, nil
+		}
+
+		rp, ok := event.Object.(*iamv0.ResourcePermission)
+		if !ok {
+			return false, nil
+		}
+
+		// Check if user can view this ResourcePermission's target
+		target := rp.Spec.Resource
+		allowed, err := CanViewTargets(r, ctx, authInfo, []iamv0.ResourcePermission{*rp}, func(i int) (string, string, string, string, bool) {
+			return rp.Namespace, target.ApiGroup, target.Resource, target.Name, true
+		})
+		if err != nil {
+			return false, err
+		}
+
+		return len(allowed) > 0, nil
 	}
 
-	hasPermission, err := r.hasUsersPermissionsRead(ctx, authInfo, namespace)
-	if err != nil {
-		r.logger.Error("before watch: error checking users.permissions:read", "error", err.Error())
-		return err
-	}
-
-	if !hasPermission {
-		return fmt.Errorf(
-			"watch on ResourcePermissions requires users.permissions:read: %w",
-			storewrapper.ErrUnauthorized,
-		)
-	}
-
-	return nil
+	return storewrapper.NewFilteredWatch(ctx, w, filterFunc), nil
 }

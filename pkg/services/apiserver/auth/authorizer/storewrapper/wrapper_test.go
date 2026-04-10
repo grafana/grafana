@@ -426,6 +426,7 @@ func TestWrapper_WithPreserveIdentity(t *testing.T) {
 func TestWrapper_Watch(t *testing.T) {
 	t.Run("success - authorized user can watch", func(t *testing.T) {
 		mockWatchInterface := &fakeWatchInterface{}
+		filteredWatchInterface := &fakeWatchInterface{}
 		mockStore := &fakeWatcherStore{
 			watchInterface: mockWatchInterface,
 			watchError:     nil,
@@ -440,13 +441,14 @@ func TestWrapper_Watch(t *testing.T) {
 
 		watchOpts := &internalversion.ListOptions{}
 
-		// Verify original user identity is used for authorization check
-		mockAuth.On("BeforeWatch", mock.MatchedBy(matchesOriginalUser())).Return(nil)
+		// Verify FilterWatch is called with the watch interface from inner store
+		// and returns a filtered watch interface
+		mockAuth.On("FilterWatch", mock.MatchedBy(matchesOriginalUser()), mockWatchInterface, mock.Anything).Return(filteredWatchInterface, nil)
 
 		result, err := wrapper.Watch(ctx, watchOpts)
 
 		require.NoError(t, err)
-		assert.Equal(t, mockWatchInterface, result)
+		assert.Equal(t, filteredWatchInterface, result)
 
 		// Assert expectations
 		mockAuth.AssertExpectations(t)
@@ -468,8 +470,8 @@ func TestWrapper_Watch(t *testing.T) {
 
 		watchOpts := &internalversion.ListOptions{}
 
-		// Simulate unauthorized error from BeforeWatch authorizer
-		mockAuth.On("BeforeWatch", mock.MatchedBy(matchesOriginalUser())).Return(ErrUnauthorized)
+		// Simulate unauthorized error from FilterWatch authorizer
+		mockAuth.On("FilterWatch", mock.MatchedBy(matchesOriginalUser()), mockWatchInterface, mock.Anything).Return(nil, ErrUnauthorized)
 
 		result, err := wrapper.Watch(ctx, watchOpts)
 
@@ -477,7 +479,7 @@ func TestWrapper_Watch(t *testing.T) {
 		assert.Nil(t, result)
 		assert.Equal(t, ErrUnauthorized, err)
 
-		// Assert expectations - watch should fail before calling inner store
+		// Assert expectations
 		mockAuth.AssertExpectations(t)
 	})
 
@@ -494,15 +496,14 @@ func TestWrapper_Watch(t *testing.T) {
 
 		watchOpts := &internalversion.ListOptions{}
 
-		// Authorization should still be checked first
-		mockAuth.On("BeforeWatch", mock.MatchedBy(matchesOriginalUser())).Return(nil)
-
+		// No FilterWatch call expected because inner store doesn't support watch
 		result, err := wrapper.Watch(ctx, watchOpts)
 
 		require.Error(t, err)
 		assert.Nil(t, result)
 		assert.Contains(t, err.Error(), "watch is not supported")
 
+		// Assert expectations. FilterWatch should not be called.
 		mockAuth.AssertExpectations(t)
 	})
 }
@@ -544,9 +545,13 @@ func (f *FakeAuthorizer) FilterList(ctx context.Context, list runtime.Object) (r
 	return res, args.Error(1)
 }
 
-func (f *FakeAuthorizer) BeforeWatch(ctx context.Context) error {
-	args := f.Called(ctx)
-	return args.Error(0)
+func (f *FakeAuthorizer) FilterWatch(ctx context.Context, w watch.Interface, listObj runtime.Object) (watch.Interface, error) {
+	args := f.Called(ctx, w, listObj)
+	var res watch.Interface
+	if args.Get(0) != nil {
+		res = args.Get(0).(watch.Interface)
+	}
+	return res, args.Error(1)
 }
 
 type fakeObject struct {
@@ -558,6 +563,19 @@ func (f *fakeObject) DeepCopyObject() runtime.Object {
 	return &fakeObject{
 		TypeMeta:   f.TypeMeta,
 		ObjectMeta: f.ObjectMeta,
+	}
+}
+
+// fakeListObject implements runtime.Object for list type testing
+type fakeListObject struct {
+	metaV1.TypeMeta
+	metaV1.ListMeta
+}
+
+func (f *fakeListObject) DeepCopyObject() runtime.Object {
+	return &fakeListObject{
+		TypeMeta: f.TypeMeta,
+		ListMeta: f.ListMeta,
 	}
 }
 
@@ -592,6 +610,11 @@ type fakeWatcherStore struct {
 
 func (f *fakeWatcherStore) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
 	return f.watchInterface, f.watchError
+}
+
+func (f *fakeWatcherStore) NewList() runtime.Object {
+	// Return a simple empty list object for testing
+	return &fakeListObject{}
 }
 
 // fakeNonWatcherStore implements K8sStorage but NOT k8srest.Watcher

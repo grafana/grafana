@@ -29,7 +29,7 @@ type ResourceStorageAuthorizer interface {
 	BeforeDelete(ctx context.Context, obj runtime.Object) error
 	AfterGet(ctx context.Context, obj runtime.Object) error
 	FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error)
-	BeforeWatch(ctx context.Context) error
+	FilterWatch(ctx context.Context, w watch.Interface, listObj runtime.Object) (watch.Interface, error)
 }
 
 // Wrapper is a k8sStorage (e.g. registry.Store) wrapper that enforces authorization based on ResourceStorageAuthorizer.
@@ -224,13 +224,16 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 }
 
 func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
-	// Enforce authorization before allowing watch access
-	if err := w.authorizer.BeforeWatch(ctx); err != nil {
-		return nil, err
-	}
-
 	if watcher, ok := w.inner.(k8srest.Watcher); ok {
-		return watcher.Watch(w.storeCtx(ctx), options)
+		innerWatch, err := watcher.Watch(w.storeCtx(ctx), options)
+		if err != nil {
+			return nil, err
+		}
+
+		listObj := w.inner.NewList()
+
+		// Filter the watch stream based on user permissions
+		return w.authorizer.FilterWatch(ctx, innerWatch, listObj)
 	}
 	return nil, fmt.Errorf("watch is not supported on the underlying storage")
 }
@@ -261,8 +264,9 @@ func (b *NoopAuthorizer) FilterList(ctx context.Context, list runtime.Object) (r
 	return list, nil
 }
 
-func (b *NoopAuthorizer) BeforeWatch(ctx context.Context) error {
-	return nil
+func (b *NoopAuthorizer) FilterWatch(ctx context.Context, w watch.Interface, listObj runtime.Object) (watch.Interface, error) {
+	// No filtering - pass through all events
+	return w, nil
 }
 
 // DenyAuthorizer denies all storage operations.
@@ -290,6 +294,68 @@ func (d *DenyAuthorizer) FilterList(ctx context.Context, list runtime.Object) (r
 	return nil, ErrUnauthorized
 }
 
-func (d *DenyAuthorizer) BeforeWatch(ctx context.Context) error {
-	return ErrUnauthorized
+func (d *DenyAuthorizer) FilterWatch(ctx context.Context, w watch.Interface, listObj runtime.Object) (watch.Interface, error) {
+	w.Stop()
+	return nil, ErrUnauthorized
+}
+
+type filteredWatch struct {
+	inner      watch.Interface
+	resultChan chan watch.Event
+	stopChan   chan struct{}
+}
+
+func NewFilteredWatch(ctx context.Context, inner watch.Interface, filterFunc func(watch.Event) (bool, error)) watch.Interface {
+	fw := &filteredWatch{
+		inner:      inner,
+		resultChan: make(chan watch.Event),
+		stopChan:   make(chan struct{}),
+	}
+
+	go func() {
+		defer close(fw.resultChan)
+		defer inner.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-fw.stopChan:
+				return
+			case event, ok := <-inner.ResultChan():
+				if !ok {
+					return
+				}
+
+				include, err := filterFunc(event)
+				if err != nil {
+					fw.resultChan <- watch.Event{
+						Type:   watch.Error,
+						Object: &metaV1.Status{Status: metaV1.StatusFailure, Message: err.Error()},
+					}
+					continue
+				}
+
+				if include {
+					select {
+					case fw.resultChan <- event:
+					case <-ctx.Done():
+						return
+					case <-fw.stopChan:
+						return
+					}
+				}
+			}
+		}
+	}()
+
+	return fw
+}
+
+func (f *filteredWatch) Stop() {
+	close(f.stopChan)
+}
+
+func (f *filteredWatch) ResultChan() <-chan watch.Event {
+	return f.resultChan
 }

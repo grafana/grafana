@@ -6,6 +6,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -33,11 +34,12 @@ func (a *RoleBindingAuthorizer) FilterList(_ context.Context, list runtime.Objec
 }
 func (a *RoleBindingAuthorizer) BeforeDelete(_ context.Context, _ runtime.Object) error { return nil }
 
-// BeforeWatch implements ResourceStorageAuthorizer.
+// FilterWatch implements ResourceStorageAuthorizer.
 // TODO: Implement proper authorization for Watch
-func (a *RoleBindingAuthorizer) BeforeWatch(ctx context.Context) error {
+func (a *RoleBindingAuthorizer) FilterWatch(ctx context.Context, w watch.Interface, listObj runtime.Object) (watch.Interface, error) {
 	// Deny by default until proper authorization is implemented
-	return storewrapper.ErrUnauthorized
+	w.Stop()
+	return nil, storewrapper.ErrUnauthorized
 }
 
 // creates & updates need to check the role permissions
@@ -99,11 +101,12 @@ func (d *DenyCustomRoleRefsAuthorizer) BeforeDelete(_ context.Context, _ runtime
 	return nil
 }
 
-// BeforeWatch implements ResourceStorageAuthorizer.
+// FilterWatch implements ResourceStorageAuthorizer.
 // TODO: Implement proper authorization for Watch
-func (d *DenyCustomRoleRefsAuthorizer) BeforeWatch(ctx context.Context) error {
+func (d *DenyCustomRoleRefsAuthorizer) FilterWatch(ctx context.Context, w watch.Interface, listObj runtime.Object) (watch.Interface, error) {
 	// Deny by default until proper authorization is implemented
-	return storewrapper.ErrUnauthorized
+	w.Stop()
+	return nil, storewrapper.ErrUnauthorized
 }
 
 func (d *DenyCustomRoleRefsAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) error {
