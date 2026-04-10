@@ -7,14 +7,16 @@ import {
   type TransformerRegistryItem,
 } from '@grafana/data';
 
-// Direct import from internal path - this module is no longer publicly exported from @grafana/data
-// to avoid pulling all transformer implementations into the plugin-facing shared chunk.
-// Webpack resolves @grafana/data to source via the @grafana-app/source condition.
-// eslint-disable-next-line no-restricted-imports
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 
+// Direct source import - standardTransformers was removed from @grafana/data's public API
+// to keep it out of the plugin-facing shared chunk.
 import { standardTransformers } from '../../../../packages/grafana-data/src/transformations/transformers';
+
+import { isHeatmapApplicable } from './calculateHeatmap/applicability';
+import { isSmoothingApplicable } from './smoothing/applicability';
+import { isTimeSeriesTableApplicable } from './timeSeriesTable/applicability';
 
 // SVG images - dark
 import calculateFieldDark from './images/dark/calculateField.svg';
@@ -487,6 +489,11 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       ),
       state: PluginState.alpha,
       categories: new Set([TransformerCategory.CreateNewVisualization]),
+      isApplicable: isHeatmapApplicable,
+      isApplicableDescription: t(
+        'transformers.heatmap.is-applicable-description',
+        'The Heatmap transformation requires fields with Heatmap compatible data. No fields with Heatmap data could be found.'
+      ),
       imageDark: heatmapDark,
       imageLight: heatmapLight,
     },
@@ -637,6 +644,11 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
               'Reduce noise in time series data through adaptive downsampling.'
             ),
             categories: new Set([TransformerCategory.CalculateNewFields]),
+            isApplicable: isSmoothingApplicable,
+            isApplicableDescription: t(
+              'transformers.smoothing.is-applicable-description',
+              'The Smoothing transformation requires at least one time series frame to function. You currently have none.'
+            ),
             tags: new Set(['ASAP', 'Autosmooth']),
             imageDark: smoothingDark,
             imageLight: smoothingLight,
@@ -677,6 +689,11 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
         'Convert time series data to table rows so that they can be viewed in tabular or sparkline format.'
       ),
       state: PluginState.beta,
+      isApplicable: isTimeSeriesTableApplicable,
+      isApplicableDescription: t(
+        'transformers.time-series-table.is-applicable-description.requires-time-series-frame',
+        'The Time series to table transformation requires at least one time series frame to function. You currently have none.'
+      ),
       imageDark: timeSeriesTableDark,
       imageLight: timeSeriesTableLight,
     },

@@ -12,6 +12,7 @@ import {
   type DataSourceApi,
   type DataTransformContext,
   type Field,
+  DataTransformerID,
   FieldType,
   getFieldDisplayName,
   type KeyValue,
@@ -72,7 +73,7 @@ export function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFr
           interpolate: (v: string) => v,
         };
 
-        return from(standardTransformersRegistry.get('merge').transformation()).pipe(
+        return from(standardTransformersRegistry.get(DataTransformerID.merge).transformation()).pipe(
           mergeMap((t) => of(data).pipe(t.operator({}, ctx), map((d) => d[0])))
         );
       })

@@ -31,6 +31,18 @@ export interface TransformerRegistryItem<TOptions = any> extends RegistryItem {
    */
   defaultOptions?: Partial<TOptions>;
 
+  /**
+   * Checks whether this transformer is applicable to the given data.
+   * Hoisted from DataTransformerInfo so the picker can check applicability
+   * without resolving the async transformation.
+   */
+  isApplicable?: (data: DataFrame[]) => number;
+
+  /**
+   * Description shown when the transformer is not applicable.
+   */
+  isApplicableDescription?: string | ((data: DataFrame[]) => string);
+
   /** Markdown with more detailed description and help */
   help?: string;
 

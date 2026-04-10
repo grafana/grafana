@@ -5,6 +5,7 @@ import { map, mergeMap } from 'rxjs/operators';
 import {
   type AbsoluteTimeRange,
   type DataFrame,
+  DataTransformerID,
   FieldType,
   getDisplayProcessor,
   type PanelData,
@@ -186,8 +187,8 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
   // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
   // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
   const registryItem = hasOnlyTimeseries
-    ? standardTransformersRegistry.get('joinByField')
-    : standardTransformersRegistry.get('merge');
+    ? standardTransformersRegistry.get(DataTransformerID.joinByField)
+    : standardTransformersRegistry.get(DataTransformerID.merge);
 
   return from(registryItem.transformation()).pipe(
     mergeMap((t) =>
@@ -242,8 +243,8 @@ export const decorateWithRawPrometheusResult = (data: ExplorePanelData): Observa
   // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
   // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
   const registryItem = hasOnlyTimeseries
-    ? standardTransformersRegistry.get('joinByField')
-    : standardTransformersRegistry.get('merge');
+    ? standardTransformersRegistry.get(DataTransformerID.joinByField)
+    : standardTransformersRegistry.get(DataTransformerID.merge);
 
   return from(registryItem.transformation()).pipe(
     mergeMap((t) =>

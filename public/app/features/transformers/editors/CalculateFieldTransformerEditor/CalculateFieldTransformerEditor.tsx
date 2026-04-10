@@ -85,7 +85,7 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
 
   useEffect(() => {
     const ctx = { interpolate: (v: string) => v };
-    const subscription = from(standardTransformersRegistry.get('ensureColumns').transformation())
+    const subscription = from(standardTransformersRegistry.get(DataTransformerID.ensureColumns).transformation())
       .pipe(
         mergeMap((t) =>
           of(input).pipe(t.operator(null, ctx), extractAllNames(), getVariableNames(), extractNamesAndSelected(configuredOptions || []))

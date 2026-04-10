@@ -3,9 +3,7 @@ import { Suspense, useCallback } from 'react';
 import { DataTransformerID, type DataTransformerConfig, type DataFrame } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { LoadingPlaceholder } from '@grafana/ui';
-
-import { ErrorBoundaryWithRetry } from './ErrorBoundaryWithRetry';
+import { ErrorBoundaryAlert, LoadingPlaceholder } from '@grafana/ui';
 import { NoOptionsIndicator } from './NoOptionsIndicator';
 import { type Transformation } from './types';
 
@@ -34,7 +32,7 @@ export function TransformationEditor({ transformation, inputData, onUpdate }: Tr
 
   return (
     <div data-testid={selectors.components.TransformTab.transformationEditor(registryItem?.name || '')}>
-      <ErrorBoundaryWithRetry>
+      <ErrorBoundaryAlert>
         <Suspense
           fallback={
             <LoadingPlaceholder
@@ -48,7 +46,7 @@ export function TransformationEditor({ transformation, inputData, onUpdate }: Tr
             options={{ ...registryItem!.defaultOptions, ...transformConfig.options }}
           />
         </Suspense>
-      </ErrorBoundaryWithRetry>
+      </ErrorBoundaryAlert>
       {showNoOptions && <NoOptionsIndicator name={registryItem?.name ?? ''} />}
     </div>
   );
