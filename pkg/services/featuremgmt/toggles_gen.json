@@ -2397,6 +2397,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.correlationsSkipLegacy",
+        "resourceVersion": "1775835903415",
+        "creationTimestamp": "2026-04-10T15:45:03Z"
+      },
+      "spec": {
+        "description": "Route any calls to legacy correlations endpoints to call through to app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.newPreferencesPage",
         "resourceVersion": "1775304981849",
         "creationTimestamp": "2026-04-04T12:16:21Z"
