@@ -88,14 +88,7 @@ func ProvideAuthZClient(
 			return nil, err
 		}
 		if zanzanaEnabled {
-			if len(cfg.ZanzanaRollout.ResourcePercentages) > 0 {
-				shadowClient, err := zClient.WithShadowRBACClient(zanzanaClient, rbacClient, reg)
-				if err != nil {
-					return nil, err
-				}
-				return newRolloutAccessClient(rbacClient, shadowClient, cfg.ZanzanaRollout.ResourcePercentages), nil
-			}
-			return newShadowClient(cfg.ZanzanaClient.PrimaryEngine, rbacClient, zanzanaClient, reg)
+			return newZanzanaAwareClient(cfg, rbacClient, zanzanaClient, reg)
 		}
 		return rbacClient, nil
 	default:
@@ -157,14 +150,7 @@ func ProvideAuthZClient(
 		)
 
 		if zanzanaEnabled {
-			if len(cfg.ZanzanaRollout.ResourcePercentages) > 0 {
-				shadowClient, err := zClient.WithShadowRBACClient(zanzanaClient, rbacClient, reg)
-				if err != nil {
-					return nil, err
-				}
-				return newRolloutAccessClient(rbacClient, shadowClient, cfg.ZanzanaRollout.ResourcePercentages), nil
-			}
-			return newShadowClient(cfg.ZanzanaClient.PrimaryEngine, rbacClient, zanzanaClient, reg)
+			return newZanzanaAwareClient(cfg, rbacClient, zanzanaClient, reg)
 		}
 
 		return rbacClient, nil
@@ -209,6 +195,21 @@ func ProvideStandaloneAuthZClient(
 	}
 
 	return remoteRBACClient, nil
+}
+
+// newZanzanaAwareClient returns the appropriate access client when Zanzana is
+// enabled. If a rollout map is configured it wraps rbacClient in a shadow
+// comparison client and routes per-resource tenants deterministically via the
+// rollout percentages; otherwise it delegates to newShadowClient.
+func newZanzanaAwareClient(cfg *setting.Cfg, rbacClient, zanzanaClient authlib.AccessClient, reg prometheus.Registerer) (authlib.AccessClient, error) {
+	if len(cfg.ZanzanaRollout.ResourcePercentages) > 0 {
+		shadowClient, err := zClient.WithShadowRBACClient(zanzanaClient, rbacClient, reg)
+		if err != nil {
+			return nil, err
+		}
+		return newRolloutAccessClient(rbacClient, shadowClient, cfg.ZanzanaRollout.ResourcePercentages), nil
+	}
+	return newShadowClient(cfg.ZanzanaClient.PrimaryEngine, rbacClient, zanzanaClient, reg)
 }
 
 // newShadowClient returns either a ShadowClient (RBAC primary) or a

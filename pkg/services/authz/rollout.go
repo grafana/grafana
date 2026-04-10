@@ -7,6 +7,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 var rolloutLog = log.New("authz.rollout")
@@ -31,11 +32,17 @@ type rolloutAccessClient struct {
 }
 
 func newRolloutAccessClient(rbac, zanzana claims.AccessClient, rollout map[string]float64) claims.AccessClient {
+	if rbac == nil {
+		panic("newRolloutAccessClient: rbac client is nil")
+	}
+	if zanzana == nil {
+		panic("newRolloutAccessClient: zanzana client is nil")
+	}
 	return &rolloutAccessClient{rbac: rbac, zanzana: zanzana, rollout: rollout}
 }
 
 func (c *rolloutAccessClient) clientFor(namespace, group, resource string) claims.AccessClient {
-	pct, ok := c.rollout[group+"/"+resource]
+	pct, ok := c.rollout[common.FormatGroupResource(group, resource, "")]
 	if !ok || pct <= 0 {
 		return c.rbac
 	}
@@ -70,6 +77,7 @@ func (c *rolloutAccessClient) BatchCheck(ctx context.Context, id claims.AuthInfo
 	for _, check := range req.Checks[1:] {
 		if check.Group != group || check.Resource != resource {
 			rolloutLog.Warn("batch contains mixed group/resource combinations, falling back to RBAC",
+				"namespace", req.Namespace,
 				"first_group", group, "first_resource", resource,
 				"conflict_group", check.Group, "conflict_resource", check.Resource,
 			)
