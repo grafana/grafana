@@ -93,7 +93,3 @@ To configure repeating panels, follow these steps:
 {{< /docs/list >}}
 
 You can stop a panel from repeating by selecting **Disable repeating** in the **Repeat by variable** drop-down list.
-
-{{< admonition type="tip" >}}
-To access repeat options without leaving the dashboard, click anywhere on the panel to open the sidebar while the dashboard is in edit mode. Repeat options are available in the sidebar.
-{{< /admonition >}}
