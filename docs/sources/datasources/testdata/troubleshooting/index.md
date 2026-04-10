@@ -40,7 +40,7 @@ These errors occur when running TestData scenarios.
 | Cause                                | Solution                                                                                                                  |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
 | No Data Points scenario selected     | The No Data Points scenario returns empty results by design. Select a different scenario such as Random Walk.              |
-| Datapoints Outside Range selected    | This scenario returns a data point one hour before the query time range. Expand the time range or select a different scenario. |
+| Data Points Outside Range selected    | This scenario returns a data point one hour before the query time range. Expand the time range or select a different scenario. |
 | Empty String Input for CSV scenarios | CSV Metric Values and CSV Content require input data. Add comma-separated values or CSV content.                          |
 | Time range doesn't contain data      | Some scenarios generate data relative to the query time range. Expand the dashboard time range.                           |
 
