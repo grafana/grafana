@@ -1621,8 +1621,8 @@ var (
 			Name:        "teamLBACApiWriteFromAppPlatform",
 			Description: "Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server",
 			Stage:       FeatureStageExperimental,
-			Owner:       identityAccessTeam,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Owner:       identityAccessTeam,
 			Expression:  "false",
 		},
 		{
