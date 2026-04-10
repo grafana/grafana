@@ -15,7 +15,7 @@ const makeMarkdownTable = (properties: Array<Record<string, string | undefined>>
   const rows = properties.map((property) => {
     const columns = keys.map((key) => {
       const value = property[key] ?? '';
-      return String(value).replace(/\|/g, '\\|');
+      return String(value).replace(/[\\|]/g, '\\$&');
     });
 
     return '| ' + columns.join(' | ') + ' |';
