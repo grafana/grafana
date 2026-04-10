@@ -543,6 +543,10 @@ const (
 	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
 	FlagTeamLBACApiReadFromAppPlatform = "teamLBACApiReadFromAppPlatform"
 
+	// FlagTeamLBACApiWriteFromAppPlatform
+	// Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
+	FlagTeamLBACApiWriteFromAppPlatform = "teamLBACApiWriteFromAppPlatform"
+
 	// FlagGrafanaAdvisor
 	// Enables Advisor app
 	FlagGrafanaAdvisor = "grafanaAdvisor"
