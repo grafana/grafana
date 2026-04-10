@@ -1,14 +1,20 @@
 import { useState } from 'react';
 
 import {
-  FieldConfigEditorBuilder,
+  type FieldConfigEditorBuilder,
   FieldType,
   identityOverrideProcessor,
-  SelectableValue,
-  StandardEditorProps,
+  type SelectableValue,
+  type StandardEditorProps,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { AxisColorMode, AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
+import {
+  AxisColorMode,
+  type AxisConfig,
+  AxisPlacement,
+  ScaleDistribution,
+  type ScaleDistributionConfig,
+} from '@grafana/schema';
 
 import { Field } from '../../components/Forms/Field';
 import { RadioButtonGroup } from '../../components/Forms/RadioButtonGroup/RadioButtonGroup';
@@ -17,9 +23,6 @@ import { Stack } from '../../components/Layout/Stack/Stack';
 import { Select } from '../../components/Select/Select';
 import { getGraphFieldOptions } from '../../components/uPlot/config';
 
-/**
- * @alpha
- */
 export function addAxisConfig(builder: FieldConfigEditorBuilder<AxisConfig>, defaultConfig: AxisConfig) {
   // options for axis appearance
   addAxisPlacement(builder);

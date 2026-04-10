@@ -1,5 +1,6 @@
-import { MonitoringLogger } from '@grafana/runtime';
-import { getAppPluginMetas, invalidateCache, setLogger } from '@grafana/runtime/internal';
+import { type MonitoringLogger } from '@grafana/runtime';
+import { getAppPluginMetas, invalidateCache } from '@grafana/runtime/internal';
+import { mockLogger } from '@grafana/test-utils/unstable';
 
 import { getPluginExtensionRegistries } from './setup';
 
@@ -9,21 +10,14 @@ jest.mock('@grafana/runtime/internal', () => ({
 }));
 
 const getAppPluginMetasMock = jest.mocked(getAppPluginMetas);
-let logger: MonitoringLogger;
 
 describe('getPluginExtensionRegistries', () => {
+  let logger: MonitoringLogger;
   beforeEach(() => {
     jest.resetAllMocks();
     invalidateCache();
     getAppPluginMetasMock.mockResolvedValue([]);
-    logger = {
-      logDebug: jest.fn(),
-      logError: jest.fn(),
-      logInfo: jest.fn(),
-      logMeasurement: jest.fn(),
-      logWarning: jest.fn(),
-    };
-    setLogger(logger);
+    logger = mockLogger('grafana/runtime.utils.getCachedPromise');
   });
 
   test('should only call getAppPluginMetas once', async () => {

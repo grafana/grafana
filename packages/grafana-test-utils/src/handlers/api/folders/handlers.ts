@@ -1,5 +1,5 @@
 import { Chance } from 'chance';
-import { HttpResponse, http } from 'msw';
+import { HttpResponse, http, type HttpResponseResolver } from 'msw';
 
 import { treeViewersCanEdit, wellFormedTree } from '../../../fixtures/folders';
 
@@ -161,6 +161,8 @@ const folderCountsHandler = () =>
 
     return HttpResponse.json(getMockFolderCounts(1, 1, 1, 1));
   });
+
+export const customCreateFolderHandler = (resolver: HttpResponseResolver) => http.post('/api/folders', resolver);
 
 const handlers = [
   listFoldersHandler(),

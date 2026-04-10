@@ -1,4 +1,4 @@
-import { GrafanaSearcher } from './types';
+import { type GrafanaSearcher } from './types';
 import { UnifiedSearcher } from './unified';
 
 let searcher: GrafanaSearcher | undefined = undefined;

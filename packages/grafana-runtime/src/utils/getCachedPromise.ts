@@ -1,6 +1,6 @@
-import { LogContext } from '@grafana/faro-web-sdk';
+import { type LogContext } from '@grafana/faro-web-sdk';
 
-import { createMonitoringLogger, MonitoringLogger } from './logging';
+import { getLogger } from '../services/logging/registry';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const cache: Map<string, Promise<any>> = new Map();
@@ -42,24 +42,6 @@ interface LogErrorArgs {
   key: string;
 }
 
-let logger: MonitoringLogger;
-
-function getLogger() {
-  if (!logger) {
-    logger = createMonitoringLogger('get-cached-promise-logs');
-  }
-
-  return logger;
-}
-
-export function setLogger(override: MonitoringLogger) {
-  if (process.env.NODE_ENV !== 'test') {
-    throw new Error('setLogger function can only be called from tests.');
-  }
-
-  logger = override;
-}
-
 function logError({ error, key }: LogErrorArgs): void {
   const err = error instanceof Error ? error : new Error(String(error));
 
@@ -68,7 +50,10 @@ function logError({ error, key }: LogErrorArgs): void {
     context.stack = err.stack;
   }
 
-  getLogger().logError(new Error(`Something failed while resolving a cached promise`), context);
+  getLogger('grafana/runtime.utils.getCachedPromise').logError(
+    new Error(`Something failed while resolving a cached promise`),
+    context
+  );
 }
 
 function checkCacheSize() {

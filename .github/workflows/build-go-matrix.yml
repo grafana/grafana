@@ -23,7 +23,7 @@ jobs:
     permissions:
       contents: read
     outputs:
-      changed: ${{ steps.detect-changes.outputs.backend }}
+      changed: ${{ steps.detect-changes.outputs.backend == 'true' || steps.detect-changes.outputs.makefile == 'true' }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -40,7 +40,7 @@ jobs:
     # Run on `main` and on pull_requests where changes were detected
     if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && needs.detect-changes.outputs.changed == 'true')
     name: ${{ matrix.name }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-large-io
     permissions:
       contents: read
     strategy:
@@ -82,8 +82,8 @@ jobs:
       - name: Build Go (${{ matrix.name }})
         env:
           CGO_ENABLED: "0"
-          GO_BUILD_OS: ${{ matrix.goos }}
-          GO_BUILD_ARCH: ${{ matrix.goarch }}
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
           GOARM: ${{ matrix.goarm }}
         run: make build-go
 
@@ -91,7 +91,7 @@ jobs:
     needs: detect-changes
     if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true')
     name: ${{ matrix.name }} (enterprise)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-large-io
     permissions:
       contents: read
       id-token: write
@@ -153,6 +153,8 @@ jobs:
     if: always()
     name: All steps completed
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
         with:

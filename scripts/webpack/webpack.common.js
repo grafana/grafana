@@ -18,7 +18,7 @@ module.exports = (env = {}) => ({
     clean: env.react19 ? false : true,
     path: path.resolve(__dirname, '../../public/build'),
     filename: env.react19 ? '[name]-react19.[contenthash].js' : '[name].[contenthash].js',
-    // Keep publicPath relative for host.com/grafana/ deployments
+    chunkFilename: env.react19 ? '[name]-react19.[contenthash].js' : '[name].[contenthash].js',
     publicPath: 'public/build/',
   },
   resolve: {

@@ -1,11 +1,11 @@
 import memoizeOne from 'memoize-one';
 import { useEffect, useState } from 'react';
 
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Resource } from 'app/features/dashboard/api/utils';
-import { DashboardDTO } from 'app/types/dashboard';
+import { type DashboardDTO } from 'app/types/dashboard';
 
 import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
 

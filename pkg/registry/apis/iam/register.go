@@ -53,6 +53,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	teamservice "github.com/grafana/grafana/pkg/services/team"
 	legacyuser "github.com/grafana/grafana/pkg/services/user"
@@ -151,7 +152,7 @@ func RegisterAPIService(
 		unified:                           unified,
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
 			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg), features),
-		teamSearch:                       NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService, tracing), unified, features, accessClient),
+		teamSearch:                       NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(legacyTeamSearchService(teamService), tracing), unified, features, accessClient),
 		resourcePermissionsSearchHandler: newResourcePermissionsSearchHandler(resourcePermsSearchBackend, resourcePermsSearchAuthorizer),
 		tracing:                          tracing,
 		cfgProvider:                      cfgProvider,
@@ -180,6 +181,7 @@ func NewAPIService(
 	authorizerDialConfigs map[schema.GroupResource]iamauthorizer.DialConfig,
 	tracingService tracing.Tracer,
 	mappers *resourcepermission.MappersRegistry,
+	settingService settingsvc.Service,
 ) *IdentityAccessManagementAPIBuilder {
 	store := legacy.NewLegacySQLStores(dbProvider)
 	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider, mappers)
@@ -187,6 +189,7 @@ func NewAPIService(
 
 	globalRoleAuthorizer := globalRoleApiInstaller.GetAuthorizer()
 	roleAuthorizer := roleApiInstaller.GetAuthorizer()
+	serviceAccountAuthorizer := newServiceAccountAuthorizer(accessClient)
 	teamLBACAuthorizer := teamLBACApiInstaller.GetAuthorizer()
 	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 
@@ -198,6 +201,7 @@ func NewAPIService(
 	return &IdentityAccessManagementAPIBuilder{
 		store:                      store,
 		userLegacyStore:            user.NewLegacyStore(store, accessClient, tracingService),
+		saLegacyStore:              serviceaccount.NewLegacyStore(store, accessClient, tracingService),
 		teamBindingLegacyStore:     teambinding.NewLegacyBindingStore(store, tracingService),
 		display:                    user.NewLegacyDisplayREST(store),
 		tracing:                    tracingService,
@@ -215,6 +219,7 @@ func NewAPIService(
 		globalRoleApiInstaller:     globalRoleApiInstaller,
 		apiConfig:                  Config{SingleOrganization: true},
 		teamLBACApiInstaller:       teamLBACApiInstaller,
+		settingService:             settingService,
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				user, ok := types.AuthInfoFrom(ctx)
@@ -265,6 +270,13 @@ func NewAPIService(
 						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
 					}
 					return resourceAuthorizer.Authorize(ctx, a)
+				}
+
+				if a.GetResource() == iamv0.ServiceAccountResourceInfo.GetName() {
+					if user.GetIdentityType() != types.TypeAccessPolicy {
+						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
+					}
+					return serviceAccountAuthorizer.Authorize(ctx, a)
 				}
 
 				return authorizer.DecisionDeny, "access denied", nil
@@ -379,7 +391,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	if enableServiceAccountsApi {
-		if err := b.UpdateServiceAccountsAPIGroup(opts, storage, enableServiceAccountTokensApi); err != nil {
+		if err := b.UpdateServiceAccountsAPIGroup(opts, storage, enableServiceAccountTokensApi, enableZanzanaSync); err != nil {
 			return err
 		}
 	}
@@ -461,8 +473,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 			b.features,
 		)
 
-		storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(teamBindingSearchClient, b.tracing,
-			b.features, b.accessClient)
+		storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(teamBindingSearchClient, b.tracing, b.features)
 	}
 
 	if enableExternalGroupMappingsApi && b.teamGroupsHandler != nil {
@@ -509,6 +520,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts bui
 
 	authzWrapper := storewrapper.New(teamBindingStore, iamauthorizer.NewTeamBindingAuthorizer(b.accessClient))
 	storage[teamBindingResource.StoragePath()] = authzWrapper
+	if b.teamSearch != nil {
+		b.teamSearch.teamBindingStore = authzWrapper
+	}
 	return nil
 }
 
@@ -545,7 +559,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 		}
 	}
 
-	storage[userResource.StoragePath()] = storewrapper.New(userStore, user.NewStoreWrapper(b.cfgProvider), storewrapper.WithPreserveIdentity())
+	storage[userResource.StoragePath()] = storewrapper.New(userStore, user.NewStoreWrapper(b.cfgProvider, b.settingService), storewrapper.WithPreserveIdentity())
 
 	if b.dual != nil && b.unified != nil {
 		legacyTeamBindingSearchClient := teambinding.NewLegacyTeamBindingSearchClient(b.store, b.tracing)
@@ -558,18 +572,59 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 			b.features,
 		)
 
+		statusStore := grafanaregistry.NewRegistryStatusStore(opts.Scheme, userUniStore)
+		storage[userResource.StoragePath("status")] = statusStore
+
+		if b.userLegacyStore != nil && b.useStatusDualWriter(userResource) {
+			storage[userResource.StoragePath("status")] = user.NewStatusDualWriter(
+				userResource.GroupVersion(),
+				b.tracing,
+				statusStore,
+				b.userLegacyStore,
+				b.store,
+			)
+		}
 		storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamBindingSearchClient, b.tracing, b.features)
 	}
 
 	return nil
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableServiceAccountTokensApi bool) error {
+// useStatusDualWriter returns true when the user resource is in Mode 0-3 (legacy is still
+// the primary or co-primary store), meaning status updates must go through the legacy path.
+// In Mode 4/5 the unified store is the sole source of truth so the plain StatusREST suffices.
+func (b *IdentityAccessManagementAPIBuilder) useStatusDualWriter(resourceInfo utils.ResourceInfo) bool {
+	// cfgProvider is only registered in single-tenant (ST) mode. In multi-tenant (MT) mode
+	// there is no legacy SQL store, so status updates always go through unified storage.
+	if b.cfgProvider == nil {
+		return false
+	}
+	cfg, err := b.cfgProvider.Get(context.Background())
+	if err != nil {
+		b.logger.Warn("unable to read config, defaulting to legacy status dual writer", "error", err)
+		return true
+	}
+	if resCfg, ok := cfg.UnifiedStorage[resourceInfo.GroupResource().String()]; ok {
+		return resCfg.DualWriterMode < grafanarest.Mode4
+	}
+	// Mode 0 (default) — legacy is primary
+	return true
+}
+
+func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableServiceAccountTokensApi bool, enableZanzanaSync bool) error {
 	saResource := iamv0.ServiceAccountResourceInfo
 	saUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, saResource, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
+
+	if enableZanzanaSync {
+		b.logger.Info("Enabling hooks for ServiceAccount to sync basic role assignments to Zanzana")
+		saUniStore.AfterCreate = b.AfterServiceAccountCreate
+		saUniStore.BeginUpdate = b.BeginServiceAccountUpdate
+		saUniStore.AfterDelete = b.AfterServiceAccountDelete
+	}
+
 	storage[saResource.StoragePath()] = saUniStore
 
 	if b.saLegacyStore != nil {
@@ -879,6 +934,11 @@ func (b *IdentityAccessManagementAPIBuilder) validateUpdate(ctx context.Context,
 	oldObj := a.GetOldObject()
 	switch typedObj := a.GetObject().(type) {
 	case *iamv0.User:
+		// Skip spec validation for status subresource updates because the generated
+		// UpdateStatus client only sends the status (spec fields are empty).
+		if a.GetSubresource() == "status" {
+			return nil
+		}
 		oldUserObj, ok := oldObj.(*iamv0.User)
 		if !ok {
 			return fmt.Errorf("expected old object to be a User, got %T", oldObj)
@@ -960,7 +1020,11 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 	case admission.Update:
 		switch typedObj := a.GetObject().(type) {
 		case *iamv0.User:
-			return user.MutateOnCreateAndUpdate(ctx, typedObj)
+			// Skip spec mutation for status subresource updates because the generated
+			// UpdateStatus client only sends the status (spec fields are empty).
+			if a.GetSubresource() != "status" {
+				return user.MutateOnCreateAndUpdate(ctx, typedObj)
+			}
 		case *iamv0.Role:
 			oldObj, ok := a.GetOldObject().(*iamv0.Role)
 			if !ok {
@@ -1037,4 +1101,15 @@ func mergeAPIRoutes(routes ...*builder.APIRoutes) *builder.APIRoutes {
 		merged.Namespace = append(merged.Namespace, r.Namespace...)
 	}
 	return merged
+}
+
+type legacySearchServiceProvider interface {
+	LegacySearchService() teamservice.Service
+}
+
+func legacyTeamSearchService(svc teamservice.Service) teamservice.Service {
+	if p, ok := svc.(legacySearchServiceProvider); ok {
+		return p.LegacySearchService()
+	}
+	return svc
 }

@@ -1,10 +1,13 @@
 package resourcepermission
 
 import (
+	"context"
 	"fmt"
 	"slices"
 	"strings"
 
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -40,7 +43,7 @@ type mapper struct {
 func NewMapper(resource string, levels []string) Mapper {
 	sets := make([]string, 0, len(levels))
 	for _, level := range levels {
-		sets = append(sets, resource+":"+level)
+		sets = append(sets, resource+":"+strings.ToLower(level))
 	}
 	return mapper{
 		resource:   resource,
@@ -112,30 +115,68 @@ func (m *MappersRegistry) RegisterMapper(gr schema.GroupResource, mapper Mapper,
 	m.reverse[prefix] = gr
 }
 
+// findGroupKey returns the registry key for gr.Group using exact match first,
+// then wildcard (*.<suffix>) match. A group starting with "*" is never a valid
+// input (prevents matching a wildcard key as-is). Multi-segment prefixes
+// (e.g. "foo.loki.datasource.grafana.app") do not match "*.datasource.grafana.app".
+func (m *MappersRegistry) findGroupKey(gr schema.GroupResource) (schema.GroupResource, bool) {
+	if strings.HasPrefix(gr.Group, "*") {
+		return schema.GroupResource{}, false
+	}
+	// Exact match
+	key := schema.GroupResource{Group: gr.Group, Resource: gr.Resource}
+	if _, ok := m.entries[key]; ok {
+		return key, true
+	}
+	// Wildcard match: find a registered key of the form *.<suffix>/<resource>
+	for k := range m.entries {
+		if k.Resource != gr.Resource {
+			continue
+		}
+		if !strings.HasPrefix(k.Group, "*.") {
+			continue
+		}
+		prefix, ok := strings.CutSuffix(gr.Group, k.Group[1:]) // e.g. "loki.datasource.grafana.app" -> "loki"
+		if !ok || prefix == "" || strings.Contains(prefix, ".") {
+			continue
+		}
+		return k, true
+	}
+	return schema.GroupResource{}, false
+}
+
 // Get returns the mapper for the given GroupResource regardless of enabled state.
 // Use this when reading or writing existing data - the mapper provides the RBAC translation
 // even if the feature is currently disabled (to preserve existing permissions).
+// Wildcard group keys (e.g. "*.datasource.grafana.app") are resolved transparently.
 func (m *MappersRegistry) Get(gr schema.GroupResource) (Mapper, bool) {
-	e, ok := m.entries[gr]
+	key, ok := m.findGroupKey(gr)
 	if !ok {
 		return nil, false
 	}
-	return e.mapper, true
+	return m.entries[key].mapper, true
 }
 
 // IsEnabled reports whether the mapper for the given GroupResource is registered and enabled.
 // Use this for admission control (create/update validation) to gate whether new permissions
 // can be created for this resource type based on feature flags or licensing.
+// Wildcard group keys (e.g. "*.datasource.grafana.app") are resolved transparently.
 func (m *MappersRegistry) IsEnabled(gr schema.GroupResource) bool {
-	e, ok := m.entries[gr]
-	return ok && (e.enabled == nil || e.enabled())
+	key, ok := m.findGroupKey(gr)
+	if !ok {
+		return false
+	}
+	e := m.entries[key]
+	return e.enabled == nil || e.enabled()
 }
 
 // ParseScope parses an RBAC scope string (e.g., "folders:uid:abc") into a groupResourceName.
 // Used when reading permissions from the database for two purposes:
 //  1. Populating the ResourcePermission Spec (Group, Resource, Name fields)
 //  2. Making AccessClient Check requests to authorize viewing the resource
-func (m *MappersRegistry) ParseScope(scope string) (*groupResourceName, error) {
+//
+// datasourceType is the datasource type from the permission row, used to resolve the concrete group.
+func (m *MappersRegistry) ParseScope(scope, datasourceType string) (*groupResourceName, error) {
 	parts := strings.SplitN(scope, ":", 3)
 	if len(parts) != 3 {
 		return nil, fmt.Errorf("%w: %s", errInvalidScope, scope)
@@ -144,7 +185,22 @@ func (m *MappersRegistry) ParseScope(scope string) (*groupResourceName, error) {
 	if !ok {
 		return nil, fmt.Errorf("%w: %s", errUnknownGroupResource, parts[0])
 	}
-	return &groupResourceName{Group: gr.Group, Resource: gr.Resource, Name: parts[2]}, nil
+
+	group := resolveGroup(gr.Group, datasourceType)
+
+	return &groupResourceName{Group: group, Resource: gr.Resource, Name: parts[2]}, nil
+}
+
+// resolveGroup resolves a wildcard group (e.g. "*.datasource.grafana.app") to a concrete group
+// (e.g. "loki.datasource.grafana.app") using the prefix
+func resolveGroup(group, prefix string) string {
+	if !strings.HasPrefix(group, "*.") {
+		return group
+	}
+	if prefix == "" {
+		return "unknown" + group[1:]
+	}
+	return prefix + group[1:]
 }
 
 // EnabledActionSets returns the action sets for all currently-enabled mappers.
@@ -173,4 +229,75 @@ func (m *MappersRegistry) EnabledScopePatterns() []string {
 		out = append(out, e.mapper.ScopePattern())
 	}
 	return out
+}
+
+// NewIDScopedMapper creates a Mapper for resources stored with id-based scopes
+// in the legacy permission table (teams, users, service accounts).
+// Unlike the default uid-scoped mapper, its ScopePattern returns ":id:%".
+// The actual uid↔id resolution is handled by scope_resolver functions via the
+// MappersRegistry's identity store, not by the mapper itself.
+func NewIDScopedMapper(resource string, levels []string) Mapper {
+	sets := make([]string, 0, len(levels))
+	for _, level := range levels {
+		sets = append(sets, resource+":"+strings.ToLower(level))
+	}
+	return idMapper{resource: resource, actionSets: sets}
+}
+
+// idMapper implements Mapper for id-scoped resources. It differs from the default
+// mapper only in ScopePattern (returns ":id:%" for DB queries).
+type idMapper struct {
+	resource   string
+	actionSets []string
+}
+
+func (m idMapper) ActionSets() []string { return m.actionSets }
+
+func (m idMapper) ActionSet(level string) (string, error) {
+	actionSet := m.resource + ":" + strings.ToLower(level)
+	if !slices.Contains(m.actionSets, actionSet) {
+		return "", fmt.Errorf("invalid level (%s): %w", level, errInvalidSpec)
+	}
+	return actionSet, nil
+}
+
+func (m idMapper) Scope(name string) string {
+	return m.resource + ":uid:" + name
+}
+
+func (m idMapper) ScopePattern() string {
+	return m.resource + ":id:%"
+}
+
+// ParseScopeCtx parses an RBAC scope string into a groupResourceName, resolving id to uid for
+// id-scoped resources (teams, users, service accounts) using the provided store and namespace.
+// For uid-scoped resources (folders, dashboards) it behaves identically to ParseScope.
+func (m *MappersRegistry) ParseScopeCtx(ctx context.Context, ns types.NamespaceInfo, store IdentityStore, scope, datasourceType string) (*groupResourceName, error) {
+	parts := strings.SplitN(scope, ":", 3)
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("%w: %s", errInvalidScope, scope)
+	}
+	gr, ok := m.reverse[parts[0]]
+	if !ok {
+		return nil, fmt.Errorf("%w: %s", errUnknownGroupResource, parts[0])
+	}
+
+	entry := m.entries[gr]
+	group := resolveGroup(gr.Group, datasourceType)
+
+	name := parts[2]
+	if isIDScoped(entry.mapper) && store != nil {
+		uid, err := legacy.ResolveIDScopeToUIDName(ctx, store, ns, scope)
+		if err != nil {
+			return nil, err
+		}
+		name = uid
+	}
+
+	return &groupResourceName{Group: group, Resource: gr.Resource, Name: name}, nil
+}
+
+// isIDScoped returns true if the mapper's ScopePattern uses ":id:" (id-scoped resources).
+func isIDScoped(m Mapper) bool {
+	return strings.Contains(m.ScopePattern(), ":id:")
 }

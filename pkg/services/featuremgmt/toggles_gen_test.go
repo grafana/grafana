@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -61,6 +62,13 @@ func TestFeatureToggleFiles(t *testing.T) {
 				generateCSV(lookup),
 			)
 		})
+
+		t.Run("react openfeature manifest", func(t *testing.T) {
+			verifyAndGenerateFile(t,
+				"../../../packages/grafana-runtime/src/internal/openFeature/openfeature.gen.ts",
+				generateOpenFeatureReact(t),
+			)
+		})
 	})
 }
 
@@ -89,7 +97,7 @@ func readFeatureList(t *testing.T) map[string]featuretoggleapi.Feature {
 			Stage:           flag.Stage.String(),
 			Owner:           string(flag.Owner),
 			RequiresDevMode: flag.RequiresDevMode,
-			FrontendOnly:    flag.FrontendOnly,
+			FrontendOnly:    !flag.Generate.Go && !flag.Generate.LegacyGo,
 			RequiresRestart: flag.RequiresRestart,
 			HideFromDocs:    flag.HideFromDocs,
 			Expression:      flag.Expression,
@@ -160,13 +168,26 @@ func readFeatureList(t *testing.T) map[string]featuretoggleapi.Feature {
 	return all
 }
 
+func verifyFlagName(flag FeatureFlag) error {
+	name := flag.Name
+
+	// Flags should be in the format `component.flagName`, except legacy feature toggles
+	isLegacy := flag.Generate.LegacyFrontend || flag.Generate.LegacyGo
+	if !isLegacy && !strings.Contains(name, ".") {
+		return fmt.Errorf("flag name %q must be in the format of component.flagName", name)
+	}
+
+	for part := range strings.SplitSeq(name, ".") {
+		// acronyms can be configured as needed via `ConfigureAcronym` function from `./strcase/camel.go`
+		if part != strcase.ToLowerCamel(part) {
+			return fmt.Errorf("flag name %q segment %q is not lowerCamelCase (expected %q)", name, part, strcase.ToLowerCamel(part))
+		}
+	}
+	return nil
+}
+
 // Check if all flags are configured properly
 func verifyFlagsConfiguration(t *testing.T) {
-	legacyNames := map[string]bool{
-		"live-service-web-worker": true,
-	}
-	invalidNames := make([]string, 0)
-
 	// Check that all flags set in code are valid
 	for _, flag := range standardFeatureFlags {
 		if flag.Expression == "true" && (flag.Stage != FeatureStageGeneralAvailability && flag.Stage != FeatureStageDeprecated && flag.Stage != FeatureStagePublicPreview) {
@@ -193,15 +214,13 @@ func verifyFlagsConfiguration(t *testing.T) {
 		if flag.Expression == "" {
 			t.Errorf("the `Expression` property for %s is incorrect. Empty string values are not allowed. Please explicitly define the default value of the Feature Flag. Valid values include boolean, non-empty string, integer, float, and structured values in JSON format.", flag.Name)
 		}
-		// Check camel case names
-		if flag.Name != strcase.ToLowerCamel(flag.Name) && !legacyNames[flag.Name] {
-			invalidNames = append(invalidNames, flag.Name)
+		if err := verifyFlagName(flag); err != nil {
+			t.Error(err)
+		}
+		if !flag.Generate.Go && !flag.Generate.LegacyGo && !flag.Generate.LegacyFrontend && !flag.Generate.React {
+			t.Errorf("feature %s does not have any generation targets. please set the `Generate` property to specify which clients should be generated for this feature", flag.Name)
 		}
 	}
-
-	// Make sure the names are valid
-	require.Empty(t, invalidNames, "%s feature names should be camel cased", invalidNames)
-	// acronyms can be configured as needed via `ConfigureAcronym` function from `./strcase/camel.go`
 }
 
 type flagDateInfo struct {
@@ -284,6 +303,10 @@ func generateTypeScript() string {
 export interface FeatureToggles {
 `
 	for _, flag := range standardFeatureFlags {
+		if !flag.Generate.LegacyFrontend {
+			continue
+		}
+
 		buf += "  /**\n"
 		buf += "  * " + flag.Description + "\n"
 		if flag.Stage == FeatureStageDeprecated {
@@ -338,8 +361,9 @@ package featuremgmt
 const (`)
 
 	for _, flag := range standardFeatureFlags {
-		if flag.FrontendOnly {
-			continue // no need to have the golang constant for frontend only flags
+		// There's no OpenFeature-specific generation for Go yet, but `GenerateGo` is used to enforce new naming conventions
+		if !flag.Generate.LegacyGo && !flag.Generate.Go {
+			continue
 		}
 
 		data.CamelCase = strcase.ToCamel(flag.Name)
@@ -383,13 +407,13 @@ func generateCSV(lookup map[string]featuretoggleapi.Feature) string {
 	for _, flag := range standardFeatureFlags {
 		info := lookup[flag.Name]
 		write([]string{
-			info.GetCreationTimestamp().Format("2006-01-02"),
+			info.GetCreationTimestamp().UTC().Format("2006-01-02"),
 			flag.Name,
 			flag.Stage.String(),
 			string(flag.Owner),
 			strconv.FormatBool(flag.RequiresDevMode),
 			strconv.FormatBool(flag.RequiresRestart),
-			strconv.FormatBool(flag.FrontendOnly),
+			strconv.FormatBool(!flag.Generate.Go && !flag.Generate.LegacyGo),
 		})
 	}
 
@@ -515,4 +539,81 @@ func writeToggleDocsTable(include func(FeatureFlag) bool, showEnableByDefault bo
 	// Markdown table formatting (from prettier)
 	v := strings.ReplaceAll(sb.String(), "|--", "| -")
 	return strings.ReplaceAll(v, "--|", "- |")
+}
+
+// Generates and returns an OpenFeature React SDK file content. It shells out to the OpenFeature CLI, writes
+// the SDK to a temp dir, and then reads and returns its content.
+func generateOpenFeatureReact(t *testing.T) string {
+	manifestPath := generateOpenFeatureManifest(t, Generate{React: true})
+	openFeatureBin := getOpenFeatureCLIBin(t)
+
+	outputDir := t.TempDir()
+
+	//nolint:gosec
+	cmd := exec.Command(openFeatureBin, "generate", "react",
+		"--manifest", manifestPath,
+		"--output", outputDir,
+		"--template", "openfeature_react.tmpl",
+		"--no-input",
+	)
+	out, err := cmd.CombinedOutput()
+	require.NoError(t, err, "openfeature generate react failed: %s", string(out))
+
+	//nolint:gosec
+	content, err := os.ReadFile(filepath.Join(outputDir, "openfeature.ts"))
+	require.NoError(t, err)
+	return string(content)
+}
+
+func getOpenFeatureCLIBin(t *testing.T) string {
+	modfile := filepath.Join("..", "..", "..", ".citools", "src", "openfeature", "go.mod")
+	getPath := exec.Command("go", "tool", "-n", "-modfile="+modfile, "openfeature") //nolint:gosec
+	getPath.Env = append(os.Environ(), "GOWORK=off")
+	binOut, err := getPath.Output()
+	require.NoError(t, err, "failed to resolve openfeature CLI via go tool")
+	bin := strings.TrimSpace(string(binOut))
+	return bin
+}
+
+// Generates an OpenFeature flags manifest file for flags matching the given generation target
+// and returns the path to that manifest.
+func generateOpenFeatureManifest(t *testing.T, requested Generate) string {
+	t.Helper()
+
+	type flagDef struct {
+		FlagType     string `json:"flagType"`
+		DefaultValue bool   `json:"defaultValue"`
+		Description  string `json:"description,omitempty"`
+	}
+	type manifest struct {
+		Schema string             `json:"$schema"`
+		Flags  map[string]flagDef `json:"flags"`
+	}
+
+	m := manifest{
+		Schema: "https://raw.githubusercontent.com/open-feature/cli/refs/heads/main/schema/v0/flag-manifest.json",
+		Flags:  make(map[string]flagDef),
+	}
+
+	for _, flag := range standardFeatureFlags {
+		shouldGenerate := (flag.Generate.Go && requested.Go) || (flag.Generate.React && requested.React)
+
+		if !shouldGenerate {
+			continue
+		}
+
+		m.Flags[flag.Name] = flagDef{
+			FlagType:     "boolean",
+			DefaultValue: flag.Expression == "true",
+			Description:  flag.Description,
+		}
+	}
+
+	manifestJSON, err := json.MarshalIndent(m, "", "  ")
+	require.NoError(t, err)
+
+	tmpDir := t.TempDir()
+	manifestPath := filepath.Join(tmpDir, "manifest.json")
+	require.NoError(t, os.WriteFile(manifestPath, append(manifestJSON, '\n'), 0600))
+	return manifestPath
 }

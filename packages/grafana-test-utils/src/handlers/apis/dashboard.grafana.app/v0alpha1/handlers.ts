@@ -1,7 +1,7 @@
 import { Chance } from 'chance';
 import { HttpResponse, http } from 'msw';
 
-import { DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 
 import { wellFormedTree } from '../../../../fixtures/folders';
 
@@ -38,6 +38,7 @@ export function getCustomSearchHandler(hits: DashboardHit[]) {
     const mappedTypeFilters = typeFilter.map((f) => typeMap[f] || f);
     const nameFilter = url.searchParams.getAll('name');
     const tagFilter = url.searchParams.getAll('tag');
+    const ownerReferenceFilter = url.searchParams.getAll('ownerReference');
     const offset = parseInt(url.searchParams.get('offset') || '', 10) || 0;
 
     const filters: HitFilterArray = [];
@@ -53,6 +54,12 @@ export function getCustomSearchHandler(hits: DashboardHit[]) {
 
     if (tagFilter.length > 0) {
       filters.push((hit) => Boolean(hit.tags?.some((tag) => tagFilter.includes(tag))));
+    }
+
+    if (ownerReferenceFilter.length > 0) {
+      filters.push((hit) =>
+        Boolean(hit.ownerReferences?.some((ownerReference) => ownerReferenceFilter.includes(ownerReference)))
+      );
     }
 
     if (folderFilter === 'general') {

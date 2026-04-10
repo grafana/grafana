@@ -7,24 +7,29 @@ import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1'
 import { AppEvents, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
 import { appEvents } from 'app/core/app_events';
 import { buildNotificationButton } from 'app/core/components/AppNotifications/NotificationButton';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
-import { setStarred } from 'app/core/reducers/navBarTree';
+import { setStarred, updateDashboardName } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AnnoKeyFolder, Resource, ResourceList } from 'app/features/apiserver/types';
+import { AnnoKeyFolder, type Resource, type ResourceList } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
-import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
+import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { dispatch } from 'app/store/store';
-import { PermissionLevel } from 'app/types/acl';
-import { ImportDashboardResponseDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
-import { DescendantCount, DescendantCountDTO, FolderDTO, FolderListItemDTO } from 'app/types/folders';
+import { type PermissionLevel } from 'app/types/acl';
+import { type ImportDashboardResponseDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
+import {
+  type DescendantCount,
+  type DescendantCountDTO,
+  type FolderDTO,
+  type FolderListItemDTO,
+} from 'app/types/folders';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
@@ -129,17 +134,20 @@ export const browseDashboardsAPI = createApi({
           parentUid,
         },
       }),
-      onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
-        queryFulfilled.then(async ({ data: folder }) => {
-          dispatch(
-            refetchChildren({
-              parentUID: parentUid,
-              pageSize: PAGE_SIZE,
-            })
-          );
-          // Refetch quota usage after mutations that change the total number of dashboards or folders
-          invalidateQuotaUsage(dispatch);
-        });
+      onQueryStarted: async ({ parentUid }, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+        } catch {
+          return; // Error handled by mutation caller
+        }
+        dispatch(
+          refetchChildren({
+            parentUID: parentUid,
+            pageSize: PAGE_SIZE,
+          })
+        );
+        // Refetch quota usage after mutations that change the total number of dashboards or folders
+        invalidateQuotaUsage(dispatch);
       },
     }),
 
@@ -471,10 +479,14 @@ export const browseDashboardsAPI = createApi({
         }
       },
 
-      onQueryStarted: ({ folderUid }, { queryFulfilled, dispatch }) => {
+      onQueryStarted: ({ folderUid, dashboard }, { queryFulfilled, dispatch }) => {
         dashboardWatcher.ignoreNextSave();
         queryFulfilled.then(async ({ data }) => {
-          await contextSrv.fetchUserPermissions();
+          try {
+            await contextSrv.fetchUserPermissions();
+          } catch (err) {
+            console.error('Failed to refresh user permissions after save', err);
+          }
           dispatch(
             refetchChildren({
               parentUID: folderUid,
@@ -484,6 +496,12 @@ export const browseDashboardsAPI = createApi({
           // version 1 means a newly created dashboard — only then does the resource count change
           if (data.version === 1) {
             invalidateQuotaUsage(dispatch);
+          }
+          // Update starred dashboard name in nav sidebar (no-ops if dashboard isn't starred)
+          const title = dashboard.title;
+          if (title && data.url) {
+            const url = locationUtil.stripBaseFromUrl(data.url);
+            dispatch(updateDashboardName({ id: data.uid, title, url }));
           }
         });
       },

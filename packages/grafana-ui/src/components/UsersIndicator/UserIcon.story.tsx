@@ -1,4 +1,4 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { UserIcon } from './UserIcon';
 import mdx from './UserIcon.mdx';

@@ -1,23 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import saveAs from 'file-saver';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
-import { FieldType, LogLevel, LogsDedupStrategy, LogsMetaItem, LogsMetaKind, store, toDataFrame } from '@grafana/data';
-import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
-import { config } from '@grafana/runtime';
-
-import { logRowsToReadableJson } from '../../logs/utils';
-import { extractFieldsTransformer } from '../../transformers/extractFields/extractFields';
+import { LogsDedupStrategy, type LogsMetaItem, LogsMetaKind, store } from '@grafana/data';
 
 import { LogsMetaRow } from './LogsMetaRow';
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  reportInteraction: () => null,
-}));
-
-jest.mock('file-saver', () => jest.fn());
 
 type LogsMetaRowProps = ComponentProps<typeof LogsMetaRow>;
 const defaultProps: LogsMetaRowProps = {
@@ -25,18 +11,16 @@ const defaultProps: LogsMetaRowProps = {
   dedupStrategy: LogsDedupStrategy.none,
   dedupCount: 0,
   displayedFields: [],
-  logRows: [],
   clearDisplayedFields: jest.fn(),
   defaultDisplayedFields: [],
   visualisationType: 'logs',
 };
 
-const setup = (propOverrides?: Partial<LogsMetaRowProps>, disableDownload = false) => {
+const setup = (propOverrides?: Partial<LogsMetaRowProps>) => {
   const props = {
     ...defaultProps,
     ...propOverrides,
   };
-  config.exploreHideLogsDownload = disableDownload;
 
   return render(<LogsMetaRow {...props} />);
 };
@@ -83,195 +67,6 @@ describe('LogsMetaRow', () => {
       })
     );
     expect(clearSpy).toBeCalled();
-  });
-
-  it('renders a button to show the download menu', () => {
-    setup();
-    expect(screen.getByText('Download').closest('button')).toBeInTheDocument();
-  });
-
-  it('does not render a button to show the download menu if disabled', async () => {
-    setup({}, true);
-    expect(screen.queryByText('Download')).toBeNull();
-  });
-
-  it('renders a button to show the download menu', async () => {
-    setup();
-
-    expect(screen.queryAllByText('txt')).toHaveLength(0);
-    await userEvent.click(screen.getByText('Download').closest('button')!);
-    expect(
-      screen.getByRole('menuitem', {
-        name: 'txt',
-      })
-    ).toBeInTheDocument();
-  });
-
-  it('renders a button to download txt', async () => {
-    setup();
-
-    await userEvent.click(screen.getByText('Download').closest('button')!);
-
-    await userEvent.click(
-      screen.getByRole('menuitem', {
-        name: 'txt',
-      })
-    );
-
-    expect(saveAs).toBeCalled();
-  });
-
-  it('renders a button to download json', async () => {
-    const rows = [
-      {
-        rowIndex: 1,
-        entryFieldIndex: 0,
-        dataFrame: toDataFrame({
-          name: 'logs',
-          fields: [
-            {
-              name: 'time',
-              type: FieldType.time,
-              values: ['1970-01-01T00:00:00Z'],
-            },
-            {
-              name: 'message',
-              type: FieldType.string,
-              values: ['INFO 1'],
-              labels: {
-                foo: 'bar',
-              },
-            },
-          ],
-        }),
-        entry: 'test entry',
-        hasAnsi: false,
-        hasUnescapedContent: false,
-        labels: {
-          foo: 'bar',
-        },
-        logLevel: LogLevel.info,
-        raw: '',
-        timeEpochMs: 10,
-        timeEpochNs: '123456789',
-        timeFromNow: '',
-        timeLocal: '',
-        timeUtc: '',
-        uid: '2',
-      },
-    ];
-    setup({ logRows: rows });
-
-    await userEvent.click(screen.getByText('Download').closest('button')!);
-
-    await userEvent.click(
-      screen.getByRole('menuitem', {
-        name: 'json',
-      })
-    );
-
-    expect(saveAs).toBeCalled();
-    const blob = (saveAs as unknown as jest.Mock).mock.lastCall[0];
-    expect(blob.type).toBe('application/json;charset=utf-8');
-    const text = await blob.text();
-    expect(text).toBe(JSON.stringify(logRowsToReadableJson(rows)));
-  });
-
-  it('renders a button to download CSV', async () => {
-    const transformers = [extractFieldsTransformer, organizeFieldsTransformer];
-    mockTransformationsRegistry(transformers);
-
-    const rows = [
-      {
-        rowIndex: 1,
-        entryFieldIndex: 0,
-        dataFrame: toDataFrame({
-          name: 'logs',
-          refId: 'A',
-          fields: [
-            {
-              name: 'time',
-              type: FieldType.time,
-              values: ['1970-01-01T00:00:00Z'],
-            },
-            {
-              name: 'message',
-              type: FieldType.string,
-              values: ['INFO 1'],
-              labels: {
-                foo: 'bar',
-              },
-            },
-          ],
-        }),
-        entry: 'test entry',
-        hasAnsi: false,
-        hasUnescapedContent: false,
-        labels: {
-          foo: 'bar',
-        },
-        logLevel: LogLevel.info,
-        raw: '',
-        timeEpochMs: 10,
-        timeEpochNs: '123456789',
-        timeFromNow: '',
-        timeLocal: '',
-        timeUtc: '',
-        uid: '2',
-      },
-      {
-        rowIndex: 2,
-        entryFieldIndex: 1,
-        dataFrame: toDataFrame({
-          name: 'logs',
-          refId: 'B',
-          fields: [
-            {
-              name: 'time',
-              type: FieldType.time,
-              values: [1],
-            },
-            {
-              name: 'message',
-              type: FieldType.string,
-              values: ['INFO 1'],
-              labels: {
-                foo: 'bar',
-              },
-            },
-          ],
-        }),
-        entry: 'test entry',
-        hasAnsi: false,
-        hasUnescapedContent: false,
-        labels: {
-          foo: 'bar',
-        },
-        logLevel: LogLevel.info,
-        raw: '',
-        timeEpochMs: 10,
-        timeEpochNs: '123456789',
-        timeFromNow: '',
-        timeLocal: '',
-        timeUtc: '',
-        uid: '2',
-      },
-    ];
-    setup({ logRows: rows });
-
-    await userEvent.click(screen.getByText('Download').closest('button')!);
-
-    await userEvent.click(
-      screen.getByRole('menuitem', {
-        name: 'csv',
-      })
-    );
-    expect(saveAs).toBeCalled();
-
-    const blob = (saveAs as unknown as jest.Mock).mock.lastCall[0];
-    expect(blob.type).toBe('text/csv;charset=utf-8');
-    const text = await blob.text();
-    expect(text).toBe(`"Date","time","message bar"\r\n1970-01-01T00:00:00.001Z,1,INFO 1`);
   });
 
   it('renders common labels', async () => {

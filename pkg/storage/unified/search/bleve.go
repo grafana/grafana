@@ -18,7 +18,6 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/blevesearch/bleve/v2"
-	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/blevesearch/bleve/v2/search"
@@ -315,7 +314,7 @@ func (b *bleveBackend) updateIndexSizeMetric(ctx context.Context, indexPath stri
 // newBleveIndex creates a new bleve index with consistent configuration.
 // If path is empty, creates an in-memory index.
 // If path is not empty, creates a file-based index at the specified path.
-func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time, buildVersion string) (bleve.Index, error) {
+func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time, buildVersion string, selectableFields []string) (bleve.Index, error) {
 	kvstore := bleve.Config.DefaultKVStore
 	if path == "" {
 		// use in-memory kvstore
@@ -327,8 +326,9 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 	}
 
 	bi := buildInfo{
-		BuildTime:    buildTime.Unix(),
-		BuildVersion: buildVersion,
+		BuildTime:        buildTime.Unix(),
+		BuildVersion:     buildVersion,
+		SelectableFields: selectableFields,
 	}
 
 	biBytes, err := json.Marshal(bi)
@@ -345,8 +345,9 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 }
 
 type buildInfo struct {
-	BuildTime    int64  `json:"build_time"`    // Unix seconds timestamp of time when the index was built
-	BuildVersion string `json:"build_version"` // Grafana version used when building the index
+	BuildTime        int64    `json:"build_time"`                  // Unix seconds timestamp of time when the index was built
+	BuildVersion     string   `json:"build_version"`               // Grafana version used when building the index
+	SelectableFields []string `json:"selectable_fields,omitempty"` // List of selectable fields used when index was created.
 }
 
 // BuildIndex builds an index from scratch or retrieves it from the filesystem.
@@ -472,7 +473,7 @@ func (b *bleveBackend) BuildIndex(
 					return nil, fmt.Errorf("invalid path %s", indexDir)
 				}
 
-				index, err = newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion)
+				index, err = newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion, selectableFields)
 				if errors.Is(err, bleve.ErrorIndexPathExists) {
 					now = now.Add(time.Second) // Bump time for next try
 					index = nil                // Bleve actually returns non-nil value with ErrorIndexPathExists
@@ -487,7 +488,7 @@ func (b *bleveBackend) BuildIndex(
 			defer closeIndexOnExit(index, indexDir) // Close index, and delete new index directory.
 		}
 	} else {
-		index, err = newBleveIndex("", mapper, time.Now(), b.opts.BuildVersion)
+		index, err = newBleveIndex("", mapper, time.Now(), b.opts.BuildVersion, selectableFields)
 		if err != nil {
 			return nil, fmt.Errorf("error creating new in-memory bleve index: %w", err)
 		}
@@ -899,8 +900,9 @@ func (b *bleveIndex) BuildInfo() (resource.IndexBuildInfo, error) {
 	}
 
 	return resource.IndexBuildInfo{
-		BuildTime:    bt,
-		BuildVersion: bv,
+		BuildTime:        bt,
+		BuildVersion:     bv,
+		SelectableFields: bi.SelectableFields,
 	}, nil
 }
 
@@ -1293,17 +1295,13 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 			if len(queryFields) == 0 {
 				queryFields = []*resourcepb.ResourceSearchRequest_QueryField{
 					{
-						Name:  resource.SEARCH_FIELD_TITLE,
-						Type:  resourcepb.QueryFieldType_KEYWORD,
-						Boost: 10, // exact match -- includes ngrams! If they lived on their own field, we could score them differently
-					}, {
-						Name:  resource.SEARCH_FIELD_TITLE,
-						Type:  resourcepb.QueryFieldType_TEXT,
-						Boost: 2, // standard analyzer (with ngrams!)
-					}, {
 						Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
+						Type:  resourcepb.QueryFieldType_KEYWORD,
+						Boost: 10, // exact title match (case-insensitive via pre-lowered title_phrase)
+					}, {
+						Name:  resource.SEARCH_FIELD_TITLE,
 						Type:  resourcepb.QueryFieldType_TEXT,
-						Boost: 5, // standard analyzer
+						Boost: 2, // standard analyzer (word-level matching with ngrams)
 					},
 				}
 			}
@@ -1319,10 +1317,9 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 					disjoin.AddQuery(q)
 
 				case resourcepb.QueryFieldType_KEYWORD:
-					q := bleve.NewMatchQuery(req.Query)
+					q := bleve.NewTermQuery(strings.ToLower(req.Query))
 					q.SetBoost(float64(field.Boost))
 					q.SetField(field.Name)
-					q.Analyzer = keyword.Name // don't analyze the query input - treat it as a single token
 					disjoin.AddQuery(q)
 
 				case resourcepb.QueryFieldType_PHRASE:
@@ -1631,7 +1628,20 @@ var exactTermFields = []string{
 func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, *resourcepb.ErrorResult) {
 	useExactTermQuery := slices.Contains(exactTermFields, req.Key) || strings.HasPrefix(req.Key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX)
 	switch selection.Operator(req.Operator) {
-	case selection.Equals, selection.DoubleEquals:
+	case selection.DoubleEquals:
+		// DoubleEquals does exact matching via TermQuery (single value only).
+		// For title, route to the pre-lowered title_phrase field.
+		if len(req.Values) == 1 {
+			key := req.Key
+			value := req.Values[0]
+			if key == resource.SEARCH_FIELD_TITLE {
+				key = resource.SEARCH_FIELD_TITLE_PHRASE
+				value = strings.ToLower(value)
+			}
+			return newExactTermsQuery(key, value, prefix), nil
+		}
+
+	case selection.Equals:
 		if len(req.Values) == 0 {
 			return query.NewMatchAllQuery(), nil
 		}

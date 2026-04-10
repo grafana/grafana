@@ -1,10 +1,10 @@
-import { from, Observable } from 'rxjs';
+import { from, type Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { DataQueryRequest, CustomVariableSupport, MetricFindValue } from '@grafana/data';
+import { type DataQueryRequest, CustomVariableSupport, type MetricFindValue } from '@grafana/data';
 
-import { TempoVariableQuery, TempoVariableQueryEditor } from './VariableQueryEditor';
-import { TempoDatasource } from './datasource';
+import { type TempoVariableQuery, TempoVariableQueryEditor } from './VariableQueryEditor';
+import { type TempoDatasource } from './datasource';
 
 export class TempoVariableSupport extends CustomVariableSupport<TempoDatasource, TempoVariableQuery> {
   editor = TempoVariableQueryEditor;

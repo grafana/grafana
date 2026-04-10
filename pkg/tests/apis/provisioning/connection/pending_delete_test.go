@@ -7,26 +7,19 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-// labelPendingDelete mirrors the constant defined in the connection controller
-// (pkg/registry/apis/provisioning/controller/labels.go) and written by the
-// tenant watcher (pkg/storage/unified/resource/tenant_watcher.go).
-const labelPendingDelete = "cloud.grafana.com/pending-delete"
 
 // TestIntegrationProvisioning_ConnectionPendingDeleteLabel_SkipsReconciliation verifies
 // that when a connection carries the pending-delete label the controller skips further
 // reconciliation – in particular it never advances ObservedGeneration for a soft-deleted
 // stack, which would otherwise happen within a few seconds of a spec change.
 func TestIntegrationProvisioning_ConnectionPendingDeleteLabel_SkipsReconciliation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 
 	const connName = "pending-delete-skip-conn"
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
@@ -86,7 +79,7 @@ func TestIntegrationProvisioning_ConnectionPendingDeleteLabel_SkipsReconciliatio
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	labels[labelPendingDelete] = "true"
+	labels[common.LabelPendingDelete] = "true"
 	obj.SetLabels(labels)
 
 	updatedObj, err := helper.Connections.Resource.Update(t.Context(), obj, metav1.UpdateOptions{})
@@ -115,7 +108,7 @@ func TestIntegrationProvisioning_ConnectionPendingDeleteLabel_SkipsReconciliatio
 	require.NoError(t, err)
 
 	labels = obj.GetLabels()
-	delete(labels, labelPendingDelete)
+	delete(labels, common.LabelPendingDelete)
 	obj.SetLabels(labels)
 
 	_, err = helper.Connections.Resource.Update(t.Context(), obj, metav1.UpdateOptions{})
@@ -136,4 +129,113 @@ func TestIntegrationProvisioning_ConnectionPendingDeleteLabel_SkipsReconciliatio
 			"connection should be healthy after label removal")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
 		"connection should reconcile successfully once the pending-delete label is removed")
+}
+
+// TestIntegrationProvisioning_ConnectionPendingDeleteAdmission verifies that the
+// admission webhook enforces pending-delete semantics on Connection resources.
+func TestIntegrationProvisioning_ConnectionPendingDeleteAdmission(t *testing.T) {
+	helper := sharedHelper(t)
+
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
+
+	makeConnObj := func(name string) *unstructured.Unstructured {
+		return &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      name,
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Pending Delete Admission Test",
+				"type":  "github",
+				"github": map[string]any{
+					"appID":          "123456",
+					"installationID": "454545",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+	}
+
+	// createConn creates a connection and returns immediately — no reconciliation wait.
+	// Sufficient for tests that exercise the admission webhook synchronously.
+	createConn := func(t *testing.T, name string) {
+		t.Helper()
+		_, err := helper.CreateGithubConnection(t, t.Context(), makeConnObj(name))
+		require.NoError(t, err)
+	}
+
+	t.Run("create with pending-delete label is forbidden", func(t *testing.T) {
+		connObj := makeConnObj("pd-conn-admission-create")
+		connObj.SetLabels(map[string]string{common.LabelPendingDelete: "true"})
+
+		_, err := helper.Connections.Resource.Create(t.Context(), connObj, metav1.CreateOptions{})
+		require.Error(t, err)
+		require.True(t, k8serrors.IsForbidden(err),
+			"expected Forbidden when creating a connection with the pending-delete label, got: %v", err)
+	})
+
+	t.Run("update blocked when both old and new have pending-delete label", func(t *testing.T) {
+		const connName = "pd-conn-admission-update-blocked"
+		createConn(t, connName)
+		common.SetPendingDeleteLabel(t, helper.Connections.Resource, connName)
+
+		// Always re-Get to avoid stale resourceVersion conflicts from concurrent status updates.
+		err := common.RetryOnConflict(func() error {
+			obj, err := helper.Connections.Resource.Get(t.Context(), connName, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			obj.Object["spec"].(map[string]interface{})["title"] = "Modified Title"
+			_, err = helper.Connections.Resource.Update(t.Context(), obj, metav1.UpdateOptions{})
+			return err
+		})
+		require.Error(t, err)
+		require.True(t, k8serrors.IsForbidden(err),
+			"expected Forbidden when mutating a pending-delete connection, got: %v", err)
+	})
+
+	t.Run("status subresource update allowed with pending-delete label", func(t *testing.T) {
+		const connName = "pd-conn-admission-status-update"
+		createConn(t, connName)
+		common.SetPendingDeleteLabel(t, helper.Connections.Resource, connName)
+
+		// Echo back the current object via UpdateStatus. The admission webhook must
+		// pass status-subresource requests through without a Forbidden rejection,
+		// regardless of whether the pending-delete label is set.
+		err := common.RetryOnConflict(func() error {
+			obj, err := helper.Connections.Resource.Get(t.Context(), connName, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			_, err = helper.Connections.Resource.UpdateStatus(t.Context(), obj, metav1.UpdateOptions{})
+			return err
+		})
+		require.NoError(t, err, "status subresource update must be allowed even when the pending-delete label is set")
+	})
+
+	t.Run("removing pending-delete label via update is allowed", func(t *testing.T) {
+		const connName = "pd-conn-admission-remove-label"
+		createConn(t, connName)
+		common.SetPendingDeleteLabel(t, helper.Connections.Resource, connName)
+
+		// Always re-Get to avoid stale resourceVersion conflicts from concurrent status updates.
+		err := common.RetryOnConflict(func() error {
+			obj, err := helper.Connections.Resource.Get(t.Context(), connName, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			labels := obj.GetLabels()
+			delete(labels, common.LabelPendingDelete)
+			obj.SetLabels(labels)
+			_, err = helper.Connections.Resource.Update(t.Context(), obj, metav1.UpdateOptions{})
+			return err
+		})
+		require.NoError(t, err, "removing the pending-delete label should be allowed")
+	})
 }

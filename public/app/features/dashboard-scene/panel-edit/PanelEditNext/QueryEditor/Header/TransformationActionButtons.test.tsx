@@ -1,17 +1,17 @@
 import { screen } from '@testing-library/react';
 
 import {
-  DataFrame,
-  DataTransformerInfo,
+  type DataFrame,
+  type DataTransformerInfo,
   FrameMatcherID,
   getDefaultTimeRange,
   LoadingState,
-  TransformerRegistryItem,
+  type TransformerRegistryItem,
 } from '@grafana/data';
 import { DataTopic } from '@grafana/schema';
 
-import { renderWithQueryEditorProvider } from '../testUtils';
-import { Transformation } from '../types';
+import { mockTransformToggles, renderWithQueryEditorProvider } from '../testUtils';
+import { type Transformation } from '../types';
 
 import { TransformationActionButtons } from './TransformationActionButtons';
 
@@ -59,6 +59,56 @@ describe('TransformationActionButtons', () => {
     });
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  describe('help and debug actions', () => {
+    it('shows transformation help button when help metadata exists and toggles help', async () => {
+      const toggleHelp = jest.fn();
+      const transformation = makeTransformation({
+        registryItem: { ...mockRegistryItem, help: 'https://example.test/help' } as TransformerRegistryItem,
+      });
+
+      const { user } = renderWithQueryEditorProvider(<TransformationActionButtons />, {
+        selectedTransformation: transformation,
+        uiStateOverrides: {
+          transformToggles: { ...mockTransformToggles, showHelp: false, toggleHelp },
+        },
+      });
+
+      await user.click(screen.getByRole('button', { name: /show transformation help/i }));
+
+      expect(toggleHelp).toHaveBeenCalledTimes(1);
+    });
+
+    it('uses "Hide transformation help" label when help is expanded', () => {
+      const transformation = makeTransformation({
+        registryItem: { ...mockRegistryItem, help: 'https://example.test/help' } as TransformerRegistryItem,
+      });
+
+      renderWithQueryEditorProvider(<TransformationActionButtons />, {
+        selectedTransformation: transformation,
+        uiStateOverrides: {
+          transformToggles: { ...mockTransformToggles, showHelp: true },
+        },
+      });
+
+      expect(screen.getByRole('button', { name: /hide transformation help/i })).toBeInTheDocument();
+    });
+
+    it('always renders debug button and toggles debug mode', async () => {
+      const toggleDebug = jest.fn();
+
+      const { user } = renderWithQueryEditorProvider(<TransformationActionButtons />, {
+        selectedTransformation: makeTransformation(),
+        uiStateOverrides: {
+          transformToggles: { ...mockTransformToggles, showDebug: false, toggleDebug },
+        },
+      });
+
+      await user.click(screen.getByRole('button', { name: /debug/i }));
+
+      expect(toggleDebug).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('filter button visibility', () => {
@@ -211,6 +261,35 @@ describe('TransformationActionButtons', () => {
         options: {},
         topic: DataTopic.Annotations,
       });
+    });
+  });
+
+  describe('debug button behaviour', () => {
+    it('always shows the debug action for a selected transformation', () => {
+      renderWithQueryEditorProvider(<TransformationActionButtons />, {
+        selectedTransformation: makeTransformation(),
+      });
+
+      expect(screen.getByRole('button', { name: /debug/i })).toBeInTheDocument();
+    });
+
+    it('toggles debug mode when clicked', async () => {
+      const toggleDebug = jest.fn();
+      const { user } = renderWithQueryEditorProvider(<TransformationActionButtons />, {
+        selectedTransformation: makeTransformation(),
+        uiStateOverrides: {
+          transformToggles: {
+            showHelp: false,
+            toggleHelp: jest.fn(),
+            showDebug: false,
+            toggleDebug,
+          },
+        },
+      });
+
+      await user.click(screen.getByRole('button', { name: /debug/i }));
+
+      expect(toggleDebug).toHaveBeenCalledTimes(1);
     });
   });
 });

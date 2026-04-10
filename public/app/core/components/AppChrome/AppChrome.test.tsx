@@ -1,15 +1,14 @@
-import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { KBarProvider } from 'kbar';
-import { ReactNode } from 'react';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { type ReactNode } from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { render, screen, waitFor, act, getWrapper } from 'test/test-utils';
 
-import { config, setBackendSrv } from '@grafana/runtime';
-import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
-import server, { setupMockServer } from '@grafana/test-utils/server';
+import { type DataFrame, DataFrameView, FieldType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { type DashboardQueryResult, type QueryResponse } from 'app/features/search/service/types';
 
 import { Page } from '../Page/Page';
 
@@ -45,15 +44,15 @@ const setup = (children: ReactNode) => {
   ];
 
   const context = getGrafanaContextMock();
+  const wrapper = getWrapper({ grafanaContext: context, renderWithRouter: true });
 
   const renderResult = render(
     <KBarProvider>
-      <TestProvider grafanaContext={context}>
-        <AppChrome>
-          <div data-testid="page-children">{children}</div>
-        </AppChrome>
-      </TestProvider>
-    </KBarProvider>
+      <AppChrome>
+        <div data-testid="page-children">{children}</div>
+      </AppChrome>
+    </KBarProvider>,
+    { wrapper }
   );
 
   return { renderResult, context };
@@ -80,6 +79,22 @@ describe('AppChrome', () => {
     expect(skipLink).toHaveFocus();
     await userEvent.keyboard('{tab}');
     expect(await screen.findByRole('button', { name: 'Main menu' })).toHaveFocus();
+  });
+
+  it('should move focus to main content on every skip link activation', async () => {
+    setup(<Page navId="child1">Children</Page>);
+    const skipLink = await screen.findByRole('link', { name: 'Skip to main content' });
+    const mainContent = document.getElementById('pageContent')!;
+
+    await userEvent.click(skipLink);
+    expect(mainContent).toHaveFocus();
+
+    // Tab away, then activate the skip link a second time
+    await userEvent.tab();
+    expect(mainContent).not.toHaveFocus();
+
+    await userEvent.click(skipLink);
+    expect(mainContent).toHaveFocus();
   });
 
   it('should not render a skip link if the page is chromeless', async () => {

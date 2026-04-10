@@ -3,6 +3,8 @@ import { Tooltip } from './Tooltip';
 
 # Tooltip
 
+Tooltips display additional information upon hover or focus. The information included should be contextual, helpful, and non-critical to the user's task-at-hand. The information should be concise and provide clarity to the user.
+
 ## Theme
 
 There are currently themes available for the Tooltip.
@@ -22,5 +24,92 @@ Tooltip with a red background.
 ### Info alternative
 
 We added this to be able to add a `<JSONFormatter />` in the tooltip.
+
+## Do's
+
+- Provide supportive, explanatory text for icons (i.e. "search" as a label for a magnifying glass icon).
+- Offer concise information about the intended use of an element.
+- Allow tooltips to be triggered by keyboard navigation.
+- Use arrows to indicate which element the tooltip relates to.
+- Use tooltips consistently (i.e., all icon buttons have them, all tooltips are styled the same).
+- Use ARIA tags when building tooltips to ensure they are accessible.
+
+## Don'ts
+
+- Do not house information critical to a user's task completion in the tooltip.
+- Do not duplicate information such as labels for calls to action, as this creates information pollution.
+- Do not use interactive components within a tooltip.
+- Do not force the user to dismiss the tooltip.
+
+## Variants
+
+| Variants               | Purpose                                                |
+| ---------------------- | ------------------------------------------------------ |
+| **Info (aka default)** | Provides contextual supportive information to the user |
+| **Info-alt**           | Not sure on what this is                               |
+| **Error**              | Acts as inline validation                              |
+
+## Accessibility
+
+- Use ARIA tags when building tooltips to ensure they are accessible:
+- Use `aria-labelledby` if the tooltip acts as a primary label (i.e., to name an IconButton action).
+- Use `aria-describedby` if the tooltip acts as a supporting label (i.e., to provide additional information on an input).
+- Tooltips must be visible when their trigger is tabbed to or focused on via keyboard navigation.
+
+## Formatting
+
+### Anatomy
+
+![Image calling out parts of the tooltip](./images/tooltip.anatomy.png 'Image calling out parts of the tooltip')
+
+1. **Trigger** -- The UI control users interact with to display tooltips.
+2. **Tip** -- The triangle piece that points to the trigger element.
+3. **Body** -- The container that houses the content of the tooltip.
+
+### Placement
+
+- Auto: Displays tooltip on the side with most space available.
+  - Auto-start: Aligns to the top of the trigger.
+  - Auto: Aligns to the center of the trigger.
+  - Auto-end: Aligns to the bottom of the trigger.
+- Top:
+  - Top-Left
+  - Top-Center
+  - Top-Right
+- Bottom:
+  - Bottom-Left
+  - Bottom-Center
+  - Bottom-Right
+- Left:
+  - Left-Top
+  - Left-Center
+  - Left-Bottom
+- Right:
+  - Right-Top
+  - Right-Center
+  - Right-Bottom
+
+## Behaviors
+
+### Triggers
+
+- Icons (commonly information icon)
+- Buttons
+- Links
+
+### User Interactions
+
+Tooltips are triggered when the mouse hovers over or focuses on the UI trigger. The tooltip persists as long as the mouse remains over the active container or the UI trigger, or there is focus on the active container or UI trigger. The tooltip is dismissed by hovering away or moving focus to another element.
+
+## Related
+
+If interactive elements are needed, consider using a [Toggletip](/docs/overlays-toggletip--docs).
+
+## Further Reading
+
+- [Inclusive Components; Tooltips and Toggletips](https://inclusive-components.design/tooltips-toggletips/)
+- [NNG; Tooltip Guidelines](https://www.nngroup.com/articles/tooltip-guidelines/)
+- [Using the aria-describedby property to provide a descriptive label for user interface controls](https://www.w3.org/WAI/WCAG21/Techniques/aria/ARIA1)
+- [Providing Accessible Names and Descriptions](https://www.w3.org/WAI/ARIA/apg/practices/names-and-descriptions/)
 
 <ArgTypes of={Tooltip} />

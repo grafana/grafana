@@ -1,9 +1,9 @@
 import { act, render, screen } from '@testing-library/react';
-import userEvent, { UserEvent } from '@testing-library/user-event';
+import userEvent, { type UserEvent } from '@testing-library/user-event';
 import React from 'react';
 
-import { MultiCombobox, MultiComboboxProps } from './MultiCombobox';
-import { ComboboxOption } from './types';
+import { MultiCombobox, type MultiComboboxProps } from './MultiCombobox';
+import { type ComboboxOption } from './types';
 import { DEBOUNCE_TIME_MS } from './useOptions';
 
 describe('MultiCombobox', () => {
@@ -209,6 +209,22 @@ describe('MultiCombobox', () => {
     expect(onChange).toHaveBeenCalledWith(options.filter((o) => o.value !== 'a'));
   });
 
+  it('should remove value when clicking on the close icon of the pill when pills are collapsed due to width constraint', async () => {
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+      { label: 'C', value: 'c' },
+      { label: 'D', value: 'd' },
+    ];
+    const onChange = jest.fn();
+    render(<MultiCombobox width={40} options={options} value={['a', 'b', 'c', 'd']} onChange={onChange} />);
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    const removeButton = await screen.findByRole('button', { name: 'Remove D' });
+    await user.click(removeButton);
+    expect(onChange).toHaveBeenCalledWith(options.filter((o) => o.value !== 'd'));
+  });
+
   it('should remove all selected items when clicking on clear all button', async () => {
     const options = [
       { label: 'A', value: 'a' },
@@ -300,6 +316,32 @@ describe('MultiCombobox', () => {
       const checkbox = screen.getByTestId(`combobox-option-${options[0].value}-checkbox`);
       expect(checkbox).toBeInTheDocument();
       expect(checkbox).not.toBeChecked();
+    });
+  });
+
+  describe('duplicate and undefined values', () => {
+    it('should render only unique pills when value array contains duplicates', () => {
+      const options = [
+        { label: 'A', value: 'a' },
+        { label: 'B', value: 'b' },
+        { label: 'C', value: 'c' },
+      ];
+      render(<MultiCombobox width={200} options={options} value={['a', 'a', 'b']} onChange={jest.fn()} />);
+      expect(screen.getByText('A')).toBeInTheDocument();
+      expect(screen.getByText('B')).toBeInTheDocument();
+      expect(screen.queryByText('C')).not.toBeInTheDocument();
+      expect(screen.getAllByText('A')).toHaveLength(1);
+    });
+
+    it('should render fallback pills for duplicate values not present in options', () => {
+      const options = [
+        { label: 'A', value: 'a' },
+        { label: 'B', value: 'b' },
+      ];
+      render(<MultiCombobox width={200} options={options} value={['d', 'd', 'a']} onChange={jest.fn()} />);
+      expect(screen.getByText('A')).toBeInTheDocument();
+      // 'd' is not in options but should appear once as a fallback pill, not twice
+      expect(screen.getAllByText('d')).toHaveLength(1);
     });
   });
 
