@@ -215,3 +215,29 @@ func TestMapper_AnnotationSubresource_ActionSets(t *testing.T) {
 		})
 	}
 }
+
+// TestPlaylistMapping verifies that playlist.grafana.app uses the simplified 2-action model:
+// all write verbs map to playlists:write (no separate :create or :delete actions).
+func TestPlaylistMapping(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("playlist.grafana.app", "playlists", "")
+	require.True(t, ok, "playlist.grafana.app/playlists should be registered in the mapper")
+
+	readVerbs := []string{utils.VerbGet, utils.VerbList, utils.VerbWatch}
+	for _, verb := range readVerbs {
+		action, ok := mapping.Action(verb)
+		require.True(t, ok, "verb %q should have a mapping", verb)
+		assert.Equal(t, "playlists:read", action, "verb %q should map to playlists:read", verb)
+	}
+
+	writeVerbs := []string{utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection}
+	for _, verb := range writeVerbs {
+		action, ok := mapping.Action(verb)
+		require.True(t, ok, "verb %q should have a mapping", verb)
+		assert.Equal(t, "playlists:write", action, "verb %q should map to playlists:write (not :create or :delete)", verb)
+	}
+
+	// Playlists have no folder support and no action sets
+	assert.False(t, mapping.HasFolderSupport())
+}

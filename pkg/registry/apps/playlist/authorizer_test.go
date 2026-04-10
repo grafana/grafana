@@ -2,16 +2,15 @@ package playlist
 
 import (
 	"context"
-	"strings"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -24,8 +23,33 @@ type mockAttributes struct {
 
 func (m *mockAttributes) IsResourceRequest() bool { return m.isResourceRequest }
 func (m *mockAttributes) GetVerb() string         { return m.verb }
+func (m *mockAttributes) GetAPIGroup() string     { return "playlist.grafana.app" }
+func (m *mockAttributes) GetResource() string     { return "playlists" }
+func (m *mockAttributes) GetNamespace() string    { return "default" }
+func (m *mockAttributes) GetName() string         { return "" }
+func (m *mockAttributes) GetSubresource() string  { return "" }
+func (m *mockAttributes) GetPath() string         { return "" }
 
-func installerWithToggle(on bool, ac accesscontrol.AccessControl) *AppInstaller {
+// mockAccessClient implements authlib.AccessClient for testing
+type mockAccessClient struct {
+	allowed      bool
+	lastCheckReq authlib.CheckRequest
+}
+
+func (m *mockAccessClient) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+	m.lastCheckReq = req
+	return authlib.CheckResponse{Allowed: m.allowed}, nil
+}
+
+func (m *mockAccessClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return nil, authlib.NoopZookie{}, nil
+}
+
+func (m *mockAccessClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	return authlib.BatchCheckResponse{}, nil
+}
+
+func installerWithToggle(on bool, ac authlib.AccessClient) *AppInstaller {
 	var features featuremgmt.FeatureToggles
 	if on {
 		features = featuremgmt.WithFeatures(featuremgmt.FlagPlaylistsRBAC)
@@ -33,139 +57,63 @@ func installerWithToggle(on bool, ac accesscontrol.AccessControl) *AppInstaller 
 		features = featuremgmt.WithFeatures()
 	}
 	return &AppInstaller{
-		features:      features,
-		accessControl: ac,
-		logger:        log.NewNopLogger(),
+		features:     features,
+		accessClient: ac,
+		logger:       log.NewNopLogger(),
 	}
 }
-
-// mockAccessControl implements accesscontrol.AccessControl for testing
-type mockAccessControl struct {
-	accesscontrol.AccessControl
-	evaluateFunc func(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error)
-}
-
-func (m *mockAccessControl) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
-	if m.evaluateFunc != nil {
-		return m.evaluateFunc(ctx, user, evaluator)
-	}
-	return false, nil
-}
-
-func (m *mockAccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
-}
-
-func (m *mockAccessControl) WithoutResolvers() accesscontrol.AccessControl {
-	return m
-}
-
-func (m *mockAccessControl) InvalidateResolverCache(orgID int64, scope string) {}
 
 func TestGetAuthorizer(t *testing.T) {
 	tests := []struct {
 		name             string
 		verb             string
 		isResourceReq    bool
-		hasPermission    bool
+		allowed          bool
 		withoutUser      bool
 		expectedDecision authorizer.Decision
-		expectedAction   string
-		expectedReason   string
 	}{
-		// Read verbs → playlists:read
 		{
-			name:             "get with read permission allows",
+			name:             "get with permission allows",
 			verb:             "get",
 			isResourceReq:    true,
-			hasPermission:    true,
+			allowed:          true,
 			expectedDecision: authorizer.DecisionAllow,
-			expectedAction:   ActionPlaylistsRead,
 		},
 		{
-			name:             "get without read permission denies",
+			name:             "get without permission denies",
 			verb:             "get",
 			isResourceReq:    true,
-			hasPermission:    false,
+			allowed:          false,
 			expectedDecision: authorizer.DecisionDeny,
-			expectedAction:   ActionPlaylistsRead,
-			expectedReason:   "insufficient permissions",
 		},
 		{
-			name:             "list with read permission allows",
+			name:             "list with permission allows",
 			verb:             "list",
 			isResourceReq:    true,
-			hasPermission:    true,
+			allowed:          true,
 			expectedDecision: authorizer.DecisionAllow,
-			expectedAction:   ActionPlaylistsRead,
 		},
 		{
-			name:             "watch with read permission allows",
-			verb:             "watch",
-			isResourceReq:    true,
-			hasPermission:    true,
-			expectedDecision: authorizer.DecisionAllow,
-			expectedAction:   ActionPlaylistsRead,
-		},
-		// Write verbs → playlists:write
-		{
-			name:             "create with write permission allows",
+			name:             "create with permission allows",
 			verb:             "create",
 			isResourceReq:    true,
-			hasPermission:    true,
+			allowed:          true,
 			expectedDecision: authorizer.DecisionAllow,
-			expectedAction:   ActionPlaylistsWrite,
 		},
 		{
-			name:             "create without write permission denies",
+			name:             "create without permission denies",
 			verb:             "create",
 			isResourceReq:    true,
-			hasPermission:    false,
+			allowed:          false,
 			expectedDecision: authorizer.DecisionDeny,
-			expectedAction:   ActionPlaylistsWrite,
-			expectedReason:   "insufficient permissions",
 		},
 		{
-			name:             "update with write permission allows",
-			verb:             "update",
-			isResourceReq:    true,
-			hasPermission:    true,
-			expectedDecision: authorizer.DecisionAllow,
-			expectedAction:   ActionPlaylistsWrite,
-		},
-		{
-			name:             "patch with write permission allows",
-			verb:             "patch",
-			isResourceReq:    true,
-			hasPermission:    true,
-			expectedDecision: authorizer.DecisionAllow,
-			expectedAction:   ActionPlaylistsWrite,
-		},
-		{
-			name:             "delete with write permission allows",
+			name:             "delete with permission allows",
 			verb:             "delete",
 			isResourceReq:    true,
-			hasPermission:    true,
+			allowed:          true,
 			expectedDecision: authorizer.DecisionAllow,
-			expectedAction:   ActionPlaylistsWrite,
 		},
-		{
-			name:             "delete without write permission denies",
-			verb:             "delete",
-			isResourceReq:    true,
-			hasPermission:    false,
-			expectedDecision: authorizer.DecisionDeny,
-			expectedAction:   ActionPlaylistsWrite,
-			expectedReason:   "insufficient permissions",
-		},
-		{
-			name:             "deletecollection with write permission allows",
-			verb:             "deletecollection",
-			isResourceReq:    true,
-			hasPermission:    true,
-			expectedDecision: authorizer.DecisionAllow,
-			expectedAction:   ActionPlaylistsWrite,
-		},
-		// Edge cases
 		{
 			name:             "non-resource request returns no opinion",
 			verb:             "get",
@@ -173,39 +121,18 @@ func TestGetAuthorizer(t *testing.T) {
 			expectedDecision: authorizer.DecisionNoOpinion,
 		},
 		{
-			name:             "unsupported verb denies",
-			verb:             "unsupported",
-			isResourceReq:    true,
-			hasPermission:    true,
-			expectedDecision: authorizer.DecisionDeny,
-			expectedReason:   "unsupported verb: unsupported",
-		},
-		{
-			name:             "missing user denies",
+			name:             "missing identity denies",
 			verb:             "get",
 			isResourceReq:    true,
 			withoutUser:      true,
 			expectedDecision: authorizer.DecisionDeny,
-			expectedReason:   "valid user is required",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var evaluatedAction string
-			mockAC := &mockAccessControl{
-				evaluateFunc: func(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
-					evalStr := evaluator.String()
-					if strings.Contains(evalStr, ActionPlaylistsRead) {
-						evaluatedAction = ActionPlaylistsRead
-					} else if strings.Contains(evalStr, ActionPlaylistsWrite) {
-						evaluatedAction = ActionPlaylistsWrite
-					}
-					return tt.hasPermission, nil
-				},
-			}
-
-			installer := installerWithToggle(true, mockAC)
+			mockClient := &mockAccessClient{allowed: tt.allowed}
+			installer := installerWithToggle(true, mockClient)
 
 			attrs := &mockAttributes{
 				isResourceRequest: tt.isResourceReq,
@@ -214,15 +141,17 @@ func TestGetAuthorizer(t *testing.T) {
 
 			ctx := context.Background()
 			if !tt.withoutUser {
-				ctx = identity.WithRequester(ctx, &identity.StaticRequester{
+				user := &identity.StaticRequester{
 					OrgID:   1,
 					UserID:  1,
 					OrgRole: identity.RoleViewer,
-				})
+				}
+				ctx = identity.WithRequester(ctx, user)
+				ctx = authlib.WithAuthInfo(ctx, user)
 			}
 
 			auth := installer.GetAuthorizer()
-			decision, reason, err := auth.Authorize(ctx, attrs)
+			decision, _, err := auth.Authorize(ctx, attrs)
 
 			if tt.withoutUser && tt.isResourceReq {
 				require.Error(t, err)
@@ -231,19 +160,18 @@ func TestGetAuthorizer(t *testing.T) {
 			}
 
 			assert.Equal(t, tt.expectedDecision, decision)
-			if tt.expectedReason != "" {
-				assert.Contains(t, reason, tt.expectedReason)
-			}
-			if tt.isResourceReq && !tt.withoutUser && tt.expectedAction != "" && tt.verb != "unsupported" {
-				assert.Equal(t, tt.expectedAction, evaluatedAction)
+
+			// Verify the verb is passed through to the access client
+			if tt.isResourceReq && !tt.withoutUser {
+				assert.Equal(t, tt.verb, mockClient.lastCheckReq.Verb)
 			}
 		})
 	}
 }
 
 func TestGetAuthorizerToggleOff(t *testing.T) {
-	mockAC := &mockAccessControl{}
-	installer := installerWithToggle(false, mockAC)
+	mockClient := &mockAccessClient{}
+	installer := installerWithToggle(false, mockClient)
 	auth := installer.GetAuthorizer()
 
 	noneCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{

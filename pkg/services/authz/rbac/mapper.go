@@ -364,6 +364,26 @@ func NewMapperRegistry() MapperRegistry {
 			// No actionSetMapping — dashboard action sets don't apply to org-level annotations.
 			"annotations": newResourceTranslation("annotations", "type", false, nil),
 		},
+		// Playlists use a simplified 2-action model: all write verbs map to playlists:write
+		// (no separate :create or :delete actions). Scope is skipped — permissions are org-wide.
+		"playlist.grafana.app": {
+			"playlists": translation{
+				resource:  "playlists",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:              "playlists:read",
+					utils.VerbList:             "playlists:read",
+					utils.VerbWatch:            "playlists:read",
+					utils.VerbCreate:           "playlists:write",
+					utils.VerbUpdate:           "playlists:write",
+					utils.VerbPatch:            "playlists:write",
+					utils.VerbDelete:           "playlists:write",
+					utils.VerbDeleteCollection: "playlists:write",
+				},
+				folderSupport:   false,
+				skipScopeOnVerb: skipScopeOnAllVerbs,
+			},
+		},
 	})
 
 	return mapper
