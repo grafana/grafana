@@ -88,6 +88,7 @@ Agents often do well at **regression tests** when pointed at a **specific fix** 
 
 - **Prefer `toEqual` / `toMatchObject`** on the fields and metadata that matter for each scenario (transform output, field config, links). This matches maintenance expectations for visualization data prep (see heatmap `fields.test.ts` patterns).
 - **Avoid large `toMatchSnapshot()`** for structured objects unless the team explicitly wants regression dumps; when replacing snapshots, use **`toMatchObject`** for partial shapes (this repo does not use jest-extended `toContainObject`).
+- **Avoid `expect(…).toHaveStyle(…)`** unless it is strictly necessary. Styling is volatile (theme tokens, Emotion-generated class names, refactors). Prefer **`toBeVisible()`**, **roles**, **accessible names**, **text content**, or **`data-testid`** + behavior-level checks. Reserve `toHaveStyle` for cases where the **contract under test is literally CSS** (e.g. a regression on a specific inline style or computed fill) and a more stable assertion is not available.
 
 ## Layered tests (unit vs integration)
 
