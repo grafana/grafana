@@ -6888,7 +6888,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "A szabályok megjelenítése/elrejtése nem fog működni",
@@ -8565,7 +8570,6 @@
       "give-feedback": "Visszajelzés küldése"
     },
     "logs-meta-row": {
-      "download": "Letöltés",
       "label": {
         "deduplication-count": "Duplikátumtörlések száma",
         "showing-only-selected-fields": "Csak a kijelölt mezők megjelenítése"
@@ -8920,22 +8924,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "Eredmények megjelenítése a naplók vizualizációjában",
-        "show-results-in-table-visualisation": "Eredmények megjelenítése a táblázat vizualizációjában",
-        "show-results-newest-to-oldest": "Eredmények megjelenítése a legújabbtól a legrégebbiig",
-        "show-results-oldest-to-newest": "Eredmények megjelenítése a legrégebbitől a legújabbig"
+        "show-results-in-table-visualisation": "Eredmények megjelenítése a táblázat vizualizációjában"
       },
       "label": {
         "logs": "Naplók",
-        "newest-first": "Újabbat előre",
-        "oldest-first": "Régebbit előre",
         "table": "Táblázat"
       },
-      "label-deduplication": "Duplikálás megszüntetése",
-      "label-display-results": "Eredmények megjelenítése",
-      "label-prettify-json": "JSON szépítése",
-      "label-time": "Idő",
-      "label-unique-labels": "Egyedi címkék",
-      "label-wrap-lines": "Sortörés",
       "title-feedback": "Visszajelzés",
       "title-logs": "Naplók",
       "title-logs-volume": "Naplómennyiség"
@@ -9030,8 +9024,7 @@
       "tooltip-s-m-h": "10 mp., 1 p., 30 p., 1 ó."
     },
     "sql-expr": {
-      "button-run-query": "Lekérdezés futtatása",
-      "tooltip-experimental": "Az SQL-kifejezések LLM-integrációja kísérleti jellegű. Kérjük, jelentse az esetleges problémákat a Grafana csapatának."
+      "button-run-query": "Lekérdezés futtatása"
     },
     "sql-schema": {
       "error-title": "Hiba",
@@ -11442,9 +11435,6 @@
       },
       "wrap-lines": "Sortörés"
     },
-    "logs-navigation": {
-      "scroll-top": "Görgetés a tetejére"
-    },
     "logs-panel": {
       "render-common-labels": {
         "common-labels": "Közös címkék:"
@@ -12237,7 +12227,7 @@
     },
     "quick-add": {
       "aria-label": "Új",
-      "new-template-dashboard-button": "Irányítópult sablonból"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "Újdonságok a blogról"
   },
@@ -13391,6 +13381,7 @@
       "token-label": "Projekthozzáférési token",
       "token-required": "A GitLab-token megadása kötelező",
       "url-description": "A GitLab-adattár URL-címe",
+      "url-pattern": "",
       "url-required": "Az adattár URL-címének megadása kötelező"
     },
     "history-view": {
@@ -14831,19 +14822,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "Az SQL-javaslatok generálásához adjon hozzá legalább egy adatlekérdezést",
-    "ai-explain-title": "MI-alapú SQL-kifejezés magyarázata",
-    "ai-suggestions-title": "MI-alapú SQL-kifejezési javaslatok",
-    "apply": "Alkalmaz",
-    "code-label": "{{ language }}",
-    "copy": "Másolás",
-    "explain-empty-query-tooltip": "A magyarázathoz adjon meg egy SQL-kifejezést",
     "explain-query": "Lekérdezés magyarázata",
-    "explanation-modal-title": "SQL-lekérdezés magyarázata",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "SQL-javaslatok előzményei",
-    "suggestions": "Javaslatok",
-    "view-explanation": "Magyarázat megtekintése"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "Megjelölés kedvencként",

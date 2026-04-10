@@ -886,10 +886,6 @@ const (
 	// Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
 	FlagDatasourcesApiServerEnableHealthEndpoint = "datasourcesApiServerEnableHealthEndpoint"
 
-	// FlagAnalyticsFramework
-	// Enables new analytics framework
-	FlagAnalyticsFramework = "analyticsFramework"
-
 	// FlagDatasourcesApiServerEnableHealthEndpointRedirect
 	// Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.
 	FlagDatasourcesApiServerEnableHealthEndpointRedirect = "datasourcesApiServerEnableHealthEndpointRedirect"
@@ -897,10 +893,6 @@ const (
 	// FlagAdvisorDatasourceIntegration
 	// Enables the advisor report integration with datasource pages
 	FlagAdvisorDatasourceIntegration = "advisorDatasourceIntegration"
-
-	// FlagInlineLogDetailsNoScrolls
-	// Enables an inline version of Log Details that creates no new scrolls
-	FlagInlineLogDetailsNoScrolls = "inlineLogDetailsNoScrolls"
 
 	// FlagColorblindThemes
 	// Enables the new colorblind-friendly themes
@@ -937,4 +929,12 @@ const (
 	// FlagCompiledBootScript
 	// Boots the frontend using the boot.js script built from TS instead of the embedded boot script
 	FlagCompiledBootScript = "compiledBootScript"
+
+	// FlagInfluxDBConfigValidation
+	// Enables validation on the InfluxDB data source configuration page
+	FlagInfluxDBConfigValidation = "influxDBConfigValidation"
+
+	// FlagClickHouseConfigValidation
+	// Enables validation on the ClickHouse data source configuration page
+	FlagClickHouseConfigValidation = "clickHouseConfigValidation"
 )

@@ -159,11 +159,6 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
-  * Allow setting folder metadata for provisioned folders
-  * @default true
-  */
-  provisioningFolderMetadata?: boolean;
-  /**
   * Enable export functionality for provisioned resources
   * @default false
   */
@@ -1030,11 +1025,6 @@ export interface FeatureToggles {
   */
   newShareReportDrawer?: boolean;
   /**
-  * Disable pre-loading app plugins when the request is coming from the renderer
-  * @default false
-  */
-  rendererDisableAppPluginsPreload?: boolean;
-  /**
   * Enables SRI checks for Grafana JavaScript assets
   * @default false
   */
@@ -1637,11 +1627,6 @@ export interface FeatureToggles {
   */
   frontendServiceUseSettingsService?: boolean;
   /**
-  * Whether to use the new SharedPreferences functional component
-  * @default false
-  */
-  functionalSharedPreferences?: boolean;
-  /**
   * Enables managed plugins v2 (expanded rollout, community plugin coverage)
   * @default false
   */
@@ -1771,4 +1756,14 @@ export interface FeatureToggles {
   * @default false
   */
   compiledBootScript?: boolean;
+  /**
+  * Enables validation on the InfluxDB data source configuration page
+  * @default false
+  */
+  influxDBConfigValidation?: boolean;
+  /**
+  * Enables validation on the ClickHouse data source configuration page
+  * @default false
+  */
+  clickHouseConfigValidation?: boolean;
 }

@@ -6856,7 +6856,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "顯示／隱藏規則將無法運作",
@@ -8522,7 +8527,6 @@
       "give-feedback": "提供意見回饋"
     },
     "logs-meta-row": {
-      "download": "下載",
       "label": {
         "deduplication-count": "去除重複項目計數",
         "showing-only-selected-fields": "僅顯示選取的欄位"
@@ -8875,22 +8879,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "在日誌視覺化中顯示結果",
-        "show-results-in-table-visualisation": "在表格視覺化中顯示結果",
-        "show-results-newest-to-oldest": "顯示結果（最新至最舊）",
-        "show-results-oldest-to-newest": "顯示結果（最舊至最新）"
+        "show-results-in-table-visualisation": "在表格視覺化中顯示結果"
       },
       "label": {
         "logs": "紀錄",
-        "newest-first": "最新排前",
-        "oldest-first": "最舊排前",
         "table": "表格"
       },
-      "label-deduplication": "重複資料",
-      "label-display-results": "顯示結果",
-      "label-prettify-json": "美化 JSON",
-      "label-time": "時間",
-      "label-unique-labels": "唯一標籤",
-      "label-wrap-lines": "換行",
       "title-feedback": "意見回饋",
       "title-logs": "紀錄",
       "title-logs-volume": "紀錄容量"
@@ -8985,8 +8979,7 @@
       "tooltip-s-m-h": "10 秒、1 分鐘、30 分鐘、1 小時"
     },
     "sql-expr": {
-      "button-run-query": "執行查詢",
-      "tooltip-experimental": "SQL 運算式 LLM 整合為實驗性功能。如有任何問題，請向 Grafana 團隊回報。"
+      "button-run-query": "執行查詢"
     },
     "sql-schema": {
       "error-title": "錯誤",
@@ -11379,9 +11372,6 @@
       },
       "wrap-lines": "換行"
     },
-    "logs-navigation": {
-      "scroll-top": "捲動回頂部"
-    },
     "logs-panel": {
       "render-common-labels": {
         "common-labels": "通用標籤："
@@ -12174,7 +12164,7 @@
     },
     "quick-add": {
       "aria-label": "新",
-      "new-template-dashboard-button": "來自範本的儀表板"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "部落格的最新消息"
   },
@@ -13319,6 +13309,7 @@
       "token-label": "專案存取權杖",
       "token-required": "GitLab 權杖為必填",
       "url-description": "GitLab 儲存庫網址",
+      "url-pattern": "",
       "url-required": "儲存庫網址為必填"
     },
     "history-view": {
@@ -14744,19 +14735,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "新增至少一個資料查詢以產生 SQL 建議",
-    "ai-explain-title": "AI 驅動的 SQL 運算式解釋",
-    "ai-suggestions-title": "AI 驅動的 SQL 運算式建議",
-    "apply": "套用",
-    "code-label": "{{ language }}",
-    "copy": "複製",
-    "explain-empty-query-tooltip": "輸入 SQL 運算式以取得解釋",
     "explain-query": "解釋查詢",
-    "explanation-modal-title": "SQL 查詢解釋",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "SQL 建議歷史紀錄",
-    "suggestions": "建議",
-    "view-explanation": "檢視解釋"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "標記為「我的最愛」",
