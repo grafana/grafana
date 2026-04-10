@@ -63,7 +63,7 @@ export { joinByFieldTransformer, type JoinByFieldOptions, JoinMode } from '../tr
 export { LabelsToFieldsMode, type LabelsToFieldsOptions } from '../transformations/transformers/labelsToFields';
 export { type LimitTransformerOptions } from '../transformations/transformers/limit';
 export { type MergeTransformerOptions } from '../transformations/transformers/merge';
-export { ReduceTransformerMode, type ReduceTransformerOptions } from '../transformations/transformers/reduce';
+export { reduceTransformer, ReduceTransformerMode, type ReduceTransformerOptions } from '../transformations/transformers/reduce';
 export {
   createOrderFieldsComparer,
   Order,

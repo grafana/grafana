@@ -5,7 +5,6 @@ import { type ReducerID, type SelectableValue, type TransformerUIProps, type Gra
 import {
   type GroupByFieldOptions,
   GroupByOperationID,
-  type GroupByTransformerOptions,
   type GroupToNestedTableTransformerOptions,
   SHOW_NESTED_HEADERS_DEFAULT,
 } from '@grafana/data/internal';

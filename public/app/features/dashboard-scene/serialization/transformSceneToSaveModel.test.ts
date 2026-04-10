@@ -9,7 +9,6 @@ import {
   FieldType,
   type PanelData,
   type PanelPluginMeta,
-  standardTransformersRegistry,
   type StandardVariableQuery,
   toDataFrame,
   VariableSupportType,
@@ -28,7 +27,7 @@ import {
 import { type Dashboard, LoadingState, type Panel, type RowPanel, VariableRefresh } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
-import { getReduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
+import { mockTransformationsRegistry, reduceTransformer } from '@grafana/data/internal';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
@@ -58,7 +57,7 @@ import {
   trimDashboardForSnapshot,
 } from './transformSceneToSaveModel';
 
-standardTransformersRegistry.setInit(() => [getReduceTransformRegistryItem()]);
+mockTransformationsRegistry([reduceTransformer]);
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,
