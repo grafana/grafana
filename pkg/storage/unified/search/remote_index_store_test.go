@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/oklog/ulid/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gocloud.dev/blob"
@@ -87,6 +88,16 @@ func createTestBleveIndex(t *testing.T) string {
 	return dir
 }
 
+// setupTestFiles creates files in dir from a map of relative paths to content.
+func setupTestFiles(t *testing.T, dir string, files map[string]string) {
+	t.Helper()
+	for rel, content := range files {
+		path := filepath.Join(dir, filepath.FromSlash(rel))
+		require.NoError(t, os.MkdirAll(filepath.Dir(path), 0750))
+		require.NoError(t, os.WriteFile(path, []byte(content), 0600))
+	}
+}
+
 // --- Multi-backend tests (fileblob + optional remote) ---
 
 func TestRemoteIndexStore_UploadDownloadBleveIndex(t *testing.T) {
@@ -96,9 +107,6 @@ func TestRemoteIndexStore_UploadDownloadBleveIndex(t *testing.T) {
 			store := NewRemoteIndexStore(setup.bucket)
 			ctx := context.Background()
 			ns := newTestNsResource()
-			indexKey := "roundtrip"
-
-			t.Cleanup(func() { _ = store.DeleteIndex(ctx, ns, indexKey) })
 
 			srcDir := createTestBleveIndex(t)
 			meta := IndexMeta{
@@ -107,7 +115,9 @@ func TestRemoteIndexStore_UploadDownloadBleveIndex(t *testing.T) {
 				LatestResourceVersion: 99,
 			}
 
-			require.NoError(t, store.UploadIndex(ctx, ns, indexKey, srcDir, meta))
+			indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = store.DeleteIndex(ctx, ns, indexKey) })
 
 			destDir := filepath.Join(t.TempDir(), "downloaded")
 			gotMeta, err := store.DownloadIndex(ctx, ns, indexKey, destDir)
@@ -146,16 +156,14 @@ func TestRemoteIndexStore_ListIndexes(t *testing.T) {
 			ctx := context.Background()
 			ns := newTestNsResource()
 
-			keys := []string{"list-001", "list-002", "list-003"}
-			for _, key := range keys {
-				key := key
-				t.Cleanup(func() { _ = store.DeleteIndex(ctx, ns, key) })
-			}
-
-			for _, key := range keys {
+			var keys []ulid.ULID
+			for range 3 {
 				srcDir := createTestBleveIndex(t)
 				meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
-				require.NoError(t, store.UploadIndex(ctx, ns, key, srcDir, meta))
+				key, err := store.UploadIndex(ctx, ns, srcDir, meta)
+				require.NoError(t, err)
+				keys = append(keys, key)
+				t.Cleanup(func() { _ = store.DeleteIndex(ctx, ns, key) })
 			}
 
 			indexes, err := store.ListIndexes(ctx, ns)
@@ -182,13 +190,12 @@ func TestRemoteIndexStore_DeleteIndex(t *testing.T) {
 			store := NewRemoteIndexStore(setup.bucket)
 			ctx := context.Background()
 			ns := newTestNsResource()
-			indexKey := "delete-test"
-
-			t.Cleanup(func() { _ = store.DeleteIndex(ctx, ns, indexKey) })
 
 			srcDir := createTestBleveIndex(t)
 			meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
-			require.NoError(t, store.UploadIndex(ctx, ns, indexKey, srcDir, meta))
+			indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = store.DeleteIndex(ctx, ns, indexKey) })
 
 			require.NoError(t, store.DeleteIndex(ctx, ns, indexKey))
 
@@ -198,39 +205,6 @@ func TestRemoteIndexStore_DeleteIndex(t *testing.T) {
 
 			_, err = store.DownloadIndex(ctx, ns, indexKey, t.TempDir())
 			require.Error(t, err)
-		})
-	}
-}
-
-func TestRemoteIndexStore_RejectsOverwrite(t *testing.T) {
-	for _, setup := range testBucketSetups(t) {
-		t.Run(setup.name, func(t *testing.T) {
-			t.Cleanup(setup.cleanup)
-			store := NewRemoteIndexStore(setup.bucket)
-			ctx := context.Background()
-			ns := newTestNsResource()
-			indexKey := "immutable-test"
-
-			t.Cleanup(func() { _ = store.DeleteIndex(ctx, ns, indexKey) })
-
-			srcDir := createTestBleveIndex(t)
-			meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 100}
-			require.NoError(t, store.UploadIndex(ctx, ns, indexKey, srcDir, meta))
-
-			// Second upload to the same key must fail
-			srcDir2 := createTestBleveIndex(t)
-			meta2 := IndexMeta{GrafanaBuildVersion: "12.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 200}
-			err := store.UploadIndex(ctx, ns, indexKey, srcDir2, meta2)
-			require.Error(t, err)
-			require.Contains(t, err.Error(), "already exists")
-
-			// Original index is still intact
-			destDir := filepath.Join(t.TempDir(), "downloaded")
-			gotMeta, err := store.DownloadIndex(ctx, ns, indexKey, destDir)
-			require.NoError(t, err)
-			assert.Equal(t, int64(100), gotMeta.LatestResourceVersion)
-
-			require.NoError(t, store.DeleteIndex(ctx, ns, indexKey))
 		})
 	}
 }
@@ -246,10 +220,11 @@ func TestRemoteIndexStore_DownloadRejectsPathTraversal(t *testing.T) {
 
 	srcDir := createTestBleveIndex(t)
 	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
-	require.NoError(t, store.UploadIndex(ctx, ns, "snap-001", srcDir, meta))
+	indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
+	require.NoError(t, err)
 
 	// Tamper with meta.json to include a path traversal entry
-	pfx := indexPrefix(ns, "snap-001")
+	pfx := indexPrefix(ns, indexKey.String())
 	metaRaw, err := bucket.ReadAll(ctx, pfx+"meta.json")
 	require.NoError(t, err)
 	require.NoError(t, json.Unmarshal(metaRaw, &meta))
@@ -258,12 +233,12 @@ func TestRemoteIndexStore_DownloadRejectsPathTraversal(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", metaBytes, nil))
 
-	_, err = store.DownloadIndex(ctx, ns, "snap-001", t.TempDir())
+	_, err = store.DownloadIndex(ctx, ns, indexKey, t.TempDir())
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "path traversal")
 }
 
-func TestRemoteIndexStore_RejectsInvalidIndexKey(t *testing.T) {
+func TestRemoteIndexStore_UploadRejectsPathTraversal(t *testing.T) {
 	ctx := context.Background()
 	bucket := memblob.OpenBucket(nil)
 	defer func() { _ = bucket.Close() }()
@@ -271,17 +246,19 @@ func TestRemoteIndexStore_RejectsInvalidIndexKey(t *testing.T) {
 	ns := newTestNsResource()
 
 	srcDir := createTestBleveIndex(t)
-	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now(), LatestResourceVersion: 1}
 
-	for _, badKey := range []string{"", "../escape", "a/b", ".", ".."} {
-		require.Error(t, store.UploadIndex(ctx, ns, badKey, srcDir, meta), "key=%q", badKey)
-		_, err := store.DownloadIndex(ctx, ns, badKey, srcDir)
-		require.Error(t, err, "key=%q", badKey)
-		require.Error(t, store.DeleteIndex(ctx, ns, badKey), "key=%q", badKey)
-	}
+	// Add a symlink pointing outside the source directory
+	externalFile := filepath.Join(t.TempDir(), "another.txt")
+	require.NoError(t, os.WriteFile(externalFile, []byte("another"), 0600))
+	require.NoError(t, os.Symlink(externalFile, filepath.Join(srcDir, "sneaky.zap")))
+
+	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
+	_, err := store.UploadIndex(ctx, ns, srcDir, meta)
+	require.Error(t, err)
+	require.ErrorIs(t, err, ErrNonRegularFile)
 }
 
-func TestRemoteIndexStore_UploadSkipsSymlinks(t *testing.T) {
+func TestRemoteIndexStore_UploadRejectsNonRegularFiles(t *testing.T) {
 	ctx := context.Background()
 	bucket := memblob.OpenBucket(nil)
 	defer func() { _ = bucket.Close() }()
@@ -296,14 +273,9 @@ func TestRemoteIndexStore_UploadSkipsSymlinks(t *testing.T) {
 	require.NoError(t, os.Symlink(externalFile, filepath.Join(srcDir, "sneaky.zap")))
 
 	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
-	require.NoError(t, store.UploadIndex(ctx, ns, "snap-001", srcDir, meta))
-
-	pfx := indexPrefix(ns, "snap-001")
-	metaBytes, err := bucket.ReadAll(ctx, pfx+"meta.json")
-	require.NoError(t, err)
-	var uploaded IndexMeta
-	require.NoError(t, json.Unmarshal(metaBytes, &uploaded))
-	require.NotContains(t, uploaded.Files, "sneaky.zap")
+	_, err := store.UploadIndex(ctx, ns, srcDir, meta)
+	require.Error(t, err)
+	require.ErrorIs(t, err, ErrNonRegularFile)
 }
 
 func TestRemoteIndexStore_DownloadRejectsSymlinkedSubdir(t *testing.T) {
@@ -323,14 +295,15 @@ func TestRemoteIndexStore_DownloadRejectsSymlinkedSubdir(t *testing.T) {
 		UploadTimestamp:       time.Now().Truncate(time.Second),
 		LatestResourceVersion: 10,
 	}
-	require.NoError(t, store.UploadIndex(ctx, ns, "snap-001", srcDir, meta))
+	indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
+	require.NoError(t, err)
 
 	// Prepare a dest dir where "store" is a symlink pointing outside
 	destDir := t.TempDir()
 	outsideDir := t.TempDir()
 	require.NoError(t, os.Symlink(outsideDir, filepath.Join(destDir, "store")))
 
-	_, err := store.DownloadIndex(ctx, ns, "snap-001", destDir)
+	_, err = store.DownloadIndex(ctx, ns, indexKey, destDir)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "symlink")
 
@@ -356,7 +329,8 @@ func TestRemoteIndexStore_DownloadRejectsSymlinkedFile(t *testing.T) {
 		UploadTimestamp:       time.Now().Truncate(time.Second),
 		LatestResourceVersion: 10,
 	}
-	require.NoError(t, store.UploadIndex(ctx, ns, "snap-001", srcDir, meta))
+	indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
+	require.NoError(t, err)
 
 	// Prepare a dest dir where the leaf file is a symlink pointing outside
 	destDir := t.TempDir()
@@ -364,7 +338,7 @@ func TestRemoteIndexStore_DownloadRejectsSymlinkedFile(t *testing.T) {
 	require.NoError(t, os.WriteFile(outsideFile, []byte("original"), 0600))
 	require.NoError(t, os.Symlink(outsideFile, filepath.Join(destDir, "00000001.zap")))
 
-	_, err := store.DownloadIndex(ctx, ns, "snap-001", destDir)
+	_, err = store.DownloadIndex(ctx, ns, indexKey, destDir)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "symlink")
 
@@ -380,17 +354,18 @@ func TestRemoteIndexStore_DownloadRejectsCorruptMetaJSON(t *testing.T) {
 	defer func() { _ = bucket.Close() }()
 	store := NewRemoteIndexStore(bucket)
 	ns := newTestNsResource()
-	pfx := indexPrefix(ns, "snap-001")
+	key := ulid.Make()
+	pfx := indexPrefix(ns, key.String())
 
 	t.Run("missing meta.json", func(t *testing.T) {
-		_, err := store.DownloadIndex(ctx, ns, "snap-001", t.TempDir())
+		_, err := store.DownloadIndex(ctx, ns, key, t.TempDir())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "reading meta.json")
 	})
 
 	t.Run("invalid JSON", func(t *testing.T) {
 		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", []byte("{not json"), nil))
-		_, err := store.DownloadIndex(ctx, ns, "snap-001", t.TempDir())
+		_, err := store.DownloadIndex(ctx, ns, key, t.TempDir())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "parsing meta.json")
 	})
@@ -400,7 +375,7 @@ func TestRemoteIndexStore_DownloadRejectsCorruptMetaJSON(t *testing.T) {
 		metaBytes, err := json.Marshal(meta)
 		require.NoError(t, err)
 		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", metaBytes, nil))
-		_, err = store.DownloadIndex(ctx, ns, "snap-001", t.TempDir())
+		_, err = store.DownloadIndex(ctx, ns, key, t.TempDir())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "empty file manifest")
 	})
@@ -415,10 +390,11 @@ func TestRemoteIndexStore_DownloadValidatesCompleteness(t *testing.T) {
 
 	srcDir := createTestBleveIndex(t)
 	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
-	require.NoError(t, store.UploadIndex(ctx, ns, "snap-001", srcDir, meta))
+	indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
+	require.NoError(t, err)
 
 	// Delete one file from the bucket to simulate partial upload
-	pfx := indexPrefix(ns, "snap-001")
+	pfx := indexPrefix(ns, indexKey.String())
 	metaRaw, err := bucket.ReadAll(ctx, pfx+"meta.json")
 	require.NoError(t, err)
 	require.NoError(t, json.Unmarshal(metaRaw, &meta))
@@ -427,7 +403,7 @@ func TestRemoteIndexStore_DownloadValidatesCompleteness(t *testing.T) {
 		break
 	}
 
-	_, err = store.DownloadIndex(ctx, ns, "snap-001", t.TempDir())
+	_, err = store.DownloadIndex(ctx, ns, indexKey, t.TempDir())
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "downloading")
 }
@@ -441,7 +417,7 @@ func TestRemoteIndexStore_UploadRejectsEmptyDirectory(t *testing.T) {
 
 	emptyDir := t.TempDir()
 	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
-	err := store.UploadIndex(ctx, ns, "snap-001", emptyDir, meta)
+	_, err := store.UploadIndex(ctx, ns, emptyDir, meta)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "no files to upload")
 }
@@ -458,9 +434,10 @@ func TestRemoteIndexStore_UploadExcludesMetaJSON(t *testing.T) {
 	require.NoError(t, os.WriteFile(filepath.Join(srcDir, "meta.json"), []byte(`{"stale":"data"}`), 0600))
 
 	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
-	require.NoError(t, store.UploadIndex(ctx, ns, "snap-001", srcDir, meta))
+	indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
+	require.NoError(t, err)
 
-	pfx := indexPrefix(ns, "snap-001")
+	pfx := indexPrefix(ns, indexKey.String())
 	metaBytes, err := bucket.ReadAll(ctx, pfx+"meta.json")
 	require.NoError(t, err)
 	var uploaded IndexMeta
@@ -518,12 +495,14 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 	ctx := context.Background()
 	ns := newTestNsResource()
 
-	uploadSnapshot := func(t *testing.T, bucket *blob.Bucket) {
+	uploadSnapshot := func(t *testing.T, bucket *blob.Bucket) ulid.ULID {
 		t.Helper()
 		store := NewRemoteIndexStore(bucket)
 		srcDir := createTestBleveIndex(t)
 		meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
-		require.NoError(t, store.UploadIndex(ctx, ns, "snap-001", srcDir, meta))
+		key, err := store.UploadIndex(ctx, ns, srcDir, meta)
+		require.NoError(t, err)
+		return key
 	}
 
 	t.Run("upload file error", func(t *testing.T) {
@@ -531,7 +510,7 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 		defer func() { _ = real.Close() }()
 		store := NewRemoteIndexStore(&errorBucket{CDKBucket: real, uploadErr: fmt.Errorf("upload network timeout")})
 
-		err := store.UploadIndex(ctx, ns, "snap-001", createTestBleveIndex(t),
+		_, err := store.UploadIndex(ctx, ns, createTestBleveIndex(t),
 			IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "upload network timeout")
@@ -542,7 +521,7 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 		defer func() { _ = real.Close() }()
 		store := NewRemoteIndexStore(&errorBucket{CDKBucket: real, writeAllErr: fmt.Errorf("write quota exceeded")})
 
-		err := store.UploadIndex(ctx, ns, "snap-001", createTestBleveIndex(t),
+		_, err := store.UploadIndex(ctx, ns, createTestBleveIndex(t),
 			IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "write quota exceeded")
@@ -553,7 +532,7 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 		defer func() { _ = real.Close() }()
 		store := NewRemoteIndexStore(&errorBucket{CDKBucket: real, readAllErr: fmt.Errorf("access denied")})
 
-		_, err := store.DownloadIndex(ctx, ns, "snap-001", t.TempDir())
+		_, err := store.DownloadIndex(ctx, ns, ulid.Make(), t.TempDir())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "access denied")
 	})
@@ -561,11 +540,11 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 	t.Run("file download error cleans up partial files", func(t *testing.T) {
 		real := memblob.OpenBucket(nil)
 		defer func() { _ = real.Close() }()
-		uploadSnapshot(t, real)
+		key := uploadSnapshot(t, real)
 		store := NewRemoteIndexStore(&errorBucket{CDKBucket: real, downloadErr: fmt.Errorf("connection reset")})
 
 		destDir := t.TempDir()
-		_, err := store.DownloadIndex(ctx, ns, "snap-001", destDir)
+		_, err := store.DownloadIndex(ctx, ns, key, destDir)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "connection reset")
 
@@ -578,10 +557,10 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 	t.Run("delete error", func(t *testing.T) {
 		real := memblob.OpenBucket(nil)
 		defer func() { _ = real.Close() }()
-		uploadSnapshot(t, real)
+		key := uploadSnapshot(t, real)
 		store := NewRemoteIndexStore(&errorBucket{CDKBucket: real, deleteErr: fmt.Errorf("permission denied")})
 
-		err := store.DeleteIndex(ctx, ns, "snap-001")
+		err := store.DeleteIndex(ctx, ns, key)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "permission denied")
 	})

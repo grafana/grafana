@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/oklog/ulid/v2"
 	"gocloud.dev/blob"
 	"gocloud.dev/gcerrors"
 
@@ -20,6 +21,9 @@ import (
 )
 
 const metaJSONFile = "meta.json"
+
+// ErrNonRegularFile is returned when a non-regular file (symlink, pipe, socket, device) is found during index upload.
+var ErrNonRegularFile = errors.New("non-regular file found in index directory")
 
 // IndexMeta contains metadata about a remote index snapshot.
 type IndexMeta struct {
@@ -45,21 +49,24 @@ type IndexMeta struct {
 //	/<namespace>/<group>.<resource>/<index-key>/meta.json  <- uploaded last, signals complete upload
 type RemoteIndexStore interface {
 	// UploadIndex uploads a local index directory to remote storage.
+	// It generates a unique, lexicographically sortable ULID key and returns it.
 	// The meta.json is uploaded last to signal a complete upload.
 	// Callers must hold a distributed lock to prevent concurrent uploads to the same prefix.
-	UploadIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey string, localDir string, meta IndexMeta) error
+	UploadIndex(ctx context.Context, nsResource resource.NamespacedResource, localDir string, meta IndexMeta) (ulid.ULID, error)
 
 	// DownloadIndex downloads a remote index to a local directory.
 	// Validates completeness against the manifest in meta.json.
-	DownloadIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey string, destDir string) (*IndexMeta, error)
+	DownloadIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, destDir string) (*IndexMeta, error)
 
 	// ListIndexes lists all complete index snapshots for a namespaced resource.
-	ListIndexes(ctx context.Context, nsResource resource.NamespacedResource) (map[string]*IndexMeta, error)
+	// Note: indexes may be deleted between listing and subsequent operations.
+	// Callers should handle NotFound errors gracefully when acting on listed keys.
+	ListIndexes(ctx context.Context, nsResource resource.NamespacedResource) (map[ulid.ULID]*IndexMeta, error)
 
 	// DeleteIndex deletes all files for an index snapshot.
 	// The meta.json is deleted first to signal it an incomplete index.
 	// Callers must hold a distributed lock to prevent concurrent modifications.
-	DeleteIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey string) error
+	DeleteIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) error
 }
 
 // remoteIndexStore implements RemoteIndexStore using a CDKBucket.
@@ -76,14 +83,6 @@ func NewRemoteIndexStore(bucket resource.CDKBucket) RemoteIndexStore {
 	}
 }
 
-// validateIndexKey ensures the index key is a flat name without path separators.
-func validateIndexKey(key string) error {
-	if key == "" || strings.ContainsAny(key, "/\\") || key == "." || key == ".." {
-		return fmt.Errorf("invalid index key: %q", key)
-	}
-	return nil
-}
-
 // indexPrefix returns the object storage prefix for a namespaced resource + index key.
 func indexPrefix(ns resource.NamespacedResource, indexKey string) string {
 	return fmt.Sprintf("%s/%s.%s/%s/", ns.Namespace, ns.Group, ns.Resource, indexKey)
@@ -94,24 +93,18 @@ func nsPrefix(ns resource.NamespacedResource) string {
 	return fmt.Sprintf("%s/%s.%s/", ns.Namespace, ns.Group, ns.Resource)
 }
 
-func (s *remoteIndexStore) UploadIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey string, localDir string, meta IndexMeta) error {
-	if err := validateIndexKey(indexKey); err != nil {
-		return err
-	}
-	pfx := indexPrefix(nsResource, indexKey)
-
-	// Index keys are immutable. Reject uploads to existing keys.
-	_, err := s.bucket.Attributes(ctx, pfx+metaJSONFile)
-	if err == nil {
-		return fmt.Errorf("index %q already exists", indexKey)
-	}
-	if gcerrors.Code(err) != gcerrors.NotFound {
-		return fmt.Errorf("checking index existence: %w", err)
-	}
+func (s *remoteIndexStore) UploadIndex(ctx context.Context, nsResource resource.NamespacedResource, localDir string, meta IndexMeta) (ulid.ULID, error) {
+	indexKey := ulid.Make()
+	pfx := indexPrefix(nsResource, indexKey.String())
 
 	absLocalDir, err := filepath.Abs(localDir)
 	if err != nil {
-		return fmt.Errorf("resolving local dir: %w", err)
+		return ulid.ULID{}, fmt.Errorf("resolving local dir: %w", err)
+	}
+	// Resolve symlinks so WalkDir enters the real directory.
+	absLocalDir, err = filepath.EvalSymlinks(absLocalDir)
+	if err != nil {
+		return ulid.ULID{}, fmt.Errorf("resolving local dir symlinks: %w", err)
 	}
 
 	meta.Files = make(map[string]int64)
@@ -120,8 +113,11 @@ func (s *remoteIndexStore) UploadIndex(ctx context.Context, nsResource resource.
 		if err != nil {
 			return err
 		}
-		if d.IsDir() || !d.Type().IsRegular() {
+		if d.IsDir() {
 			return nil
+		}
+		if !d.Type().IsRegular() {
+			return fmt.Errorf("%w: %s (mode: %s)", ErrNonRegularFile, path, d.Type())
 		}
 		// Skip meta.json — we generate our own manifest and uploading a pre-existing
 		// one would cause a size mismatch on round-trip.
@@ -141,30 +137,30 @@ func (s *remoteIndexStore) UploadIndex(ctx context.Context, nsResource resource.
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("walking local dir: %w", err)
+		return ulid.ULID{}, fmt.Errorf("walking local dir: %w", err)
 	}
 	if len(relPaths) == 0 {
-		return fmt.Errorf("no files to upload in %s", localDir)
+		return ulid.ULID{}, fmt.Errorf("no files to upload in %s", localDir)
 	}
 
 	// Upload each file using streaming.
 	for _, rel := range relPaths {
 		objectKey := pfx + filepath.ToSlash(rel)
 		if err := s.uploadFile(ctx, objectKey, filepath.Join(absLocalDir, rel)); err != nil {
-			return fmt.Errorf("uploading %s: %w", rel, err)
+			return ulid.ULID{}, fmt.Errorf("uploading %s: %w", rel, err)
 		}
 	}
 
 	// Upload meta.json last — its presence signals a complete upload
 	metaBytes, err := json.Marshal(meta)
 	if err != nil {
-		return fmt.Errorf("marshaling meta: %w", err)
+		return ulid.ULID{}, fmt.Errorf("marshaling meta: %w", err)
 	}
 	if err := s.bucket.WriteAll(ctx, pfx+metaJSONFile, metaBytes, nil); err != nil {
-		return fmt.Errorf("uploading meta.json: %w", err)
+		return ulid.ULID{}, fmt.Errorf("uploading meta.json: %w", err)
 	}
 
-	return nil
+	return indexKey, nil
 }
 
 func (s *remoteIndexStore) uploadFile(ctx context.Context, objectKey, localPath string) error {
@@ -198,11 +194,8 @@ func (s *remoteIndexStore) uploadFile(ctx context.Context, objectKey, localPath 
 	})
 }
 
-func (s *remoteIndexStore) DownloadIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey string, destDir string) (*IndexMeta, error) {
-	if err := validateIndexKey(indexKey); err != nil {
-		return nil, err
-	}
-	pfx := indexPrefix(nsResource, indexKey)
+func (s *remoteIndexStore) DownloadIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, destDir string) (*IndexMeta, error) {
+	pfx := indexPrefix(nsResource, indexKey.String())
 
 	// Read meta.json first
 	metaBytes, err := s.bucket.ReadAll(ctx, pfx+metaJSONFile)
@@ -308,9 +301,9 @@ func (s *remoteIndexStore) downloadFile(ctx context.Context, objectKey, localPat
 	return f.Close()
 }
 
-func (s *remoteIndexStore) ListIndexes(ctx context.Context, nsResource resource.NamespacedResource) (map[string]*IndexMeta, error) {
+func (s *remoteIndexStore) ListIndexes(ctx context.Context, nsResource resource.NamespacedResource) (map[ulid.ULID]*IndexMeta, error) {
 	nsPfx := nsPrefix(nsResource)
-	result := make(map[string]*IndexMeta)
+	result := make(map[ulid.ULID]*IndexMeta)
 
 	// List all objects under the namespace prefix, looking for meta.json files
 	iter := s.bucket.List(&blob.ListOptions{Prefix: nsPfx})
@@ -330,9 +323,14 @@ func (s *remoteIndexStore) ListIndexes(ctx context.Context, nsResource resource.
 
 		// Extract index key from: <nsPfx><indexKey>/meta.json
 		rel := strings.TrimPrefix(obj.Key, nsPfx)
-		indexKey := strings.TrimSuffix(rel, "/"+metaJSONFile)
-		if indexKey == "" || strings.Contains(indexKey, "/") {
+		keyStr := strings.TrimSuffix(rel, "/"+metaJSONFile)
+		if keyStr == "" || strings.Contains(keyStr, "/") {
 			continue // skip nested or malformed paths
+		}
+		indexKey, err := ulid.Parse(keyStr)
+		if err != nil {
+			s.log.Warn("skipping index with non-ULID key", "key", keyStr, "err", err)
+			continue
 		}
 
 		// Fetch and parse meta.json
@@ -354,11 +352,8 @@ func (s *remoteIndexStore) ListIndexes(ctx context.Context, nsResource resource.
 	return result, nil
 }
 
-func (s *remoteIndexStore) DeleteIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey string) error {
-	if err := validateIndexKey(indexKey); err != nil {
-		return err
-	}
-	pfx := indexPrefix(nsResource, indexKey)
+func (s *remoteIndexStore) DeleteIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) error {
+	pfx := indexPrefix(nsResource, indexKey.String())
 
 	// Delete meta.json first
 	if err := s.bucket.Delete(ctx, pfx+metaJSONFile); err != nil && gcerrors.Code(err) != gcerrors.NotFound {
