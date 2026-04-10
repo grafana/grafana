@@ -10,11 +10,10 @@ import {
   LogsSortOrder,
   MutableDataFrame,
   type DataFrame,
-  standardTransformers,
   toDataFrame,
   DataFrameType,
 } from '@grafana/data';
-import { mockTransformationsRegistry } from '@grafana/data/internal';
+import { filterFieldsByNameTransformer, mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { getMockFrames } from 'app/plugins/datasource/loki/mocks/frames';
 
@@ -684,8 +683,8 @@ describe('downloadLogs', () => {
     beforeAll(() => {
       mockTransformationsRegistry([
         extractFieldsTransformer,
-        standardTransformers.organizeFieldsTransformer,
-        standardTransformers.filterFieldsByNameTransformer,
+        organizeFieldsTransformer,
+        filterFieldsByNameTransformer,
       ]);
     });
 

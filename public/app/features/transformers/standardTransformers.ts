@@ -6,14 +6,15 @@ import {
   TransformerCategory,
   type TransformerRegistryItem,
 } from '@grafana/data';
+
 // Direct import from internal path - this module is no longer publicly exported from @grafana/data
 // to avoid pulling all transformer implementations into the plugin-facing shared chunk.
 // Webpack resolves @grafana/data to source via the @grafana-app/source condition.
 // eslint-disable-next-line no-restricted-imports
-import { standardTransformers } from '../../../../packages/grafana-data/src/transformations/transformers';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 
+import { standardTransformers } from '../../../../packages/grafana-data/src/transformations/transformers';
 
 // SVG images - dark
 import calculateFieldDark from './images/dark/calculateField.svg';
@@ -28,8 +29,8 @@ import filterFieldsByNameDark from './images/dark/filterFieldsByName.svg';
 import formatStringDark from './images/dark/formatString.svg';
 import formatTimeDark from './images/dark/formatTime.svg';
 import groupByDark from './images/dark/groupBy.svg';
-import groupingToMatrixDark from './images/dark/groupingToMatrix.svg';
 import groupToNestedTableDark from './images/dark/groupToNestedTable.svg';
+import groupingToMatrixDark from './images/dark/groupingToMatrix.svg';
 import heatmapDark from './images/dark/heatmap.svg';
 import histogramDark from './images/dark/histogram.svg';
 import joinByFieldDark from './images/dark/joinByField.svg';
@@ -50,7 +51,6 @@ import sortByDark from './images/dark/sortBy.svg';
 import spatialDark from './images/dark/spatial.svg';
 import timeSeriesTableDark from './images/dark/timeSeriesTable.svg';
 import transposeDark from './images/dark/transpose.svg';
-
 // SVG images - light
 import calculateFieldLight from './images/light/calculateField.svg';
 import concatenateLight from './images/light/concatenate.svg';
@@ -64,8 +64,8 @@ import filterFieldsByNameLight from './images/light/filterFieldsByName.svg';
 import formatStringLight from './images/light/formatString.svg';
 import formatTimeLight from './images/light/formatTime.svg';
 import groupByLight from './images/light/groupBy.svg';
-import groupingToMatrixLight from './images/light/groupingToMatrix.svg';
 import groupToNestedTableLight from './images/light/groupToNestedTable.svg';
+import groupingToMatrixLight from './images/light/groupingToMatrix.svg';
 import heatmapLight from './images/light/heatmap.svg';
 import histogramLight from './images/light/histogram.svg';
 import joinByFieldLight from './images/light/joinByField.svg';

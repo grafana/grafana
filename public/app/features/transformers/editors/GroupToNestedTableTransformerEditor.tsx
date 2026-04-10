@@ -1,17 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useId } from 'react';
 
-import {
-  DataTransformerID,
-  type ReducerID,
-  type SelectableValue,
-  standardTransformers,
-  type TransformerRegistryItem,
-  type TransformerUIProps,
-  TransformerCategory,
-  type GrafanaTheme2,
-  PluginState,
-} from '@grafana/data';
+import { type ReducerID, type SelectableValue, type TransformerUIProps, type GrafanaTheme2 } from '@grafana/data';
 import {
   type GroupByFieldOptions,
   GroupByOperationID,
@@ -22,8 +12,6 @@ import {
 import { t } from '@grafana/i18n';
 import { useTheme2, Select, StatsPicker, InlineField, Field, Switch, Alert, Stack } from '@grafana/ui';
 
-import darkImage from '../images/dark/groupToNestedTable.svg';
-import lightImage from '../images/light/groupToNestedTable.svg';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 interface FieldProps {
@@ -193,26 +181,3 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-
-export const getGroupToNestedTableTransformRegistryItem: () => TransformerRegistryItem<GroupByTransformerOptions> =
-  () => ({
-    id: DataTransformerID.groupToNestedTable,
-    editor: GroupToNestedTableTransformerEditor,
-    transformation: standardTransformers.groupToNestedTable,
-    name: t(
-      'transformers.group-to-nested-table-transformer-editor.name.group-to-nested-tables',
-      'Group to nested tables'
-    ),
-    description: t(
-      'transformers.group-to-nested-table-transformer-editor.description.group-by-field-value',
-      'Group data by a field value and create nested tables with the grouped data.'
-    ),
-    categories: new Set([
-      TransformerCategory.Combine,
-      TransformerCategory.CalculateNewFields,
-      TransformerCategory.Reformat,
-    ]),
-    state: PluginState.beta,
-    imageDark: darkImage,
-    imageLight: lightImage,
-  });

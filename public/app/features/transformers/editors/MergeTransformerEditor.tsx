@@ -1,16 +1,7 @@
-import {
-  DataTransformerID,
-  standardTransformers,
-  type TransformerRegistryItem,
-  type TransformerUIProps,
-  TransformerCategory,
-} from '@grafana/data';
+import { type TransformerUIProps } from '@grafana/data';
 import { type MergeTransformerOptions } from '@grafana/data/internal';
-import { Trans, t } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { FieldValidationMessage } from '@grafana/ui';
-
-import darkImage from '../images/dark/merge.svg';
-import lightImage from '../images/light/merge.svg';
 
 export const MergeTransformerEditor = ({ input, options, onChange }: TransformerUIProps<MergeTransformerOptions>) => {
   if (input.length <= 1) {
@@ -25,17 +16,3 @@ export const MergeTransformerEditor = ({ input, options, onChange }: Transformer
   }
   return null;
 };
-
-export const getMergeTransformerRegistryItem: () => TransformerRegistryItem<MergeTransformerOptions> = () => ({
-  id: DataTransformerID.merge,
-  editor: MergeTransformerEditor,
-  transformation: standardTransformers.mergeTransformer,
-  name: t('transformers.merge-transformer-editor.name.merge', 'Merge series/tables'),
-  description: t(
-    'transformers.merge-transformer-editor.description.merge-multiple-series',
-    'Merge multiple series. Values will be combined into one row.'
-  ),
-  categories: new Set([TransformerCategory.Combine]),
-  imageDark: darkImage,
-  imageLight: lightImage,
-});

@@ -10,9 +10,9 @@ import {
   type DataSourceApi,
   type DataSourceInstanceSettings,
   type PanelPluginMeta,
-  standardTransformers,
   standardTransformersRegistry,
 } from '@grafana/data';
+import { joinByFieldTransformer, mergeTransformer } from '@grafana/data/internal';
 import { type CorrelationData } from '@grafana/runtime';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import { type DataSourceJsonData, type DataQuery } from '@grafana/schema';
@@ -35,7 +35,7 @@ jest.mock('@grafana/data', () => ({
 
 beforeAll(() => {
   standardTransformersRegistry.setInit(() =>
-    [standardTransformers.joinByFieldTransformer, standardTransformers.mergeTransformer].map((t) => ({
+    [joinByFieldTransformer, mergeTransformer].map((t) => ({
       id: t.id,
       aliasIds: t.aliasIds,
       name: t.name,
