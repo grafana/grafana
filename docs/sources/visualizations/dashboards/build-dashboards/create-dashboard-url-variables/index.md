@@ -18,7 +18,7 @@ title: Dashboard URL variables
 description: Use variables in dashboard URLs to add more context to your links
 weight: 250
 refs:
-  ad-hoc-filters:
+  filters:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters
     - pattern: /docs/grafana-cloud/
@@ -83,7 +83,7 @@ Grafana interprets `var-example=value1&var-example=value2` as the dashboard vari
 
 ## Filters
 
-Filters apply key/value filters to all metric queries that use the specified data source. For more information, refer to [Add filters](ref:ad-hoc-filters).
+Filters apply key/value filters to all metric queries that use the specified data source. For more information, refer to [Add filters](ref:filters).
 
 To pass a filter as a query parameter, use the variable syntax to pass the filter variable. Then provide the key, operator, and value as a pipe-separated list.
 
