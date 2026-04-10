@@ -120,4 +120,4 @@ With a variable named `env` set to `production`, entering `env=$env` in the **La
 
 ## Limitations
 
-TestData doesn't support [ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters). Ad hoc filters require the data source to implement tag key and value lookups, which TestData doesn't provide.
+TestData doesn't support [adhoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters). Adhoc filters require the data source to implement tag key and value lookups, which TestData doesn't provide.
