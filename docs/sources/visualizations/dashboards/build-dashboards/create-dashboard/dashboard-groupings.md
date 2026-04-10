@@ -202,15 +202,10 @@ To remove groupings, follow these steps:
 1. Click **Save**.
 1. Click **Exit edit**.
 
-## Move tabs between rows
+## Drag tabs between rows
 
 In dashboards that include multiple rows with nested tabs, you can drag and drop nested tabs between rows.
-To do this, the receiving row just needs to have one nested tab already:
-
-You can also move tabs to a row that has no nested tabs as long as:
-
-- It previously had nested tabs.
-- The last tab was moved out of the row rather than deleted.
+To do this, the receiving row just needs to have one nested tab already.
 
 ## Place panels outside of groupings with headerless rows
 
