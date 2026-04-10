@@ -156,7 +156,7 @@ func TestRemoteIndexStore_ListIndexes(t *testing.T) {
 			ctx := context.Background()
 			ns := newTestNsResource()
 
-			var keys []ulid.ULID
+			keys := make([]ulid.ULID, 0, 3)
 			for range 3 {
 				srcDir := createTestBleveIndex(t)
 				meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
