@@ -19,6 +19,8 @@ weight: 200
 
 In the **Dashboard controls** section of the sidebar in add mode, you can add filters and group by keys, variables, annotation queries, and dashboard links without leaving the dashboard.
 
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-controls-v13.0.png" max-width="500px" alt="Dashboard controls in the Dashboard options sidebar view" >}}
+
 ## Filter and group by
 
 <!-- vale Grafana.Spelling = NO -->
@@ -268,7 +270,9 @@ To add a URL link to your dashboard, follow these steps:
 ## Manage dashboard controls
 
 After you add dashboard controls, you can manage them from the dashboard options.
-In this view, the sidebar includes collapsible sections for variables (including filter and group by), annotations, and links, including hidden controls that aren't otherwise visible on the dashboard.
+In this view, the sidebar includes collapsible sections for variables (including filter and group by), annotations, and links, including hidden controls that aren't otherwise visible on the dashboard:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-controls-mgmt-v13.0.png" alt="Dashboard controls in the Dashboard options sidebar view" max-width="500px" >}}
 
 To manage dashboard controls, follow these steps:
 
