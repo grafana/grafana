@@ -13,7 +13,6 @@ import {
   type SaveDashboardOptions,
 } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DashboardSavedEvent } from 'app/types/events';
-import { useDispatch } from 'app/types/store';
 
 import { updateDashboardUidLastUsedDatasource } from '../../dashboard/utils/dashboard';
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -21,7 +20,6 @@ import { DashboardInteractions } from '../utils/interactions';
 import { trackDashboardSceneCreatedOrSaved } from '../utils/tracking';
 
 export function useSaveDashboard(isCopy = false) {
-  const dispatch = useDispatch();
   const notifyApp = useAppNotification();
   const [saveDashboardRtkQuery] = useSaveDashboardMutation();
 
@@ -102,7 +100,7 @@ export function useSaveDashboard(isCopy = false) {
         return result.data;
       }
     },
-    [dispatch, notifyApp]
+    [notifyApp]
   );
 
   return { state, onSaveDashboard };

@@ -1733,14 +1733,6 @@ var (
 			Expression:   "false", // enabled by default
 		},
 		{
-			Name:         "logsPanelControls",
-			Description:  "Enables a control component for the logs panel in Explore",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-			Expression:   "true",
-		},
-		{
 			Name:         "metricsFromProfiles",
 			Description:  "Enables creating metrics from profiles and storing them as recording rules",
 			Stage:        FeatureStageExperimental,
@@ -2663,6 +2655,14 @@ var (
 			FrontendOnly:    true,
 		},
 		{
+			Name:            "datasourcesApiServerEnableHealthEndpointRedirect",
+			Description:     "Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+		},
+		{
 			Name:         "flameGraphWithCallTree",
 			Description:  "Enables the new Flame Graph UI containing the Call Tree view",
 			Stage:        FeatureStageExperimental,
@@ -2803,13 +2803,36 @@ var (
 			Expression:      "false",
 			RequiresRestart: true,
 		},
+		{
+			Name:         "compiledBootScript",
+			Description:  "Boots the frontend using the boot.js script built from TS instead of the embedded boot script",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+		},
+		{
+			Name:         "influxDBConfigValidation",
+			Description:  "Enables validation on the InfluxDB data source configuration page",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "clickHouseConfigValidation",
+			Description:  "Enables validation on the ClickHouse data source configuration page",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
 	}
 )
 
 //go:embed toggles_gen.json
 var f embed.FS
 
-// Get the cached feature list (exposed as a k8s resource)
 func GetEmbeddedFeatureList() (featuretoggleapi.FeatureList, error) {
 	features := featuretoggleapi.FeatureList{}
 	body, err := f.ReadFile("toggles_gen.json")

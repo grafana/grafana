@@ -11,7 +11,6 @@ import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/bro
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { DashboardSavedEvent } from 'app/types/events';
-import { useDispatch } from 'app/types/store';
 
 import { updateDashboardUidLastUsedDatasource } from '../../utils/dashboard';
 import { trackDashboardCreatedOrSaved } from '../../utils/tracking';
@@ -40,7 +39,6 @@ const saveDashboard = async (
 };
 
 export const useDashboardSave = (isCopy = false) => {
-  const dispatch = useDispatch();
   const notifyApp = useAppNotification();
   const [saveDashboardRtkQuery] = useSaveDashboardMutation();
   const [state, onDashboardSave] = useAsyncFn(
@@ -87,7 +85,7 @@ export const useDashboardSave = (isCopy = false) => {
         throw error;
       }
     },
-    [dispatch, notifyApp]
+    [notifyApp]
   );
 
   return { state, onDashboardSave };

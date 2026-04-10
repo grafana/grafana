@@ -658,26 +658,25 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		return nil, AsErrorResult(err)
 	}
 
-	l := s.log.FromContext(ctx)
+	// TODO: return a NewBadRequestErorr in this case once the resource server is
+	// only interfacing with storage backends for K8s resources.
 	if obj.GetUID() == "" {
-		// TODO! once https://github.com/grafana/grafana/pull/96086 is deployed everywhere
-		// return nil, NewBadRequestError("object is missing UID")
-		l.Error("object is missing UID", "key", key)
+		s.log.FromContext(ctx).Warn("object is missing UID", "key", key)
 	}
 
 	if obj.GetResourceVersion() != "" {
-		l.Error("object must not include a resource version", "key", key)
+		return nil, NewBadRequestError("object must not include a resource version")
 	}
 
 	// Make sure the command labels are not saved
 	for k := range obj.GetLabels() {
 		if k == utils.LabelKeyGetHistory || k == utils.LabelKeyGetTrash {
-			return nil, NewBadRequestError("can not save label: " + k)
+			return nil, NewBadRequestError("cannot save label: " + k)
 		}
 	}
 
 	if obj.GetAnnotation(utils.AnnoKeyGrantPermissions) != "" {
-		return nil, NewBadRequestError("can not save annotation: " + utils.AnnoKeyGrantPermissions)
+		return nil, NewBadRequestError("cannot save annotation: " + utils.AnnoKeyGrantPermissions)
 	}
 
 	event := &WriteEvent{
@@ -905,6 +904,11 @@ func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resource
 	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
+		if apierrors.IsConflict(err) {
+			// Retryable concurrent-create conflict. Return as gRPC Aborted
+			// so client retry interceptors can handle it.
+			return nil, status.Error(codes.Aborted, err.Error())
+		}
 		rsp.Error = AsErrorResult(err)
 	}
 	s.log.FromContext(ctx).Debug("server.WriteEvent", "type", event.Type, "rv", rsp.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "name", event.Key.Name, "resource", event.Key.Resource)

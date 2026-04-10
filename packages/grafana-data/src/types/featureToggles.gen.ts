@@ -1101,11 +1101,6 @@ export interface FeatureToggles {
   */
   unifiedNavbars?: boolean;
   /**
-  * Enables a control component for the logs panel in Explore
-  * @default true
-  */
-  logsPanelControls?: boolean;
-  /**
   * Enables creating metrics from profiles and storing them as recording rules
   * @default false
   */
@@ -1677,6 +1672,11 @@ export interface FeatureToggles {
   */
   datasourcesApiServerEnableHealthEndpointFrontend?: boolean;
   /**
+  * Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.
+  * @default false
+  */
+  datasourcesApiServerEnableHealthEndpointRedirect?: boolean;
+  /**
   * Enables the new Flame Graph UI containing the Call Tree view
   * @default false
   */
@@ -1766,4 +1766,19 @@ export interface FeatureToggles {
   * @default false
   */
   cacheConfigUnifiedStorageMigration?: boolean;
+  /**
+  * Boots the frontend using the boot.js script built from TS instead of the embedded boot script
+  * @default false
+  */
+  compiledBootScript?: boolean;
+  /**
+  * Enables validation on the InfluxDB data source configuration page
+  * @default false
+  */
+  influxDBConfigValidation?: boolean;
+  /**
+  * Enables validation on the ClickHouse data source configuration page
+  * @default false
+  */
+  clickHouseConfigValidation?: boolean;
 }
