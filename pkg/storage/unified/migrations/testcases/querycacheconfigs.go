@@ -71,13 +71,15 @@ func (tc *queryCacheConfigsTestCase) Setup(t *testing.T, helper *apis.K8sTestHel
 	require.NoError(t, err)
 
 	_, err = sess.Exec(
-		"INSERT INTO data_source_cache (data_source_id, data_source_uid, enabled, ttl_ms, ttl_resources_ms, use_default_ttl, created, updated) SELECT id, uid, 1, 60000, 300000, 0, '2024-01-01 00:00:00', '2024-01-02 00:00:00' FROM data_source WHERE uid = 'ds-prom-uid'",
+		"INSERT INTO data_source_cache (data_source_id, data_source_uid, enabled, ttl_ms, ttl_resources_ms, use_default_ttl, created, updated) SELECT id, uid, ?, 60000, 300000, ?, '2024-01-01 00:00:00', '2024-01-02 00:00:00' FROM data_source WHERE uid = 'ds-prom-uid'",
+		true, false,
 	)
 	require.NoError(t, err)
 	tc.names = append(tc.names, "prometheus.ds-prom-uid")
 
 	_, err = sess.Exec(
-		"INSERT INTO data_source_cache (data_source_id, data_source_uid, enabled, ttl_ms, ttl_resources_ms, use_default_ttl, created, updated) SELECT id, uid, 0, 30000, 120000, 1, '2024-01-01 00:00:00', '2024-01-02 00:00:00' FROM data_source WHERE uid = 'ds-loki-uid'",
+		"INSERT INTO data_source_cache (data_source_id, data_source_uid, enabled, ttl_ms, ttl_resources_ms, use_default_ttl, created, updated) SELECT id, uid, ?, 30000, 120000, ?, '2024-01-01 00:00:00', '2024-01-02 00:00:00' FROM data_source WHERE uid = 'ds-loki-uid'",
+		false, true,
 	)
 	require.NoError(t, err)
 	tc.names = append(tc.names, "loki.ds-loki-uid")
