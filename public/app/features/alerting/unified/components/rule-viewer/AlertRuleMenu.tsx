@@ -17,15 +17,18 @@ import {
 } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useEnrichmentAbilityState } from '../../hooks/abilities/otherAbilities';
 import {
   skipToken,
-  usePromRuleAbilityStates,
+  usePromRuleAdministrationAbility,
+  usePromRuleExportAbility,
+  usePromRuleSilenceAbility,
   useRuleAdministrationAbility,
   useRuleExportAbility,
   useRuleSilenceAbility,
 } from '../../hooks/abilities/ruleAbilities';
-import { EnrichmentAction, RuleAction } from '../../hooks/abilities/types';
+import { EnrichmentAction } from '../../hooks/abilities/types';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import {
@@ -78,22 +81,16 @@ const AlertRuleMenu = ({
   const { granted: canDeleteRuler } = rulerEditAbility.delete;
   const { granted: canDuplicateRuler } = rulerEditAbility.duplicate;
   const { granted: canSilenceRuler } = useRuleSilenceAbility(rulerRule);
-  const { granted: canExportRuler } = useRuleExportAbility(rulerRule, groupIdentifier);
+  const { granted: canExportRuler } = useRuleExportAbility(rulerRule);
 
   // Prom-path abilities — used when the list view has removed all ruler API requests
-  const [
-    { granted: canPauseGrafana },
-    { granted: canDeleteGrafana },
-    { granted: canDuplicateGrafana },
-    { granted: canSilenceGrafana },
-    { granted: canExportGrafana },
-  ] = usePromRuleAbilityStates(prometheusRuleType.grafana.rule(promRule) ? promRule : skipToken, [
-    RuleAction.Pause,
-    RuleAction.Delete,
-    RuleAction.Duplicate,
-    RuleAction.Silence,
-    RuleAction.ModifyExport,
-  ]);
+  const promRuleOrSkip = prometheusRuleType.grafana.rule(promRule) ? promRule : skipToken;
+  const promAdminAbility = usePromRuleAdministrationAbility(promRuleOrSkip);
+  const canPauseGrafana = isGranted(promAdminAbility.pause);
+  const canDeleteGrafana = isGranted(promAdminAbility.delete);
+  const canDuplicateGrafana = isGranted(promAdminAbility.duplicate);
+  const canSilenceGrafana = isGranted(usePromRuleSilenceAbility(promRuleOrSkip));
+  const canExportGrafana = isGranted(usePromRuleExportAbility(promRuleOrSkip));
 
   const canPause = canPauseRuler || canPauseGrafana;
   const canDelete = canDeleteRuler || canDeleteGrafana;

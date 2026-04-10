@@ -261,27 +261,19 @@ function RenderSilence({ rule }: { rule: ReturnType<typeof getGrafanaRule> }) {
 // ── useRuleExploreAbility ─────────────────────────────────────────────────────
 
 describe('useRuleExploreAbility', () => {
-  it('grants explore when user has DataSourcesExplore permission', async () => {
+  it('grants explore when user has DataSourcesExplore permission', () => {
     grantUserPermissions([AccessControlAction.DataSourcesExplore]);
 
-    const rule = getGrafanaRule();
-    const groupId = groupIdentifier.fromCombinedRule(rule);
+    const { result } = renderHook(() => useRuleExploreAbility(), { wrapper: wrapper() });
 
-    const { result } = renderHook(() => useRuleExploreAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
-
-    await waitFor(() => expect(result.current.granted).toBe(true));
+    // Synchronous — no async needed
+    expect(result.current.granted).toBe(true);
   });
 
-  it('returns INSUFFICIENT_PERMISSIONS when user lacks DataSourcesExplore', async () => {
-    // Explicitly grant no permissions — DataSourcesExplore is not in the set
+  it('returns INSUFFICIENT_PERMISSIONS when user lacks DataSourcesExplore', () => {
     grantUserPermissions([]);
 
-    const rule = getGrafanaRule();
-    const groupId = groupIdentifier.fromCombinedRule(rule);
-
-    const { result } = renderHook(() => useRuleExploreAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
-
-    await waitFor(() => expect(isLoading(result.current)).toBe(false));
+    const { result } = renderHook(() => useRuleExploreAbility(), { wrapper: wrapper() });
 
     expect(isInsufficientPermissions(result.current)).toBe(true);
     if (isInsufficientPermissions(result.current)) {
@@ -295,25 +287,21 @@ describe('useRuleExploreAbility', () => {
 // ── useRuleExportAbility ──────────────────────────────────────────────────────
 
 describe('useRuleExportAbility', () => {
-  it('is applicable for Grafana-managed rules', async () => {
+  it('is applicable for Grafana-managed rules', () => {
     const rule = getGrafanaRule();
-    const groupId = groupIdentifier.fromCombinedRule(rule);
 
-    const { result } = renderHook(() => useRuleExportAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+    const { result } = renderHook(() => useRuleExportAbility(rule.rulerRule), { wrapper: wrapper() });
 
-    await waitFor(() => expect(isAvailable(result.current)).toBe(true));
+    expect(isAvailable(result.current)).toBe(true);
   });
 
-  it('returns NOT_SUPPORTED for cloud rules', async () => {
+  it('returns NOT_SUPPORTED for cloud rules', () => {
     const mimirDs = mockDataSource({ uid: 'mimir', name: 'Mimir' });
     setupDataSources(mimirDs);
 
     const rule = getCloudRule({}, { rulesSource: mimirDs });
-    const groupId = groupIdentifier.fromCombinedRule(rule);
 
-    const { result } = renderHook(() => useRuleExportAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
-
-    await waitFor(() => expect(result.current).not.toBeUndefined());
+    const { result } = renderHook(() => useRuleExportAbility(rule.rulerRule), { wrapper: wrapper() });
 
     expect(isNotSupported(result.current)).toBe(true);
   });

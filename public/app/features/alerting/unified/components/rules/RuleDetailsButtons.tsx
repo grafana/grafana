@@ -1,4 +1,4 @@
-import { Fragment, type JSX, useMemo } from 'react';
+import { Fragment, type JSX } from 'react';
 
 import { textUtil } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -10,7 +10,6 @@ import { useRuleExploreAbility } from '../../hooks/abilities/ruleAbilities';
 import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
 import { Annotation } from '../../utils/constants';
 import { isCloudRulesSource } from '../../utils/datasource';
-import { groupIdentifier } from '../../utils/groupIdentifier';
 import { createExploreLink } from '../../utils/misc';
 import { isFederatedRuleGroup, rulerRuleType } from '../../utils/rules';
 
@@ -32,8 +31,7 @@ const RuleDetailsButtons = ({ rule, rulesSource }: Props) => {
 
   const setReturnToPrevious = useReturnToPrevious();
 
-  const groupId = useMemo(() => groupIdentifier.fromCombinedRule(rule), [rule]);
-  const exploreAbility = useRuleExploreAbility(rule.rulerRule, groupId);
+  const exploreAbility = useRuleExploreAbility();
 
   const buttons: JSX.Element[] = [];
 

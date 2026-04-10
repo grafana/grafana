@@ -6,20 +6,17 @@ import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import { useEnrichmentAbilityState } from '../../hooks/abilities/otherAbilities';
 import {
+  type PromRuleAdministrationAbilityResult,
   type RuleEditAbilityResult,
-  usePromRuleAbilityState,
-  usePromRuleAbilityStates,
+  usePromRuleAdministrationAbility,
+  usePromRuleExportAbility,
+  usePromRuleSilenceAbility,
   useRuleAdministrationAbility,
+  useRuleExploreAbility,
   useRuleExportAbility,
   useRuleSilenceAbility,
 } from '../../hooks/abilities/ruleAbilities';
-import {
-  type AbilityState,
-  Granted,
-  InsufficientPermissions,
-  NotSupported,
-  RuleAction,
-} from '../../hooks/abilities/types';
+import { type AbilityState, Granted, InsufficientPermissions, NotSupported } from '../../hooks/abilities/types';
 import { getCloudRule, getGrafanaRule } from '../../mocks';
 import { mimirDataSource } from '../../mocks/server/configure';
 
@@ -35,13 +32,23 @@ jest.mock('../../hooks/abilities/otherAbilities');
 /** Denied AbilityState for simple cases */
 const Denied: AbilityState = NotSupported;
 
-/** A fully-denied RuleEditAbilityResult */
+/** A fully-denied RuleEditAbilityResult (ruler path) */
 function deniedEditAbility(): RuleEditAbilityResult {
   return { update: Denied, delete: Denied, restore: Denied, pause: Denied, duplicate: Denied, loading: false };
 }
 
-/** A fully-granted RuleEditAbilityResult */
+/** A fully-granted RuleEditAbilityResult (ruler path) */
 function grantedEditAbility(): RuleEditAbilityResult {
+  return { update: Granted, delete: Granted, restore: Granted, pause: Granted, duplicate: Granted, loading: false };
+}
+
+/** A fully-denied PromRuleAdministrationAbilityResult (prom path) */
+function deniedPromAdminAbility(): PromRuleAdministrationAbilityResult {
+  return { update: Denied, delete: Denied, restore: Denied, pause: Denied, duplicate: Denied, loading: false };
+}
+
+/** A fully-granted PromRuleAdministrationAbilityResult (prom path) */
+function grantedPromAdminAbility(): PromRuleAdministrationAbilityResult {
   return { update: Granted, delete: Granted, restore: Granted, pause: Granted, duplicate: Granted, loading: false };
 }
 
@@ -49,8 +56,10 @@ const mocks = {
   useRuleAdministrationAbility: jest.mocked(useRuleAdministrationAbility),
   useRuleSilenceAbility: jest.mocked(useRuleSilenceAbility),
   useRuleExportAbility: jest.mocked(useRuleExportAbility),
-  usePromRuleAbilityState: jest.mocked(usePromRuleAbilityState),
-  usePromRuleAbilityStates: jest.mocked(usePromRuleAbilityStates),
+  useRuleExploreAbility: jest.mocked(useRuleExploreAbility),
+  usePromRuleAdministrationAbility: jest.mocked(usePromRuleAdministrationAbility),
+  usePromRuleSilenceAbility: jest.mocked(usePromRuleSilenceAbility),
+  usePromRuleExportAbility: jest.mocked(usePromRuleExportAbility),
   useEnrichmentAbilityState: jest.mocked(useEnrichmentAbilityState),
 };
 
@@ -85,10 +94,11 @@ describe('RulesTable RBAC', () => {
     mocks.useRuleAdministrationAbility.mockReturnValue(deniedEditAbility());
     mocks.useRuleSilenceAbility.mockReturnValue(Denied);
     mocks.useRuleExportAbility.mockReturnValue(Denied);
-    mocks.usePromRuleAbilityState.mockReturnValue(Denied);
+    mocks.useRuleExploreAbility.mockReturnValue(Denied);
+    mocks.usePromRuleAdministrationAbility.mockReturnValue(deniedPromAdminAbility());
+    mocks.usePromRuleSilenceAbility.mockReturnValue(Denied);
+    mocks.usePromRuleExportAbility.mockReturnValue(Denied);
     mocks.useEnrichmentAbilityState.mockReturnValue(Denied);
-
-    mocks.usePromRuleAbilityStates.mockImplementation((_rule, actions) => actions.map(() => Denied));
   });
 
   describe('Grafana rules action buttons', () => {
@@ -99,9 +109,10 @@ describe('RulesTable RBAC', () => {
         ...deniedEditAbility(),
         update: InsufficientPermissions([]),
       });
-      mocks.usePromRuleAbilityStates.mockImplementation((_rule, actions) =>
-        actions.map((action) => (action === RuleAction.Update ? InsufficientPermissions([]) : Denied))
-      );
+      mocks.usePromRuleAdministrationAbility.mockReturnValue({
+        ...deniedPromAdminAbility(),
+        update: InsufficientPermissions([]),
+      });
 
       render(<RulesTable rules={[grafanaRule]} />);
 
@@ -113,9 +124,10 @@ describe('RulesTable RBAC', () => {
         ...deniedEditAbility(),
         delete: InsufficientPermissions([]),
       });
-      mocks.usePromRuleAbilityStates.mockImplementation((_rule, actions) =>
-        actions.map((action) => (action === RuleAction.Delete ? InsufficientPermissions([]) : Denied))
-      );
+      mocks.usePromRuleAdministrationAbility.mockReturnValue({
+        ...deniedPromAdminAbility(),
+        delete: InsufficientPermissions([]),
+      });
 
       render(<RulesTable rules={[grafanaRule]} />);
 
@@ -129,9 +141,10 @@ describe('RulesTable RBAC', () => {
         ...deniedEditAbility(),
         update: Granted,
       });
-      mocks.usePromRuleAbilityStates.mockImplementation((_rule, actions) =>
-        actions.map((action) => (action === RuleAction.Update ? Granted : Denied))
-      );
+      mocks.usePromRuleAdministrationAbility.mockReturnValue({
+        ...deniedPromAdminAbility(),
+        update: Granted,
+      });
 
       render(<RulesTable rules={[grafanaRule]} />);
 
@@ -143,9 +156,10 @@ describe('RulesTable RBAC', () => {
         ...deniedEditAbility(),
         delete: Granted,
       });
-      mocks.usePromRuleAbilityStates.mockImplementation((_rule, actions) =>
-        actions.map((action) => (action === RuleAction.Delete ? Granted : Denied))
-      );
+      mocks.usePromRuleAdministrationAbility.mockReturnValue({
+        ...deniedPromAdminAbility(),
+        delete: Granted,
+      });
 
       render(<RulesTable rules={[grafanaRule]} />);
 
@@ -164,7 +178,7 @@ describe('RulesTable RBAC', () => {
 
       beforeEach(() => {
         mocks.useRuleAdministrationAbility.mockReturnValue(grantedEditAbility());
-        mocks.usePromRuleAbilityStates.mockImplementation((_rule, actions) => actions.map(() => Granted));
+        mocks.usePromRuleAdministrationAbility.mockReturnValue(grantedPromAdminAbility());
       });
 
       it('does not render View button when rule is creating', async () => {
@@ -198,9 +212,10 @@ describe('RulesTable RBAC', () => {
         ...deniedEditAbility(),
         update: InsufficientPermissions([]),
       });
-      mocks.usePromRuleAbilityStates.mockImplementation((_rule, actions) =>
-        actions.map((action) => (action === RuleAction.Update ? InsufficientPermissions([]) : Denied))
-      );
+      mocks.usePromRuleAdministrationAbility.mockReturnValue({
+        ...deniedPromAdminAbility(),
+        update: InsufficientPermissions([]),
+      });
 
       render(<RulesTable rules={[cloudRule]} />);
 
@@ -212,9 +227,10 @@ describe('RulesTable RBAC', () => {
         ...deniedEditAbility(),
         delete: InsufficientPermissions([]),
       });
-      mocks.usePromRuleAbilityStates.mockImplementation((_rule, actions) =>
-        actions.map((action) => (action === RuleAction.Delete ? InsufficientPermissions([]) : Denied))
-      );
+      mocks.usePromRuleAdministrationAbility.mockReturnValue({
+        ...deniedPromAdminAbility(),
+        delete: InsufficientPermissions([]),
+      });
 
       render(<RulesTable rules={[cloudRule]} />);
 
@@ -227,9 +243,10 @@ describe('RulesTable RBAC', () => {
         ...deniedEditAbility(),
         update: Granted,
       });
-      mocks.usePromRuleAbilityStates.mockImplementation((_rule, actions) =>
-        actions.map((action) => (action === RuleAction.Update ? Granted : Denied))
-      );
+      mocks.usePromRuleAdministrationAbility.mockReturnValue({
+        ...deniedPromAdminAbility(),
+        update: Granted,
+      });
 
       render(<RulesTable rules={[cloudRule]} />);
 
@@ -241,9 +258,10 @@ describe('RulesTable RBAC', () => {
         ...deniedEditAbility(),
         delete: Granted,
       });
-      mocks.usePromRuleAbilityStates.mockImplementation((_rule, actions) =>
-        actions.map((action) => (action === RuleAction.Delete ? Granted : Denied))
-      );
+      mocks.usePromRuleAdministrationAbility.mockReturnValue({
+        ...deniedPromAdminAbility(),
+        delete: Granted,
+      });
 
       render(<RulesTable rules={[cloudRule]} />);
 

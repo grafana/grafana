@@ -290,43 +290,90 @@ export function useRuleSilenceAbility(rule: RulerRuleDTO | undefined): AbilitySt
 }
 
 /**
- * Returns the explore `AbilityState` for a rule.
- * Requires the DataSourcesExplore permission; reflects loading state from the edit check.
+ * Returns the explore `AbilityState`.
+ * This is a pure synchronous global RBAC check — `DataSourcesExplore` has no
+ * folder-scoped or async dependency, so no rule or group identifier is needed.
  */
-export function useRuleExploreAbility(rule: RulerRuleDTO | undefined, id: RuleGroupIdentifierV2): AbilityState {
-  const { loading } = useRuleAdministrationAbility(rule, id);
-  return useMemo(() => fromPermissions(true, loading, AccessControlAction.DataSourcesExplore), [loading]);
+export function useRuleExploreAbility(): AbilityState {
+  return fromPermissions(true, false, AccessControlAction.DataSourcesExplore);
 }
 
 /**
  * Returns the export/modify-export `AbilityState` for a rule.
  * Only applicable to Grafana-managed alerting rules; returns `NOT_SUPPORTED` for cloud rules.
  */
-export function useRuleExportAbility(rule: RulerRuleDTO | undefined, id: RuleGroupIdentifierV2): AbilityState {
+export function useRuleExportAbility(rule: RulerRuleDTO | undefined): AbilityState {
   const isGrafanaManagedRule = rulerRuleType.grafana.rule(rule);
   const exportAbility = useRuleAbilityState(RuleAction.ExportRules);
   return useMemo(() => (isGrafanaManagedRule ? exportAbility : NotSupported), [isGrafanaManagedRule, exportAbility]);
 }
 
-// ── Per-rule (PromRule) abilities ─────────────────────────────────────────────
+// ── Per-rule (PromRule) focused ability hooks ─────────────────────────────────
 
-export function useAllPromRuleAbilityStates(rule: GrafanaPromRuleDTO | undefined): AbilityStates<RuleAction> {
-  const { isEditable, isRemovable, loading: editableLoading } = useIsGrafanaPromRuleEditable(rule);
-  const exportAbility = useRuleAbilityState(RuleAction.ExportRules);
-  const { silenceSupported, silenceLoading } = useGrafanaRulesSilenceSupport();
-  const canSilenceInFolder = useCanSilenceInFolder(rule?.folderUid);
-  const { isPluginManaged, pluginLoading } = useRulePluginImmutability(rule);
+export const skipToken = Symbol('ability-skip-token');
+type SkipToken = typeof skipToken;
 
-  return useMemo<AbilityStates<RuleAction>>(() => {
+export interface PromRuleAdministrationAbilityResult {
+  /** Edit the rule. Denied when: loading, provisioned, plugin-managed, or no folder edit permission. */
+  update: AbilityState;
+  /** Delete the rule. Same conditions as `update` but checks delete permission. */
+  delete: AbilityState;
+  /**
+   * Pause/resume the rule. Same as `update` but `NOT_SUPPORTED` for recording rules —
+   * only alerting rules can be paused.
+   */
+  pause: AbilityState;
+  /**
+   * Restore the rule to a previous version. Same as `update` but `NOT_SUPPORTED` for
+   * recording rules — only alerting rules have version history.
+   */
+  restore: AbilityState;
+  /**
+   * Duplicate the rule. Not blocked by provisioning. Returns `IS_PLUGIN_MANAGED` when
+   * the rule is plugin-owned, otherwise checks the create permission.
+   */
+  duplicate: AbilityState;
+  /** True while async checks (folder metadata, plugin settings) are still in flight. */
+  loading: boolean;
+}
+
+/**
+ * Resolves the per-rule administration abilities for a Grafana PromRule, combining:
+ * - Provisioning state (`PROVISIONED`)
+ * - Plugin ownership (`IS_PLUGIN_MANAGED`)
+ * - Folder-scoped RBAC permissions
+ *
+ * Priority: LOADING > PROVISIONED > IS_PLUGIN_MANAGED > INSUFFICIENT_PERMISSIONS
+ *
+ * Pass `skipToken` when no prom rule is available — all fields return `NOT_SUPPORTED`.
+ */
+export function usePromRuleAdministrationAbility(
+  rule: GrafanaPromRuleDTO | SkipToken
+): PromRuleAdministrationAbilityResult {
+  const promRule = rule === skipToken ? undefined : rule;
+  const { isEditable, isRemovable, loading: editableLoading } = useIsGrafanaPromRuleEditable(promRule);
+  const { isPluginManaged, pluginLoading } = useRulePluginImmutability(promRule);
+
+  return useMemo(() => {
+    if (rule === skipToken) {
+      return {
+        update: NotSupported,
+        delete: NotSupported,
+        pause: NotSupported,
+        restore: NotSupported,
+        duplicate: NotSupported,
+        loading: false,
+      };
+    }
+
     const isProvisioned = rule ? isProvisionedPromRule(rule) : false;
     const isFederated = false;
     const isAlertingRule = prometheusRuleType.grafana.alertingRule(rule);
-    const combinedLoading = editableLoading || silenceLoading || pluginLoading;
-
+    const loading = editableLoading || pluginLoading;
     const rulesPermissions = getRulesPermissions('grafana');
 
     function computeEdit(hasPermission: boolean, permission: AccessControlAction): AbilityState {
-      if (combinedLoading) {
+      if (loading) {
         return Loading;
       }
       if (isProvisioned || isFederated) {
@@ -341,82 +388,60 @@ export function useAllPromRuleAbilityStates(rule: GrafanaPromRuleDTO | undefined
       return Granted;
     }
 
-    const updateAbility = computeEdit(isEditable ?? false, rulesPermissions.update);
-    const deleteAbility = computeEdit(isRemovable ?? false, rulesPermissions.delete);
+    const update = computeEdit(isEditable ?? false, rulesPermissions.update);
+    const del = computeEdit(isRemovable ?? false, rulesPermissions.delete);
 
-    const silenceAbility = buildSilenceAbility(silenceLoading, silenceSupported, canSilenceInFolder && isAlertingRule);
+    // Pause and restore only apply to alerting rules
+    const alertingOnly = (base: AbilityState): AbilityState => (isAlertingRule ? base : NotSupported);
 
-    const alertingOnlyUpdate: AbilityState = isAlertingRule ? updateAbility : NotSupported;
-
-    const deletePermanentlyAbility: AbilityState = (() => {
-      if (!isAlertingRule) {
-        return NotSupported;
-      }
-      if (!deleteAbility.granted) {
-        return deleteAbility;
-      }
-      if (!isAdmin()) {
-        return InsufficientPermissions([rulesPermissions.delete]);
-      }
-      return Granted;
-    })();
-
-    const duplicateAbility: AbilityState = (() => {
-      if (combinedLoading) {
+    function computeDuplicate(): AbilityState {
+      if (loading) {
         return Loading;
       }
       if (isPluginManaged) {
         return IsPluginManaged;
       }
       return fromPermissions(true, false, rulesPermissions.create);
-    })();
+    }
 
     return {
-      [RuleAction.Create]: NotSupported,
-      [RuleAction.View]: fromPermissions(true, combinedLoading, rulesPermissions.read),
-      [RuleAction.Update]: updateAbility,
-      [RuleAction.Delete]: deleteAbility,
-      [RuleAction.ExportRules]: fromPermissions(true, combinedLoading, rulesPermissions.read),
-      [RuleAction.Duplicate]: duplicateAbility,
-      [RuleAction.Explore]: fromPermissions(true, combinedLoading, AccessControlAction.DataSourcesExplore),
-      [RuleAction.Silence]: silenceAbility,
-      [RuleAction.ModifyExport]: isAlertingRule ? exportAbility : NotSupported,
-      [RuleAction.Pause]: alertingOnlyUpdate,
-      [RuleAction.Restore]: alertingOnlyUpdate,
-      [RuleAction.DeletePermanently]: deletePermanentlyAbility,
+      update,
+      delete: del,
+      pause: alertingOnly(update),
+      restore: alertingOnly(update),
+      duplicate: computeDuplicate(),
+      loading,
     };
-  }, [
-    rule,
-    editableLoading,
-    silenceLoading,
-    pluginLoading,
-    isEditable,
-    isRemovable,
-    canSilenceInFolder,
-    exportAbility,
-    silenceSupported,
-    isPluginManaged,
-  ]);
-}
-
-export const skipToken = Symbol('ability-skip-token');
-type SkipToken = typeof skipToken;
-
-export function usePromRuleAbilityState(rule: GrafanaPromRuleDTO | SkipToken, action: RuleAction): AbilityState {
-  const all = useAllPromRuleAbilityStates(rule === skipToken ? undefined : rule);
-  return useMemo(() => all[action], [all, action]);
+  }, [rule, editableLoading, pluginLoading, isEditable, isRemovable, isPluginManaged]);
 }
 
 /**
- * Returns AbilityState for multiple RuleActions on the same PromRule.
- *
- * IMPORTANT: callers should stabilize the `actions` array reference (e.g. via a
- * module-level constant or `useMemo`) so that this hook's inner `useMemo` is not
- * defeated by a new array reference on every render.
+ * Returns the silence `AbilityState` for a Grafana PromRule.
+ * Checks alertmanager configuration and folder-level silence permissions.
+ * Pass `skipToken` when no prom rule is available.
  */
-export function usePromRuleAbilityStates(rule: GrafanaPromRuleDTO | SkipToken, actions: RuleAction[]): AbilityState[] {
-  const all = useAllPromRuleAbilityStates(rule === skipToken ? undefined : rule);
-  return useMemo(() => actions.map((a) => all[a]), [all, actions]);
+export function usePromRuleSilenceAbility(rule: GrafanaPromRuleDTO | SkipToken): AbilityState {
+  const promRule = rule === skipToken ? undefined : rule;
+  const isAlertingRule = promRule ? prometheusRuleType.grafana.alertingRule(promRule) : false;
+  const { silenceSupported, silenceLoading } = useGrafanaRulesSilenceSupport();
+  const canSilenceInFolder = useCanSilenceInFolder(promRule?.folderUid);
+
+  return useMemo(
+    () => buildSilenceAbility(silenceLoading, silenceSupported, canSilenceInFolder && isAlertingRule),
+    [silenceLoading, silenceSupported, canSilenceInFolder, isAlertingRule]
+  );
+}
+
+/**
+ * Returns the export/modify-export `AbilityState` for a Grafana PromRule.
+ * Only applicable to Grafana-managed **alerting** rules (not recording rules).
+ * Pass `skipToken` when no prom rule is available.
+ */
+export function usePromRuleExportAbility(rule: GrafanaPromRuleDTO | SkipToken): AbilityState {
+  const promRule = rule === skipToken ? undefined : rule;
+  const isAlertingRule = promRule ? prometheusRuleType.grafana.alertingRule(promRule) : false;
+  const exportAbility = useRuleAbilityState(RuleAction.ExportRules);
+  return useMemo(() => (isAlertingRule ? exportAbility : NotSupported), [isAlertingRule, exportAbility]);
 }
 
 // ── Internal helpers ──────────────────────────────────────────────────────────

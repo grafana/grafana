@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { keyBy, startCase, uniqueId } from 'lodash';
-import { useMemo } from 'react';
 import * as React from 'react';
 
 import { type DataSourceInstanceSettings, type GrafanaTheme2, type PanelData, urlUtil } from '@grafana/data';
@@ -34,7 +33,6 @@ import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisu
 import { DatasourceModelPreview } from './components/rule-viewer/tabs/Query/DataSourceModelPreview';
 import { isGranted } from './hooks/abilities/abilityUtils';
 import { useRuleExploreAbility } from './hooks/abilities/ruleAbilities';
-import { groupIdentifier as groupIdentifierUtil } from './utils/groupIdentifier';
 
 interface GrafanaRuleViewerProps {
   rule: CombinedRule;
@@ -112,8 +110,7 @@ export function QueryPreview({
 }: QueryPreviewProps) {
   const styles = useStyles2(getQueryPreviewStyles);
   const isExpression = isExpressionQuery(model);
-  const groupId = useMemo(() => groupIdentifierUtil.fromCombinedRule(rule), [rule]);
-  const exploreAbility = useRuleExploreAbility(rule.rulerRule, groupId);
+  const exploreAbility = useRuleExploreAbility();
 
   const headerItems: React.ReactNode[] = [];
 
