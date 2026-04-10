@@ -25,6 +25,14 @@ review_date: 2026-04-10
 
 Parca is a continuous profiling database for analysis of CPU and memory usage, down to the line number and throughout time. Grafana ships with built-in support for Parca, so you can add it as a data source and start querying your profiles in [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/).
 
+Refer to the [Parca documentation](https://www.parca.dev/docs) to learn about continuous profiling and how to instrument your applications.
+
+To use Parca profiling data in Grafana, you should:
+
+1. [Set up Parca](https://www.parca.dev/docs/quickstart) to scrape profiles from your applications.
+1. [Configure the Parca data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/parca/configure/) in Grafana.
+1. [Query your profiling data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/parca/query-editor/) using the query editor in Explore.
+
 ## Supported Parca versions
 
 This data source supports Parca v0.19 and later.
@@ -47,26 +55,13 @@ The following pages help you get started with the Parca data source:
 - [Template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/parca/template-variables/)
 - [Troubleshoot Parca data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/parca/troubleshooting/)
 
+## Explore profiling data
+
+[Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) is the primary way to interact with Parca data in Grafana. Use Explore to query profiles and metrics without building a dashboard, and to select the **Both** query type to view flame graphs and time-series data side by side.
+
 ## Integrate profiles into dashboards
 
-Using the Parca data source, you can integrate profiles into your dashboards.
-Embed flame graphs using the [flame graph panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/).
-
-## Provision the Parca data source
-
-You can define and manage the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, refer to [Provisioning Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
-
-Here is an example configuration:
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: Parca
-    type: parca
-    url: http://localhost:7070
-```
+Using the Parca data source, you can embed profiling data in your dashboards alongside other signals like logs and metrics. For example, you can place a [flame graph panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/) showing CPU profiles next to a metrics panel tracking request latency to correlate performance bottlenecks with application behavior.
 
 ## Plugin updates
 
