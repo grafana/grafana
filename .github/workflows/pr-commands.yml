@@ -5,9 +5,12 @@ on:
       - labeled
       - opened
       - synchronize
-permissions: {}
+
 concurrency:
   group: pr-commands-${{ github.event.number }}
+
+permissions: {}
+
 jobs:
   main:
     permissions:
@@ -16,20 +19,8 @@ jobs:
       issues: write
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Actions
-        uses: actions/checkout@v5
+      - name: Run PR Commands
+        uses: grafana/grafana-github-actions/commands@main
         with:
-          repository: "grafana/grafana-github-actions"
-          ref: main
-          persist-credentials: false
-      # Note: this action checks out the grafana/grafana-github-actions repo, not Grafana.
-      # So this `yarn install` is installing dependencies for the actions, not for Grafana.
-      - name: Install Actions
-        run: |
-          corepack enable
-          yarn install --immutable
-      - name: Run Commands
-        uses: ./commands
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{secrets.GITHUB_TOKEN}}
           configPath: pr-commands

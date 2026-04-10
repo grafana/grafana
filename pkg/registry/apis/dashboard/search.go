@@ -349,13 +349,13 @@ var errEmptyResults = fmt.Errorf("empty results")
 func permissionToActions(p dashboardaccess.PermissionType) (dashboardAction string, folderAction string) {
 	switch p {
 	case dashboardaccess.PERMISSION_EDIT:
-		return dashboards.ActionDashboardsWrite, dashboards.ActionFoldersWrite
+		return dashboards.ActionDashboardsWrite, foldermodel.ActionFoldersWrite
 	case dashboardaccess.PERMISSION_ADMIN:
-		return dashboards.ActionDashboardsPermissionsWrite, dashboards.ActionFoldersPermissionsWrite
+		return dashboards.ActionDashboardsPermissionsWrite, foldermodel.ActionFoldersPermissionsWrite
 	case dashboardaccess.PERMISSION_VIEW:
 		fallthrough
 	default:
-		return dashboards.ActionDashboardsRead, dashboards.ActionFoldersRead
+		return dashboards.ActionDashboardsRead, foldermodel.ActionFoldersRead
 	}
 }
 
@@ -586,17 +586,13 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		// Explicitly configure the query for dashboard+folder matching.
 		searchRequest.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
 			{
-				Name:  resource.SEARCH_FIELD_TITLE,
-				Type:  resourcepb.QueryFieldType_KEYWORD,
-				Boost: 10, // exact match -- includes ngrams! If they lived on their own field, we could score them differently
-			}, {
-				Name:  resource.SEARCH_FIELD_TITLE,
-				Type:  resourcepb.QueryFieldType_TEXT,
-				Boost: 2, // standard analyzer (with ngrams!)
-			}, {
 				Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
+				Type:  resourcepb.QueryFieldType_KEYWORD,
+				Boost: 10, // exact title match (case-insensitive via pre-lowered title_phrase)
+			}, {
+				Name:  resource.SEARCH_FIELD_TITLE,
 				Type:  resourcepb.QueryFieldType_TEXT,
-				Boost: 5, // standard analyzer
+				Boost: 2, // standard analyzer (word-level matching with ngrams)
 			},
 		}
 
@@ -681,7 +677,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		}
 	}
 	for _, folderPermission := range folderPermissions {
-		if folderUid, found := strings.CutPrefix(folderPermission, dashboards.ScopeFoldersPrefix); found {
+		if folderUid, found := strings.CutPrefix(folderPermission, foldermodel.ScopeFoldersPrefix); found {
 			if !slices.Contains(dashboardUids, folderUid) && folderUid != foldermodel.SharedWithMeFolderUID && folderUid != foldermodel.GeneralFolderUID {
 				dashboardUids = append(dashboardUids, folderUid)
 			}
