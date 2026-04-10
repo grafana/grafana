@@ -54,8 +54,8 @@ Data sources with an asterisk also support group by:
 
 {{< column-list >}}
 
-- Prometheus*
-- Loki*
+- Prometheus\*
+- Loki\*
 - InfluxDB
 - Elasticsearch
 - OpenSearch.
@@ -70,7 +70,7 @@ To add a filter and group by, follow these steps:
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
 1. Click the **Add new element** icon (blue plus sign).
-. Click **Filter and Group by**.
+   . Click **Filter and Group by**.
 1. Enter a **Name** for the filter.
 1. (Optional) In the **Label** field, enter the display name for the filter drop-down list.
 
@@ -88,14 +88,14 @@ To add a filter and group by, follow these steps:
 
 1. Under the **Filter options** section of the page, set the following options:
 
-   | Option | Description |
-   | ------ | ----------- |
-   | Data source | Select a target data source in the drop-down list. You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/). |
-   | Default filters | Set a default key/value pair. Optional. In the dashboard filter control, the default value is indicated with an information icon. |
-   | Enable group by | This option only appears if you selected a Prometheus or Loki data source. Toggle the switch on to enable data grouping. |
-   | Default group by | Set a default key for the dashboard. Optional. In the dashboard filter control, the default value is indicated with an information icon. |
-   | Use static key dimensions | To provide the filter dimensions as comma-separated values (CSV), toggle the switch on, and then enter the values in the space provided. Optional. |
-   | Allow custom values | Toggle the switch on to allow dashboard users to add custom values to the filter and group by lists. Optional. |
+   | Option                    | Description                                                                                                                                                                                                                                                                                                                          |
+   | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+   | Data source               | Select a target data source in the drop-down list. You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/). |
+   | Default filters           | Set a default key/value pair. Optional. In the dashboard filter control, the default value is indicated with an information icon.                                                                                                                                                                                                    |
+   | Enable group by           | This option only appears if you selected a Prometheus or Loki data source. Toggle the switch on to enable data grouping.                                                                                                                                                                                                             |
+   | Default group by          | Set a default key for the dashboard. Optional. In the dashboard filter control, the default value is indicated with an information icon.                                                                                                                                                                                             |
+   | Use static key dimensions | To provide the filter dimensions as comma-separated values (CSV), toggle the switch on, and then enter the values in the space provided. Optional.                                                                                                                                                                                   |
+   | Allow custom values       | Toggle the switch on to allow dashboard users to add custom values to the filter and group by lists. Optional.                                                                                                                                                                                                                       |
 
 1. Click **Save**.
 1. Enter an optional description of your dashboard changes, and then click **Save**.
