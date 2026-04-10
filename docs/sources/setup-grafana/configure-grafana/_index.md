@@ -2595,11 +2595,11 @@ Path to the PEM-encoded CA certificate file from the Image Renderer server.
 
 #### `default_image_width`
 
-Configures the width of the rendered image. The default width is `1000`.
+Configures the width of the rendered image. The default and minimum width is `1000`.
 
 #### `default_image_height`
 
-Configures the height of the rendered image. The default height is `500`.
+Configures the height of the rendered image. The default and minimum height is `500`.
 
 #### `default_image_scale`
 
