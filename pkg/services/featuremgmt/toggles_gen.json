@@ -4688,7 +4688,8 @@
       "metadata": {
         "name": "rendererDisableAppPluginsPreload",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-02-24T14:43:06Z"
+        "creationTimestamp": "2025-02-24T14:43:06Z",
+        "deletionTimestamp": "2026-04-09T15:47:18Z"
       },
       "spec": {
         "description": "Disable pre-loading app plugins when the request is coming from the renderer",

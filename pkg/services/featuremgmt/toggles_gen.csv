@@ -201,7 +201,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-04-14,scopeSearchAllLevels,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2025-02-17,alertingRuleVersionHistoryRestore,GA,@grafana/alerting-squad,false,false,true
 2025-02-17,newShareReportDrawer,preview,@grafana/grafana-operator-experience-squad,false,false,false
-2025-02-24,rendererDisableAppPluginsPreload,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2025-03-04,assetSriChecks,experimental,@grafana/frontend-ops,false,false,true
 2025-03-05,alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
 2025-03-14,infinityRunQueriesInParallel,privatePreview,@grafana/data-sources-plugins,false,false,false
