@@ -13,6 +13,9 @@ func TestExists_NonExistent(t *testing.T) {
 	require.NoError(t, err)
 
 	require.False(t, exists)
+
+	// This is a file that is super unlikely to ever be changed.
+	// As a result, it's a great place to put a no-op patch that would be fine to test against.
 }
 
 func TestExists_Existent(t *testing.T) {
