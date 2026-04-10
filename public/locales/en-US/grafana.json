@@ -4438,10 +4438,6 @@
       "clear": "Clear search and filters",
       "text": "No results found for your query"
     },
-    "org-templates-banner": {
-      "body": "To manage org-defined templates, view all templates in the <2>template gallery</2>.",
-      "title": "New Feature: Org-defined Templates"
-    },
     "quota-banner": {
       "at-limit-body": "Clean up unused resources to free up space.",
       "at-limit-title": "You've hit your storage limits",
@@ -6646,9 +6642,6 @@
       "customize-with-assistant-button": "Customize with Assistant",
       "customize-with-assistant-button-label": "Customize with Assistant: {{title}}",
       "datasource-provided-badge": "Data source provided",
-      "delete-confirm-body": "Are you sure you want to delete the template \"{{title}}\"?",
-      "delete-confirm-button": "Delete",
-      "delete-confirm-title": "Delete template",
       "details-tooltip": "Details",
       "edit-template-button": "Edit",
       "edit-template-button-label": "Edit template: {{title}}",
@@ -6718,9 +6711,7 @@
     "template-filters": {
       "creator-placeholder": "Filter by created by",
       "search-placeholder": "Search",
-      "sort-az": "Title A-Z",
-      "sort-placeholder": "Sort",
-      "sort-za": "Title Z-A"
+      "sort-placeholder": "Sort"
     }
   },
   "dashboard-links": {
@@ -8012,9 +8003,9 @@
       "label-name": "Name"
     },
     "build-a-dashboard-button": {
-      "blank": "Blank",
       "build-a-dashboard": "Build a dashboard",
-      "from-suggestions": "From suggestions"
+      "from-suggestions": "From suggestions",
+      "new-dashboard": "New dashboard"
     },
     "build-categories": {
       "categories": {

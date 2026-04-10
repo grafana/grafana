@@ -14,7 +14,7 @@ export function TemplateDashboardUseBanner({ dashboard }: { dashboard: Dashboard
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const shouldRender =
-    Boolean(searchParams.get('orgTemplateUid')) && location.pathname === DASHBOARD_LIBRARY_ROUTES.Template;
+    Boolean(searchParams.get('useTemplateBanner')) && location.pathname === DASHBOARD_LIBRARY_ROUTES.Template;
   const [dismissed, setDismissed] = useState<boolean>(!shouldRender);
 
   const onDismiss = () => {
