@@ -18,7 +18,7 @@ labels:
 menuTitle: TestData
 title: TestData data source
 weight: 1500
-review_date: "2026-04-08"
+review_date: '2026-04-08'
 ---
 
 # TestData data source

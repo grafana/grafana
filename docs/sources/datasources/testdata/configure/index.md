@@ -16,7 +16,7 @@ labels:
 menuTitle: Configure
 title: Configure the TestData data source
 weight: 100
-review_date: "2026-04-08"
+review_date: '2026-04-08'
 ---
 
 # Configure the TestData data source
@@ -75,7 +75,7 @@ datasources:
     access: proxy
 ```
 
-## Provision with Terraform 
+## Provision with Terraform
 
 To provision the data source with Terraform, use the [`grafana_data_source` resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source):
 

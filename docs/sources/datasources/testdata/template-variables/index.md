@@ -14,7 +14,7 @@ labels:
 menuTitle: Template variables
 title: TestData template variables
 weight: 300
-review_date: "2026-04-08"
+review_date: '2026-04-08'
 ---
 
 # TestData template variables
@@ -25,11 +25,11 @@ For an introduction to templating and template variables, refer to the [Templati
 
 ## Supported variable types
 
-| Variable type   | Supported |
-| --------------- | --------- |
-| Query           | Yes       |
-| Custom          | Yes       |
-| Data source     | Yes       |
+| Variable type | Supported |
+| ------------- | --------- |
+| Query         | Yes       |
+| Custom        | Yes       |
+| Data source   | Yes       |
 
 ## Create a query variable
 
@@ -49,25 +49,25 @@ TestData generates a hierarchical metric tree with nodes named using letter comb
 
 Use `*` as a wildcard to return all children at a given level:
 
-| Query     | Result                                                                    |
-| --------- | ------------------------------------------------------------------------- |
-| `*`       | Returns the top-level nodes: `A`, `B`, `C`, `D`, `E`, `F`, `G`, `H`.    |
-| `A.*`     | Returns children of node A: `AA`, `AB`, `AC`, `AD`, `AE`, `AF`, `AG`, `AH`. |
-| `A.AA.*`  | Returns children of node AA: `AAA`, `AAB`, `AAC`, etc.                    |
-| `A.AB`    | Returns children of the AB node: `ABA`, `ABB`, `ABC`, etc.               |
+| Query    | Result                                                                      |
+| -------- | --------------------------------------------------------------------------- |
+| `*`      | Returns the top-level nodes: `A`, `B`, `C`, `D`, `E`, `F`, `G`, `H`.        |
+| `A.*`    | Returns children of node A: `AA`, `AB`, `AC`, `AD`, `AE`, `AF`, `AG`, `AH`. |
+| `A.AA.*` | Returns children of node AA: `AAA`, `AAB`, `AAC`, etc.                      |
+| `A.AB`   | Returns children of the AB node: `ABA`, `ABB`, `ABC`, etc.                  |
 
 Use glob patterns with curly braces to match multiple nodes:
 
-| Query         | Result                                                                   |
-| ------------- | ------------------------------------------------------------------------ |
-| `{A,B}.*`     | Returns children of both A and B: `AA`, `AB`, ..., `BA`, `BB`, etc.      |
-| `A.{AA,AB}.*` | Returns children of AA and AB: `AAA`, `AAB`, ..., `ABA`, `ABB`, etc.     |
+| Query         | Result                                                               |
+| ------------- | -------------------------------------------------------------------- |
+| `{A,B}.*`     | Returns children of both A and B: `AA`, `AB`, ..., `BA`, `BB`, etc.  |
+| `A.{AA,AB}.*` | Returns children of AA and AB: `AAA`, `AAB`, ..., `ABA`, `ABB`, etc. |
 
 Use `*` after a prefix to match nodes that start with the given string:
 
-| Query    | Result                                                                           |
-| -------- | -------------------------------------------------------------------------------- |
-| `A*`     | Returns all top-level nodes starting with A (only `A` at the top level).         |
+| Query | Result                                                                   |
+| ----- | ------------------------------------------------------------------------ |
+| `A*`  | Returns all top-level nodes starting with A (only `A` at the top level). |
 
 ### Value queries
 

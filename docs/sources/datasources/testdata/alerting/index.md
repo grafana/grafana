@@ -15,7 +15,7 @@ labels:
 menuTitle: Alerting
 title: TestData alerting
 weight: 400
-review_date: "2026-04-08"
+review_date: '2026-04-08'
 ---
 
 # TestData alerting
@@ -31,16 +31,16 @@ The TestData data source supports [Grafana Alerting](https://grafana.com/docs/gr
 
 TestData scenarios that return time-series data work with alert rule conditions. Choose a scenario based on the behavior you want to test.
 
-| Scenario                   | Alerting use case                                                                             |
-| -------------------------- | --------------------------------------------------------------------------------------------- |
-| **Predictable Pulse**      | Deterministic on/off pattern. Produces repeatable alert firing and resolving on a fixed cycle. |
-| **Random Walk**            | Non-deterministic time series. Useful for quick prototyping and load testing alert evaluation. |
-| **CSV Metric Values**      | Controlled, fixed values. Test exact threshold boundaries.                                    |
-| **Predictable CSV Wave**   | Custom repeating waveforms. Test complex threshold patterns with precise control.             |
-| **Random Walk (with error)** | Returns both data and an error. Test how alerts handle partial failures.                     |
-| **Error with source**      | Returns a plugin or downstream error. Test alert evaluation error handling.                   |
-| **No Data Points**         | Returns empty results. Test no-data alert conditions.                                         |
-| **Slow Query**             | Introduces a configurable delay. Test alert evaluation timeouts.                              |
+| Scenario                     | Alerting use case                                                                              |
+| ---------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Predictable Pulse**        | Deterministic on/off pattern. Produces repeatable alert firing and resolving on a fixed cycle. |
+| **Random Walk**              | Non-deterministic time series. Useful for quick prototyping and load testing alert evaluation. |
+| **CSV Metric Values**        | Controlled, fixed values. Test exact threshold boundaries.                                     |
+| **Predictable CSV Wave**     | Custom repeating waveforms. Test complex threshold patterns with precise control.              |
+| **Random Walk (with error)** | Returns both data and an error. Test how alerts handle partial failures.                       |
+| **Error with source**        | Returns a plugin or downstream error. Test alert evaluation error handling.                    |
+| **No Data Points**           | Returns empty results. Test no-data alert conditions.                                          |
+| **Slow Query**               | Introduces a configurable delay. Test alert evaluation timeouts.                               |
 
 Scenarios that produce logs, traces, or streaming data aren't suitable for threshold-based alert conditions.
 
@@ -71,13 +71,13 @@ To create a Predictable Pulse alert:
 1. Select the **Predictable Pulse** scenario.
 1. Configure the pulse options:
 
-   | Field         | Value | Effect                                            |
-   | ------------- | ----- | ------------------------------------------------- |
-   | **Step**      | `60`  | One data point every 60 seconds.                  |
-   | **On Count**  | `3`   | Three consecutive points at the "on" value.       |
-   | **Off Count** | `6`   | Six consecutive points at the "off" value.        |
-   | **On Value**  | `1`   | Value during the "on" phase.                      |
-   | **Off Value** | `0`   | Value during the "off" phase.                     |
+   | Field         | Value | Effect                                      |
+   | ------------- | ----- | ------------------------------------------- |
+   | **Step**      | `60`  | One data point every 60 seconds.            |
+   | **On Count**  | `3`   | Three consecutive points at the "on" value. |
+   | **Off Count** | `6`   | Six consecutive points at the "off" value.  |
+   | **On Value**  | `1`   | Value during the "on" phase.                |
+   | **Off Value** | `0`   | Value during the "off" phase.               |
 
 1. Add a **Reduce** expression with function **Last**.
 1. Add a **Threshold** expression: **Is above** `0.5`.
