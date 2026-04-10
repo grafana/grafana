@@ -5,8 +5,8 @@ import { Badge, ConfirmModal, LinkButton, Stack } from '@grafana/ui';
 import { useExportMuteTimingsDrawer } from 'app/features/alerting/unified/components/mute-timings/useExportMuteTimingsDrawer';
 
 import { AbilityAny } from '../../components/AbilityGuards';
-import { AlertmanagerAction } from '../../hooks/useAbilities.types';
-import { useAlertmanagerAbilityState } from '../../hooks/useAlertmanagerAbilities';
+import { useAlertmanagerAbilityState } from '../../hooks/abilities/notificationAbilities';
+import { AlertmanagerAction, isApplicable } from '../../hooks/abilities/types';
 import { isLoading } from '../../hooks/useAsync';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
@@ -25,9 +25,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
   });
   const [showDeleteDrawer, setShowDeleteDrawer] = useState(false);
   const [ExportDrawer, showExportDrawer] = useExportMuteTimingsDrawer();
-  const { supported: exportSupported, allowed: exportAllowed } = useAlertmanagerAbilityState(
-    AlertmanagerAction.ExportTimeIntervals
-  );
+  const exportAbility = useAlertmanagerAbilityState(AlertmanagerAction.ExportTimeIntervals);
 
   const closeDeleteModal = () => setShowDeleteDrawer(false);
 
@@ -60,13 +58,13 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
         )}
         <AbilityAny actions={[AlertmanagerAction.UpdateTimeInterval]}>{viewOrEditButton}</AbilityAny>
 
-        {exportSupported && (
+        {isApplicable(exportAbility) && (
           <LinkButton
             icon="download-alt"
             variant="secondary"
             size="sm"
             data-testid="export"
-            disabled={!exportAllowed || isLoading(deleteMuteTimingRequestState)}
+            disabled={!exportAbility.granted || isLoading(deleteMuteTimingRequestState)}
             onClick={() => showExportDrawer(muteTiming.name)}
           >
             <Trans i18nKey="alerting.common.export">Export</Trans>

@@ -1,8 +1,8 @@
 import { type JSX, useCallback, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
-import { AlertmanagerAction } from '../../hooks/useAbilities.types';
-import { useAlertmanagerAbilityState } from '../../hooks/useAlertmanagerAbilities';
+import { useAlertmanagerAbilityState } from '../../hooks/abilities/notificationAbilities';
+import { AlertmanagerAction } from '../../hooks/abilities/types';
 import { GrafanaReceiverExporter } from '../export/GrafanaReceiverExporter';
 import { GrafanaReceiversExporter } from '../export/GrafanaReceiversExporter';
 

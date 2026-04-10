@@ -10,8 +10,8 @@ import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { LogMessages, logInfo } from '../../Analytics';
-import { useRuleAbilityState } from '../../hooks/useAbilities';
-import { RuleAction } from '../../hooks/useAbilities.types';
+import { useRuleAbilityState } from '../../hooks/abilities/ruleAbilities';
+import { RuleAction } from '../../hooks/abilities/types';
 import { flattenGrafanaManagedRules } from '../../hooks/useCombinedRuleNamespaces';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';

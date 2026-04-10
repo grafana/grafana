@@ -5,8 +5,8 @@ import { t } from '@grafana/i18n';
 import { FeatureBadge, useStyles2 } from '@grafana/ui';
 
 import { useAlertRule } from '../../components/rule-viewer/RuleContext';
-import { useEnrichmentAbilityState } from '../../hooks/useAbilities';
-import { EnrichmentAction } from '../../hooks/useAbilities.types';
+import { useEnrichmentAbilityState } from '../../hooks/abilities/otherAbilities';
+import { EnrichmentAction } from '../../hooks/abilities/types';
 import { rulerRuleType } from '../../utils/rules';
 
 type SetActiveTab = (tab: string) => void;

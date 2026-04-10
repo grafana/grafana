@@ -6,12 +6,8 @@ import { type PromOptions } from '@grafana/prometheus';
 import { config, locationService, setPluginLinksHook } from '@grafana/runtime';
 import * as ruler from 'app/features/alerting/unified/api/ruler';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
-import * as alertingAbilities from 'app/features/alerting/unified/hooks/useAbilities';
-import {
-  type AbilityState,
-  type AbilityStates,
-  RuleAction,
-} from 'app/features/alerting/unified/hooks/useAbilities.types';
+import * as alertingAbilities from 'app/features/alerting/unified/hooks/abilities/ruleAbilities';
+import { type AbilityStates, Granted, RuleAction } from 'app/features/alerting/unified/hooks/abilities/types';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   grantUserPermissions,
@@ -201,9 +197,8 @@ describe('PanelAlertTabContent', () => {
       namespace: () => ({ path: 'ruler' }),
       namespaceGroup: () => ({ path: 'ruler' }),
     });
-    const granted: AbilityState = { supported: true, allowed: true, loading: false, granted: true };
     mocks.useAlertRuleAbilityMock.mockReturnValue(
-      Object.fromEntries(Object.values(RuleAction).map((action) => [action, granted])) as AbilityStates<RuleAction>
+      Object.fromEntries(Object.values(RuleAction).map((action) => [action, Granted])) as AbilityStates<RuleAction>
     );
 
     mockAlertRuleApi(server).prometheusRuleNamespaces(GRAFANA_RULES_SOURCE_NAME, promResponse);

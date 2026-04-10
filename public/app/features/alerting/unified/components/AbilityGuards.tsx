@@ -1,16 +1,12 @@
 import { type ReactNode, useMemo } from 'react';
 
 import {
-  useEnrichmentAbilityStates,
-  useExternalRuleAbilityStates,
-  useFolderBulkActionAbilityStates,
-  useRuleAbilityStates,
-} from '../hooks/useAbilities';
-import { type AbilityState, type AbilityStates, type Action } from '../hooks/useAbilities.types';
-import {
   useAllAlertmanagerAbilityStates,
   useAllExternalAlertmanagerAbilityStates,
-} from '../hooks/useAlertmanagerAbilities';
+} from '../hooks/abilities/notificationAbilities';
+import { useEnrichmentAbilityStates, useFolderBulkActionAbilityStates } from '../hooks/abilities/otherAbilities';
+import { useExternalRuleAbilityStates, useRuleAbilityStates } from '../hooks/abilities/ruleAbilities';
+import { type AbilityState, type AbilityStates, type Action, NotSupported } from '../hooks/abilities/types';
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
@@ -47,10 +43,8 @@ function useAbilityStatesForActions(actions: Action[]): AbilityStates<Action> {
       ...enrichmentStates,
     };
 
-    const fallback: AbilityState = { granted: false, supported: false, allowed: false, loading: false };
-
     return actions.reduce<AbilityStates<Action>>((acc, action) => {
-      acc[action] = merged[action] ?? fallback;
+      acc[action] = merged[action] ?? NotSupported;
       return acc;
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     }, {} as AbilityStates<Action>);

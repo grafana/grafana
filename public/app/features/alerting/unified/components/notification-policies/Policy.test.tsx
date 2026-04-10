@@ -14,8 +14,8 @@ import {
   type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 
-import type { AbilityState } from '../../hooks/useAbilities.types';
-import { useAlertmanagerAbilityStates } from '../../hooks/useAlertmanagerAbilities';
+import { useAlertmanagerAbilityStates } from '../../hooks/abilities/notificationAbilities';
+import { type AbilityState, Granted, InsufficientPermissions, NotSupported } from '../../hooks/abilities/types';
 import { mockReceiversState } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { KnownProvenance } from '../../types/knownProvenance';
@@ -29,16 +29,18 @@ import {
   useCreateDropdownMenuActions,
 } from './Policy';
 
-jest.mock('../../hooks/useAlertmanagerAbilities', () => ({
-  ...jest.requireActual('../../hooks/useAlertmanagerAbilities'),
+jest.mock('../../hooks/abilities/notificationAbilities', () => ({
+  ...jest.requireActual('../../hooks/abilities/notificationAbilities'),
   useAlertmanagerAbilityStates: jest.fn(),
 }));
 
 const useAlertmanagerAbilitiesMock = jest.mocked(useAlertmanagerAbilityStates);
 
-/** Convert a legacy [supported, allowed] tuple to AbilityState for test mocks */
 function toAbilityState([supported, allowed]: [boolean, boolean]): AbilityState {
-  return { supported, allowed, granted: supported && allowed, loading: false };
+  if (!supported) {
+    return NotSupported;
+  }
+  return allowed ? Granted : InsufficientPermissions([]);
 }
 
 describe('Policy', () => {

@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { LogMessages, logInfo } from '../../Analytics';
-import { ExternalRuleAction, RuleAction } from '../../hooks/useAbilities.types';
+import { ExternalRuleAction, RuleAction } from '../../hooks/abilities/types';
 import { isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
 import { AbilityAny } from '../AbilityGuards';
 

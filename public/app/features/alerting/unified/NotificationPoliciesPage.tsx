@@ -19,8 +19,8 @@ import {
   useCreatePolicyAction,
   useListNotificationPolicyRoutes,
 } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
-import { AlertmanagerAction } from 'app/features/alerting/unified/hooks/useAbilities.types';
-import { useAlertmanagerAbilityState } from 'app/features/alerting/unified/hooks/useAlertmanagerAbilities';
+import { useAlertmanagerAbilityState } from 'app/features/alerting/unified/hooks/abilities/notificationAbilities';
+import { AlertmanagerAction, isApplicable } from 'app/features/alerting/unified/hooks/abilities/types';
 import { useRouteGroupsMatcher } from 'app/features/alerting/unified/useRouteGroupsMatcher';
 import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
@@ -56,12 +56,10 @@ const NotificationPoliciesTabs = () => {
 
   // Alertmanager logic and data hooks
   const { selectedAlertmanager = '' } = useAlertmanager();
-  const { supported: policiesSupported, allowed: canSeePoliciesTab } = useAlertmanagerAbilityState(
-    AlertmanagerAction.ViewNotificationPolicyTree
-  );
-  const { supported: timingsSupported, allowed: canSeeTimingsTab } = useAlertmanagerAbilityState(
-    AlertmanagerAction.ViewTimeInterval
-  );
+  const policiesAbility = useAlertmanagerAbilityState(AlertmanagerAction.ViewNotificationPolicyTree);
+  const timingsAbility = useAlertmanagerAbilityState(AlertmanagerAction.ViewTimeInterval);
+  const canSeePoliciesTab = policiesAbility.granted;
+  const canSeeTimingsTab = timingsAbility.granted;
   const availableTabs = [
     canSeePoliciesTab && ActiveTab.NotificationPolicies,
     canSeeTimingsTab && ActiveTab.TimeIntervals,
@@ -98,7 +96,7 @@ const NotificationPoliciesTabs = () => {
       <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager} />
       <InhibitionRulesAlert alertmanagerSourceName={selectedAlertmanager} />
       <TabsBar>
-        {policiesSupported && canSeePoliciesTab && (
+        {isApplicable(policiesAbility) && canSeePoliciesTab && (
           <Tab
             label={t('alerting.notification-policies-tabs.label-notification-policies', 'Notification Policies')}
             active={policyTreeTabActive}
@@ -108,7 +106,7 @@ const NotificationPoliciesTabs = () => {
             }}
           />
         )}
-        {timingsSupported && canSeeTimingsTab && (
+        {isApplicable(timingsAbility) && canSeeTimingsTab && (
           <Tab
             label={t('alerting.notification-policies-tabs.label-time-intervals', 'Time intervals')}
             active={muteTimingsTabActive}

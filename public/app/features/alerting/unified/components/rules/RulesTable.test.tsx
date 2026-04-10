@@ -4,15 +4,22 @@ import { byRole } from 'testing-library-selector';
 import { setPluginLinksHook } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
+import { useEnrichmentAbilityState } from '../../hooks/abilities/otherAbilities';
 import {
   useAllRulerRuleAbilityStates,
-  useEnrichmentAbilityState,
   usePromRuleAbilityState,
   usePromRuleAbilityStates,
   useRulerRuleAbilityState,
   useRulerRuleAbilityStates,
-} from '../../hooks/useAbilities';
-import { type AbilityState, RuleAction } from '../../hooks/useAbilities.types';
+} from '../../hooks/abilities/ruleAbilities';
+import {
+  type AbilityState,
+  type AbilityStates,
+  Granted,
+  InsufficientPermissions,
+  NotSupported,
+  RuleAction,
+} from '../../hooks/abilities/types';
 import { getCloudRule, getGrafanaRule } from '../../mocks';
 import { mimirDataSource } from '../../mocks/server/configure';
 
@@ -22,11 +29,15 @@ jest.mock('@grafana/assistant', () => ({
   useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
 }));
 
-jest.mock('../../hooks/useAbilities');
+jest.mock('../../hooks/abilities/ruleAbilities');
+jest.mock('../../hooks/abilities/otherAbilities');
 
-/** Convert a [supported, allowed] pair to an AbilityState for test mocks */
+/** Returns Granted or NotSupported/InsufficientPermissions for test mocks */
 function toAbilityState(supported: boolean, allowed: boolean): AbilityState {
-  return { supported, allowed, granted: supported && allowed, loading: false };
+  if (!supported) {
+    return NotSupported;
+  }
+  return allowed ? Granted : InsufficientPermissions([]);
 }
 
 /** Build a full AbilityStates<RuleAction> object where every action returns the same state */

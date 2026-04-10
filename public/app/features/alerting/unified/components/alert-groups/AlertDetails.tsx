@@ -7,7 +7,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { AlertmanagerAction } from '../../hooks/useAbilities.types';
+import { AlertmanagerAction } from '../../hooks/abilities/types';
 import { isGrafanaRulesSource } from '../../utils/datasource';
 import { makeAMLink, makeLabelBasedSilenceLink } from '../../utils/misc';
 import { AbilityAny } from '../AbilityGuards';

@@ -11,8 +11,8 @@ import { useAlertmanager } from 'app/features/alerting/unified/state/Alertmanage
 import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/constants';
 
 import { AbilityAny } from '../../components/AbilityGuards';
-import { AlertmanagerAction } from '../../hooks/useAbilities.types';
-import { useAlertmanagerAbilityState, useAlertmanagerAbilityStates } from '../../hooks/useAlertmanagerAbilities';
+import { useAlertmanagerAbilityState, useAlertmanagerAbilityStates } from '../../hooks/abilities/notificationAbilities';
+import { AlertmanagerAction, isApplicable } from '../../hooks/abilities/types';
 import { makeAMLink } from '../../utils/misc';
 import { DynamicTable, type DynamicTableColumnProps } from '../DynamicTable';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
@@ -45,11 +45,8 @@ export const TimeIntervalsTable = () => {
     });
   }, [data]);
 
-  const { allowed: allowedToCreateMuteTiming } = useAlertmanagerAbilityState(AlertmanagerAction.CreateTimeInterval);
-
-  const { supported: exportMuteTimingsSupported, allowed: exportMuteTimingsAllowed } = useAlertmanagerAbilityState(
-    AlertmanagerAction.ExportTimeIntervals
-  );
+  const createAbility = useAlertmanagerAbilityState(AlertmanagerAction.CreateTimeInterval);
+  const exportAbility = useAlertmanagerAbilityState(AlertmanagerAction.ExportTimeIntervals);
   const columns = useColumns(alertManagerSourceName, hideActions);
 
   if (isLoading) {
@@ -91,12 +88,12 @@ export const TimeIntervalsTable = () => {
             </LinkButton>
           </AbilityAny>
         )}
-        {exportMuteTimingsSupported && (
+        {isApplicable(exportAbility) && (
           <>
             <Button
               icon="download-alt"
               variant="secondary"
-              disabled={!exportMuteTimingsAllowed}
+              disabled={!exportAbility.granted}
               onClick={() => showExportAllDrawer(ALL_MUTE_TIMINGS)}
             >
               <Trans i18nKey="alerting.common.export-all">Export all</Trans>
@@ -118,7 +115,7 @@ export const TimeIntervalsTable = () => {
               buttonIcon="plus"
               buttonSize="lg"
               href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
-              showButton={allowedToCreateMuteTiming}
+              showButton={createAbility.granted}
             />
           ) : (
             <EmptyAreaWithCTA
@@ -137,11 +134,11 @@ export const TimeIntervalsTable = () => {
 };
 
 function useColumns(alertManagerSourceName: string, hideActions = false) {
-  const [{ allowed: allowedToEdit }, { allowed: allowedToDelete }] = useAlertmanagerAbilityStates([
+  const [editAbility, deleteAbility] = useAlertmanagerAbilityStates([
     AlertmanagerAction.UpdateTimeInterval,
     AlertmanagerAction.DeleteTimeInterval,
   ]);
-  const showActions = !hideActions && (allowedToEdit || allowedToDelete);
+  const showActions = !hideActions && (editAbility.granted || deleteAbility.granted);
 
   return useMemo((): Array<DynamicTableColumnProps<MuteTiming>> => {
     const columns: Array<DynamicTableColumnProps<MuteTiming>> = [

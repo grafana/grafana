@@ -14,8 +14,8 @@ import {
   trackRuleVersionsRestoreSuccess,
 } from '../../../Analytics';
 import { alertRuleApi } from '../../../api/alertRuleApi';
-import { useRulerRuleAbilityState } from '../../../hooks/useAbilities';
-import { RuleAction } from '../../../hooks/useAbilities.types';
+import { useRulerRuleAbilityState } from '../../../hooks/abilities/ruleAbilities';
+import { RuleAction } from '../../../hooks/abilities/types';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 
@@ -64,13 +64,8 @@ export function AlertVersionHistory({ rule }: AlertVersionHistoryProps) {
     groupName: rule.grafana_alert.rule_group,
     groupOrigin: 'grafana',
   };
-  const { supported: restoreSupported, allowed: restoreAllowed } = useRulerRuleAbilityState(
-    rule,
-    groupIdentifier,
-    RuleAction.Restore
-  );
-  const canRestore =
-    restoreAllowed && restoreSupported && Boolean(config.featureToggles.alertingRuleVersionHistoryRestore);
+  const restoreAbility = useRulerRuleAbilityState(rule, groupIdentifier, RuleAction.Restore);
+  const canRestore = restoreAbility.granted && Boolean(config.featureToggles.alertingRuleVersionHistoryRestore);
 
   //tracking functions for restore action
   const onRestoreSuccess = useCallback(

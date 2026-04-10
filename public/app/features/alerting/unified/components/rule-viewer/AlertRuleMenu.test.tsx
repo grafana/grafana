@@ -24,7 +24,7 @@ import { fromCombinedRule } from 'app/features/alerting/unified/utils/rule-id';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { RuleAction } from '../../hooks/useAbilities.types';
+import { RuleAction } from '../../hooks/abilities/types';
 
 const mockOpenAssistant = jest.fn();
 jest.mock('@grafana/assistant', () => ({

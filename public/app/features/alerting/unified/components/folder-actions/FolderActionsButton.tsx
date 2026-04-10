@@ -7,8 +7,9 @@ import { useDispatch } from 'app/types/store';
 
 import { alertingFolderActionsApi } from '../../api/alertingFolderActionsApi';
 import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
-import { useFolderBulkActionAbilityState, useRuleAbilityState } from '../../hooks/useAbilities';
-import { FolderBulkAction, RuleAction } from '../../hooks/useAbilities.types';
+import { useFolderBulkActionAbilityState } from '../../hooks/abilities/otherAbilities';
+import { useRuleAbilityState } from '../../hooks/abilities/ruleAbilities';
+import { FolderBulkAction, RuleAction } from '../../hooks/abilities/types';
 import { useFolder } from '../../hooks/useFolder';
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';

@@ -18,8 +18,8 @@ import {
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
-import { AlertmanagerAction } from '../../hooks/useAbilities.types';
-import { useAlertmanagerAbilityState } from '../../hooks/useAlertmanagerAbilities';
+import { useAlertmanagerAbilityState } from '../../hooks/abilities/notificationAbilities';
+import { AlertmanagerAction, isApplicable } from '../../hooks/abilities/types';
 import { useCanViewContactPoints } from '../../hooks/useNotificationAbilities';
 import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
@@ -62,12 +62,8 @@ const ContactPointsTab = () => {
     fetchStatuses,
   });
 
-  const { supported: addContactPointSupported, allowed: addContactPointAllowed } = useAlertmanagerAbilityState(
-    AlertmanagerAction.CreateContactPoint
-  );
-  const { supported: exportContactPointsSupported, allowed: exportContactPointsAllowed } = useAlertmanagerAbilityState(
-    AlertmanagerAction.ExportContactPoint
-  );
+  const addContactPointAbility = useAlertmanagerAbilityState(AlertmanagerAction.CreateContactPoint);
+  const exportContactPointsAbility = useAlertmanagerAbilityState(AlertmanagerAction.ExportContactPoint);
 
   const [ExportDrawer, showExportDrawer] = useExportContactPoint();
 
@@ -82,9 +78,9 @@ const ContactPointsTab = () => {
   if (contactPoints.length === 0) {
     return (
       <EmptyState
-        variant={addContactPointAllowed ? 'call-to-action' : 'not-found'}
+        variant={addContactPointAbility.granted ? 'call-to-action' : 'not-found'}
         button={
-          addContactPointAllowed && (
+          addContactPointAbility.granted && (
             <LinkButton
               href={makeAMLink('/alerting/notifications/receivers/new', selectedAlertmanager)}
               icon="plus"
@@ -106,23 +102,23 @@ const ContactPointsTab = () => {
         <ContactPointsFilter />
 
         <Stack direction="row" gap={1}>
-          {addContactPointSupported && (
+          {isApplicable(addContactPointAbility) && (
             <LinkButton
               icon="plus"
               aria-label={t('alerting.contact-points-tab.aria-label-add-contact-point', 'add contact point')}
               variant="primary"
               href="/alerting/notifications/receivers/new"
-              disabled={!addContactPointAllowed}
+              disabled={!addContactPointAbility.granted}
             >
               <Trans i18nKey="alerting.contact-points.create">New contact point</Trans>
             </LinkButton>
           )}
-          {exportContactPointsSupported && (
+          {isApplicable(exportContactPointsAbility) && (
             <Button
               icon="download-alt"
               variant="secondary"
               aria-label={t('alerting.contact-points-tab.aria-label-export-all', 'export all')}
-              disabled={!exportContactPointsAllowed}
+              disabled={!exportContactPointsAbility.granted}
               onClick={() => showExportDrawer(ALL_CONTACT_POINTS)}
             >
               <Trans i18nKey="alerting.contact-points-tab.export-all">Export all</Trans>
@@ -151,9 +147,7 @@ const ContactPointsTab = () => {
 };
 
 const NotificationTemplatesTab = () => {
-  const { supported: createTemplateSupported, allowed: createTemplateAllowed } = useAlertmanagerAbilityState(
-    AlertmanagerAction.CreateNotificationTemplate
-  );
+  const createTemplateAbility = useAlertmanagerAbilityState(AlertmanagerAction.CreateNotificationTemplate);
 
   return (
     <Stack direction="column" gap={1}>
@@ -163,12 +157,12 @@ const NotificationTemplatesTab = () => {
             Create notification templates to customize your notifications.
           </Trans>
         </Text>
-        {createTemplateSupported && (
+        {isApplicable(createTemplateAbility) && (
           <LinkButton
             icon="plus"
             variant="primary"
             href="/alerting/notifications/templates/new"
-            disabled={!createTemplateAllowed}
+            disabled={!createTemplateAbility.granted}
           >
             <Trans i18nKey="alerting.notification-templates-tab.add-notification-template-group">
               New notification template
@@ -199,9 +193,9 @@ const useTabQueryParam = (defaultTab: ActiveTab) => {
 
 export const ContactPointsPageContents = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  const { allowed: canViewContactPoints } = useAlertmanagerAbilityState(AlertmanagerAction.ViewContactPoint);
-  const { allowed: canCreateContactPoints } = useAlertmanagerAbilityState(AlertmanagerAction.CreateContactPoint);
-  const { allowed: showTemplatesTab } = useAlertmanagerAbilityState(AlertmanagerAction.ViewNotificationTemplate);
+  const { granted: canViewContactPoints } = useAlertmanagerAbilityState(AlertmanagerAction.ViewContactPoint);
+  const { granted: canCreateContactPoints } = useAlertmanagerAbilityState(AlertmanagerAction.CreateContactPoint);
+  const { granted: showTemplatesTab } = useAlertmanagerAbilityState(AlertmanagerAction.ViewNotificationTemplate);
 
   const showContactPointsTab = canViewContactPoints || canCreateContactPoints;
 

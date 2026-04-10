@@ -1,8 +1,8 @@
 import { Trans } from '@grafana/i18n';
 import { LinkButton, Stack, Text } from '@grafana/ui';
 
-import { AlertmanagerAction } from '../../hooks/useAbilities.types';
-import { useAlertmanagerAbilityState } from '../../hooks/useAlertmanagerAbilities';
+import { useAlertmanagerAbilityState } from '../../hooks/abilities/notificationAbilities';
+import { AlertmanagerAction, isApplicable } from '../../hooks/abilities/types';
 import { useTemplatesNav } from '../../navigation/useNotificationConfigNav';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
@@ -11,9 +11,7 @@ import { GrafanaAlertmanagerWarning } from '../GrafanaAlertmanagerWarning';
 import { NotificationTemplates } from './NotificationTemplates';
 
 function TemplatesPageContent() {
-  const { supported: createTemplateSupported, allowed: createTemplateAllowed } = useAlertmanagerAbilityState(
-    AlertmanagerAction.CreateNotificationTemplate
-  );
+  const createTemplateAbility = useAlertmanagerAbilityState(AlertmanagerAction.CreateNotificationTemplate);
 
   return (
     <Stack direction="column" gap={1}>
@@ -23,12 +21,12 @@ function TemplatesPageContent() {
             Create notification templates to customize your notifications.
           </Trans>
         </Text>
-        {createTemplateSupported && (
+        {isApplicable(createTemplateAbility) && (
           <LinkButton
             icon="plus"
             variant="primary"
             href="/alerting/notifications/templates/new"
-            disabled={!createTemplateAllowed}
+            disabled={!createTemplateAbility.granted}
           >
             <Trans i18nKey="alerting.templates-page.add-template">New notification template</Trans>
           </LinkButton>

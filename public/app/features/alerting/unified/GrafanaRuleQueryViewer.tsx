@@ -32,8 +32,8 @@ import { ExpressionResult } from './components/expressions/Expression';
 import { type ThresholdDefinition, getThresholdsForQueries } from './components/rule-editor/util';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { DatasourceModelPreview } from './components/rule-viewer/tabs/Query/DataSourceModelPreview';
-import { useAllRulerRuleAbilityStates } from './hooks/useAbilities';
-import { RuleAction } from './hooks/useAbilities.types';
+import { useAllRulerRuleAbilityStates } from './hooks/abilities/ruleAbilities';
+import { RuleAction } from './hooks/abilities/types';
 import { groupIdentifier as groupIdentifierUtil } from './utils/groupIdentifier';
 
 interface GrafanaRuleViewerProps {

@@ -17,13 +17,9 @@ import {
 } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import {
-  skipToken,
-  useEnrichmentAbilityState,
-  usePromRuleAbilityStates,
-  useRulerRuleAbilityStates,
-} from '../../hooks/useAbilities';
-import { EnrichmentAction, RuleAction } from '../../hooks/useAbilities.types';
+import { useEnrichmentAbilityState } from '../../hooks/abilities/otherAbilities';
+import { skipToken, usePromRuleAbilityStates, useRulerRuleAbilityStates } from '../../hooks/abilities/ruleAbilities';
+import { EnrichmentAction, RuleAction } from '../../hooks/abilities/types';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import {
@@ -110,9 +106,7 @@ const AlertRuleMenu = ({
 
   const extensionsAvailable = ruleExtensionLinks.length > 0;
 
-  const { supported: enrichmentReadSupported, allowed: enrichmentReadAllowed } = useEnrichmentAbilityState(
-    EnrichmentAction.Read
-  );
+  const enrichmentReadAbility = useEnrichmentAbilityState(EnrichmentAction.Read);
 
   /**
    * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
@@ -144,8 +138,7 @@ const AlertRuleMenu = ({
     ruleUid &&
     handleManageEnrichments &&
     config.featureToggles.alertingEnrichmentPerRule &&
-    enrichmentReadSupported &&
-    enrichmentReadAllowed;
+    enrichmentReadAbility.granted;
 
   const menuItems = (
     <>

@@ -10,8 +10,14 @@ import { setupDataSources } from 'app/features/alerting/unified/testSetup/dataso
 
 import { AccessControlAction } from '../../../../../types/accessControl';
 import NotificationPolicies from '../../NotificationPoliciesPage';
-import { type AbilityState, AlertmanagerAction } from '../../hooks/useAbilities.types';
-import { useAlertmanagerAbilityState, useAlertmanagerAbilityStates } from '../../hooks/useAlertmanagerAbilities';
+import { useAlertmanagerAbilityState, useAlertmanagerAbilityStates } from '../../hooks/abilities/notificationAbilities';
+import {
+  type AbilityState,
+  AlertmanagerAction,
+  Granted,
+  InsufficientPermissions,
+  NotSupported,
+} from '../../hooks/abilities/types';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
 import { getRoutingTree, getRoutingTreeList, resetRoutingTreeMap } from '../../mocks/server/entities/k8s/routingtrees';
 import { KnownProvenance } from '../../types/knownProvenance';
@@ -29,15 +35,17 @@ jest.mock('../export/GrafanaPoliciesExporter', () => ({
   GrafanaPoliciesExporter: () => null,
 }));
 
-jest.mock('../../hooks/useAlertmanagerAbilities', () => ({
-  ...jest.requireActual('../../hooks/useAlertmanagerAbilities'),
+jest.mock('../../hooks/abilities/notificationAbilities', () => ({
+  ...jest.requireActual('../../hooks/abilities/notificationAbilities'),
   useAlertmanagerAbilityStates: jest.fn(),
   useAlertmanagerAbilityState: jest.fn(),
 }));
 
-/** Convert a [supported, allowed] pair to an AbilityState for test mocks */
 function toAbilityState(supported: boolean, allowed: boolean): AbilityState {
-  return { supported, allowed, granted: supported && allowed, loading: false };
+  if (!supported) {
+    return NotSupported;
+  }
+  return allowed ? Granted : InsufficientPermissions([]);
 }
 
 const mocks = {

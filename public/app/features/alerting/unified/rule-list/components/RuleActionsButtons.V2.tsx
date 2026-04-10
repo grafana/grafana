@@ -19,8 +19,8 @@ import {
 import { type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { logWarning } from '../../Analytics';
-import { skipToken, usePromRuleAbilityState, useRulerRuleAbilityState } from '../../hooks/useAbilities';
-import { RuleAction } from '../../hooks/useAbilities.types';
+import { skipToken, usePromRuleAbilityState, useRulerRuleAbilityState } from '../../hooks/abilities/ruleAbilities';
+import { RuleAction } from '../../hooks/abilities/types';
 import * as ruleId from '../../utils/rule-id';
 import {
   getRuleUID,

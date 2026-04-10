@@ -20,8 +20,8 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { AlertmanagerAction } from '../../hooks/useAbilities.types';
-import { useAlertmanagerAbilityState } from '../../hooks/useAlertmanagerAbilities';
+import { useAlertmanagerAbilityState } from '../../hooks/abilities/notificationAbilities';
+import { AlertmanagerAction } from '../../hooks/abilities/types';
 import { useAsync } from '../../hooks/useAsync';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
 import {
@@ -339,9 +339,7 @@ export function useCreateRoutingTree() {
  */
 export function useCreatePolicyAction(allPolicies: Route[] | undefined) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const { supported: createPoliciesSupported, allowed: createPoliciesAllowed } = useAlertmanagerAbilityState(
-    AlertmanagerAction.CreateNotificationPolicy
-  );
+  const createAbility = useAlertmanagerAbilityState(AlertmanagerAction.CreateNotificationPolicy);
   const [createTrigger] = useCreateRoutingTree();
 
   const existingPolicyNames = useMemo(
@@ -353,8 +351,8 @@ export function useCreatePolicyAction(allPolicies: Route[] | undefined) {
     isCreateModalOpen,
     openCreateModal: () => setIsCreateModalOpen(true),
     closeCreateModal: () => setIsCreateModalOpen(false),
-    createPoliciesSupported,
-    createPoliciesAllowed,
+    createPoliciesSupported: createAbility.granted || createAbility.cause === 'INSUFFICIENT_PERMISSIONS',
+    createPoliciesAllowed: createAbility.granted,
     createTrigger,
     existingPolicyNames,
   };
