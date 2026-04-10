@@ -18,13 +18,13 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
     builder.addFieldNamePicker({
       path: 'xField',
       name: t('trend.name-x-field', 'X field'),
-      description: t('trend.description-x-field', 'An increasing numeric value'),
+      description: t('trend.description-x-field', 'A numeric or categorical field for the X axis'),
       category,
       defaultValue: undefined,
       settings: {
         isClearable: true,
-        placeholderText: t('trend.placeholder-x-field', 'First numeric value'),
-        filter: (field: Field) => field.type === FieldType.number,
+        placeholderText: t('trend.placeholder-x-field', 'First numeric or string field'),
+        filter: (field: Field) => field.type === FieldType.number || field.type === FieldType.string,
       },
     });
 
@@ -32,10 +32,11 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
     commonOptionsBuilder.addLegendOptions(builder, true, true);
   })
   .setSuggestionsSupplier((ds) => {
+    const hasStringX = ds.fieldCountByType(FieldType.string) > 0;
+    const minNumbers = hasStringX ? 1 : 2; // string X needs 1 number for Y; numeric X needs 2
     if (
       !ds.rawFrames ||
-      ds.fieldCountByType(FieldType.number) < 2 ||
-      ds.rowCountTotal < 2 ||
+      ds.fieldCountByType(FieldType.number) < minNumbers ||
       ds.rowCountTotal < 2 ||
       ds.frameCount > 1
     ) {
@@ -47,9 +48,11 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
       return;
     }
 
+    const isStringX = hasStringX && ds.fieldCountByType(FieldType.time) === 0;
     return [
       {
-        score: VisualizationSuggestionScore.Good,
+        // Categorical data is more naturally a bar chart; rank below Bar Chart's default (OK=50)
+        score: isStringX ? VisualizationSuggestionScore.OK - 10 : VisualizationSuggestionScore.Good,
         fieldConfig: {
           defaults: {
             custom: {},

@@ -1,10 +1,9 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import {
   type DataFrame,
   FieldMatcherID,
   fieldMatchers,
-  FieldType,
   type PanelProps,
   type TimeRange,
   useDataLinksContext,
@@ -19,7 +18,7 @@ import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
 import { type Options } from './panelcfg.gen';
-import { prepSeries } from './utils';
+import { findXFieldIndex, prepSeries } from './utils';
 
 export const TrendPanel = ({
   data,
@@ -37,17 +36,29 @@ export const TrendPanel = ({
 
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
-  // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬
-  const trendXFieldName =
-    options.xField ?? data.series[0]?.fields.find((field) => field.type === FieldType.number)?.name;
-  const preparePlotFrameTimeless = (frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) => {
-    dimFields = {
-      ...dimFields,
-      x: fieldMatchers.get(FieldMatcherID.byName).get(trendXFieldName),
-    };
+  // Need to fallback to find an appropriate X field if not set in options otherwise panel crashes 😬
+  const trendXFieldName = useMemo(() => {
+    if (options.xField) {
+      return options.xField;
+    }
+    const fields = data.series[0]?.fields;
+    if (!fields) {
+      return undefined;
+    }
+    const idx = findXFieldIndex(fields);
+    return idx !== -1 ? fields[idx].name : undefined;
+  }, [options.xField, data.series]);
+  const preparePlotFrameTimeless = useCallback(
+    (frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) => {
+      dimFields = {
+        ...dimFields,
+        x: fieldMatchers.get(FieldMatcherID.byName).get(trendXFieldName),
+      };
 
-    return preparePlotFrame(frames, dimFields);
-  };
+      return preparePlotFrame(frames, dimFields);
+    },
+    [trendXFieldName]
+  );
 
   const info = useMemo(() => prepSeries(data.series, options.xField), [data.series, options.xField]);
 
