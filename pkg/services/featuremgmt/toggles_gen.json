@@ -566,7 +566,8 @@
       "metadata": {
         "name": "alertingNotificationHistoryTriage",
         "resourceVersion": "1772614382283",
-        "creationTimestamp": "2026-03-04T08:53:02Z"
+        "creationTimestamp": "2026-03-04T08:53:02Z",
+        "deletionTimestamp": "2026-04-09T17:07:43Z"
       },
       "spec": {
         "description": "Enables the notification history timeline in the triage instance details drawer",
@@ -1245,6 +1246,20 @@
     },
     {
       "metadata": {
+        "name": "clickHouseConfigValidation",
+        "resourceVersion": "1775754463440",
+        "creationTimestamp": "2026-04-09T17:07:43Z"
+      },
+      "spec": {
+        "description": "Enables validation on the ClickHouse data source configuration page",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "cloudRBACRoles",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-01-10T13:19:01Z"
@@ -1321,6 +1336,20 @@
         "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
         "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "compiledBootScript",
+        "resourceVersion": "1775117897717",
+        "creationTimestamp": "2026-04-02T08:18:17Z"
+      },
+      "spec": {
+        "description": "Boots the frontend using the boot.js script built from TS instead of the embedded boot script",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -1766,6 +1795,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasourcesApiServerEnableHealthEndpointRedirect",
+        "resourceVersion": "1774543694579",
+        "creationTimestamp": "2026-03-26T16:48:14Z"
+      },
+      "spec": {
+        "description": "Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
         "expression": "false"
       }
     },
@@ -2564,6 +2606,23 @@
         "description": "Enables running Infinity queries in parallel",
         "stage": "privatePreview",
         "codeowner": "@grafana/data-sources-plugins",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "influxDBConfigValidation",
+        "resourceVersion": "1775754463440",
+        "creationTimestamp": "2026-02-13T15:53:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-09 17:07:43.440663 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables validation on the InfluxDB data source configuration page",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -3444,7 +3503,8 @@
       "metadata": {
         "name": "logsPanelControls",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-07T14:38:55Z"
+        "creationTimestamp": "2025-04-07T14:38:55Z",
+        "deletionTimestamp": "2026-04-08T09:25:37Z"
       },
       "spec": {
         "description": "Enables a control component for the logs panel in Explore",
@@ -4628,7 +4688,8 @@
       "metadata": {
         "name": "rendererDisableAppPluginsPreload",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-02-24T14:43:06Z"
+        "creationTimestamp": "2025-02-24T14:43:06Z",
+        "deletionTimestamp": "2026-04-09T15:47:18Z"
       },
       "spec": {
         "description": "Disable pre-loading app plugins when the request is coming from the renderer",
