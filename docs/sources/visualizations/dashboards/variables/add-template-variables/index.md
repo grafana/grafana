@@ -324,7 +324,7 @@ groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5
 
 {{< admonition type="note" >}}
 In Grafana v13, we released the filter and group by feature in public preview.
-It replaces ad hoc filters and extends them by adding grouping for Prometheus and Loki data sources.
+It renames ad hoc filters and extends them by adding grouping for Prometheus and Loki data sources.
 However, in the dashboard schema, it is still referred to as `"kind": "AdhocVariable"`.
 
 To use this feature, enable the `dashboardUnifiedDrilldownControls` feature toggle in your Grafana configuration file.

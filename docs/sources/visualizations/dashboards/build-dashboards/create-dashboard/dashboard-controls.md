@@ -27,12 +27,7 @@ In the **Dashboard controls** section of the sidebar, you can add variables, ann
 Filter and group by is currently in public preview.
 Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 
-This feature renames _ad hoc filters_ to simply _filters_ and extends them by adding grouping for Prometheus and Loki data sources.
-However, in the dashboard schema, it is still referred to as `"kind": "AdhocVariable"`.
 To use this feature, enable the `dashboardUnifiedDrilldownControls` feature toggle in your Grafana configuration file.
-
-For information on ad hoc filters, refer to the [Variables documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
-While that documentation reflects the generally available experience, the information applies to the filter and group by feature.
 {{< /admonition >}}
 
 <!-- vale Grafana.Spelling = YES -->
