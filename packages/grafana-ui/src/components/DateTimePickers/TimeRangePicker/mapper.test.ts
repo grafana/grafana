@@ -1,5 +1,3 @@
-import { set } from 'lodash';
-
 import { type DateTime, dateTimeParse, type FeatureToggles } from '@grafana/data';
 import { initRegionalFormatForTests } from '@grafana/i18n';
 
@@ -28,7 +26,7 @@ const mockSetCommonFormat: (enabled: LocaleFormatPreferenceType) => void = commo
 
 function setRegionalFormatToggle(enabled: LocaleFormatPreferenceType) {
   mockSetCommonFormat(enabled);
-  set(window, 'grafanaBootData.settings.featureToggles.localeFormatPreference', enabled);
+  window.grafanaBootData.settings.featureToggles.localeFormatPreference = enabled;
 }
 
 beforeAll(() => {
