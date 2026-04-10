@@ -83,13 +83,11 @@ To configure repeating panels, follow these steps:
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
 
-1. Hover your cursor over the top-right corner of the panel to display the menu icon.
-1. Click the menu icon and select **Edit**.
-1. Under **Panel options** in the panel editor pane, expand the **Repeat options** section.
+1. Click **Edit**.
+1. Click the panel to open the sidebar.
 
 {{% shared-snippet path="/docs/grafana/latest/visualizations/dashboards/build-dashboards/create-dashboard/_index.md" id="configure-repeat" %}}
 
-1. Click **Back to dashboard** and then **Exit edit**.
 1. To propagate changes to all panels, reload the dashboard.
 
 {{< /docs/list >}}

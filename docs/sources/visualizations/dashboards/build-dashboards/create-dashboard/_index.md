@@ -418,10 +418,9 @@ To configure repeats, follow these steps:
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
 
-1. Expand the **Repeat options** section.
-
 {{< shared id="configure-repeat" >}}
 
+1. Expand the **Repeat options** section.
 1. Select the **Repeat by variable**.
 1. For panels in a custom layout, set the following options:
    1. Under **Repeat direction**, choose one of the following:
