@@ -121,10 +121,6 @@ export const AnnotationsPlugin2Cluster = ({
     config.addHook('ready', (u) => {
       xAxisRef.current = u.root.querySelector<HTMLDivElement>('.u-axis')!;
       plotRef.current = u;
-      // If annos were defined before uPlot ready is called, we need to force the component to re-render annos now that uplot is available
-      if (annotations?.length) {
-        forceUpdate();
-      }
     });
 
     config.addHook('draw', (u) => {
@@ -235,6 +231,7 @@ export const AnnotationsPlugin2Cluster = ({
   useEffect(() => {
     if (plotRef.current) {
       plotRef.current.redraw(false, true);
+      forceUpdate();
     }
   }, [clusteredAnnos]);
 
