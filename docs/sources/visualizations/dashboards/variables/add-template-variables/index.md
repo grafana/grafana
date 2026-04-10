@@ -327,7 +327,7 @@ groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5
 <!-- vale Grafana.WordList = NO -->
 <!-- vale Grafana.Spelling = NO -->
 
-## Add filters
+## Add filters {#add-ad-hoc-filters}
 
 {{< admonition type="note" >}}
 In Grafana v13, we released the filter and group by feature in public preview.
