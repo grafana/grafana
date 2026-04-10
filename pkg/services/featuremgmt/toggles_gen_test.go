@@ -580,18 +580,6 @@ func generateOpenFeatureReact(t *testing.T) string {
 		"Quote": func(s string) string {
 			return `"` + s + `"`
 		},
-		"OpenFeatureType": func(flagType string) string {
-			switch flagType {
-			case "boolean":
-				return "boolean"
-			case "string":
-				return "string"
-			case "integer", "float":
-				return "number"
-			default:
-				return "object"
-			}
-		},
 		"QuoteString": func(v any) string {
 			switch val := v.(type) {
 			case bool:
