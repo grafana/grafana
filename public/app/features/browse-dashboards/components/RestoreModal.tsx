@@ -1,9 +1,11 @@
+import { css } from '@emotion/css';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useState } from 'react';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { ConfirmModal, Field, Space, Text } from '@grafana/ui';
+import { ConfirmModal, Space, Text, useStyles2 } from '@grafana/ui';
 import { getStatusFromError } from 'app/core/utils/errors';
 
 import { FolderPicker } from '../../../core/components/Select/FolderPicker';
@@ -43,6 +45,7 @@ export const RestoreModal = ({
   originCandidate,
   isLoading,
 }: RestoreModalProps) => {
+  const styles = useStyles2(getStyles);
   const [manualTarget, setManualTarget] = useState<string | undefined | null>(null);
   const numberOfDashboards = selectedDashboards.length;
   const originWasDeleted = deletedFoldersState.isDeleted(originCandidate);
@@ -99,9 +102,9 @@ export const RestoreModal = ({
           </Text>
           <Space v={1} />
           {/* Field wrapper resets font-size to 14px, preventing cascade from parent Text components */}
-          <Field noMargin>
+          <div className={styles.field}>
             <FolderPicker onChange={onTargetChange} value={restoreTarget} />
-          </Field>
+          </div>
         </>
       }
       confirmText={
@@ -117,4 +120,12 @@ export const RestoreModal = ({
       disabled={restoreTarget === undefined || isLoading}
     />
   );
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    field: css({
+      fontSize: theme.typography.body.fontSize,
+    }),
+  };
 };
