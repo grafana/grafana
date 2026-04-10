@@ -21,10 +21,10 @@ Canonical methodology: [AGENTS.md](../../../AGENTS.md) (section “Cycle 1”).
 3. **Constraints**: Time box, avoid certain mocks (e.g. defer uPlot), or files that are off limits.
 4. **Prior knowledge**: Anything they already find confusing or risky in the code.
 
-## Steps (read-only unless the user approves commands)
+## Steps (read-only for file edits)
 
 1. **Read** the relevant implementation and existing tests (if any).
-2. **Coverage**: Propose running a targeted coverage command (e.g. Jest `--coverage` for specific files). **Ask permission before running** if not already agreed; paste or summarize key gaps (lines/branches), not only a percentage.
+2. **Coverage**: Run a targeted **coverage** command (e.g. Jest `--coverage` for specific files) **without** asking for approval—then paste or summarize key gaps (lines/branches), not only a percentage.
 3. **Second pass**: Re-read **uncovered** or **complex** areas; list **questions** and **WTF zones** (unclear control flow, heavy side effects).
 4. **Deliverable**: A short written summary for the prompter:
    - What the code does (at the level tests will need).

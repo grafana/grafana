@@ -24,7 +24,7 @@ Canonical methodology: [AGENTS.md](../../../AGENTS.md) (sections “Cycle 4”, 
 
 ## If wrong or messy
 
-- **Wrong**: debug, fix test or (minimally) production selectors; re-run tests with user approval for commands.
+- **Wrong**: debug, fix test or (minimally) production selectors; re-run tests—**coverage** may run **without** approval; **ask** before other test commands if the workflow would normally require it.
 - **Messy**: refactor **tests only** (Cycle 3-style) in a follow-up, or ask the prompter if they want a Cycle 3 pass.
 
 ## Anti-patterns

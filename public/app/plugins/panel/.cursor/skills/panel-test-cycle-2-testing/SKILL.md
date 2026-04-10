@@ -35,7 +35,7 @@ If the prompter prefers batch review, they may approve a **numbered list** of te
 
 ## After adding test cases
 
-1. Run or suggest **`yarn jest path/to/file.test.tsx --no-watch --watchAll=false`** (and coverage if requested). **Ask before running** if not already agreed.
+1. **Coverage reports** (`yarn jest … --coverage`, or equivalent): run **without** asking for approval; paste or summarize results. For **`yarn jest`** **without** `--coverage`, **ask before running** if not already agreed.
 2. Propose additional test cases only where coverage gaps matter; repeat the **per-test-case approval** rule.
 
 ## Anti-patterns

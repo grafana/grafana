@@ -16,7 +16,8 @@ Ask the prompter for:
 
 1. **PR URL or branch name** (if not in context)—to read the full diff in GitHub or locally.
 2. **Focus areas**: behavior risk, flakiness worries, or files they want extra scrutiny.
-3. Whether to run **coverage** again and which paths matter.
+
+**Coverage**: You may run **coverage** again **without** asking for approval; align paths with the PR/diff scope when obvious, or infer from changed test files.
 
 ## Review checklist
 

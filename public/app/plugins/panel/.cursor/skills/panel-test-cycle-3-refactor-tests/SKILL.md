@@ -32,7 +32,7 @@ Ask: **Approve this plan?** Revise until yes.
 ## Execution (after approval)
 
 1. Apply refactors in **small commits or steps**; prefer one `describe` block or one helper at a time if the file is large.
-2. Run tests after each logical step; **ask before running** if the user did not request runs.
+2. Run tests after each logical step; **coverage** runs (`--coverage`) **do not** require asking—run and check. **Ask before running** other test commands if the user did not request runs.
 3. End state: `it` blocks read as **scenarios**; duplication removed without hiding important variation.
 
 ## Anti-patterns
