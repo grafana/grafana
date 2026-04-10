@@ -59,8 +59,10 @@ var (
 )
 
 const (
-	KindDashboards = common.KindDashboards
-	KindFolders    = common.KindFolders
+	KindDashboards    = common.KindDashboards
+	KindFolders       = common.KindFolders
+	KindSnapshots     = common.KindSnapshots
+	KindLibraryPanels = common.KindLibraryPanels
 )
 
 var (

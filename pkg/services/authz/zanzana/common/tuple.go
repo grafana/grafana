@@ -36,8 +36,10 @@ const (
 )
 
 const (
-	KindDashboards string = dashboardV1.DASHBOARD_RESOURCE
-	KindFolders    string = folderV1.RESOURCE
+	KindDashboards    string = dashboardV1.DASHBOARD_RESOURCE
+	KindFolders       string = folderV1.RESOURCE
+	KindSnapshots     string = "snapshots"
+	KindLibraryPanels string = dashboardV1.LIBRARY_PANEL_RESOURCE
 )
 
 const (

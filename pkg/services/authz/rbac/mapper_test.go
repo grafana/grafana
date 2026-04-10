@@ -127,6 +127,38 @@ func TestMapperRegistry_ExactMatchPreferred(t *testing.T) {
 	assert.Equal(t, "dashboards:uid:", mapping.Prefix())
 }
 
+// TestMapperRegistry_Snapshots verifies snapshots map to the legacy RBAC action names
+// and skip scope on all verbs (global actions, no per-resource scope).
+func TestMapperRegistry_Snapshots(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("dashboard.grafana.app", "snapshots", "")
+	require.True(t, ok, "snapshots must be registered in dashboard.grafana.app")
+	require.NotNil(t, mapping)
+
+	tests := []struct {
+		verb           string
+		expectedAction string
+	}{
+		{utils.VerbGet, "snapshots:read"},
+		{utils.VerbList, "snapshots:read"},
+		{utils.VerbWatch, "snapshots:read"},
+		{utils.VerbCreate, "snapshots:create"},
+		{utils.VerbDelete, "snapshots:delete"},
+		{utils.VerbDeleteCollection, "snapshots:delete"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.verb, func(t *testing.T) {
+			action, ok := mapping.Action(tt.verb)
+			require.True(t, ok)
+			assert.Equal(t, tt.expectedAction, action)
+			assert.True(t, mapping.SkipScope(tt.verb), "snapshots must skip scope on all verbs")
+		})
+	}
+
+	assert.False(t, mapping.HasFolderSupport(), "snapshots do not live in folders")
+}
+
 func TestMapperRegistry_SubresourceLookup(t *testing.T) {
 	parentTr := newResourceTranslation("widgets", "uid", true, nil)
 	subTr := translation{

@@ -103,7 +103,6 @@ type DashboardsAPIBuilder struct {
 	dashboardService dashboards.DashboardService
 	features         featuremgmt.FeatureToggles
 
-	accessControl            accesscontrol.AccessControl
 	accessClient             authlib.AccessClient
 	legacy                   legacy.DashboardAccessor
 	unified                  resource.ResourceClient
@@ -135,7 +134,6 @@ func RegisterAPIService(
 	datasourceService datasources.DataSourceService,
 	dashboardPermissions dashboards.PermissionsRegistrationService,
 	dashboardPermissionsSvc accesscontrol.DashboardPermissionsService,
-	accessControl accesscontrol.AccessControl,
 	accessClient authlib.AccessClient,
 	provisioning provisioning.ProvisioningService,
 	reg prometheus.Registerer,
@@ -175,7 +173,6 @@ func RegisterAPIService(
 		dashboardPermissions:     dashboardPermissions,
 		dashboardPermissionsSvc:  dashboardPermissionsSvc,
 		features:                 features,
-		accessControl:            accessControl,
 		accessClient:             accessClient,
 		unified:                  unified,
 		search:                   NewSearchHandler(tracing, unified, features),
@@ -191,7 +188,7 @@ func RegisterAPIService(
 		snapshotOptions:          snapshotOptions,
 		namespacer:               namespacer,
 		dashboardActivityChannel: dashboardActivityChannel,
-		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, provisioning, accessControl),
+		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, provisioning, accessClient),
 	}
 
 	migration.RegisterMetrics(reg)
@@ -1071,7 +1068,7 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	searchAPIRoutes := b.search.GetAPIRoutes(defs)
-	snapshotAPIRoutes := snapshot.GetRoutes(b.snapshotService, b.snapshotOptions, b.accessControl, defs,
+	snapshotAPIRoutes := snapshot.GetRoutes(b.snapshotService, b.snapshotOptions, b.accessClient, defs,
 		func() rest.Storage {
 			return b.snapshotStorage
 		}, b.dashboardService)
@@ -1090,7 +1087,7 @@ func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvalu
 // Snapshots use RBAC-based authorization; other resources fall back to ServiceAuthorizer.
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	serviceAuthorizer := grafanaauthorizer.NewServiceAuthorizer()
-	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl)
+	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessClient)
 
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
