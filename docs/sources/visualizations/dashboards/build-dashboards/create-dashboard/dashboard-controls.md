@@ -144,7 +144,7 @@ You can also do this programmatically by returning the data frame with the appro
 With the override in place, you can click a series on a time series panel and filter it in or out.
 The new filter is shown in the dashboard filter control and the it's applied to the whole dashboard.
 
-<!-- TODO: Add screenshot here when feature is working properly -->
+{{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filters-v13.0.png" max-width="675px" alt="Panel with tooltip open showing options to filter on a value or filter it out" >}}
 
 ## Add variables
 
