@@ -55,25 +55,28 @@ func (tc *queryCacheConfigsTestCase) Setup(t *testing.T, helper *apis.K8sTestHel
 	engine := helper.GetEnv().SQLStore.GetEngine()
 	orgID := helper.Org1.OrgID
 
-	_, err := engine.Exec(
-		"INSERT INTO data_source (org_id, version, type, name, access, url, uid, basic_auth, is_default, json_data, created, updated) VALUES (?, 1, 'prometheus', 'Prometheus', 'proxy', 'http://localhost:9090', 'ds-prom-uid', 0, 0, '{}', '2024-01-01 00:00:00', '2024-01-01 00:00:00')",
-		orgID,
+	sess := engine.NewSession()
+	defer sess.Close()
+
+	_, err := sess.Exec(
+		"INSERT INTO data_source (org_id, version, type, name, access, url, uid, basic_auth, is_default, json_data, created, updated) VALUES (?, 1, 'prometheus', 'Prometheus', 'proxy', 'http://localhost:9090', 'ds-prom-uid', ?, ?, '{}', '2024-01-01 00:00:00', '2024-01-01 00:00:00')",
+		orgID, false, false,
 	)
 	require.NoError(t, err)
 
-	_, err = engine.Exec(
-		"INSERT INTO data_source (org_id, version, type, name, access, url, uid, basic_auth, is_default, json_data, created, updated) VALUES (?, 1, 'loki', 'Loki', 'proxy', 'http://localhost:3100', 'ds-loki-uid', 0, 0, '{}', '2024-01-01 00:00:00', '2024-01-01 00:00:00')",
-		orgID,
+	_, err = sess.Exec(
+		"INSERT INTO data_source (org_id, version, type, name, access, url, uid, basic_auth, is_default, json_data, created, updated) VALUES (?, 1, 'loki', 'Loki', 'proxy', 'http://localhost:3100', 'ds-loki-uid', ?, ?, '{}', '2024-01-01 00:00:00', '2024-01-01 00:00:00')",
+		orgID, false, false,
 	)
 	require.NoError(t, err)
 
-	_, err = engine.Exec(
+	_, err = sess.Exec(
 		"INSERT INTO data_source_cache (data_source_id, data_source_uid, enabled, ttl_ms, ttl_resources_ms, use_default_ttl, created, updated) SELECT id, uid, 1, 60000, 300000, 0, '2024-01-01 00:00:00', '2024-01-02 00:00:00' FROM data_source WHERE uid = 'ds-prom-uid'",
 	)
 	require.NoError(t, err)
 	tc.names = append(tc.names, "prometheus.ds-prom-uid")
 
-	_, err = engine.Exec(
+	_, err = sess.Exec(
 		"INSERT INTO data_source_cache (data_source_id, data_source_uid, enabled, ttl_ms, ttl_resources_ms, use_default_ttl, created, updated) SELECT id, uid, 0, 30000, 120000, 1, '2024-01-01 00:00:00', '2024-01-02 00:00:00' FROM data_source WHERE uid = 'ds-loki-uid'",
 	)
 	require.NoError(t, err)
@@ -89,21 +92,14 @@ func (tc *queryCacheConfigsTestCase) Verify(t *testing.T, helper *apis.K8sTestHe
 	namespace := authlib.OrgNamespaceFormatter(helper.Org1.OrgID)
 	engine := helper.GetEnv().SQLStore.GetEngine()
 
-	rows, err := engine.DB().Query(
-		"SELECT COUNT(*) FROM resource WHERE namespace = ? AND resource = ?",
-		namespace, "querycacheconfigs",
-	)
+	count, err := engine.Table("resource").
+		Where("namespace = ? AND resource = ?", namespace, "querycacheconfigs").
+		Count()
 	require.NoError(t, err)
-	defer func() { _ = rows.Close() }()
 
-	var count int
-	require.True(t, rows.Next())
-	require.NoError(t, rows.Scan(&count))
-	require.NoError(t, rows.Err())
-
-	expectedCount := 0
+	expectedCount := int64(0)
 	if shouldExist {
-		expectedCount = len(tc.names)
+		expectedCount = int64(len(tc.names))
 	}
 	require.Equal(t, expectedCount, count, "expected %d querycacheconfig resources in namespace %s", expectedCount, namespace)
 }
