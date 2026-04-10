@@ -8142,8 +8142,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Not supported",
+      "badge-text-success": "Success",
       "badge-text-supported": "Supported",
       "label": {
+        "advisor": "Advisor",
         "alerting": "Alerting",
         "type": "Type"
       }
@@ -9024,8 +9026,7 @@
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
     },
     "sql-expr": {
-      "button-run-query": "Run query",
-      "tooltip-experimental": "SQL Expressions LLM integration is experimental. Please report any issues to the Grafana team."
+      "button-run-query": "Run query"
     },
     "sql-schema": {
       "error-title": "Error",
@@ -12228,7 +12229,7 @@
     },
     "quick-add": {
       "aria-label": "New",
-      "new-template-dashboard-button": "Dashboard from template"
+      "new-template-dashboard-button": "From template"
     },
     "rss-button": "Latest from the blog"
   },
@@ -13382,6 +13383,7 @@
       "token-label": "Project Access Token",
       "token-required": "GitLab token is required",
       "url-description": "The GitLab repository URL",
+      "url-pattern": "Must be a valid repository URL (https://hostname/group/repository or https://hostname/group/subgroup/repository)",
       "url-required": "Repository URL is required"
     },
     "history-view": {
@@ -14822,19 +14824,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "Add at least one data query to generate SQL suggestions",
-    "ai-explain-title": "AI-powered SQL expression explanation",
-    "ai-suggestions-title": "AI-powered SQL expression suggestions",
-    "apply": "Apply",
-    "code-label": "{{ language }}",
-    "copy": "Copy",
-    "explain-empty-query-tooltip": "Enter a SQL expression to get an explanation",
     "explain-query": "Explain query",
-    "explanation-modal-title": "SQL Query Explanation",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "SQL Suggestion History",
-    "suggestions": "Suggestions",
-    "view-explanation": "View explanation"
+    "generate-suggestion": "Generate suggestion",
+    "improve-query": "Improve query"
   },
   "stars": {
     "mark-as-starred": "Mark as favorite",
