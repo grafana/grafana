@@ -64,7 +64,7 @@ Grafana sanitizes the rendered HTML to reduce security risk and strips out or re
 ## Configure repeating panels
 
 You can configure Grafana to dynamically add panels to a dashboard.
-This is a panel that the system creates based on the value of a multi-value variable.
+A dynamic panel is a panel that the system creates based on the value of a multi-value variable.
 Variables dynamically change your queries across all panels in a dashboard.
 
 To see an example of repeating panels, refer to [this dashboard with repeating panels](https://play.grafana.org/d/testdata-repeating/testdata-repeating-panels?orgId=1).
