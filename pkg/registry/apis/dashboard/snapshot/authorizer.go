@@ -38,6 +38,26 @@ func NewSnapshotAuthorizer(accessControl ac.AccessControl, publicMode bool) auth
 				return authorizer.DecisionDeny, "valid user is required", err
 			}
 
+			// Custom routes: snapshots/create, snapshots/delete/{deleteKey}, snapshots/settings
+			// K8s parses these as name="create"|"delete"|"settings" with the path param as subresource.
+			name := attr.GetName()
+			if name == "create" || name == "delete" || name == "settings" {
+				var action string
+				switch name {
+				case "create":
+					action = dashboards.ActionSnapshotsCreate
+				case "delete":
+					action = dashboards.ActionSnapshotsDelete
+				case "settings":
+					action = dashboards.ActionSnapshotsRead
+				}
+				ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(action))
+				if !ok || err != nil {
+					return authorizer.DecisionDeny, "access denied", err
+				}
+				return authorizer.DecisionAllow, "", nil
+			}
+
 			// Handle subresources
 			if attr.GetSubresource() != "" {
 				var action string
