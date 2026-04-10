@@ -1,157 +1,145 @@
-import type { ComponentProps, ReactNode } from 'react';
+import { HttpResponse, delay, http } from 'msw';
 import { render, screen } from 'test/test-utils';
 
-import { useGetFolderQuery } from '../api/browseDashboardsAPI';
+import { setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { backendSrv } from 'app/core/services/backend_srv';
 
-import { RestoreModal } from './RestoreModal';
+import { RestoreModal, type RestoreModalProps } from './RestoreModal';
 
-jest.mock('@grafana/ui', () => {
-  const actual = jest.requireActual('@grafana/ui');
-  type MockConfirmModalProps = {
-    body?: ReactNode;
-    confirmText?: ReactNode;
-    disabled?: boolean;
-    isOpen?: boolean;
-    onConfirm?: () => void;
-    onDismiss?: () => void;
-    title?: ReactNode;
-  };
+const [_, { folderA }] = getFolderFixtures();
 
+const server = setupMockServer();
+setBackendSrv(backendSrv);
+
+// NestedFolderPicker (rendered via FolderPicker) calls useGetTeamFolders which hits
+// team + dashboard-search APIs unrelated to RestoreModal. Mock it out with a static
+// return value — same pattern as NestedFolderPicker.test.tsx.
+jest.mock('app/core/components/NestedFolderPicker/useTeamOwnedFolder', () => {
+  const actual = jest.requireActual('app/core/components/NestedFolderPicker/useTeamOwnedFolder');
   return {
     ...actual,
-    ConfirmModal: ({ body, confirmText, disabled, isOpen, onConfirm, onDismiss, title }: MockConfirmModalProps) =>
-      isOpen ? (
-        <div>
-          <div>{title}</div>
-          <div>{body}</div>
-          <button onClick={onConfirm} disabled={disabled}>
-            {confirmText}
-          </button>
-          <button onClick={onDismiss}>Dismiss</button>
-        </div>
-      ) : null,
+    useGetTeamFolders: jest.fn().mockReturnValue({
+      foldersByTeam: [],
+      isLoading: false,
+      error: undefined,
+    }),
   };
 });
 
-jest.mock('../api/browseDashboardsAPI', () => ({
-  ...jest.requireActual('../api/browseDashboardsAPI'),
-  useGetFolderQuery: jest.fn(),
-}));
-
-jest.mock('../../../core/components/Select/FolderPicker', () => ({
-  FolderPicker: ({ onChange, value }: { onChange?: (folderUID: string | undefined) => void; value?: string }) => (
-    <div>
-      <div data-testid="folder-picker-value">{value === undefined ? 'undefined' : value === '' ? 'root' : value}</div>
-      <button onClick={() => onChange?.('manual-folder')}>Pick manual folder</button>
-      <button onClick={() => onChange?.(undefined)}>Clear folder</button>
-    </div>
-  ),
-}));
-
-const mockUseGetFolderQuery = useGetFolderQuery as jest.MockedFunction<typeof useGetFolderQuery>;
 const onConfirm = jest.fn().mockResolvedValue(undefined);
 const onDismiss = jest.fn();
 
-type FolderQueryState = {
-  data?: { uid: string };
-  error?: unknown;
-  isError: boolean;
-  isFetching: boolean;
-  isSuccess: boolean;
-  refetch: jest.Mock;
-};
-
 describe('RestoreModal', () => {
-  let folderQueryState: FolderQueryState;
+  const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
+
+  beforeAll(() => {
+    window.HTMLElement.prototype.scrollIntoView = function () {};
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    folderQueryState = buildFolderQueryState();
-    mockUseGetFolderQuery.mockImplementation(() => folderQueryState);
   });
 
-  it('preselects the root folder immediately without validating it', () => {
+  afterAll(() => {
+    window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+  });
+
+  it('preselects the root folder immediately without validating it', async () => {
     renderRestoreModal({ originCandidate: '' });
 
-    expect(screen.getByTestId('folder-picker-value')).toHaveTextContent('root');
+    // Root folder = "Dashboards" in the NestedFolderPicker trigger
+    expect(await screen.findByRole('button', { name: /Dashboards currently selected/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Restore' })).toBeEnabled();
   });
 
-  it('preselects a live origin folder after a successful validation lookup', () => {
-    folderQueryState = buildFolderQueryState({ isSuccess: true, isFetching: false });
+  it('preselects a live origin folder after a successful validation lookup', async () => {
+    renderRestoreModal({ originCandidate: folderA.item.uid });
 
-    renderRestoreModal({ originCandidate: 'folder-1' });
-
-    expect(screen.getByTestId('folder-picker-value')).toHaveTextContent('folder-1');
+    // MSW returns folder A → FolderPicker shows its title
+    expect(
+      await screen.findByRole('button', { name: new RegExp(`${folderA.item.title} currently selected`) })
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Restore' })).toBeEnabled();
   });
 
-  it('leaves the picker empty when the refetch returns 404 even if stale data exists', () => {
-    folderQueryState = buildFolderQueryState({
-      data: { uid: 'folder-1' },
-      error: { status: 404, data: { message: 'Folder not found' } },
-      isError: true,
-      isSuccess: false,
-      isFetching: false,
-    });
+  it('leaves the picker empty when the origin folder returns 404', async () => {
+    // UID not in fixtures → default MSW handler returns 404
+    renderRestoreModal({ originCandidate: 'deleted-folder' });
 
-    renderRestoreModal({ originCandidate: 'folder-1' });
-
-    expect(screen.getByTestId('folder-picker-value')).toHaveTextContent('undefined');
+    // getAutoTarget returns undefined for 404 → no folder selected → Restore disabled
+    expect(await screen.findByRole('button', { name: 'Select folder' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Restore' })).toBeDisabled();
   });
 
-  it('keeps the original folder selected when validation returns 403', () => {
-    folderQueryState = buildFolderQueryState({
-      error: { status: 403, data: { message: 'Forbidden' } },
-      isError: true,
-      isSuccess: false,
-      isFetching: false,
-    });
+  it('keeps the original folder selected when validation returns 403', async () => {
+    // Override the folder handler to return 403 for all UIDs
+    server.use(http.get('/api/folders/:uid', () => HttpResponse.json({ message: 'Forbidden' }, { status: 403 })));
 
-    renderRestoreModal({ originCandidate: 'folder-1' });
+    renderRestoreModal({ originCandidate: folderA.item.uid });
 
-    expect(screen.getByTestId('folder-picker-value')).toHaveTextContent('folder-1');
-    expect(screen.getByRole('button', { name: 'Restore' })).toBeEnabled();
+    // getAutoTarget returns originCandidate for non-404 errors → restoreTarget is set
+    // The FolderPicker's own facade also gets 403, so it can't resolve the title.
+    // But the Restore button should be enabled because restoreTarget !== undefined.
+    expect(await screen.findByRole('button', { name: 'Restore' })).toBeEnabled();
   });
 
-  it('does not preselect while a refetch is in progress, even if stale data exists', () => {
-    folderQueryState = buildFolderQueryState({
-      data: { uid: 'folder-1' },
-      isSuccess: true,
-      isFetching: true,
-    });
+  it('does not preselect while validation is in progress', async () => {
+    // Keep the validation request pending indefinitely
+    server.use(
+      http.get('/api/folders/:uid', async () => {
+        await delay('infinite');
+        return HttpResponse.json({});
+      })
+    );
 
-    renderRestoreModal({ originCandidate: 'folder-1' });
+    renderRestoreModal({ originCandidate: folderA.item.uid });
 
-    expect(screen.getByTestId('folder-picker-value')).toHaveTextContent('undefined');
+    // isFetching: true → autoTarget = undefined → FolderPicker has no value
+    expect(await screen.findByRole('button', { name: 'Select folder' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Restore' })).toBeDisabled();
   });
 
   it('preserves a manual folder selection when validation later succeeds', async () => {
-    folderQueryState = buildFolderQueryState({ isSuccess: false, isFetching: true });
-    const { rerender, user } = renderRestoreModal({ originCandidate: 'folder-1' });
-
-    await user.click(screen.getByRole('button', { name: 'Pick manual folder' }));
-    expect(screen.getByTestId('folder-picker-value')).toHaveTextContent('manual-folder');
-
-    folderQueryState = buildFolderQueryState({ isSuccess: true, isFetching: false });
-    rerender(
-      <RestoreModal
-        onConfirm={onConfirm}
-        onDismiss={onDismiss}
-        selectedDashboards={['dashboard-1']}
-        isLoading={false}
-        originCandidate="folder-1"
-      />
+    // Deferred response: validation stays pending until we resolve it
+    let resolveValidation!: () => void;
+    server.use(
+      http.get('/api/folders/:uid', () => {
+        return new Promise<Response>((resolve) => {
+          resolveValidation = () =>
+            resolve(
+              HttpResponse.json({
+                uid: folderA.item.uid,
+                title: folderA.item.title,
+              })
+            );
+        });
+      })
     );
 
-    expect(screen.getByTestId('folder-picker-value')).toHaveTextContent('manual-folder');
+    const { user } = renderRestoreModal({ originCandidate: folderA.item.uid });
+
+    // While validation is pending, picker has no value → user can pick manually
+    const trigger = await screen.findByRole('button', { name: 'Select folder' });
+    await user.click(trigger);
+
+    // Folder list loads via default MSW handlers for /api/folders (list endpoint
+    // is NOT overridden — only /api/folders/:uid is). The root "Dashboards" item
+    // is always visible.
+    const dashboardsItem = await screen.findByLabelText('Dashboards');
+    await user.click(dashboardsItem);
+
+    // Resolve validation — autoTarget becomes folderA.item.uid
+    resolveValidation();
+
+    // Manual selection (root = '') should be preserved over autoTarget
+    expect(await screen.findByRole('button', { name: /Dashboards currently selected/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Restore' })).toBeEnabled();
   });
 });
 
-function renderRestoreModal(props: Partial<ComponentProps<typeof RestoreModal>> = {}) {
+function renderRestoreModal(props: Partial<RestoreModalProps> = {}) {
   return render(
     <RestoreModal
       onConfirm={onConfirm}
@@ -161,16 +149,4 @@ function renderRestoreModal(props: Partial<ComponentProps<typeof RestoreModal>> 
       {...props}
     />
   );
-}
-
-function buildFolderQueryState(overrides: Partial<FolderQueryState> = {}): FolderQueryState {
-  return {
-    data: undefined,
-    error: undefined,
-    isError: false,
-    isFetching: false,
-    isSuccess: false,
-    refetch: jest.fn(),
-    ...overrides,
-  };
 }
