@@ -24,10 +24,10 @@ export const FlagKeys = {
 *
 * **Details:**
 * - flag key: `{{ .Key }}`
-* - default value: `{{ if eq (.Type | OpenFeatureType) "object"}}{{ .DefaultValue | ToJSONString }}{{ else }}{{ .DefaultValue }}{{ end }}`
+* - default value: `{{ if eq .Type "object"}}{{ .DefaultValue | ToJSONString }}{{ else }}{{ .DefaultValue }}{{ end }}`
 */
-export const useFlag{{ .Key | ToPascal }} = (options?: ReactFlagEvaluationOptions): {{ if eq (.Type | OpenFeatureType) "object" }}JsonValue{{ else }}{{ .Type | OpenFeatureType }}{{ end }} => {
-  return useFlag({{ .Key | Quote }}, {{ if eq (.Type | OpenFeatureType) "object"}}{{ .DefaultValue | ToJSONString }}{{ else }}{{ .DefaultValue | QuoteString }}{{ end }}, options).value;
+export const useFlag{{ .Key | ToPascal }} = (options?: ReactFlagEvaluationOptions): {{ if eq .Type "object" }}JsonValue{{ else }}{{ .Type }}{{ end }} => {
+  return useFlag({{ .Key | Quote }}, {{ if eq .Type "object"}}{{ .DefaultValue | ToJSONString }}{{ else }}{{ .DefaultValue | QuoteString }}{{ end }}, options).value;
 };
 
 {{ end }}

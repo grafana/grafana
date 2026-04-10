@@ -150,8 +150,10 @@ func TestCanSearchByTitle(t *testing.T) {
 		checkSearchQuery(t, index, newTestQuery("wonderfully"), []string{"name1"})
 		// search for word at end
 		checkSearchQuery(t, index, newTestQuery("world"), []string{"name1"})
-		// can search for word substring anchored at start of word (edge ngram)
+		// can search for word substring at start of word (ngram)
 		checkSearchQuery(t, index, newTestQuery("worl"), []string{"name1"})
+		// can search for word substring in middle of word (ngram, not edge-only)
+		checkSearchQuery(t, index, newTestQuery("ello"), []string{"name1"})
 		// can search for multiple, non-consecutive words in title
 		checkSearchQuery(t, index, newTestQuery("hello world"), []string{"name1"})
 		// can search for multiple, non-consecutive words in title
@@ -241,6 +243,107 @@ func TestCanSearchByTitle(t *testing.T) {
 
 		checkSearchQuery(t, index, newTestQuery("ash"), []string{"name2", "name3", "name1"})
 		checkSearchQuery(t, index, newTestQuery("ome"), []string{"name3"})
+	})
+}
+
+// TestTitleNgramFieldSearch queries exclusively against the title_ngram field
+// (via explicit QueryFields) to prove the dedicated ngram index mapping works
+// independently of the ngram mapping still present on the title field.
+// Once all instances have this mapping, the ngram mapping on title can be
+// removed and partial/prefix matching will rely entirely on title_ngram.
+func TestTitleNgramFieldSearch(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+
+	newNgramOnlyQuery := func(q string) *resourcepb.ResourceSearchRequest {
+		return &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "dashboard.grafana.app",
+					Resource:  "dashboards",
+				},
+			},
+			Limit: 100000,
+			Query: q,
+			QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{
+				{
+					Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
+					Type:  resourcepb.QueryFieldType_TEXT,
+					Boost: 1,
+				},
+			},
+		}
+	}
+
+	t.Run("title_ngram field matches partial word at start", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Hello WORLD",
+			"name2": "Something Else",
+		})
+		checkSearchQuery(t, index, newNgramOnlyQuery("worl"), []string{"name1"})
+	})
+
+	t.Run("title_ngram field matches partial word in middle", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "new dashboard",
+			"name2": "somedash",
+			"name3": "unrelated",
+		})
+		// "ash" is a middle-of-word ngram in "dashboard" and "somedash"
+		// "somedash" (shorter, higher TF-IDF) ranks above "new dashboard" (longer)
+		checkSearchQuery(t, index, newNgramOnlyQuery("ash"), []string{"name2", "name1"})
+	})
+
+	t.Run("title_ngram field matches full word", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Hello World",
+			"name2": "Goodbye Moon",
+		})
+		checkSearchQuery(t, index, newNgramOnlyQuery("hello"), []string{"name1"})
+	})
+
+	t.Run("title_ngram field does not match short terms below ngram min", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "dashboard",
+		})
+		// "da" is 2 chars, below NGRAM_MIN_TOKEN (3) — removeSmallTerms strips it
+		checkSearchQuery(t, index, newNgramOnlyQuery("da"), nil)
+	})
+}
+
+func TestScoringHierarchy(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+
+	t.Run("exact title match scores above word match and ngram match", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"exact":   "monitor",              // exact match on title_phrase (boost=10) + word match on title (boost=2)
+			"partial": "monitoring dashboard", // word match on "monitor" via ngram (boost=1+2)
+		})
+		// "monitor" should rank the exact title match first
+		checkSearchQuery(t, index, newTestQuery("monitor"), []string{"exact", "partial"})
+	})
+
+	t.Run("word match scores above ngram-only match", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"word":  "alerts overview",    // "alerts" is a full word — matches via standard analyzer (boost=2) and ngram (boost=1)
+			"ngram": "alertstate monitor", // "alert" is a substring of "alertstate" — matches only via ngram (boost=1)
+		})
+		// "alert" matches "alerts overview" via word+ngram, and "alertstate monitor" via ngram only
+		checkSearchQuery(t, index, newTestQuery("alert"), []string{"word", "ngram"})
 	})
 }
 

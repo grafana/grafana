@@ -120,7 +120,7 @@ const (
 	FlagSseGroupByDatasource = "sseGroupByDatasource"
 
 	// FlagSseExpressionErrorIsolation
-	// Isolate expression build errors to the broken expression&#39;s refID instead of failing the entire pipeline
+	// Isolate expression build errors to the broken expression's refID instead of failing the entire pipeline
 	FlagSseExpressionErrorIsolation = "sseExpressionErrorIsolation"
 
 	// FlagLokiRunQueriesInParallel
@@ -300,11 +300,11 @@ const (
 	FlagSqlExpressions = "sqlExpressions"
 
 	// FlagKubernetesAggregator
-	// Enable grafana&#39;s embedded kube-aggregator
+	// Enable grafana's embedded kube-aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
 
 	// FlagKubernetesAggregatorCapTokenAuth
-	// Enable CAP token based authentication in grafana&#39;s embedded kube-aggregator
+	// Enable CAP token based authentication in grafana's embedded kube-aggregator
 	FlagKubernetesAggregatorCapTokenAuth = "kubernetesAggregatorCapTokenAuth"
 
 	// FlagGroupByVariable
@@ -428,7 +428,7 @@ const (
 	FlagDataplaneAggregator = "dataplaneAggregator"
 
 	// FlagAppPlatformGrpcClientAuth
-	// Enables the gRPC client to authenticate with the App Platform by using ID &amp; access tokens
+	// Enables the gRPC client to authenticate with the App Platform by using ID & access tokens
 	FlagAppPlatformGrpcClientAuth = "appPlatformGrpcClientAuth"
 
 	// FlagGroupAttributeSync
@@ -542,6 +542,10 @@ const (
 	// FlagTeamLBACApiReadFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
 	FlagTeamLBACApiReadFromAppPlatform = "teamLBACApiReadFromAppPlatform"
+
+	// FlagTeamLBACApiWriteFromAppPlatform
+	// Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
+	FlagTeamLBACApiWriteFromAppPlatform = "teamLBACApiWriteFromAppPlatform"
 
 	// FlagGrafanaAdvisor
 	// Enables Advisor app
@@ -739,7 +743,7 @@ const (
 	FlagPluginInstallAPISync = "pluginInstallAPISync"
 
 	// FlagJaegerEnableGrpcEndpoint
-	// Enable querying trace data through Jaeger&#39;s gRPC endpoint (HTTP)
+	// Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
 	FlagJaegerEnableGrpcEndpoint = "jaegerEnableGrpcEndpoint"
 
 	// FlagPluginStoreServiceLoading
@@ -843,7 +847,7 @@ const (
 	FlagAppPluginAPIServer = "appPluginAPIServer"
 
 	// FlagAlertingIgnorePendingForNoDataAndError
-	// Makes NoData and Error alerts fire immediately, without &#39;pending&#39; stage
+	// Makes NoData and Error alerts fire immediately, without 'pending' stage
 	FlagAlertingIgnorePendingForNoDataAndError = "alertingIgnorePendingForNoDataAndError"
 
 	// FlagAlertingNotificationHistoryRuleViewer
