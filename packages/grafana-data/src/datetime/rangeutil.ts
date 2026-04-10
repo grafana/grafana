@@ -15,6 +15,9 @@ import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo, toIANATimez
 import { isDateTime, type DateTime, dateTime } from './moment_wrapper';
 import { dateTimeParse } from './parser';
 
+// `fQ` and `fy` are synthesized lookup keys matching the regex group `f[Qy]`
+// in `describeTextRange`; `datemath.parse` itself recognizes the base unit
+// (`Q` / `y`) with a separate fiscal flag, so these keys are local to display.
 const spans: { [key: string]: { display: string; section?: number } } = {
   s: { display: 'second' },
   m: { display: 'minute' },
