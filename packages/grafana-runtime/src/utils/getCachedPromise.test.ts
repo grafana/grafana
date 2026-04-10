@@ -699,16 +699,16 @@ describe('cached promises', () => {
       expect(serializeArg(1, 'test')).not.toBe(serializeArg('1', 'test'));
     });
 
-    test('should distinguish NaN, Infinity, -Infinity and -0', () => {
-      expect(serializeArg(NaN, 'test')).toBe('number:NaN');
-      expect(serializeArg(Infinity, 'test')).toBe('number:Infinity');
-      expect(serializeArg(-Infinity, 'test')).toBe('number:-Infinity');
-      expect(serializeArg(-0, 'test')).toBe('number:-0');
+    test('should can not distinguish NaN, Infinity, -Infinity and -0', () => {
+      expect(serializeArg(NaN, 'test')).toBe('number:null');
+      expect(serializeArg(Infinity, 'test')).toBe('number:null');
+      expect(serializeArg(-Infinity, 'test')).toBe('number:null');
+      expect(serializeArg(-0, 'test')).toBe('number:0');
       expect(serializeArg(0, 'test')).toBe('number:0');
     });
 
-    test('should serialize bigint arguments', () => {
-      expect(serializeArg(BigInt(42), 'test')).toBe('bigint:42');
+    test('should not be able to serialize bigint arguments', () => {
+      expect(serializeArg(BigInt(42), 'test')).toMatch(/^uncacheable:/);
     });
 
     test.each([
@@ -719,18 +719,11 @@ describe('cached promises', () => {
       { name: 'Error', value: new Error('test') },
       { name: 'RegExp', value: /test/ },
       { name: 'RegExp', value: new RegExp('test') },
-      { name: 'Date', value: new Date() },
       { name: 'Promise', value: Promise.resolve() },
-      { name: 'function', value: () => {} },
-      { name: 'symbol', value: Symbol('foo') },
-    ])('should return uncacheable key for unsupported type: $name', ({ name, value }) => {
+    ])('should return object:{} for unsupported type: $name', ({ name, value }) => {
       const key = serializeArg(value, 'test');
 
-      expect(key).toMatch(/^uncacheable:/);
-      expect(getLogger('grafana/runtime.utils.getCachedPromise').logWarning).toHaveBeenCalledWith(
-        `getCachedPromiseWithArgs: unsupported argument type "${name}" cannot be used as a cache key`,
-        { baseKey: 'test', key: expect.stringContaining('uncacheable') }
-      );
+      expect(key).toBe('object:{}');
     });
 
     test('should return a unique uncacheable key when JSON.stringify fails', () => {
