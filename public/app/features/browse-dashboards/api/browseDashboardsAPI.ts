@@ -33,7 +33,6 @@ import {
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
-import { deletedFoldersState } from '../../search/service/deletedFoldersState';
 import { refetchChildren, refreshParents } from '../state/actions';
 
 import { isProvisionedDashboard } from './isProvisioned';
@@ -212,7 +211,6 @@ export const browseDashboardsAPI = createApi({
       onQueryStarted: async ({ uid, parentUid }, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
-          deletedFoldersState.markDeleted([uid]);
           dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
           invalidateQuotaUsage(dispatch);
         } catch {
@@ -338,44 +336,26 @@ export const browseDashboardsAPI = createApi({
     }),
 
     // delete *multiple* folders. used in the delete modal.
-    deleteFolders: builder.mutation<DeleteFoldersResult, DeleteFoldersArgs>({
+    deleteFolders: builder.mutation<void, DeleteFoldersArgs>({
       invalidatesTags: invalidateFolderListOnSuccess,
       queryFn: async ({ folderUIDs }, api, _extraOptions, baseQuery) => {
-        const deletedFolderUIDs: string[] = [];
-
-        // Delete folders sequentially so bulk delete can skip failures.
         for (const folderUID of folderUIDs) {
-          // This also shows the provisioned-folder warning alert.
           if (await isProvisionedFolderCheck(api.dispatch, folderUID)) {
             continue;
           }
 
-          const response = await baseQuery({
+          await baseQuery({
             url: `/folders/${folderUID}`,
             method: 'DELETE',
             params: deleteFolderParams,
           });
-
-          if ('error' in response && response.error) {
-            continue;
-          }
-
-          deletedFolderUIDs.push(folderUID);
         }
 
-        return {
-          data: {
-            requestedFolderUIDs: folderUIDs,
-            deletedFolderUIDs,
-          },
-        };
+        return { data: undefined };
       },
-      onQueryStarted: (_arg, { queryFulfilled, dispatch }) => {
-        queryFulfilled.then(({ data: { requestedFolderUIDs, deletedFolderUIDs } }) => {
-          if (deletedFolderUIDs.length > 0) {
-            deletedFoldersState.markDeleted(deletedFolderUIDs);
-          }
-          dispatch(refreshParents(requestedFolderUIDs));
+      onQueryStarted: ({ folderUIDs }, { queryFulfilled, dispatch }) => {
+        queryFulfilled.then(() => {
+          dispatch(refreshParents(folderUIDs));
           deletedDashboardsCache.clear();
           invalidateQuotaUsage(dispatch);
         });
@@ -619,11 +599,6 @@ export const browseDashboardsAPI = createApi({
     }),
   }),
 });
-
-type DeleteFoldersResult = {
-  requestedFolderUIDs: string[];
-  deletedFolderUIDs: string[];
-};
 
 export const {
   endpoints,

@@ -1,5 +1,4 @@
 import { generatedAPI } from '@grafana/api-clients/rtkq/folder/v1beta1';
-import { deletedFoldersState } from 'app/features/search/service/deletedFoldersState';
 import { type DescendantCount } from 'app/types/folders';
 
 import { getParsedCounts } from './utils';
@@ -25,14 +24,6 @@ export const folderAPIv1beta1 = generatedAPI
       },
       deleteFolder: {
         invalidatesTags: (_result, error) => (error ? [] : [folderListTag]),
-        async onQueryStarted({ name }, { queryFulfilled }) {
-          try {
-            await queryFulfilled;
-            deletedFoldersState.markDeleted(name);
-          } catch {
-            // Error handled by mutation caller
-          }
-        },
       },
     },
   })

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -9,7 +9,6 @@ import { ConfirmModal, Space, Text, useStyles2 } from '@grafana/ui';
 import { getStatusFromError } from 'app/core/utils/errors';
 
 import { FolderPicker } from '../../../core/components/Select/FolderPicker';
-import { deletedFoldersState } from '../../search/service/deletedFoldersState';
 import { useGetFolderQuery } from '../api/browseDashboardsAPI';
 
 export interface RestoreModalProps {
@@ -23,19 +22,19 @@ export interface RestoreModalProps {
 // Derive the initial restore target before the user overrides it.
 function getAutoTarget(
   originCandidate: string | undefined,
-  shouldValidateOrigin: boolean,
-  isOriginValidationFetching: boolean,
-  originValidationStatus?: number
-) {
+  isFetching: boolean,
+  errorStatus?: number
+): string | undefined {
   if (originCandidate === '') {
     return '';
   }
 
-  if (!shouldValidateOrigin || isOriginValidationFetching) {
+  if (!originCandidate || isFetching) {
     return undefined;
   }
 
-  return originValidationStatus === 404 ? undefined : originCandidate;
+  // Non-404 errors (e.g. 403) preserve selection — folder likely exists
+  return errorStatus === 404 ? undefined : originCandidate;
 }
 
 export const RestoreModal = ({
@@ -46,32 +45,20 @@ export const RestoreModal = ({
   isLoading,
 }: RestoreModalProps) => {
   const styles = useStyles2(getStyles);
-  const [manualTarget, setManualTarget] = useState<string | undefined | null>(null);
+  const [userTarget, setUserTarget] = useState<string | undefined>();
   const numberOfDashboards = selectedDashboards.length;
-  const originWasDeleted = deletedFoldersState.isDeleted(originCandidate);
-  const shouldValidateOrigin = originCandidate !== undefined && originCandidate !== '' && !originWasDeleted;
-  const { error: originValidationError, isFetching: isOriginValidationFetching } = useGetFolderQuery(
-    shouldValidateOrigin
+  const { error: originError, isFetching } = useGetFolderQuery(
+    originCandidate
       ? {
           folderUID: originCandidate,
-          accesscontrol: true,
+          accesscontrol: false,
           isLegacyCall: Boolean(config.featureToggles.foldersAppPlatformAPI),
         }
       : skipToken,
     { refetchOnMountOrArgChange: true }
   );
-  const originValidationStatus = getStatusFromError(originValidationError);
-  const autoTarget = getAutoTarget(
-    originCandidate,
-    shouldValidateOrigin,
-    isOriginValidationFetching,
-    originValidationStatus
-  );
-  const restoreTarget = manualTarget === null ? autoTarget : manualTarget;
-
-  const onTargetChange = useCallback((folderUID: string | undefined) => {
-    setManualTarget(folderUID);
-  }, []);
+  const autoTarget = getAutoTarget(originCandidate, isFetching, getStatusFromError(originError));
+  const restoreTarget = userTarget ?? autoTarget;
 
   const onRestore = async () => {
     reportInteraction('grafana_restore_confirm_clicked', {
@@ -103,7 +90,7 @@ export const RestoreModal = ({
           <Space v={1} />
           {/* Field wrapper resets font-size to 14px, preventing cascade from parent Text components */}
           <div className={styles.field}>
-            <FolderPicker onChange={onTargetChange} value={restoreTarget} />
+            <FolderPicker onChange={setUserTarget} value={restoreTarget} />
           </div>
         </>
       }

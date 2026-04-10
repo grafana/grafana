@@ -5,7 +5,6 @@ import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1bet
 import { setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { deletedFoldersState } from 'app/features/search/service/deletedFoldersState';
 
 import { folderAPIv1beta1 } from './index';
 
@@ -23,7 +22,6 @@ describe('folderAPIv1beta1 cache invalidation', () => {
 
   beforeEach(() => {
     folderAPIVersionResolver.set('v1beta1');
-    deletedFoldersState.clear();
   });
 
   it('does not refetch an active getFolder subscription after deleting that folder', async () => {
@@ -49,7 +47,6 @@ describe('folderAPIv1beta1 cache invalidation', () => {
 
     expect(getFolderSpy).toHaveBeenCalledTimes(1);
     expect(deleteFolderSpy).toHaveBeenCalledTimes(1);
-    expect(deletedFoldersState.isDeleted('folder-1')).toBe(true);
 
     subscription.unsubscribe();
   });

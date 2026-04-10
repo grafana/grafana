@@ -16,7 +16,6 @@ import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { deletedDashboardsCache } from 'app/features/search/service/deletedDashboardsCache';
-import { deletedFoldersState } from 'app/features/search/service/deletedFoldersState';
 import { setStore } from 'app/store/store';
 import { type FolderDTO } from 'app/types/folders';
 import { type ThunkDispatch } from 'app/types/store';
@@ -55,7 +54,6 @@ describe('browseDashboardsAPI', () => {
   beforeEach(() => {
     getDashboardAPIMock.mockReset();
     folderAPIVersionResolver.set('v1beta1');
-    deletedFoldersState.clear();
     server.use(http.get('/api/access-control/user/actions', () => HttpResponse.json({})));
   });
 
@@ -146,7 +144,6 @@ describe('browseDashboardsAPI', () => {
       expect(getFolderSpy).toHaveBeenCalledTimes(1);
       expect(deleteFolderSpy).toHaveBeenCalledTimes(1);
       expect(invalidateQuotaUsageSpy).toHaveBeenCalledTimes(1);
-      expect(deletedFoldersState.isDeleted('folder-1')).toBe(true);
 
       subscription.unsubscribe();
     } finally {
@@ -189,149 +186,143 @@ describe('browseDashboardsAPI', () => {
 
     expect(getProvisionedFolderSpy).not.toHaveBeenCalled();
     expect(deleteFolderSpy).toHaveBeenCalledTimes(1);
-    expect(deletedFoldersState.isDeleted('folder-1')).toBe(true);
   });
 
-  it('marks only successfully deleted folders during bulk delete and does not refetch active folder queries', async () => {
-    const store = createTestStore();
-    const folderOneQueryArg = { folderUID: 'folder-1', accesscontrol: true, isLegacyCall: false };
-    const folderTwoQueryArg = { folderUID: 'folder-2', accesscontrol: true, isLegacyCall: false };
+  // RTK Query logs a console.error for void queryFn returning { data: undefined }.
+  describe('deleteFolders', () => {
+    let consoleErrorSpy: jest.SpyInstance;
+    beforeEach(() => {
+      consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+    });
+    afterEach(() => {
+      consoleErrorSpy.mockRestore();
+    });
 
-    server.use(
-      http.get('/api/folders/folder-1', () => HttpResponse.json({ uid: 'folder-1' })),
-      http.get('/api/folders/folder-2', () => HttpResponse.json({ uid: 'folder-2' })),
-      http.delete('/api/folders/folder-1', () => HttpResponse.json({})),
-      http.delete('/api/folders/folder-2', () => HttpResponse.json({ message: 'Folder not found' }, { status: 404 }))
-    );
+    it('does not refetch active folder queries during bulk delete', async () => {
+      const store = createTestStore();
+      const folderOneQueryArg = { folderUID: 'folder-1', accesscontrol: true, isLegacyCall: false };
+      const folderTwoQueryArg = { folderUID: 'folder-2', accesscontrol: true, isLegacyCall: false };
 
-    const firstSubscription = store.dispatch(browseDashboardsAPI.endpoints.getFolder.initiate(folderOneQueryArg));
-    const secondSubscription = store.dispatch(browseDashboardsAPI.endpoints.getFolder.initiate(folderTwoQueryArg));
-    await Promise.all([firstSubscription, secondSubscription]);
-    await store.dispatch(
-      browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
-    );
+      server.use(
+        http.get('/api/folders/folder-1', () => HttpResponse.json({ uid: 'folder-1' })),
+        http.get('/api/folders/folder-2', () => HttpResponse.json({ uid: 'folder-2' })),
+        http.delete('/api/folders/folder-1', () => HttpResponse.json({})),
+        http.delete('/api/folders/folder-2', () => HttpResponse.json({ message: 'Folder not found' }, { status: 404 }))
+      );
 
-    expect(deletedFoldersState.isDeleted('folder-1')).toBe(true);
-    expect(deletedFoldersState.isDeleted('folder-2')).toBe(false);
+      const firstSubscription = store.dispatch(browseDashboardsAPI.endpoints.getFolder.initiate(folderOneQueryArg));
+      const secondSubscription = store.dispatch(browseDashboardsAPI.endpoints.getFolder.initiate(folderTwoQueryArg));
+      await Promise.all([firstSubscription, secondSubscription]);
+      await store.dispatch(
+        browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+      );
 
-    firstSubscription.unsubscribe();
-    secondSubscription.unsubscribe();
-  });
+      firstSubscription.unsubscribe();
+      secondSubscription.unsubscribe();
+    });
 
-  it('invalidates the folder list when bulk delete yields no successes', async () => {
-    const store = createTestStore();
-    const listFoldersSpy = jest.fn();
-    const clearDeletedDashboardsCacheSpy = jest.spyOn(deletedDashboardsCache, 'clear');
-    const invalidateQuotaUsageSpy = jest.spyOn(quotasAPI, 'invalidateQuotaUsage');
+    it('invalidates the folder list when bulk delete yields no successes', async () => {
+      const store = createTestStore();
+      const listFoldersSpy = jest.fn();
+      const clearDeletedDashboardsCacheSpy = jest.spyOn(deletedDashboardsCache, 'clear');
+      const invalidateQuotaUsageSpy = jest.spyOn(quotasAPI, 'invalidateQuotaUsage');
 
-    try {
+      try {
+        server.use(
+          http.get('/api/folders', () => {
+            listFoldersSpy();
+            return HttpResponse.json([{ uid: 'folder-1', title: 'Folder 1' }]);
+          }),
+          http.delete('/api/folders/folder-1', () =>
+            HttpResponse.json({ message: 'Folder not found' }, { status: 404 })
+          ),
+          http.delete('/api/folders/folder-2', () =>
+            HttpResponse.json({ message: 'Folder not found' }, { status: 404 })
+          )
+        );
+
+        const subscription = store.dispatch(
+          browseDashboardsAPI.endpoints.listFolders.initiate({ parentUid: undefined, limit: PAGE_SIZE, page: 1 })
+        );
+
+        await subscription;
+        await store.dispatch(
+          browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+        );
+
+        expect(listFoldersSpy).toHaveBeenCalledTimes(2);
+        expect(clearDeletedDashboardsCacheSpy).toHaveBeenCalledTimes(1);
+        expect(invalidateQuotaUsageSpy).toHaveBeenCalledTimes(1);
+
+        subscription.unsubscribe();
+      } finally {
+        clearDeletedDashboardsCacheSpy.mockRestore();
+        invalidateQuotaUsageSpy.mockRestore();
+      }
+    });
+
+    it('refreshes parents for requested folders even when bulk delete yields no successes', async () => {
+      const store = createTestStore();
+      const dispatch = store.dispatch as ThunkDispatch;
+      const listFoldersSpy = jest.fn();
+      const hasPermissionSpy = jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
       server.use(
         http.get('/api/folders', () => {
           listFoldersSpy();
-          return HttpResponse.json([{ uid: 'folder-1', title: 'Folder 1' }]);
+          return HttpResponse.json(
+            Array.from({ length: PAGE_SIZE }, (_, index) => ({
+              uid: `folder-${index + 1}`,
+              title: `Folder ${index + 1}`,
+            }))
+          );
         }),
         http.delete('/api/folders/folder-1', () => HttpResponse.json({ message: 'Folder not found' }, { status: 404 })),
         http.delete('/api/folders/folder-2', () => HttpResponse.json({ message: 'Folder not found' }, { status: 404 }))
       );
 
-      const subscription = store.dispatch(
-        browseDashboardsAPI.endpoints.listFolders.initiate({ parentUid: undefined, limit: PAGE_SIZE, page: 1 })
-      );
-
-      await subscription;
-      await store.dispatch(
-        browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
-      );
-
-      expect(listFoldersSpy).toHaveBeenCalledTimes(2);
-      expect(clearDeletedDashboardsCacheSpy).toHaveBeenCalledTimes(1);
-      expect(invalidateQuotaUsageSpy).toHaveBeenCalledTimes(1);
-      expect(deletedFoldersState.isDeleted('folder-1')).toBe(false);
-      expect(deletedFoldersState.isDeleted('folder-2')).toBe(false);
-
-      subscription.unsubscribe();
-    } finally {
-      clearDeletedDashboardsCacheSpy.mockRestore();
-      invalidateQuotaUsageSpy.mockRestore();
-    }
-  });
-
-  it('refreshes parents for requested folders even when bulk delete yields no successes', async () => {
-    const store = createTestStore();
-    const dispatch = store.dispatch as ThunkDispatch;
-    const listFoldersSpy = jest.fn();
-    const hasPermissionSpy = jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
-
-    server.use(
-      http.get('/api/folders', () => {
-        listFoldersSpy();
-        return HttpResponse.json(
-          Array.from({ length: PAGE_SIZE }, (_, index) => ({
-            uid: `folder-${index + 1}`,
-            title: `Folder ${index + 1}`,
-          }))
+      try {
+        await dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
+        await store.dispatch(
+          browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
         );
-      }),
-      http.delete('/api/folders/folder-1', () => HttpResponse.json({ message: 'Folder not found' }, { status: 404 })),
-      http.delete('/api/folders/folder-2', () => HttpResponse.json({ message: 'Folder not found' }, { status: 404 }))
-    );
 
-    try {
-      await dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
-      await store.dispatch(
-        browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+        expect(listFoldersSpy).toHaveBeenCalledTimes(2);
+      } finally {
+        hasPermissionSpy.mockRestore();
+      }
+    });
+
+    it('does not delete provisioned folders during bulk delete', async () => {
+      const store = createTestStore();
+      config.featureToggles.provisioning = true;
+
+      const deleteSpy = jest.fn();
+
+      server.use(
+        http.get('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/folder-1', () =>
+          HttpResponse.json({
+            apiVersion: 'folder.grafana.app/v1beta1',
+            kind: 'Folder',
+            metadata: {
+              name: 'folder-1',
+              namespace: 'default',
+              annotations: {
+                [AnnoKeyManagerKind]: ManagerKind.Repo,
+              },
+            },
+            spec: { title: 'Folder 1' },
+          })
+        ),
+        http.delete('/api/folders/:uid', () => {
+          deleteSpy();
+          return HttpResponse.json({});
+        })
       );
 
-      expect(listFoldersSpy).toHaveBeenCalledTimes(2);
-      expect(deletedFoldersState.isDeleted('folder-1')).toBe(false);
-      expect(deletedFoldersState.isDeleted('folder-2')).toBe(false);
-    } finally {
-      hasPermissionSpy.mockRestore();
-    }
-  });
+      await store.dispatch(browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1'] }));
 
-  it('does not mark skipped provisioned folders as deleted', async () => {
-    const store = createTestStore();
-    config.featureToggles.provisioning = true;
-
-    const deleteSpy = jest.fn();
-
-    server.use(
-      http.get('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/folder-1', () =>
-        HttpResponse.json({
-          apiVersion: 'folder.grafana.app/v1beta1',
-          kind: 'Folder',
-          metadata: {
-            name: 'folder-1',
-            namespace: 'default',
-            annotations: {
-              [AnnoKeyManagerKind]: ManagerKind.Repo,
-            },
-          },
-          spec: { title: 'Folder 1' },
-        })
-      ),
-      http.delete('/api/folders/:uid', () => {
-        deleteSpy();
-        return HttpResponse.json({});
-      })
-    );
-
-    await store.dispatch(browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1'] }));
-
-    expect(deleteSpy).not.toHaveBeenCalled();
-    expect(deletedFoldersState.isDeleted('folder-1')).toBe(false);
-  });
-
-  it('does not mark folders as deleted when single delete fails', async () => {
-    const store = createTestStore();
-
-    server.use(http.delete('/api/folders/:uid', () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
-
-    await store.dispatch(
-      browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
-    );
-
-    expect(deletedFoldersState.isDeleted('folder-1')).toBe(false);
+      expect(deleteSpy).not.toHaveBeenCalled();
+    });
   });
 });
