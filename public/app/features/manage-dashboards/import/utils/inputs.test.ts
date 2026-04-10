@@ -661,6 +661,9 @@ describe('applyV1Inputs', () => {
 
     const dsVariable = result.templating?.list?.[0] as DatasourceVariableModel;
     expect(dsVariable.current?.value).toBe('prom-uid');
+
+    const queryVariable = result.templating?.list?.[1] as QueryVariableModel;
+    expect(queryVariable.datasource?.uid).toBe('prom-uid');
   });
 
   it('replaces constant variable query, current, and options with user-provided values', () => {

@@ -681,19 +681,10 @@ function processVariable(
     }
   }
 
-  if (variableType === 'query' && 'datasource' in variable && isRecord(variable.datasource)) {
-    const datasourceUid = variable.datasource.uid;
-    if (typeof datasourceUid === 'string' && datasourceUid.startsWith('$')) {
-      const userInput = checkUserInputMatch(datasourceUid, inputs.dataSources, form.dataSources);
-      if (userInput) {
-        return {
-          ...variable,
-          datasource: {
-            ...variable.datasource,
-            uid: userInput.uid,
-          },
-        };
-      }
+  if (variableType === 'query' && 'datasource' in variable) {
+    const resolved = resolveDatasource(variable.datasource, inputs.dataSources, form.dataSources);
+    if (resolved) {
+      return { ...variable, datasource: resolved };
     }
   }
 
