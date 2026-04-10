@@ -229,7 +229,13 @@ export function SectionVariableControls({ variableSet }: { variableSet: SceneVar
   }
 
   return (
-    <div className={styles.sectionVariables}>
+    // Prevent row selection on click (see RowItemRenderer onPointerUp)
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+    <div
+      className={styles.sectionVariables}
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
+    >
       {visibleVariables.map((variable) => (
         <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
       ))}
