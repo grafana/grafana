@@ -1,5 +1,5 @@
 ---
-name: panel-test-meta-six-cycles
+name: interactive-panel-unit-tests
 description: >-
   Meta-orchestration for Grafana built-in panel testing across six methodology cycles
   (Human context Cycle (1) through Agent assistance Cycle (4), then Regression tests
@@ -8,7 +8,7 @@ description: >-
   agent refresh under public/app/plugins/panel.
 ---
 
-# Panel testing — Meta: six cycles, dedicated agents, serial execution
+# Interactive panel unit tests — six cycles, dedicated agents, serial execution
 
 Canonical methodology: [AGENTS.md](../../../AGENTS.md) — use the **Human context Cycle (1)** … **Review Cycle (6)** names in the table below (AGENTS.md still uses its own section titles **“Cycle 1”** … **“Cycle 5”** plus **Regression tests**).
 
@@ -65,6 +65,6 @@ Use the **Cursor UI context indicator** for the thread, if shown. If no meter is
 ## Anti-patterns
 
 - Running multiple cycles at once on the same panel effort “to save time.”
-- Using a **single** agent for all six cycles when the methodology expects **separate** cycle agents (this meta skill is built for **six** threads).
+- Using a **single** agent for all six cycles when the methodology expects **separate** cycle agents (this skill is built for **six** threads).
 - Looping back to an earlier methodology cycle in a **different** agent without cause, when the original thread for that cycle is still **below 60%** context—unnecessarily splits state.
 - Ignoring the 60% rule and continuing in a **full** thread for that cycle—risks dropped context and inconsistent output.
