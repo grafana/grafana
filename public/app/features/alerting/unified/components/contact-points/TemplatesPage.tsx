@@ -2,7 +2,7 @@ import { Trans } from '@grafana/i18n';
 import { LinkButton, Stack, Text } from '@grafana/ui';
 
 import { useAlertmanagerAbilityState } from '../../hooks/abilities/notificationAbilities';
-import { AlertmanagerAction, isApplicable } from '../../hooks/abilities/types';
+import { AlertmanagerAction, isAvailable } from '../../hooks/abilities/types';
 import { useTemplatesNav } from '../../navigation/useNotificationConfigNav';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
@@ -21,7 +21,7 @@ function TemplatesPageContent() {
             Create notification templates to customize your notifications.
           </Trans>
         </Text>
-        {isApplicable(createTemplateAbility) && (
+        {isAvailable(createTemplateAbility) && (
           <LinkButton
             icon="plus"
             variant="primary"

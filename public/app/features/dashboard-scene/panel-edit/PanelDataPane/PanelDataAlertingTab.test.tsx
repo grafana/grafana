@@ -48,7 +48,7 @@ jest.mock('@grafana/assistant', () => ({
 
 jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
 jest.spyOn(ruler, 'rulerUrlBuilder');
-jest.spyOn(alertingAbilities, 'useRuleEditAbility');
+jest.spyOn(alertingAbilities, 'useRuleAdministrationAbility');
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
@@ -81,7 +81,7 @@ const dataSources = {
 };
 
 const mocks = {
-  useAlertRuleAbilityMock: jest.mocked(alertingAbilities.useRuleEditAbility),
+  useAlertRuleAbilityMock: jest.mocked(alertingAbilities.useRuleAdministrationAbility),
   rulerBuilderMock: jest.mocked(ruler.rulerUrlBuilder),
 };
 

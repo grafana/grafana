@@ -23,7 +23,7 @@ import { type AlertmanagerAlert, type Silence, SilenceState } from 'app/plugins/
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { useAlertmanagerAbilityState } from '../../hooks/abilities/notificationAbilities';
-import { AlertmanagerAction, isApplicable } from '../../hooks/abilities/types';
+import { AlertmanagerAction, isAvailable } from '../../hooks/abilities/types';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
 import { getSilenceFiltersFromUrlParams, makeAMLink, stringifyErrorLike } from '../../utils/misc';
@@ -358,11 +358,11 @@ function useColumns(alertManagerSourceName: string) {
         const canWrite = silence?.accessControl?.write;
 
         const canRecreate =
-          isApplicable(updateAbility) &&
+          isAvailable(updateAbility) &&
           isExpired &&
           (isGrafanaFlavoredAlertmanager ? canCreate : updateAbility.granted);
         const canEdit =
-          isApplicable(updateAbility) &&
+          isAvailable(updateAbility) &&
           !isExpired &&
           (isGrafanaFlavoredAlertmanager ? canWrite : updateAbility.granted);
 

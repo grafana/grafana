@@ -20,7 +20,7 @@ import {
   useListNotificationPolicyRoutes,
 } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
 import { useAlertmanagerAbilityState } from 'app/features/alerting/unified/hooks/abilities/notificationAbilities';
-import { AlertmanagerAction, isApplicable } from 'app/features/alerting/unified/hooks/abilities/types';
+import { AlertmanagerAction, isAvailable } from 'app/features/alerting/unified/hooks/abilities/types';
 import { useRouteGroupsMatcher } from 'app/features/alerting/unified/useRouteGroupsMatcher';
 import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
@@ -96,7 +96,7 @@ const NotificationPoliciesTabs = () => {
       <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager} />
       <InhibitionRulesAlert alertmanagerSourceName={selectedAlertmanager} />
       <TabsBar>
-        {isApplicable(policiesAbility) && canSeePoliciesTab && (
+        {isAvailable(policiesAbility) && canSeePoliciesTab && (
           <Tab
             label={t('alerting.notification-policies-tabs.label-notification-policies', 'Notification Policies')}
             active={policyTreeTabActive}
@@ -106,7 +106,7 @@ const NotificationPoliciesTabs = () => {
             }}
           />
         )}
-        {isApplicable(timingsAbility) && canSeeTimingsTab && (
+        {isAvailable(timingsAbility) && canSeeTimingsTab && (
           <Tab
             label={t('alerting.notification-policies-tabs.label-time-intervals', 'Time intervals')}
             active={muteTimingsTabActive}

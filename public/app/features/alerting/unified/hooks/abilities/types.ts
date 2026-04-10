@@ -127,7 +127,7 @@ export type Action =
  * @example
  * // Rich UI using utility functions
  * const ability = useAlertmanagerAbilityState(AlertmanagerAction.ExportContactPoint);
- * {isApplicable(ability) && (
+ * {isAvailable(ability) && (
  *   <Tooltip content={isInsufficientPermissions(ability) ? `Requires: ${ability.anyOfPermissions.join(', ')}` : undefined}>
  *     <Button disabled={!ability.granted}>Export</Button>
  *   </Tooltip>
@@ -227,15 +227,15 @@ export function isPluginManaged(ability: AbilityState): boolean {
  * regardless of whether the current user can perform it.
  *
  * Replaces the old `supported: true` semantics. Use this for the **show-but-disable**
- * pattern: render a button (possibly disabled) only when `isApplicable`, and hide it
+ * pattern: render a button (possibly disabled) only when `isAvailable`, and hide it
  * entirely when `isNotSupported` or `isLoading`.
  *
  * @example
- * {isApplicable(exportAbility) && (
+ * {isAvailable(exportAbility) && (
  *   <Button disabled={!exportAbility.granted} onClick={handleExport}>Export</Button>
  * )}
  */
-export function isApplicable(ability: AbilityState): boolean {
+export function isAvailable(ability: AbilityState): boolean {
   return (
     ability.granted ||
     ability.cause === 'PROVISIONED' ||

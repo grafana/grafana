@@ -21,7 +21,7 @@ import { useEnrichmentAbilityState } from '../../hooks/abilities/otherAbilities'
 import {
   skipToken,
   usePromRuleAbilityStates,
-  useRuleEditAbility,
+  useRuleAdministrationAbility,
   useRuleExportAbility,
   useRuleSilenceAbility,
 } from '../../hooks/abilities/ruleAbilities';
@@ -73,7 +73,7 @@ const AlertRuleMenu = ({
   fill,
 }: Props) => {
   // Ruler-path abilities — focused hooks per concern
-  const rulerEditAbility = useRuleEditAbility(rulerRule, groupIdentifier);
+  const rulerEditAbility = useRuleAdministrationAbility(rulerRule, groupIdentifier);
   const { granted: canPauseRuler } = rulerEditAbility.pause;
   const { granted: canDeleteRuler } = rulerEditAbility.delete;
   const { granted: canDuplicateRuler } = rulerEditAbility.duplicate;

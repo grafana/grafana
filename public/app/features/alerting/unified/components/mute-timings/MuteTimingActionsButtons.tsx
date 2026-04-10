@@ -6,7 +6,7 @@ import { useExportMuteTimingsDrawer } from 'app/features/alerting/unified/compon
 
 import { AbilityAny } from '../../components/AbilityGuards';
 import { useAlertmanagerAbilityState } from '../../hooks/abilities/notificationAbilities';
-import { AlertmanagerAction, isApplicable } from '../../hooks/abilities/types';
+import { AlertmanagerAction, isAvailable } from '../../hooks/abilities/types';
 import { isLoading } from '../../hooks/useAsync';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
@@ -58,7 +58,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
         )}
         <AbilityAny actions={[AlertmanagerAction.UpdateTimeInterval]}>{viewOrEditButton}</AbilityAny>
 
-        {isApplicable(exportAbility) && (
+        {isAvailable(exportAbility) && (
           <LinkButton
             icon="download-alt"
             variant="secondary"

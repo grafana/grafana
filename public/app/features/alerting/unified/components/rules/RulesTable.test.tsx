@@ -9,7 +9,7 @@ import {
   type RuleEditAbilityResult,
   usePromRuleAbilityState,
   usePromRuleAbilityStates,
-  useRuleEditAbility,
+  useRuleAdministrationAbility,
   useRuleExportAbility,
   useRuleSilenceAbility,
 } from '../../hooks/abilities/ruleAbilities';
@@ -46,7 +46,7 @@ function grantedEditAbility(): RuleEditAbilityResult {
 }
 
 const mocks = {
-  useRuleEditAbility: jest.mocked(useRuleEditAbility),
+  useRuleAdministrationAbility: jest.mocked(useRuleAdministrationAbility),
   useRuleSilenceAbility: jest.mocked(useRuleSilenceAbility),
   useRuleExportAbility: jest.mocked(useRuleExportAbility),
   usePromRuleAbilityState: jest.mocked(usePromRuleAbilityState),
@@ -82,7 +82,7 @@ describe('RulesTable RBAC', () => {
     jest.resetAllMocks();
 
     // Default: nothing granted
-    mocks.useRuleEditAbility.mockReturnValue(deniedEditAbility());
+    mocks.useRuleAdministrationAbility.mockReturnValue(deniedEditAbility());
     mocks.useRuleSilenceAbility.mockReturnValue(Denied);
     mocks.useRuleExportAbility.mockReturnValue(Denied);
     mocks.usePromRuleAbilityState.mockReturnValue(Denied);
@@ -95,7 +95,7 @@ describe('RulesTable RBAC', () => {
     const grafanaRule = getGrafanaRule({ name: 'Grafana' });
 
     it('Should not render Edit button for users without the update permission', async () => {
-      mocks.useRuleEditAbility.mockReturnValue({
+      mocks.useRuleAdministrationAbility.mockReturnValue({
         ...deniedEditAbility(),
         update: InsufficientPermissions([]),
       });
@@ -109,7 +109,7 @@ describe('RulesTable RBAC', () => {
     });
 
     it('Should not render Delete button for users without the delete permission', async () => {
-      mocks.useRuleEditAbility.mockReturnValue({
+      mocks.useRuleAdministrationAbility.mockReturnValue({
         ...deniedEditAbility(),
         delete: InsufficientPermissions([]),
       });
@@ -125,7 +125,7 @@ describe('RulesTable RBAC', () => {
     });
 
     it('Should render Edit button for users with the update permission', async () => {
-      mocks.useRuleEditAbility.mockReturnValue({
+      mocks.useRuleAdministrationAbility.mockReturnValue({
         ...deniedEditAbility(),
         update: Granted,
       });
@@ -139,7 +139,7 @@ describe('RulesTable RBAC', () => {
     });
 
     it('Should render Delete button for users with the delete permission', async () => {
-      mocks.useRuleEditAbility.mockReturnValue({
+      mocks.useRuleAdministrationAbility.mockReturnValue({
         ...deniedEditAbility(),
         delete: Granted,
       });
@@ -163,7 +163,7 @@ describe('RulesTable RBAC', () => {
       };
 
       beforeEach(() => {
-        mocks.useRuleEditAbility.mockReturnValue(grantedEditAbility());
+        mocks.useRuleAdministrationAbility.mockReturnValue(grantedEditAbility());
         mocks.usePromRuleAbilityStates.mockImplementation((_rule, actions) => actions.map(() => Granted));
       });
 
@@ -194,7 +194,7 @@ describe('RulesTable RBAC', () => {
     const cloudRule = getCloudRule({ name: 'Cloud' }, { rulesSource: mimirDs });
 
     it('Should not render Edit button for users without the update permission', async () => {
-      mocks.useRuleEditAbility.mockReturnValue({
+      mocks.useRuleAdministrationAbility.mockReturnValue({
         ...deniedEditAbility(),
         update: InsufficientPermissions([]),
       });
@@ -208,7 +208,7 @@ describe('RulesTable RBAC', () => {
     });
 
     it('Should not render Delete button for users without the delete permission', async () => {
-      mocks.useRuleEditAbility.mockReturnValue({
+      mocks.useRuleAdministrationAbility.mockReturnValue({
         ...deniedEditAbility(),
         delete: InsufficientPermissions([]),
       });
@@ -223,7 +223,7 @@ describe('RulesTable RBAC', () => {
     });
 
     it('Should render Edit button for users with the update permission', async () => {
-      mocks.useRuleEditAbility.mockReturnValue({
+      mocks.useRuleAdministrationAbility.mockReturnValue({
         ...deniedEditAbility(),
         update: Granted,
       });
@@ -237,7 +237,7 @@ describe('RulesTable RBAC', () => {
     });
 
     it('Should render Delete button for users with the delete permission', async () => {
-      mocks.useRuleEditAbility.mockReturnValue({
+      mocks.useRuleAdministrationAbility.mockReturnValue({
         ...deniedEditAbility(),
         delete: Granted,
       });

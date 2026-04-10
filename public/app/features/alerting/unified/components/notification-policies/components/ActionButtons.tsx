@@ -5,7 +5,7 @@ import { LinkButton, Stack, Tooltip } from '@grafana/ui';
 
 import { ROUTES_META_SYMBOL, type Route } from '../../../../../../plugins/datasource/alertmanager/types';
 import { useAlertmanagerAbilityStates } from '../../../hooks/abilities/notificationAbilities';
-import { AlertmanagerAction, isApplicable } from '../../../hooks/abilities/types';
+import { AlertmanagerAction, isAvailable } from '../../../hooks/abilities/types';
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { createRelativeUrl } from '../../../utils/url';
 import ConditionalWrap from '../../ConditionalWrap';
@@ -53,7 +53,7 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
     </LinkButton>
   );
 
-  if (isApplicable(exportAbility)) {
+  if (isAvailable(exportAbility)) {
     actions.push(
       <LinkButton
         key="export-routing-tree"
@@ -72,7 +72,7 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
     );
   }
 
-  if (isApplicable(deleteAbility)) {
+  if (isAvailable(deleteAbility)) {
     const canBeDeleted = deleteAbility.granted && !provisioned;
     const isDefaultPolicy = route.name === ROOT_ROUTE_NAME;
 

@@ -198,7 +198,10 @@ export interface RuleEditAbilityResult {
  *
  * Priority: LOADING > NOT_SUPPORTED > PROVISIONED > IS_PLUGIN_MANAGED > INSUFFICIENT_PERMISSIONS
  */
-export function useRuleEditAbility(rule: RulerRuleDTO | undefined, id: RuleGroupIdentifierV2): RuleEditAbilityResult {
+export function useRuleAdministrationAbility(
+  rule: RulerRuleDTO | undefined,
+  id: RuleGroupIdentifierV2
+): RuleEditAbilityResult {
   const rulesSourceName = getGroupOriginName(id);
   const {
     isEditable,
@@ -291,7 +294,7 @@ export function useRuleSilenceAbility(rule: RulerRuleDTO | undefined): AbilitySt
  * Requires the DataSourcesExplore permission; reflects loading state from the edit check.
  */
 export function useRuleExploreAbility(rule: RulerRuleDTO | undefined, id: RuleGroupIdentifierV2): AbilityState {
-  const { loading } = useRuleEditAbility(rule, id);
+  const { loading } = useRuleAdministrationAbility(rule, id);
   return useMemo(() => fromPermissions(true, loading, AccessControlAction.DataSourcesExplore), [loading]);
 }
 

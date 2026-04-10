@@ -19,7 +19,7 @@ import {
 import { type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { logWarning } from '../../Analytics';
-import { skipToken, usePromRuleAbilityState, useRuleEditAbility } from '../../hooks/abilities/ruleAbilities';
+import { skipToken, usePromRuleAbilityState, useRuleAdministrationAbility } from '../../hooks/abilities/ruleAbilities';
 import { RuleAction } from '../../hooks/abilities/types';
 import * as ruleId from '../../utils/rule-id';
 import {
@@ -60,7 +60,7 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
 
   const isProvisioned = getIsProvisioned(rule, promRule);
 
-  const { granted: canEditRuler } = useRuleEditAbility(rule, groupIdentifier).update;
+  const { granted: canEditRuler } = useRuleAdministrationAbility(rule, groupIdentifier).update;
   // If the consumer of this component comes from the alert list view, we need to use promRule to check abilities and permissions,
   // as we have removed all requests to the ruler API in the list view.
   const { granted: canEditGrafana } = usePromRuleAbilityState(

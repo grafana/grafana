@@ -33,7 +33,7 @@ jest.mock('./api/ruler');
 jest.mock('@grafana/assistant', () => ({
   useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
 }));
-jest.spyOn(alertingAbilities, 'useRuleEditAbility');
+jest.spyOn(alertingAbilities, 'useRuleAdministrationAbility');
 
 const prometheusModuleSettings = { alerting: true, module: 'core:plugin/prometheus' };
 
@@ -68,7 +68,7 @@ const dataSources = {
 };
 
 const mocks = {
-  useAlertRuleAbilityMock: jest.mocked(alertingAbilities.useRuleEditAbility),
+  useAlertRuleAbilityMock: jest.mocked(alertingAbilities.useRuleAdministrationAbility),
   rulerBuilderMock: jest.mocked(apiRuler.rulerUrlBuilder),
 };
 

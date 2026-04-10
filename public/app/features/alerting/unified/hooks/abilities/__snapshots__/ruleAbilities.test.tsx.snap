@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`useRuleEditAbility matches snapshot for a Grafana rule with all permissions granted 1`] = `
+exports[`useRuleAdministrationAbility matches snapshot for a Grafana rule with all permissions granted 1`] = `
 {
   "delete": {
     "granted": true,
@@ -21,7 +21,7 @@ exports[`useRuleEditAbility matches snapshot for a Grafana rule with all permiss
 }
 `;
 
-exports[`useRuleEditAbility matches snapshot for a cloud rule in loading state 1`] = `
+exports[`useRuleAdministrationAbility matches snapshot for a cloud rule in loading state 1`] = `
 {
   "delete": {
     "cause": "LOADING",
@@ -47,7 +47,7 @@ exports[`useRuleEditAbility matches snapshot for a cloud rule in loading state 1
 }
 `;
 
-exports[`useRuleEditAbility returns PROVISIONED for provisioned Grafana rules — duplicate remains grantable 1`] = `
+exports[`useRuleAdministrationAbility returns PROVISIONED for provisioned Grafana rules — duplicate remains grantable 1`] = `
 {
   "delete": {
     "cause": "PROVISIONED",

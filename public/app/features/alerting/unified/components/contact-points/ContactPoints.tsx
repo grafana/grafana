@@ -19,7 +19,7 @@ import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 import { useAlertmanagerAbilityState } from '../../hooks/abilities/notificationAbilities';
-import { AlertmanagerAction, isApplicable } from '../../hooks/abilities/types';
+import { AlertmanagerAction, isAvailable } from '../../hooks/abilities/types';
 import { useCanViewContactPoints } from '../../hooks/useNotificationAbilities';
 import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
@@ -102,7 +102,7 @@ const ContactPointsTab = () => {
         <ContactPointsFilter />
 
         <Stack direction="row" gap={1}>
-          {isApplicable(addContactPointAbility) && (
+          {isAvailable(addContactPointAbility) && (
             <LinkButton
               icon="plus"
               aria-label={t('alerting.contact-points-tab.aria-label-add-contact-point', 'add contact point')}
@@ -113,7 +113,7 @@ const ContactPointsTab = () => {
               <Trans i18nKey="alerting.contact-points.create">New contact point</Trans>
             </LinkButton>
           )}
-          {isApplicable(exportContactPointsAbility) && (
+          {isAvailable(exportContactPointsAbility) && (
             <Button
               icon="download-alt"
               variant="secondary"
@@ -157,7 +157,7 @@ const NotificationTemplatesTab = () => {
             Create notification templates to customize your notifications.
           </Trans>
         </Text>
-        {isApplicable(createTemplateAbility) && (
+        {isAvailable(createTemplateAbility) && (
           <LinkButton
             icon="plus"
             variant="primary"

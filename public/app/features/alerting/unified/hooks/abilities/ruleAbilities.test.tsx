@@ -9,13 +9,13 @@ import { setupDataSources } from '../../testSetup/datasources';
 import { groupIdentifier } from '../../utils/groupIdentifier';
 
 import {
-  useRuleEditAbility,
+  useRuleAdministrationAbility,
   useRuleExploreAbility,
   useRuleExportAbility,
   useRuleSilenceAbility,
 } from './ruleAbilities';
 import {
-  isApplicable,
+  isAvailable,
   isInsufficientPermissions,
   isLoading,
   isNotSupported,
@@ -27,14 +27,14 @@ setupMswServer();
 
 const wrapper = () => getWrapper({ renderWithRouter: true });
 
-// ── useRuleEditAbility ────────────────────────────────────────────────────────
+// ── useRuleAdministrationAbility ────────────────────────────────────────────────────────
 
-describe('useRuleEditAbility', () => {
+describe('useRuleAdministrationAbility', () => {
   it('returns loading state while async checks are in flight', async () => {
     const rule = getGrafanaRule();
     const groupId = groupIdentifier.fromCombinedRule(rule);
 
-    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+    const { result } = renderHook(() => useRuleAdministrationAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
 
     // Initially loading
     expect(isLoading(result.current.update)).toBe(true);
@@ -53,7 +53,7 @@ describe('useRuleEditAbility', () => {
     const rule = getGrafanaRule();
     const groupId = groupIdentifier.fromCombinedRule(rule);
 
-    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+    const { result } = renderHook(() => useRuleAdministrationAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
@@ -71,7 +71,7 @@ describe('useRuleEditAbility', () => {
     const rule = getGrafanaRule();
     const groupId = groupIdentifier.fromCombinedRule(rule);
 
-    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+    const { result } = renderHook(() => useRuleAdministrationAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
@@ -85,7 +85,7 @@ describe('useRuleEditAbility', () => {
     const rule = getCloudRule({}, { rulesSource: mimirDs });
     const groupId = groupIdentifier.fromCombinedRule(rule);
 
-    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+    const { result } = renderHook(() => useRuleAdministrationAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
 
     // Snapshot the initial loading state before the ruler resolves
     expect(result.current).toMatchSnapshot();
@@ -98,7 +98,7 @@ describe('useRuleEditAbility', () => {
     const rule = getGrafanaRule();
     const groupId = groupIdentifier.fromCombinedRule(rule);
 
-    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+    const { result } = renderHook(() => useRuleAdministrationAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
@@ -122,7 +122,7 @@ describe('useRuleEditAbility', () => {
     }
     const groupId = groupIdentifier.fromCombinedRule(rule);
 
-    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+    const { result } = renderHook(() => useRuleAdministrationAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
@@ -142,9 +142,9 @@ describe('useRuleEditAbility', () => {
     });
     const groupId = groupIdentifier.fromCombinedRule(rule);
 
-    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+    const { result } = renderHook(() => useRuleAdministrationAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
 
-    await waitFor(() => expect(isApplicable(result.current.update)).toBe(true));
+    await waitFor(() => expect(isAvailable(result.current.update)).toBe(true));
 
     // Non-existent plugin → isPluginManaged=false → editable
     expect(result.current.update.granted).toBe(true);
@@ -158,12 +158,12 @@ describe('useRuleEditAbility', () => {
     const rule = getCloudRule({}, { rulesSource: mimirDs });
     const groupId = groupIdentifier.fromCombinedRule(rule);
 
-    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+    const { result } = renderHook(() => useRuleAdministrationAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
 
     await waitFor(() => expect(result.current).not.toBeUndefined());
 
     // Cloud rules without a connected ruler → NOT_SUPPORTED after loading
-    expect(isApplicable(result.current.update)).toBe(false);
+    expect(isAvailable(result.current.update)).toBe(false);
   });
 
   it('returns NOT_SUPPORTED for restore and pause when rule is not Grafana-managed', async () => {
@@ -173,7 +173,7 @@ describe('useRuleEditAbility', () => {
     const rule = getCloudRule({}, { rulesSource: mimirDs });
     const groupId = groupIdentifier.fromCombinedRule(rule);
 
-    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+    const { result } = renderHook(() => useRuleAdministrationAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
 
     await waitFor(() => expect(result.current).not.toBeUndefined());
 
@@ -187,7 +187,7 @@ describe('useRuleEditAbility', () => {
     const rule = getGrafanaRule();
     const groupId = groupIdentifier.fromCombinedRule(rule);
 
-    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+    const { result } = renderHook(() => useRuleAdministrationAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
@@ -203,7 +203,7 @@ describe('useRuleEditAbility', () => {
     });
     const groupId = groupIdentifier.fromCombinedRule(rule);
 
-    const { result } = renderHook(() => useRuleEditAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+    const { result } = renderHook(() => useRuleAdministrationAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
@@ -219,7 +219,6 @@ describe('useRuleSilenceAbility', () => {
     setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: true });
 
     const rule = getGrafanaRule();
-    const groupId = groupIdentifier.fromCombinedRule(rule);
 
     render(<RenderSilence rule={rule} />);
 
@@ -244,7 +243,6 @@ describe('useRuleSilenceAbility', () => {
     grantUserPermissions([]);
 
     const rule = getGrafanaRule();
-    const groupId = groupIdentifier.fromCombinedRule(rule);
 
     const { result } = renderHook(() => useRuleSilenceAbility(rule.rulerRule), { wrapper: wrapper() });
 
@@ -260,7 +258,7 @@ function RenderSilence({ rule }: { rule: ReturnType<typeof getGrafanaRule> }) {
   const silenceAbility = useRuleSilenceAbility(rule.rulerRule);
   return (
     <>
-      {isApplicable(silenceAbility) && 'applicable'}
+      {isAvailable(silenceAbility) && 'applicable'}
       {silenceAbility.granted && 'granted'}
     </>
   );
@@ -309,7 +307,7 @@ describe('useRuleExportAbility', () => {
 
     const { result } = renderHook(() => useRuleExportAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
 
-    await waitFor(() => expect(isApplicable(result.current)).toBe(true));
+    await waitFor(() => expect(isAvailable(result.current)).toBe(true));
   });
 
   it('returns NOT_SUPPORTED for cloud rules', async () => {

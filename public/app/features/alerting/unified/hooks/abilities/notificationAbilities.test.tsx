@@ -19,7 +19,7 @@ import {
   useAlertmanagerAbilityStates,
   useAllAlertmanagerAbilityStates,
 } from './notificationAbilities';
-import { AlertmanagerAction, isApplicable, isInsufficientPermissions } from './types';
+import { AlertmanagerAction, isAvailable, isInsufficientPermissions } from './types';
 
 setupMswServer();
 
@@ -59,7 +59,7 @@ describe('notificationAbilities', () => {
 
     // Every action should be applicable (either granted or denied-but-visible)
     Object.values(result.current).forEach((ability) => {
-      expect(isApplicable(ability) || ability.granted).toBe(true);
+      expect(isAvailable(ability) || ability.granted).toBe(true);
     });
 
     // read permission was granted — view should be granted
@@ -118,7 +118,7 @@ describe('notificationAbilities', () => {
     // ViewContactPoint — read permission was granted
     expect(result.current[0].granted).toBe(true);
     // CreateContactPoint — applicable but not granted (no write permission)
-    expect(isApplicable(result.current[1])).toBe(true);
+    expect(isAvailable(result.current[1])).toBe(true);
     expect(result.current[1].granted).toBe(false);
     expect(isInsufficientPermissions(result.current[1])).toBe(true);
     // ExportContactPoint — granted (Grafana AM supports export; view implies export)

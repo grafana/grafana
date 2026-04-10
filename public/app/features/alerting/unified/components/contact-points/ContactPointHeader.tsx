@@ -19,7 +19,7 @@ import {
 } from 'app/features/alerting/unified/utils/k8s/utils';
 
 import { useAlertmanagerAbilityState } from '../../hooks/abilities/notificationAbilities';
-import { AlertmanagerAction, isApplicable } from '../../hooks/abilities/types';
+import { AlertmanagerAction, isAvailable } from '../../hooks/abilities/types';
 import { createRelativeUrl } from '../../utils/url';
 import MoreButton from '../MoreButton';
 import { ProvisioningBadge } from '../Provisioning';
@@ -77,14 +77,14 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
   /** Can the contact point actually be edited via the UI? */
   const contactPointIsEditable = !isProvisioned;
   /** Given the alertmanager, the user's permissions, and the state of the contact point - can it actually be edited? */
-  const canEdit = isApplicable(editAbility) && hasAbilityToEdit && contactPointIsEditable;
+  const canEdit = isAvailable(editAbility) && hasAbilityToEdit && contactPointIsEditable;
 
   /** Does the current user have permissions to delete the contact point? */
   const hasAbilityToDelete = usingK8sApi ? canDeleteEntity(contactPoint) : deleteAbility.granted;
   /** Can the contact point actually be deleted, regardless of permissions? i.e. ensuring it isn't provisioned and isn't referenced elsewhere */
   const contactPointIsDeleteable = !isProvisioned && !numberOfPoliciesPreventingDeletion && !numberOfRules;
   /** Given the alertmanager, the user's permissions, and the state of the contact point - can it actually be deleted? */
-  const canBeDeleted = isApplicable(deleteAbility) && hasAbilityToDelete && contactPointIsDeleteable;
+  const canBeDeleted = isAvailable(deleteAbility) && hasAbilityToDelete && contactPointIsDeleteable;
 
   const menuActions: JSX.Element[] = [];
   if (showManagePermissions) {
@@ -99,7 +99,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
     );
   }
 
-  if (isApplicable(exportAbility)) {
+  if (isAvailable(exportAbility)) {
     menuActions.push(
       <Fragment key="export-contact-point">
         <Menu.Item
@@ -115,7 +115,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
     );
   }
 
-  if (isApplicable(deleteAbility)) {
+  if (isAvailable(deleteAbility)) {
     const cannotDeleteNoPermissions = t(
       'alerting.contact-points.delete-reasons.no-permissions',
       'You do not have the required permission to delete this contact point'
