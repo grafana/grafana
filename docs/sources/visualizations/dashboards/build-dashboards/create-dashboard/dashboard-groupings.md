@@ -245,4 +245,4 @@ Also, grouping-level variables carry over when you convert between rows and tabs
 
 Grouping-level variables are supported for all variable types.
 However, they aren't supported for the public preview **Filter and group by** feature, which replaces the **Filters** variable when the `dashboardUnifiedDrilldownControls` feature toggle is enabled.
-For more information on **Filter and group by**, refer to the [Dashboard controls documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/).
+For more information on **Filter and group by**, refer to the [Dashboard controls documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#filter-and-group-by).

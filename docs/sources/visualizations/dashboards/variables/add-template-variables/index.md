@@ -330,13 +330,13 @@ groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5
 ## Add filters {#add-ad-hoc-filters}
 
 {{< admonition type="note" >}}
-In Grafana v13, we released the **Filter and group by** feature in public preview.
+In Grafana v13, we released the **Filter and Group by** feature in public preview.
 It renames the **Filters** variable (formerly ad hoc filter) and extends it by adding grouping for Prometheus and Loki data sources.
 However, in the dashboard schema, it's still referred to as `"kind": "AdhocVariable"`.
 
 To use this feature, enable the `dashboardUnifiedDrilldownControls` feature toggle in your Grafana configuration file.
 
-For more information on **Filter and group by**, refer to the [Dashboard controls documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/).
+For more information on the **Filter and Group by** feature, refer to the [Dashboard controls documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#filter-and-group-by).
 {{< /admonition >}}
 
 _Filters_ are one of the most complex and flexible variable options available.
