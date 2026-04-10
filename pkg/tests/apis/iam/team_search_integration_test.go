@@ -203,23 +203,28 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualW
 		require.Equal(t, int64(1), result.Offset, "should return offset 1")
 	})
 
-	t.Run("should filter teams by exact title", func(t *testing.T) {
-		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?title=%s", namespace, url.QueryEscape("Test Team 1"))
-		var result iamv0alpha1.GetSearchTeamsResponse
+	t.Run("should filter teams by exact title case-insensitive", func(t *testing.T) {
+		titles := []string{"Test Team 1", "test team 1", "TEST TEAM 1", "tEsT tEaM 1"}
+		for _, title := range titles {
+			t.Run(title, func(t *testing.T) {
+				path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?title=%s", namespace, url.QueryEscape(title))
+				var result iamv0alpha1.GetSearchTeamsResponse
 
-		response := apis.DoRequest(helper, apis.RequestParams{
-			User:   helper.Org1.Admin,
-			Method: http.MethodGet,
-			Path:   path,
-		}, &result)
+				response := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: http.MethodGet,
+					Path:   path,
+				}, &result)
 
-		require.NotNil(t, response)
-		require.Equal(t, http.StatusOK, response.Response.StatusCode)
-		require.NotNil(t, response.Result)
-		require.Equal(t, int64(1), result.TotalHits, "should find exactly 1 team with title 'Test Team 1'")
-		require.Equal(t, 1, len(result.Hits), "should return 1 hit")
-		require.Equal(t, team1.GetName(), result.Hits[0].Name)
-		require.Equal(t, "Test Team 1", result.Hits[0].Title)
+				require.NotNil(t, response)
+				require.Equal(t, http.StatusOK, response.Response.StatusCode)
+				require.NotNil(t, response.Result)
+				require.Equal(t, int64(1), result.TotalHits, "should find exactly 1 team with title '%s'", title)
+				require.Equal(t, 1, len(result.Hits), "should return 1 hit")
+				require.Equal(t, team1.GetName(), result.Hits[0].Name)
+				require.Equal(t, "Test Team 1", result.Hits[0].Title)
+			})
+		}
 	})
 
 	t.Run("should return no results when title does not match any team", func(t *testing.T) {
