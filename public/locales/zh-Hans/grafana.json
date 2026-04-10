@@ -6856,7 +6856,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "显示/隐藏规则将不起作用",
@@ -8522,7 +8527,6 @@
       "give-feedback": "提供反馈"
     },
     "logs-meta-row": {
-      "download": "下载",
       "label": {
         "deduplication-count": "去重计数",
         "showing-only-selected-fields": "仅显示所选字段"
@@ -8875,22 +8879,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "在日志可视化中显示结果",
-        "show-results-in-table-visualisation": "在表格可视化中显示结果",
-        "show-results-newest-to-oldest": "显示结果（从最新到最旧）",
-        "show-results-oldest-to-newest": "显示结果（从最旧到最新）"
+        "show-results-in-table-visualisation": "在表格可视化中显示结果"
       },
       "label": {
         "logs": "日志",
-        "newest-first": "最新在前",
-        "oldest-first": "最早在前",
         "table": "表格"
       },
-      "label-deduplication": "去重",
-      "label-display-results": "显示结果",
-      "label-prettify-json": "美化 JSON",
-      "label-time": "时间",
-      "label-unique-labels": "唯一标签",
-      "label-wrap-lines": "多行显示",
       "title-feedback": "反馈",
       "title-logs": "日志",
       "title-logs-volume": "日志卷"
@@ -8985,8 +8979,7 @@
       "tooltip-s-m-h": "10 秒、1 分钟、30 分钟、1 小时"
     },
     "sql-expr": {
-      "button-run-query": "运行查询",
-      "tooltip-experimental": "SQL 表达式 LLM 集成是实验性的。若有任何问题，请向 Grafana 团队报告。"
+      "button-run-query": "运行查询"
     },
     "sql-schema": {
       "error-title": "错误",
@@ -11379,9 +11372,6 @@
       },
       "wrap-lines": "多行显示"
     },
-    "logs-navigation": {
-      "scroll-top": "滚动到顶部"
-    },
     "logs-panel": {
       "render-common-labels": {
         "common-labels": "常用标签："
@@ -12174,7 +12164,7 @@
     },
     "quick-add": {
       "aria-label": "新建",
-      "new-template-dashboard-button": "来自模板的数据面板"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "最新博客"
   },
@@ -13319,6 +13309,7 @@
       "token-label": "项目访问令牌",
       "token-required": "GitLab 令牌为必填项",
       "url-description": "GitLab 存储库 URL",
+      "url-pattern": "",
       "url-required": "存储库 URL 为必填项"
     },
     "history-view": {
@@ -14744,19 +14735,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "添加至少一个数据查询以生成 SQL 建议",
-    "ai-explain-title": "AI 驱动的 SQL 表达式解释",
-    "ai-suggestions-title": "AI 驱动的 SQL 表达式建议",
-    "apply": "应用",
-    "code-label": "{{ language }}",
-    "copy": "复制",
-    "explain-empty-query-tooltip": "输入 SQL 表达式以获取解释",
     "explain-query": "解释查询",
-    "explanation-modal-title": "SQL 查询解释",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "SQL 建议历史记录",
-    "suggestions": "建议",
-    "view-explanation": "查看解释"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "标记为收藏",
