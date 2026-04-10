@@ -31,7 +31,6 @@ export function createDragEndHandler(
   visible: SceneVariable[],
   controlsMenu: SceneVariable[],
   hidden: SceneVariable[],
-  preserved: SceneVariable[],
   description: string,
   droppableToHide: Record<string, VariableHide>
 ) {
@@ -63,7 +62,7 @@ export function createDragEndHandler(
     const newHide = getTargetHide(destination.droppableId, oldHide, listIds.visible, droppableToHide);
 
     const reordered = [...lists[listIds.visible], ...lists[listIds.controlsMenu], ...lists[listIds.hidden]];
-    const preservedSet = new Set(preserved);
+    const draggableSet = new Set(reordered);
 
     dashboardEditActions.edit({
       source: variableSet,
@@ -74,7 +73,7 @@ export function createDragEndHandler(
         }
 
         let reorderedIdx = 0;
-        const merged = currentVariables.map((v) => (preservedSet.has(v) ? v : reordered[reorderedIdx++]));
+        const merged = currentVariables.map((v) => (draggableSet.has(v) ? reordered[reorderedIdx++] : v));
 
         variableSet.setState({ variables: merged });
       },

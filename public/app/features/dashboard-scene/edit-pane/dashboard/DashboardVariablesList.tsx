@@ -30,21 +30,12 @@ const DROPPABLE_TO_HIDE: Record<string, VariableHide> = {
 
 export function DashboardVariablesList({ variableSet }: { variableSet: SceneVariableSet }) {
   const { variables } = variableSet.useState();
-  const { editable, nonEditable } = useMemo(() => {
-    const result = partitionVariablesByEditability(variables);
+  const editable = useMemo(() => {
+    const { editable } = partitionVariablesByEditability(variables);
     if (!config.featureToggles.dashboardUnifiedDrilldownControls) {
-      return result;
+      return editable;
     }
-    const filteredEditable: SceneVariable[] = [];
-    const filteredNonEditable = [...result.nonEditable];
-    for (const v of result.editable) {
-      if (v.state.type === 'adhoc') {
-        filteredNonEditable.push(v);
-      } else {
-        filteredEditable.push(v);
-      }
-    }
-    return { editable: filteredEditable, nonEditable: filteredNonEditable };
+    return editable.filter((v) => v.state.type !== 'adhoc');
   }, [variables]);
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(editable), [editable]);
 
@@ -61,14 +52,13 @@ export function DashboardVariablesList({ variableSet }: { variableSet: SceneVari
         visible,
         controlsMenu,
         hidden,
-        nonEditable,
         t(
           'dashboard-scene.variables-list.create-drag-end-handler.description.reorder-variables-list',
           'Reorder variables list'
         ),
         DROPPABLE_TO_HIDE
       ),
-    [variableSet, nonEditable, visible, controlsMenu, hidden]
+    [variableSet, visible, controlsMenu, hidden]
   );
 
   return (

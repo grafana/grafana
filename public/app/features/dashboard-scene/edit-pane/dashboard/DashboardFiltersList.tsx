@@ -28,18 +28,7 @@ const DROPPABLE_TO_HIDE: Record<string, VariableHide> = {
 
 export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariableSet }) {
   const { variables } = variableSet.useState();
-  const { filters, nonFilters } = useMemo(() => {
-    const filters: SceneVariable[] = [];
-    const nonFilters: SceneVariable[] = [];
-    for (const v of variables) {
-      if (v.state.type === 'adhoc') {
-        filters.push(v);
-      } else {
-        nonFilters.push(v);
-      }
-    }
-    return { filters, nonFilters };
-  }, [variables]);
+  const filters = useMemo(() => variables.filter((v) => v.state.type === 'adhoc'), [variables]);
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(filters), [filters]);
 
   const onClickFilter = useCallback((variable: SceneVariable) => {
@@ -59,11 +48,10 @@ export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariab
         visible,
         controlsMenu,
         hidden,
-        nonFilters,
         t('dashboard-scene.filters-list.reorder-description', 'Reorder filters list'),
         DROPPABLE_TO_HIDE
       ),
-    [variableSet, nonFilters, visible, controlsMenu, hidden]
+    [variableSet, visible, controlsMenu, hidden]
   );
 
   return (
