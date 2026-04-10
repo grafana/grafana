@@ -1,11 +1,11 @@
 import { getLogger, setLogger } from '../services/logging/registry';
 
 import {
-  extractKeyFromArgs,
   getCachedPromise,
   getCachedPromiseWithArgs,
   invalidateCache,
   MAX_CACHE_SIZE,
+  serializeArg,
 } from './getCachedPromise';
 
 const TEST_ASYNC_DELAY = 10;
@@ -467,10 +467,18 @@ describe('cached promises', () => {
       await expect(cached('a')).rejects.toThrow('Network Error');
     });
 
-    test('should throw when called with an anonymous function and no cacheKey', () => {
+    test('should throw when called with an anonymous function and no cacheKeyFn', () => {
       expect(() => getCachedPromiseWithArgs(async (_id: string) => `result-${_id}`)).toThrow(
-        'getCachedPromiseWithArgs function must be invoked with a named function or cacheKey'
+        'getCachedPromiseWithArgs function must be invoked with a named function or cacheKeyFn'
       );
+    });
+
+    test('should not throw when called with an anonymous function and a cacheKeyFn', async () => {
+      const fn = async (id: string) => `result-${id}`;
+      const cached = getCachedPromiseWithArgs(fn, undefined, (id) => `custom:${id}`);
+
+      const actual = await cached('a');
+      expect(actual).toBe('result-a');
     });
 
     test('should cache different named functions independently even with same args', async () => {
@@ -492,24 +500,6 @@ describe('cached promises', () => {
       expect(order).toBe('order-123');
     });
 
-    test('should use cacheKey as base key instead of fn.name', async () => {
-      let callCount = 0;
-      async function fetchData(id: string) {
-        callCount++;
-        return `data-${id}-${callCount}`;
-      }
-
-      const cachedA = getCachedPromiseWithArgs(fetchData, { cacheKey: 'namespace-a' });
-      const cachedB = getCachedPromiseWithArgs(fetchData, { cacheKey: 'namespace-b' });
-
-      const resultA = await cachedA('1');
-      const resultB = await cachedB('1');
-
-      // Same function, same args, but different cacheKeys = independent caches
-      expect(resultA).toBe('data-1-1');
-      expect(resultB).toBe('data-1-2');
-    });
-
     test('should forward arguments to the underlying function', async () => {
       const fn = jest.fn(async (a: string, b: number, c: boolean) => `${a}-${b}-${c}`);
       const cached = getCachedPromiseWithArgs(fn);
@@ -517,6 +507,18 @@ describe('cached promises', () => {
       await cached('hello', 42, true);
 
       expect(fn).toHaveBeenCalledWith('hello', 42, true);
+    });
+
+    test('should not collide when args contain the separator character', async () => {
+      const fn = jest.fn(async (...args: string[]) => args.join(','));
+      const cached = getCachedPromiseWithArgs(fn);
+
+      const twoArgs = await cached('a', 'b');
+      const oneArgWithPipe = await cached('a|b');
+
+      expect(twoArgs).toBe('a,b');
+      expect(oneArgWithPipe).toBe('a|b');
+      expect(fn).toHaveBeenCalledTimes(2);
     });
 
     test('should only invalidate the cache for the specific args', async () => {
@@ -543,44 +545,208 @@ describe('cached promises', () => {
       expect(a2).toBe('a-3'); // call 3: cachedInvalidate('a') invalidated + re-fetched
       expect(b2).toBe(b1); // 'b' was not invalidated, still cached
     });
+
+    describe('when called with cacheKeyFn', () => {
+      test('should use cacheKeyFn to generate cache keys', async () => {
+        const fn = jest.fn(async (id: string) => `result-${id}`);
+        const cached = getCachedPromiseWithArgs(fn, undefined, (id) => `custom:${id}`);
+
+        const actual1 = await cached('a');
+        const actual2 = await cached('a');
+
+        expect(actual1).toBe('result-a');
+        expect(actual1).toBe(actual2);
+        expect(fn).toHaveBeenCalledTimes(1);
+      });
+
+      test('should cache separately when cacheKeyFn returns different keys', async () => {
+        const fn = jest.fn(async (id: string) => `result-${id}`);
+        const cached = getCachedPromiseWithArgs(fn, undefined, (id) => `custom:${id}`);
+
+        const actual1 = await cached('a');
+        const actual2 = await cached('b');
+
+        expect(actual1).toBe('result-a');
+        expect(actual2).toBe('result-b');
+        expect(fn).toHaveBeenCalledTimes(2);
+      });
+
+      test('should allow unsupported types when cacheKeyFn is provided', async () => {
+        const fn = jest.fn(async (filter: RegExp) => `matched-${filter.source}`);
+        const cached = getCachedPromiseWithArgs(fn, undefined, (filter) => `regex:${filter.source}:${filter.flags}`);
+
+        const actual1 = await cached(/foo/i);
+        const actual2 = await cached(/foo/i);
+        const actual3 = await cached(/bar/g);
+
+        expect(actual1).toBe('matched-foo');
+        expect(actual1).toBe(actual2);
+        expect(actual3).toBe('matched-bar');
+        expect(fn).toHaveBeenCalledTimes(2);
+        // No logError calls since cacheKeyFn bypasses serialization
+        expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).not.toHaveBeenCalled();
+      });
+
+      test('should support invalidate option with cacheKeyFn', async () => {
+        let callCount = 0;
+        async function fetchData(id: string) {
+          callCount++;
+          return `data-${id}-${callCount}`;
+        }
+
+        const cached = getCachedPromiseWithArgs(fetchData, undefined, (id) => `custom:${id}`);
+        const cachedInvalidate = getCachedPromiseWithArgs(fetchData, { invalidate: true }, (id) => `custom:${id}`);
+
+        const a1 = await cached('a');
+        const b1 = await cached('b');
+
+        // Invalidate only 'a' via cacheKeyFn, 'b' should remain cached
+        await cachedInvalidate('a');
+
+        const a2 = await cached('a');
+        const b2 = await cached('b');
+
+        expect(a1).toBe('data-a-1');
+        expect(b1).toBe('data-b-2');
+        expect(a2).toBe('data-a-3'); // invalidated + re-fetched
+        expect(b2).toBe(b1); // 'b' was not invalidated, still cached
+      });
+
+      test('should support onError option with cacheKeyFn', async () => {
+        const fn = jest.fn(async (_id: string): Promise<string> => {
+          throw new Error('fail');
+        });
+        const onError = jest.fn(async ({ invalidate }: { invalidate: () => void }) => {
+          invalidate();
+          return 'recovered';
+        });
+        const cached = getCachedPromiseWithArgs(fn, { onError }, (id) => `custom:${id}`);
+
+        const actual = await cached('a');
+
+        expect(actual).toBe('recovered');
+        expect(onError).toHaveBeenCalledTimes(1);
+        expect(onError).toHaveBeenCalledWith({ error: new Error('fail'), invalidate: expect.any(Function) });
+
+        // After invalidation via onError, a new call should re-fetch
+        fn.mockResolvedValueOnce('fresh');
+        const actual2 = await cached('a');
+        expect(actual2).toBe('fresh');
+        expect(fn).toHaveBeenCalledTimes(2);
+      });
+
+      test('should isolate cache between different cacheKeyFn instances for the same function', async () => {
+        let callCount = 0;
+        async function fetchData(id: string) {
+          callCount++;
+          return `data-${id}-${callCount}`;
+        }
+
+        const cachedA = getCachedPromiseWithArgs(fetchData, undefined, (id) => `ns-a:${id}`);
+        const cachedB = getCachedPromiseWithArgs(fetchData, undefined, (id) => `ns-b:${id}`);
+
+        const resultA = await cachedA('1');
+        const resultB = await cachedB('1');
+
+        expect(resultA).toBe('data-1-1');
+        expect(resultB).toBe('data-1-2');
+      });
+    });
   });
 
-  describe('extractKeyFromArgs', () => {
-    test('should serialize primitive arguments', () => {
-      expect(extractKeyFromArgs(['a', 1, true], 'test')).toBe('["a",1,true]');
+  describe('serializeArg', () => {
+    test('should serialize string arguments', () => {
+      expect(serializeArg('a', 'test')).toBe('string:"a"');
+    });
+
+    test('should serialize number arguments', () => {
+      expect(serializeArg(1, 'test')).toBe('number:1');
+    });
+
+    test('should serialize boolean arguments', () => {
+      expect(serializeArg(true, 'test')).toBe('boolean:true');
     });
 
     test('should serialize object arguments', () => {
-      expect(extractKeyFromArgs([{ id: 1 }], 'test')).toBe('[{"id":1}]');
+      expect(serializeArg({ id: 1 }, 'test')).toBe('object:{"id":1}');
+    });
+
+    test('should serialize array arguments distinctly from objects', () => {
+      expect(serializeArg([1, 2], 'test')).toBe('object:[1,2]');
+      expect(serializeArg({ 0: 1, 1: 2 }, 'test')).toBe('object:{"0":1,"1":2}');
+      expect(serializeArg([1, 2], 'test')).not.toBe(serializeArg({ 0: 1, 1: 2 }, 'test'));
+    });
+
+    test('should produce different keys for objects with different key order', () => {
+      const keyAB = serializeArg({ a: 1, b: 2 }, 'test');
+      const keyBA = serializeArg({ b: 2, a: 1 }, 'test');
+
+      // JSON.stringify preserves insertion order, so different key order = different cache key
+      expect(keyAB).toBe('object:{"a":1,"b":2}');
+      expect(keyBA).toBe('object:{"b":2,"a":1}');
+      expect(keyAB).not.toBe(keyBA);
     });
 
     test('should serialize null and undefined distinctly', () => {
-      const nullKey = extractKeyFromArgs([null], 'test');
-      const undefinedKey = extractKeyFromArgs([undefined], 'test');
-
-      // JSON.stringify treats both as null
-      expect(nullKey).toBe('[null]');
-      expect(undefinedKey).toBe('[null]');
+      expect(serializeArg(null, 'test')).toBe('object:null');
+      expect(serializeArg(undefined, 'test')).toBe('undefined:undefined');
+      expect(serializeArg(null, 'test')).not.toBe(serializeArg(undefined, 'test'));
     });
 
-    test('should serialize empty arguments', () => {
-      expect(extractKeyFromArgs([], 'test')).toBe('[]');
+    test('should distinguish number from string with same value', () => {
+      expect(serializeArg(1, 'test')).toBe('number:1');
+      expect(serializeArg('1', 'test')).toBe('string:"1"');
+      expect(serializeArg(1, 'test')).not.toBe(serializeArg('1', 'test'));
+    });
+
+    test('should distinguish NaN, Infinity, -Infinity and -0', () => {
+      expect(serializeArg(NaN, 'test')).toBe('number:NaN');
+      expect(serializeArg(Infinity, 'test')).toBe('number:Infinity');
+      expect(serializeArg(-Infinity, 'test')).toBe('number:-Infinity');
+      expect(serializeArg(-0, 'test')).toBe('number:-0');
+      expect(serializeArg(0, 'test')).toBe('number:0');
+    });
+
+    test('should serialize bigint arguments', () => {
+      expect(serializeArg(BigInt(42), 'test')).toBe('bigint:42');
+    });
+
+    test.each([
+      { name: 'Map', value: new Map() },
+      { name: 'Set', value: new Set() },
+      { name: 'WeakMap', value: new WeakMap() },
+      { name: 'WeakSet', value: new WeakSet() },
+      { name: 'Error', value: new Error('test') },
+      { name: 'RegExp', value: /test/ },
+      { name: 'RegExp', value: new RegExp('test') },
+      { name: 'Date', value: new Date() },
+      { name: 'Promise', value: Promise.resolve() },
+      { name: 'function', value: () => {} },
+      { name: 'symbol', value: Symbol('foo') },
+    ])('should return uncacheable key for unsupported type: $name', ({ name, value }) => {
+      const key = serializeArg(value, 'test');
+
+      expect(key).toMatch(/^uncacheable:/);
+      expect(getLogger('grafana/runtime.utils.getCachedPromise').logWarning).toHaveBeenCalledWith(
+        `getCachedPromiseWithArgs: unsupported argument type "${name}" cannot be used as a cache key`,
+        { baseKey: 'test', key: expect.stringContaining('uncacheable') }
+      );
     });
 
     test('should return a unique uncacheable key when JSON.stringify fails', () => {
       const circular: Record<string, unknown> = { name: 'a' };
       circular.self = circular;
 
-      const keyA = extractKeyFromArgs([circular], 'test');
-      const keyB = extractKeyFromArgs([circular], 'test');
+      const keyA = serializeArg(circular, 'test');
+      const keyB = serializeArg(circular, 'test');
 
       expect(keyA).toMatch(/^uncacheable:/);
       expect(keyB).toMatch(/^uncacheable:/);
       expect(keyA).not.toBe(keyB);
       expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledTimes(2);
       expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'getCachedPromiseWithArgs: extractKeyFromArgs failed' }),
-        expect.objectContaining({ baseName: 'test' })
+        expect.objectContaining({ message: 'getCachedPromiseWithArgs: serializeArg failed' }),
+        expect.objectContaining({ baseKey: 'test' })
       );
     });
   });

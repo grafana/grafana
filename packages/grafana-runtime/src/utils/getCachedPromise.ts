@@ -149,43 +149,129 @@ export function invalidateCache() {
   cache.clear();
 }
 
-export function extractKeyFromArgs<TArgs extends unknown[]>(args: TArgs, baseName: string): string {
+/**
+ * Types that cannot be reliably serialized for use as cache keys.
+ * These either produce lossy JSON (Map/Set/Error → "{}") or are
+ * inherently non-serializable (functions, RegExp).
+ */
+const UNSUPPORTED_TYPES: ReadonlySet<string> = new Set([
+  'Map',
+  'Set',
+  'WeakMap',
+  'WeakSet',
+  'Error',
+  'RegExp',
+  'Date',
+  'Promise',
+]);
+
+function getUnsupportedType(value: unknown): string | null {
+  if (typeof value === 'function') {
+    return 'function';
+  }
+
+  if (typeof value === 'symbol') {
+    return 'symbol';
+  }
+
+  if (value !== null && typeof value === 'object') {
+    const tag = Object.prototype.toString.call(value).slice(8, -1); // e.g. "[object Map]" → "Map"
+    if (UNSUPPORTED_TYPES.has(tag)) {
+      return tag;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Serializes a value with a typeof prefix to avoid collisions
+ * between different types (e.g. null vs undefined, 1 vs "1").
+ *
+ * Explicitly rejects types that cannot be reliably serialized
+ * (Map, Set, Error, RegExp, Date, Promise, WeakMap, WeakSet, functions).
+ * Passing an unsupported type produces a unique uncacheable key and logs a warning.
+ */
+export function serializeArg(value: unknown, baseKey: string): string {
+  const type = typeof value;
+
+  if (type === 'bigint') {
+    return `bigint:${value}`;
+  }
+
+  // JSON.stringify turns NaN, Infinity, and -Infinity into "null", so use String() for numbers
+  if (type === 'number') {
+    return Object.is(value, -0) ? `number:-0` : `number:${String(value)}`;
+  }
+
+  const unsupported = getUnsupportedType(value);
+  if (unsupported !== null) {
+    const key = `uncacheable:${uuidv4()}`;
+    getLogger('grafana/runtime.utils.getCachedPromise').logWarning(
+      `getCachedPromiseWithArgs: unsupported argument type "${unsupported}" cannot be used as a cache key`,
+      { baseKey, key }
+    );
+    return key;
+  }
+
   try {
-    return JSON.stringify(args);
+    return `${type}:${JSON.stringify(value)}`;
   } catch (error) {
     const key = `uncacheable:${uuidv4()}`;
     getLogger('grafana/runtime.utils.getCachedPromise').logError(
-      new Error(`getCachedPromiseWithArgs: extractKeyFromArgs failed`, { cause: error }),
-      {
-        baseName,
-        key,
-      }
+      new Error(`getCachedPromiseWithArgs: serializeArg failed`, { cause: error }),
+      { baseKey, key }
     );
     return key;
   }
 }
 
 /**
- * Utility function that generates a cached version of a promise-returning function. The generated function will cache the result of the promise based on the provided options.
- * It uses the getCachedPromise function internally to handle caching logic and error handling.
+ * Creates a cached version of a promise-returning function, keyed by its arguments.
  *
- * @template TArgs - The type of the arguments for the promise function
+ * By default, cache keys are derived by serializing each argument with {@link serializeArg}.
+ * Only JSON-safe primitives and plain objects/arrays are supported as arguments:
+ * - `string`, `number` (including NaN, Infinity, -0), `boolean`, `bigint`
+ * - `null`, `undefined`
+ * - Plain objects and arrays (serialized via `JSON.stringify`)
+ *
+ * The following types **cannot** be reliably serialized and will cause each call to
+ * bypass the cache (a unique key is generated and a warning is logged):
+ * `Map`, `Set`, `WeakMap`, `WeakSet`, `Error`, `RegExp`, `Date`, `Promise`, `symbol`, `function`.
+ *
+ * If your function accepts unsupported argument types, provide a custom `cacheKeyFn`
+ * that returns a stable string key for the given arguments. When `cacheKeyFn` is provided,
+ * the default serialization is bypassed entirely and the caller is responsible for
+ * producing unique keys.
+ *
  * @template T - The type of the resolved promise value
- * @param fn - The promise-returning function to be cached
- * @param options - Options for caching behavior
- * @returns A function that returns a cached promise when invoked with the same arguments
+ * @template TArgs - The type of the arguments for the promise function
+ * @param fn - A named promise-returning function to be cached. Anonymous functions require a `cacheKeyFn`.
+ * @param options - Options for error handling and cache invalidation (defaultValue, invalidate, onError)
+ * @param options.defaultValue - Optional default value to return if the promise rejects
+ * @param options.invalidate - Optionally invalidates the cache for the given function name or cacheKey
+ * @param options.onError - Optional error handler that receives the error and an invalidate function
+ * @param cacheKeyFn - Optional function that receives the same arguments as `fn` and returns a
+ *   cache key string. Use this when `fn` accepts arguments that are not JSON-serializable.
+ * @returns A wrapper function with the same signature as `fn` that returns cached promises
  */
 export function getCachedPromiseWithArgs<T, TArgs extends unknown[]>(
   fn: (...args: TArgs) => Promise<T>,
-  options?: CachedPromiseOptions<T>
+  options?: Pick<CachedPromiseOptions<T>, 'defaultValue' | 'invalidate' | 'onError'>,
+  cacheKeyFn?: (...args: TArgs) => string
 ): (...args: TArgs) => Promise<T> {
-  const baseName = options?.cacheKey ?? fn.name;
-  if (!baseName) {
-    throw new Error(`getCachedPromiseWithArgs function must be invoked with a named function or cacheKey`);
+  const baseKey = cacheKeyFn ?? fn.name;
+  if (!baseKey) {
+    throw new Error(`getCachedPromiseWithArgs function must be invoked with a named function or cacheKeyFn`);
+  }
+
+  function defaultCacheKeyFn(...args: TArgs): string {
+    const argsKey = args.map((a) => serializeArg(a, fn.name)).join('|');
+    return `${fn.name}:${argsKey}`;
   }
 
   return (...args: TArgs) => {
-    const key = `${baseName}:${extractKeyFromArgs(args, baseName)}`;
-    return getCachedPromise(() => fn(...args), { ...options, cacheKey: key });
+    const cacheKey = cacheKeyFn ? cacheKeyFn(...args) : defaultCacheKeyFn(...args);
+    return getCachedPromise(() => fn(...args), { ...options, cacheKey });
   };
 }
