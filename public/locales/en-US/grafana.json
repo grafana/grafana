@@ -5641,11 +5641,6 @@
         "variable": "{{type}} variable",
         "variable-set": "Variables"
       },
-      "filters": {
-        "add-filter": "Add filter",
-        "reorder": "Drag to reorder",
-        "select-filter": "Select"
-      },
       "links": {
         "add-link": "Add link",
         "reorder": "Drag to reorder",
