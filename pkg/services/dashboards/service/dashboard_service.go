@@ -1728,6 +1728,10 @@ func (dr *DashboardServiceImpl) CleanUpDashboard(ctx context.Context, dashboardU
 	ctx, span := tracer.Start(ctx, "dashboards.service.CleanUpDashboard")
 	defer span.End()
 
+	if dashboardUID == "" {
+		return dashboards.ErrDashboardIdentifierNotSet
+	}
+
 	// cleanup things related to dashboards that are not stored in unistore yet
 	var err = dr.publicDashboardService.DeleteByDashboardUIDs(ctx, orgId, []string{dashboardUID})
 	if err != nil {
@@ -2371,14 +2375,23 @@ func getFolderUIDs(hits []dashboardv0.DashboardHit) []string {
 }
 
 func (dr *DashboardServiceImpl) cleanupAfterDelete(ctx context.Context, orgID int64, uid string, id int64) error {
+	if uid == "" {
+		return dashboards.ErrDashboardIdentifierNotSet
+	}
+
 	type statement struct {
 		SQL  string
 		args []any
 	}
 	sqlStatements := []statement{
 		{SQL: "DELETE FROM star WHERE dashboard_uid = ? AND org_id = ?", args: []any{uid, orgID}},
-		{SQL: "DELETE FROM dashboard_acl WHERE dashboard_id = ?", args: []any{id}},
-		{SQL: "DELETE FROM annotation WHERE dashboard_id = ? AND org_id = ?", args: []any{id, orgID}},
+	}
+	// dashboard_id=0 is used for org/API annotations; never delete by id 0 or we wipe that whole class for the org.
+	if id != 0 {
+		sqlStatements = append(sqlStatements,
+			statement{SQL: "DELETE FROM dashboard_acl WHERE dashboard_id = ?", args: []any{id}},
+			statement{SQL: "DELETE FROM annotation WHERE dashboard_id = ? AND org_id = ?", args: []any{id, orgID}},
+		)
 	}
 
 	return dr.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
