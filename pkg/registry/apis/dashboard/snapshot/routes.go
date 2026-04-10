@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/kube-openapi/pkg/common"
@@ -233,7 +235,7 @@ func handleCreate(service dashboardsnapshots.Service, options dashv0.SnapshotSha
 	}
 }
 
-func handleDeleteByKey(service dashboardsnapshots.Service, accessControl ac.AccessControl, storageGetter func() rest.Storage) http.HandlerFunc {
+func handleDeleteByKey(accessControl ac.AccessControl, storageGetter func() rest.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -263,13 +265,25 @@ func handleDeleteByKey(service dashboardsnapshots.Service, accessControl ac.Acce
 		// Set namespace in context for k8s storage layer
 		ctx = k8srequest.WithNamespace(ctx, namespace)
 
-		// Look up snapshot name by deleteKey
-		// TODO: replace this to not use the legacy service
-		snap, err := service.GetDashboardSnapshot(ctx, &dashboardsnapshots.GetDashboardSnapshotQuery{DeleteKey: deleteKey})
-		if err != nil || snap == nil {
+		// Look up snapshot by deleteKey using field selector
+		lister, ok := storage.(rest.Lister)
+		if !ok {
+			errhttp.Write(ctx, fmt.Errorf("snapshot storage does not support list"), w)
+			return
+		}
+		obj, err := lister.List(ctx, &internalversion.ListOptions{
+			FieldSelector: fields.OneTermEqualSelector("spec.deleteKey", deleteKey),
+		})
+		if err != nil {
+			errhttp.Write(ctx, fmt.Errorf("failed to look up snapshot: %w", err), w)
+			return
+		}
+		snapList, ok := obj.(*dashv0.SnapshotList)
+		if !ok || len(snapList.Items) == 0 {
 			errhttp.Write(ctx, fmt.Errorf("snapshot not found for delete key"), w)
 			return
 		}
+		snapshotName := snapList.Items[0].Name
 
 		deleter, ok := storage.(rest.GracefulDeleter)
 		if !ok {
@@ -277,7 +291,7 @@ func handleDeleteByKey(service dashboardsnapshots.Service, accessControl ac.Acce
 			return
 		}
 
-		_, _, err = deleter.Delete(ctx, snap.Key, nil, &metav1.DeleteOptions{})
+		_, _, err = deleter.Delete(ctx, snapshotName, nil, &metav1.DeleteOptions{})
 		if err != nil {
 			errhttp.Write(ctx, fmt.Errorf("failed to delete snapshot: %w", err), w)
 			return
@@ -423,7 +437,7 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						},
 					},
 				},
-				Handler: handleDeleteByKey(service, accessControl, storageGetter),
+				Handler: handleDeleteByKey(accessControl, storageGetter),
 			},
 			{
 				Path: prefix + "/settings",

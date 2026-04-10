@@ -84,6 +84,21 @@ func (s *SnapshotLegacyStore) Delete(ctx context.Context, name string, deleteVal
 }
 
 func (s *SnapshotLegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	// Handle spec.deleteKey field selector: look up by deleteKey via the service
+	if options.FieldSelector != nil {
+		if deleteKey, found := options.FieldSelector.RequiresExactMatch("spec.deleteKey"); found {
+			snap, err := s.Service.GetDashboardSnapshot(ctx, &dashboardsnapshots.GetDashboardSnapshotQuery{
+				DeleteKey: deleteKey,
+			})
+			if err != nil {
+				return &dashV0.SnapshotList{}, nil
+			}
+			return &dashV0.SnapshotList{
+				Items: []dashV0.Snapshot{*convertSnapshotToK8sResource(snap, s.Namespacer)},
+			}, nil
+		}
+	}
+
 	orgId, err := request.OrgIDForList(ctx)
 	if err != nil {
 		return nil, err

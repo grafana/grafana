@@ -284,6 +284,21 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		return err
 	}
 
+	// Register field label conversion for Snapshot to enable spec.deleteKey field selector
+	if err := scheme.AddFieldLabelConversionFunc(
+		dashv0.SnapshotResourceInfo.GroupVersion().WithKind("Snapshot"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "metadata.name", "metadata.namespace", "spec.deleteKey":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported for Snapshot: %s", label)
+			}
+		},
+	); err != nil {
+		return err
+	}
+
 	return scheme.SetVersionPriority(b.GetGroupVersions()...)
 }
 
@@ -831,7 +846,12 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			ExternalSnapshotToken: b.snapshotOptions.ExternalSnapshotToken,
 		}
 
-		unifiedSnapshotStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, *snapshots, opts.OptsGetter)
+		selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
+			GetAttrs: snapshot.SnapshotGetAttrs,
+		}
+		unifiedSnapshotStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
+			opts.Scheme, *snapshots, opts.OptsGetter, selectableFieldsOpts,
+		)
 		if err != nil {
 			return err
 		}
