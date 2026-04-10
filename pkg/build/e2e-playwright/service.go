@@ -10,10 +10,12 @@ import (
 )
 
 type GrafanaServiceOpts struct {
-	HostSrc           *dagger.Directory
-	FrontendContainer *dagger.Container
-	GrafanaTarGz      *dagger.File
-	License           *dagger.File
+	HostSrc              *dagger.Directory
+	FrontendContainer    *dagger.Container
+	GrafanaTarGz         *dagger.File
+	License              *dagger.File
+	StartImageRenderer   bool
+	ImageRendererVersion string
 }
 
 func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOpts) (*dagger.Service, error) {
@@ -36,6 +38,16 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 		// when running locally.
 		WithEnvVariable("GF_SERVER_HTTP_PORT", fmt.Sprint(grafanaPort)).
 		WithExposedPort(grafanaPort)
+
+	if opts.StartImageRenderer {
+		imageRendererSvc := d.Container().From("grafana/grafana-image-renderer:" + opts.ImageRendererVersion).
+			WithExposedPort(8081).
+			AsService()
+
+		container = container.WithServiceBinding("image-renderer", imageRendererSvc).
+			WithEnvVariable("GF_RENDERING_CALLBACK_URL", fmt.Sprintf("http://grafana:%d/", grafanaPort)).
+			WithEnvVariable("GF_RENDERING_SERVER_URL", "http://image-renderer:8081/render")
+	}
 
 	var licenseArg string
 	if opts.License != nil {

@@ -82,6 +82,16 @@ func NewApp() *cli.Command {
 				Validator: mustBeFile("cloud-plugin-creds", true),
 				TakesFile: true,
 			},
+			&cli.BoolFlag{
+				Name:  "image-renderer",
+				Usage: "Enable the image renderer service",
+				Value: false,
+			},
+			&cli.StringFlag{
+				Name:  "image-renderer-version",
+				Usage: "When enabling the image renderer, which version to use",
+				Value: "latest",
+			},
 		},
 		Action: run,
 	}
@@ -181,10 +191,12 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	svc, err := GrafanaService(ctx, d, GrafanaServiceOpts{
-		HostSrc:           grafanaHostSrc,
-		FrontendContainer: frontendContainer,
-		GrafanaTarGz:      targz,
-		License:           license,
+		HostSrc:              grafanaHostSrc,
+		FrontendContainer:    frontendContainer,
+		GrafanaTarGz:         targz,
+		License:              license,
+		StartImageRenderer:   cmd.Bool("image-renderer"),
+		ImageRendererVersion: cmd.String("image-renderer-version"),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create Grafana service: %w", err)
