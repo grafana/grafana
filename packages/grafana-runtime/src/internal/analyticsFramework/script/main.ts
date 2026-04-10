@@ -20,7 +20,9 @@ if (OUTPUT_FORMAT === 'markdown') {
   const markdown = await formatEventsAsMarkdown(events);
   console.log(markdown);
 
-  await fs.writeFile('analytics-report.md', markdown);
+  const outputPath = path.resolve('docs/sources/analytics/analytics-report.md');
+  await fs.mkdir(path.dirname(outputPath), { recursive: true });
+  await fs.writeFile(outputPath, markdown);
 } else {
   console.log(JSON.stringify(events, null, 2));
 }
