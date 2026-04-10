@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	authlib "github.com/grafana/authlib/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
 
@@ -23,25 +24,40 @@ var (
 	_ appsdkapiserver.AppInstaller = (*AppInstaller)(nil)
 )
 
+const (
+	playlistAPIGroup = "playlist.grafana.app"
+	playlistResource = "playlists"
+)
+
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
 	features      featuremgmt.FeatureToggles
-	accessControl accesscontrol.AccessControl
+	accessService accesscontrol.Service
+	accessClient  authlib.AccessClient
 	logger        log.Logger
 }
 
 func RegisterAppInstaller(
 	features featuremgmt.FeatureToggles,
 	accessControlService accesscontrol.Service,
-	ac accesscontrol.AccessControl,
+	accessClient authlib.AccessClient,
 ) (*AppInstaller, error) {
 	if err := DeclareFixedRoles(accessControlService); err != nil {
 		return nil, fmt.Errorf("declaring fixed roles: %w", err)
 	}
+	// Register fixed roles immediately when AC has already been initialized.
+	// This avoids startup-order races where playlist roles are declared after
+	// initial role registration and would otherwise not be effective until next reload.
+	if roleRegistry, ok := accessControlService.(accesscontrol.RoleRegistry); ok {
+		if err := roleRegistry.RegisterFixedRoles(context.Background()); err != nil {
+			return nil, fmt.Errorf("registering fixed roles: %w", err)
+		}
+	}
 
 	installer := &AppInstaller{
 		features:      features,
-		accessControl: ac,
+		accessService: accessControlService,
+		accessClient:  accessClient,
 		logger:        log.New("playlist.api"),
 	}
 	specificConfig := any(&playlistapp.PlaylistConfig{
@@ -91,26 +107,72 @@ func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 				}
 			}
 
-			var action string
-			switch attr.GetVerb() {
-			case "get", "list", "watch":
-				action = ActionPlaylistsRead
-			case "create", "update", "patch", "delete", "deletecollection":
-				action = ActionPlaylistsWrite
-			default:
-				return authorizer.DecisionDeny, "unsupported verb: " + attr.GetVerb(), nil
+			authInfo, ok := authlib.AuthInfoFrom(ctx)
+			if !ok {
+				return authorizer.DecisionDeny, "valid user is required", fmt.Errorf("no identity found for request")
 			}
-
-			hasAccess, err := p.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(action))
+			checkRsp, err := p.accessClient.Check(ctx, authInfo, authlib.CheckRequest{
+				Verb:        attr.GetVerb(),
+				Group:       playlistAPIGroup,
+				Resource:    playlistResource,
+				Namespace:   attr.GetNamespace(),
+				Name:        attr.GetName(),
+				Subresource: attr.GetSubresource(),
+				Path:        attr.GetPath(),
+			}, "")
 			if err != nil {
 				p.logger.Error("failed to evaluate permission", "error", err)
 				return authorizer.DecisionDeny, "permission evaluation failed", err
 			}
-			if !hasAccess {
+			if !checkRsp.Allowed {
+				// For built-in org roles, defer to the default role authorizer when
+				// AccessClient denies. This keeps legacy role behavior intact while
+				// still allowing explicit RBAC grants for None-role users.
+				if user.GetOrgRole() != org.RoleNone {
+					return authorizer.DecisionNoOpinion, "", nil
+				}
+				legacyAllowed, legacyErr := p.checkNoneRoleFallback(ctx, user, attr)
+				if legacyErr != nil {
+					return authorizer.DecisionDeny, "permission evaluation failed", legacyErr
+				}
+				if legacyAllowed {
+					return authorizer.DecisionAllow, "", nil
+				}
 				return authorizer.DecisionDeny, "insufficient permissions", nil
 			}
 
 			return authorizer.DecisionAllow, "", nil
 		},
 	)
+}
+
+func (p *AppInstaller) checkNoneRoleFallback(ctx context.Context, user identity.Requester, attr authorizer.Attributes) (bool, error) {
+	var action string
+	switch attr.GetVerb() {
+	case "get", "list", "watch":
+		action = ActionPlaylistsRead
+	case "create", "update", "patch", "delete", "deletecollection":
+		action = ActionPlaylistsWrite
+	default:
+		return false, nil
+	}
+
+	perms, err := p.accessService.GetUserPermissions(ctx, user, accesscontrol.Options{})
+	if err != nil {
+		return false, err
+	}
+
+	name := attr.GetName()
+	for _, perm := range perms {
+		if perm.Action != action {
+			continue
+		}
+		if perm.Scope == "*" || perm.Scope == "playlists:*" || perm.Scope == "playlists:uid:*" {
+			return true, nil
+		}
+		if name != "" && perm.Scope == "playlists:uid:"+name {
+			return true, nil
+		}
+	}
+	return false, nil
 }

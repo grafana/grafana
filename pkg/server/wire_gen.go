@@ -803,7 +803,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service14, cacheServiceImpl, plugincontextProvider, cfg)
 	v := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
-	appInstaller, err := playlist2.RegisterAppInstaller(featureToggles, acimplService, accessControl)
+	appInstaller, err := playlist2.RegisterAppInstaller(featureToggles, acimplService, accessClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1502,7 +1502,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service14, cacheServiceImpl, plugincontextProvider, cfg)
 	v := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
-	appInstaller, err := playlist2.RegisterAppInstaller(featureToggles, acimplService, accessControl)
+	appInstaller, err := playlist2.RegisterAppInstaller(featureToggles, acimplService, accessClient)
 	if err != nil {
 		return nil, err
 	}

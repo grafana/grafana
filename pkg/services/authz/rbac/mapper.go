@@ -354,6 +354,25 @@ func NewMapperRegistry() MapperRegistry {
 			"plugins": newResourceTranslation("plugins.plugins", "uid", false, nil),
 			"metas":   newResourceTranslation("plugins.metas", "uid", false, nil),
 		},
+		"playlist.grafana.app": {
+			"playlists": translation{
+				resource:  "playlists",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:              "playlists:read",
+					utils.VerbList:             "playlists:read",
+					utils.VerbWatch:            "playlists:read",
+					utils.VerbCreate:           "playlists:write",
+					utils.VerbUpdate:           "playlists:write",
+					utils.VerbPatch:            "playlists:write",
+					utils.VerbDelete:           "playlists:write",
+					utils.VerbDeleteCollection: "playlists:write",
+					utils.VerbGetPermissions:   "playlists:read",
+					utils.VerbSetPermissions:   "playlists:write",
+				},
+				folderSupport: false,
+			},
+		},
 		"advisor.grafana.app": {
 			"checks":     newResourceTranslation("advisor.checks", "uid", false, nil),
 			"checktypes": newResourceTranslation("advisor.checktypes", "uid", false, nil),

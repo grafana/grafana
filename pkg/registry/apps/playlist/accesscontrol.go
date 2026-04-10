@@ -10,6 +10,11 @@ const (
 	ActionPlaylistsWrite = "playlists:write"
 )
 
+var (
+	scopeProviderPlaylists = accesscontrol.NewScopeProvider("playlists")
+	scopeAllPlaylists      = scopeProviderPlaylists.GetResourceAllScope()
+)
+
 func DeclareFixedRoles(service accesscontrol.Service) error {
 	playlistsReaderRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
@@ -19,7 +24,7 @@ func DeclareFixedRoles(service accesscontrol.Service) error {
 			Group:       "Playlists",
 			Version:     1,
 			Permissions: []accesscontrol.Permission{
-				{Action: ActionPlaylistsRead},
+				{Action: ActionPlaylistsRead, Scope: scopeAllPlaylists},
 			},
 		},
 		Grants: []string{string(org.RoleViewer), string(org.RoleEditor), string(org.RoleAdmin)},
@@ -33,7 +38,7 @@ func DeclareFixedRoles(service accesscontrol.Service) error {
 			Group:       "Playlists",
 			Version:     1,
 			Permissions: accesscontrol.ConcatPermissions(playlistsReaderRole.Role.Permissions, []accesscontrol.Permission{
-				{Action: ActionPlaylistsWrite},
+				{Action: ActionPlaylistsWrite, Scope: scopeAllPlaylists},
 			}),
 		},
 		Grants: []string{string(org.RoleEditor), string(org.RoleAdmin)},
