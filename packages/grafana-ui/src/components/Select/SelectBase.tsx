@@ -161,18 +161,18 @@ export function SelectBase<T, Rest = {}>({
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
   const selectStyles = useCustomSelectStyles(theme, width);
   const [hasInputValue, setHasInputValue] = useState<boolean>(!!inputValue);
+  // local state to track when menu is open - used to stop Escape key from propagating to parent overlays when menu is open
+  const [open, setOpen] = useState(!!isOpen);
 
   useImperativeHandle(selectRef, () => reactSelectRef.current!, []);
 
-  const menuIsOpenRef = useRef(false);
-
   const handleMenuOpen = useCallback(() => {
-    menuIsOpenRef.current = true;
+    setOpen(true);
     onOpenMenu?.();
   }, [onOpenMenu]);
 
   const handleMenuClose = useCallback(() => {
-    menuIsOpenRef.current = false;
+    setOpen(false);
     onCloseMenu?.();
   }, [onCloseMenu]);
 
@@ -180,12 +180,12 @@ export function SelectBase<T, Rest = {}>({
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       // Stop Escape from propagating to parent overlays (e.g. Modals, Drawers)
       // so that only the dropdown menu closes, not the parent.
-      if (event.key === 'Escape' && menuIsOpenRef.current) {
+      if (event.key === 'Escape' && open) {
         event.stopPropagation();
       }
       onKeyDown?.(event);
     },
-    [onKeyDown]
+    [onKeyDown, open]
   );
 
   // Infer the menu position for asynchronously loaded options. menuPlacement="auto" doesn't work when the menu is
