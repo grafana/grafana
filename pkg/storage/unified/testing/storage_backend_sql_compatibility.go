@@ -85,6 +85,7 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend NewBacken
 		{"bulk import large counter CRUD", runTestBulkImportLargeCounterCRUD},
 		{"last import time cross backend", runTestLastImportTimeCrossBackend},
 		{"cluster scoped resources compatibility", runTestClusterScopedResources},
+		{"cross backend rv list compatibility", runTestCrossBackendRVListCompatibility},
 	}
 
 	for _, tc := range cases {
@@ -2670,5 +2671,65 @@ func runSearchCompatibilityScenario(t *testing.T, cfg searchCompatibilityTestCon
 		verifySearchServerResults(t, searchServer, cfg.namespace, "Updated", 2, []string{
 			alphaName(1), betaName(1),
 		})
+	})
+}
+
+// runTestCrossBackendRVListCompatibility verifies that a ResourceVersion obtained
+// from one backend can be used to list resources from the other backend. Listing
+// at the same RV should produce the same snapshot. This exercises cross-format RV handling
+// (microsecond ↔ snowflake).
+func runTestCrossBackendRVListCompatibility(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, _ sqldb.DB) {
+	ctx := newIntegrationTestContext(t)
+
+	sqlServer := createStorageServer(t, sqlBackend)
+	kvServer := createStorageServer(t, kvBackend)
+
+	// testCrossBackendList creates resources via backend A, lists from A to
+	// capture a point-in-time RV, then lists from backend B using that RV.
+	// The results must match.
+	testCrossBackendList := func(t *testing.T, serverA, serverB resource.ResourceServer, isSnowflakeRV bool, ns string) {
+		// Create resources via backend A.
+		for i := 1; i <= 2; i++ {
+			createPlaylistResource(t, serverA, ctx, PlaylistResourceOptions{
+				Name:       fmt.Sprintf("res-%d", i),
+				Namespace:  ns,
+				UID:        fmt.Sprintf("uid-%d", i),
+				Generation: 1,
+				Title:      fmt.Sprintf("Playlist %d", i),
+			})
+		}
+
+		listOpts := &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+			Namespace: ns,
+		}}
+
+		// List from backend A to capture its RV.
+		listA, err := serverA.List(ctx, &resourcepb.ListRequest{Options: listOpts})
+		require.NoError(t, err)
+		require.Nil(t, listA.Error)
+		require.Len(t, listA.Items, 2)
+		rvFromA := listA.ResourceVersion
+		require.Greater(t, rvFromA, int64(0))
+
+		require.Equal(t, isSnowflakeRV, resource.IsSnowflake(rvFromA))
+
+		// List from backend B using backend A's RV — should return the same resources.
+		listB, err := serverB.List(ctx, &resourcepb.ListRequest{
+			ResourceVersion: rvFromA,
+			Options:         listOpts,
+		})
+		require.NoError(t, err)
+		require.Nil(t, listB.Error)
+		require.Len(t, listB.Items, 2, "listing with cross-backend RV should return the same resources")
+	}
+
+	t.Run("SQL to KV", func(t *testing.T) {
+		testCrossBackendList(t, sqlServer, kvServer, false, nsPrefix+"-rv-sql2kv")
+	})
+
+	t.Run("KV to SQL", func(t *testing.T) {
+		testCrossBackendList(t, kvServer, sqlServer, true, nsPrefix+"-rv-kv2sql")
 	})
 }

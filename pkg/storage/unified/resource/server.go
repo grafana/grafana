@@ -1008,7 +1008,7 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 		return rsp, nil
 	}
 
-	event, e := s.newEvent(ctx, user, req.Key, req.ResourceVersion, req.Value, latest.Value)
+	event, e := s.newEvent(ctx, user, req.Key, normalizeRV(req.ResourceVersion), req.Value, latest.Value)
 	if e != nil {
 		rsp.Error = e
 		return rsp, nil
@@ -1092,7 +1092,7 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 	event := WriteEvent{
 		Key:        req.Key,
 		Type:       resourcepb.WatchEvent_DELETED,
-		PreviousRV: req.ResourceVersion,
+		PreviousRV: normalizeRV(req.ResourceVersion),
 		GUID:       uuid.New().String(),
 	}
 	marker := &unstructured.Unstructured{}
@@ -1163,6 +1163,7 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 }
 
 func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+	req.ResourceVersion = normalizeRV(req.ResourceVersion)
 	rsp := s.backend.ReadResource(ctx, req)
 	if rsp.Error != nil && rsp.Error.Code == http.StatusNotFound {
 		return &resourcepb.ReadResponse{Error: rsp.Error}, nil
@@ -1219,6 +1220,8 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 			return &resourcepb.ListResponse{Error: NewBadRequestError("history and trash must be requested as source")}, nil
 		}
 	}
+
+	req.ResourceVersion = normalizeRV(req.ResourceVersion)
 
 	// Fast path for getting single value in a list
 	if rsp := s.tryFieldSelector(ctx, req); rsp != nil {
@@ -1939,8 +1942,20 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 // Unix timestamps (SQL backend).
 func resourceVersionTime(rv int64) time.Time {
 	micro := rv
-	if isSnowflake(rv) {
+	if IsSnowflake(rv) {
 		micro = rvmanager.RVFromSnowflake(rv)
 	}
 	return time.UnixMicro(micro)
+}
+
+// normalizeRV converts a snowflake RV to microsecond format if needed.
+// This ensures that RVs arriving at the server layer are in the canonical
+// microsecond format used by the SQL backend. No-op for values ≤ 0.
+//
+// TODO: remove when compatibility with SQL backend is no longer needed.
+func normalizeRV(rv int64) int64 {
+	if rv > 0 && IsSnowflake(rv) {
+		return rvmanager.RVFromSnowflake(rv)
+	}
+	return rv
 }
