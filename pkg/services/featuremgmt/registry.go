@@ -1623,7 +1623,7 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       identityAccessTeam,
 			Expression:  "false",
-			Generate:    Generate{LegacyGo: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:        "grafanaAdvisor",
