@@ -1737,10 +1737,10 @@ export interface FeatureToggles {
   */
   queryFetchConfigFromSettingsService?: boolean;
   /**
-  * Enables the query service to do query caching
+  * Enables heatmap visualization support for Pyroscope profiles
   * @default false
   */
-  queryServiceQueryCaching?: boolean;
+  profilesHeatmap?: boolean;
   /**
   * Enables the time seeker in traces drilldown
   * @default false

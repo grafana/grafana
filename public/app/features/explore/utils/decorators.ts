@@ -37,6 +37,7 @@ export const decorateWithFrameTypeMetadata = async (data: PanelData): Promise<Ex
   const traceFrames: DataFrame[] = [];
   const nodeGraphFrames: DataFrame[] = [];
   const flameGraphFrames: DataFrame[] = [];
+  const heatmapFrames: DataFrame[] = [];
   const customFrames: DataFrame[] = [];
   const panels = await getPanelPluginMetas();
   const panelsById: PanelPluginMetas = {};
@@ -49,6 +50,13 @@ export const decorateWithFrameTypeMetadata = async (data: PanelData): Promise<Ex
       customFrames.push(frame);
       continue;
     }
+
+    // Check for heatmap-cells type BEFORE the switch statement
+    if (frame.meta?.type === 'heatmap-cells') {
+      heatmapFrames.push(frame);
+      continue;
+    }
+
     switch (frame.meta?.preferredVisualisationType) {
       case 'logs':
         logsFrames.push(frame);
@@ -92,6 +100,7 @@ export const decorateWithFrameTypeMetadata = async (data: PanelData): Promise<Ex
     customFrames,
     flameGraphFrames,
     rawPrometheusFrames,
+    heatmapFrames,
     graphResult: null,
     tableResult: null,
     logsResult: null,

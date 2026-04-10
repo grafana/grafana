@@ -4302,6 +4302,22 @@
     },
     {
       "metadata": {
+        "name": "profilesHeatmap",
+        "resourceVersion": "1774371795325",
+        "creationTimestamp": "2026-01-06T12:50:01Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-24 17:03:15.325768 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables heatmap visualization support for Pyroscope profiles",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "prometheusAzureOverrideAudience",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2022-05-30T15:43:32Z",
@@ -4516,7 +4532,8 @@
       "metadata": {
         "name": "queryServiceQueryCaching",
         "resourceVersion": "1774711941702",
-        "creationTimestamp": "2026-03-28T15:32:21Z"
+        "creationTimestamp": "2026-03-28T15:32:21Z",
+        "deletionTimestamp": "2026-03-30T16:00:02Z"
       },
       "spec": {
         "description": "Enables the query service to do query caching",
