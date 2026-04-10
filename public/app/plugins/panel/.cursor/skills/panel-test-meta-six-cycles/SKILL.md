@@ -30,7 +30,7 @@ At the **start** of a full panel-test effort, **plan for six dedicated agents** 
 
 Within the **same** cycle-5 agent (unless replaced at 60% context), run **in order**:
 
-1. **[`panel-test-cycle-5-github-regression-hunt`](../panel-test-cycle-5-github-regression-hunt/SKILL.md)**: Prompt the prompter to search GitHub for related merged bugfixes that may lack tests; **return** full **PR** and **issue** links (when present); **ask** whether they want a regression test for each candidate.
+1. **[`panel-test-cycle-5-github-regression-hunt`](../panel-test-cycle-5-github-regression-hunt/SKILL.md)**: Prompt the prompter to search GitHub for related merged bugfixes that may lack tests; **always return** full **`https://github.com/grafana/grafana/pull/...`** and **`.../issues/...`** links (never number-only); **ask** whether they want a regression test for each candidate.
 2. **[AGENTS.md — Regression tests](../../../AGENTS.md)**: For any candidate they accept, follow revert-fix / targeted regression steps and implement in the appropriate test layer.
 
 ## Non-negotiable: series execution
