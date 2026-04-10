@@ -8,9 +8,15 @@ import { Alert, Button, LoadingPlaceholder, Stack, Text, Tooltip, useStyles2 } f
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { type AlertQuery, type Labels } from 'app/types/unified-alerting-dto';
 
-import { useCanViewNotificationPolicies } from '../../../hooks/useNotificationAbilities';
+import { isGranted } from '../../../hooks/abilities/abilityUtils';
+import { useAlertmanagerAbilityState } from '../../../hooks/abilities/notificationAbilities';
+import { AlertmanagerAction } from '../../../hooks/abilities/types';
+import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
 import { type Folder, type KBObjectArray } from '../../../types/rule-form';
-import { useGetAlertManagerDataSourcesByPermissionAndConfig } from '../../../utils/datasource';
+import {
+  GRAFANA_RULES_SOURCE_NAME,
+  useGetAlertManagerDataSourcesByPermissionAndConfig,
+} from '../../../utils/datasource';
 
 const NotificationPreviewByAlertManager = lazy(() => import('./NotificationPreviewByAlertManager'));
 const NotificationPreviewForGrafanaManaged = lazy(() => import('./NotificationPreviewGrafanaManaged'));
@@ -148,13 +154,15 @@ export const NotificationPreview = ({
                 </Stack>
               )}
               {alertManagerSource.name === 'grafana' ? (
-                <NotificationPreviewGrafanaPermissionCheck>
-                  <NotificationPreviewForGrafanaManaged
-                    alertManagerSource={alertManagerSource}
-                    instances={potentialInstances}
-                    policyName={policyName}
-                  />
-                </NotificationPreviewGrafanaPermissionCheck>
+                <AlertmanagerProvider accessType="notification" alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME}>
+                  <NotificationPreviewGrafanaPermissionCheck>
+                    <NotificationPreviewForGrafanaManaged
+                      alertManagerSource={alertManagerSource}
+                      instances={potentialInstances}
+                      policyName={policyName}
+                    />
+                  </NotificationPreviewGrafanaPermissionCheck>
+                </AlertmanagerProvider>
               ) : (
                 <NotificationPreviewByAlertManager
                   alertManagerSource={alertManagerSource}
@@ -172,17 +180,13 @@ export const NotificationPreview = ({
 
 /**
  * Permission check for Grafana notification preview.
- * This is a workaround because useGetAlertManagerDataSourcesByPermissionAndConfig
- * doesn't properly filter by the new K8s-style RBAC permissions.
- *
- * We check for either:
- * - alert.notifications:read (legacy permission)
- * - alert.notifications.routes:read (new granular permission)
+ * Requires an AlertmanagerProvider ancestor (always provided by the call site above).
+ * Uses the standard ability system to check ViewNotificationPolicyTree permission.
  */
 function NotificationPreviewGrafanaPermissionCheck({ children }: React.PropsWithChildren) {
-  const canViewNotificationPolicies = useCanViewNotificationPolicies();
+  const viewPoliciesAbility = useAlertmanagerAbilityState(AlertmanagerAction.ViewNotificationPolicyTree);
 
-  if (canViewNotificationPolicies) {
+  if (isGranted(viewPoliciesAbility)) {
     return <>{children}</>;
   }
 
