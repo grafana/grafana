@@ -572,6 +572,7 @@ type Cfg struct {
 	ZanzanaServer     ZanzanaServerSettings
 	ZanzanaReconciler ZanzanaReconcilerSettings
 	ZanzanaGRPCStore  ZanzanaGRPCStoreSettings
+	ZanzanaRollout    ZanzanaRolloutSettings
 
 	// GRPC Server.
 	GRPCServer GRPCServerSettings

@@ -84,10 +84,20 @@ func ProvideAuthZClient(
 	switch authCfg.mode {
 	case clientModeCloud:
 		rbacClient, err := newRemoteRBACClient(authCfg, tracer, reg)
+		if err != nil {
+			return nil, err
+		}
 		if zanzanaEnabled {
+			if len(cfg.ZanzanaRollout.ResourcePercentages) > 0 {
+				shadowClient, err := zClient.WithShadowRBACClient(zanzanaClient, rbacClient, reg)
+				if err != nil {
+					return nil, err
+				}
+				return newRolloutAccessClient(rbacClient, shadowClient, cfg.ZanzanaRollout.ResourcePercentages), nil
+			}
 			return newShadowClient(cfg.ZanzanaClient.PrimaryEngine, rbacClient, zanzanaClient, reg)
 		}
-		return rbacClient, err
+		return rbacClient, nil
 	default:
 		sql := legacysql.NewDatabaseProvider(db)
 		rbacSettings := rbac.Settings{CacheTTL: authCfg.cacheTTL}
@@ -147,6 +157,13 @@ func ProvideAuthZClient(
 		)
 
 		if zanzanaEnabled {
+			if len(cfg.ZanzanaRollout.ResourcePercentages) > 0 {
+				shadowClient, err := zClient.WithShadowRBACClient(zanzanaClient, rbacClient, reg)
+				if err != nil {
+					return nil, err
+				}
+				return newRolloutAccessClient(rbacClient, shadowClient, cfg.ZanzanaRollout.ResourcePercentages), nil
+			}
 			return newShadowClient(cfg.ZanzanaClient.PrimaryEngine, rbacClient, zanzanaClient, reg)
 		}
 
