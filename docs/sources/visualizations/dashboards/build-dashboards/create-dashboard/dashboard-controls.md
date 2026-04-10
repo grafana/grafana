@@ -17,7 +17,7 @@ weight: 200
 
 # Dashboard controls
 
-In the **Dashboard controls** section of the sidebar in add mode, you can add filters and group by keys, variables, annotation queries, and dashboard links without leaving the dashboard.
+In the **Dashboard controls** section of the sidebar, you can add variables, annotation queries, dashboard links, and controls to filter and group data, without leaving the dashboard.
 
 ## Filter and group by
 
@@ -27,7 +27,7 @@ In the **Dashboard controls** section of the sidebar in add mode, you can add fi
 Filter and group by is currently in public preview.
 Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 
-This feature replaces ad hoc filters and extends them by adding grouping for Prometheus and Loki data sources.
+This feature renames _ad hoc filters_ to simply _filters_ and extends them by adding grouping for Prometheus and Loki data sources.
 However, in the dashboard schema, it is still referred to as `"kind": "AdhocVariable"`.
 To use this feature, enable the `dashboardUnifiedDrilldownControls` feature toggle in your Grafana configuration file.
 
@@ -41,9 +41,9 @@ The filter and group by is one of the most complex and flexible variable options
 Instead of creating a variable for each dimension by which you want to filter, it automatically creates variables (key/value pairs) for all the dimensions returned by your data source query.
 This allows you to quickly apply filters dashboard-wide.
 
-The group by function allows you to then group data by keys, letting you further narrow your scope.
+The group by function allows you to then group data by keys, letting you split it up.
 Group by functionality works when you have queries that are aggregators, such as `sum(your_metric_here)`.
-Then, you can filter further with panel-level filters that let you drill down into your data.
+Then, you can use filters within panels to filter data in or out, drilling down further into the data.
 
 The filter and group by feature lets you add label/value filters that are automatically added to all metric queries that use the specified data source.
 Unlike other variables, you don't use these filters in queries.
@@ -103,13 +103,13 @@ To add a filter and group by, follow these steps:
 
 Now you can filter and group data on the dashboard.
 
-You can remove and reset default filters and group by selections, and see your recent ones:
+You can remove and reset default filters and groupings, and see your recent ones:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-reset-default-v13.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" caption="Reset default filters and group by selections" >}}
 
 {{< figure src="/media/docs/grafana/screenshot-filters-group-recent-v13.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" caption="Recent filter and group by settings" >}}
 
-To see every active filter and group by across the dashboard all at once, click the filter icon in the toolbar to open an overview.
+To see every active filter and grouping across the dashboard all at once, click the filter icon in the toolbar to open an overview.
 The overview lets you see your current filters and group by selections, search for specific keys, and adjust them without scrolling through the dashboard controls:
 
 {{< figure src="/media/docs/grafana/screenshot-filters-overview-v12.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" >}}
