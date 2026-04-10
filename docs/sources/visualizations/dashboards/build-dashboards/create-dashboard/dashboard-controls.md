@@ -45,7 +45,7 @@ The group by function allows you to then group data by keys, letting you split i
 Group by functionality works when you have queries that are aggregators, such as `sum(your_metric_here)`.
 Then, you can use filters within panels to filter data in or out, drilling down further into the data.
 
-The filter and group by feature lets you add label/value filters that are automatically added to all metric queries that use the specified data source.
+The filter and group by feature lets you add label/value filters that are automatically added to all queries that use the specified data source.
 Unlike other variables, you don't use these filters in queries.
 Instead, you use them to write filters for existing queries.
 
