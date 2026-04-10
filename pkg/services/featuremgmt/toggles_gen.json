@@ -5299,8 +5299,11 @@
     {
       "metadata": {
         "name": "teamLBACApiWriteFromAppPlatform",
-        "resourceVersion": "1775774995035",
-        "creationTimestamp": "2026-04-09T22:49:55Z"
+        "resourceVersion": "1775845194547",
+        "creationTimestamp": "2026-04-09T22:49:55Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-10 18:19:54.547668 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server",
