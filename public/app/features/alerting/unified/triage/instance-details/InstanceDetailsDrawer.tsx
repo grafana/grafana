@@ -224,20 +224,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     [instanceLabels, commonLabels, instanceState, handleOpenSilence]
   );
 
-  const getDrawerTitle = () => {
-    switch (activeView.type) {
-      case 'instance-details':
-        return <InstanceDetailsDrawerTitle {...sharedTitleProps} rule={rule?.grafana_alert} />;
-      case 'contact-point-list':
-        return t('alerting.triage.instance-details-drawer.contact-point-list-title', 'Contact point list');
-      case 'notification-history-details':
-        return t('alerting.triage.instance-details-drawer.notification-history-details-title', 'Notification details');
-      case 'silence':
-        return t('alerting.triage.instance-details-drawer.silence-title', 'Silence');
-      case 'declare-incident':
-        return t('alerting.triage.instance-details-drawer.declare-incident-title', 'Declare incident');
-    }
-  };
+  const getDrawerTitle = () => <InstanceDetailsDrawerTitle {...sharedTitleProps} rule={rule?.grafana_alert} />;
 
   const getInstanceDetailsBody = () => {
     if (error) {
@@ -313,16 +300,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     );
   };
 
-  const getDrawerBody = () => {
-    switch (activeView.type) {
-      case 'instance-details':
-      case 'silence':
-        // Silence step uses a second overlaid drawer for the form; body stays the instance details underneath.
-        return getInstanceDetailsBody();
-      default:
-        return getInstanceDetailsBody();
-    }
-  };
+  const getDrawerBody = () => getInstanceDetailsBody();
 
   if (error || loading || !rule) {
     return (
