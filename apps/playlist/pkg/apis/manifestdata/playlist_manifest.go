@@ -43,7 +43,7 @@ var appManifestData = app.ManifestData{
 					Kind:       "Playlist",
 					Plural:     "Playlists",
 					Scope:      "Namespaced",
-					Conversion: false,
+					Conversion: true,
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{
@@ -76,7 +76,7 @@ var appManifestData = app.ManifestData{
 					Kind:       "Playlist",
 					Plural:     "Playlists",
 					Scope:      "Namespaced",
-					Conversion: false,
+					Conversion: true,
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{

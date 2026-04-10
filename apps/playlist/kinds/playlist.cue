@@ -15,9 +15,10 @@ package playlist
 }
 
 playlistv1: {
-	kind:   "Playlist"
-	plural: "playlists"
-	scope:  "Namespaced"
+	kind:       "Playlist"
+	plural:     "playlists"
+	scope:      "Namespaced"
+	conversion: true
 	validation: {
 		operations: [
 			"CREATE",
