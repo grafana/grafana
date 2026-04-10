@@ -114,7 +114,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-03-25,oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,false
 2025-11-19,refreshTokenRequired,experimental,@grafana/identity-access-team,false,false,false
 2024-04-04,newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,false,false
-2025-12-18,dashboardAdHocAndGroupByWrapper,experimental,@grafana/dashboards-squad,false,false,false
 2026-03-09,dashboardUnifiedDrilldownControls,privatePreview,@grafana/dashboards-squad,false,false,true
 2026-03-02,adHocFilterDefaultValues,experimental,@grafana/dashboards-squad,false,false,true
 2024-04-05,cloudWatchNewLabelParsing,GA,@grafana/data-sources-plugins,false,false,false
@@ -188,6 +187,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-05-22,teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,teamHttpHeadersFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
 2026-03-16,teamLBACApiReadFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
+2026-04-09,teamLBACApiWriteFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
 2025-01-20,grafanaAdvisor,GA,@grafana/plugins-platform-backend,false,false,false
 2025-01-15,elasticsearchImprovedParsing,experimental,@grafana/data-sources-plugins,false,false,false
 2025-01-21,datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
@@ -201,7 +201,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-04-14,scopeSearchAllLevels,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2025-02-17,alertingRuleVersionHistoryRestore,GA,@grafana/alerting-squad,false,false,true
 2025-02-17,newShareReportDrawer,preview,@grafana/grafana-operator-experience-squad,false,false,false
-2025-02-24,rendererDisableAppPluginsPreload,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2025-03-04,assetSriChecks,experimental,@grafana/frontend-ops,false,false,true
 2025-03-05,alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
 2025-03-14,infinityRunQueriesInParallel,privatePreview,@grafana/data-sources-plugins,false,false,false
@@ -322,17 +321,16 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-03-16,alertingNotificationHistoryDetail,experimental,@grafana/alerting-squad,false,false,false
 2026-02-18,react19,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-02-18,frontendServiceUseSettingsService,experimental,@grafana/grafana-frontend-platform,false,false,false
-2026-02-22,functionalSharedPreferences,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-02-25,managedPluginsV2,experimental,@grafana/plugins-platform-backend,false,false,false
 2026-02-25,rememberUserOrgForSso,GA,@grafana/identity-access-team,false,false,false
 2026-02-23,dsAbstractionApp,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-02-26,datasourcesApiServerEnableHealthEndpoint,experimental,@grafana/grafana-datasources-core-services,false,false,false
-2026-02-27,analyticsFramework,experimental,@grafana/grafana-frontend-platform,false,false,false
+2026-02-27,analyticsFramework,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-03-03,datasourcesApiServerEnableHealthEndpointFrontend,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2026-03-26,datasourcesApiServerEnableHealthEndpointRedirect,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-03-10,flameGraphWithCallTree,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2026-03-11,advisorDatasourceIntegration,experimental,@grafana/plugins-platform-backend,false,false,false
-2026-03-04,inlineLogDetailsNoScrolls,experimental,@grafana/observability-logs,false,false,false
+2026-03-04,inlineLogDetailsNoScrolls,experimental,@grafana/observability-logs,false,false,true
 2026-02-06,colorblindThemes,GA,@grafana/grafana-frontend-platform,false,true,false
 2026-03-19,yAxisTickControl,experimental,@grafana/dataviz-squad,false,false,true
 2026-03-25,logsTablePanelNG,experimental,@grafana/observability-logs,false,false,false
@@ -348,6 +346,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-04-01,enableDatasourceMetaApiPluginLoading,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-04-02,enableColorblindSafePanelOptions,experimental,@grafana/dataviz-squad,false,false,true
 2026-04-03,cacheConfigUnifiedStorageMigration,experimental,@grafana/grafana-operator-experience-squad,false,true,false
+2026-04-10,querycaching.redirectToK8SApi,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-04-02,compiledBootScript,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-02-13,influxDBConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
 2026-04-09,clickHouseConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
+2026-04-04,grafana.newPreferencesPage,experimental,@grafana/grafana-frontend-platform,false,false,true

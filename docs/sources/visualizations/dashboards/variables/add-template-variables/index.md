@@ -212,8 +212,9 @@ Query expressions are different for each data source. For more information, refe
    - **Include All option** - Enables an option to include all variables. Enter a value in the **Custom all value** field to set your own "all" option.
 
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
-1. Click **Save dashboard**.
-1. Click **Back to dashboard** and **Exit edit**.
+1. Click **Save** in the top-right corner.
+1. Enter an optional description of your changes and click **Save**.
+1. Click **Back to dashboard** and then **Exit edit**.
 
 ## Add a custom variable
 
@@ -232,8 +233,9 @@ For example, if you have server names or region names that never change, then yo
    - **Include All option** - Enables an option to include all variables.
 
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. If you've entered a JSON array, the preview is a table that includes all the value properties. Review them to ensure they match what you expect.
-1. Click **Save dashboard**.
-1. Click **Back to dashboard** and **Exit edit**.
+1. Click **Save** in the top-right corner.
+1. Enter an optional description of your changes and click **Save**.
+1. Click **Back to dashboard** and then **Exit edit**.
 
 ## Add a text box variable
 
@@ -246,8 +248,9 @@ For more information about cardinality, refer to [What are cardinality spikes an
 
    If you do not enter anything in this field, then Grafana displays an empty text box for users to type text into.
 
-1. Click **Save dashboard**.
-1. Click **Back to dashboard** and **Exit edit**.
+1. Click **Save** in the top-right corner.
+1. Enter an optional description of your changes and click **Save**.
+1. Click **Back to dashboard** and then **Exit edit**.
 
 ## Add a constant variable
 
@@ -262,8 +265,9 @@ Constant variables are useful when you have complex values that you need to incl
 
    You can enter letters, numbers, and symbols. You can even use wildcards if you use [raw format](ref:raw-format).
 
-1. Click **Save dashboard**.
-1. Click **Back to dashboard** and **Exit edit**.
+1. Click **Save** in the top-right corner.
+1. Enter an optional description of your changes and click **Save**.
+1. Click **Back to dashboard** and then **Exit edit**.
 
 ## Add a data source variable
 
@@ -280,8 +284,9 @@ _Data source_ variables enable you to quickly change the data source for an enti
    - **Include All option** - Enables an option to include all variables.
 
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
-1. Click **Save dashboard**.
-1. Click **Back to dashboard** and **Exit edit**.
+1. Click **Save** in the top-right corner.
+1. Enter an optional description of your changes and click **Save**.
+1. Click **Back to dashboard** and then **Exit edit**.
 
 ## Add an interval variable
 
@@ -301,8 +306,9 @@ You can use an interval variable as a parameter to group by time (for InfluxDB),
    - **Min interval** - The minimum threshold below which the step count intervals does not divide the time. To continue the 30 minute example, if the minimum interval is set to 2m, then Grafana would group the data into 15 two-minute increments.
 
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
-1. Click **Save dashboard**.
-1. Click **Back to dashboard** and **Exit edit**.
+1. Click **Save** in the top-right corner.
+1. Enter an optional description of your changes and click **Save**.
+1. Click **Back to dashboard** and then **Exit edit**.
 
 ### Interval variable examples
 
@@ -325,7 +331,7 @@ groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5
 
 {{< admonition type="note" >}}
 In Grafana v13, we released the filter and group by feature in public preview.
-It replaces ad hoc filters and extends them by adding grouping for Prometheus and Loki data sources.
+It renames ad hoc filters and extends them by adding grouping for Prometheus and Loki data sources.
 However, in the dashboard schema, it is still referred to as `"kind": "AdhocVariable"`.
 
 To use this feature, enable the `dashboardUnifiedDrilldownControls` feature toggle in your Grafana configuration file.
@@ -359,9 +365,9 @@ To create an ad hoc filter, follow these steps:
    For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
 
 1. (Optional) To provide the filter dimensions as comma-separated values (CSV), toggle the **Use static key dimensions** switch on, and then enter the values in the space provided.
-1. Click **Save dashboard**.
-1. Enter an optional description of your dashboard changes, and then click **Save**.
-1. Click **Back to dashboard** and **Exit edit**.
+1. Click **Save** in the top-right corner.
+1. Enter an optional description of your changes and click **Save**.
+1. Click **Back to dashboard** and then **Exit edit**.
 
 Now you can [filter data on the dashboard](ref:filter-dashboard).
 
@@ -393,7 +399,8 @@ To use ad hoc filters on data from an unsupported data source, follow these step
 
 1. Navigate to the dashboard with the panel with the data you want to filter.
 1. Click **Edit** in top-right corner of the dashboard.
-1. At the top of the dashboard, click **Add** and select **Visualization** in the drop-down list.
+1. Click the **Add new element** icon and click or drag a panel onto the dashboard.
+1. Click **Configure visualization**.
 1. In the **Queries** tab of the edit panel view, enter `Dashboard` in the **Data source** field and select **-- Dashboard --**.
 1. In the query configuration section, make the following selections:
    - **Source panel** - Choose the panel with the source data.
@@ -405,7 +412,9 @@ To use ad hoc filters on data from an unsupported data source, follow these step
    {{< /admonition >}}
 
 1. Configure any other needed options for the panel.
-1. Click **Save dashboard**.
+1. Click **Save** in the top-right corner.
+1. Enter an optional description of your changes and click **Save**.
+1. Click **Back to dashboard** and then **Exit edit**.
 
 Now you can filter the data from the source panel by way of the Dashboard data source.
 Add as many panels as you need.
