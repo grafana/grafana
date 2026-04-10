@@ -1,0 +1,38 @@
+---
+name: panel-test-cycle-1-human-context
+description: >-
+  Guides Grafana built-in panel test work for Cycle 1 (read code, coverage, note gaps)
+  before any edits. Use when the user is starting panel tests, mentions Cycle 1, human
+  context, coverage-first exploration, or public/app/plugins/panel testing workflow.
+---
+
+# Panel testing — Cycle 1: Human context
+
+Canonical methodology: [public/app/plugins/panel/AGENTS.md](../../../public/app/plugins/panel/AGENTS.md) (section “Cycle 1”).
+
+## Non-negotiable: input before edits
+
+**Do not modify source or test files in this cycle.** Gather information from the prompter and the repo; produce a shared picture of risk and gaps. If the user asks you to “just add tests,” redirect: complete Cycle 1 outputs first, or confirm they want to skip (explicit opt-in).
+
+## What to collect from the prompter (ask if missing)
+
+1. **Scope**: Which panel plugin path(s) under `public/app/plugins/panel/` (and which components/files are “under test”).
+2. **Goal**: New feature coverage, refactor safety net, bug follow-up, or general raise in coverage.
+3. **Constraints**: Time box, avoid certain mocks (e.g. defer uPlot), or files that are off limits.
+4. **Prior knowledge**: Anything they already find confusing or risky in the code.
+
+## Steps (read-only unless the user approves commands)
+
+1. **Read** the relevant implementation and existing tests (if any).
+2. **Coverage**: Propose running a targeted coverage command (e.g. Jest `--coverage` for specific files). **Ask permission before running** if not already agreed; paste or summarize key gaps (lines/branches), not only a percentage.
+3. **Second pass**: Re-read **uncovered** or **complex** areas; list **questions** and **WTF zones** (unclear control flow, heavy side effects).
+4. **Deliverable**: A short written summary for the prompter:
+   - What the code does (at the level tests will need).
+   - Where coverage is thin and why it matters.
+   - Open questions / assumptions.
+5. **Gate**: Ask whether this summary is accurate and whether to proceed to **Cycle 2** (testing). Do not start Cycle 2 work until they confirm.
+
+## Anti-patterns
+
+- Jumping straight to `it('renders')` without coverage notes.
+- Editing production code for “testability” in Cycle 1 (forbidden; selectors/comments only appear in later cycles if needed).
