@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestTwinmakerCloudEOSStep_Run(t *testing.T) {
+func TestTwinmakerSceneViewerStep_Run(t *testing.T) {
 	log := logging.DefaultLogger
 
 	otherPlugin := &pluginstore.Plugin{
@@ -57,7 +57,7 @@ func TestTwinmakerCloudEOSStep_Run(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			step := &twinmakerCloudEOSStep{}
+			step := &twinmakerSceneViewerStep{}
 
 			failures, err := step.Run(context.Background(), log, &advisor.CheckSpec{}, tt.input)
 			if tt.wantErr {
@@ -69,6 +69,9 @@ func TestTwinmakerCloudEOSStep_Run(t *testing.T) {
 				require.Len(t, failures, 1)
 				assert.Equal(t, advisor.CheckReportFailureSeverityLow, failures[0].Severity)
 				assert.Contains(t, failures[0].Item, tt.wantFailureMessage)
+				assert.Equal(t, []advisor.CheckErrorLink{
+					{Message: "View plugin", Url: "/plugins/" + twinmakerAppPluginID},
+				}, failures[0].Links)
 			} else {
 				assert.Len(t, failures, 0)
 			}

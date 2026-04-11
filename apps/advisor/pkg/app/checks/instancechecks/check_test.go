@@ -12,31 +12,25 @@ import (
 
 func TestCheck_IsCloudInstance_Logic(t *testing.T) {
 	tests := []struct {
-		name            string
-		stackID         string
-		expectedCloud   bool
-		expectedSteps   int
-		expectedStepID  string
-		expectedItems   int
-		expectedItemID  string
+		name           string
+		stackID        string
+		expectedCloud  bool
+		expectedStepID string
+		expectedItemID string
 	}{
 		{
-			name:            "empty stackID should run out of support check",
-			stackID:         "",
-			expectedCloud:   false,
-			expectedSteps:   1,
-			expectedStepID:  outOfSupportVersion,
-			expectedItems:   1,
-			expectedItemID:  outOfSupportVersion,
+			name:           "empty stackID should run out of support check",
+			stackID:        "",
+			expectedCloud:  false,
+			expectedStepID: outOfSupportVersion,
+			expectedItemID: outOfSupportVersion,
 		},
 		{
-			name:            "non-empty stackID should run pinned version check",
-			stackID:         "12345",
-			expectedCloud:   true,
-			expectedSteps:   1,
-			expectedStepID:  pinnedVersion,
-			expectedItems:   1,
-			expectedItemID:  pinnedVersion,
+			name:           "non-empty stackID should run pinned version check",
+			stackID:        "12345",
+			expectedCloud:  true,
+			expectedStepID: pinnedVersion,
+			expectedItemID: pinnedVersion,
 		},
 	}
 
@@ -54,15 +48,15 @@ func TestCheck_IsCloudInstance_Logic(t *testing.T) {
 			// Verify isCloudInstance field is set correctly
 			assert.Equal(t, tt.expectedCloud, check.isCloudInstance)
 
-			// Verify Steps() returns the correct steps
+			// Verify Steps() returns the correct step type
 			steps := check.Steps()
-			require.Len(t, steps, tt.expectedSteps)
+			require.Len(t, steps, 1)
 			assert.Equal(t, tt.expectedStepID, steps[0].ID())
 
-			// Verify Items() returns the correct items
+			// Verify Items() returns the correct item type
 			items, err := check.Items(context.Background())
 			require.NoError(t, err)
-			require.Len(t, items, tt.expectedItems)
+			require.Len(t, items, 1)
 			assert.Equal(t, tt.expectedItemID, items[0])
 		})
 	}
