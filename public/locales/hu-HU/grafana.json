@@ -4331,6 +4331,9 @@
       "total_one": "{{count}} tétel",
       "total_other": "{{count}} tétel"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Ez az elem nem ugyanabban az adattárban található, mint a kiválasztott elemek."
@@ -8142,8 +8145,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Nem támogatott",
+      "badge-text-success": "",
       "badge-text-supported": "Támogatott",
       "label": {
+        "advisor": "",
         "alerting": "Riasztás",
         "type": "Típus"
       }
@@ -14316,11 +14321,11 @@
       "view-as-list": "Listanézet"
     },
     "dashboard-actions": {
-      "import": "Importálás",
+      "import": "",
       "new": "Új",
       "new-dashboard": "Új irányítópult",
       "new-folder": "Új mappa",
-      "new-template-dashboard": "Irányítópult sablonból"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Pontszám"
@@ -15285,11 +15290,12 @@
     },
     "range-content": {
       "apply-button": "Időtartomány alkalmazása",
-      "default-error": "Adjon meg egy múltbeli dátumot vagy a „{{now}}” értéket",
+      "default-error": "",
       "fiscal-year": "Pénzügyi év: {{from}} – {{to}}",
       "from-input": "Kezdet",
       "open-input-calendar": "Naptár megnyitása",
-      "range-error": "A „Kezdete” nem lehet a „Vége” után",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Vége"
     },
     "range-picker": {

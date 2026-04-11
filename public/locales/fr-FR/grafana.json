@@ -4331,6 +4331,9 @@
       "total_one": "{{count}} objet",
       "total_other": "{{count}} objets"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Cet élément ne fait pas partie du même référentiel que les éléments sélectionnés."
@@ -8142,8 +8145,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Non pris en charge",
+      "badge-text-success": "",
       "badge-text-supported": "Pris en charge",
       "label": {
+        "advisor": "",
         "alerting": "Alerte",
         "type": "Type"
       }
@@ -14316,11 +14321,11 @@
       "view-as-list": "Voir en tant que liste"
     },
     "dashboard-actions": {
-      "import": "Importer",
+      "import": "",
       "new": "Nouveau",
       "new-dashboard": "Nouveau tableau de bord",
       "new-folder": "Nouveau dossier",
-      "new-template-dashboard": "Tableau de bord à partir d’un modèle"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Note"
@@ -15285,11 +15290,12 @@
     },
     "range-content": {
       "apply-button": "Appliquer la plage temporelle",
-      "default-error": "Veuillez saisir une date antérieure ou « {{now}} »",
+      "default-error": "",
       "fiscal-year": "Exercice fiscal : {{from}} - {{to}}",
       "from-input": "De",
       "open-input-calendar": "Ouvrir le calendrier",
-      "range-error": "« De » ne peut pas être ultérieur à « À »",
+      "range-error": "",
+      "required-error": "",
       "to-input": "À"
     },
     "range-picker": {

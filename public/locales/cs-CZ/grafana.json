@@ -4385,6 +4385,9 @@
       "total_many": "{{count}} položka",
       "total_other": "{{count}} položka"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Tato položka není ve stejném úložišti jako vybrané položky."
@@ -8228,8 +8231,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Nepodporováno",
+      "badge-text-success": "",
       "badge-text-supported": "Podporováno",
       "label": {
+        "advisor": "",
         "alerting": "Výstrahy",
         "type": "Typ"
       }
@@ -14488,11 +14493,11 @@
       "view-as-list": "Zobrazit jako seznam"
     },
     "dashboard-actions": {
-      "import": "Importovat",
+      "import": "",
       "new": "Nové",
       "new-dashboard": "Nová nástěnka",
       "new-folder": "Nová složka",
-      "new-template-dashboard": "Nástěnka ze šablony"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Skóre"
@@ -15461,11 +15466,12 @@
     },
     "range-content": {
       "apply-button": "Použít časový rozsah",
-      "default-error": "Zadejte dřívější datum nebo „{{now}}“",
+      "default-error": "",
       "fiscal-year": "Fiskální rok: {{from}}–{{to}}",
       "from-input": "Od",
       "open-input-calendar": "Otevřít kalendář",
-      "range-error": "„Od“ nemůže být po „Do“",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Do"
     },
     "range-picker": {
