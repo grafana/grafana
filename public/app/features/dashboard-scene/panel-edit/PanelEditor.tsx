@@ -188,6 +188,37 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   }
 
   /**
+   * Detects panel changes that occurred outside of the editor (e.g. styles pasted from dashboard view)
+   * and marks the editor as dirty so the Discard button is enabled.
+   */
+  private _applyPreExistingChanges(panel: VizPanel) {
+    const savedPanel = this._getPanelFromInitialSaveModel(panel);
+    if (!savedPanel) {
+      return;
+    }
+
+    const currentPanel = vizPanelToPanel(panel);
+    if (deepEqual(currentPanel.fieldConfig, savedPanel.fieldConfig)) {
+      return;
+    }
+
+    // Use saved fieldConfig as the baseline so the pre-existing change is reflected as dirty.
+    this._originalSaveModel = { ...currentPanel, fieldConfig: savedPanel.fieldConfig };
+    this.setState({ isDirty: true });
+  }
+
+  private _getPanelFromInitialSaveModel(panel: VizPanel): Panel | undefined {
+    const dashboard = getDashboardSceneFor(this);
+    const initialSaveModel = dashboard.getInitialSaveModel();
+    if (!initialSaveModel || !('panels' in initialSaveModel) || !initialSaveModel.panels) {
+      return undefined;
+    }
+    const panelId = getPanelIdForVizPanel(panel);
+    // Filter out row panels (which have a nested `panels` array) before searching
+    return initialSaveModel.panels.filter((p): p is Panel => !('panels' in p)).find((p) => p.id === panelId);
+  }
+
+  /**
    * Useful for testing to turn on debounce
    */
   public debounceSaveModelDiff = true;
@@ -226,6 +257,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     if (this.state.isInitializing) {
       this.setOriginalState(this.state.panelRef);
       this._setupChangeDetection();
+      this._applyPreExistingChanges(panel);
       this._updateDataPane(plugin);
 
       // Listen for panel plugin changes
