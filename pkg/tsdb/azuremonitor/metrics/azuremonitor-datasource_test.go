@@ -568,6 +568,90 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 	}
 }
 
+func TestAzureMonitorParseResponseGrafanaSqlRenamesFields(t *testing.T) {
+	resources := map[string]dataquery.AzureMonitorResource{}
+	resources[strings.ToLower("/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana")] =
+		dataquery.AzureMonitorResource{ResourceGroup: strPtr("grafanastaging"), ResourceName: strPtr("grafana")}
+	subscription := "12345678-aaaa-bbbb-cccc-123456789abc"
+
+	azData := loadTestFile(t, "azuremonitor/1-azure-monitor-response-avg.json")
+	datasource := &AzureMonitorDatasource{}
+	q := &types.AzureMonitorQuery{
+		GrafanaSql: true,
+		URL:        "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
+		Params: url.Values{
+			"aggregation": {"Average"},
+		},
+		Resources:    resources,
+		Subscription: subscription,
+	}
+	frames, err := datasource.parseResponse(azData, q, "http://ds", "")
+	require.NoError(t, err)
+	require.NotEmpty(t, frames)
+	for _, f := range frames {
+		require.Equal(t, "time", f.Fields[0].Name)
+		require.Equal(t, "value", f.Fields[1].Name)
+	}
+}
+
+func TestAzureMonitorParseResponseGrafanaSqlFalseKeepsDefaultFieldNames(t *testing.T) {
+	resources := map[string]dataquery.AzureMonitorResource{}
+	resources[strings.ToLower("/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana")] =
+		dataquery.AzureMonitorResource{ResourceGroup: strPtr("grafanastaging"), ResourceName: strPtr("grafana")}
+	subscription := "12345678-aaaa-bbbb-cccc-123456789abc"
+
+	azData := loadTestFile(t, "azuremonitor/1-azure-monitor-response-avg.json")
+	datasource := &AzureMonitorDatasource{}
+	q := &types.AzureMonitorQuery{
+		GrafanaSql: false,
+		URL:        "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
+		Params: url.Values{
+			"aggregation": {"Average"},
+		},
+		Resources:    resources,
+		Subscription: subscription,
+	}
+	frames, err := datasource.parseResponse(azData, q, "http://ds", "")
+	require.NoError(t, err)
+	require.NotEmpty(t, frames)
+	for _, f := range frames {
+		require.Equal(t, data.TimeSeriesTimeFieldName, f.Fields[0].Name)
+		require.Equal(t, "Percentage CPU", f.Fields[1].Name)
+	}
+}
+
+func TestBuildQuerySetsGrafanaSqlFromJSON(t *testing.T) {
+	datasource := &AzureMonitorDatasource{}
+	q := backend.DataQuery{
+		RefID: "A",
+		TimeRange: backend.TimeRange{
+			From: time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC),
+			To:   time.Date(2018, 3, 15, 13, 34, 0, 0, time.UTC),
+		},
+		JSON: []byte(`{
+			"grafanaSql": true,
+			"subscription": "12345678-aaaa-bbbb-cccc-123456789abc",
+			"azureMonitor": {
+				"aggregation": "Average",
+				"metricNamespace": "Microsoft.Compute/virtualMachines",
+				"metricName": "Percentage CPU",
+				"timeGrain": "PT1M",
+				"resources": [{
+					"subscription": "12345678-aaaa-bbbb-cccc-123456789abc",
+					"resourceGroup": "grafanastaging",
+					"resourceName": "grafana",
+					"metricNamespace": "Microsoft.Compute/virtualMachines"
+				}]
+			}
+		}`),
+	}
+	result, err := datasource.buildQuery(q, types.DatasourceInfo{
+		Settings: types.AzureMonitorSettings{SubscriptionId: "default-subscription"},
+	})
+	require.NoError(t, err)
+	require.True(t, result.GrafanaSql)
+}
+
 func TestFindClosestAllowIntervalMS(t *testing.T) {
 	humanIntervalToMS := map[string]int64{
 		"3m":  180000,

@@ -86,6 +86,22 @@ func (params *urlBuilder) buildResourceURI() (*string, error) {
 	return &resourceURI, nil
 }
 
+// BuildResourceURIString builds the ARM resource ID path used by Azure Monitor metrics APIs
+// (e.g. /subscriptions/{sub}/resourceGroups/{rg}/providers/...).
+func BuildResourceURIString(subscription, resourceGroup, metricNamespace, resourceName string) (*string, error) {
+	sub := subscription
+	rg := resourceGroup
+	ns := metricNamespace
+	rn := resourceName
+	ub := urlBuilder{
+		Subscription:    &sub,
+		ResourceGroup:   &rg,
+		MetricNamespace: &ns,
+		ResourceName:    &rn,
+	}
+	return ub.buildResourceURI()
+}
+
 // BuildSubscriptionMetricsURL returns a URL for querying metrics for all resources in a subscription
 // It requires to set a $filter and a region parameter
 func BuildSubscriptionMetricsURL(subscription string) string {

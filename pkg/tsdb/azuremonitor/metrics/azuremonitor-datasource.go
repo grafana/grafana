@@ -77,6 +77,12 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 		return nil, fmt.Errorf("failed to decode the Azure Monitor query object from JSON: %w", err)
 	}
 
+	var queryEnvelope struct {
+		GrafanaSql bool `json:"grafanaSql"`
+	}
+	// Best-effort: same JSON may omit grafanaSql (Explore / panels).
+	_ = json.Unmarshal(query.JSON, &queryEnvelope)
+
 	azJSONModel := queryJSONModel.AzureMonitor
 	// Legacy: If only MetricDefinition is set, use it as namespace
 	if azJSONModel.MetricDefinition != nil && *azJSONModel.MetricDefinition != "" &&
@@ -203,6 +209,7 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 		Dimensions:   azJSONModel.DimensionFilters,
 		Resources:    resourceMap,
 		Subscription: sub,
+		GrafanaSql:   queryEnvelope.GrafanaSql,
 	}
 	if filterString != "" {
 		if filterInBody {
@@ -441,6 +448,23 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 				dataField.SetConfig(&data.FieldConfig{
 					DisplayName: displayName,
 				})
+			}
+		}
+
+		if query.GrafanaSql {
+			timeField.Name = "time"
+			metricFieldName := dataField.Name
+			dataField.Name = "value"
+			if query.Alias == "" {
+				if dataField.Config != nil {
+					if dataField.Config.DisplayName == "" {
+						dataField.Config.DisplayName = metricFieldName
+					}
+				} else {
+					dataField.SetConfig(&data.FieldConfig{
+						DisplayName: metricFieldName,
+					})
+				}
 			}
 		}
 
