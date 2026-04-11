@@ -437,7 +437,7 @@ describe('Non-Grafana alertmanagers', () => {
     ]);
   });
 
-  it.skip('Shows an empty config when config returns an error and the AM supports lazy config initialization', async () => {
+  it('Shows an empty config when config returns an error and the AM supports lazy config initialization', async () => {
     makeAllAlertmanagerConfigFetchFail(getErrorResponse('alertmanager storage object not found'));
     setAlertmanagerStatus(dataSources.mimir.uid, someCloudAlertManagerStatus);
     renderNotificationPolicies(dataSources.mimir.name);
