@@ -4385,6 +4385,9 @@
       "total_many": "{{count}} položka",
       "total_other": "{{count}} položka"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Tato položka není ve stejném úložišti jako vybrané položky."
@@ -6952,7 +6955,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "Pravidla pro zobrazení/skrytí nebudou fungovat",
@@ -8223,8 +8231,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Nepodporováno",
+      "badge-text-success": "",
       "badge-text-supported": "Podporováno",
       "label": {
+        "advisor": "",
         "alerting": "Výstrahy",
         "type": "Typ"
       }
@@ -8651,7 +8661,6 @@
       "give-feedback": "Poskytnout zpětnou vazbu"
     },
     "logs-meta-row": {
-      "download": "Stáhnout",
       "label": {
         "deduplication-count": "Počet deduplikací",
         "showing-only-selected-fields": "Zobrazují se pouze vybraná pole"
@@ -9010,22 +9019,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "Zobrazit výsledky ve vizualizaci protokolů",
-        "show-results-in-table-visualisation": "Zobrazit výsledky ve vizualizaci tabulky",
-        "show-results-newest-to-oldest": "Zobrazit výsledky od nejnovějších po nejstarší",
-        "show-results-oldest-to-newest": "Zobrazit výsledky od nejstarších po nejnovější"
+        "show-results-in-table-visualisation": "Zobrazit výsledky ve vizualizaci tabulky"
       },
       "label": {
         "logs": "Protokoly",
-        "newest-first": "Seřadit od nejnovějších",
-        "oldest-first": "Seřadit od nejstarších",
         "table": "Tabulka"
       },
-      "label-deduplication": "Deduplikace",
-      "label-display-results": "Zobrazit výsledky",
-      "label-prettify-json": "Zkrášlit JSON",
-      "label-time": "Čas",
-      "label-unique-labels": "Jedinečné štítky",
-      "label-wrap-lines": "Zalomit řádky",
       "title-feedback": "Zpětná vazba",
       "title-logs": "Protokoly",
       "title-logs-volume": "Objem protokolů"
@@ -9120,8 +9119,7 @@
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
     },
     "sql-expr": {
-      "button-run-query": "Spustit dotaz",
-      "tooltip-experimental": "Integrace LLM pro výrazy jazyka SQL je experimentální. Jakékoli problémy nahlaste týmu Grafana."
+      "button-run-query": "Spustit dotaz"
     },
     "sql-schema": {
       "error-title": "Chyba",
@@ -11568,9 +11566,6 @@
       },
       "wrap-lines": "Zalomit řádky"
     },
-    "logs-navigation": {
-      "scroll-top": "Posunout nahoru"
-    },
     "logs-panel": {
       "render-common-labels": {
         "common-labels": "Běžné štítky:"
@@ -12363,7 +12358,7 @@
     },
     "quick-add": {
       "aria-label": "Nové",
-      "new-template-dashboard-button": "Nástěnka ze šablony"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "Novinky z blogu"
   },
@@ -13535,6 +13530,7 @@
       "token-label": "Přístupový token projektu",
       "token-required": "Je vyžadován token GitLab",
       "url-description": "Adresa URL úložiště GitLab",
+      "url-pattern": "",
       "url-required": "Adresa URL úložiště je povinná"
     },
     "history-view": {
@@ -14497,11 +14493,11 @@
       "view-as-list": "Zobrazit jako seznam"
     },
     "dashboard-actions": {
-      "import": "Importovat",
+      "import": "",
       "new": "Nové",
       "new-dashboard": "Nová nástěnka",
       "new-folder": "Nová složka",
-      "new-template-dashboard": "Nástěnka ze šablony"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Skóre"
@@ -15005,19 +15001,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "Přidejte alespoň jeden dotaz na data a vygenerujte návrhy SQL",
-    "ai-explain-title": "Vysvětlení SQL výrazu pomocí umělé inteligence",
-    "ai-suggestions-title": "Návrhy SQL výrazů pomocí umělé inteligence",
-    "apply": "Použít",
-    "code-label": "{{ language }}",
-    "copy": "Kopírovat",
-    "explain-empty-query-tooltip": "Zadejte SQL výraz a získejte vysvětlení",
     "explain-query": "Vysvětlit dotaz",
-    "explanation-modal-title": "Vysvětlení dotazu SQL",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "Historie návrhů SQL",
-    "suggestions": "Návrhy",
-    "view-explanation": "Zobrazit vysvětlení"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "Označit jako oblíbené",
@@ -15480,11 +15466,12 @@
     },
     "range-content": {
       "apply-button": "Použít časový rozsah",
-      "default-error": "Zadejte dřívější datum nebo „{{now}}“",
+      "default-error": "",
       "fiscal-year": "Fiskální rok: {{from}}–{{to}}",
       "from-input": "Od",
       "open-input-calendar": "Otevřít kalendář",
-      "range-error": "„Od“ nemůže být po „Do“",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Do"
     },
     "range-picker": {

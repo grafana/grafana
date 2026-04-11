@@ -5,7 +5,8 @@ import { type AlertState, type GrafanaTheme2, type IconName } from '@grafana/dat
 import { t } from '@grafana/i18n';
 import { Button, ConfirmModal, Icon, Stack, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { getQueryEditorColors, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from './constants';
+import { useQueryEditorTypeConfig } from './QueryEditor/QueryEditorContext';
+import { QueryEditorType } from './constants';
 import { trackCardAction, type CardActionSource } from './tracking';
 
 export interface ActionItem {
@@ -58,12 +59,11 @@ export function Actions({
   order,
 }: ActionsProps) {
   const theme = useTheme2();
-  const queryEditorColors = getQueryEditorColors(theme);
+  const typeConfig = useQueryEditorTypeConfig();
   const styles = useStyles2(getStyles);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const config = QUERY_EDITOR_TYPE_CONFIG[item.type];
-  const typeLabel = config.getLabel();
-  const requiresDeleteConfirmation = config.deleteConfirmation;
+  const typeLabel = typeConfig[item.type].getLabel();
+  const requiresDeleteConfirmation = typeConfig[item.type].deleteConfirmation;
   const cardActionSource: CardActionSource = contentHeader ? 'content_header' : 'sidebar_card';
 
   const labels = useMemo(
@@ -166,7 +166,7 @@ export function Actions({
               name="exclamation-triangle"
               aria-label={t('query-editor-next.action.error', 'Error')}
               className={styles.errorIcon}
-              color={queryEditorColors.error}
+              color={theme.colors.error.text}
             />
           </Tooltip>
         )}
