@@ -1000,6 +1000,7 @@ func (b *backend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, 
 	ctx, span := tracer.Start(ctx, "sql.backend.ListHistory")
 	defer span.End()
 
+	req.ResourceVersion = toMicrosecondRV(req.ResourceVersion)
 	return b.getHistory(ctx, req, cb)
 }
 

@@ -1476,6 +1476,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 		return 0, err
 	}
 	key := req.Options.Key
+	req.ResourceVersion = toSnowflakeRV(req.ResourceVersion)
 	// Parse continue token if provided
 	lastSeenRV := int64(0)
 	if req.NextPageToken != "" {
