@@ -311,27 +311,47 @@ func (r *ResourcePermissionsAuthorizer) FilterWatch(ctx context.Context, w watch
 	}
 
 	// Filter events based on user's access to the target resource
-	filterFunc := func(event watch.Event) (bool, error) {
-		if event.Type == watch.Error {
-			return true, nil
-		}
+filterFunc := func(events []watch.Event) ([]bool, error) {                                                                                                            
+          results := make([]bool, len(events))
 
-		rp, ok := event.Object.(*iamv0.ResourcePermission)
-		if !ok {
-			return false, nil
-		}
+          // collect valid ResourcePermission objects and remember their positions                                                                                          
+          var batch []iamv0.ResourcePermission
+          var batchIndices []int                                                                                                                                            
+          for i, event := range events {
+              rp, ok := event.Object.(*iamv0.ResourcePermission)
+              if !ok {                                                                                                                                                      
+                  continue
+              }                                                                                                                                                             
+              batch = append(batch, *rp)
+              batchIndices = append(batchIndices, i)
+          }
 
-		// Check if user can view this ResourcePermission's target
-		target := rp.Spec.Resource
-		allowed, err := CanViewTargets(r, ctx, authInfo, []iamv0.ResourcePermission{*rp}, func(i int) (string, string, string, string, bool) {
-			return rp.Namespace, target.ApiGroup, target.Resource, target.Name, true
-		})
-		if err != nil {
-			return false, err
-		}
+          if len(batch) == 0 {
+              return results, nil
+          }                                                                                                                                                                 
+  
+          // single BatchCheck RPC for the entire flush                                                                                                                     
+          allowed, err := CanViewTargets(r, ctx, authInfo, batch, func(i int) (string, string, string, string, bool) {
+              target := batch[i].Spec.Resource                                                                                                                              
+              return batch[i].Namespace, target.ApiGroup, target.Resource, target.Name, true
+          })                                                                                                                                                                
+          if err != nil {
+              return nil, err
+          }
+                                                                                                                                                                            
+          // map allowed items back to original event positions by name
+          allowedSet := make(map[string]struct{}, len(allowed))                                                                                                             
+          for _, rp := range allowed {
+              allowedSet[rp.Name] = struct{}{}
+          }
+          for j, origIdx := range batchIndices {
+              if _, ok := allowedSet[batch[j].Name]; ok {                                                                                                                   
+                  results[origIdx] = true
+              }                                                                                                                                                             
+          }       
 
-		return len(allowed) > 0, nil
-	}
+          return results, nil
+      }
 
 	return storewrapper.NewFilteredWatch(ctx, w, filterFunc), nil
 }
