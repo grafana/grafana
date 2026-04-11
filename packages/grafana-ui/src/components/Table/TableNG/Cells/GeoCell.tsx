@@ -1,17 +1,21 @@
 import { css } from '@emotion/css';
-import WKT from 'ol/format/WKT';
-import { Geometry } from 'ol/geom';
 
+import { useOpenLayersContext } from '../../OpenLayersContext';
 import { type GeoCellProps, type TableCellStyles } from '../types';
 
 export function GeoCell({ value }: GeoCellProps) {
+  const { formatGeometry } = useOpenLayersContext();
   let disp = null;
 
-  if (value instanceof Geometry) {
-    disp = new WKT().writeGeometry(value, {
-      featureProjection: 'EPSG:3857',
-      dataProjection: 'EPSG:4326',
-    });
+  if (
+    formatGeometry &&
+    // alternative to instanceof Geometry without importing the whole class from ol
+    typeof value === 'object' &&
+    value != null &&
+    'intersectsCoordinate' in value
+  ) {
+    // @ts-ignore
+    disp = formatGeometry(value);
   } else if (value != null) {
     disp = `${value}`;
   }

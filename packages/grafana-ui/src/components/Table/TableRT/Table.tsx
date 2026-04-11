@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   useAbsoluteLayout,
   useExpanded,
@@ -19,6 +19,7 @@ import { useTheme2 } from '../../../themes/ThemeContext';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../../Pagination/Pagination';
 import { TableCellInspector } from '../TableCellInspector';
+import { hasGeoCell } from '../hasGeoCell';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from '../hooks';
 import { getInitialState, useTableStateReducer } from '../reducer';
 import { type FooterItem, type GrafanaTableState, type InspectCell, type TableRTProps as Props } from '../types';
@@ -39,6 +40,9 @@ import { useTableStyles } from './styles';
 const COLUMN_MIN_WIDTH = 150;
 const FOOTER_ROW_HEIGHT = 36;
 const NO_DATA_TEXT = 'No data';
+const LazyOpenLayersProvider = lazy(() =>
+  import('../OpenLayersProvider').then((module) => ({ default: module.OpenLayersProvider }))
+);
 
 /**
  * Used for displaying tabular data
@@ -153,6 +157,7 @@ export const Table = memo((props: Props) => {
   });
 
   const hasUniqueId = !!data.meta?.uniqueRowIdFields?.length;
+  const tableHasGeoCell = useMemo(() => hasGeoCell(data), [data]);
 
   const options: any = useMemo(() => {
     // This is a bit hard to type with the react-table types here, the reducer does not actually match with the
@@ -330,7 +335,7 @@ export const Table = memo((props: Props) => {
     });
   }
 
-  return (
+  const rendered = (
     <>
       <div
         {...getTableProps()}
@@ -407,6 +412,16 @@ export const Table = memo((props: Props) => {
         />
       )}
     </>
+  );
+
+  if (!tableHasGeoCell) {
+    return rendered;
+  }
+
+  return (
+    <Suspense fallback={rendered}>
+      <LazyOpenLayersProvider>{rendered}</LazyOpenLayersProvider>
+    </Suspense>
   );
 });
 
