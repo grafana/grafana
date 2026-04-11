@@ -1128,7 +1128,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListReques
 		if err != nil {
 			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
 		}
-		iter.listRV = continueToken.ResourceVersion
+		iter.listRV = toMicrosecondRV(continueToken.ResourceVersion)
 		iter.offset = continueToken.StartOffset
 
 		if req.ResourceVersion != 0 && req.ResourceVersion != iter.listRV {
