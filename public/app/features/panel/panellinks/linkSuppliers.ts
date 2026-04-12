@@ -1,19 +1,19 @@
 import {
-  DataLink,
-  DisplayValue,
-  FieldDisplay,
+  type DataLink,
+  type DisplayValue,
+  type FieldDisplay,
   formattedValueToString,
   getFieldDisplayValuesProxy,
   getTimeField,
-  InterpolateFunction,
-  Labels,
-  LinkModelSupplier,
-  ScopedVar,
-  ScopedVars,
+  type InterpolateFunction,
+  type Labels,
+  type LinkModelSupplier,
+  type ScopedVar,
+  type ScopedVars,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { VizPanel } from '@grafana/scenes';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type VizPanel } from '@grafana/scenes';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardSceneGraph } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 
 import { getLinkSrv } from './link_srv';

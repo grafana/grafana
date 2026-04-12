@@ -1,6 +1,6 @@
 import { PureComponent } from 'react';
 
-import { StandardEditorProps, SelectFieldConfigSettings, SelectableValue } from '@grafana/data';
+import { type StandardEditorProps, type SelectFieldConfigSettings, type SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
 interface State<T> {

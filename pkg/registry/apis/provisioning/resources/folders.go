@@ -8,14 +8,14 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
 
 const MaxNumberOfFolders = 10000
@@ -47,13 +47,15 @@ type FolderManager struct {
 	client                dynamic.ResourceInterface
 	beforeCreate          FolderCreationInterceptor
 	folderMetadataEnabled bool
+	folderGVK             schema.GroupVersionKind
 }
 
-func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, opts ...FolderManagerOption) *FolderManager {
+func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, folderGVK schema.GroupVersionKind, opts ...FolderManagerOption) *FolderManager {
 	fm := &FolderManager{
-		repo:   repo,
-		tree:   lookup,
-		client: client,
+		repo:      repo,
+		tree:      lookup,
+		client:    client,
+		folderGVK: folderGVK,
 		beforeCreate: func(context.Context, Folder) error {
 			return nil
 		},
@@ -62,6 +64,10 @@ func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInter
 		opt(fm)
 	}
 	return fm
+}
+
+func (fm *FolderManager) FolderGVK() schema.GroupVersionKind {
+	return fm.folderGVK
 }
 
 func WithBeforeCreate(beforeCreate FolderCreationInterceptor) FolderManagerOption {
@@ -237,8 +243,8 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			},
 		},
 	}
-	obj.SetAPIVersion(folders.APIVERSION)
-	obj.SetKind(folders.FolderResourceInfo.GroupVersionKind().Kind)
+	obj.SetAPIVersion(fm.folderGVK.Group + "/" + fm.folderGVK.Version)
+	obj.SetKind(fm.folderGVK.Kind)
 	obj.SetNamespace(cfg.GetNamespace())
 	obj.SetName(folder.ID)
 
@@ -265,7 +271,7 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		// there is a potential race here where two syncs can be triggered
 		// if we try to create and there is an error, check if it is from another sync
 		// job for this repo that created it
-		if apierrors.IsAlreadyExists(err) || err.Error() == dashboards.ErrFolderVersionMismatch.Error() {
+		if apierrors.IsAlreadyExists(err) || err.Error() == foldermodel.ErrVersionMismatch.Error() {
 			obj, err2 := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
 			if err2 != nil {
 				return fmt.Errorf("failed to get folder: %w", err2)
@@ -408,7 +414,7 @@ func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, ref, path s
 
 		if fm.folderMetadataEnabled {
 			msg := fmt.Sprintf("Add folder and folder metadata %s", p)
-			manifest := NewFolderManifest(folder.ID, folder.Title)
+			manifest := NewFolderManifest(folder.ID, folder.Title, fm.folderGVK)
 			if _, err := WriteFolderMetadata(ctx, fm.repo, p, manifest, ref, msg); err != nil {
 				return fn(folder, true, err)
 			}

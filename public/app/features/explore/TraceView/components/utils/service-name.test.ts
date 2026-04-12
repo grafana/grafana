@@ -1,4 +1,4 @@
-import { TraceProcess } from '../types/trace';
+import { type TraceProcess } from '../types/trace';
 
 import { getServiceDisplayName, getServiceColorKey } from './service-name';
 

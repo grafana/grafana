@@ -1,20 +1,44 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, type IconName, isIconName } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { useSelector } from 'app/types/store';
 
-import { getCloudCardData, getOssCardData } from '../components/PageCard/CardData';
+import { getConnectionsCardMetadata } from '../components/PageCard/CardMetadata';
 import PageCard from '../components/PageCard/PageCard';
+
+const FALLBACK_ICON: IconName = 'plug';
+
+function resolveIcon(metaIcon: IconName | undefined, navIcon: string | undefined): IconName {
+  if (metaIcon) {
+    return metaIcon;
+  }
+  if (navIcon && isIconName(navIcon)) {
+    return navIcon;
+  }
+  return FALLBACK_ICON;
+}
 
 export default function ConnectionsHomePage() {
   const styles = useStyles2(getStyles);
 
   const isOnPrem = !config.pluginAdminExternalManageEnabled;
-
-  let cardsData = isOnPrem ? getOssCardData() : getCloudCardData();
+  const cardMetadata = getConnectionsCardMetadata(isOnPrem);
+  const navIndex = useSelector((state) => state.navIndex);
+  const cardsData = (navIndex['connections']?.children ?? [])
+    .filter((item) => item.url)
+    .map((item) => {
+      const meta = cardMetadata[item.url!];
+      return {
+        ...item,
+        text: meta?.text ?? item.text,
+        icon: resolveIcon(meta?.icon, item.icon),
+        subTitle: meta?.subTitle ?? item.subTitle ?? '',
+      };
+    });
 
   return (
     <Page
@@ -42,15 +66,15 @@ export default function ConnectionsHomePage() {
               </Trans>
             )}
           </p>
-          {cardsData && cardsData.length > 0 && (
+          {cardsData.length > 0 && (
             <section className={styles.cardsSection}>
-              {cardsData?.map((child, index) => (
+              {cardsData.map((child, index) => (
                 <PageCard
-                  key={index}
+                  key={child.id ?? index}
                   title={child.text}
                   description={child.subTitle}
                   icon={child.icon}
-                  url={child.url}
+                  url={child.url!}
                   index={index}
                 />
               ))}

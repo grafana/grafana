@@ -94,6 +94,9 @@ func RunAdminApiReencryptTest(
 ) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		APIServerStorageType: options.StorageTypeUnified,
+		EnableLog:            false,
+		QueryRetries:         30, // arbitrary 3x from the default
+		TransactionRetries:   30, // arbitrary 3x from the default
 	})
 
 	grafanaListenAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
@@ -105,25 +108,17 @@ func RunAdminApiReencryptTest(
 	require.NoError(t, err)
 
 	// Reencrypt with new data key.
-	require.Eventually(t, func() bool {
-		ok, err := env.Server.HTTPServer.SecretsMigrator.ReEncryptSecrets(context.Background())
-		if err != nil {
-			return false
-		}
-		return ok
-	}, 5*time.Second, time.Second)
+	ok, err := env.Server.HTTPServer.SecretsMigrator.ReEncryptSecrets(context.Background())
+	require.NoError(t, err)
+	require.True(t, ok, "Failed to reencrypt all secrets")
 
 	afterReencrypt := getSecrets(t, secretsFns, env)
 	verifyAllSecrets(t, env, beforeReencrypt, afterReencrypt)
 
 	// Rollback from envelope to legacy encryption.
-	require.Eventually(t, func() bool {
-		ok, err := env.Server.HTTPServer.SecretsMigrator.RollBackSecrets(context.Background())
-		if err != nil {
-			return false
-		}
-		return ok
-	}, 5*time.Second, time.Second)
+	ok, err = env.Server.HTTPServer.SecretsMigrator.RollBackSecrets(context.Background())
+	require.NoError(t, err)
+	require.True(t, ok, "Failed to rollback all secrets")
 
 	afterRollback := getSecrets(t, secretsFns, env)
 	verifyAllSecrets(t, env, afterReencrypt, afterRollback)

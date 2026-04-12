@@ -192,9 +192,6 @@ var (
 	// StatsTotalRuleGroups is a metric of total number of alert rule groups stored in Grafana.
 	StatsTotalRuleGroups prometheus.Gauge
 
-	// StatsTotalDashboardVersions is a metric of total number of dashboard versions stored in Grafana.
-	StatsTotalDashboardVersions prometheus.Gauge
-
 	grafanaPluginBuildInfoDesc *prometheus.GaugeVec
 
 	grafanaPluginTargetInfoDesc *prometheus.GaugeVec
@@ -589,12 +586,6 @@ func init() {
 		Namespace: ExporterName,
 	}, []string{"plugin_id", "provisioning_method"})
 
-	StatsTotalDashboardVersions = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name:      "stat_totals_dashboard_versions",
-		Help:      "total amount of dashboard versions in the database",
-		Namespace: ExporterName,
-	})
-
 	StatsTotalAnnotations = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_annotations",
 		Help:      "total amount of annotations in the database",
@@ -819,7 +810,6 @@ func initMetricVars(reg prometheus.Registerer) {
 		grafanaPluginFileSystemInfoDesc,
 		grafanaPluginAssetInfoDesc,
 		grafanaPluginProvisioningInfoDesc,
-		StatsTotalDashboardVersions,
 		StatsTotalAnnotations,
 		StatsTotalAlertRules,
 		StatsTotalRuleGroups,

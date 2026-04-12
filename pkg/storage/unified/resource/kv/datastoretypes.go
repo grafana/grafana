@@ -17,6 +17,22 @@ const (
 	DataActionDeleted DataAction = "deleted"
 )
 
+// LegacyActionValue maps the datastore action to the temporary integer encoding
+// still used by sql/backend compatibility columns.
+// Remove once sqlkv no longer needs to mirror those legacy columns.
+func LegacyActionValue(action DataAction) (int64, error) {
+	switch action {
+	case DataActionCreated:
+		return 1, nil
+	case DataActionUpdated:
+		return 2, nil
+	case DataActionDeleted:
+		return 3, nil
+	default:
+		return 0, fmt.Errorf("unknown data action: %q", action)
+	}
+}
+
 type DataKey struct {
 	Namespace       string
 	Group           string
@@ -52,6 +68,9 @@ func ParseDataKeyParts(parts []string) (DataKey, []string, error) {
 		return DataKey{}, nil, fmt.Errorf("invalid key: expected 4 or 5 parts, got %d", len(parts))
 	}
 	rvParts := strings.Split(rvMeta, "~")
+	if len(rvParts) < 3 {
+		return DataKey{}, nil, fmt.Errorf("invalid resource version metadata: expected at least 3 parts, got %d", len(rvParts))
+	}
 	rv, err := strconv.ParseInt(rvParts[0], 10, 64)
 	if err != nil {
 		return DataKey{}, nil, fmt.Errorf("invalid resource version '%s': %w", rvParts[0], err)

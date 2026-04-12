@@ -1,9 +1,9 @@
-import { StoryFn, Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react';
 
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 
-import { ClipboardButton as ClipboardButtonImpl, Props } from './ClipboardButton';
+import { ClipboardButton as ClipboardButtonImpl, type Props } from './ClipboardButton';
 import mdx from './ClipboardButton.mdx';
 
 const meta: Meta = {

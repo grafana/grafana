@@ -21,8 +21,8 @@ function openAddFilterPane(dashboard: DashboardScene) {
   const type = 'adhoc';
   const newVar = getVariableScene(type, { name: getNextAvailableId(name, variablesSet.state.variables ?? []) });
   dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
-  dashboard.state.editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
-  DashboardInteractions.newVariableTypeSelected({ type });
+  dashboard.state.editPane.selectObject(newVar, { force: true, multi: false });
+  DashboardInteractions.variableTypeSelected({ type });
 }
 
 export function AddFilters({ dashboardScene }: { dashboardScene: DashboardScene }) {

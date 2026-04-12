@@ -13,7 +13,7 @@ import {
   Space,
   Stack,
   Text,
-  ComboboxOption,
+  type ComboboxOption,
   Alert,
   useStyles2,
 } from '@grafana/ui';
@@ -28,8 +28,8 @@ import {
   trackInfluxDBConfigV2QueryLanguageSelected,
   trackInfluxDBConfigV2URLInputField,
 } from './tracking';
-import { Props } from './types';
-import { INFLUXDB_VERSION_MAP, InfluxDBProduct } from './versions';
+import { type Props } from './types';
+import { INFLUXDB_VERSION_MAP, type InfluxDBProduct } from './versions';
 
 const getQueryLanguageOptions = (productName: string): Array<{ value: string }> => {
   const product = INFLUXDB_VERSION_MAP.find(({ name }) => name === productName);
@@ -168,7 +168,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
       >
         <Text color="secondary">
           Enter the URL of your InfluxDB instance, then select your product and query language. This will determine the
-          available settings and authentication methods in the next steps. If you need futher guidance, visit the{' '}
+          available settings and authentication methods in the next steps. If you need further guidance, visit the{' '}
           <TextLink
             href="https://grafana.com/docs/grafana/latest/datasources/influxdb/"
             icon="external-link-alt"

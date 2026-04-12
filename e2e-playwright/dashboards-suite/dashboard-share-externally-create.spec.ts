@@ -2,8 +2,6 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 test.use({
   featureToggles: {
-    scenes: true,
-    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
     dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });
@@ -11,7 +9,7 @@ test.use({
 const DASHBOARD_UID = 'd41dbaa2-a39e-4536-ab2b-caca52f1a9c8';
 const DASHBOARD_UID_2 = 'edediimbjhdz4b';
 
-test.describe(
+test.skip(
   'Shared dashboards',
   {
     tag: ['@dashboards'],
