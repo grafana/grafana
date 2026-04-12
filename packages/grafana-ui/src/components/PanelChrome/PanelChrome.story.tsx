@@ -1,6 +1,5 @@
 import { action } from '@storybook/addon-actions';
 import { type Meta, type StoryFn } from '@storybook/react';
-import { merge } from 'lodash';
 import { type CSSProperties, useState, type ReactNode } from 'react';
 import { useInterval, useToggle } from 'react-use';
 
@@ -51,7 +50,7 @@ function renderPanel(content: string, overrides?: Partial<PanelChromeProps>) {
     children: () => undefined,
   };
 
-  merge(props, overrides);
+  Object.assign(props, overrides);
 
   const contentStyle = getContentStyle();
 
@@ -72,7 +71,7 @@ function renderCollapsiblePanel(name: string, overrides?: Partial<PanelChromePro
     collapsible: true,
   };
 
-  merge(props, overrides);
+  Object.assign(props, overrides);
 
   const contentStyle = getContentStyle();
 
@@ -345,7 +344,7 @@ export const Basic: StoryFn<typeof PanelChrome> = (overrides?: Partial<PanelChro
     children: () => undefined,
   };
 
-  merge(args, overrides);
+  Object.assign(args, overrides);
 
   const contentStyle = getContentStyle();
 

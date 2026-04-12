@@ -1,4 +1,3 @@
-import { merge } from 'lodash';
 import uPlot, {
   type Cursor,
   type Band,
@@ -20,6 +19,7 @@ import {
 } from '@grafana/data';
 import { AxisPlacement, type VizOrientation } from '@grafana/schema';
 
+import { deepMerge } from '../../../utils/deepMerge';
 import { type FacetedData, type PlotConfig } from '../types';
 import { DEFAULT_PLOT_CONFIG, getStackingBands, pluginLog, type StackingGroup } from '../utils';
 
@@ -79,7 +79,7 @@ export class UPlotConfigBuilder {
   scaleKeys: [string, string] = ['', ''];
 
   setState(state: PlotState) {
-    this.state = merge({}, this.state, state);
+    this.state = deepMerge({ ...this.state }, state);
   }
 
   getState() {
@@ -140,7 +140,7 @@ export class UPlotConfigBuilder {
   }
 
   setCursor(cursor?: Cursor) {
-    this.cursor = merge({}, this.cursor, cursor);
+    this.cursor = deepMerge({ ...this.cursor }, cursor);
   }
 
   setMode(mode: uPlot.Mode) {
@@ -233,9 +233,8 @@ export class UPlotConfigBuilder {
         return s + alphaHex;
       };
 
-    config.cursor = merge(
-      {},
-      cursorDefaults,
+    config.cursor = deepMerge(
+      { ...cursorDefaults },
       {
         points: {
           stroke: pointColorFn('80'),
