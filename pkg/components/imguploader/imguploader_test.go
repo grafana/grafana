@@ -162,10 +162,10 @@ func TestImageUploaderFactory(t *testing.T) {
 
 				original, ok := uploader.(*AzureBlobUploader)
 				require.True(t, ok)
-				require.Equal(t, "account_name", original.account_name)
-				require.Equal(t, "account_key", original.account_key)
-				require.Equal(t, "container_name", original.container_name)
-				require.Equal(t, -1, original.sas_token_expiration_days)
+				require.Equal(t, "account_name", original.accountName)
+				require.Equal(t, "account_key", original.accountKey)
+				require.Equal(t, "container_name", original.containerName)
+				require.Equal(t, -1, original.sasTokenExpirationDays)
 			})
 		})
 

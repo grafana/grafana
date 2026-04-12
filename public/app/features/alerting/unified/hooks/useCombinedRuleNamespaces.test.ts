@@ -1,4 +1,4 @@
-import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { type CombinedRuleGroup, type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { flattenGrafanaManagedRules, sortRulesByName } from './useCombinedRuleNamespaces';
 

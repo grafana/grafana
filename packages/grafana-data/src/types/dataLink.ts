@@ -1,9 +1,9 @@
-import { ScopedVars } from './ScopedVars';
-import { ExploreCorrelationHelperData, ExplorePanelsState } from './explore';
-import { LinkTarget } from './linkTarget';
-import { InterpolateFunction } from './panel';
-import { DataQuery } from './query';
-import { TimeRange } from './time';
+import { type ScopedVars } from './ScopedVars';
+import { type ExploreCorrelationHelperData, type ExplorePanelsState } from './explore';
+import { type LinkTarget } from './linkTarget';
+import { type InterpolateFunction } from './panel';
+import { type DataQuery } from './query';
+import { type TimeRange } from './time';
 
 /**
  * Callback info for DataLink click events

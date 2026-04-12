@@ -1,24 +1,24 @@
-import { DataSourceInstanceSettings, VariableModel } from '@grafana/data';
+import { type DataSourceInstanceSettings, type VariableModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { AnnotationQuery, Dashboard, Panel, RowPanel } from '@grafana/schema';
-import { AnnotationQueryKind, Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type AnnotationQuery, type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
+import { type AnnotationQueryKind, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isRecord } from 'app/core/utils/isRecord';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { isDashboardV1Resource, isDashboardV2Resource, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
 
-import { LibraryElementExport } from '../../../dashboard/components/DashExportModal/DashboardExporter';
+import { type LibraryElementExport } from '../../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../../library-panels/state/api';
 import { LibraryElementKind } from '../../../library-panels/types';
 import {
-  DashboardInput,
-  DashboardInputs,
-  DataSourceInput,
-  ImportDashboardDTO,
-  ImportFormDataV2,
+  type DashboardInput,
+  type DashboardInputs,
+  type DataSourceInput,
+  type ImportDashboardDTO,
+  type ImportFormDataV2,
   InputType,
-  LibraryPanelInput,
+  type LibraryPanelInput,
   LibraryPanelInputState,
 } from '../../types';
 
@@ -61,10 +61,6 @@ function isLibraryElementExport(value: unknown): value is LibraryElementExport {
     typeof value.kind === 'number' &&
     isRecord(value.model)
   );
-}
-
-function hasUid(query: unknown): query is { uid: string } {
-  return isRecord(query) && typeof query['uid'] === 'string';
 }
 
 function getExportLabel(labels?: { [ExportLabel]?: string }): string | undefined {
@@ -550,6 +546,67 @@ function replaceElementDatasources(
   );
 }
 
+/**
+ * Replace ${DS_...} placeholders in a library panel model's datasource references
+ * using the user-selected datasources from the import form.
+ */
+export function interpolateLibraryPanelDatasources(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  model: any,
+  inputs: { dataSources: DataSourceInput[] },
+  form: ImportDashboardDTO
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any {
+  const result = { ...model };
+
+  const resolvedDs = resolveDatasource(result.datasource, inputs.dataSources, form.dataSources);
+  if (resolvedDs) {
+    result.datasource = resolvedDs;
+  }
+
+  if (Array.isArray(result.targets)) {
+    result.targets = result.targets.map((target: Record<string, unknown>) => {
+      const resolved = resolveDatasource(target.datasource, inputs.dataSources, form.dataSources);
+      return resolved ? { ...target, datasource: resolved } : target;
+    });
+  }
+
+  return result;
+}
+
+/**
+ * Extract a ${DS_...} placeholder string from a datasource reference.
+ * Handles both the object form { uid: "${DS_...}" } and legacy string form "${DS_...}".
+ */
+function extractDatasourcePlaceholder(datasource: unknown): string | undefined {
+  if (typeof datasource === 'string' && datasource.startsWith('$')) {
+    return datasource;
+  }
+  if (isRecord(datasource) && typeof datasource.uid === 'string' && datasource.uid.startsWith('$')) {
+    return datasource.uid;
+  }
+  return undefined;
+}
+
+/**
+ * Resolve a datasource placeholder to the user-selected datasource.
+ */
+function resolveDatasource(
+  datasource: unknown,
+  datasourceInputs: DataSourceInput[],
+  userDsInputs: DataSourceInstanceSettings[]
+): { uid: string; type: string } | undefined {
+  const placeholder = extractDatasourcePlaceholder(datasource);
+  if (!placeholder) {
+    return undefined;
+  }
+  const userInput = checkUserInputMatch(placeholder, datasourceInputs, userDsInputs);
+  if (!userInput) {
+    return undefined;
+  }
+  return { uid: userInput.uid, type: userInput.type };
+}
+
 function checkUserInputMatch(
   templateizedUid: string,
   datasourceInputs: DataSourceInput[],
@@ -566,49 +623,11 @@ function processAnnotation(
   inputs: { dataSources: DataSourceInput[] },
   form: ImportDashboardDTO
 ): AnnotationQuery {
-  if (annotation.datasource && annotation.datasource.uid && annotation.datasource.uid.startsWith('$')) {
-    const userInput = checkUserInputMatch(annotation.datasource.uid, inputs.dataSources, form.dataSources);
-    if (userInput) {
-      return {
-        ...annotation,
-        datasource: {
-          ...annotation.datasource,
-          uid: userInput.uid,
-        },
-      };
-    }
+  const resolved = resolveDatasource(annotation.datasource, inputs.dataSources, form.dataSources);
+  if (resolved) {
+    return { ...annotation, datasource: resolved };
   }
-
   return annotation;
-}
-
-function getDSUid(datasource: unknown): string | null {
-  if (typeof datasource === 'string' && datasource.startsWith('$')) {
-    return datasource;
-  }
-  if (hasUid(datasource) && datasource.uid.startsWith('$')) {
-    return datasource.uid;
-  }
-  return null;
-}
-
-function resolveInputDatasource(
-  datasource: Panel['datasource'],
-  inputs: { dataSources: DataSourceInput[] },
-  form: ImportDashboardDTO
-): Panel['datasource'] {
-  const dsUid = getDSUid(datasource);
-
-  if (dsUid) {
-    const userInput = checkUserInputMatch(dsUid, inputs.dataSources, form.dataSources);
-    if (userInput) {
-      return {
-        ...(isRecord(datasource) ? datasource : {}),
-        uid: userInput.uid,
-      };
-    }
-  }
-  return datasource;
 }
 
 function processPanel(
@@ -616,20 +635,20 @@ function processPanel(
   inputs: { dataSources: DataSourceInput[] },
   form: ImportDashboardDTO
 ): Panel | RowPanel {
+  const resolvedPanelDs = resolveDatasource(panel.datasource, inputs.dataSources, form.dataSources);
+
   return {
     ...panel,
-    ...(panel.datasource && { datasource: resolveInputDatasource(panel.datasource, inputs, form) }),
-    // nested panels of collapsed rows
+    ...(resolvedPanelDs && { datasource: resolvedPanelDs }),
     ...('panels' in panel && {
       panels: panel.panels.map((nestedPanel) => processPanel(nestedPanel, inputs, form)),
     }),
     ...('targets' in panel &&
       panel.targets && {
-        targets: panel.targets.map((target) =>
-          target.datasource
-            ? { ...target, datasource: resolveInputDatasource(target.datasource, inputs, form) }
-            : target
-        ),
+        targets: panel.targets.map((target) => {
+          const resolved = resolveDatasource(target.datasource, inputs.dataSources, form.dataSources);
+          return resolved ? { ...target, datasource: resolved } : target;
+        }),
       }),
   };
 }
@@ -662,19 +681,10 @@ function processVariable(
     }
   }
 
-  if (variableType === 'query' && 'datasource' in variable && isRecord(variable.datasource)) {
-    const datasourceUid = variable.datasource.uid;
-    if (typeof datasourceUid === 'string' && datasourceUid.startsWith('$')) {
-      const userInput = checkUserInputMatch(datasourceUid, inputs.dataSources, form.dataSources);
-      if (userInput) {
-        return {
-          ...variable,
-          datasource: {
-            ...variable.datasource,
-            uid: userInput.uid,
-          },
-        };
-      }
+  if (variableType === 'query' && 'datasource' in variable) {
+    const resolved = resolveDatasource(variable.datasource, inputs.dataSources, form.dataSources);
+    if (resolved) {
+      return { ...variable, datasource: resolved };
     }
   }
 

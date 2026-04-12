@@ -1,15 +1,15 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
-import userEvent, { UserEvent } from '@testing-library/user-event';
+import userEvent, { type UserEvent } from '@testing-library/user-event';
 import * as React from 'react';
 import { of } from 'rxjs';
 
 import { CoreApp } from '@grafana/data';
 
 import { AzureQueryType } from '../../dataquery.gen';
-import Datasource from '../../datasource';
+import type Datasource from '../../datasource';
 import createMockDatasource from '../../mocks/datasource';
 import createMockQuery from '../../mocks/query';
-import { AzureMonitorQuery } from '../../types/query';
+import { type AzureMonitorQuery } from '../../types/query';
 import { selectOptionInTest } from '../../utils/testUtils';
 
 import Filters from './Filters';

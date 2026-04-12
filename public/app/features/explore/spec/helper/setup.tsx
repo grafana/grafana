@@ -1,11 +1,11 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { ByRoleMatcher, waitFor, within } from '@testing-library/dom';
+import { type ByRoleMatcher, waitFor, within } from '@testing-library/dom';
 import { render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { KBarProvider } from 'kbar';
 import { fromPairs } from 'lodash';
 import { stringify } from 'querystring';
-import { ComponentType, ReactNode } from 'react';
+import { type ComponentType, type ReactNode } from 'react';
 import { Provider } from 'react-redux';
 // eslint-disable-next-line no-restricted-imports
 import { Route, Router } from 'react-router-dom';
@@ -13,10 +13,10 @@ import { of } from 'rxjs';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import {
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  QueryEditorProps,
-  DataSourcePluginMeta,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type QueryEditorProps,
+  type DataSourcePluginMeta,
   PluginType,
 } from '@grafana/data';
 import {
@@ -24,7 +24,7 @@ import {
   setEchoSrv,
   locationService,
   HistoryWrapper,
-  LocationService,
+  type LocationService,
   setBackendSrv,
   getBackendSrv,
   getDataSourceSrv,
@@ -32,8 +32,8 @@ import {
   setLocationService,
   setPluginLinksHook,
 } from '@grafana/runtime';
-import { DataSourceRef } from '@grafana/schema';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
+import { type DataSourceRef } from '@grafana/schema';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
@@ -41,16 +41,20 @@ import { Echo } from 'app/core/services/echo/Echo';
 import { setLastUsedDatasourceUID } from 'app/core/utils/explore';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreQueryParams } from 'app/types/explore';
+import { type ExploreQueryParams } from 'app/types/explore';
 
-import { RichHistoryRemoteStorageDTO } from '../../../../core/history/RichHistoryRemoteStorage';
-import { LokiDatasource } from '../../../../plugins/datasource/loki/datasource';
-import { LokiQuery } from '../../../../plugins/datasource/loki/types';
+import { type RichHistoryRemoteStorageDTO } from '../../../../core/history/RichHistoryRemoteStorage';
+import { type LokiDatasource } from '../../../../plugins/datasource/loki/datasource';
+import { type LokiQuery } from '../../../../plugins/datasource/loki/types';
 import { initialUserState } from '../../../profile/state/reducers';
 import ExplorePage from '../../ExplorePage';
 import { QueriesDrawerContextProvider } from '../../QueriesDrawer/QueriesDrawerContext';
 
 import { mockData } from './mocks';
+
+export const setBooleanFlags = (flags: Record<string, boolean>) => {
+  setTestFlags(flags);
+};
 
 export const QueryLibraryMocks = {
   data: mockData.all,
@@ -85,6 +89,8 @@ export function setupExplore(options?: SetupOptions): {
   container: HTMLElement;
   location: LocationService;
 } {
+  setTestFlags({});
+
   const previousBackendSrv = getBackendSrv();
   setBackendSrv({
     datasourceRequest: jest.fn().mockRejectedValue(undefined),

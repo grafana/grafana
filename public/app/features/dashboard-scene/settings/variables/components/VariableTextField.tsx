@@ -1,5 +1,5 @@
 import { useId } from '@react-aria/utils';
-import { FormEvent, PropsWithChildren } from 'react';
+import { type FormEvent, type PropsWithChildren } from 'react';
 import * as React from 'react';
 
 import { Field, Input } from '@grafana/ui';

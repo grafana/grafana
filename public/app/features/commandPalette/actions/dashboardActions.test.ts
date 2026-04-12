@@ -1,11 +1,12 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
-import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
+import { type DataFrame, DataFrameView, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { ContextSrv, contextSrv } from 'app/core/services/context_srv';
+import { type ContextSrv, contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
+import { ManagerKind } from 'app/features/apiserver/types';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { DashboardQueryResult, QueryResponse } from 'app/features/search/service/types';
+import { type DashboardQueryResult, type QueryResponse } from 'app/features/search/service/types';
 
 import { getRecentDashboardActions, getSearchResultActions, useSearchResults } from './dashboardActions';
 
@@ -96,6 +97,28 @@ describe('dashboardActions', () => {
           },
         ]);
       });
+
+      it('includes managedBy when present in search results', async () => {
+        const searchDataWithManagedBy: DataFrame = {
+          ...searchData,
+          fields: [
+            ...searchData.fields,
+            { name: 'managedBy', type: FieldType.string, config: {}, values: [ManagerKind.Repo] },
+          ],
+        };
+        grafanaSearcherSpy.mockResolvedValueOnce({
+          ...mockSearchResult,
+          view: new DataFrameView<DashboardQueryResult>(searchDataWithManagedBy),
+        });
+
+        const results = await getRecentDashboardActions();
+        expect(results).toEqual([
+          expect.objectContaining({
+            id: 'recent-dashboards/my-dashboard-1',
+            managedBy: ManagerKind.Repo,
+          }),
+        ]);
+      });
     });
   });
 
@@ -164,6 +187,28 @@ describe('dashboardActions', () => {
             subtitle: 'My folder 1',
             url: '/my-dashboard-1',
           },
+        ]);
+      });
+
+      it('includes managedBy in search result actions when present', async () => {
+        const searchDataWithManagedBy: DataFrame = {
+          ...searchData,
+          fields: [
+            ...searchData.fields,
+            { name: 'managedBy', type: FieldType.string, config: {}, values: [ManagerKind.Repo] },
+          ],
+        };
+        grafanaSearcherSpy.mockResolvedValueOnce({
+          ...mockSearchResult,
+          view: new DataFrameView<DashboardQueryResult>(searchDataWithManagedBy),
+        });
+
+        const results = await getSearchResultActions('mySearchQuery');
+        expect(results).toEqual([
+          expect.objectContaining({
+            id: 'go/dashboard/my-dashboard-1',
+            managedBy: ManagerKind.Repo,
+          }),
         ]);
       });
     });
