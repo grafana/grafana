@@ -5,6 +5,11 @@ exports[`useRuleAdministrationAbility matches snapshot for a Grafana rule with a
   "delete": {
     "granted": true,
   },
+  "deletePermanently": {
+    "anyOfPermissions": [],
+    "cause": "INSUFFICIENT_PERMISSIONS",
+    "granted": false,
+  },
   "duplicate": {
     "granted": true,
   },
@@ -25,6 +30,10 @@ exports[`useRuleAdministrationAbility matches snapshot for a cloud rule in loadi
 {
   "delete": {
     "cause": "LOADING",
+    "granted": false,
+  },
+  "deletePermanently": {
+    "cause": "NOT_SUPPORTED",
     "granted": false,
   },
   "duplicate": {
@@ -50,6 +59,10 @@ exports[`useRuleAdministrationAbility matches snapshot for a cloud rule in loadi
 exports[`useRuleAdministrationAbility returns PROVISIONED for provisioned Grafana rules — duplicate remains grantable 1`] = `
 {
   "delete": {
+    "cause": "PROVISIONED",
+    "granted": false,
+  },
+  "deletePermanently": {
     "cause": "PROVISIONED",
     "granted": false,
   },

@@ -185,6 +185,11 @@ export interface RuleEditAbilityResult {
    * the rule is plugin-owned, otherwise checks the create permission.
    */
   duplicate: AbilityState;
+  /**
+   * Permanently delete the rule (purge from trash). Only applicable to Grafana-managed
+   * alerting rules. Requires both delete permission and Grafana admin status.
+   */
+  deletePermanently: AbilityState;
   /** True while async checks (ruler, plugin settings) are still in flight. */
   loading: boolean;
 }
@@ -255,12 +260,30 @@ export function useRuleAdministrationAbility(
       return fromPermissions(true, false, rulesPermissions.create);
     }
 
+    // Permanent deletion requires both delete permission and Grafana admin status.
+    function computeDeletePermanently(): AbilityState {
+      if (!isGrafanaManagedRule) {
+        return NotSupported;
+      }
+      if (!del.granted) {
+        // Propagate the underlying cause (LOADING, PROVISIONED, IS_PLUGIN_MANAGED, etc.)
+        return del;
+      }
+      if (!isAdmin()) {
+        // Admin is a role, not an RBAC permission — anyOfPermissions is empty to signal
+        // "this requires Grafana Admin role" rather than a grantable permission action.
+        return InsufficientPermissions([]);
+      }
+      return Granted;
+    }
+
     return {
       update,
       delete: del,
       restore: grafanaOnlyUpdate,
       pause: grafanaOnlyUpdate,
       duplicate: computeDuplicate(),
+      deletePermanently: computeDeletePermanently(),
       loading,
     };
   }, [
@@ -333,6 +356,11 @@ export interface PromRuleAdministrationAbilityResult {
    * the rule is plugin-owned, otherwise checks the create permission.
    */
   duplicate: AbilityState;
+  /**
+   * Permanently delete the rule (purge from trash). Only applicable to Grafana-managed
+   * alerting rules. Requires both delete permission and Grafana admin status.
+   */
+  deletePermanently: AbilityState;
   /** True while async checks (folder metadata, plugin settings) are still in flight. */
   loading: boolean;
 }
@@ -362,6 +390,7 @@ export function usePromRuleAdministrationAbility(
         pause: NotSupported,
         restore: NotSupported,
         duplicate: NotSupported,
+        deletePermanently: NotSupported,
         loading: false,
       };
     }
@@ -404,12 +433,30 @@ export function usePromRuleAdministrationAbility(
       return fromPermissions(true, false, rulesPermissions.create);
     }
 
+    // Permanent deletion requires both delete permission and Grafana admin status.
+    function computeDeletePermanently(): AbilityState {
+      if (!isAlertingRule) {
+        return NotSupported;
+      }
+      if (!del.granted) {
+        // Propagate the underlying cause (LOADING, PROVISIONED, IS_PLUGIN_MANAGED, etc.)
+        return del;
+      }
+      if (!isAdmin()) {
+        // Admin is a role, not an RBAC permission — anyOfPermissions is empty to signal
+        // "this requires Grafana Admin role" rather than a grantable permission action.
+        return InsufficientPermissions([]);
+      }
+      return Granted;
+    }
+
     return {
       update,
       delete: del,
       pause: alertingOnly(update),
       restore: alertingOnly(update),
       duplicate: computeDuplicate(),
+      deletePermanently: computeDeletePermanently(),
       loading,
     };
   }, [rule, editableLoading, pluginLoading, isEditable, isRemovable, isPluginManaged]);

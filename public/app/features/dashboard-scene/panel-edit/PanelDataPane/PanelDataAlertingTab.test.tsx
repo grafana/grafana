@@ -205,6 +205,7 @@ describe('PanelAlertTabContent', () => {
       restore: granted,
       pause: granted,
       duplicate: granted,
+      deletePermanently: granted,
       loading: false,
     } satisfies RuleEditAbilityResult);
 

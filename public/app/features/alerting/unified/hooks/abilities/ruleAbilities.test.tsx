@@ -1,15 +1,19 @@
 import { getWrapper, render, renderHook, screen, waitFor } from 'test/test-utils';
 
 import { AccessControlAction } from 'app/types/accessControl';
+import { type GrafanaPromRuleDTO, PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../../mockApi';
 import { getCloudRule, getGrafanaRule, grantUserPermissions, mockDataSource } from '../../mocks';
 import { setFolderAccessControl } from '../../mocks/server/configure';
 import { setupDataSources } from '../../testSetup/datasources';
 import { groupIdentifier } from '../../utils/groupIdentifier';
+import * as misc from '../../utils/misc';
 
 import { isAvailable, isLoading, isNotSupported, isPluginManaged, isProvisioned } from './abilityUtils';
 import {
+  skipToken,
+  usePromRuleAdministrationAbility,
   useRuleAdministrationAbility,
   useRuleExploreAbility,
   useRuleExportAbility,
@@ -204,6 +208,69 @@ describe('useRuleAdministrationAbility', () => {
     // Non-existent plugin → not plugin-managed → duplicate checks create permission
     expect(isPluginManaged(result.current.duplicate)).toBe(false);
   });
+
+  it('returns NOT_SUPPORTED for deletePermanently when rule is not Grafana-managed', async () => {
+    const mimirDs = mockDataSource({ uid: 'mimir', name: 'Mimir' });
+    setupDataSources(mimirDs);
+
+    const rule = getCloudRule({}, { rulesSource: mimirDs });
+    const groupId = groupIdentifier.fromCombinedRule(rule);
+
+    const { result } = renderHook(() => useRuleAdministrationAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+
+    await waitFor(() => expect(result.current).not.toBeUndefined());
+
+    expect(isNotSupported(result.current.deletePermanently)).toBe(true);
+  });
+
+  it('returns INSUFFICIENT_PERMISSIONS for deletePermanently when user has delete permission but is not admin', async () => {
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
+    setFolderAccessControl({ 'alert.rules:write': true, 'alert.rules:delete': true });
+
+    const rule = getGrafanaRule();
+    const groupId = groupIdentifier.fromCombinedRule(rule);
+
+    const { result } = renderHook(() => useRuleAdministrationAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.delete.granted).toBe(true);
+    expect(isInsufficientPermissions(result.current.deletePermanently)).toBe(true);
+    if (isInsufficientPermissions(result.current.deletePermanently)) {
+      // Admin is a role, not a grantable permission — the list is intentionally empty.
+      expect(result.current.deletePermanently.anyOfPermissions).toHaveLength(0);
+    }
+  });
+
+  it('grants deletePermanently when user has delete permission and is admin', async () => {
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(true);
+    setFolderAccessControl({ 'alert.rules:write': true, 'alert.rules:delete': true });
+
+    const rule = getGrafanaRule();
+    const groupId = groupIdentifier.fromCombinedRule(rule);
+
+    const { result } = renderHook(() => useRuleAdministrationAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.deletePermanently.granted).toBe(true);
+  });
+
+  it('propagates underlying cause to deletePermanently when delete is denied', async () => {
+    // Provisioned rules: delete → PROVISIONED, so deletePermanently should also → PROVISIONED
+    const rule = getGrafanaRule();
+    if (rule.rulerRule && 'grafana_alert' in rule.rulerRule) {
+      (rule.rulerRule as { grafana_alert: { provenance: string } }).grafana_alert.provenance = 'terraform';
+    }
+    const groupId = groupIdentifier.fromCombinedRule(rule);
+
+    const { result } = renderHook(() => useRuleAdministrationAbility(rule.rulerRule, groupId), { wrapper: wrapper() });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(isProvisioned(result.current.delete)).toBe(true);
+    expect(isProvisioned(result.current.deletePermanently)).toBe(true);
+  });
 });
 
 // ── useRuleSilenceAbility ─────────────────────────────────────────────────────
@@ -304,5 +371,95 @@ describe('useRuleExportAbility', () => {
     const { result } = renderHook(() => useRuleExportAbility(rule.rulerRule), { wrapper: wrapper() });
 
     expect(isNotSupported(result.current)).toBe(true);
+  });
+});
+
+// ── usePromRuleAdministrationAbility ─────────────────────────────────────────
+
+/** Build a minimal GrafanaPromRuleDTO for testing */
+function makePromRule(overrides?: Partial<GrafanaPromRuleDTO>): GrafanaPromRuleDTO {
+  const rule = getGrafanaRule();
+  const rulerRule = rule.rulerRule!;
+  const folderUid =
+    'grafana_alert' in rulerRule
+      ? (rulerRule as { grafana_alert: { namespace_uid: string } }).grafana_alert.namespace_uid
+      : '';
+  return {
+    name: 'test rule',
+    query: '{}',
+    uid: 'test-uid',
+    folderUid,
+    isPaused: false,
+    health: 'ok',
+    state: PromAlertingRuleState.Inactive,
+    type: PromRuleType.Alerting,
+    totals: {},
+    totalsFiltered: {},
+    ...overrides,
+  };
+}
+
+describe('usePromRuleAdministrationAbility', () => {
+  it('returns all NOT_SUPPORTED when skipToken is passed', () => {
+    const { result } = renderHook(() => usePromRuleAdministrationAbility(skipToken), { wrapper: wrapper() });
+
+    expect(isNotSupported(result.current.update)).toBe(true);
+    expect(isNotSupported(result.current.delete)).toBe(true);
+    expect(isNotSupported(result.current.deletePermanently)).toBe(true);
+    expect(result.current.loading).toBe(false);
+  });
+
+  it('returns NOT_SUPPORTED for deletePermanently when rule is a recording rule', async () => {
+    const promRule = makePromRule({ type: PromRuleType.Recording });
+
+    const { result } = renderHook(() => usePromRuleAdministrationAbility(promRule), { wrapper: wrapper() });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(isNotSupported(result.current.deletePermanently)).toBe(true);
+  });
+
+  it('returns INSUFFICIENT_PERMISSIONS for deletePermanently when user has delete permission but is not admin', async () => {
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
+    setFolderAccessControl({ 'alert.rules:write': true, 'alert.rules:delete': true });
+
+    const promRule = makePromRule();
+
+    const { result } = renderHook(() => usePromRuleAdministrationAbility(promRule), { wrapper: wrapper() });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.delete.granted).toBe(true);
+    expect(isInsufficientPermissions(result.current.deletePermanently)).toBe(true);
+    if (isInsufficientPermissions(result.current.deletePermanently)) {
+      // Admin is a role, not a grantable permission — the list is intentionally empty.
+      expect(result.current.deletePermanently.anyOfPermissions).toHaveLength(0);
+    }
+  });
+
+  it('grants deletePermanently when user has delete permission and is admin', async () => {
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(true);
+    setFolderAccessControl({ 'alert.rules:write': true, 'alert.rules:delete': true });
+
+    const promRule = makePromRule();
+
+    const { result } = renderHook(() => usePromRuleAdministrationAbility(promRule), { wrapper: wrapper() });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.deletePermanently.granted).toBe(true);
+  });
+
+  it('propagates underlying cause to deletePermanently when delete is denied', async () => {
+    // Provisioned alerting rule: delete → PROVISIONED, deletePermanently should also → PROVISIONED
+    // isProvisionedPromRule checks promRule.provenance directly.
+    const promRule = makePromRule({ provenance: 'terraform' });
+
+    const { result } = renderHook(() => usePromRuleAdministrationAbility(promRule), { wrapper: wrapper() });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(isProvisioned(result.current.delete)).toBe(true);
+    expect(isProvisioned(result.current.deletePermanently)).toBe(true);
   });
 });

@@ -34,22 +34,54 @@ const Denied: AbilityState = NotSupported;
 
 /** A fully-denied RuleEditAbilityResult (ruler path) */
 function deniedEditAbility(): RuleEditAbilityResult {
-  return { update: Denied, delete: Denied, restore: Denied, pause: Denied, duplicate: Denied, loading: false };
+  return {
+    update: Denied,
+    delete: Denied,
+    restore: Denied,
+    pause: Denied,
+    duplicate: Denied,
+    deletePermanently: Denied,
+    loading: false,
+  };
 }
 
 /** A fully-granted RuleEditAbilityResult (ruler path) */
 function grantedEditAbility(): RuleEditAbilityResult {
-  return { update: Granted, delete: Granted, restore: Granted, pause: Granted, duplicate: Granted, loading: false };
+  return {
+    update: Granted,
+    delete: Granted,
+    restore: Granted,
+    pause: Granted,
+    duplicate: Granted,
+    deletePermanently: Granted,
+    loading: false,
+  };
 }
 
 /** A fully-denied PromRuleAdministrationAbilityResult (prom path) */
 function deniedPromAdminAbility(): PromRuleAdministrationAbilityResult {
-  return { update: Denied, delete: Denied, restore: Denied, pause: Denied, duplicate: Denied, loading: false };
+  return {
+    update: Denied,
+    delete: Denied,
+    restore: Denied,
+    pause: Denied,
+    duplicate: Denied,
+    deletePermanently: Denied,
+    loading: false,
+  };
 }
 
 /** A fully-granted PromRuleAdministrationAbilityResult (prom path) */
 function grantedPromAdminAbility(): PromRuleAdministrationAbilityResult {
-  return { update: Granted, delete: Granted, restore: Granted, pause: Granted, duplicate: Granted, loading: false };
+  return {
+    update: Granted,
+    delete: Granted,
+    restore: Granted,
+    pause: Granted,
+    duplicate: Granted,
+    deletePermanently: Granted,
+    loading: false,
+  };
 }
 
 const mocks = {
