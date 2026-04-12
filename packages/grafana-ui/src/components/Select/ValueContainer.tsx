@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { isEqual } from 'lodash';
+import deepEqual from 'fast-deep-equal';
 import { Component, createRef, type ReactNode } from 'react';
 import { type ValueContainerProps as BaseValueContainerProps, type GroupBase } from 'react-select';
 
@@ -27,7 +27,7 @@ class UnthemedValueContainer<Option, isMulti extends boolean, Group extends Grou
       this.ref.current &&
       this.props.selectProps.autoWidth &&
       !this.props.selectProps.maxVisibleValues &&
-      !isEqual(prevProps.selectProps.value, this.props.selectProps.value)
+      !deepEqual(prevProps.selectProps.value, this.props.selectProps.value)
     ) {
       // Reset in order to measure the new width
       this.ref.current.style.minWidth = '0px';
