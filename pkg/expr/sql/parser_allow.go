@@ -74,6 +74,11 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.CharExpr:
 		return
 
+    // Column names that match reserved SQL keywords (for example: plan,
+    // group, order, select) may still cause parse errors before reaching
+    // this allowlist logic. Users should alias or rename such columns in
+    // their query.
+
 	case sqlparser.ColIdent, *sqlparser.ColName, sqlparser.Columns, sqlparser.ColumnType:
 		return
 
