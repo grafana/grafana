@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, type Column, EmptyState, InteractiveTable, Stack } from '@grafana/ui';
-import { type GrafanaRuleDefinition, type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { Button, type Column, EmptyState, InteractiveTable, Stack, Tooltip } from '@grafana/ui';
+import { type GrafanaRuleDefinition, type RulerGrafanaRuleDTO } from 'app/types/unified-alerter-dto';
+import { type RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 
 import { trackDeletedRuleRestoreFail, trackDeletedRuleRestoreSuccess } from '../../../Analytics';
 import { shouldAllowPermanentlyDeletingRules } from '../../../featureToggles';
+import { isAvailable, isGranted, isInsufficientPermissions } from '../../../hooks/abilities/abilityUtils';
+import { useRuleAdministrationAbility } from '../../../hooks/abilities/ruleAbilities';
 import { UpdatedByUser } from '../../rule-viewer/tabs/version-history/UpdatedBy';
 
 import { ConfirmDeletedPermanentlyModal } from './ConfirmDeletePermanantlyModal';
@@ -60,8 +63,6 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
     setGuidToDelete(ruleTorestore.grafana_alert.guid);
   };
 
-  const shouldAllowRemovePermanently = shouldAllowPermanentlyDeletingRules();
-
   const columns: Array<Column<(typeof deletedRules)[0]>> = [
     {
       id: 'createdBy',
@@ -112,30 +113,11 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
       disableGrow: true,
       cell: ({ row }) => {
         return (
-          <Stack direction="row" alignItems="center" justifyContent="flex-end">
-            <Button
-              variant="secondary"
-              size="sm"
-              icon="history"
-              onClick={() => {
-                showConfirmation(getRowId(row.original.grafana_alert));
-              }}
-            >
-              <Trans i18nKey="alerting.deleted-rules.restore">Restore</Trans>
-            </Button>
-            {shouldAllowRemovePermanently && (
-              <Button
-                variant="destructive"
-                size="sm"
-                icon="trash-alt"
-                onClick={() => {
-                  showDeleteConfirmation(getRowId(row.original.grafana_alert));
-                }}
-              >
-                <Trans i18nKey="alerting.deleted-rules.permanently-delete">Permanently delete</Trans>
-              </Button>
-            )}
-          </Stack>
+          <DeletedRuleActions
+            rule={row.original}
+            onRestore={() => showConfirmation(getRowId(row.original.grafana_alert))}
+            onDeletePermanently={() => showDeleteConfirmation(getRowId(row.original.grafana_alert))}
+          />
         );
       },
     },
@@ -164,6 +146,52 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
         onDismiss={hideConfirmationForDelete}
       />
     </>
+  );
+}
+
+interface DeletedRuleActionsProps {
+  rule: RulerGrafanaRuleDTO<GrafanaRuleDefinition>;
+  onRestore: () => void;
+  onDeletePermanently: () => void;
+}
+
+function DeletedRuleActions({ rule, onRestore, onDeletePermanently }: DeletedRuleActionsProps) {
+  const groupId = useMemo(
+    (): RuleGroupIdentifierV2 => ({
+      groupOrigin: 'grafana',
+      groupName: rule.grafana_alert.rule_group,
+      namespace: { uid: rule.grafana_alert.namespace_uid },
+    }),
+    [rule.grafana_alert.rule_group, rule.grafana_alert.namespace_uid]
+  );
+
+  const { deletePermanently: deletePermAbility } = useRuleAdministrationAbility(rule, groupId);
+
+  const showPermanentDelete = shouldAllowPermanentlyDeletingRules() && isAvailable(deletePermAbility);
+
+  const tooltipContent = isInsufficientPermissions(deletePermAbility)
+    ? t('alerting.deleted-rules.permanently-delete-no-permission', 'Grafana Admin role required')
+    : undefined;
+
+  return (
+    <Stack direction="row" alignItems="center" justifyContent="flex-end">
+      <Button variant="secondary" size="sm" icon="history" onClick={onRestore}>
+        <Trans i18nKey="alerting.deleted-rules.restore">Restore</Trans>
+      </Button>
+      {showPermanentDelete && (
+        <Tooltip content={tooltipContent ?? ''} placement="top">
+          <Button
+            variant="destructive"
+            size="sm"
+            icon="trash-alt"
+            disabled={!isGranted(deletePermAbility)}
+            onClick={onDeletePermanently}
+          >
+            <Trans i18nKey="alerting.deleted-rules.permanently-delete">Permanently delete</Trans>
+          </Button>
+        </Tooltip>
+      )}
+    </Stack>
   );
 }
 
