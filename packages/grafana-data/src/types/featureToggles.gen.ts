@@ -29,11 +29,6 @@ export interface FeatureToggles {
   */
   publicDashboardsEmailSharing?: boolean;
   /**
-  * Enables public dashboard rendering using scenes
-  * @default true
-  */
-  publicDashboardsScene?: boolean;
-  /**
   * Support new streaming approach for loki (prototype, needs special loki build)
   * @default false
   */
@@ -164,11 +159,6 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
-  * Allow setting folder metadata for provisioned folders
-  * @default true
-  */
-  provisioningFolderMetadata?: boolean;
-  /**
   * Enable export functionality for provisioned resources
   * @default false
   */
@@ -178,11 +168,6 @@ export interface FeatureToggles {
   * @default false
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
-  /**
-  * Allow requesting query results as chunked jsonl rather than single json blob
-  * @default false
-  */
-  chunkedQueryStreaming?: boolean;
   /**
   * Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
   * @default true
@@ -404,11 +389,6 @@ export interface FeatureToggles {
   */
   annotationsClustering?: boolean;
   /**
-  * Enables dashboard rendering using scenes for all roles
-  * @default true
-  */
-  dashboardScene?: boolean;
-  /**
   * Enables new dashboard layouts
   * @default true
   */
@@ -609,11 +589,6 @@ export interface FeatureToggles {
   */
   newDashboardWithFiltersAndGroupBy?: boolean;
   /**
-  * Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it
-  * @default false
-  */
-  dashboardAdHocAndGroupByWrapper?: boolean;
-  /**
   * Renders ad hoc filters and group by in a single unified control
   * @default false
   */
@@ -810,6 +785,11 @@ export interface FeatureToggles {
   */
   groupAttributeSync?: boolean;
   /**
+  * Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation
+  * @default false
+  */
+  groupToNestedTableV2?: boolean;
+  /**
   * Enables step mode for alerting queries and expressions
   * @default true
   */
@@ -975,6 +955,11 @@ export interface FeatureToggles {
   */
   teamLBACApiReadFromAppPlatform?: boolean;
   /**
+  * Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
+  * @default false
+  */
+  teamLBACApiWriteFromAppPlatform?: boolean;
+  /**
   * Enables Advisor app
   * @default true
   */
@@ -1039,11 +1024,6 @@ export interface FeatureToggles {
   * @default false
   */
   newShareReportDrawer?: boolean;
-  /**
-  * Disable pre-loading app plugins when the request is coming from the renderer
-  * @default false
-  */
-  rendererDisableAppPluginsPreload?: boolean;
   /**
   * Enables SRI checks for Grafana JavaScript assets
   * @default false
@@ -1110,11 +1090,6 @@ export interface FeatureToggles {
   * @default false
   */
   unifiedNavbars?: boolean;
-  /**
-  * Enables a control component for the logs panel in Explore
-  * @default true
-  */
-  logsPanelControls?: boolean;
   /**
   * Enables creating metrics from profiles and storing them as recording rules
   * @default false
@@ -1652,11 +1627,6 @@ export interface FeatureToggles {
   */
   frontendServiceUseSettingsService?: boolean;
   /**
-  * Whether to use the new SharedPreferences functional component
-  * @default false
-  */
-  functionalSharedPreferences?: boolean;
-  /**
   * Enables managed plugins v2 (expanded rollout, community plugin coverage)
   * @default false
   */
@@ -1686,6 +1656,11 @@ export interface FeatureToggles {
   * @default false
   */
   datasourcesApiServerEnableHealthEndpointFrontend?: boolean;
+  /**
+  * Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.
+  * @default false
+  */
+  datasourcesApiServerEnableHealthEndpointRedirect?: boolean;
   /**
   * Enables the new Flame Graph UI containing the Call Tree view
   * @default false
@@ -1776,4 +1751,19 @@ export interface FeatureToggles {
   * @default false
   */
   cacheConfigUnifiedStorageMigration?: boolean;
+  /**
+  * Boots the frontend using the boot.js script built from TS instead of the embedded boot script
+  * @default false
+  */
+  compiledBootScript?: boolean;
+  /**
+  * Enables validation on the InfluxDB data source configuration page
+  * @default false
+  */
+  influxDBConfigValidation?: boolean;
+  /**
+  * Enables validation on the ClickHouse data source configuration page
+  * @default false
+  */
+  clickHouseConfigValidation?: boolean;
 }

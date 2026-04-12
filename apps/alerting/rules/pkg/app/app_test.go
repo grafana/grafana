@@ -5,10 +5,11 @@ import (
 	"testing"
 	"time"
 
-	appsdk "github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	appsdk "github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resource"
 
 	v1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/alertrule"
@@ -38,7 +39,7 @@ func TestAlertRuleValidation_Success(t *testing.T) {
 		Expressions:          v1.AlertRuleExpressionMap{"A": v1.AlertRuleExpression{Model: map[string]any{"expr": "1"}, Source: boolPtr(true)}},
 		NoDataState:          v1.DefaultNoDataState,
 		ExecErrState:         v1.DefaultExecErrState,
-		NotificationSettings: &v1.AlertRuleV0alpha1SpecNotificationSettings{Receiver: "notif-ok"},
+		NotificationSettings: &v1.AlertRuleNotificationSettings{Receiver: "notif-ok"},
 	}
 
 	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
@@ -140,7 +141,7 @@ func TestAlertRuleValidation_Errors(t *testing.T) {
 	assert.Error(t, mk(func(r *v1.AlertRule) { r.Annotations[v1.FolderAnnotationKey] = "bad" }), "want folder not exist error")
 	assert.Error(t, mk(func(r *v1.AlertRule) { r.Spec.Trigger.Interval = v1.AlertRulePromDuration("30s") }), "want base interval multiple error")
 	assert.Error(t, mk(func(r *v1.AlertRule) {
-		r.Spec.NotificationSettings = &v1.AlertRuleV0alpha1SpecNotificationSettings{Receiver: "bad"}
+		r.Spec.NotificationSettings = &v1.AlertRuleNotificationSettings{Receiver: "bad"}
 	}), "want invalid receiver error")
 	assert.Error(t, mk(func(r *v1.AlertRule) { r.Labels[v1.GroupLabelKey] = "grp" }), "want group set on create error")
 	assert.Error(t, mk(func(r *v1.AlertRule) { r.Spec.For = strPtr("-10s") }), "want for>=0 error")
