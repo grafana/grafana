@@ -1,6 +1,7 @@
 /**
  * Deep merges multiple source objects into a target object, mutating the target.
- * Arrays are replaced (not concatenated), matching lodash.merge behavior.
+ * Arrays are replaced rather than merged by index.
+ * This intentionally differs from lodash.merge, which merges arrays by index.
  */
 export function deepMerge<T extends object>(target: T, ...sources: Array<Partial<T> | undefined>): T {
   for (const source of sources) {
