@@ -49,7 +49,7 @@ const ALTERNATING_PATTERN_LINE_STYLES: LineStyle[] = [
 
 /**
  * Resolves the "accessible" (alternating patterns) fill type into a concrete line style per series.
- * Non auto line styles pass through unchanged.
+ * Non accessible line styles pass through unchanged.
  */
 function resolveLineStyle(lineStyle: LineStyle | undefined, seriesIndex: number): LineStyle | undefined {
   if (!lineStyle || lineStyle.fill !== 'accessible') {
