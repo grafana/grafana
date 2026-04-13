@@ -425,6 +425,10 @@ func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID 
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.validateResource")
 	defer span.End()
 
+	if resourceID == "*" {
+		return ErrInvalidResourceID.Build(ErrInvalidResourceIDData(resourceID))
+	}
+
 	if s.options.ResourceValidator != nil {
 		return s.options.ResourceValidator(ctx, orgID, resourceID)
 	}
