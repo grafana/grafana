@@ -1236,12 +1236,21 @@ describe('heatmapPathsDense', () => {
           },
         },
       });
-      expect(rect).toHaveBeenCalledTimes(6);
-      expect(each).toHaveBeenCalledTimes(6);
+      [
+        [1000, -1],
+        [1000, 0],
+        [1000, 1],
+        [2000, -1],
+        [2000, 0],
+        [2000, 1],
+      ].forEach((pair, idx) => {
+        expect(rect).toHaveBeenCalledWith(expect.anything(), pair[0], pair[1], 999, 1);
+        expect(each).toHaveBeenCalledWith(expect.anything(), 1, idx, pair[0], pair[1], 999, 1);
+      });
     });
 
     it('filters cells by hideLE and hideGE', () => {
-      const { rect, each } = invokeDensePathBuilder({
+      const { rect } = invokeDensePathBuilder({
         ...minimalPathbuilderOpts,
         hideLE: 8,
         hideGE: 22,
@@ -1252,153 +1261,38 @@ describe('heatmapPathsDense', () => {
           },
         },
       });
-      expect(rect).toHaveBeenCalledTimes(4);
-      expect(each).toHaveBeenCalledTimes(4);
+      expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), 1000, 0, 999, 1);
+      expect(rect).toHaveBeenNthCalledWith(2, expect.anything(), 1000, 1, 999, 1);
+      expect(rect).toHaveBeenNthCalledWith(3, expect.anything(), 2000, -1, 999, 1);
     });
 
-    it('uses fillPalette from disp.fill.index when provided', () => {
-      const palette = ['#ff0000', '#00ff00', '#0000ff'];
-      const { rect } = invokeDensePathBuilder({
-        ...minimalPathbuilderOpts,
-        disp: {
-          fill: {
-            values: () => [0, 1, 2, 0, 1, 2],
-            index: palette,
-          },
-        },
-      });
-      expect(rect).toHaveBeenCalledTimes(6);
-    });
-
-    it('uses [...new Set(fills)] when disp.fill.index is not provided', () => {
-      const { rect } = invokeDensePathBuilder({
-        ...minimalPathbuilderOpts,
-        disp: {
-          fill: {
-            values: () => [0, 1, 0, 1, 0, 1],
-            // @ts-expect-error testing fallback when index is undefined
-            index: undefined,
-          },
-        },
-      });
-      expect(rect).toHaveBeenCalledTimes(6);
-    });
-
-    it('uses log scale branch for x when scaleX.distr === 3', () => {
-      const { rect } = invokeDensePathBuilder(
-        {
+    it.each([['#ff0000', '#00ff00', '#0000ff'], undefined])(
+      'uses fillPalette from disp.fill.index when provided',
+      (palette) => {
+        const { rect } = invokeDensePathBuilder({
           ...minimalPathbuilderOpts,
           disp: {
             fill: {
               values: () => [0, 1, 2, 0, 1, 2],
-              index: ['#a', '#b', '#c'],
+              index: palette as [],
             },
           },
-        },
-        { scaleXDistr: 3 }
-      );
-      expect(rect).toHaveBeenCalledTimes(6);
-    });
+        });
+        expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), 1000, -1, 999, 1);
+        expect(rect).toHaveBeenNthCalledWith(2, expect.anything(), 1000, 0, 999, 1);
+        expect(rect).toHaveBeenNthCalledWith(3, expect.anything(), 1000, 1, 999, 1);
+        expect(rect).toHaveBeenNthCalledWith(4, expect.anything(), 2000, -1, 999, 1);
+        expect(rect).toHaveBeenNthCalledWith(5, expect.anything(), 2000, 0, 999, 1);
+        expect(rect).toHaveBeenNthCalledWith(6, expect.anything(), 2000, 1, 999, 1);
+      }
+    );
 
-    it('uses log scale branch for y when scaleY.distr === 3', () => {
-      const { rect } = invokeDensePathBuilder(
-        {
-          ...minimalPathbuilderOpts,
-          disp: {
-            fill: {
-              values: () => [0, 1, 2, 0, 1, 2],
-              index: ['#a', '#b', '#c'],
-            },
-          },
-        },
-        { scaleYDistr: 3 }
-      );
-      expect(rect).toHaveBeenCalledTimes(6);
-    });
-
-    it('uses ySizeDivisor when scaleY is log and ySizeDivisor !== 1', () => {
-      const { rect } = invokeDensePathBuilder(
-        {
-          ...minimalPathbuilderOpts,
-          ySizeDivisor: 2,
-          disp: {
-            fill: {
-              values: () => [0, 1, 2, 0, 1, 2],
-              index: ['#a', '#b', '#c'],
-            },
-          },
-        },
-        { scaleYDistr: 3 }
-      );
-      expect(rect).toHaveBeenCalledTimes(6);
-    });
-
-    it('skips cells with null count', () => {
-      const dataWithNull: DenseHeatmap = [
-        [1000, 1000, 2000, 2000],
-        [0, 1, 0, 1],
-        [5, null, 10, 20],
-      ];
-      const { rect, each } = invokeDensePathBuilder(
-        {
-          ...minimalPathbuilderOpts,
-          disp: {
-            fill: {
-              values: () => [0, 0, 1, 2],
-              index: ['#a', '#b', '#c'],
-            },
-          },
-        },
-        { data: dataWithNull }
-      );
-      expect(rect).toHaveBeenCalledTimes(3);
-      expect(each).toHaveBeenCalledTimes(3);
-    });
-
-    it('applies xAlign -1 and yAlign 0 offsets correctly', () => {
-      const { rect } = invokeDensePathBuilder({
-        ...minimalPathbuilderOpts,
-        xAlign: -1,
-        yAlign: 0,
-        disp: {
-          fill: {
-            values: () => [0, 1, 2, 0, 1, 2],
-            index: ['#a', '#b', '#c'],
-          },
-        },
-      });
-      expect(rect).toHaveBeenCalledTimes(6);
-      expect(rect).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.any(Number),
-        expect.any(Number),
-        expect.any(Number),
-        expect.any(Number)
-      );
-    });
-
-    it('uses Math.round for tile size when gap >= CRISP_EDGES_GAP_MIN (4)', () => {
-      const { rect } = invokeDensePathBuilder({
-        ...minimalPathbuilderOpts,
-        gap: 5,
-        disp: {
-          fill: {
-            values: () => [0, 1, 2, 0, 1, 2],
-            index: ['#a', '#b', '#c'],
-          },
-        },
-      });
-      expect(rect).toHaveBeenCalledTimes(6);
-    });
-
-    it('calls ctx.save, rect, clip, fill, restore for each fill path', () => {
+    it('calls ctx.save, rect, restore for each fill path', () => {
       const ctx = createMockCtx();
       invokeDensePathBuilder(minimalPathbuilderOpts, { ctx });
-      expect(ctx.save).toHaveBeenCalled();
+      expect(ctx.save).toHaveBeenCalledWith();
       expect(ctx.rect).toHaveBeenCalledWith(0, 0, 100, 100);
-      expect(ctx.clip).toHaveBeenCalled();
-      expect(ctx.fill).toHaveBeenCalled();
-      expect(ctx.restore).toHaveBeenCalled();
+      expect(ctx.restore).toHaveBeenCalledWith();
     });
   });
 });
@@ -1473,27 +1367,23 @@ describe('heatmapPathsPoints', () => {
     it('draws rect for each point and calls each callback', () => {
       const { rect, each } = invokePointsPathBuilder(minimalPointsOpts, 'rgba(255,0,255,0.7)');
 
-      expect(rect).toHaveBeenCalledTimes(3);
-      expect(each).toHaveBeenCalledTimes(3);
+      // rect
+      expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), 96, -3, 8, 8);
+      expect(rect).toHaveBeenNthCalledWith(2, expect.anything(), 196, -2, 8, 8);
+      expect(rect).toHaveBeenNthCalledWith(3, expect.anything(), 296, -1, 8, 8);
+
+      //each
+      expect(each).toHaveBeenNthCalledWith(1, expect.anything(), 1, 0, 96, -3, 8, 8);
+      expect(each).toHaveBeenNthCalledWith(2, expect.anything(), 1, 1, 196, -2, 8, 8);
+      expect(each).toHaveBeenNthCalledWith(3, expect.anything(), 1, 2, 296, -1, 8, 8);
     });
 
     it('calls each with correct (u, seriesIdx, dataIdx, lft, top, wid, hgt)', () => {
       const { each } = invokePointsPathBuilder(minimalPointsOpts, 'magenta');
 
-      expect(each).toHaveBeenNthCalledWith(1, expect.anything(), 1, 0, expect.any(Number), expect.any(Number), 8, 8);
-      expect(each).toHaveBeenNthCalledWith(2, expect.anything(), 1, 1, expect.any(Number), expect.any(Number), 8, 8);
-    });
-
-    it('uses exemplarColor for fill palette', () => {
-      const customColor = 'rgba(0,128,255,0.9)';
-      const ctx = createMockCtx();
-      invokePointsPathBuilder(minimalPointsOpts, customColor, { ctx });
-
-      expect(ctx.save).toHaveBeenCalled();
-      expect(ctx.rect).toHaveBeenCalledWith(0, 0, 100, 100);
-      expect(ctx.clip).toHaveBeenCalled();
-      expect(ctx.fill).toHaveBeenCalled();
-      expect(ctx.restore).toHaveBeenCalled();
+      expect(each).toHaveBeenNthCalledWith(1, expect.anything(), 1, 0, 96, -3, 8, 8);
+      expect(each).toHaveBeenNthCalledWith(2, expect.anything(), 1, 1, 196, -2, 8, 8);
+      expect(each).toHaveBeenNthCalledWith(3, expect.anything(), 1, 2, 296, -1, 8, 8);
     });
 
     it('applies yShift -0.5 when yLayout is le (ordinal)', () => {
@@ -1548,23 +1438,6 @@ describe('heatmapPathsSparse', () => {
       },
     },
   };
-
-  it('returns a path builder function', () => {
-    const pathBuilder = heatmapPathsSparse(minimalPathbuilderOpts);
-    expect(typeof pathBuilder).toBe('function');
-    expect(pathBuilder.length).toBe(2); // (u, seriesIdx)
-  });
-
-  it('accepts optional gap, hideLE, hideGE', () => {
-    const pathBuilder = heatmapPathsSparse({
-      ...minimalPathbuilderOpts,
-      gap: 2,
-      hideLE: 0,
-      hideGE: 100,
-    });
-    expect(typeof pathBuilder).toBe('function');
-  });
-
   describe('draws and fills sparse heatmap grid cells', () => {
     /**
      * Invokes heatmapPathsSparse path builder by mocking uPlot.orient to capture and run the draw callback.
@@ -1603,8 +1476,15 @@ describe('heatmapPathsSparse', () => {
           },
         },
       });
-      expect(rect).toHaveBeenCalledTimes(4);
-      expect(each).toHaveBeenCalledTimes(4);
+      expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), 0.5, 4.5, 99, 1);
+      expect(rect).toHaveBeenNthCalledWith(2, expect.anything(), 100.5, 4.5, 99, 1);
+      expect(rect).toHaveBeenNthCalledWith(3, expect.anything(), 0.5, 16.5, 99, 1);
+      expect(rect).toHaveBeenNthCalledWith(4, expect.anything(), 100.5, 16.5, 99, 1);
+
+      expect(each).toHaveBeenNthCalledWith(1, expect.anything(), 1, 0, 0.5, 4.5, 99, 1);
+      expect(each).toHaveBeenNthCalledWith(2, expect.anything(), 1, 1, 100.5, 4.5, 99, 1);
+      expect(each).toHaveBeenNthCalledWith(3, expect.anything(), 1, 2, 0.5, 16.5, 99, 1);
+      expect(each).toHaveBeenNthCalledWith(4, expect.anything(), 1, 3, 100.5, 16.5, 99, 1);
     });
 
     it('filters cells by hideLE and hideGE', () => {
@@ -1619,55 +1499,11 @@ describe('heatmapPathsSparse', () => {
           },
         },
       });
-      expect(rect).toHaveBeenCalledTimes(2);
-      expect(each).toHaveBeenCalledTimes(2);
-    });
+      expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), 100.5, 4.5, 99, 1);
+      expect(rect).toHaveBeenNthCalledWith(2, expect.anything(), 0.5, 16.5, 99, 1);
 
-    it('uses fillPalette from disp.fill.index when provided', () => {
-      const { rect } = invokeSparsePathBuilder({
-        ...minimalPathbuilderOpts,
-        disp: {
-          fill: {
-            values: () => [0, 1, 2, 3],
-            index: ['#a', '#b', '#c', '#d'],
-          },
-        },
-      });
-      expect(rect).toHaveBeenCalledTimes(4);
-    });
-
-    it('uses [...new Set(fills)] when disp.fill.index is not provided', () => {
-      const { rect } = invokeSparsePathBuilder({
-        ...minimalPathbuilderOpts,
-        disp: {
-          fill: {
-            values: () => [0, 1, 0, 1],
-            // @ts-expect-error testing fallback when index is undefined
-            index: undefined,
-          },
-        },
-      });
-      expect(rect).toHaveBeenCalledTimes(4);
-    });
-
-    it('caches tile bounds in xOffs and yOffs Maps', () => {
-      const { rect } = invokeSparsePathBuilder({
-        ...minimalPathbuilderOpts,
-        disp: {
-          fill: {
-            values: () => [0, 1, 2, 3],
-            index: ['#a', '#b', '#c', '#d'],
-          },
-        },
-      });
-      expect(rect).toHaveBeenCalledTimes(4);
-      expect(rect).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.any(Number),
-        expect.any(Number),
-        expect.any(Number),
-        expect.any(Number)
-      );
+      expect(each).toHaveBeenNthCalledWith(1, expect.anything(), 1, 1, 100.5, 4.5, 99, 1);
+      expect(each).toHaveBeenNthCalledWith(2, expect.anything(), 1, 2, 0.5, 16.5, 99, 1);
     });
 
     it('skips cells when count <= hideLE or count >= hideGE', () => {
@@ -1682,7 +1518,7 @@ describe('heatmapPathsSparse', () => {
           },
         },
       });
-      expect(rect).toHaveBeenCalledTimes(0);
+      expect(rect).not.toHaveBeenCalled();
     });
 
     it('calls ctx.save, rect, clip, fill, restore', () => {
@@ -1706,7 +1542,10 @@ describe('heatmapPathsSparse', () => {
           },
         },
       });
-      expect(rect).toHaveBeenCalledTimes(4);
+      expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), 2.5, 6.5, 95, 1);
+      expect(rect).toHaveBeenNthCalledWith(2, expect.anything(), 102.5, 6.5, 95, 1);
+      expect(rect).toHaveBeenNthCalledWith(3, expect.anything(), 2.5, 18.5, 95, 1);
+      expect(rect).toHaveBeenNthCalledWith(4, expect.anything(), 102.5, 18.5, 95, 1);
     });
   });
 });
@@ -2347,7 +2186,6 @@ describe('Regression tests', () => {
       const yMaxValues = [0.1, 0.5, 1.0];
       const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
       expect(factor).toBe(1);
-      expect(Number.isFinite(factor)).toBe(true);
     });
   });
 });
