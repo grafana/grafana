@@ -67,6 +67,10 @@ type RemoteIndexStore interface {
 	// The meta.json is deleted first to signal it an incomplete index.
 	// Callers must hold a distributed lock to prevent concurrent modifications.
 	DeleteIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) error
+
+	// CleanupIncompleteUploads removes index prefixes that have files but no meta.json,
+	// indicating a failed or interrupted upload. Returns the number of cleaned prefixes.
+	CleanupIncompleteUploads(ctx context.Context, nsResource resource.NamespacedResource) (int, error)
 }
 
 // remoteIndexStore implements RemoteIndexStore using a CDKBucket.
@@ -93,7 +97,7 @@ func nsPrefix(ns resource.NamespacedResource) string {
 	return fmt.Sprintf("%s/%s.%s/", ns.Namespace, ns.Group, ns.Resource)
 }
 
-func (s *remoteIndexStore) UploadIndex(ctx context.Context, nsResource resource.NamespacedResource, localDir string, meta IndexMeta) (ulid.ULID, error) {
+func (s *remoteIndexStore) UploadIndex(ctx context.Context, nsResource resource.NamespacedResource, localDir string, meta IndexMeta) (_ ulid.ULID, retErr error) {
 	indexKey := ulid.Make()
 	pfx := indexPrefix(nsResource, indexKey.String())
 
@@ -143,24 +147,47 @@ func (s *remoteIndexStore) UploadIndex(ctx context.Context, nsResource resource.
 		return ulid.ULID{}, fmt.Errorf("no files to upload in %s", localDir)
 	}
 
+	// Best-effort cleanup of uploaded objects on failure.
+	var uploaded []string
+	defer func() {
+		if retErr != nil {
+			s.cleanupObjects(context.WithoutCancel(ctx), uploaded)
+		}
+	}()
+
 	// Upload each file using streaming.
 	for _, rel := range relPaths {
 		objectKey := pfx + filepath.ToSlash(rel)
 		if err := s.uploadFile(ctx, objectKey, filepath.Join(absLocalDir, rel)); err != nil {
 			return ulid.ULID{}, fmt.Errorf("uploading %s: %w", rel, err)
 		}
+		uploaded = append(uploaded, objectKey)
 	}
 
-	// Upload meta.json last — its presence signals a complete upload
+	// Upload meta.json last — its presence signals a complete upload.
+	// Add it to uploaded first so deferred cleanup covers the case where
+	// WriteAll fails ambiguously (object committed but response error).
 	metaBytes, err := json.Marshal(meta)
 	if err != nil {
 		return ulid.ULID{}, fmt.Errorf("marshaling meta: %w", err)
 	}
-	if err := s.bucket.WriteAll(ctx, pfx+metaJSONFile, metaBytes, nil); err != nil {
+	metaKey := pfx + metaJSONFile
+	uploaded = append(uploaded, metaKey)
+	if err := s.bucket.WriteAll(ctx, metaKey, metaBytes, nil); err != nil {
 		return ulid.ULID{}, fmt.Errorf("uploading meta.json: %w", err)
 	}
 
 	return indexKey, nil
+}
+
+// cleanupObjects performs best-effort deletion of the given object keys.
+// Errors are logged but not returned, since this runs during error recovery.
+func (s *remoteIndexStore) cleanupObjects(ctx context.Context, keys []string) {
+	for _, key := range keys {
+		if err := s.bucket.Delete(ctx, key); err != nil {
+			s.log.Warn("failed to clean up partially uploaded object", "key", key, "err", err)
+		}
+	}
 }
 
 func (s *remoteIndexStore) uploadFile(ctx context.Context, objectKey, localPath string) error {
@@ -194,7 +221,7 @@ func (s *remoteIndexStore) uploadFile(ctx context.Context, objectKey, localPath 
 	})
 }
 
-func (s *remoteIndexStore) DownloadIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, destDir string) (*IndexMeta, error) {
+func (s *remoteIndexStore) DownloadIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, destDir string) (_ *IndexMeta, retErr error) {
 	pfx := indexPrefix(nsResource, indexKey.String())
 
 	// Read meta.json first
@@ -209,25 +236,45 @@ func (s *remoteIndexStore) DownloadIndex(ctx context.Context, nsResource resourc
 	if len(meta.Files) == 0 {
 		return nil, fmt.Errorf("meta.json has empty file manifest for index %q", indexKey)
 	}
+	if err := validateManifestPaths(meta.Files); err != nil {
+		return nil, fmt.Errorf("invalid manifest: %w", err)
+	}
 
-	// Ensure the destination directory exists before resolving symlinks,
-	// so callers can pass a fresh path without pre-creating it.
+	// fail if destDir already exist
 	absDest, err := filepath.Abs(destDir)
 	if err != nil {
 		return nil, fmt.Errorf("resolving dest dir: %w", err)
 	}
-	if err := os.MkdirAll(absDest, 0750); err != nil {
-		return nil, fmt.Errorf("creating dest dir: %w", err)
+	if _, err := os.Stat(absDest); err == nil {
+		return nil, fmt.Errorf("destination already exists: %s", absDest)
+	} else if !os.IsNotExist(err) {
+		return nil, fmt.Errorf("checking destination: %w", err)
 	}
-	realDest, err := filepath.EvalSymlinks(absDest)
+
+	// Download into a staging dir, then rename to absDest
+	if err := os.MkdirAll(filepath.Dir(absDest), 0750); err != nil {
+		return nil, fmt.Errorf("creating parent dir: %w", err)
+	}
+	tmpDir, err := os.MkdirTemp(filepath.Dir(absDest), ".dl-*")
 	if err != nil {
-		return nil, fmt.Errorf("resolving dest dir symlinks: %w", err)
+		return nil, fmt.Errorf("creating staging dir: %w", err)
+	}
+	defer func() {
+		if tmpDir != "" {
+			_ = os.RemoveAll(tmpDir)
+		}
+	}()
+
+	// Resolve the staging dir to its real path
+	realTmpDir, err := filepath.EvalSymlinks(tmpDir)
+	if err != nil {
+		return nil, fmt.Errorf("resolving staging dir: %w", err)
 	}
 	for relPath, expectedSize := range meta.Files {
 		objectKey := pfx + relPath
-		localPath := filepath.Join(realDest, filepath.FromSlash(relPath))
+		localPath := filepath.Join(realTmpDir, filepath.FromSlash(relPath))
 
-		safePath, err := safeDownloadPath(localPath, realDest, relPath)
+		safePath, err := safeDownloadPath(localPath, realTmpDir, relPath)
 		if err != nil {
 			return nil, err
 		}
@@ -246,7 +293,27 @@ func (s *remoteIndexStore) DownloadIndex(ctx context.Context, nsResource resourc
 		}
 	}
 
+	// Atomically move staging dir to final destination.
+	if err := os.Rename(tmpDir, absDest); err != nil {
+		return nil, fmt.Errorf("moving staged download to destination: %w", err)
+	}
+	tmpDir = "" // prevent deferred cleanup of the now-renamed directory
+
 	return &meta, nil
+}
+
+// validateManifestPaths rejects manifest entries that are not already in canonical form.
+func validateManifestPaths(files map[string]int64) error {
+	for relPath := range files {
+		clean := filepath.ToSlash(filepath.Clean(filepath.FromSlash(relPath)))
+		if clean != relPath {
+			return fmt.Errorf("non-canonical path %q (canonical: %q)", relPath, clean)
+		}
+		if clean == "." || filepath.IsAbs(clean) || strings.HasPrefix(clean, "..") {
+			return fmt.Errorf("invalid path %q", relPath)
+		}
+	}
+	return nil
 }
 
 // safeDownloadPath validates that localPath stays inside realDest after resolving
@@ -295,7 +362,6 @@ func (s *remoteIndexStore) downloadFile(ctx context.Context, objectKey, localPat
 
 	if err := s.bucket.Download(ctx, objectKey, f, nil); err != nil {
 		_ = f.Close()
-		_ = os.Remove(localPath) // clean up partial file
 		return err
 	}
 	return f.Close()
@@ -346,6 +412,10 @@ func (s *remoteIndexStore) ListIndexes(ctx context.Context, nsResource resource.
 			s.log.Error("failed to parse meta.json", "key", obj.Key, "err", err)
 			continue
 		}
+		if len(meta.Files) == 0 || validateManifestPaths(meta.Files) != nil {
+			s.log.Warn("skipping index with invalid manifest", "key", obj.Key)
+			continue
+		}
 		result[indexKey] = &meta
 	}
 
@@ -376,4 +446,79 @@ func (s *remoteIndexStore) DeleteIndex(ctx context.Context, nsResource resource.
 	}
 
 	return nil
+}
+
+func (s *remoteIndexStore) CleanupIncompleteUploads(ctx context.Context, nsResource resource.NamespacedResource) (int, error) {
+	nsPfx := nsPrefix(nsResource)
+
+	// First pass: collect all keys grouped by index prefix, recording the meta.json key if present.
+	type prefixInfo struct {
+		keys    []string
+		metaKey string // empty = no meta.json seen
+	}
+	prefixes := make(map[string]*prefixInfo)
+
+	iter := s.bucket.List(&blob.ListOptions{Prefix: nsPfx})
+	for {
+		obj, err := iter.Next(ctx)
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return 0, fmt.Errorf("listing objects: %w", err)
+		}
+
+		rel := strings.TrimPrefix(obj.Key, nsPfx)
+		slashIdx := strings.Index(rel, "/")
+		if slashIdx < 0 {
+			continue
+		}
+		keyStr := rel[:slashIdx]
+		if _, err := ulid.Parse(keyStr); err != nil {
+			continue // skip non-ULID prefixes
+		}
+
+		info := prefixes[keyStr]
+		if info == nil {
+			info = &prefixInfo{}
+			prefixes[keyStr] = info
+		}
+		info.keys = append(info.keys, obj.Key)
+		if strings.HasSuffix(obj.Key, "/"+metaJSONFile) {
+			info.metaKey = obj.Key
+		}
+	}
+
+	// Second pass: delete incomplete prefixes.
+	// A prefix is incomplete if it has no meta.json, or if the meta.json is
+	// unparseable or has an empty file manifest (truncated/corrupt upload).
+	cleaned := 0
+	for keyStr, info := range prefixes {
+		if info.metaKey != "" && s.isValidManifest(ctx, info.metaKey) {
+			continue
+		}
+		s.log.Info("cleaning up incomplete upload", "key", keyStr, "objects", len(info.keys))
+		for _, key := range info.keys {
+			if err := s.bucket.Delete(ctx, key); err != nil && gcerrors.Code(err) != gcerrors.NotFound {
+				return cleaned, fmt.Errorf("deleting %s: %w", key, err)
+			}
+		}
+		cleaned++
+	}
+
+	return cleaned, nil
+}
+
+// isValidManifest reads and parses a meta.json object, returning true only if
+// it contains valid JSON with a non-empty Files map.
+func (s *remoteIndexStore) isValidManifest(ctx context.Context, metaKey string) bool {
+	data, err := s.bucket.ReadAll(ctx, metaKey)
+	if err != nil {
+		return false
+	}
+	var meta IndexMeta
+	if err := json.Unmarshal(data, &meta); err != nil {
+		return false
+	}
+	return len(meta.Files) > 0
 }

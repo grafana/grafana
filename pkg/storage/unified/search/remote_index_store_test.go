@@ -88,16 +88,6 @@ func createTestBleveIndex(t *testing.T) string {
 	return dir
 }
 
-// setupTestFiles creates files in dir from a map of relative paths to content.
-func setupTestFiles(t *testing.T, dir string, files map[string]string) {
-	t.Helper()
-	for rel, content := range files {
-		path := filepath.Join(dir, filepath.FromSlash(rel))
-		require.NoError(t, os.MkdirAll(filepath.Dir(path), 0750))
-		require.NoError(t, os.WriteFile(path, []byte(content), 0600))
-	}
-}
-
 // --- Multi-backend tests (fileblob + optional remote) ---
 
 func TestRemoteIndexStore_UploadDownloadBleveIndex(t *testing.T) {
@@ -233,9 +223,9 @@ func TestRemoteIndexStore_DownloadRejectsPathTraversal(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", metaBytes, nil))
 
-	_, err = store.DownloadIndex(ctx, ns, indexKey, t.TempDir())
+	_, err = store.DownloadIndex(ctx, ns, indexKey, filepath.Join(t.TempDir(), "dl"))
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "path traversal")
+	require.Contains(t, err.Error(), "invalid manifest")
 }
 
 func TestRemoteIndexStore_UploadRejectsPathTraversal(t *testing.T) {
@@ -278,76 +268,6 @@ func TestRemoteIndexStore_UploadRejectsNonRegularFiles(t *testing.T) {
 	require.ErrorIs(t, err, ErrNonRegularFile)
 }
 
-func TestRemoteIndexStore_DownloadRejectsSymlinkedSubdir(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := NewRemoteIndexStore(bucket)
-	ns := newTestNsResource()
-
-	// Upload a snapshot with a nested file
-	srcDir := t.TempDir()
-	setupTestFiles(t, srcDir, map[string]string{
-		"store/root.bolt": "bolt-data",
-	})
-	meta := IndexMeta{
-		GrafanaBuildVersion:   "11.0.0",
-		UploadTimestamp:       time.Now().Truncate(time.Second),
-		LatestResourceVersion: 10,
-	}
-	indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
-	require.NoError(t, err)
-
-	// Prepare a dest dir where "store" is a symlink pointing outside
-	destDir := t.TempDir()
-	outsideDir := t.TempDir()
-	require.NoError(t, os.Symlink(outsideDir, filepath.Join(destDir, "store")))
-
-	_, err = store.DownloadIndex(ctx, ns, indexKey, destDir)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "symlink")
-
-	// Verify the file was NOT written to the outside directory
-	_, statErr := os.Stat(filepath.Join(outsideDir, "root.bolt"))
-	require.True(t, os.IsNotExist(statErr))
-}
-
-func TestRemoteIndexStore_DownloadRejectsSymlinkedFile(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := NewRemoteIndexStore(bucket)
-	ns := newTestNsResource()
-
-	// Upload a snapshot with a single file
-	srcDir := t.TempDir()
-	setupTestFiles(t, srcDir, map[string]string{
-		"00000001.zap": "segment-data",
-	})
-	meta := IndexMeta{
-		GrafanaBuildVersion:   "11.0.0",
-		UploadTimestamp:       time.Now().Truncate(time.Second),
-		LatestResourceVersion: 10,
-	}
-	indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
-	require.NoError(t, err)
-
-	// Prepare a dest dir where the leaf file is a symlink pointing outside
-	destDir := t.TempDir()
-	outsideFile := filepath.Join(t.TempDir(), "victim.txt")
-	require.NoError(t, os.WriteFile(outsideFile, []byte("original"), 0600))
-	require.NoError(t, os.Symlink(outsideFile, filepath.Join(destDir, "00000001.zap")))
-
-	_, err = store.DownloadIndex(ctx, ns, indexKey, destDir)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "symlink")
-
-	// Verify the outside file was NOT overwritten
-	content, readErr := os.ReadFile(outsideFile) //nolint:gosec // test code with controlled paths
-	require.NoError(t, readErr)
-	require.Equal(t, "original", string(content))
-}
-
 func TestRemoteIndexStore_DownloadRejectsCorruptMetaJSON(t *testing.T) {
 	ctx := context.Background()
 	bucket := memblob.OpenBucket(nil)
@@ -379,6 +299,26 @@ func TestRemoteIndexStore_DownloadRejectsCorruptMetaJSON(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "empty file manifest")
 	})
+
+	t.Run("non-canonical path", func(t *testing.T) {
+		meta := IndexMeta{GrafanaBuildVersion: "11.0.0", Files: map[string]int64{"store/../store/root.bolt": 100}}
+		metaBytes, err := json.Marshal(meta)
+		require.NoError(t, err)
+		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", metaBytes, nil))
+		_, err = store.DownloadIndex(ctx, ns, key, t.TempDir())
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "non-canonical")
+	})
+
+	t.Run("absolute path", func(t *testing.T) {
+		meta := IndexMeta{GrafanaBuildVersion: "11.0.0", Files: map[string]int64{"/etc/passwd": 100}}
+		metaBytes, err := json.Marshal(meta)
+		require.NoError(t, err)
+		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", metaBytes, nil))
+		_, err = store.DownloadIndex(ctx, ns, key, t.TempDir())
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "invalid")
+	})
 }
 
 func TestRemoteIndexStore_DownloadValidatesCompleteness(t *testing.T) {
@@ -403,7 +343,7 @@ func TestRemoteIndexStore_DownloadValidatesCompleteness(t *testing.T) {
 		break
 	}
 
-	_, err = store.DownloadIndex(ctx, ns, indexKey, t.TempDir())
+	_, err = store.DownloadIndex(ctx, ns, indexKey, filepath.Join(t.TempDir(), "dl"))
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "downloading")
 }
@@ -537,21 +477,38 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 		require.Contains(t, err.Error(), "access denied")
 	})
 
-	t.Run("file download error cleans up partial files", func(t *testing.T) {
+	t.Run("file download error cleans up staging dir", func(t *testing.T) {
 		real := memblob.OpenBucket(nil)
 		defer func() { _ = real.Close() }()
 		key := uploadSnapshot(t, real)
 		store := NewRemoteIndexStore(&errorBucket{CDKBucket: real, downloadErr: fmt.Errorf("connection reset")})
 
-		destDir := t.TempDir()
+		parentDir := t.TempDir()
+		destDir := filepath.Join(parentDir, "downloaded")
 		_, err := store.DownloadIndex(ctx, ns, key, destDir)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "connection reset")
 
-		entries, _ := os.ReadDir(destDir)
-		for _, e := range entries {
-			require.True(t, e.IsDir(), "no partial files should remain: %s", e.Name())
-		}
+		// destDir should not exist (staging dir cleaned up, rename never happened)
+		_, statErr := os.Stat(destDir)
+		require.True(t, os.IsNotExist(statErr), "dest dir should not exist after failure")
+
+		// Parent should still exist and have no leftover staging dirs
+		entries, err := os.ReadDir(parentDir)
+		require.NoError(t, err)
+		assert.Empty(t, entries, "no staging dirs should remain in parent")
+	})
+
+	t.Run("download fails if dest already exists", func(t *testing.T) {
+		real := memblob.OpenBucket(nil)
+		defer func() { _ = real.Close() }()
+		key := uploadSnapshot(t, real)
+		store := NewRemoteIndexStore(real)
+
+		destDir := t.TempDir() // already exists
+		_, err := store.DownloadIndex(ctx, ns, key, destDir)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "destination already exists")
 	})
 
 	t.Run("delete error", func(t *testing.T) {
@@ -564,4 +521,101 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "permission denied")
 	})
+}
+
+func TestRemoteIndexStore_CleanupIncompleteUploads(t *testing.T) {
+	ctx := context.Background()
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+	store := NewRemoteIndexStore(bucket)
+	ns := newTestNsResource()
+
+	// Upload a complete index (has meta.json)
+	srcDir := createTestBleveIndex(t)
+	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
+	completeKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
+	require.NoError(t, err)
+
+	// Simulate an incomplete upload: write objects under a ULID prefix without meta.json
+	incompleteKey := ulid.Make()
+	incompletePfx := indexPrefix(ns, incompleteKey.String())
+	require.NoError(t, bucket.WriteAll(ctx, incompletePfx+"store/root.bolt", []byte("orphaned"), nil))
+	require.NoError(t, bucket.WriteAll(ctx, incompletePfx+"store/00000001.zap", []byte("orphaned"), nil))
+
+	// Cleanup should remove only the incomplete prefix
+	cleaned, err := store.CleanupIncompleteUploads(ctx, ns)
+	require.NoError(t, err)
+	assert.Equal(t, 1, cleaned)
+
+	// Complete index should still be intact
+	indexes, err := store.ListIndexes(ctx, ns)
+	require.NoError(t, err)
+	assert.Contains(t, indexes, completeKey)
+
+	// Incomplete prefix should be gone
+	iter := bucket.List(&blob.ListOptions{Prefix: incompletePfx})
+	obj, err := iter.Next(ctx)
+	assert.Nil(t, obj)
+	assert.ErrorIs(t, err, io.EOF)
+}
+
+func TestRemoteIndexStore_CleanupIncompleteUploads_NoneFound(t *testing.T) {
+	ctx := context.Background()
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+	store := NewRemoteIndexStore(bucket)
+	ns := newTestNsResource()
+
+	// Upload a complete index
+	srcDir := createTestBleveIndex(t)
+	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
+	_, err := store.UploadIndex(ctx, ns, srcDir, meta)
+	require.NoError(t, err)
+
+	// Nothing to clean
+	cleaned, err := store.CleanupIncompleteUploads(ctx, ns)
+	require.NoError(t, err)
+	assert.Equal(t, 0, cleaned)
+}
+
+func TestRemoteIndexStore_CleanupIncompleteUploads_CorruptManifest(t *testing.T) {
+	ctx := context.Background()
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+	store := NewRemoteIndexStore(bucket)
+	ns := newTestNsResource()
+
+	// Upload a valid complete index
+	srcDir := createTestBleveIndex(t)
+	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
+	completeKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
+	require.NoError(t, err)
+
+	t.Run("invalid JSON manifest", func(t *testing.T) {
+		key := ulid.Make()
+		pfx := indexPrefix(ns, key.String())
+		require.NoError(t, bucket.WriteAll(ctx, pfx+"store/root.bolt", []byte("data"), nil))
+		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", []byte("{corrupt"), nil))
+
+		cleaned, err := store.CleanupIncompleteUploads(ctx, ns)
+		require.NoError(t, err)
+		assert.Equal(t, 1, cleaned)
+	})
+
+	t.Run("empty files manifest", func(t *testing.T) {
+		key := ulid.Make()
+		pfx := indexPrefix(ns, key.String())
+		require.NoError(t, bucket.WriteAll(ctx, pfx+"store/root.bolt", []byte("data"), nil))
+		emptyMeta, _ := json.Marshal(IndexMeta{GrafanaBuildVersion: "11.0.0", Files: map[string]int64{}})
+		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", emptyMeta, nil))
+
+		cleaned, err := store.CleanupIncompleteUploads(ctx, ns)
+		require.NoError(t, err)
+		assert.Equal(t, 1, cleaned)
+	})
+
+	// Complete index should still be intact after all cleanups
+	indexes, err := store.ListIndexes(ctx, ns)
+	require.NoError(t, err)
+	assert.Contains(t, indexes, completeKey)
 }
