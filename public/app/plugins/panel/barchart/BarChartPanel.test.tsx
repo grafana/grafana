@@ -32,19 +32,12 @@ let canExecuteActionsForTest = false;
 let onAddAdHocFilterMock: jest.Mock;
 
 jest.mock('uplot', () => {
-  const mock = Object.assign(
-    jest.fn().mockImplementation(() => ({
-      setData: jest.fn(),
-      setSize: jest.fn(),
-      destroy: jest.fn(),
-    })),
-    {
-      paths: {
-        bars: jest.fn(() => () => ''),
-      },
-      rangeLog: jest.fn((min: number, max: number) => [min, max]),
-    }
-  );
+  const mock = jest.fn().mockImplementation(() => ({ destroy: jest.fn() }));
+
+  //@ts-expect-error
+  mock.paths = {
+    bars: jest.fn(() => () => ''),
+  };
   return mock;
 });
 
@@ -53,16 +46,12 @@ jest.mock('@grafana/ui', () => {
   return {
     ...actual,
     usePanelContext: jest.fn().mockImplementation(() => ({
-      sync: () => 0,
-      eventsScope: 'global',
-      canAddAnnotations: () => false,
-      onSelectRange: jest.fn(),
       canExecuteActions: () => canExecuteActionsForTest,
       onAddAdHocFilter: onAddAdHocFilterMock,
     })),
     TooltipPlugin2: (props: {
-      getDataLinks?: (seriesIdx: number, dataIdx: number) => unknown[];
-      getAdHocFilters?: (seriesIdx: number, dataIdx: number) => unknown[];
+      getDataLinks?: (seriesIdx: number, dataIdx: number) => [];
+      getAdHocFilters?: (seriesIdx: number, dataIdx: number) => [];
       render?: (
         u: unknown,
         dataIdxs: Array<number | null>,
