@@ -39,14 +39,14 @@ func (s *AlertRuleSpec) NoDataStateOrDefault() string {
 	if s.NoDataState == "" {
 		return DefaultNoDataState
 	}
-	return s.NoDataState
+	return string(s.NoDataState)
 }
 
 func (s *AlertRuleSpec) ExecErrStateOrDefault() string {
 	if s.ExecErrState == "" {
 		return DefaultExecErrState
 	}
-	return s.ExecErrState
+	return string(s.ExecErrState)
 }
 
 func (d *AlertRulePromDuration) ToDuration() (time.Duration, error) {

@@ -22,8 +22,6 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	gocache "github.com/patrickmn/go-cache"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/util/sqlite"
 )
@@ -794,7 +792,6 @@ var (
 	sqlKVDeleteLegacyResource        = mustTemplate("sqlkv_delete_legacy_resource.sql")
 
 	// Bulk backwards compatibility templates
-	sqlKVUpdateLegacyResourceHistoryBulk = mustTemplate("sqlkv_update_legacy_resource_history_bulk.sql")
 	sqlKVDeleteLegacyResourceCollection  = mustTemplate("sqlkv_delete_legacy_resource_collection.sql")
 	sqlKVInsertLegacyResourceFromHistory = mustTemplate("sqlkv_insert_legacy_resource_from_history.sql")
 )
@@ -825,25 +822,6 @@ type sqlKVLegacyUpdateHistoryRequest struct {
 }
 
 func (req sqlKVLegacyUpdateHistoryRequest) Validate() error {
-	return nil
-}
-
-// TODO: remove when backwards compatibility is no longer needed.
-type sqlKVLegacyUpdateHistoryBulkRequest struct {
-	sqltemplate.SQLTemplate
-	KeyPath         string
-	Group           string
-	Resource        string
-	Namespace       string
-	Name            string
-	Action          int64
-	Folder          string
-	ResourceVersion int64
-	PreviousRV      int64
-	Generation      int64
-}
-
-func (req sqlKVLegacyUpdateHistoryBulkRequest) Validate() error {
 	return nil
 }
 
@@ -896,14 +874,9 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		return fmt.Errorf("compatibility layer: failed to update resource_history: %w", err)
 	}
 
-	var action int64
-	switch key.Action {
-	case DataActionCreated:
-		action = 1
-	case DataActionUpdated:
-		action = 2
-	case DataActionDeleted:
-		action = 3
+	action, err := kvpkg.LegacyActionValue(key.Action)
+	if err != nil {
+		return err
 	}
 
 	switch key.Action {
@@ -925,10 +898,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 				// This can only happen if a concurrent write was attempted: the validation in
 				// WriteEvent guarantees that we return early when the resource already exists
 				// before entering the transaction.
-				//
-				// TODO: mark this and optimistic locking errors as conflicts (409) so that they
-				// can be identified by callers.
-				return fmt.Errorf("conflict: concurrent creation detected")
+				return conflictError(event, "concurrent create attempts detected")
 			}
 			return fmt.Errorf("compatibility layer: failed to insert to resource: %w", err)
 		}
@@ -948,7 +918,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		if err != nil {
 			return fmt.Errorf("compatibility layer: failed to update resource: %w", err)
 		}
-		if err := checkLegacyCASConflict(res, key); err != nil {
+		if err := checkLegacyCASConflict(res, event, key); err != nil {
 			return err
 		}
 	case DataActionDeleted:
@@ -964,7 +934,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		if err != nil {
 			return fmt.Errorf("compatibility layer: failed to delete from resource: %w", err)
 		}
-		if err := checkLegacyCASConflict(res, key); err != nil {
+		if err := checkLegacyCASConflict(res, event, key); err != nil {
 			return err
 		}
 	}
@@ -972,7 +942,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 	return nil
 }
 
-func checkLegacyCASConflict(res db.Result, key DataKey) error {
+func checkLegacyCASConflict(res db.Result, event WriteEvent, key DataKey) error {
 	rows, err := res.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("compatibility layer: failed to verify optimistic lock result: %w", err)
@@ -984,10 +954,7 @@ func checkLegacyCASConflict(res db.Result, key DataKey) error {
 		return fmt.Errorf("compatibility layer: unexpected rows affected: %d", rows)
 	}
 
-	return apierrors.NewConflict(schema.GroupResource{
-		Group:    key.Group,
-		Resource: key.Resource,
-	}, key.Name, fmt.Errorf("resource version does not match current value"))
+	return conflictError(event, "requested RV does not match current RV")
 }
 
 func isRowAlreadyExistsError(err error) bool {
@@ -1030,47 +997,6 @@ func (d *dataStore) deleteLegacyResourceCollection(ctx context.Context, execer d
 	})
 	if err != nil {
 		return fmt.Errorf("compatibility layer: failed to delete legacy resource collection: %w", err)
-	}
-	return nil
-}
-
-// updateLegacyResourceHistoryBulk fills in all legacy columns on a resource_history row identified by key_path.
-// During non Backwards Compatible bulk import, the row is inserted with only key_path and value set; this UPDATE fills in
-// group, resource, namespace, name, action, folder, resource_version, previous_resource_version, and generation.
-// TODO: remove when backwards compatibility is no longer needed.
-func (d *dataStore) updateLegacyResourceHistoryBulk(ctx context.Context, execer db.ContextExecer, dataKey DataKey, microRV int64, previousRV int64, generation int64) error {
-	_, isSQLKV := d.kv.(*kvpkg.SqlKV)
-	if !isSQLKV {
-		return nil
-	}
-
-	keyPath := kvpkg.DataSection + "/" + dataKey.String()
-
-	var action int64
-	switch dataKey.Action {
-	case DataActionCreated:
-		action = 1
-	case DataActionUpdated:
-		action = 2
-	case DataActionDeleted:
-		action = 3
-	}
-
-	_, err := dbutil.Exec(ctx, execer, sqlKVUpdateLegacyResourceHistoryBulk, sqlKVLegacyUpdateHistoryBulkRequest{
-		SQLTemplate:     sqltemplate.New(d.legacyDialect),
-		KeyPath:         keyPath,
-		Group:           dataKey.Group,
-		Resource:        dataKey.Resource,
-		Namespace:       dataKey.Namespace,
-		Name:            dataKey.Name,
-		Action:          action,
-		Folder:          dataKey.Folder,
-		ResourceVersion: microRV,
-		PreviousRV:      previousRV,
-		Generation:      generation,
-	})
-	if err != nil {
-		return fmt.Errorf("compatibility layer: failed to update legacy resource_history for bulk: %w", err)
 	}
 	return nil
 }

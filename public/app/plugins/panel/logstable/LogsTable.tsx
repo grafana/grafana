@@ -11,7 +11,7 @@ import {
   type PanelData,
   type PanelProps,
 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
@@ -49,7 +49,7 @@ export const LogsTable = ({
   data,
   width,
   height,
-  fieldConfig,
+  fieldConfig: fieldConfigProp,
   options,
   eventBus,
   onOptionsChange,
@@ -64,6 +64,7 @@ export const LogsTable = ({
 }: LogsTablePanelProps) => {
   const frameIndex = options.frameIndex <= data.series.length - 1 ? options.frameIndex : 0;
   const styles = useStyles2(getStyles, height, width);
+  const { app } = usePanelContext();
 
   const rawTableFrame: DataFrame | null = data.series[frameIndex] ? data.series[frameIndex] : null;
   const logsFrame: LogsFrame | null = useMemo(
@@ -159,6 +160,48 @@ export const LogsTable = ({
     [data.timeRange]
   );
 
+  const wrapText = useMemo(
+    () => fieldConfigProp.defaults.custom?.wrapText ?? options.wrapText ?? false,
+    [fieldConfigProp.defaults.custom?.wrapText, options.wrapText]
+  );
+
+  const handleWrapTextClick = useCallback(() => {
+    const nextWrapText = !wrapText;
+    if (app === CoreApp.Dashboard || app === CoreApp.PanelEditor || app === CoreApp.PanelViewer) {
+      const nextFieldConfig: FieldConfigSource = {
+        ...fieldConfigProp,
+        defaults: {
+          ...fieldConfigProp.defaults,
+          custom: {
+            ...fieldConfigProp.defaults.custom,
+            wrapText: nextWrapText,
+          },
+        },
+      };
+      onFieldConfigChange(nextFieldConfig);
+    } else {
+      onOptionsChange({
+        ...options,
+        wrapText: nextWrapText,
+      });
+    }
+  }, [app, fieldConfigProp, onFieldConfigChange, onOptionsChange, options, wrapText]);
+
+  const fieldConfig = useMemo(
+    () => ({
+      ...fieldConfigProp,
+      defaults: {
+        ...fieldConfigProp.defaults,
+        custom: {
+          ...fieldConfigProp.defaults?.custom,
+          filterable: true,
+          wrapText,
+        },
+      },
+    }),
+    [fieldConfigProp, wrapText]
+  );
+
   // Extract fields transform
   const { extractedFrame } = useExtractFields({ rawTableFrame, fieldConfig, timeZone });
 
@@ -185,6 +228,17 @@ export const LogsTable = ({
 
     return data;
   }, [organizedFrame, data, frameIndex]);
+
+  const tableOptions = useMemo(
+    () => ({
+      sortOrder: LogsSortOrder.Descending,
+      sortBy: [{ displayName: timeFieldName, desc: true }],
+      fieldSelectorWidth: options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth(),
+      ...options,
+      wrapText,
+    }),
+    [options, timeFieldName, wrapText]
+  );
 
   const noSeries = data.series.length === 0;
   const noValues = data.series[frameIndex]?.fields?.[0]?.values?.length === 0;
@@ -228,12 +282,7 @@ export const LogsTable = ({
             height={height}
             id={id}
             timeZone={timeZone}
-            options={{
-              sortOrder: LogsSortOrder.Descending,
-              sortBy: [{ displayName: timeFieldName, desc: true }],
-              fieldSelectorWidth: options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth(),
-              ...options,
-            }}
+            options={tableOptions}
             transparent={transparent}
             fieldConfig={fieldConfig}
             renderCounter={renderCounter}
@@ -243,6 +292,7 @@ export const LogsTable = ({
             onFieldConfigChange={handleTableOnFieldConfigChange}
             replaceVariables={replaceVariables}
             onChangeTimeRange={onChangeTimeRange}
+            onWrapTextClick={handleWrapTextClick}
             logOptionsStorageKey={SETTING_KEY_ROOT}
           />
         </>

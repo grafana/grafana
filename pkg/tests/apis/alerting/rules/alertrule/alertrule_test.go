@@ -14,12 +14,13 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 
+	prom_model "github.com/prometheus/common/model"
+
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	prom_model "github.com/prometheus/common/model"
 )
 
 func TestMain(m *testing.M) {
@@ -68,8 +69,8 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 			Trigger: v0alpha1.AlertRuleIntervalTrigger{
 				Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 			},
-			NoDataState:  string(rule.NoDataState),
-			ExecErrState: string(rule.ExecErrState),
+			NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
+			ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
 		},
 	}
 
@@ -166,8 +167,8 @@ func TestIntegrationAccessControl(t *testing.T) {
 			Trigger: v0alpha1.AlertRuleIntervalTrigger{
 				Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 			},
-			NoDataState:  string(rule.NoDataState),
-			ExecErrState: string(rule.ExecErrState),
+			NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
+			ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
 		},
 	}
 
@@ -251,8 +252,8 @@ func TestIntegrationCRUD(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  string(rule.NoDataState),
-				ExecErrState: string(rule.ExecErrState),
+				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
+				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
 			},
 		}
 
@@ -305,8 +306,8 @@ func TestIntegrationCRUD(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  string(rule.NoDataState),
-				ExecErrState: string(rule.ExecErrState),
+				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
+				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
 			},
 		}
 
@@ -366,8 +367,8 @@ func TestIntegrationCRUD(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  string(rule.NoDataState),
-				ExecErrState: string(rule.ExecErrState),
+				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
+				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
 			},
 		}
 
@@ -417,8 +418,8 @@ func TestIntegrationCRUD(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  string(rule.NoDataState),
-				ExecErrState: string(rule.ExecErrState),
+				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
+				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
 			},
 		}
 
@@ -455,8 +456,8 @@ func TestIntegrationCRUD(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  string(rule.NoDataState),
-				ExecErrState: string(rule.ExecErrState),
+				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
+				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
 			},
 		}
 
@@ -509,8 +510,8 @@ func TestIntegrationPatch(t *testing.T) {
 			Trigger: v0alpha1.AlertRuleIntervalTrigger{
 				Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 			},
-			NoDataState:  string(rule.NoDataState),
-			ExecErrState: string(rule.ExecErrState),
+			NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
+			ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
 		},
 	}
 
@@ -611,8 +612,8 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  string(rule.NoDataState),
-				ExecErrState: string(rule.ExecErrState),
+				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
+				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
 			},
 		}
 
