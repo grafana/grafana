@@ -577,6 +577,10 @@ func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a adm
 			return fmt.Errorf("error getting requester: %w", err)
 		}
 
+		if err := b.verifyFolderAccessPermissions(ctx, id, accessor.GetFolder()); err != nil {
+			return err
+		}
+
 		if _, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
 			return err
 		}

@@ -5,12 +5,19 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestValidateVariable(t *testing.T) {
@@ -64,6 +71,44 @@ func TestDashboardsAPIBuilderValidateVariable(t *testing.T) {
 	), nil)
 
 	require.NoError(t, err)
+}
+
+func TestDashboardsAPIBuilderValidateVariableCreateRequiresFolderAccess(t *testing.T) {
+	folderUID := "folder-a"
+	v := newCustomVariable("region", "region")
+	v.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+
+	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
+		OrgRole: identity.RoleEditor,
+		OrgID:   1,
+	})
+
+	folderHandler := &variableFolderAccessHandler{
+		forbiddenAccessSubresource: true,
+	}
+
+	builder := &DashboardsAPIBuilder{
+		folderClientProvider: &staticHandlerProvider{handler: folderHandler},
+	}
+
+	err := builder.Validate(ctx, admission.NewAttributesRecord(
+		v,
+		nil,
+		dashv2.VariableResourceInfo.GroupVersionKind(),
+		"stacks-1",
+		v.GetName(),
+		dashv2.VariableResourceInfo.GroupVersionResource(),
+		"",
+		admission.Create,
+		&metav1.CreateOptions{},
+		false,
+		nil,
+	), nil)
+
+	require.Error(t, err)
+	require.True(t, apierrors.IsForbidden(err))
+	require.True(t, folderHandler.accessSubresourceChecked)
 }
 
 func TestVariableMutationPermissionsByRole(t *testing.T) {
@@ -229,4 +274,66 @@ func buildVariableAttributesForOp(op admission.Operation, newVariable, oldVariab
 			nil,
 		)
 	}
+}
+
+type staticHandlerProvider struct {
+	handler client.K8sHandler
+}
+
+func (p *staticHandlerProvider) GetOrCreateHandler(namespace string) client.K8sHandler {
+	return p.handler
+}
+
+type variableFolderAccessHandler struct {
+	accessSubresourceChecked   bool
+	forbiddenAccessSubresource bool
+}
+
+func (h *variableFolderAccessHandler) Get(_ context.Context, name string, _ int64, _ metav1.GetOptions, subresource ...string) (*unstructured.Unstructured, error) {
+	if len(subresource) > 0 && subresource[0] == "access" {
+		h.accessSubresourceChecked = true
+		if h.forbiddenAccessSubresource {
+			return nil, apierrors.NewForbidden(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name, nil)
+		}
+
+		return &unstructured.Unstructured{
+			Object: map[string]any{
+				"spec": map[string]any{
+					"canEdit": true,
+				},
+			},
+		}, nil
+	}
+
+	return &unstructured.Unstructured{
+		Object: map[string]any{
+			"metadata": map[string]any{
+				"name": name,
+			},
+		},
+	}, nil
+}
+
+func (h *variableFolderAccessHandler) GetNamespace(_ int64) string { return "stacks-1" }
+func (h *variableFolderAccessHandler) Create(_ context.Context, _ *unstructured.Unstructured, _ int64, _ metav1.CreateOptions) (*unstructured.Unstructured, error) {
+	return nil, nil
+}
+func (h *variableFolderAccessHandler) Update(_ context.Context, _ *unstructured.Unstructured, _ int64, _ metav1.UpdateOptions) (*unstructured.Unstructured, error) {
+	return nil, nil
+}
+func (h *variableFolderAccessHandler) Delete(_ context.Context, _ string, _ int64, _ metav1.DeleteOptions) error {
+	return nil
+}
+func (h *variableFolderAccessHandler) DeleteCollection(_ context.Context, _ int64) error { return nil }
+func (h *variableFolderAccessHandler) List(_ context.Context, _ int64, _ metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+	return nil, nil
+}
+func (h *variableFolderAccessHandler) Search(_ context.Context, _ int64, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	return nil, nil
+}
+func (h *variableFolderAccessHandler) GetStats(_ context.Context, _ int64) (*resourcepb.ResourceStatsResponse, error) {
+	return nil, nil
+}
+func (h *variableFolderAccessHandler) GetUsersFromMeta(_ context.Context, _ []string) (map[string]*user.User, error) {
+	return nil, nil
 }

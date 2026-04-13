@@ -22,9 +22,8 @@ func TestIntegrationVariablesV2beta1(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableAnonymous:      true,
-		DisableDataMigrations: true,
-		EnableFeatureToggles:  []string{"globalDashboardVariables"},
+		DisableAnonymous:     true,
+		EnableFeatureToggles: []string{"globalDashboardVariables"},
 	})
 	t.Cleanup(helper.Shutdown)
 
