@@ -2026,7 +2026,7 @@ export type CreateTokenBody = {
 };
 export type CreateTokenRequestBody = {
   expiresInSeconds?: number;
-  title?: string;
+  tokenName?: string;
 };
 export type TeamBindingspecSubject = {
   /** kind of the identity */

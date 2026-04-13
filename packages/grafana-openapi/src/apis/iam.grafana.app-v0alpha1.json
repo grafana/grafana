@@ -4669,7 +4669,7 @@
             "type": "integer",
             "format": "int64"
           },
-          "title": {
+          "tokenName": {
             "type": "string"
           }
         }
