@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
@@ -13,7 +13,10 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { type StoreState, useSelector } from 'app/types/store';
 
 import { ROUTES } from '../../connections/constants';
-import { useDatasourceFailureByUID } from '../../connections/hooks/useDatasourceAdvisorChecks';
+import {
+  type DatasourceFailureDetails,
+  useDatasourceFailureByUID,
+} from '../../connections/hooks/useDatasourceAdvisorChecks';
 import { useLoadDataSources } from '../state/hooks';
 import { getDataSources, getDataSourcesCount } from '../state/selectors';
 import { trackDataSourcesListViewed } from '../tracking';
@@ -175,49 +178,88 @@ export function DataSourcesListView({
       <DataSourcesListHeader filterCheckbox={favoritesCheckbox} />
 
       {/* List */}
-      {dataSources.length === 0 && !isLoading ? (
+      {dataSources.length === 0 && !isLoading && (
         <EmptyState variant="not-found" message={t('data-sources.empty-state.message', 'No data sources found')} />
-      ) : isLoading ? (
-        <ul className={styles.loadingList} aria-label={t('data-sources.list.label', 'Data sources')}>
-          {new Array(LOADING_SKELETON_COUNT).fill(null).map((_, index) => (
-            <DataSourcesListCard.Skeleton key={index} hasExploreRights={hasExploreRights} />
-          ))}
-        </ul>
-      ) : (
-        <div ref={scrollRef} className={styles.listContainer}>
-          <ul
-            className={styles.virtualList}
-            aria-label={t('data-sources.list.label', 'Data sources')}
-            style={{ height: rowVirtualizer.getTotalSize() }}
-          >
-            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-              const dataSource = dataSources[virtualRow.index];
-              if (!dataSource) {
-                return null;
-              }
-
-              return (
-                <li
-                  key={dataSource.uid}
-                  ref={rowVirtualizer.measureElement}
-                  data-index={virtualRow.index}
-                  aria-setsize={dataSources.length}
-                  aria-posinset={virtualRow.index + 1}
-                  className={styles.virtualListItem}
-                  style={{ transform: `translateY(${virtualRow.start}px)` }}
-                >
-                  <DataSourcesListCard
-                    dataSource={dataSource}
-                    hasWriteRights={hasWriteRights}
-                    hasExploreRights={hasExploreRights}
-                    failure={datasourceFailureByUID.get(dataSource.uid)}
-                  />
-                </li>
-              );
-            })}
-          </ul>
-        </div>
       )}
+      {isLoading && <DataSourcesListLoading hasExploreRights={hasExploreRights} />}
+      {dataSources.length > 0 && !isLoading && (
+        <DataSourcesListVirtualized
+          dataSources={dataSources}
+          hasWriteRights={hasWriteRights}
+          hasExploreRights={hasExploreRights}
+          datasourceFailureByUID={datasourceFailureByUID}
+          scrollRef={scrollRef}
+          rowVirtualizer={rowVirtualizer}
+        />
+      )}
+    </div>
+  );
+}
+
+function DataSourcesListLoading({ hasExploreRights }: { hasExploreRights: boolean }) {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <ul className={styles.loadingList} aria-label={t('data-sources.list.label', 'Data sources')}>
+      {new Array(LOADING_SKELETON_COUNT).fill(null).map((_, index) => (
+        <DataSourcesListCard.Skeleton key={index} hasExploreRights={hasExploreRights} />
+      ))}
+    </ul>
+  );
+}
+
+interface DataSourcesListVirtualizedProps {
+  dataSources: DataSourceSettings[];
+  hasWriteRights: boolean;
+  hasExploreRights: boolean;
+  datasourceFailureByUID: Map<string, DatasourceFailureDetails>;
+  scrollRef: RefObject<HTMLDivElement>;
+  rowVirtualizer: ReturnType<typeof useVirtualizer<HTMLDivElement, Element>>;
+}
+
+function DataSourcesListVirtualized({
+  dataSources,
+  hasWriteRights,
+  hasExploreRights,
+  datasourceFailureByUID,
+  scrollRef,
+  rowVirtualizer,
+}: DataSourcesListVirtualizedProps) {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div ref={scrollRef} className={styles.listContainer}>
+      <ul
+        className={styles.virtualList}
+        aria-label={t('data-sources.list.label', 'Data sources')}
+        style={{ height: rowVirtualizer.getTotalSize() }}
+      >
+        {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+          const dataSource = dataSources[virtualRow.index];
+          if (!dataSource) {
+            return null;
+          }
+
+          return (
+            <li
+              key={dataSource.uid}
+              ref={rowVirtualizer.measureElement}
+              data-index={virtualRow.index}
+              aria-setsize={dataSources.length}
+              aria-posinset={virtualRow.index + 1}
+              className={styles.virtualListItem}
+              style={{ transform: `translateY(${virtualRow.start}px)` }}
+            >
+              <DataSourcesListCard
+                dataSource={dataSource}
+                hasWriteRights={hasWriteRights}
+                hasExploreRights={hasExploreRights}
+                failure={datasourceFailureByUID.get(dataSource.uid)}
+              />
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
