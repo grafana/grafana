@@ -102,6 +102,7 @@ function cachePromiseWithCallback<T>({ key, promise, onError }: CachePromiseWith
  * it returns the cached promise. Otherwise, it executes the promise function and caches the result.
  * It also provides options for handling errors, including returning a defaultValue value or invoking a custom error handler.
  * If neither defaultValue nor onError is provided, errors will propagate as usual.
+ * In minified production builds, function names may be mangled. In this case, a cacheKey should be provided to ensure proper caching behavior.
  *
  * @template T - The type of the resolved promise value
  * @param promise - Function that returns the promise to be cached

@@ -85,5 +85,8 @@ async function initPluginExtensionRegistries(): Promise<PluginExtensionRegistrie
  * @returns Promise resolving to the plugin extension registries
  */
 export async function getPluginExtensionRegistries(): Promise<PluginExtensionRegistries> {
-  return getCachedPromise(initPluginExtensionRegistries, { defaultValue: initRegistries([]) });
+  return getCachedPromise(initPluginExtensionRegistries, {
+    cacheKey: 'initPluginExtensionRegistries',
+    defaultValue: initRegistries([]),
+  });
 }
