@@ -1,7 +1,9 @@
 package search
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,7 +22,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-const metaJSONFile = "meta.json"
+const (
+	metaJSONFile = "meta.json"
+	// maxMetaJSONSize is the maximum allowed size for a meta.json file (1 MiB).
+	maxMetaJSONSize = 1 << 20
+)
 
 // ErrNonRegularFile is returned when a non-regular file (symlink, pipe, socket, device) is found during index upload.
 var ErrNonRegularFile = errors.New("non-regular file found in index directory")
@@ -37,53 +43,50 @@ type IndexMeta struct {
 	Files map[string]int64 `json:"files"`
 }
 
-// RemoteIndexStore manages index snapshots on remote object storage.
-//
-// Callers must hold a distributed lock to prevent interleaved writes.
-// Index keys are immutable and each snapshot must use a unique key.
-//
-// Object storage layout:
-//
-//	/<namespace>/<group>.<resource>/<index-key>/store/root.bolt
-//	/<namespace>/<group>.<resource>/<index-key>/*.zap
-//	/<namespace>/<group>.<resource>/<index-key>/meta.json  <- uploaded last, signals complete upload
+// RemoteIndexStore manages index snapshots on remote storage.
+// Index keys are immutable: each snapshot uses a unique ULID key.
 type RemoteIndexStore interface {
 	// UploadIndex uploads a local index directory to remote storage.
 	// It generates a unique, lexicographically sortable ULID key and returns it.
-	// The meta.json is uploaded last to signal a complete upload.
-	// Callers must hold a distributed lock to prevent concurrent uploads to the same prefix.
 	UploadIndex(ctx context.Context, nsResource resource.NamespacedResource, localDir string, meta IndexMeta) (ulid.ULID, error)
 
 	// DownloadIndex downloads a remote index to a local directory.
-	// Validates completeness against the manifest in meta.json.
+	// destDir must not exist; it will be created atomically on success.
 	DownloadIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, destDir string) (*IndexMeta, error)
 
 	// ListIndexes lists all complete index snapshots for a namespaced resource.
 	// Note: indexes may be deleted between listing and subsequent operations.
-	// Callers should handle NotFound errors gracefully when acting on listed keys.
 	ListIndexes(ctx context.Context, nsResource resource.NamespacedResource) (map[ulid.ULID]*IndexMeta, error)
 
 	// DeleteIndex deletes all files for an index snapshot.
-	// The meta.json is deleted first to signal it an incomplete index.
-	// Callers must hold a distributed lock to prevent concurrent modifications.
 	DeleteIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) error
 
-	// CleanupIncompleteUploads removes index prefixes that have files but no meta.json,
-	// indicating a failed or interrupted upload. Returns the number of cleaned prefixes.
-	CleanupIncompleteUploads(ctx context.Context, nsResource resource.NamespacedResource) (int, error)
+	// CleanupIncompleteUploads removes incomplete uploads older than minAge.
+	// Returns the number of cleaned prefixes.
+	CleanupIncompleteUploads(ctx context.Context, nsResource resource.NamespacedResource, minAge time.Duration) (int, error)
 }
 
-// remoteIndexStore implements RemoteIndexStore using a CDKBucket.
-type remoteIndexStore struct {
+// BucketRemoteIndexStore implements RemoteIndexStore using a CDKBucket.
+//
+// Object storage layout:
+//
+//	/<namespace>/<group>.<resource>/<index-key>/index_meta.json
+//	/<namespace>/<group>.<resource>/<index-key>/store/root.bolt
+//	/<namespace>/<group>.<resource>/<index-key>/store/*.zap
+//	/<namespace>/<group>.<resource>/<index-key>/meta.json  <- uploaded last, signals complete upload
+//
+// meta.json is uploaded last during upload and deleted first during delete,
+// serving as the completion signal.
+type BucketRemoteIndexStore struct {
 	bucket resource.CDKBucket
 	log    log.Logger
 }
 
-// NewRemoteIndexStore creates a new RemoteIndexStore backed by the given bucket.
-func NewRemoteIndexStore(bucket resource.CDKBucket) RemoteIndexStore {
-	return &remoteIndexStore{
+// NewBucketRemoteIndexStore creates a new RemoteIndexStore backed by the given bucket.
+func NewBucketRemoteIndexStore(bucket resource.CDKBucket) *BucketRemoteIndexStore {
+	return &BucketRemoteIndexStore{
 		bucket: bucket,
-		log:    log.New("remote-index-store"),
+		log:    log.New("bucket-remote-index-store"),
 	}
 }
 
@@ -97,8 +100,11 @@ func nsPrefix(ns resource.NamespacedResource) string {
 	return fmt.Sprintf("%s/%s.%s/", ns.Namespace, ns.Group, ns.Resource)
 }
 
-func (s *remoteIndexStore) UploadIndex(ctx context.Context, nsResource resource.NamespacedResource, localDir string, meta IndexMeta) (_ ulid.ULID, retErr error) {
-	indexKey := ulid.Make()
+func (s *BucketRemoteIndexStore) UploadIndex(ctx context.Context, nsResource resource.NamespacedResource, localDir string, meta IndexMeta) (_ ulid.ULID, retErr error) {
+	indexKey, err := ulid.New(ulid.Timestamp(time.Now()), rand.Reader)
+	if err != nil {
+		return ulid.ULID{}, fmt.Errorf("generating index key: %w", err)
+	}
 	pfx := indexPrefix(nsResource, indexKey.String())
 	meta.UploadTimestamp = ulid.Time(indexKey.Time())
 
@@ -183,7 +189,7 @@ func (s *remoteIndexStore) UploadIndex(ctx context.Context, nsResource resource.
 
 // cleanupObjects performs best-effort deletion of the given object keys.
 // Errors are logged but not returned, since this runs during error recovery.
-func (s *remoteIndexStore) cleanupObjects(ctx context.Context, keys []string) {
+func (s *BucketRemoteIndexStore) cleanupObjects(ctx context.Context, keys []string) {
 	for _, key := range keys {
 		if err := s.bucket.Delete(ctx, key); err != nil {
 			s.log.Warn("failed to clean up partially uploaded object", "key", key, "err", err)
@@ -191,7 +197,7 @@ func (s *remoteIndexStore) cleanupObjects(ctx context.Context, keys []string) {
 	}
 }
 
-func (s *remoteIndexStore) uploadFile(ctx context.Context, objectKey, localPath string) error {
+func (s *BucketRemoteIndexStore) uploadFile(ctx context.Context, objectKey, localPath string) error {
 	// Lstat the path first — reject symlinks before opening.
 	linfo, err := os.Lstat(localPath)
 	if err != nil {
@@ -222,16 +228,16 @@ func (s *remoteIndexStore) uploadFile(ctx context.Context, objectKey, localPath 
 	})
 }
 
-func (s *remoteIndexStore) DownloadIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, destDir string) (_ *IndexMeta, retErr error) {
+func (s *BucketRemoteIndexStore) DownloadIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, destDir string) (_ *IndexMeta, retErr error) {
 	pfx := indexPrefix(nsResource, indexKey.String())
 
-	// Read meta.json first
-	metaBytes, err := s.bucket.ReadAll(ctx, pfx+metaJSONFile)
-	if err != nil {
+	// Download and parse meta.json with a size limit to avoid OOM on malicious files.
+	var metaBuf bytes.Buffer
+	if err := s.bucket.Download(ctx, pfx+metaJSONFile, &limitedWriter{w: &metaBuf, n: maxMetaJSONSize}, nil); err != nil {
 		return nil, fmt.Errorf("reading meta.json: %w", err)
 	}
 	var meta IndexMeta
-	if err := json.Unmarshal(metaBytes, &meta); err != nil {
+	if err := json.Unmarshal(metaBuf.Bytes(), &meta); err != nil {
 		return nil, fmt.Errorf("parsing meta.json: %w", err)
 	}
 	if len(meta.Files) == 0 {
@@ -351,7 +357,7 @@ func safeDownloadPath(localPath, realDest, relPath string) (string, error) {
 }
 
 // downloadFile creates localPath and streams the remote object into it.
-func (s *remoteIndexStore) downloadFile(ctx context.Context, objectKey, localPath string) error {
+func (s *BucketRemoteIndexStore) downloadFile(ctx context.Context, objectKey, localPath string) error {
 	f, err := os.Create(localPath) //nolint:gosec // path validated by safeDownloadPath
 	if err != nil {
 		return err
@@ -364,7 +370,25 @@ func (s *remoteIndexStore) downloadFile(ctx context.Context, objectKey, localPat
 	return f.Close()
 }
 
-func (s *remoteIndexStore) ListIndexes(ctx context.Context, nsResource resource.NamespacedResource) (map[ulid.ULID]*IndexMeta, error) {
+var errWriteLimitExceeded = errors.New("write limit exceeded")
+
+// limitedWriter wraps a writer and stops accepting data once the limit is reached,
+// mirroring io.LimitedReader semantics.
+type limitedWriter struct {
+	w io.Writer
+	n int64
+}
+
+func (lw *limitedWriter) Write(p []byte) (int, error) {
+	if int64(len(p)) > lw.n {
+		return 0, errWriteLimitExceeded
+	}
+	n, err := lw.w.Write(p)
+	lw.n -= int64(n)
+	return n, err
+}
+
+func (s *BucketRemoteIndexStore) ListIndexes(ctx context.Context, nsResource resource.NamespacedResource) (map[ulid.ULID]*IndexMeta, error) {
 	nsPfx := nsPrefix(nsResource)
 	result := make(map[ulid.ULID]*IndexMeta)
 
@@ -419,7 +443,7 @@ func (s *remoteIndexStore) ListIndexes(ctx context.Context, nsResource resource.
 	return result, nil
 }
 
-func (s *remoteIndexStore) DeleteIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) error {
+func (s *BucketRemoteIndexStore) DeleteIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) error {
 	pfx := indexPrefix(nsResource, indexKey.String())
 
 	// Delete meta.json first
@@ -445,7 +469,7 @@ func (s *remoteIndexStore) DeleteIndex(ctx context.Context, nsResource resource.
 	return nil
 }
 
-func (s *remoteIndexStore) CleanupIncompleteUploads(ctx context.Context, nsResource resource.NamespacedResource) (int, error) {
+func (s *BucketRemoteIndexStore) CleanupIncompleteUploads(ctx context.Context, nsResource resource.NamespacedResource, minAge time.Duration) (int, error) {
 	nsPfx := nsPrefix(nsResource)
 
 	// First pass: collect all keys grouped by index prefix, recording the meta.json key if present.
@@ -471,8 +495,13 @@ func (s *remoteIndexStore) CleanupIncompleteUploads(ctx context.Context, nsResou
 			continue
 		}
 		keyStr := rel[:slashIdx]
-		if _, err := ulid.Parse(keyStr); err != nil {
+		parsedKey, err := ulid.Parse(keyStr)
+		if err != nil {
 			continue // skip non-ULID prefixes
+		}
+		// Skip recent prefixes that may still be uploading.
+		if time.Since(ulid.Time(parsedKey.Time())) < minAge {
+			continue
 		}
 
 		info := prefixes[keyStr]
@@ -513,17 +542,21 @@ func (s *remoteIndexStore) CleanupIncompleteUploads(ctx context.Context, nsResou
 	return cleaned, nil
 }
 
-// isValidManifest reads and parses a meta.json object.
+// isValidManifest downloads and parses a meta.json object with a size limit.
 // Returns (true, nil) for a valid manifest, (false, nil) for a positively
-// invalid one (corrupt JSON or empty Files), and (false, err) for read errors.
-func (s *remoteIndexStore) isValidManifest(ctx context.Context, metaKey string) (bool, error) {
-	data, err := s.bucket.ReadAll(ctx, metaKey)
-	if err != nil {
-		return false, err
+// invalid one (oversized, corrupt JSON, or empty Files), and (false, err) for
+// transient download errors.
+func (s *BucketRemoteIndexStore) isValidManifest(ctx context.Context, metaKey string) (bool, error) {
+	var buf bytes.Buffer
+	if err := s.bucket.Download(ctx, metaKey, &limitedWriter{w: &buf, n: maxMetaJSONSize}, nil); err != nil {
+		if errors.Is(err, errWriteLimitExceeded) {
+			return false, nil // positively invalid: oversized
+		}
+		return false, err // transient download error, skip this prefix
 	}
 	var meta IndexMeta
-	if err := json.Unmarshal(data, &meta); err != nil {
-		return false, nil
+	if err := json.Unmarshal(buf.Bytes(), &meta); err != nil {
+		return false, nil // positively invalid
 	}
 	return len(meta.Files) > 0, nil
 }

@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"crypto/rand"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/oklog/ulid/v2"
@@ -93,7 +96,7 @@ func TestRemoteIndexStore_UploadDownloadBleveIndex(t *testing.T) {
 	for _, setup := range testBucketSetups(t) {
 		t.Run(setup.name, func(t *testing.T) {
 			t.Cleanup(setup.cleanup)
-			store := NewRemoteIndexStore(setup.bucket)
+			store := NewBucketRemoteIndexStore(setup.bucket)
 			ctx := context.Background()
 			ns := newTestNsResource()
 
@@ -140,7 +143,7 @@ func TestRemoteIndexStore_ListIndexes(t *testing.T) {
 	for _, setup := range testBucketSetups(t) {
 		t.Run(setup.name, func(t *testing.T) {
 			t.Cleanup(setup.cleanup)
-			store := NewRemoteIndexStore(setup.bucket)
+			store := NewBucketRemoteIndexStore(setup.bucket)
 			ctx := context.Background()
 			ns := newTestNsResource()
 
@@ -175,7 +178,7 @@ func TestRemoteIndexStore_DeleteIndex(t *testing.T) {
 	for _, setup := range testBucketSetups(t) {
 		t.Run(setup.name, func(t *testing.T) {
 			t.Cleanup(setup.cleanup)
-			store := NewRemoteIndexStore(setup.bucket)
+			store := NewBucketRemoteIndexStore(setup.bucket)
 			ctx := context.Background()
 			ns := newTestNsResource()
 
@@ -203,7 +206,7 @@ func TestRemoteIndexStore_DownloadRejectsPathTraversal(t *testing.T) {
 	ctx := context.Background()
 	bucket := memblob.OpenBucket(nil)
 	defer func() { _ = bucket.Close() }()
-	store := NewRemoteIndexStore(bucket)
+	store := NewBucketRemoteIndexStore(bucket)
 	ns := newTestNsResource()
 
 	srcDir := createTestBleveIndex(t)
@@ -230,7 +233,7 @@ func TestRemoteIndexStore_UploadRejectsPathTraversal(t *testing.T) {
 	ctx := context.Background()
 	bucket := memblob.OpenBucket(nil)
 	defer func() { _ = bucket.Close() }()
-	store := NewRemoteIndexStore(bucket)
+	store := NewBucketRemoteIndexStore(bucket)
 	ns := newTestNsResource()
 
 	srcDir := createTestBleveIndex(t)
@@ -250,7 +253,7 @@ func TestRemoteIndexStore_UploadRejectsNonRegularFiles(t *testing.T) {
 	ctx := context.Background()
 	bucket := memblob.OpenBucket(nil)
 	defer func() { _ = bucket.Close() }()
-	store := NewRemoteIndexStore(bucket)
+	store := NewBucketRemoteIndexStore(bucket)
 	ns := newTestNsResource()
 
 	srcDir := createTestBleveIndex(t)
@@ -270,7 +273,7 @@ func TestRemoteIndexStore_DownloadRejectsCorruptMetaJSON(t *testing.T) {
 	ctx := context.Background()
 	bucket := memblob.OpenBucket(nil)
 	defer func() { _ = bucket.Close() }()
-	store := NewRemoteIndexStore(bucket)
+	store := NewBucketRemoteIndexStore(bucket)
 	ns := newTestNsResource()
 	key := ulid.Make()
 	pfx := indexPrefix(ns, key.String())
@@ -317,13 +320,25 @@ func TestRemoteIndexStore_DownloadRejectsCorruptMetaJSON(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "invalid")
 	})
+
+	t.Run("oversized meta.json", func(t *testing.T) {
+		// Write a meta.json that exceeds the 1 MiB limit
+		oversized := make([]byte, maxMetaJSONSize+1)
+		for i := range oversized {
+			oversized[i] = 'x'
+		}
+		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", oversized, nil))
+		_, err := store.DownloadIndex(ctx, ns, key, filepath.Join(t.TempDir(), "dl"))
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "write limit exceeded")
+	})
 }
 
 func TestRemoteIndexStore_DownloadValidatesCompleteness(t *testing.T) {
 	ctx := context.Background()
 	bucket := memblob.OpenBucket(nil)
 	defer func() { _ = bucket.Close() }()
-	store := NewRemoteIndexStore(bucket)
+	store := NewBucketRemoteIndexStore(bucket)
 	ns := newTestNsResource()
 
 	srcDir := createTestBleveIndex(t)
@@ -350,7 +365,7 @@ func TestRemoteIndexStore_UploadRejectsEmptyDirectory(t *testing.T) {
 	ctx := context.Background()
 	bucket := memblob.OpenBucket(nil)
 	defer func() { _ = bucket.Close() }()
-	store := NewRemoteIndexStore(bucket)
+	store := NewBucketRemoteIndexStore(bucket)
 	ns := newTestNsResource()
 
 	emptyDir := t.TempDir()
@@ -364,7 +379,7 @@ func TestRemoteIndexStore_UploadExcludesMetaJSON(t *testing.T) {
 	ctx := context.Background()
 	bucket := memblob.OpenBucket(nil)
 	defer func() { _ = bucket.Close() }()
-	store := NewRemoteIndexStore(bucket)
+	store := NewBucketRemoteIndexStore(bucket)
 	ns := newTestNsResource()
 
 	srcDir := createTestBleveIndex(t)
@@ -389,6 +404,7 @@ type errorBucket struct {
 	resource.CDKBucket
 	uploadErr   error
 	downloadErr error
+	downloadFn  func(key string) error // if set, called instead of downloadErr
 	writeAllErr error
 	readAllErr  error
 	deleteErr   error
@@ -402,7 +418,11 @@ func (e *errorBucket) Upload(ctx context.Context, key string, r io.Reader, opts 
 }
 
 func (e *errorBucket) Download(ctx context.Context, key string, w io.Writer, opts *blob.ReaderOptions) error {
-	if e.downloadErr != nil {
+	if e.downloadFn != nil {
+		if err := e.downloadFn(key); err != nil {
+			return err
+		}
+	} else if e.downloadErr != nil {
 		return e.downloadErr
 	}
 	return e.CDKBucket.Download(ctx, key, w, opts)
@@ -435,7 +455,7 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 
 	uploadSnapshot := func(t *testing.T, bucket *blob.Bucket) ulid.ULID {
 		t.Helper()
-		store := NewRemoteIndexStore(bucket)
+		store := NewBucketRemoteIndexStore(bucket)
 		srcDir := createTestBleveIndex(t)
 		meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
 		key, err := store.UploadIndex(ctx, ns, srcDir, meta)
@@ -446,7 +466,7 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 	t.Run("upload file error", func(t *testing.T) {
 		real := memblob.OpenBucket(nil)
 		defer func() { _ = real.Close() }()
-		store := NewRemoteIndexStore(&errorBucket{CDKBucket: real, uploadErr: fmt.Errorf("upload network timeout")})
+		store := NewBucketRemoteIndexStore(&errorBucket{CDKBucket: real, uploadErr: fmt.Errorf("upload network timeout")})
 
 		_, err := store.UploadIndex(ctx, ns, createTestBleveIndex(t),
 			IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10})
@@ -457,7 +477,7 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 	t.Run("meta.json write error", func(t *testing.T) {
 		real := memblob.OpenBucket(nil)
 		defer func() { _ = real.Close() }()
-		store := NewRemoteIndexStore(&errorBucket{CDKBucket: real, writeAllErr: fmt.Errorf("write quota exceeded")})
+		store := NewBucketRemoteIndexStore(&errorBucket{CDKBucket: real, writeAllErr: fmt.Errorf("write quota exceeded")})
 
 		_, err := store.UploadIndex(ctx, ns, createTestBleveIndex(t),
 			IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10})
@@ -465,12 +485,20 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 		require.Contains(t, err.Error(), "write quota exceeded")
 	})
 
-	t.Run("meta.json read error", func(t *testing.T) {
+	t.Run("meta.json download error", func(t *testing.T) {
 		real := memblob.OpenBucket(nil)
 		defer func() { _ = real.Close() }()
-		store := NewRemoteIndexStore(&errorBucket{CDKBucket: real, readAllErr: fmt.Errorf("access denied")})
+		store := NewBucketRemoteIndexStore(&errorBucket{
+			CDKBucket: real,
+			downloadFn: func(key string) error {
+				if strings.HasSuffix(key, "/meta.json") {
+					return fmt.Errorf("access denied")
+				}
+				return nil
+			},
+		})
 
-		_, err := store.DownloadIndex(ctx, ns, ulid.Make(), t.TempDir())
+		_, err := store.DownloadIndex(ctx, ns, ulid.Make(), filepath.Join(t.TempDir(), "dl"))
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "access denied")
 	})
@@ -479,7 +507,7 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 		real := memblob.OpenBucket(nil)
 		defer func() { _ = real.Close() }()
 		key := uploadSnapshot(t, real)
-		store := NewRemoteIndexStore(&errorBucket{CDKBucket: real, downloadErr: fmt.Errorf("connection reset")})
+		store := NewBucketRemoteIndexStore(&errorBucket{CDKBucket: real, downloadErr: fmt.Errorf("connection reset")})
 
 		parentDir := t.TempDir()
 		destDir := filepath.Join(parentDir, "downloaded")
@@ -501,7 +529,7 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 		real := memblob.OpenBucket(nil)
 		defer func() { _ = real.Close() }()
 		key := uploadSnapshot(t, real)
-		store := NewRemoteIndexStore(real)
+		store := NewBucketRemoteIndexStore(real)
 
 		destDir := t.TempDir() // already exists
 		_, err := store.DownloadIndex(ctx, ns, key, destDir)
@@ -513,7 +541,7 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 		real := memblob.OpenBucket(nil)
 		defer func() { _ = real.Close() }()
 		key := uploadSnapshot(t, real)
-		store := NewRemoteIndexStore(&errorBucket{CDKBucket: real, deleteErr: fmt.Errorf("permission denied")})
+		store := NewBucketRemoteIndexStore(&errorBucket{CDKBucket: real, deleteErr: fmt.Errorf("permission denied")})
 
 		err := store.DeleteIndex(ctx, ns, key)
 		require.Error(t, err)
@@ -525,7 +553,7 @@ func TestRemoteIndexStore_CleanupIncompleteUploads(t *testing.T) {
 	ctx := context.Background()
 	bucket := memblob.OpenBucket(nil)
 	defer func() { _ = bucket.Close() }()
-	store := NewRemoteIndexStore(bucket)
+	store := NewBucketRemoteIndexStore(bucket)
 	ns := newTestNsResource()
 
 	// Upload a complete index (has meta.json)
@@ -541,7 +569,7 @@ func TestRemoteIndexStore_CleanupIncompleteUploads(t *testing.T) {
 	require.NoError(t, bucket.WriteAll(ctx, incompletePfx+"store/00000001.zap", []byte("orphaned"), nil))
 
 	// Cleanup should remove only the incomplete prefix
-	cleaned, err := store.CleanupIncompleteUploads(ctx, ns)
+	cleaned, err := store.CleanupIncompleteUploads(ctx, ns, 0)
 	require.NoError(t, err)
 	assert.Equal(t, 1, cleaned)
 
@@ -561,7 +589,7 @@ func TestRemoteIndexStore_CleanupIncompleteUploads_NoneFound(t *testing.T) {
 	ctx := context.Background()
 	bucket := memblob.OpenBucket(nil)
 	defer func() { _ = bucket.Close() }()
-	store := NewRemoteIndexStore(bucket)
+	store := NewBucketRemoteIndexStore(bucket)
 	ns := newTestNsResource()
 
 	// Upload a complete index
@@ -571,7 +599,7 @@ func TestRemoteIndexStore_CleanupIncompleteUploads_NoneFound(t *testing.T) {
 	require.NoError(t, err)
 
 	// Nothing to clean
-	cleaned, err := store.CleanupIncompleteUploads(ctx, ns)
+	cleaned, err := store.CleanupIncompleteUploads(ctx, ns, 0)
 	require.NoError(t, err)
 	assert.Equal(t, 0, cleaned)
 }
@@ -580,7 +608,7 @@ func TestRemoteIndexStore_CleanupIncompleteUploads_CorruptManifest(t *testing.T)
 	ctx := context.Background()
 	bucket := memblob.OpenBucket(nil)
 	defer func() { _ = bucket.Close() }()
-	store := NewRemoteIndexStore(bucket)
+	store := NewBucketRemoteIndexStore(bucket)
 	ns := newTestNsResource()
 
 	// Upload a valid complete index
@@ -595,7 +623,7 @@ func TestRemoteIndexStore_CleanupIncompleteUploads_CorruptManifest(t *testing.T)
 		require.NoError(t, bucket.WriteAll(ctx, pfx+"store/root.bolt", []byte("data"), nil))
 		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", []byte("{corrupt"), nil))
 
-		cleaned, err := store.CleanupIncompleteUploads(ctx, ns)
+		cleaned, err := store.CleanupIncompleteUploads(ctx, ns, 0)
 		require.NoError(t, err)
 		assert.Equal(t, 1, cleaned)
 	})
@@ -607,7 +635,7 @@ func TestRemoteIndexStore_CleanupIncompleteUploads_CorruptManifest(t *testing.T)
 		emptyMeta, _ := json.Marshal(IndexMeta{GrafanaBuildVersion: "11.0.0", Files: map[string]int64{}})
 		require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", emptyMeta, nil))
 
-		cleaned, err := store.CleanupIncompleteUploads(ctx, ns)
+		cleaned, err := store.CleanupIncompleteUploads(ctx, ns, 0)
 		require.NoError(t, err)
 		assert.Equal(t, 1, cleaned)
 	})
@@ -616,4 +644,40 @@ func TestRemoteIndexStore_CleanupIncompleteUploads_CorruptManifest(t *testing.T)
 	indexes, err := store.ListIndexes(ctx, ns)
 	require.NoError(t, err)
 	assert.Contains(t, indexes, completeKey)
+}
+
+func TestRemoteIndexStore_CleanupIncompleteUploads_MinAge(t *testing.T) {
+	ctx := context.Background()
+	bucket := memblob.OpenBucket(nil)
+	defer func() { _ = bucket.Close() }()
+	store := NewBucketRemoteIndexStore(bucket)
+	ns := newTestNsResource()
+
+	// Create an incomplete prefix with a ULID from 2 hours ago.
+	oldKey, err := ulid.New(ulid.Timestamp(time.Now().Add(-2*time.Hour)), rand.Reader)
+	require.NoError(t, err)
+	oldPfx := indexPrefix(ns, oldKey.String())
+	require.NoError(t, bucket.WriteAll(ctx, oldPfx+"store/root.bolt", []byte("old"), nil))
+
+	// Create an incomplete prefix with a recent ULID (now).
+	recentKey := ulid.Make()
+	recentPfx := indexPrefix(ns, recentKey.String())
+	require.NoError(t, bucket.WriteAll(ctx, recentPfx+"store/root.bolt", []byte("recent"), nil))
+
+	// Cleanup with minAge=1h should only delete the old prefix.
+	cleaned, err := store.CleanupIncompleteUploads(ctx, ns, 1*time.Hour)
+	require.NoError(t, err)
+	assert.Equal(t, 1, cleaned)
+
+	// Old prefix should be gone.
+	iter := bucket.List(&blob.ListOptions{Prefix: oldPfx})
+	obj, err := iter.Next(ctx)
+	assert.Nil(t, obj)
+	assert.ErrorIs(t, err, io.EOF)
+
+	// Recent prefix should still exist.
+	iter = bucket.List(&blob.ListOptions{Prefix: recentPfx})
+	obj, err = iter.Next(ctx)
+	require.NoError(t, err)
+	assert.NotNil(t, obj)
 }
