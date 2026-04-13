@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type PropsWithChildren, useLayoutEffect, useRef } from 'react';
+import { createContext, type PropsWithChildren, useContext } from 'react';
 import * as React from 'react';
 import ReactDOM from 'react-dom';
 
@@ -7,6 +7,11 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+
+// Tracks nesting depth so inner portals get a higher z-index than outer ones.
+// React commits fibers bottom-up, so nested portals targeting the same container
+// end up in reverse DOM order. Incrementing z-index by depth fixes stacking.
+const PortalDepthContext = createContext(0);
 
 interface Props {
   className?: string;
@@ -19,31 +24,18 @@ interface Props {
 export function Portal(props: PropsWithChildren<Props>) {
   const { children, className, root, forwardedRef } = props;
   const theme = useTheme2();
-  const node = useRef<HTMLDivElement | null>(null);
   const portalRoot = root ?? getPortalContainer();
+  const depth = useContext(PortalDepthContext);
+  const zIndex = props.zIndex ?? theme.zIndex.portal + depth;
 
-  if (!node.current) {
-    node.current = document.createElement('div');
-    if (className) {
-      node.current.className = className;
-    }
-    node.current.style.position = 'relative';
-    node.current.style.zIndex = `${props.zIndex ?? theme.zIndex.portal}`;
-  }
-
-  useLayoutEffect(() => {
-    if (node.current) {
-      portalRoot.appendChild(node.current);
-    }
-
-    return () => {
-      if (node.current) {
-        portalRoot.removeChild(node.current);
-      }
-    };
-  }, [portalRoot]);
-
-  return ReactDOM.createPortal(<div ref={forwardedRef}>{children}</div>, node.current);
+  return ReactDOM.createPortal(
+    <PortalDepthContext.Provider value={depth + 1}>
+      <div className={className} style={{ position: 'relative', zIndex }}>
+        <div ref={forwardedRef}>{children}</div>
+      </div>
+    </PortalDepthContext.Provider>,
+    portalRoot
+  );
 }
 
 /** @internal */
