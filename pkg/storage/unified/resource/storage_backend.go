@@ -105,7 +105,7 @@ type KVBackendOptions struct {
 	DisablePruner        bool
 	EventRetentionPeriod time.Duration         // How long to keep events (default: 1 hour)
 	EventPruningInterval time.Duration         // How often to run the event pruning (default: 5 minutes)
-	Reg prometheus.Registerer // TODO add metrics
+	Reg                  prometheus.Registerer // TODO add metrics
 	Log                  log.Logger
 	GarbageCollection    GarbageCollectionConfig
 

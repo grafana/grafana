@@ -700,7 +700,7 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 	}
 	event.PreviousRV = toMicrosecondRV(event.PreviousRV)
 
-	_, span := tracer.Start(ctx, "sql.backend.WriteEvent")
+	ctx, span := tracer.Start(ctx, "sql.backend.WriteEvent")
 	defer span.End()
 	// TODO: validate key ?
 	switch event.Type {
