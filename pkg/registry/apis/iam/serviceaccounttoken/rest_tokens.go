@@ -265,15 +265,14 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 	}
 
 	if req.TokenName == "" {
-		// TODO: Add the default (sa-1-...)
 		responder.Error(apierrors.NewBadRequest("tokenName is required"))
 		return
 	}
 
-	var expires *int64
+	// 0 means "never expires" — only compute an absolute timestamp when positive.
+	var expires int64
 	if req.ExpiresInSeconds > 0 {
-		exp := time.Now().Unix() + req.ExpiresInSeconds
-		expires = &exp
+		expires = time.Now().Unix() + req.ExpiresInSeconds
 	}
 
 	// Generate the token ONCE — the same hash goes to both stores.
@@ -284,12 +283,15 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 	}
 
 	// --- Write to legacy api_key table (Mode0 / Mode1) ---
-	if err := s.legacyStore.SaveServiceAccountTokenHash(ctx, ns, legacy.SaveServiceAccountTokenHashCommand{
+	cmd := legacy.SaveServiceAccountTokenHashCommand{
 		TokenName:         req.TokenName,
 		HashedKey:         keyResult.HashedKey,
 		ServiceAccountUID: saName,
-		Expires:           expires,
-	}); err != nil {
+	}
+	if expires > 0 {
+		cmd.Expires = &expires
+	}
+	if err := s.legacyStore.SaveServiceAccountTokenHash(ctx, ns, cmd); err != nil {
 		responder.Error(fmt.Errorf("failed to store token (legacy): %w", err))
 		return
 	}
@@ -297,16 +299,11 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 	// --- Write to custom DB (Mode5 / MT) ---
 	// Write also to the custom store if configured in Mode1 and Mode5.
 
-	var respExpires int64
-	if expires != nil {
-		respExpires = *expires
-	}
-
 	resp := &iamv0alpha1.CreateSATokenResponse{
 		CreateTokenBody: iamv0alpha1.CreateTokenBody{
 			Token:                   keyResult.ClientSecret,
 			ServiceAccountTokenName: req.TokenName,
-			Expires:                 respExpires,
+			Expires:                 expires,
 		},
 	}
 	responder.Object(http.StatusCreated, resp)

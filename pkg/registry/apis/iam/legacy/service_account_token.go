@@ -248,7 +248,6 @@ func (s *legacySQLStore) SaveServiceAccountTokenHash(
 	now := time.Now().UTC()
 
 	createCmd := CreateServiceAccountTokenCommand{
-		// TODO: Fail if TokenName is empty
 		Name:             cmd.TokenName,
 		HashedKey:        cmd.HashedKey,
 		Role:             "Viewer",

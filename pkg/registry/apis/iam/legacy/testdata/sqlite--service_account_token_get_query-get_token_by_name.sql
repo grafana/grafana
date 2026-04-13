@@ -14,4 +14,4 @@ SELECT
 WHERE o.org_id = 1
    AND u.is_service_account
    AND t.name = 'my-token'
- LIMIT 1
+LIMIT 1

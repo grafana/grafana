@@ -17,4 +17,4 @@ WHERE o.org_id = {{ .Arg .Query.OrgID }}
 {{ if .Query.ServiceAccountUID }}
    AND u.uid = {{ .Arg .Query.ServiceAccountUID }}
 {{ end }}
- LIMIT 1
+LIMIT 1

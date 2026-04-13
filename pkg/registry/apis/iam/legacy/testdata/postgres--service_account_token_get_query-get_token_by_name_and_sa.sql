@@ -15,4 +15,4 @@ WHERE o.org_id = 1
    AND u.is_service_account
    AND t.name = 'my-token'
    AND u.uid = 'sa-1'
- LIMIT 1
+LIMIT 1

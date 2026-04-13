@@ -12,7 +12,7 @@ type CreateTokenRequestBody struct {
 type CreateTokenBody struct {
 	Token                   string `json:"token"`
 	ServiceAccountTokenName string `json:"serviceAccountTokenName"`
-	Expires                 int64  `json:"expires"`
+	Expires                 int64  `json:"expires"` // unix seconds; 0 means never expires
 }
 
 // +k8s:deepcopy-gen=true
@@ -26,10 +26,10 @@ type CreateSATokenResponse struct {
 type TokenItem struct {
 	Title    string `json:"title"`
 	Revoked  bool   `json:"revoked"`
-	Expires  int64  `json:"expires"`
-	Created  int64  `json:"created"`
-	Updated  int64  `json:"updated"`
-	LastUsed int64  `json:"lastUsed"`
+	Expires  int64  `json:"expires"`  // unix seconds; 0 means never expires
+	Created  int64  `json:"created"`  // unix seconds
+	Updated  int64  `json:"updated"`  // unix seconds
+	LastUsed int64  `json:"lastUsed"` // unix seconds; 0 means never used
 }
 
 // +k8s:deepcopy-gen=true
