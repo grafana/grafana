@@ -6,7 +6,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	pluginspec "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/plugin"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginspec"
 )
 
 func TestdataOpenAPIExtension(apiVersion string) (*pluginspec.OpenAPIExtension, error) {
@@ -16,18 +16,9 @@ func TestdataOpenAPIExtension(apiVersion string) (*pluginspec.OpenAPIExtension, 
 
 	oas := &pluginspec.OpenAPIExtension{
 		Settings: pluginspec.Settings{
-			Schema: &spec.Schema{},
+			Spec: &spec.Schema{},
 
-			SecureValues: []pluginspec.SecureValueInfo{
-				{
-					Key:         "aaa",
-					Description: "describe aaa",
-					Required:    true,
-				}, {
-					Key:         "bbb",
-					Description: "describe bbb",
-				},
-			},
+			SecureValues: []pluginspec.SecureValueInfo{}, // none
 
 			Examples: map[string]*spec3.Example{
 				"": { // empty is the default one displayed in swagger
@@ -64,7 +55,7 @@ func TestdataOpenAPIExtension(apiVersion string) (*pluginspec.OpenAPIExtension, 
 	}
 
 	// Dummy spec
-	p := oas.Settings.Schema
+	p := oas.Settings.Spec
 	p.Description = "Test data does not require any explicit configuration"
 	p.Required = []string{"title"}
 	p.AdditionalProperties = &spec.SchemaOrBool{Allows: false}

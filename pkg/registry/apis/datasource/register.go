@@ -15,9 +15,8 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
 
-	pluginspec "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/plugin"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginspec"
 	"github.com/grafana/grafana-prometheus-datasource/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
