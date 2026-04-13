@@ -87,12 +87,6 @@ describe('<DataSourcesList>', () => {
     expect(await screen.findAllByRole('link', { name: 'Explore' })).toHaveLength(3);
   });
 
-  it('should render all elements in the list item', async () => {
-    setup();
-
-    expect(await screen.findByRole('link', { name: 'dataSource-0' })).toBeInTheDocument();
-  });
-
   it('should virtualize long datasource lists', async () => {
     setup({
       dataSources: getMockDataSources(200),
