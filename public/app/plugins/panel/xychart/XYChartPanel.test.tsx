@@ -109,7 +109,7 @@ function makeField(opts: {
     field.state = { ...field.state, displayName };
   }
   if (hideFromViz) {
-    field.state = { ...field.state, hideFrom: { viz: true } };
+    field.state = { ...field.state, hideFrom: { viz: true, legend: false, tooltip: false } };
   }
 
   return field;
