@@ -805,12 +805,12 @@ func (s *Storage) validateMinimumResourceVersion(minimumResourceVersion string, 
 	// RVs may be in either snowflake or microsecond format depending
 	// on which backend produced them.
 	rvMin := int64(minimumRV)
-	if resource.IsSnowflake(rvMin) {
-		rvMin = rvmanager.RVFromSnowflake(rvMin)
+	if !resource.IsSnowflake(rvMin) {
+		rvMin = rvmanager.SnowflakeFromRV(rvMin)
 	}
 	rvActual := int64(actualRevision)
-	if resource.IsSnowflake(rvActual) {
-		rvActual = rvmanager.RVFromSnowflake(rvActual)
+	if !resource.IsSnowflake(rvActual) {
+		rvActual = rvmanager.SnowflakeFromRV(rvActual)
 	}
 
 	// Enforce the storage.Interface guarantee that the resource version of the returned data
