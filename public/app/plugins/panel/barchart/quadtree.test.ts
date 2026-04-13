@@ -30,30 +30,67 @@ describe('pointWithin', () => {
 });
 
 describe('intersects', () => {
-  it('returns true when rects overlap', () => {
-    expect(intersects(rect(0, 0, 10, 10), rect(5, 5, 10, 10))).toBe(true);
-  });
-
-  it('returns true when rects touch at edge', () => {
-    expect(intersects(rect(0, 0, 10, 10), rect(10, 0, 10, 10))).toBe(true);
-  });
-
-  it('returns true when one rect fully contains the other', () => {
-    expect(intersects(rect(0, 0, 100, 100), rect(10, 10, 20, 20))).toBe(true);
-    expect(intersects(rect(10, 10, 20, 20), rect(0, 0, 100, 100))).toBe(true);
-  });
-
-  it('returns false when rects are disjoint to the left/right', () => {
-    expect(intersects(rect(0, 0, 10, 10), rect(20, 0, 10, 10))).toBe(false);
-  });
-
-  it('returns false when rects are disjoint above/below', () => {
-    expect(intersects(rect(0, 0, 10, 10), rect(0, 20, 10, 10))).toBe(false);
-  });
-
-  it('returns true for same rect', () => {
-    const r = rect(0, 0, 10, 10);
-    expect(intersects(r, r)).toBe(true);
+  it.each([
+    {
+      args: [
+        [0, 0, 10, 10],
+        [5, 5, 10, 10],
+      ],
+      expected: true,
+      desc: 'returns true when rects overlap',
+    },
+    {
+      args: [
+        [0, 0, 10, 10],
+        [10, 0, 10, 10],
+      ],
+      expected: true,
+      desc: 'returns true when rects touch at edge',
+    },
+    {
+      args: [
+        [0, 0, 100, 100],
+        [10, 10, 20, 20],
+      ],
+      expected: true,
+      desc: 'returns true when outer rect fully contains inner',
+    },
+    {
+      args: [
+        [10, 10, 20, 20],
+        [0, 0, 100, 100],
+      ],
+      expected: true,
+      desc: 'returns true when inner rect is fully contained by outer',
+    },
+    {
+      args: [
+        [0, 0, 10, 10],
+        [20, 0, 10, 10],
+      ],
+      expected: false,
+      desc: 'returns false when rects are disjoint to the left/right',
+    },
+    {
+      args: [
+        [0, 0, 10, 10],
+        [0, 20, 10, 10],
+      ],
+      expected: false,
+      desc: 'returns false when rects are disjoint above/below',
+    },
+    {
+      args: [
+        [0, 0, 10, 10],
+        [0, 0, 10, 10],
+      ],
+      expected: true,
+      desc: 'returns true for identical rects',
+    },
+  ])('intersects: $desc', (test) => {
+    const [a, b] = test.args;
+    // @ts-expect-error tuple type mismatch
+    expect(intersects(rect(...a), rect(...b))).toBe(test.expected);
   });
 });
 
