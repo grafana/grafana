@@ -98,6 +98,7 @@ type ListAlertRulesOptions struct {
 	ContinueToken string
 	GroupFilter   ListRuleStringFilter
 	FolderFilter  ListRuleStringFilter
+	// TODO: add the following filters
 	// title filter - string
 	// paused filter - bool
 	// dashboard filter - string
