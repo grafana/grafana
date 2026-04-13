@@ -5,11 +5,11 @@ import (
 )
 
 const (
-	invalidPermissionMessage  = `Permission [{{ .Public.permission }}] is invalid for this resource type`
-	invalidAssignmentMessage  = `Assignment [{{ .Public.assignment }}] is invalid for this resource type`
-	invalidParamMessage       = `Param [{{ .Public.param }}] is invalid`
-	invalidRequestBody        = `Request body is invalid: {{ .Public.reason }}`
-	invalidResourceIDMessage  = `Resource ID [{{ .Public.resourceID }}] is not valid: wildcard "*" is not allowed`
+	invalidPermissionMessage = `Permission [{{ .Public.permission }}] is invalid for this resource type`
+	invalidAssignmentMessage = `Assignment [{{ .Public.assignment }}] is invalid for this resource type`
+	invalidParamMessage      = `Param [{{ .Public.param }}] is invalid`
+	invalidRequestBody       = `Request body is invalid: {{ .Public.reason }}`
+	invalidResourceIDMessage = `Resource ID [{{ .Public.resourceID }}] is not valid: wildcard "*" is not allowed`
 )
 
 var (
