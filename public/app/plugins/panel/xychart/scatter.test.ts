@@ -13,6 +13,12 @@ import { PointShape } from './panelcfg.gen';
 import { prepConfig } from './scatter';
 import { type XYSeries } from './types2';
 
+/*
+ * Why mock UPlotConfigBuilder:
+ * - Real one needs a uPlot instance + canvas context (no DOM in Jest)
+ * - Stubbing its methods lets prepConfig run through setup without crashing
+ * - We only care about the returned prepData closure, not the builder itself
+ */
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
   UPlotConfigBuilder: jest.fn().mockImplementation(() => ({
@@ -27,6 +33,13 @@ jest.mock('@grafana/ui', () => ({
 
 const theme = createTheme();
 
+/*
+ * Why makeField has defaults and a two-level merge:
+ * - prepConfig accesses custom.pointSize, axisLabel, axisPlacement directly
+ * - config.custom is shallow-merged so caller overrides win
+ * - Top-level keys (unit, thresholds, mappings, color) spread separately
+ *   so they don't overwrite the custom defaults
+ */
 function makeField(opts: {
   name: string;
   values: number[];
@@ -97,7 +110,7 @@ describe('prepConfig', () => {
 });
 
 describe('prepData', () => {
-  it('returns faceted data with null first element', () => {
+  it('returns data array with null first element (uPlot convention)', () => {
     const series = makeSeries();
     const { prepData } = prepConfig([series], theme);
     const data = prepData!([series]);
@@ -114,7 +127,7 @@ describe('prepData', () => {
     expect(entry[1]).toEqual([10, 20, 30]);
   });
 
-  it('uses fixed size when no size field mapped', () => {
+  it('fills all diameters with the fixed value when no size field is mapped', () => {
     const series = makeSeries({ size: { fixed: 7 } });
     const { prepData } = prepConfig([series], theme);
     const data = prepData!([series]);
@@ -122,7 +135,7 @@ describe('prepData', () => {
     expect(entry[2]).toEqual([7, 7, 7]);
   });
 
-  it('fills fixed color when no color field mapped', () => {
+  it('fills all color entries with the fixed value when no color field is mapped', () => {
     const series = makeSeries({ color: { fixed: '#00ff00' } });
     const { prepData } = prepConfig([series], theme);
     const data = prepData!([series]);
@@ -130,7 +143,7 @@ describe('prepData', () => {
     expect(entry[3]).toEqual(['#00ff00', '#00ff00', '#00ff00']);
   });
 
-  it('computes quadratic size scaling when size field mapped', () => {
+  it('scales diameters by area (not linearly) when a size field is mapped', () => {
     const sizeField = makeField({ name: 'sz', values: [0, 50, 100] });
     const series = makeSeries({
       size: { field: sizeField, min: 2, max: 10, fixed: 5 },
@@ -148,7 +161,7 @@ describe('prepData', () => {
     expect(diams[2]).toBeCloseTo(10, 5);
   });
 
-  it('size scaling uses global min/max across multiple series', () => {
+  it('normalizes diameters against the global min/max when multiple series share a size field', () => {
     const series1 = makeSeries({
       x: { field: makeField({ name: 'x', values: [1, 2] }) },
       y: { field: makeField({ name: 'y', values: [10, 20], config: { unit: 'y' } }) },
@@ -175,7 +188,7 @@ describe('prepData', () => {
 });
 
 describe('fieldValueColors via prepConfig', () => {
-  it('does not throw with threshold-based color field', () => {
+  it('processes a color field with absolute thresholds without error', () => {
     const colorField = makeField({
       name: 'temp',
       values: [10, 50, 90],
@@ -204,7 +217,7 @@ describe('fieldValueColors via prepConfig', () => {
     expect(data[1]).toHaveLength(4);
   });
 
-  it('does not throw with value mapping color field', () => {
+  it('processes a color field with value-to-text mappings without error', () => {
     const colorField = makeField({
       name: 'status',
       values: [1, 2, 3],
