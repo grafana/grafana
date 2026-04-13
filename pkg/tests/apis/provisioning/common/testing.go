@@ -88,6 +88,7 @@ u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
 type ProvisioningTestHelper struct {
 	*apis.K8sTestHelper
 	ProvisioningPath string
+	Namespace        string // Namespace for this helper (set by WithNamespace or defaults to "default")
 
 	// Default clients for Org1 (backwards compatibility)
 	Repositories       *apis.K8sResourceClient
@@ -110,6 +111,7 @@ func (h *ProvisioningTestHelper) WithNamespace(namespace string, user apis.User)
 
 	return &ProvisioningTestHelper{
 		ProvisioningPath: h.ProvisioningPath,
+		Namespace:        namespace,
 		K8sTestHelper:    h.K8sTestHelper,
 
 		Repositories: h.GetResourceClient(apis.ResourceClientArgs{
@@ -201,7 +203,7 @@ func (h *ProvisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 	})
 
 	result := h.AdminREST.Post().
-		Namespace(h.Repositories.Args.Namespace).
+		Namespace(h.Namespace).
 		Resource("repositories").
 		Name(repo).
 		SubResource("jobs").
@@ -1093,6 +1095,7 @@ func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provis
 
 	h := &ProvisioningTestHelper{
 		ProvisioningPath: provisioningPath,
+		Namespace:        "default", // Default namespace (org1)
 		K8sTestHelper:    k8sHelper,
 
 		Repositories:       repositories,

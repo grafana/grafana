@@ -56,7 +56,7 @@ func TestCrossNamespaceIsolation_FolderSync(t *testing.T) {
 			},
 			SkipSync: true, // We'll sync manually to verify success
 		})
-		t.Logf("✓ Created repository '%s' in orgA (namespace: %s)", orgARepoName, orgAHelper.Repositories.Args.Namespace)
+		t.Logf("✓ Created repository '%s' in orgA (namespace: %s)", orgARepoName, orgAHelper.Namespace)
 
 		// Create orgB repository with folder sync
 		orgBRepoPath := t.TempDir()
@@ -69,7 +69,7 @@ func TestCrossNamespaceIsolation_FolderSync(t *testing.T) {
 			},
 			SkipSync: true, // We'll sync manually to verify success
 		})
-		t.Logf("✓ Created repository '%s' in orgB (namespace: %s)", orgBRepoName, orgBHelper.Repositories.Args.Namespace)
+		t.Logf("✓ Created repository '%s' in orgB (namespace: %s)", orgBRepoName, orgBHelper.Namespace)
 	})
 
 	// Step 2: Sync both repositories and verify success
@@ -103,7 +103,7 @@ func TestCrossNamespaceIsolation_FolderSync(t *testing.T) {
 		require.Len(t, orgAFolders.Items, 1, "orgA should have exactly 1 folder")
 
 		orgAFolder := &orgAFolders.Items[0]
-		assert.Equal(t, orgAHelper.Repositories.Args.Namespace, orgAFolder.GetNamespace(), "orgA folder should be in orgA namespace")
+		assert.Equal(t, orgAHelper.Namespace, orgAFolder.GetNamespace(), "orgA folder should be in orgA namespace")
 
 		// Check folder is managed by orgA repo
 		meta, err := utils.MetaAccessor(orgAFolder)
@@ -120,7 +120,7 @@ func TestCrossNamespaceIsolation_FolderSync(t *testing.T) {
 		require.Len(t, orgBFolders.Items, 1, "orgB should have exactly 1 folder")
 
 		orgBFolder := &orgBFolders.Items[0]
-		assert.Equal(t, orgBHelper.Repositories.Args.Namespace, orgBFolder.GetNamespace(), "orgB folder should be in orgB namespace")
+		assert.Equal(t, orgBHelper.Namespace, orgBFolder.GetNamespace(), "orgB folder should be in orgB namespace")
 
 		// Check folder is managed by orgB repo
 		meta, err = utils.MetaAccessor(orgBFolder)
@@ -143,7 +143,7 @@ func TestCrossNamespaceIsolation_FolderSync(t *testing.T) {
 		// Try to access orgB repository from orgA context - should fail
 		orgAViewOfOrgBRepos := helper.GetResourceClient(apis.ResourceClientArgs{
 			User:      helper.Org1.Admin,
-			Namespace: orgBHelper.Repositories.Args.Namespace, // Try to access orgB namespace
+			Namespace: orgBHelper.Namespace, // Try to access orgB namespace
 			GVR:       schema.GroupVersionResource{Group: "provisioning.grafana.app", Resource: "repositories", Version: "v0alpha1"},
 		})
 
@@ -154,7 +154,7 @@ func TestCrossNamespaceIsolation_FolderSync(t *testing.T) {
 		// Try to access orgA repository from orgB context - should fail
 		orgBViewOfOrgARepos := helper.GetResourceClient(apis.ResourceClientArgs{
 			User:      helper.OrgB.Admin,
-			Namespace: orgAHelper.Repositories.Args.Namespace, // Try to access orgA namespace
+			Namespace: orgAHelper.Namespace, // Try to access orgA namespace
 			GVR:       schema.GroupVersionResource{Group: "provisioning.grafana.app", Resource: "repositories", Version: "v0alpha1"},
 		})
 
@@ -177,19 +177,19 @@ func TestCrossNamespaceIsolation_FolderSync(t *testing.T) {
 		// Verify all orgA dashboards are in orgA namespace
 		for i := range orgADashboards.Items {
 			dash := &orgADashboards.Items[i]
-			assert.Equal(t, orgAHelper.Repositories.Args.Namespace, dash.GetNamespace(),
+			assert.Equal(t, orgAHelper.Namespace, dash.GetNamespace(),
 				fmt.Sprintf("orgA dashboard %s should be in orgA namespace", dash.GetName()))
 		}
 
 		// Verify all orgB dashboards are in orgB namespace
 		for i := range orgBDashboards.Items {
 			dash := &orgBDashboards.Items[i]
-			assert.Equal(t, orgBHelper.Repositories.Args.Namespace, dash.GetNamespace(),
+			assert.Equal(t, orgBHelper.Namespace, dash.GetNamespace(),
 				fmt.Sprintf("orgB dashboard %s should be in orgB namespace", dash.GetName()))
 		}
 
-		t.Logf("✓ orgA has %d dashboard(s) in namespace '%s'", len(orgADashboards.Items), orgAHelper.Repositories.Args.Namespace)
-		t.Logf("✓ orgB has %d dashboard(s) in namespace '%s'", len(orgBDashboards.Items), orgBHelper.Repositories.Args.Namespace)
+		t.Logf("✓ orgA has %d dashboard(s) in namespace '%s'", len(orgADashboards.Items), orgAHelper.Namespace)
+		t.Logf("✓ orgB has %d dashboard(s) in namespace '%s'", len(orgBDashboards.Items), orgBHelper.Namespace)
 	})
 
 	// Step 6: Verify re-sync maintains isolation
