@@ -16,7 +16,6 @@ import {
   type EventBus,
   type ExploreLogsPanelState,
   type ExplorePanelsState,
-  type FieldConfigSource,
   type GrafanaTheme2,
   LoadingState,
   type LogLevel,
@@ -922,9 +921,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
               onOptionsChange={onTableOptionsChange}
-              onFieldConfigChange={function (config: FieldConfigSource): void {
-                // @todo save field overrides somewhere (e.g. column widths)
-              }}
               onChangeTimeRange={onChangeTime}
             />
           )}
