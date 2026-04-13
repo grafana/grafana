@@ -1,9 +1,13 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { LocalValueVariable, type SceneObject, sceneGraph } from '@grafana/scenes';
 import { Combobox, type ComboboxOption, Select } from '@grafana/ui';
+import {
+  collectAncestorSceneVariables,
+  subscribeAncestorVariableSets,
+} from 'app/features/dashboard-scene/utils/collectAncestorSceneVariables';
 import { useSelector } from 'app/types/store';
 
 import { getLastKey, getVariablesByKey } from '../../../variables/state/selectors';
@@ -55,8 +59,18 @@ interface Props2 {
 }
 
 export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2) => {
-  const sceneVars = useMemo(() => sceneGraph.getVariables(sceneContext.getRoot()), [sceneContext]);
-  const variables = sceneVars.useState().variables;
+  const [ancestorVarsVersion, setAncestorVarsVersion] = useState(0);
+
+  useEffect(() => {
+    return subscribeAncestorVariableSets(sceneContext, () => {
+      setAncestorVarsVersion((v) => v + 1);
+    });
+  }, [sceneContext]);
+
+  const variables = useMemo(() => {
+    void ancestorVarsVersion;
+    return collectAncestorSceneVariables(sceneContext);
+  }, [sceneContext, ancestorVarsVersion]);
 
   const variableOptions = useMemo(() => {
     const options: ComboboxOption[] = variables
