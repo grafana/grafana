@@ -12,15 +12,21 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
+	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	prom_model "github.com/prometheus/common/model"
 
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
+
+	"github.com/grafana/grafana/pkg/tests/apis"
 )
 
 func TestMain(m *testing.M) {
@@ -708,6 +714,227 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
 		require.Error(t, err)
 		require.Nil(t, created)
+	})
+}
+
+func TestIntegrationNotificationSettings(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagAlertingMultiplePolicies,
+		},
+	})
+	client := common.NewAlertRuleClient(t, helper.Org1.Admin)
+
+	common.CreateTestFolder(t, helper, "test-folder")
+
+	// Create a named routing tree so NamedRoutingTree notification settings can reference it.
+	routingTreeClient, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+
+	testTree := &v1beta1.RoutingTree{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "test-routing-tree",
+			Namespace: "default",
+		},
+		Spec: v1beta1.RoutingTreeSpec{
+			Defaults: v1beta1.RoutingTreeRouteDefaults{
+				Receiver: "empty",
+			},
+		},
+	}
+	_, err = routingTreeClient.Create(ctx, testTree, resource.CreateOptions{})
+	require.NoError(t, err)
+	defer func() {
+		_ = routingTreeClient.Delete(ctx, testTree.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+	}()
+
+	baseGen := ngmodels.RuleGen.With(
+		ngmodels.RuleMuts.WithUniqueUID(),
+		ngmodels.RuleMuts.WithUniqueTitle(),
+		ngmodels.RuleMuts.WithNamespaceUID("test-folder"),
+		ngmodels.RuleMuts.WithGroupName("test-group"),
+		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	)
+
+	newAlertRule := func(t *testing.T, ns *v0alpha1.AlertRuleNotificationSettings) *v0alpha1.AlertRule {
+		t.Helper()
+		rule := baseGen.Generate()
+		return &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					"grafana.app/folder": "test-folder",
+				},
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title: rule.Title,
+				Expressions: v0alpha1.AlertRuleExpressionMap{
+					"A": {
+						QueryType:     util.Pointer(rule.Data[0].QueryType),
+						DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        util.Pointer(true),
+						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger: v0alpha1.AlertRuleIntervalTrigger{
+					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+				},
+				NoDataState:          v0alpha1.AlertRuleNoDataState(rule.NoDataState),
+				ExecErrState:         v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NotificationSettings: ns,
+			},
+		}
+	}
+
+	t.Run("should create and read rule with SimplifiedRouting notification settings", func(t *testing.T) {
+		ns := &v0alpha1.AlertRuleNotificationSettings{
+			SimplifiedRouting: &v0alpha1.AlertRuleSimplifiedRouting{
+				Type:     v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+				Receiver: "empty",
+			},
+		}
+		alertRule := newAlertRule(t, ns)
+
+		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		got, err := client.Get(ctx, created.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, got.Spec.NotificationSettings)
+		require.NotNil(t, got.Spec.NotificationSettings.SimplifiedRouting)
+		require.Nil(t, got.Spec.NotificationSettings.NamedRoutingTree)
+		require.Equal(t, v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting, got.Spec.NotificationSettings.SimplifiedRouting.Type)
+		require.Equal(t, "empty", got.Spec.NotificationSettings.SimplifiedRouting.Receiver)
+
+		require.NoError(t, client.Delete(ctx, created.Name, v1.DeleteOptions{}))
+	})
+
+	t.Run("should create and read rule with NamedRoutingTree notification settings", func(t *testing.T) {
+		ns := &v0alpha1.AlertRuleNotificationSettings{
+			NamedRoutingTree: &v0alpha1.AlertRuleNamedRoutingTree{
+				Type:        v0alpha1.AlertRuleNotificationSettingsTypeNamedRoutingTree,
+				RoutingTree: "test-routing-tree",
+			},
+		}
+		alertRule := newAlertRule(t, ns)
+
+		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		got, err := client.Get(ctx, created.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, got.Spec.NotificationSettings)
+		require.Nil(t, got.Spec.NotificationSettings.SimplifiedRouting)
+		require.NotNil(t, got.Spec.NotificationSettings.NamedRoutingTree)
+		require.Equal(t, v0alpha1.AlertRuleNotificationSettingsTypeNamedRoutingTree, got.Spec.NotificationSettings.NamedRoutingTree.Type)
+		require.Equal(t, "test-routing-tree", got.Spec.NotificationSettings.NamedRoutingTree.RoutingTree)
+
+		require.NoError(t, client.Delete(ctx, created.Name, v1.DeleteOptions{}))
+	})
+
+	t.Run("should update notification settings from SimplifiedRouting to NamedRoutingTree", func(t *testing.T) {
+		ns := &v0alpha1.AlertRuleNotificationSettings{
+			SimplifiedRouting: &v0alpha1.AlertRuleSimplifiedRouting{
+				Type:     v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+				Receiver: "empty",
+			},
+		}
+		alertRule := newAlertRule(t, ns)
+
+		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		updated := created.Copy().(*v0alpha1.AlertRule)
+		updated.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			NamedRoutingTree: &v0alpha1.AlertRuleNamedRoutingTree{
+				Type:        v0alpha1.AlertRuleNotificationSettingsTypeNamedRoutingTree,
+				RoutingTree: "test-routing-tree",
+			},
+		}
+
+		result, err := client.Update(ctx, updated, v1.UpdateOptions{})
+		require.NoError(t, err)
+
+		got, err := client.Get(ctx, result.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, got.Spec.NotificationSettings)
+		require.Nil(t, got.Spec.NotificationSettings.SimplifiedRouting)
+		require.NotNil(t, got.Spec.NotificationSettings.NamedRoutingTree)
+		require.Equal(t, v0alpha1.AlertRuleNotificationSettingsTypeNamedRoutingTree, got.Spec.NotificationSettings.NamedRoutingTree.Type)
+		require.Equal(t, "test-routing-tree", got.Spec.NotificationSettings.NamedRoutingTree.RoutingTree)
+
+		require.NoError(t, client.Delete(ctx, created.Name, v1.DeleteOptions{}))
+	})
+
+	t.Run("should update notification settings from NamedRoutingTree to SimplifiedRouting", func(t *testing.T) {
+		ns := &v0alpha1.AlertRuleNotificationSettings{
+			NamedRoutingTree: &v0alpha1.AlertRuleNamedRoutingTree{
+				Type:        v0alpha1.AlertRuleNotificationSettingsTypeNamedRoutingTree,
+				RoutingTree: "test-routing-tree",
+			},
+		}
+		alertRule := newAlertRule(t, ns)
+
+		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		updated := created.Copy().(*v0alpha1.AlertRule)
+		updated.Spec.NotificationSettings = &v0alpha1.AlertRuleNotificationSettings{
+			SimplifiedRouting: &v0alpha1.AlertRuleSimplifiedRouting{
+				Type:     v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+				Receiver: "empty",
+			},
+		}
+
+		result, err := client.Update(ctx, updated, v1.UpdateOptions{})
+		require.NoError(t, err)
+
+		got, err := client.Get(ctx, result.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, got.Spec.NotificationSettings)
+		require.NotNil(t, got.Spec.NotificationSettings.SimplifiedRouting)
+		require.Nil(t, got.Spec.NotificationSettings.NamedRoutingTree)
+		require.Equal(t, v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting, got.Spec.NotificationSettings.SimplifiedRouting.Type)
+		require.Equal(t, "empty", got.Spec.NotificationSettings.SimplifiedRouting.Receiver)
+
+		require.NoError(t, client.Delete(ctx, created.Name, v1.DeleteOptions{}))
+	})
+
+	t.Run("should remove notification settings via update", func(t *testing.T) {
+		ns := &v0alpha1.AlertRuleNotificationSettings{
+			SimplifiedRouting: &v0alpha1.AlertRuleSimplifiedRouting{
+				Type:     v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+				Receiver: "empty",
+			},
+		}
+		alertRule := newAlertRule(t, ns)
+
+		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		updated := created.Copy().(*v0alpha1.AlertRule)
+		updated.Spec.NotificationSettings = nil
+
+		result, err := client.Update(ctx, updated, v1.UpdateOptions{})
+		require.NoError(t, err)
+
+		got, err := client.Get(ctx, result.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Nil(t, got.Spec.NotificationSettings)
+
+		require.NoError(t, client.Delete(ctx, created.Name, v1.DeleteOptions{}))
 	})
 }
 
