@@ -934,6 +934,10 @@ const (
 	// Redirect caching service cache config reads from legacy storage to K8s API
 	FlagQuerycachingRedirectToK8SApi = "querycaching.redirectToK8SApi"
 
+	// FlagQuerycachingEnableConnectionsClient
+	// Use connections client instead of storage to resolve datasource plugin ID in query caching
+	FlagQuerycachingEnableConnectionsClient = "querycaching.enableConnectionsClient"
+
 	// FlagCompiledBootScript
 	// Boots the frontend using the boot.js script built from TS instead of the embedded boot script
 	FlagCompiledBootScript = "compiledBootScript"

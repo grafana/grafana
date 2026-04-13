@@ -2988,6 +2988,14 @@ var (
 			Generate:    Generate{Go: true},
 		},
 		{
+			Name:        "querycaching.enableConnectionsClient",
+			Description: "Use connections client instead of storage to resolve datasource plugin ID in query caching",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:         "compiledBootScript",
 			Description:  "Boots the frontend using the boot.js script built from TS instead of the embedded boot script",
 			Stage:        FeatureStageExperimental,
