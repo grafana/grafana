@@ -455,8 +455,6 @@ func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, pre
 		return "", nil
 	}
 
-	fm.tree.Remove(oldFolder.ID)
-
 	return oldFolder.ID, nil
 }
 
