@@ -179,8 +179,11 @@ export const KBarResults = (props: KBarResultsProps) => {
         }}
       >
         {rowVirtualizer.virtualItems.map((virtualRow) => {
+          const rawItem = itemsRef.current[virtualRow.index];
+          const isStringItem = typeof rawItem === 'string';
+
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const item = itemsRef.current[virtualRow.index] as ActionImpl & {
+          const item = rawItem as ActionImpl & {
             url?: string | URLCallback;
             target?: React.HTMLAttributeAnchorTarget;
           };
@@ -189,8 +192,6 @@ export const KBarResults = (props: KBarResultsProps) => {
           // so our url property is secretly there, but completely untyped
           // Preferably this change is upstreamed and ActionImpl has this
           const { target, url } = item;
-
-          const isStringItem = typeof item === 'string';
           const groupLabel = itemGroupLabels[virtualRow.index];
 
           const handlers = !isStringItem && {
