@@ -4,7 +4,7 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 // CreateTokenRequestBody is the request body for POST /tokens.
 type CreateTokenRequestBody struct {
-	Title            *string `json:"title,omitempty"`
+	TokenName        *string `json:"tokenName,omitempty"`
 	ExpiresInSeconds *int64  `json:"expiresInSeconds,omitempty"`
 }
 
@@ -32,12 +32,15 @@ type TokenItem struct {
 	Title             string            `json:"title"`
 	Revoked           bool              `json:"revoked"`
 	Expires           *int64            `json:"expires,omitempty"`
+	Created           *int64            `json:"created,omitempty"`
+	LastUsed          *int64            `json:"lastUsed,omitempty"`
 	ServiceAccountRef ServiceAccountRef `json:"serviceAccountRef"`
 }
 
 // +k8s:deepcopy-gen=true
 type ListTokensBody struct {
-	Items []TokenItem `json:"items"`
+	Items    []TokenItem `json:"items"`
+	Continue string      `json:"continue,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

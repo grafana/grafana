@@ -25,9 +25,11 @@ import (
 )
 
 const (
-	tokensBasePath = "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/serviceaccounts/{name}/tokens"
+	tokensBasePath = "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/serviceaccounts/{name}/tokens" // #nosec G101 not a credential
 	tokensSubPath  = tokensBasePath + "/{path}"
 	appSchemaBase  = "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1."
+
+	ServiceID = "sa"
 )
 
 // PostProcessOpenAPI patches the OpenAPI spec for the /tokens endpoints:
@@ -46,7 +48,7 @@ func PostProcessOpenAPI(oas *spec3.OpenAPI) {
 				SchemaProps: spec.SchemaProps{
 					Type: []string{"object"},
 					Properties: map[string]spec.Schema{
-						"title":            *spec.StringProperty(),
+						"tokenName":        *spec.StringProperty(),
 						"expiresInSeconds": *spec.Int64Property(),
 					},
 				},
@@ -222,14 +224,7 @@ func (s *TokensREST) handleGet(ctx context.Context, ns claims.NamespaceInfo, saN
 	}
 
 	resp := &iamv0alpha1.SATokenResponse{
-		TokenItem: iamv0alpha1.TokenItem{
-			Title:   token.Name,
-			Revoked: token.Revoked,
-			Expires: token.Expires,
-			ServiceAccountRef: iamv0alpha1.ServiceAccountRef{
-				Name: saName,
-			},
-		},
+		TokenItem: mapTokenItem(*token, saName),
 	}
 	responder.Object(http.StatusOK, resp)
 }
@@ -247,18 +242,14 @@ func (s *TokensREST) handleList(ctx context.Context, ns claims.NamespaceInfo, sa
 
 	items := make([]iamv0alpha1.TokenItem, 0, len(res.Items))
 	for _, t := range res.Items {
-		items = append(items, iamv0alpha1.TokenItem{
-			Title:   t.Name,
-			Revoked: t.Revoked,
-			Expires: t.Expires,
-			ServiceAccountRef: iamv0alpha1.ServiceAccountRef{
-				Name: saName,
-			},
-		})
+		items = append(items, mapTokenItem(t, saName))
 	}
 
 	resp := &iamv0alpha1.ListSATokenResponse{
-		ListTokensBody: iamv0alpha1.ListTokensBody{Items: items},
+		ListTokensBody: iamv0alpha1.ListTokensBody{
+			Items:    items,
+			Continue: common.OptionalFormatInt(res.Continue),
+		},
 	}
 	responder.Object(http.StatusOK, resp)
 }
@@ -273,9 +264,14 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 		}
 	}
 
-	var title string
-	if req.Title != nil {
-		title = *req.Title
+	var tokenName string
+	if req.TokenName != nil {
+		tokenName = *req.TokenName
+	}
+	if tokenName == "" {
+		// TODO: Add the default (sa-1-...)
+		responder.Error(apierrors.NewBadRequest("tokenName is required"))
+		return
 	}
 
 	var expires *int64
@@ -285,7 +281,7 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 	}
 
 	// Generate the token ONCE — the same hash goes to both stores.
-	keyResult, err := satokengen.New("sa")
+	keyResult, err := satokengen.New(ServiceID)
 	if err != nil {
 		responder.Error(fmt.Errorf("failed to generate token: %w", err))
 		return
@@ -293,8 +289,7 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 
 	// --- Write to legacy api_key table (Mode0 / Mode1) ---
 	if err := s.legacyStore.SaveServiceAccountTokenHash(ctx, ns, legacy.SaveServiceAccountTokenHashCommand{
-		TokenName:         title,
-		Title:             title,
+		TokenName:         tokenName,
 		HashedKey:         keyResult.HashedKey,
 		ServiceAccountUID: saName,
 		Expires:           expires,
@@ -304,12 +299,12 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 	}
 
 	// --- Write to custom DB (Mode5 / MT) ---
-	// Write also to the custom store if configured in Mode1 and Mode5
+	// Write also to the custom store if configured in Mode1 and Mode5.
 
 	resp := &iamv0alpha1.CreateSATokenResponse{
 		CreateTokenBody: iamv0alpha1.CreateTokenBody{
 			Token:                   keyResult.ClientSecret,
-			ServiceAccountTokenName: title,
+			ServiceAccountTokenName: tokenName,
 			Expires:                 expires,
 		},
 	}
@@ -333,11 +328,16 @@ func (s *TokensREST) handleDelete(ctx context.Context, ns claims.NamespaceInfo, 
 		return
 	}
 
-	if err := s.legacyStore.DeleteServiceAccountToken(ctx, ns, legacy.DeleteServiceAccountTokenCommand{
+	rowsAffected, err := s.legacyStore.DeleteServiceAccountToken(ctx, ns, legacy.DeleteServiceAccountTokenCommand{
 		Name:             tokenName,
 		ServiceAccountID: saIDResult.ID,
-	}); err != nil {
+	})
+	if err != nil {
 		responder.Error(fmt.Errorf("failed to delete token: %w", err))
+		return
+	}
+	if rowsAffected == 0 {
+		responder.Error(apierrors.NewNotFound(schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounttokens"}, tokenName))
 		return
 	}
 
@@ -351,4 +351,22 @@ func (s *TokensREST) handleDelete(ctx context.Context, ns claims.NamespaceInfo, 
 		},
 	}
 	responder.Object(http.StatusOK, resp)
+}
+
+func mapTokenItem(t legacy.ServiceAccountToken, saName string) iamv0alpha1.TokenItem {
+	created := t.Created.Unix()
+	item := iamv0alpha1.TokenItem{
+		Title:   t.Name,
+		Revoked: t.Revoked,
+		Expires: t.Expires,
+		Created: &created,
+		ServiceAccountRef: iamv0alpha1.ServiceAccountRef{
+			Name: saName,
+		},
+	}
+	if t.LastUsed != nil {
+		lu := t.LastUsed.Unix()
+		item.LastUsed = &lu
+	}
+	return item
 }

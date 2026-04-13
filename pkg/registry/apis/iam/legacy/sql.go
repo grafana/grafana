@@ -37,7 +37,7 @@ type LegacyIdentityStore interface {
 	ListServiceAccountTokens(ctx context.Context, ns claims.NamespaceInfo, query ListServiceAccountTokenQuery) (*ListServiceAccountTokenResult, error)
 	GetServiceAccountToken(ctx context.Context, ns claims.NamespaceInfo, query GetServiceAccountTokenQuery) (*ServiceAccountToken, error)
 	CreateServiceAccountToken(ctx context.Context, ns claims.NamespaceInfo, cmd CreateServiceAccountTokenCommand) (*ServiceAccountToken, error)
-	DeleteServiceAccountToken(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteServiceAccountTokenCommand) error
+	DeleteServiceAccountToken(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteServiceAccountTokenCommand) (int64, error)
 	SaveServiceAccountTokenHash(ctx context.Context, ns claims.NamespaceInfo, cmd SaveServiceAccountTokenHashCommand) error
 
 	GetTeamInternalID(ctx context.Context, ns claims.NamespaceInfo, query GetTeamInternalIDQuery) (*GetTeamInternalIDResult, error)

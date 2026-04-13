@@ -694,8 +694,8 @@ func (m *mockLegacyStore) CreateServiceAccountToken(ctx context.Context, ns clai
 	return nil, nil
 }
 
-func (m *mockLegacyStore) DeleteServiceAccountToken(ctx context.Context, ns claims.NamespaceInfo, cmd legacy.DeleteServiceAccountTokenCommand) error {
-	return nil
+func (m *mockLegacyStore) DeleteServiceAccountToken(ctx context.Context, ns claims.NamespaceInfo, cmd legacy.DeleteServiceAccountTokenCommand) (int64, error) {
+	return 0, nil
 }
 
 func (m *mockLegacyStore) SaveServiceAccountTokenHash(ctx context.Context, ns claims.NamespaceInfo, cmd legacy.SaveServiceAccountTokenHashCommand) error {

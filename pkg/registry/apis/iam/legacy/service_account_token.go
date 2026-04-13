@@ -41,8 +41,7 @@ type DeleteServiceAccountTokenCommand struct {
 
 // SaveServiceAccountTokenHashCommand stores a pre-generated hashed token in the legacy api_key table.
 type SaveServiceAccountTokenHashCommand struct {
-	TokenName         string // metadata.name of the ServiceAccountToken CR
-	Title             string // display name (api_key.name); falls back to TokenName
+	TokenName         string // token name used as api_key.name
 	HashedKey         string // PBKDF2-SHA256 hash from satokengen
 	ServiceAccountUID string // UID of the owning service account
 	OrgID             int64  // set automatically from namespace
@@ -129,15 +128,12 @@ func (s *legacySQLStore) GetServiceAccountToken(ctx context.Context, ns claims.N
 	}
 
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
-	defer func() {
-		if rows != nil {
-			_ = rows.Close()
-		}
-	}()
-
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	if !rows.Next() {
 		return nil, nil
@@ -192,29 +188,34 @@ func (s *legacySQLStore) CreateServiceAccountToken(ctx context.Context, ns claim
 	}, nil
 }
 
-func (s *legacySQLStore) DeleteServiceAccountToken(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteServiceAccountTokenCommand) error {
+func (s *legacySQLStore) DeleteServiceAccountToken(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteServiceAccountTokenCommand) (int64, error) {
 	cmd.OrgID = ns.OrgID
 	if cmd.OrgID == 0 {
-		return fmt.Errorf("expected non zero org id")
+		return 0, fmt.Errorf("expected non zero org id")
 	}
 
 	sql, err := s.getDB(ctx)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	req := newDeleteServiceAccountToken(sql, &cmd)
 	q, err := sqltemplate.Execute(sqlDeleteServiceAccountTokenTemplate, req)
 	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlDeleteServiceAccountTokenTemplate.Name(), err)
+		return 0, fmt.Errorf("execute template %q: %w", sqlDeleteServiceAccountTokenTemplate.Name(), err)
 	}
 
-	_, err = sql.DB.GetSqlxSession().Exec(ctx, q, req.GetArgs()...)
+	result, err := sql.DB.GetSqlxSession().Exec(ctx, q, req.GetArgs()...)
 	if err != nil {
-		return fmt.Errorf("failed to delete service account token: %w", err)
+		return 0, fmt.Errorf("failed to delete service account token: %w", err)
 	}
 
-	return nil
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	return rowsAffected, nil
 }
 
 // SaveServiceAccountTokenHash stores a pre-generated hashed token in the legacy api_key table.
@@ -244,15 +245,11 @@ func (s *legacySQLStore) SaveServiceAccountTokenHash(
 		return fmt.Errorf("service account not found: %w", err)
 	}
 
-	title := cmd.Title
-	if title == "" {
-		title = cmd.TokenName
-	}
-
 	now := time.Now().UTC()
 
 	createCmd := CreateServiceAccountTokenCommand{
-		Name:             title,
+		// TODO: Fail if TokenName is empty
+		Name:             cmd.TokenName,
 		HashedKey:        cmd.HashedKey,
 		Role:             "Viewer",
 		OrgID:            ns.OrgID,
