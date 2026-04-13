@@ -11057,6 +11057,12 @@
       "num-affected_other": "This update will affect <1>{{count}} dashboards.</1>",
       "placeholder-search-affected-dashboards": "Search affected dashboards",
       "update-all": "Update all"
+    },
+    "search-controls": {
+      "label": {
+        "alphabetically-az": "Alphabetically (A–Z)",
+        "alphabetically-za": "Alphabetically (Z–A)"
+      }
     }
   },
   "link": {
