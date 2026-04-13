@@ -13,6 +13,7 @@ type commenter struct {
 	templateDashboard     *template.Template
 	templateTable         *template.Template
 	templateRenderInfo    *template.Template
+	templateFooter        *template.Template
 	showImageRendererNote bool
 }
 
@@ -21,6 +22,7 @@ func NewCommenter(showImageRendererNote bool) Commenter {
 		templateDashboard:     template.Must(template.New("dashboard").Parse(commentTemplateSingleDashboard)),
 		templateTable:         template.Must(template.New("table").Parse(commentTemplateTable)),
 		templateRenderInfo:    template.Must(template.New("setup").Parse(commentTemplateMissingImageRenderer)),
+		templateFooter:        template.Must(template.New("footer").Parse(commentTemplateFooter)),
 		showImageRendererNote: showImageRendererNote,
 	}
 }
@@ -40,12 +42,11 @@ func (c *commenter) Comment(ctx context.Context, prRepo PullRequestRepo, pr int,
 
 func (c *commenter) generateComment(_ context.Context, info changeInfo) (string, error) {
 	// TODO: should we comment even if there are no changes?
-	if len(info.Changes) == 0 {
-		return "Grafana didn't find any changes in this pull request.", nil
-	}
-
 	var buf bytes.Buffer
-	if len(info.Changes) == 1 && info.Changes[0].Parsed.GVK.Kind == dashboardKind {
+
+	if len(info.Changes) == 0 {
+		buf.WriteString("Grafana didn't find any changes in this pull request.")
+	} else if len(info.Changes) == 1 && info.Changes[0].Parsed.GVK.Kind == dashboardKind {
 		if err := c.templateDashboard.Execute(&buf, info.Changes[0]); err != nil {
 			return "", fmt.Errorf("unable to execute template: %w", err)
 		}
@@ -61,33 +62,40 @@ func (c *commenter) generateComment(_ context.Context, info changeInfo) (string,
 		}
 	}
 
+	if err := c.templateFooter.Execute(&buf, info); err != nil {
+		return "", fmt.Errorf("unable to execute footer template: %w", err)
+	}
+
 	return strings.TrimSpace(buf.String()), nil
 }
 
 const commentTemplateSingleDashboard = `Hey there! 🎉
 Grafana spotted some changes to your dashboard.
-
 {{- if and .GrafanaScreenshotURL .PreviewScreenshotURL}}
+
 ### Side by Side Comparison of {{.Parsed.Info.Path}}
 | Before | After |
 |----------|---------|
 | ![Before]({{.GrafanaScreenshotURL}}) | ![Preview]({{.PreviewScreenshotURL}}) |
 {{- else if .GrafanaScreenshotURL}}
+
 ### Original of {{.Title}}
 ![Original]({{.GrafanaScreenshotURL}})
 {{- else if .PreviewScreenshotURL}}
+
 ### Preview of {{.Parsed.Info.Path}}
 ![Preview]({{.PreviewScreenshotURL}})
-{{ end}}
+{{- end -}}
+{{- if and .GrafanaURL .PreviewURL}}
 
-{{ if and .GrafanaURL .PreviewURL}}
 See the [original]({{.GrafanaURL}}) and [preview]({{.PreviewURL}}) of {{.Parsed.Info.Path}}.
 {{- else if .GrafanaURL}}
+
 See the [original]({{.GrafanaURL}}) of {{.Title}}.
 {{- else if .PreviewURL}}
+
 See the [preview]({{.PreviewURL}}) of {{.Parsed.Info.Path}}.
-{{- end}}
-`
+{{- end}}`
 
 const commentTemplateTable = `Hey there! 🎉
 Grafana spotted some changes.
@@ -96,16 +104,20 @@ Grafana spotted some changes.
 |--------|------|----------|---------|
 {{- range .Changes}}
 | {{.Parsed.Action}} | {{.Kind}} | {{.ExistingLink}} | {{ if .PreviewURL}}[preview]({{.PreviewURL}}){{ end }} |
-{{- end}}
+{{- end -}}
+{{- if .SkippedFiles}}
 
-{{ if .SkippedFiles }}
 and {{ .SkippedFiles }} more files.
-{{ end}}
-`
+{{- end}}`
 
 const commentTemplateMissingImageRenderer = `
-NOTE: To enable dashboard previews in pull requests, refer to the [image rendering setup documentation](https://grafana.com/docs/grafana/latest/observability-as-code/provision-resources/git-sync-setup/#configure-webhooks-and-image-rendering).
-`
+
+NOTE: To enable dashboard previews in pull requests, refer to the [image rendering setup documentation](https://grafana.com/docs/grafana/latest/observability-as-code/provision-resources/git-sync-setup/#configure-webhooks-and-image-rendering).`
+
+const commentTemplateFooter = `
+
+---
+_Posted by [{{.GrafanaHost}}]({{.GrafanaBaseURL}}){{- if .RepositoryTitle}} · Repository: **{{.RepositoryTitle}}** (` + "`" + `{{.RepositoryName}}` + "`" + `){{- end}}_`
 
 // TODO: does this have some value?
 func (f *fileChangeInfo) Kind() string {
