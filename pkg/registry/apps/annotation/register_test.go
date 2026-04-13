@@ -98,6 +98,22 @@ func TestK8sRESTAdapter_Create(t *testing.T) {
 			"expected error message about missing name/generateName")
 	})
 
+	t.Run("should return error when identity is not in context", func(t *testing.T) {
+		anno := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "anno-no-identity",
+				Namespace: "default",
+			},
+			Spec: annotationV0.AnnotationSpec{
+				Text: "test annotation",
+				Time: 12345,
+			},
+		}
+
+		_, err := adapter.Create(t.Context(), anno, nil, nil)
+		require.Error(t, err)
+	})
+
 	t.Run("name takes precedence over generateName", func(t *testing.T) {
 		anno := &annotationV0.Annotation{
 			ObjectMeta: metav1.ObjectMeta{
