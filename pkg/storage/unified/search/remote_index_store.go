@@ -100,6 +100,7 @@ func nsPrefix(ns resource.NamespacedResource) string {
 	return fmt.Sprintf("%s/%s.%s/", ns.Namespace, ns.Group, ns.Resource)
 }
 
+// TODO: caller must hold a namespace/group/resource build lock.
 func (s *BucketRemoteIndexStore) UploadIndex(ctx context.Context, nsResource resource.NamespacedResource, localDir string, meta IndexMeta) (_ ulid.ULID, retErr error) {
 	indexKey, err := ulid.New(ulid.Timestamp(time.Now()), rand.Reader)
 	if err != nil {
@@ -111,11 +112,6 @@ func (s *BucketRemoteIndexStore) UploadIndex(ctx context.Context, nsResource res
 	absLocalDir, err := filepath.Abs(localDir)
 	if err != nil {
 		return ulid.ULID{}, fmt.Errorf("resolving local dir: %w", err)
-	}
-	// Resolve symlinks so WalkDir enters the real directory.
-	absLocalDir, err = filepath.EvalSymlinks(absLocalDir)
-	if err != nil {
-		return ulid.ULID{}, fmt.Errorf("resolving local dir symlinks: %w", err)
 	}
 
 	meta.Files = make(map[string]int64)
@@ -154,11 +150,10 @@ func (s *BucketRemoteIndexStore) UploadIndex(ctx context.Context, nsResource res
 		return ulid.ULID{}, fmt.Errorf("no files to upload in %s", localDir)
 	}
 
-	// Best-effort cleanup of uploaded objects on failure.
-	var uploaded []string
+	// Best-effort cleanup of all objects under the prefix on failure.
 	defer func() {
 		if retErr != nil {
-			s.cleanupObjects(context.WithoutCancel(ctx), uploaded)
+			s.cleanupPrefix(context.WithoutCancel(ctx), pfx)
 		}
 	}()
 
@@ -168,60 +163,45 @@ func (s *BucketRemoteIndexStore) UploadIndex(ctx context.Context, nsResource res
 		if err := s.uploadFile(ctx, objectKey, filepath.Join(absLocalDir, rel)); err != nil {
 			return ulid.ULID{}, fmt.Errorf("uploading %s: %w", rel, err)
 		}
-		uploaded = append(uploaded, objectKey)
 	}
 
 	// Upload meta.json last — its presence signals a complete upload.
-	// Add it to uploaded first so deferred cleanup covers the case where
-	// WriteAll fails ambiguously (object committed but response error).
 	metaBytes, err := json.Marshal(meta)
 	if err != nil {
 		return ulid.ULID{}, fmt.Errorf("marshaling meta: %w", err)
 	}
-	metaKey := pfx + metaJSONFile
-	uploaded = append(uploaded, metaKey)
-	if err := s.bucket.WriteAll(ctx, metaKey, metaBytes, nil); err != nil {
+	if err := s.bucket.WriteAll(ctx, pfx+metaJSONFile, metaBytes, nil); err != nil {
 		return ulid.ULID{}, fmt.Errorf("uploading meta.json: %w", err)
 	}
 
 	return indexKey, nil
 }
 
-// cleanupObjects performs best-effort deletion of the given object keys.
+// cleanupPrefix performs best-effort deletion of all objects under the given prefix.
 // Errors are logged but not returned, since this runs during error recovery.
-func (s *BucketRemoteIndexStore) cleanupObjects(ctx context.Context, keys []string) {
-	for _, key := range keys {
-		if err := s.bucket.Delete(ctx, key); err != nil {
-			s.log.Warn("failed to clean up partially uploaded object", "key", key, "err", err)
+func (s *BucketRemoteIndexStore) cleanupPrefix(ctx context.Context, pfx string) {
+	iter := s.bucket.List(&blob.ListOptions{Prefix: pfx})
+	for {
+		obj, err := iter.Next(ctx)
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			s.log.Warn("failed to list objects for cleanup", "prefix", pfx, "err", err)
+			return
+		}
+		if err := s.bucket.Delete(ctx, obj.Key); err != nil {
+			s.log.Warn("failed to clean up partially uploaded object", "key", obj.Key, "err", err)
 		}
 	}
 }
 
 func (s *BucketRemoteIndexStore) uploadFile(ctx context.Context, objectKey, localPath string) error {
-	// Lstat the path first — reject symlinks before opening.
-	linfo, err := os.Lstat(localPath)
-	if err != nil {
-		return err
-	}
-	if !linfo.Mode().IsRegular() {
-		return fmt.Errorf("not a regular file (mode %s): %s", linfo.Mode().Type(), localPath)
-	}
-
-	f, err := os.Open(localPath) //nolint:gosec // path validated by Lstat+SameFile above
+	f, err := os.Open(localPath) //nolint:gosec // path is under the server-controlled bleve index directory
 	if err != nil {
 		return err
 	}
 	defer func() { _ = f.Close() }()
-
-	// Verify the opened fd matches the file we lstat'd by comparing device+inode.
-	// This detects a swap to symlink between the Lstat and Open calls.
-	finfo, err := f.Stat()
-	if err != nil {
-		return fmt.Errorf("stat after open: %w", err)
-	}
-	if !os.SameFile(linfo, finfo) {
-		return fmt.Errorf("file changed between check and open (possible symlink swap): %s", localPath)
-	}
 
 	return s.bucket.Upload(ctx, objectKey, f, &blob.WriterOptions{
 		ContentType: "application/octet-stream",
@@ -272,26 +252,19 @@ func (s *BucketRemoteIndexStore) DownloadIndex(ctx context.Context, nsResource r
 		}
 	}()
 
-	// Resolve the staging dir to its real path
-	realTmpDir, err := filepath.EvalSymlinks(tmpDir)
-	if err != nil {
-		return nil, fmt.Errorf("resolving staging dir: %w", err)
-	}
 	for relPath, expectedSize := range meta.Files {
 		objectKey := pfx + relPath
-		localPath := filepath.Join(realTmpDir, filepath.FromSlash(relPath))
+		localPath := filepath.Join(tmpDir, filepath.FromSlash(relPath))
 
-		safePath, err := safeDownloadPath(localPath, realTmpDir, relPath)
-		if err != nil {
-			return nil, err
+		if err := os.MkdirAll(filepath.Dir(localPath), 0750); err != nil {
+			return nil, fmt.Errorf("creating directory for %s: %w", relPath, err)
 		}
-
-		if err := s.downloadFile(ctx, objectKey, safePath); err != nil {
+		if err := s.downloadFile(ctx, objectKey, localPath); err != nil {
 			return nil, fmt.Errorf("downloading %s: %w", relPath, err)
 		}
 
 		// Validate size against what was actually written.
-		info, err := os.Stat(safePath)
+		info, err := os.Stat(localPath)
 		if err != nil {
 			return nil, fmt.Errorf("stat downloaded %s: %w", relPath, err)
 		}
@@ -323,42 +296,9 @@ func validateManifestPaths(files map[string]int64) error {
 	return nil
 }
 
-// safeDownloadPath validates that localPath stays inside realDest after resolving
-// symlinks in both the parent directory and the leaf file. It creates intermediate
-// directories as needed and returns the resolved safe path to write to.
-func safeDownloadPath(localPath, realDest, relPath string) (string, error) {
-	// Lexical check catches obvious traversal like "../".
-	cleanDest := realDest + string(os.PathSeparator)
-	if !strings.HasPrefix(filepath.Clean(localPath), cleanDest) {
-		return "", fmt.Errorf("path traversal detected in manifest entry %q: resolved to %s which is outside %s", relPath, filepath.Clean(localPath), realDest)
-	}
-
-	if err := os.MkdirAll(filepath.Dir(localPath), 0750); err != nil {
-		return "", fmt.Errorf("failed to create directory for %s: %w", relPath, err)
-	}
-
-	realParent, err := filepath.EvalSymlinks(filepath.Dir(localPath))
-	if err != nil {
-		return "", fmt.Errorf("failed to resolve parent symlinks for %s: %w", relPath, err)
-	}
-	if !strings.HasPrefix(realParent, cleanDest) && realParent != realDest {
-		return "", fmt.Errorf("parent directory symlink escapes destination for %q: %s resolves outside %s", relPath, filepath.Dir(localPath), realDest)
-	}
-	safePath := filepath.Join(realParent, filepath.Base(localPath))
-
-	// Check if the leaf file itself is a pre-existing symlink.
-	if linfo, err := os.Lstat(safePath); err == nil {
-		if linfo.Mode()&os.ModeSymlink != 0 {
-			return "", fmt.Errorf("destination file is a symlink for %q: %s", relPath, safePath)
-		}
-	}
-
-	return safePath, nil
-}
-
 // downloadFile creates localPath and streams the remote object into it.
 func (s *BucketRemoteIndexStore) downloadFile(ctx context.Context, objectKey, localPath string) error {
-	f, err := os.Create(localPath) //nolint:gosec // path validated by safeDownloadPath
+	f, err := os.Create(localPath) //nolint:gosec // path is under a Grafana-controlled staging directory
 	if err != nil {
 		return err
 	}
@@ -420,16 +360,14 @@ func (s *BucketRemoteIndexStore) ListIndexes(ctx context.Context, nsResource res
 			continue
 		}
 
-		// Fetch and parse meta.json
-		metaBytes, err := s.bucket.ReadAll(ctx, obj.Key)
-		if err != nil {
-			if gcerrors.Code(err) != gcerrors.NotFound {
-				s.log.Error("failed to read meta.json", "key", obj.Key, "err", err)
-			}
+		// Fetch and parse meta.json with a size limit.
+		var metaBuf bytes.Buffer
+		if err := s.bucket.Download(ctx, obj.Key, &limitedWriter{w: &metaBuf, n: maxMetaJSONSize}, nil); err != nil {
+			s.log.Error("failed to read meta.json", "key", obj.Key, "err", err)
 			continue
 		}
 		var meta IndexMeta
-		if err := json.Unmarshal(metaBytes, &meta); err != nil {
+		if err := json.Unmarshal(metaBuf.Bytes(), &meta); err != nil {
 			s.log.Error("failed to parse meta.json", "key", obj.Key, "err", err)
 			continue
 		}
@@ -443,6 +381,7 @@ func (s *BucketRemoteIndexStore) ListIndexes(ctx context.Context, nsResource res
 	return result, nil
 }
 
+// TODO: caller must hold a namespace-level cleanup lock.
 func (s *BucketRemoteIndexStore) DeleteIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) error {
 	pfx := indexPrefix(nsResource, indexKey.String())
 
@@ -469,6 +408,7 @@ func (s *BucketRemoteIndexStore) DeleteIndex(ctx context.Context, nsResource res
 	return nil
 }
 
+// TODO: caller must hold a namespace-level cleanup lock.
 func (s *BucketRemoteIndexStore) CleanupIncompleteUploads(ctx context.Context, nsResource resource.NamespacedResource, minAge time.Duration) (int, error) {
 	nsPfx := nsPrefix(nsResource)
 
@@ -558,5 +498,8 @@ func (s *BucketRemoteIndexStore) isValidManifest(ctx context.Context, metaKey st
 	if err := json.Unmarshal(buf.Bytes(), &meta); err != nil {
 		return false, nil // positively invalid
 	}
-	return len(meta.Files) > 0, nil
+	if len(meta.Files) == 0 || validateManifestPaths(meta.Files) != nil {
+		return false, nil
+	}
+	return true, nil
 }

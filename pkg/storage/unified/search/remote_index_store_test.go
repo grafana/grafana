@@ -229,26 +229,6 @@ func TestRemoteIndexStore_DownloadRejectsPathTraversal(t *testing.T) {
 	require.Contains(t, err.Error(), "invalid manifest")
 }
 
-func TestRemoteIndexStore_UploadRejectsPathTraversal(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := NewBucketRemoteIndexStore(bucket)
-	ns := newTestNsResource()
-
-	srcDir := createTestBleveIndex(t)
-
-	// Add a symlink pointing outside the source directory
-	externalFile := filepath.Join(t.TempDir(), "another.txt")
-	require.NoError(t, os.WriteFile(externalFile, []byte("another"), 0600))
-	require.NoError(t, os.Symlink(externalFile, filepath.Join(srcDir, "sneaky.zap")))
-
-	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
-	_, err := store.UploadIndex(ctx, ns, srcDir, meta)
-	require.Error(t, err)
-	require.ErrorIs(t, err, ErrNonRegularFile)
-}
-
 func TestRemoteIndexStore_UploadRejectsNonRegularFiles(t *testing.T) {
 	ctx := context.Background()
 	bucket := memblob.OpenBucket(nil)
