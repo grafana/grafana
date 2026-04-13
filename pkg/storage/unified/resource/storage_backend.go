@@ -20,7 +20,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -70,8 +69,7 @@ type kvStorageBackend struct {
 	garbageCollection       GarbageCollectionConfig
 	lastImportStore         *lastImportStore
 	lastImportTimeMaxAge    time.Duration
-	//tracer        trace.Tracer
-	//reg           prometheus.Registerer
+	//reg prometheus.Registerer
 
 	watchOpts WatchOptions
 
@@ -107,8 +105,7 @@ type KVBackendOptions struct {
 	DisablePruner        bool
 	EventRetentionPeriod time.Duration         // How long to keep events (default: 1 hour)
 	EventPruningInterval time.Duration         // How often to run the event pruning (default: 5 minutes)
-	Tracer               trace.Tracer          // TODO add tracing
-	Reg                  prometheus.Registerer // TODO add metrics
+	Reg prometheus.Registerer // TODO add metrics
 	Log                  log.Logger
 	GarbageCollection    GarbageCollectionConfig
 

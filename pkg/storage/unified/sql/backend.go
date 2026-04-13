@@ -105,7 +105,6 @@ func NewStorageBackend(
 	db infraDB.DB,
 	reg prometheus.Registerer,
 	storageMetrics *resource.StorageMetrics,
-	tracer trace.Tracer,
 	disableStorageServices bool,
 ) (resource.StorageBackend, error) {
 	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
@@ -174,7 +173,6 @@ func NewStorageBackend(
 
 	kvBackendOpts := resource.KVBackendOptions{
 		KvStore:              sqlkv,
-		Tracer:               tracer,
 		Reg:                  reg,
 		UseChannelNotifier:   !isHA,
 		Log:                  log.New("storage-backend"),
