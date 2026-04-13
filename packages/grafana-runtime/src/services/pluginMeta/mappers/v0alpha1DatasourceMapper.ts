@@ -1,7 +1,7 @@
 import { type DataSourcePluginMeta, PluginType } from '@grafana/data';
 
 import type { DatasourcePluginMetas, DatasourcePluginMetasMapper, PluginMetasResponse } from '../types';
-import type { Spec as v0alpha1Spec } from '../types/types.spec.gen';
+import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 
 import { angularMapper, infoMapper, loadingStrategyMapper, signatureMapper, stateMapper } from './shared';
 

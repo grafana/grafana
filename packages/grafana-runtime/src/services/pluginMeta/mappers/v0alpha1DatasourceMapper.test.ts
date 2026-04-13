@@ -51,7 +51,7 @@ describe('v0alpha1DatasourceMapper', () => {
     it('should map angular property correctly', () => {
       const result = v0alpha1DatasourceMapper(v0alpha1Response);
 
-      expect(result[pluginId].angular).toEqual({});
+      expect(result[pluginId].angular).toEqual({ detected: false });
     });
 
     it('should map loadingStrategy property correctly', () => {
