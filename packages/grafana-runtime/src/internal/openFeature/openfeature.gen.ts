@@ -15,6 +15,8 @@ export const FlagKeys = {
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
   /** Enables the new Flame Graph UI containing the Call Tree view */
   FlameGraphWithCallTree: "flameGraphWithCallTree",
+  /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
+  GlobalDashboardVariables: "globalDashboardVariables",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables an inline version of Log Details that creates no new scrolls */
@@ -97,6 +99,18 @@ export const useFlagDashboardTemplatesAssistantButton = (options?: ReactFlagEval
 */
 export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("flameGraphWithCallTree", false, options).value;
+};
+
+
+/**
+* Enables global and folder-scoped dashboard variables via dashboard.grafana.app
+*
+* **Details:**
+* - flag key: `globalDashboardVariables`
+* - default value: `false`
+*/
+export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("globalDashboardVariables", false, options).value;
 };
 
 
