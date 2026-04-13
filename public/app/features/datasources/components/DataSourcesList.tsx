@@ -178,7 +178,7 @@ export function DataSourcesListView({
       {dataSources.length === 0 && !isLoading ? (
         <EmptyState variant="not-found" message={t('data-sources.empty-state.message', 'No data sources found')} />
       ) : isLoading ? (
-        <ul className={styles.loadingList} role="list" aria-label={t('data-sources.list.label', 'Data sources')}>
+        <ul className={styles.loadingList} aria-label={t('data-sources.list.label', 'Data sources')}>
           {new Array(LOADING_SKELETON_COUNT).fill(null).map((_, index) => (
             <DataSourcesListCard.Skeleton key={index} hasExploreRights={hasExploreRights} />
           ))}
@@ -187,7 +187,6 @@ export function DataSourcesListView({
         <div ref={scrollRef} className={styles.listContainer}>
           <ul
             className={styles.virtualList}
-            role="list"
             aria-label={t('data-sources.list.label', 'Data sources')}
             style={{ height: rowVirtualizer.getTotalSize() }}
           >

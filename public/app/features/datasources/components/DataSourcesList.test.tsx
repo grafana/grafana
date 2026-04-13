@@ -132,7 +132,7 @@ describe('<DataSourcesList>', () => {
     await waitFor(() => expect(list.children).toHaveLength(20));
   });
 
-  it('should have role="list" and aria-label on list elements', async () => {
+  it('should have aria-label on list elements', async () => {
     setup();
 
     const list = await screen.findByRole('list');
