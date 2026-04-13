@@ -60,6 +60,16 @@ describe('i18n', () => {
       expect(addResourceBundleSpy).toHaveBeenCalledTimes(0);
     });
 
+    it('should load resources for pseudo locale', async () => {
+      const loaders: ResourceLoader[] = [jest.fn(() => Promise.resolve({ hello: 'Hi' }))];
+      const addResourceBundleSpy = jest.spyOn(i18n, 'addResourceBundle');
+
+      await loadNamespacedResources('test', 'pseudo', loaders);
+
+      expect(loaders[0]).toHaveBeenCalled();
+      expect(addResourceBundleSpy).toHaveBeenCalledWith('en-US', 'test', { hello: 'Hi' }, true, false);
+    });
+
     it('should not load resources for the default language', async () => {
       const loaders: ResourceLoader[] = [
         jest.fn(() => Promise.resolve({ hello: 'Hi' })),
