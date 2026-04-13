@@ -214,7 +214,7 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
-		return nil, apierrors.NewInternalError(fmt.Errorf("failed to get requester from context"))
+		return nil, apierrors.NewUnauthorized("failed to get requester from context")
 	}
 	annotation.SetCreatedBy(user.GetUID())
 
