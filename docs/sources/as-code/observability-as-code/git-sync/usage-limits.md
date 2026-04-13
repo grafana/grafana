@@ -89,7 +89,7 @@ The GitLab and Bitbucket integrations have limited functionality for the moment,
 
 ## Resource support and compatibility
 
-**Git Sync only supports dashboards and folders**. Alerts, data sources, panels and other resources are not supported yet.
+**Git Sync only supports dashboards and folders**. Alerts, data sources, panels and other resources are not supported yet. 
 
 If you're a Grafana Cloud user, you can check the [Grafana roadmap portal](https://grafana.ideas.aha.io/ideas) to learn about future improvements.
 
@@ -106,9 +106,18 @@ A resource can be:
 
 ## Known limitations
 
-- You can only sync dashboards and folders. Refer to [Supported resources](#resource-support-and-compatibility) for more information.
-- If you're using Git Sync in Grafana OSS and Grafana Enterprise, some resources might be in an incompatible data format and won't be synced.
-- Full-instance sync is not available in Grafana Cloud and is experimental in Grafana OSS and Grafana Enterprise.
-- When migrating to full instance sync, during the synchronization process your resources will be temporarily unavailable. No one will be able to create, edit, or delete resources during this process.
-- If you want to manage existing resources with Git Sync, you can save them from the UI, save them as JSON files and commit them to the synced repository, or use `grafanactl`. Refer to [Export non-provisioned resources from Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/export-resources) for more details.
-- Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.
+### Migration to Git Sync
+
+**Full-instance sync is experimental.**
+
+When migrating to resources to Git Sync, you can still create, edit or delete resources, but changes may not be exported. The duration of this process depends on the number of resources involved.
+
+When migrating existing dashboards, the folder structure will be replicated in the repository. You may need to manually remove or manage original folders after the migration.
+
+### Use existing resources
+
+If you want to manage existing resources with Git Sync, you can save them from the UI, save them as JSON files and commit them to the synced repository, or use `grafanactl`. Refer to [Export non-provisioned resources from Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/export-resources) for more details.
+
+### Restore resources
+
+Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.
