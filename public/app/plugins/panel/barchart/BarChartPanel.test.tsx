@@ -32,9 +32,8 @@ let canExecuteActionsForTest = false;
 let onAddAdHocFilterMock: jest.Mock;
 
 jest.mock('@grafana/ui', () => {
-  const actual = jest.requireActual('@grafana/ui');
   return {
-    ...actual,
+    ...jest.requireActual('@grafana/ui'),
     usePanelContext: jest.fn().mockImplementation(() => ({
       canExecuteActions: () => canExecuteActionsForTest,
       onAddAdHocFilter: onAddAdHocFilterMock,
