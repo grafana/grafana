@@ -22,6 +22,10 @@ import (
 type changeInfo struct {
 	GrafanaBaseURL string
 
+	// Attribution: identifies which provisioning repository posted this comment
+	RepositoryName  string
+	RepositoryTitle string
+
 	// Files we tried to read
 	Changes []fileChangeInfo
 
@@ -30,6 +34,14 @@ type changeInfo struct {
 
 	// Requested image render, but it is not available
 	MissingImageRenderer bool
+}
+
+func (c changeInfo) GrafanaHost() string {
+	u, err := url.Parse(c.GrafanaBaseURL)
+	if err != nil || u.Host == "" {
+		return c.GrafanaBaseURL
+	}
+	return u.Host
 }
 
 type fileChangeInfo struct {
@@ -80,6 +92,8 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 	shouldRender := rendererAvailable && len(changes) == 1 && cfg.Spec.GitHub.GenerateDashboardPreviews
 	info := changeInfo{
 		GrafanaBaseURL:       e.urlProvider(ctx, cfg.Namespace),
+		RepositoryName:       cfg.Name,
+		RepositoryTitle:      cfg.Spec.Title,
 		MissingImageRenderer: !rendererAvailable,
 	}
 
@@ -133,7 +147,6 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 	err = info.Parsed.DryRun(ctx)
 	if err != nil {
 		info.Error = err.Error()
-		return info
 	}
 
 	// Dashboards get special handling

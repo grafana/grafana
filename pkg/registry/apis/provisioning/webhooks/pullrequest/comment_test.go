@@ -31,9 +31,15 @@ func TestGenerateComment(t *testing.T) {
 		Name  string
 		Input changeInfo
 	}{
-		{"no changes", changeInfo{}},
+		{"no changes", changeInfo{
+			GrafanaBaseURL:  "http://host/",
+			RepositoryName:  "my-repo",
+			RepositoryTitle: "My Repo",
+		}},
 		{"new dashboard", changeInfo{
-			GrafanaBaseURL: "http://host/",
+			GrafanaBaseURL:  "http://host/",
+			RepositoryName:  "my-repo",
+			RepositoryTitle: "My Repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -50,7 +56,9 @@ func TestGenerateComment(t *testing.T) {
 			},
 		}},
 		{"update dashboard", changeInfo{
-			GrafanaBaseURL: "http://host/",
+			GrafanaBaseURL:  "http://host/",
+			RepositoryName:  "my-repo",
+			RepositoryTitle: "My Repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -70,7 +78,9 @@ func TestGenerateComment(t *testing.T) {
 			},
 		}},
 		{"update dashboard missing renderer", changeInfo{
-			GrafanaBaseURL: "http://host/",
+			GrafanaBaseURL:  "http://host/",
+			RepositoryName:  "my-repo",
+			RepositoryTitle: "My Repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -88,8 +98,10 @@ func TestGenerateComment(t *testing.T) {
 			MissingImageRenderer: true,
 		}},
 		{"multiple files", changeInfo{
-			GrafanaBaseURL: "http://host/",
-			SkippedFiles:   5,
+			GrafanaBaseURL:  "http://host/",
+			RepositoryName:  "my-repo",
+			RepositoryTitle: "My Repo",
+			SkippedFiles:    5,
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -126,6 +138,69 @@ func TestGenerateComment(t *testing.T) {
 				},
 			},
 		}},
+		{"single dashboard with error", changeInfo{
+			GrafanaBaseURL: "http://host/",
+			Changes: []fileChangeInfo{
+				{
+					Parsed: &resources.ParsedResource{
+						Info: &repository.FileInfo{
+							Path: "broken.json",
+						},
+						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+						Action: v0alpha1.ResourceActionCreate,
+					},
+					Title:      "Broken Dashboard",
+					PreviewURL: "http://grafana/admin/preview",
+					Error:      "strict decoding error: unknown field \"spec.invalidField\"",
+				},
+			},
+		}},
+		{"multiple files with errors", changeInfo{
+			GrafanaBaseURL: "http://host/",
+			Changes: []fileChangeInfo{
+				{
+					Parsed: &resources.ParsedResource{
+						Info: &repository.FileInfo{
+							Path: "good.json",
+						},
+						Action: v0alpha1.ResourceActionCreate,
+						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+					},
+					Title:      "Good Dashboard",
+					PreviewURL: "http://grafana/admin/preview",
+				},
+				{
+					Change: repository.VersionedFileChange{
+						Path: "bad.json",
+					},
+					Parsed: &resources.ParsedResource{
+						Info: &repository.FileInfo{
+							Path: "bad.json",
+						},
+						Action: v0alpha1.ResourceActionUpdate,
+						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+					},
+					Title:      "Bad Dashboard",
+					GrafanaURL: "http://grafana/d/bad",
+					PreviewURL: "http://grafana/admin/preview",
+					Error:      "admission webhook denied: panel type \"unknown-panel\" is not installed",
+				},
+				{
+					Change: repository.VersionedFileChange{
+						Path: "invalid.yaml",
+					},
+					Parsed: &resources.ParsedResource{
+						Info: &repository.FileInfo{
+							Path: "invalid.yaml",
+						},
+						Action: v0alpha1.ResourceActionCreate,
+						GVK:    schema.GroupVersionKind{Kind: "Playlist"},
+					},
+					Title: "Broken Playlist",
+					Error: "strict decoding error: unknown field \"spec.extra\"",
+				},
+			},
+		}},
 	} {
 		t.Run(tc.Name, func(t *testing.T) {
 			repo := NewMockPullRequestRepo(t)
@@ -149,7 +224,9 @@ func TestCommenter_ShowImageRendererNote(t *testing.T) {
 	t.Run("note appears when showImageRendererNote is true", func(t *testing.T) {
 		repo := NewMockPullRequestRepo(t)
 		info := changeInfo{
-			GrafanaBaseURL: "http://host/",
+			GrafanaBaseURL:  "http://host/",
+			RepositoryName:  "my-repo",
+			RepositoryTitle: "My Repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -183,7 +260,9 @@ func TestCommenter_ShowImageRendererNote(t *testing.T) {
 	t.Run("note does not appear when showImageRendererNote is false", func(t *testing.T) {
 		repo := NewMockPullRequestRepo(t)
 		info := changeInfo{
-			GrafanaBaseURL: "http://host/",
+			GrafanaBaseURL:  "http://host/",
+			RepositoryName:  "my-repo",
+			RepositoryTitle: "My Repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{

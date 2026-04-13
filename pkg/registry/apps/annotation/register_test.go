@@ -7,6 +7,7 @@ import (
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
@@ -263,5 +264,43 @@ func TestK8sRESTAdapter_TenantIsolation(t *testing.T) {
 		// Verify it's gone
 		_, err = adapter.Get(ctx1, "delete-test", nil)
 		require.Error(t, err)
+	})
+}
+
+func TestK8sRESTAdapter_NotFound(t *testing.T) {
+	store := NewMemoryStore()
+	adapter := &k8sRESTAdapter{
+		store:        store,
+		accessClient: authtypes.FixedAccessClient(true),
+	}
+
+	ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), "default")
+
+	t.Run("get returns k8s NotFound for nonexistent annotation", func(t *testing.T) {
+		_, err := adapter.Get(ctx, "does-not-exist", nil)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsNotFound(err), "expected IsNotFound, got: %v", err)
+	})
+
+	t.Run("update returns k8s NotFound for nonexistent annotation", func(t *testing.T) {
+		updated := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "does-not-exist",
+				Namespace: "default",
+			},
+			Spec: annotationV0.AnnotationSpec{
+				Text: "updated text",
+				Time: 12345,
+			},
+		}
+		_, _, err := adapter.Update(ctx, "does-not-exist", rest.DefaultUpdatedObjectInfo(updated), nil, nil, false, nil)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsNotFound(err), "expected IsNotFound, got: %v", err)
+	})
+
+	t.Run("delete returns k8s NotFound for nonexistent annotation", func(t *testing.T) {
+		_, _, err := adapter.Delete(ctx, "does-not-exist", nil, nil)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsNotFound(err), "expected IsNotFound, got: %v", err)
 	})
 }

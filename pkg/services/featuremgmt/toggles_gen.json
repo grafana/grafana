@@ -566,7 +566,8 @@
       "metadata": {
         "name": "alertingNotificationHistoryTriage",
         "resourceVersion": "1772614382283",
-        "creationTimestamp": "2026-03-04T08:53:02Z"
+        "creationTimestamp": "2026-03-04T08:53:02Z",
+        "deletionTimestamp": "2026-04-09T17:07:43Z"
       },
       "spec": {
         "description": "Enables the notification history timeline in the triage instance details drawer",
@@ -924,13 +925,17 @@
     {
       "metadata": {
         "name": "analyticsFramework",
-        "resourceVersion": "1772205128141",
-        "creationTimestamp": "2026-02-27T15:12:08Z"
+        "resourceVersion": "1775746176648",
+        "creationTimestamp": "2026-02-27T15:12:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-09 14:49:36.648721 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables new analytics framework",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -1045,7 +1050,7 @@
       "spec": {
         "description": "Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled",
         "stage": "GA",
-        "codeowner": "@grafana/aws-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
       }
     },
@@ -1058,7 +1063,7 @@
       "spec": {
         "description": "Enables http proxy settings for aws datasources",
         "stage": "experimental",
-        "codeowner": "@grafana/aws-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -1071,7 +1076,7 @@
       "spec": {
         "description": "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
         "stage": "GA",
-        "codeowner": "@grafana/aws-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
       }
     },
@@ -1084,7 +1089,7 @@
       "spec": {
         "description": "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
         "stage": "GA",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -1097,7 +1102,7 @@
       "spec": {
         "description": "Enables user auth for Azure Monitor datasource only",
         "stage": "GA",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
       }
     },
@@ -1110,7 +1115,7 @@
       "spec": {
         "description": "Enables the logs builder mode for the Azure Monitor data source",
         "stage": "preview",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -1123,7 +1128,7 @@
       "spec": {
         "description": "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
         "stage": "GA",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
       }
     },
@@ -1137,7 +1142,7 @@
       "spec": {
         "description": "Enables the updated Azure Monitor resource picker",
         "stage": "GA",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "frontend": true,
         "expression": "true"
       }
@@ -1245,6 +1250,20 @@
     },
     {
       "metadata": {
+        "name": "clickHouseConfigValidation",
+        "resourceVersion": "1775754463440",
+        "creationTimestamp": "2026-04-09T17:07:43Z"
+      },
+      "spec": {
+        "description": "Enables validation on the ClickHouse data source configuration page",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "cloudRBACRoles",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-01-10T13:19:01Z"
@@ -1267,7 +1286,7 @@
       "spec": {
         "description": "Runs CloudWatch metrics queries as separate batches",
         "stage": "GA",
-        "codeowner": "@grafana/aws-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -1280,7 +1299,7 @@
       "spec": {
         "description": "Enables cross-account querying in CloudWatch datasources",
         "stage": "GA",
-        "codeowner": "@grafana/aws-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
       }
     },
@@ -1293,7 +1312,7 @@
       "spec": {
         "description": "Updates CloudWatch label parsing to be more accurate",
         "stage": "GA",
-        "codeowner": "@grafana/aws-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
       }
     },
@@ -1306,7 +1325,7 @@
       "spec": {
         "description": "Round up end time for metric queries to the next minute to avoid missing data",
         "stage": "GA",
-        "codeowner": "@grafana/aws-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
       }
     },
@@ -1321,6 +1340,20 @@
         "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
         "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "compiledBootScript",
+        "resourceVersion": "1775117897717",
+        "creationTimestamp": "2026-04-02T08:18:17Z"
+      },
+      "spec": {
+        "description": "Boots the frontend using the boot.js script built from TS instead of the embedded boot script",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -1379,20 +1412,6 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
-        "name": "dashboardAdHocAndGroupByWrapper",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-12-18T18:58:21Z"
-      },
-      "spec": {
-        "description": "Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -1515,7 +1534,8 @@
       "metadata": {
         "name": "dashboardScene",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2023-11-13T08:51:21Z"
+        "creationTimestamp": "2023-11-13T08:51:21Z",
+        "deletionTimestamp": "2026-04-02T16:02:52Z"
       },
       "spec": {
         "description": "Enables dashboard rendering using scenes for all roles",
@@ -1770,6 +1790,19 @@
     },
     {
       "metadata": {
+        "name": "datasourcesApiServerEnableHealthEndpointRedirect",
+        "resourceVersion": "1774543694579",
+        "creationTimestamp": "2026-03-26T16:48:14Z"
+      },
+      "spec": {
+        "description": "Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourcesApiServerEnableResourceEndpoint",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
@@ -1851,13 +1884,16 @@
     {
       "metadata": {
         "name": "disableNumericMetricsSortingInExpressions",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-04-16T14:52:47Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2024-04-16T14:52:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.",
         "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "requiresRestart": true,
         "expression": "false"
       }
@@ -1912,7 +1948,7 @@
       "spec": {
         "description": "Enables cross cluster search in the Elasticsearch data source",
         "stage": "GA",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -1925,7 +1961,7 @@
       "spec": {
         "description": "Enables the ES|QL query editor in the Elasticsearch data source",
         "stage": "experimental",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -1938,7 +1974,7 @@
       "spec": {
         "description": "Enables less memory intensive Elasticsearch result parsing",
         "stage": "experimental",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -1951,7 +1987,7 @@
       "spec": {
         "description": "Enables the raw DSL query editor in the Elasticsearch data source",
         "stage": "experimental",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -2282,7 +2318,7 @@
       "spec": {
         "description": "Enables forwarding team headers from tempo for streaming requests with LBAC rules",
         "stage": "privatePreview",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -2334,7 +2370,22 @@
       "metadata": {
         "name": "functionalSharedPreferences",
         "resourceVersion": "1771763406238",
-        "creationTimestamp": "2026-02-22T12:30:06Z"
+        "creationTimestamp": "2026-02-22T12:30:06Z",
+        "deletionTimestamp": "2026-04-04T12:16:21Z"
+      },
+      "spec": {
+        "description": "Whether to use the new SharedPreferences functional component",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.newPreferencesPage",
+        "resourceVersion": "1775304981849",
+        "creationTimestamp": "2026-04-04T12:16:21Z"
       },
       "spec": {
         "description": "Whether to use the new SharedPreferences functional component",
@@ -2445,7 +2496,7 @@
       "spec": {
         "description": "Enables the Graphite data source full backend mode",
         "stage": "privatePreview",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -2473,6 +2524,23 @@
         "description": "Enable groupBy variable support in scenes dashboards",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "groupToNestedTableV2",
+        "resourceVersion": "1775569565125",
+        "creationTimestamp": "2026-03-27T20:18:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-07 13:46:05.125597 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -2533,13 +2601,33 @@
     {
       "metadata": {
         "name": "infinityRunQueriesInParallel",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-03-14T12:54:04Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2025-03-14T12:54:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables running Infinity queries in parallel",
         "stage": "privatePreview",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "influxDBConfigValidation",
+        "resourceVersion": "1775754463440",
+        "creationTimestamp": "2026-02-13T15:53:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-09 17:07:43.440663 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables validation on the InfluxDB data source configuration page",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -2553,7 +2641,7 @@
       "spec": {
         "description": "Query InfluxDB InfluxQL without the proxy",
         "stage": "GA",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "frontend": true,
         "expression": "true"
       }
@@ -2567,7 +2655,7 @@
       "spec": {
         "description": "Enables running InfluxDB Influxql queries in parallel",
         "stage": "privatePreview",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -2580,20 +2668,24 @@
       "spec": {
         "description": "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
         "stage": "experimental",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
     {
       "metadata": {
         "name": "inlineLogDetailsNoScrolls",
-        "resourceVersion": "1772636622548",
-        "creationTimestamp": "2026-03-04T15:03:42Z"
+        "resourceVersion": "1775746176648",
+        "creationTimestamp": "2026-03-04T15:03:42Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-09 14:49:36.648721 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables an inline version of Log Details that creates no new scrolls",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -2613,13 +2705,16 @@
     {
       "metadata": {
         "name": "jaegerEnableGrpcEndpoint",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-10-31T18:19:16Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2025-10-31T18:19:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable querying trace data through Jaeger's gRPC endpoint (HTTP)",
         "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -3107,6 +3202,24 @@
     },
     {
       "metadata": {
+        "name": "kubernetesQueryCachingRedirect",
+        "resourceVersion": "1775757646293",
+        "creationTimestamp": "2026-04-09T17:57:20Z",
+        "deletionTimestamp": "2026-04-10T17:37:19Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-09 18:00:46.293739 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Redirect caching service cache config reads from legacy storage to K8s API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesServiceAccountTokensApi",
         "resourceVersion": "1773060933794",
         "creationTimestamp": "2026-03-09T12:55:33Z"
@@ -3369,13 +3482,16 @@
     {
       "metadata": {
         "name": "logQLScope",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-11-11T11:53:24Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2024-11-11T11:53:24Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "In-development feature that will allow injection of labels into loki queries.",
         "stage": "privatePreview",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -3414,7 +3530,8 @@
       "metadata": {
         "name": "logsPanelControls",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-07T14:38:55Z"
+        "creationTimestamp": "2025-04-07T14:38:55Z",
+        "deletionTimestamp": "2026-04-08T09:25:37Z"
       },
       "spec": {
         "description": "Enables a control component for the logs panel in Explore",
@@ -3454,39 +3571,48 @@
     {
       "metadata": {
         "name": "lokiExperimentalStreaming",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2023-06-19T10:03:51Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2023-06-19T10:03:51Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Support new streaming approach for loki (prototype, needs special loki build)",
         "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
     {
       "metadata": {
         "name": "lokiLabelNamesQueryApi",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-12-13T14:31:41Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2024-12-13T14:31:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Defaults to using the Loki `/labels` API instead of `/series`",
         "stage": "GA",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "lokiLogsDataplane",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2023-07-13T07:58:00Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2023-07-13T07:58:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Changes logs responses from Loki to be compliant with the dataplane specification.",
         "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -3521,13 +3647,16 @@
     {
       "metadata": {
         "name": "lokiRunQueriesInParallel",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2023-09-19T09:34:01Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2023-09-19T09:34:01Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables running Loki queries in parallel",
         "stage": "privatePreview",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -3626,7 +3755,7 @@
       "spec": {
         "description": "use multi-tenant path for awsTempCredentials",
         "stage": "experimental",
-        "codeowner": "@grafana/aws-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -3655,7 +3784,7 @@
       "spec": {
         "description": "Enables new design for the Clickhouse data source configuration page",
         "stage": "privatePreview",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -3714,7 +3843,7 @@
       "spec": {
         "description": "Enables new design for the InfluxDB data source configuration page",
         "stage": "privatePreview",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -3867,13 +3996,16 @@
     {
       "metadata": {
         "name": "opentsdbBackendMigration",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-12-04T08:11:33Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2025-12-04T08:11:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Run queries through the data source backend",
         "stage": "GA",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "requiresRestart": true,
         "expression": "false"
       }
@@ -4205,20 +4337,23 @@
       "spec": {
         "description": "Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.",
         "stage": "deprecated",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "prometheusSpecialCharsInLabelValues",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-12-18T21:31:08Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2024-12-18T21:31:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Adds support for quotes and special characters in label values for Prometheus queries",
         "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "frontend": true,
         "expression": "false"
       }
@@ -4236,7 +4371,7 @@
       "spec": {
         "description": "Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources",
         "stage": "deprecated",
-        "codeowner": "@grafana/partner-datasources",
+        "codeowner": "@grafana/data-sources-plugins",
         "requiresRestart": true,
         "expression": "true"
       }
@@ -4307,7 +4442,8 @@
       "metadata": {
         "name": "publicDashboardsScene",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-03-22T14:48:21Z"
+        "creationTimestamp": "2024-03-22T14:48:21Z",
+        "deletionTimestamp": "2026-04-02T16:02:52Z"
       },
       "spec": {
         "description": "Enables public dashboard rendering using scenes",
@@ -4328,6 +4464,21 @@
         "description": "Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryCachingReadFromK8s",
+        "resourceVersion": "1775757121813",
+        "creationTimestamp": "2026-04-09T17:52:01Z",
+        "deletionTimestamp": "2026-04-09T17:57:20Z"
+      },
+      "spec": {
+        "description": "Read query cache configs from K8s API instead of legacy storage in the caching handler",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
         "expression": "false"
       }
     },
@@ -4448,14 +4599,72 @@
     {
       "metadata": {
         "name": "queryWithAssistant",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the Query with Assistant button in the query editor",
         "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "querycaching.handlersReadFromK8SApi",
+        "resourceVersion": "1775842665327",
+        "creationTimestamp": "2026-04-10T17:37:45Z",
+        "deletionTimestamp": "2026-04-10T18:24:54Z"
+      },
+      "spec": {
+        "description": "Redirect caching service cache config reads from legacy storage to K8s API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "querycaching.handlersReadFromK8sApi",
+        "resourceVersion": "1775842639855",
+        "creationTimestamp": "2026-04-10T17:37:19Z",
+        "deletionTimestamp": "2026-04-10T17:37:45Z"
+      },
+      "spec": {
+        "description": "Redirect caching service cache config reads from legacy storage to K8s API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "querycaching.redirectToK8SApi",
+        "resourceVersion": "1775845520196",
+        "creationTimestamp": "2026-04-10T18:25:20Z"
+      },
+      "spec": {
+        "description": "Redirect caching service cache config reads from legacy storage to K8s API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "querycaching.redirectToK8sApi",
+        "resourceVersion": "1775845494083",
+        "creationTimestamp": "2026-04-10T18:24:54Z",
+        "deletionTimestamp": "2026-04-10T18:25:20Z"
+      },
+      "spec": {
+        "description": "Redirect caching service cache config reads from legacy storage to K8s API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "expression": "false"
       }
     },
@@ -4576,7 +4785,8 @@
       "metadata": {
         "name": "rendererDisableAppPluginsPreload",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-02-24T14:43:06Z"
+        "creationTimestamp": "2025-02-24T14:43:06Z",
+        "deletionTimestamp": "2026-04-09T15:47:18Z"
       },
       "spec": {
         "description": "Disable pre-loading app plugins when the request is coming from the renderer",
@@ -4975,13 +5185,16 @@
     {
       "metadata": {
         "name": "streamingForwardTeamHeadersTempo",
-        "resourceVersion": "1774573687389",
-        "creationTimestamp": "2026-03-27T01:08:07Z"
+        "resourceVersion": "1775137669107",
+        "creationTimestamp": "2026-03-27T01:08:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-02 13:47:49.107937 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables forwarding team headers from tempo for streaming requests with LBAC rules",
         "stage": "privatePreview",
-        "codeowner": "@grafana/oss-big-tent",
+        "codeowner": "@grafana/data-sources-plugins",
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -5092,6 +5305,22 @@
       },
       "spec": {
         "description": "Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "teamLBACApiWriteFromAppPlatform",
+        "resourceVersion": "1775845194547",
+        "creationTimestamp": "2026-04-09T22:49:55Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-10 18:19:54.547668 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "expression": "false"
@@ -5499,6 +5728,23 @@
       },
       "spec": {
         "description": "Use openFGA as main authorization engine and disable legacy RBAC clietn.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "zanzanaSearchUsersPermissions",
+        "resourceVersion": "1776076870099",
+        "creationTimestamp": "2026-03-25T09:17:53Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-13 10:41:10.099738 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Search users permissions using Zanzana.",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
