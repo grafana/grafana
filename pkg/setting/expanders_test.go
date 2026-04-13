@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 )
 
 func TestExpandVar_EnvSuccessful(t *testing.T) {
@@ -93,4 +94,72 @@ func TestExpanderRegex(t *testing.T) {
 			assert.Equal(t, expected[i], variable[1:])
 		}
 	}
+}
+
+func TestScanFileExpansions_CapturesDatabasePassword(t *testing.T) {
+	iniContent := `
+[database]
+password = $__file{/run/secrets/db_password}
+user = grafana
+`
+	file, err := ini.Load([]byte(iniContent))
+	require.NoError(t, err)
+
+	result := scanFileExpansions(file)
+
+	require.NotNil(t, result)
+	require.Contains(t, result, "database")
+	require.Contains(t, result["database"], "password")
+	assert.Equal(t, "/run/secrets/db_password", result["database"]["password"])
+}
+
+func TestScanFileExpansions_MultipleKeys(t *testing.T) {
+	iniContent := `
+[database]
+password = $__file{/secrets/db_pwd}
+user = grafana
+
+[auth]
+secret_key = $__file{/secrets/auth_key}
+`
+	file, err := ini.Load([]byte(iniContent))
+	require.NoError(t, err)
+
+	result := scanFileExpansions(file)
+
+	require.Contains(t, result, "database")
+	assert.Equal(t, "/secrets/db_pwd", result["database"]["password"])
+	require.Contains(t, result, "auth")
+	assert.Equal(t, "/secrets/auth_key", result["auth"]["secret_key"])
+}
+
+func TestScanFileExpansions_NoFileExpansions(t *testing.T) {
+	iniContent := `
+[database]
+password = mysecret
+user = grafana
+`
+	file, err := ini.Load([]byte(iniContent))
+	require.NoError(t, err)
+
+	result := scanFileExpansions(file)
+
+	assert.NotNil(t, result)
+	assert.Empty(t, result)
+}
+
+func TestScanFileExpansions_OnlyFileExpansionsRecorded(t *testing.T) {
+	// env expansion should not be recorded, only file
+	iniContent := `
+[database]
+password = $__file{/secrets/db_pwd}
+host = $__env{DB_HOST}
+`
+	file, err := ini.Load([]byte(iniContent))
+	require.NoError(t, err)
+
+	result := scanFileExpansions(file)
+
+	require.Contains(t, result["database"], "password")
+	assert.NotContains(t, result["database"], "host")
 }

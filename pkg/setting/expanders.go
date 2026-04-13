@@ -49,6 +49,30 @@ func GetExpanderRegex() *regexp.Regexp {
 	return regex
 }
 
+// scanFileExpansions scans all INI keys for $__file{...} patterns BEFORE
+// expansion and returns a mapping of section -> key -> file path.
+// This must be called before expandConfig so we capture the raw paths.
+func scanFileExpansions(file *ini.File) map[string]map[string]string {
+	result := make(map[string]map[string]string)
+	fileRegex := regexp.MustCompile(`\$__file\{([^}]+)\}`)
+
+	for _, section := range file.Sections() {
+		for _, key := range section.Keys() {
+			match := fileRegex.FindStringSubmatch(key.Value())
+			if len(match) < 2 {
+				continue
+			}
+			sectionName := section.Name()
+			if result[sectionName] == nil {
+				result[sectionName] = make(map[string]string)
+			}
+			result[sectionName][key.Name()] = match[1]
+		}
+	}
+
+	return result
+}
+
 func expandConfig(file *ini.File) error {
 	sort.Slice(expanders, func(i, j int) bool {
 		return expanders[i].priority < expanders[j].priority

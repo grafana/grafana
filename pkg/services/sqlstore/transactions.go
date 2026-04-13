@@ -75,6 +75,17 @@ func (ss *SQLStore) inTransactionWithRetryCtx(ctx context.Context, engine *xorm.
 	}
 
 	if err != nil {
+		// On auth error with a file-sourced password, attempt credential refresh
+		// and retry the transaction once.
+		if ss.dbCfg.PwdFilePath != "" && IsAuthError(err) && retry == 0 {
+			ctxLogger.Info("Auth error detected, attempting credential refresh", "error", err)
+			ss.attemptCredentialRefresh()
+			if rollErr := sess.Rollback(); rollErr != nil {
+				ctxLogger.Warn("Rolling back failed session after auth error", "error", rollErr)
+			}
+			return ss.inTransactionWithRetryCtx(ctx, ss.engine, bus, callback, retry+1)
+		}
+
 		if rollErr := sess.Rollback(); rollErr != nil {
 			return fmt.Errorf("rolling back transaction due to error failed: %s: %w", rollErr, err)
 		}

@@ -52,6 +52,7 @@ func ProvideResourceDB(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.Trac
 type resourceDBProvider struct {
 	engine          *xorm.Engine
 	cfg             *setting.Cfg
+	dbCfg           *sqlstore.DatabaseConfig
 	log             log.Logger
 	migrateFunc     func(context.Context, *xorm.Engine, *setting.Cfg) error
 	tracer          trace.Tracer
@@ -81,6 +82,7 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 		if err != nil {
 			return nil, err
 		}
+		p.dbCfg = dbCfg
 		p.registerMetrics = true
 		p.engine, err = getEngine(dbCfg)
 		return p, err
@@ -142,7 +144,44 @@ func (p *resourceDBProvider) initDB(ctx context.Context) (db.DB, error) {
 	}
 
 	d := NewDB(p.engine.DB().DB, p.engine.Dialect().DriverName())
+
+	// Wrap with refreshableDB when the password is sourced from a file so that
+	// auth errors trigger an automatic credential refresh and retry.
+	if p.dbCfg != nil && p.dbCfg.PwdFilePath != "" {
+		d = newRefreshableDB(d, p.buildRefreshedDB)
+	}
+
 	d = otel.NewInstrumentedDB(d, p.tracer)
 
 	return d, nil
+}
+
+// buildRefreshedDB re-reads the password file, rebuilds the connection string,
+// opens a new *sql.DB and returns it wrapped as db.DB.
+func (p *resourceDBProvider) buildRefreshedDB() (db.DB, error) {
+	changed, err := p.dbCfg.RefreshPassword()
+	if err != nil {
+		return nil, err
+	}
+	if !changed {
+		// Password unchanged; return the current engine's DB (caller will retry).
+		return NewDB(p.engine.DB().DB, p.engine.Dialect().DriverName()), nil
+	}
+
+	if err := p.dbCfg.RebuildConnectionString(p.cfg, nil); err != nil {
+		return nil, err
+	}
+
+	newEngine, err := getEngine(p.dbCfg)
+	if err != nil {
+		return nil, err
+	}
+
+	oldEngine := p.engine
+	p.engine = newEngine
+
+	// Close old engine gracefully.
+	_ = oldEngine.Close()
+
+	return NewDB(p.engine.DB().DB, p.engine.Dialect().DriverName()), nil
 }
