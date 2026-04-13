@@ -31,16 +31,6 @@ import { applyBarChartFieldDefaults } from './test-helpers';
 let canExecuteActionsForTest = false;
 let onAddAdHocFilterMock: jest.Mock;
 
-jest.mock('uplot', () => {
-  const mock = jest.fn().mockImplementation(() => ({ destroy: jest.fn() }));
-
-  //@ts-expect-error
-  mock.paths = {
-    bars: jest.fn(() => () => ''),
-  };
-  return mock;
-});
-
 jest.mock('@grafana/ui', () => {
   const actual = jest.requireActual('@grafana/ui');
   return {
