@@ -138,4 +138,4 @@ Each folder in a synced repository contains a `.folder.json` file at its root:
 Where:
 
 - `<FOLDER_UID>` is the stable folder UID that Grafana uses for permissions, bookmarks, and API references.
-- `<FOLDER_UI_NAME>` is the display name shown in the Grafana UI. This parameter is optional.
+- `<FOLDER_UI_NAME>` is the display name shown in the Grafana UI. This parameter is optional. If not used, the folder name will be passed instead.
