@@ -1,6 +1,7 @@
 import { expect, test } from '@grafana/plugin-e2e';
 
 const DASHBOARD_UID = 'UTv--wqMk';
+const PANEL_TITLE = 'Time series + Auto buckets';
 
 // Tall viewport so all 12 panels render (dashboard uses 6 rows of 2 panels)
 test.use({ viewport: { width: 1920, height: 2400 } });
@@ -12,7 +13,7 @@ test.describe('Panels test: Histogram', { tag: ['@panels', '@histogram'] }, () =
     });
 
     await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Time series + Auto buckets'))
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(PANEL_TITLE))
     ).toBeVisible();
 
     // Scroll to bottom so all panels render (DashboardPanel uses LazyLoader - panels load when in view)
@@ -25,6 +26,24 @@ test.describe('Panels test: Histogram', { tag: ['@panels', '@histogram'] }, () =
     await expect(errorInfo, 'no errors in the panels').toBeHidden();
   });
 
+  test('visual regression', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+    });
+
+    const panelHeader = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(PANEL_TITLE));
+    await expect(panelHeader).toBeVisible();
+
+    const panel = page.getByTestId(selectors.components.Panels.Panel.containerByTitle(PANEL_TITLE));
+    await expect(panel).toBeVisible();
+    await expect(panel.locator('.uplot')).toBeVisible();
+
+    await expect(panel).toHaveScreenshot('time-series-auto-buckets.png', {
+      animations: 'disabled',
+      caret: 'hide',
+    });
+  });
+
   test.describe('panel options', { tag: ['@panel-options'] }, () => {
     test('legend', { tag: ['@legend'] }, async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({
@@ -33,7 +52,7 @@ test.describe('Panels test: Histogram', { tag: ['@panels', '@histogram'] }, () =
       });
 
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Time series + Auto buckets'))
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(PANEL_TITLE))
       ).toBeVisible();
 
       const panelOptionsLegendGroup = page.getByTestId(selectors.components.OptionsGroup.group('Legend'));
@@ -60,7 +79,7 @@ test.describe('Panels test: Histogram', { tag: ['@panels', '@histogram'] }, () =
       });
 
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Time series + Auto buckets'))
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(PANEL_TITLE))
       ).toBeVisible();
 
       await expect(page.locator('.uplot')).toBeVisible();
