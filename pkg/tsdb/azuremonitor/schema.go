@@ -81,6 +81,9 @@ func metricsColumns() []schemas.Column {
 	}
 }
 
+// normalizeMetricNamespaceTableName returns the canonical schemads table name for a metric namespace:
+// lowercase, with '_' and '/' replaced by '-'. All Azure Monitor metrics tables use this form so
+// Tables / TableParameters / Columns map keys stay aligned for consumers (e.g. dsabstraction SQL).
 func normalizeMetricNamespaceTableName(ns string) string {
 	s := strings.ToLower(strings.TrimSpace(ns))
 	s = strings.ReplaceAll(s, "_", "-")
@@ -145,7 +148,8 @@ func (p *metricsSchema) Tables(ctx context.Context, _ *schemas.TablesRequest) (*
 func (p *metricsSchema) Columns(ctx context.Context, req *schemas.ColumnsRequest) (*schemas.ColumnsResponse, error) {
 	cols := make(map[string][]schemas.Column, len(req.Tables))
 	dsInfo, dsErr := p.dsInfo(ctx)
-	for _, name := range req.Tables {
+	for _, raw := range req.Tables {
+		name := normalizeMetricNamespaceTableName(raw)
 		if dsErr == nil && req.TableParameters != nil {
 			cols[name] = p.metricsColumnsEnriched(ctx, dsInfo, name, req.TableParameters)
 			continue
