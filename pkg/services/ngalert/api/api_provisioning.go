@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -69,15 +70,15 @@ type MuteTimingService interface {
 }
 
 type AlertRuleService interface {
-	GetAlertRules(ctx context.Context, user identity.Requester) ([]*alerting_models.AlertRule, map[string]alerting_models.Provenance, error)
-	GetAlertRule(ctx context.Context, user identity.Requester, ruleUID string) (alerting_models.AlertRule, alerting_models.Provenance, error)
-	CreateAlertRule(ctx context.Context, user identity.Requester, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
-	UpdateAlertRule(ctx context.Context, user identity.Requester, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
-	DeleteAlertRule(ctx context.Context, user identity.Requester, ruleUID string, provenance alerting_models.Provenance) error
+	GetAlertRules(ctx context.Context, user identity.Requester) ([]*alerting_models.AlertRule, map[string]utils.ManagerProperties, error)
+	GetAlertRule(ctx context.Context, user identity.Requester, ruleUID string) (alerting_models.AlertRule, utils.ManagerProperties, error)
+	CreateAlertRule(ctx context.Context, user identity.Requester, rule alerting_models.AlertRule, manager utils.ManagerProperties) (alerting_models.AlertRule, error)
+	UpdateAlertRule(ctx context.Context, user identity.Requester, rule alerting_models.AlertRule, manager utils.ManagerProperties) (alerting_models.AlertRule, error)
+	DeleteAlertRule(ctx context.Context, user identity.Requester, ruleUID string, manager utils.ManagerProperties) error
 	GetRuleGroup(ctx context.Context, user identity.Requester, folder, group string) (alerting_models.AlertRuleGroup, error)
-	ReplaceRuleGroup(ctx context.Context, user identity.Requester, group alerting_models.AlertRuleGroup, provenance alerting_models.Provenance, message string) error
-	DeleteRuleGroup(ctx context.Context, user identity.Requester, folder, group string, provenance alerting_models.Provenance) error
-	DeleteRuleGroups(ctx context.Context, user identity.Requester, provenance alerting_models.Provenance, opts *provisioning.FilterOptions) error
+	ReplaceRuleGroup(ctx context.Context, user identity.Requester, group alerting_models.AlertRuleGroup, manager utils.ManagerProperties, message string) error
+	DeleteRuleGroup(ctx context.Context, user identity.Requester, folder, group string, manager utils.ManagerProperties) error
+	DeleteRuleGroups(ctx context.Context, user identity.Requester, manager utils.ManagerProperties, opts *provisioning.FilterOptions) error
 	GetAlertRuleWithFolderFullpath(ctx context.Context, u identity.Requester, ruleUID string) (provisioning.AlertRuleWithFolderFullpath, error)
 	GetAlertRuleGroupWithFolderFullpath(ctx context.Context, u identity.Requester, folder, group string) (alerting_models.AlertRuleGroupWithFolderFullpath, error)
 	GetAlertGroupsWithFolderFullpath(ctx context.Context, u identity.Requester, opts *provisioning.FilterOptions) ([]alerting_models.AlertRuleGroupWithFolderFullpath, error)
@@ -333,22 +334,28 @@ func (srv *ProvisioningSrv) RouteDeleteMuteTiming(c *contextmodel.ReqContext, na
 }
 
 func (srv *ProvisioningSrv) RouteGetAlertRules(c *contextmodel.ReqContext) response.Response {
-	rules, provenances, err := srv.alertRules.GetAlertRules(c.Req.Context(), c.SignedInUser)
+	rules, managerPropsMap, err := srv.alertRules.GetAlertRules(c.Req.Context(), c.SignedInUser)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
+	}
+	// Convert at the HTTP boundary: ManagerProperties → Provenance for the response DTO.
+	provenances := make(map[string]alerting_models.Provenance, len(managerPropsMap))
+	for uid, mp := range managerPropsMap {
+		provenances[uid] = alerting_models.ManagerPropertiesToProvenance(mp)
 	}
 	return response.JSON(http.StatusOK, ProvisionedAlertRuleFromAlertRules(rules, provenances))
 }
 
 func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *contextmodel.ReqContext, UID string) response.Response {
-	rule, provenace, err := srv.alertRules.GetAlertRule(c.Req.Context(), c.SignedInUser, UID)
+	rule, managerProps, err := srv.alertRules.GetAlertRule(c.Req.Context(), c.SignedInUser, UID)
 	if err != nil {
 		if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 			return response.Empty(http.StatusNotFound)
 		}
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule by UID", err)
 	}
-	return response.JSON(http.StatusOK, ProvisionedAlertRuleFromAlertRule(rule, provenace))
+	provenance := alerting_models.ManagerPropertiesToProvenance(managerProps)
+	return response.JSON(http.StatusOK, ProvisionedAlertRuleFromAlertRule(rule, provenance))
 }
 
 func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar definitions.ProvisionedAlertRule) response.Response {
@@ -358,8 +365,8 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar de
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	provenance := determineProvenance(c)
-	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), c.SignedInUser, upstreamModel, alerting_models.Provenance(provenance))
+	manager := determineManagerProperties(c)
+	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), c.SignedInUser, upstreamModel, manager)
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -373,7 +380,7 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar de
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 
-	resp := ProvisionedAlertRuleFromAlertRule(createdAlertRule, alerting_models.Provenance(provenance))
+	resp := ProvisionedAlertRuleFromAlertRule(createdAlertRule, alerting_models.ManagerPropertiesToProvenance(manager))
 	return response.JSON(http.StatusCreated, resp)
 }
 
@@ -390,8 +397,8 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 
 	updated.OrgID = c.GetOrgID()
 	updated.UID = UID
-	provenance := determineProvenance(c)
-	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), c.SignedInUser, updated, alerting_models.Provenance(provenance))
+	manager := determineManagerProperties(c)
+	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), c.SignedInUser, updated, manager)
 	if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 		return response.Empty(http.StatusNotFound)
 	}
@@ -405,13 +412,13 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 
-	resp := ProvisionedAlertRuleFromAlertRule(updatedAlertRule, alerting_models.Provenance(provenance))
+	resp := ProvisionedAlertRuleFromAlertRule(updatedAlertRule, alerting_models.ManagerPropertiesToProvenance(manager))
 	return response.JSON(http.StatusOK, resp)
 }
 
 func (srv *ProvisioningSrv) RouteDeleteAlertRule(c *contextmodel.ReqContext, UID string) response.Response {
-	provenance := determineProvenance(c)
-	err := srv.alertRules.DeleteAlertRule(c.Req.Context(), c.SignedInUser, UID, alerting_models.Provenance(provenance))
+	manager := determineManagerProperties(c)
+	err := srv.alertRules.DeleteAlertRule(c.Req.Context(), c.SignedInUser, UID, manager)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
@@ -505,11 +512,11 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, a
 	if err != nil {
 		ErrResp(http.StatusBadRequest, err, "")
 	}
-	provenance := determineProvenance(c)
+	manager := determineManagerProperties(c)
 	// TODO: https://github.com/grafana/grafana/issues/114197
 	// Support passing change messages.
 	changeMessage := ""
-	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser, groupModel, alerting_models.Provenance(provenance), changeMessage)
+	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser, groupModel, manager, changeMessage)
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -526,8 +533,8 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, a
 }
 
 func (srv *ProvisioningSrv) RouteDeleteAlertRuleGroup(c *contextmodel.ReqContext, folderUID string, group string) response.Response {
-	provenance := determineProvenance(c)
-	err := srv.alertRules.DeleteRuleGroup(c.Req.Context(), c.SignedInUser, folderUID, group, alerting_models.Provenance(provenance))
+	manager := determineManagerProperties(c)
+	err := srv.alertRules.DeleteRuleGroup(c.Req.Context(), c.SignedInUser, folderUID, group, manager)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
@@ -539,6 +546,13 @@ func determineProvenance(ctx *contextmodel.ReqContext) definitions.Provenance {
 		return definitions.Provenance(alerting_models.ProvenanceNone)
 	}
 	return definitions.Provenance(alerting_models.ProvenanceAPI)
+}
+
+func determineManagerProperties(ctx *contextmodel.ReqContext) utils.ManagerProperties {
+	if _, disabled := ctx.Req.Header[disableProvenanceHeaderName]; disabled {
+		return utils.ManagerProperties{}
+	}
+	return utils.ManagerProperties{Kind: utils.ManagerKindClassicAPI} //nolint:staticcheck
 }
 
 func extractExportRequest(c *contextmodel.ReqContext) definitions.ExportQueryParams {

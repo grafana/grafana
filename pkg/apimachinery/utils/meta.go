@@ -678,11 +678,16 @@ func (m *grafanaMetaAccessor) GetManagerProperties() (ManagerProperties, bool) {
 			}, true
 		}
 
-		// If the identity is not set, we should ignore the other annotations and return the default values.
-		//
-		// This is to prevent inadvertently marking resources as managed,
-		// since that can potentially block updates from other sources.
-		return res, false
+		// Classic shim kinds (legacy file/API provisioning) have no meaningful identity,
+		// so allow them through without one.
+		kind := ParseManagerKindString(annot[AnnoKeyManagerKind])
+		if !kind.IsClassic() {
+			// If the identity is not set, we should ignore the other annotations and return the default values.
+			//
+			// This is to prevent inadvertently marking resources as managed,
+			// since that can potentially block updates from other sources.
+			return res, false
+		}
 	}
 	res.Identity = id
 

@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
@@ -18,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 var (
@@ -64,7 +64,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
-	rules, provenanceMap, continueToken, err := s.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
+	rules, managerPropsMap, continueToken, err := s.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
 		RuleType:      ngmodels.RuleTypeFilterRecording,
 		Limit:         opts.Limit,
 		ContinueToken: opts.Continue,
@@ -74,8 +74,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	if err != nil {
 		return nil, err
 	}
-
-	return convertToK8sResources(info.OrgID, rules, provenanceMap, s.namespacer, continueToken)
+	return convertToK8sResources(info.OrgID, rules, managerPropsMap, s.namespacer, continueToken)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -89,7 +88,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 		return nil, err
 	}
 
-	rule, provenance, err := s.service.GetAlertRule(ctx, user, name)
+	rule, managerProps, err := s.service.GetAlertRule(ctx, user, name)
 	if err != nil {
 		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 			return nil, k8serrors.NewNotFound(ResourceInfo.GroupResource(), name)
@@ -97,7 +96,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 		return nil, err
 	}
 
-	obj, err := convertToK8sResource(info.OrgID, &rule, provenance, s.namespacer)
+	obj, err := convertToK8sResource(info.OrgID, &rule, managerProps, s.namespacer)
 	if err != nil && errors.Is(err, errInvalidRule) {
 		return nil, k8serrors.NewNotFound(ResourceInfo.GroupResource(), name)
 	}
@@ -133,17 +132,17 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, k8serrors.NewBadRequest("cannot set group label when creating recording rule")
 	}
 
-	model, provenance, err := convertToDomainModel(info.OrgID, p)
+	domainModel, managerProps, err := convertToDomainModel(info.OrgID, p)
 	if err != nil {
 		return nil, err
 	}
 
-	rule, err := s.service.CreateAlertRule(ctx, user, *model, provenance)
+	rule, err := s.service.CreateAlertRule(ctx, user, *domainModel, managerProps)
 	if err != nil {
 		return nil, err
 	}
 
-	return convertToK8sResource(info.OrgID, &rule, provenance, s.namespacer)
+	return convertToK8sResource(info.OrgID, &rule, managerProps, s.namespacer)
 }
 
 func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
@@ -181,23 +180,22 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 		new.UID = types.UID(new.Name)
 	}
 
-	model, provenance, err := convertToDomainModel(info.OrgID, new)
+	domainModel, managerProps, err := convertToDomainModel(info.OrgID, new)
 	if err != nil {
 		return nil, false, err
 	}
 
-	// ignore returned rule as it doesn't contain the updated version
-	_, err = s.service.UpdateAlertRule(ctx, user, *model, provenance)
+	_, err = s.service.UpdateAlertRule(ctx, user, *domainModel, managerProps)
 	if err != nil {
 		return nil, false, err
 	}
 
-	updated, provenance, err := s.service.GetAlertRule(ctx, user, name)
+	updated, managerProps, err := s.service.GetAlertRule(ctx, user, name)
 	if err != nil {
 		return nil, false, err
 	}
 
-	rule, err := convertToK8sResource(info.OrgID, &updated, provenance, s.namespacer)
+	rule, err := convertToK8sResource(info.OrgID, &updated, managerProps, s.namespacer)
 	if err != nil {
 		return nil, false, err
 	}
@@ -229,9 +227,9 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if !slices.Contains(model.AcceptedProvenanceStatuses, sourceProv) {
 		return nil, false, fmt.Errorf("invalid provenance status: %s", sourceProv)
 	}
-	provenance := ngmodels.Provenance(sourceProv)
+	managerProps := ngmodels.ProvenanceToManagerProperties(ngmodels.Provenance(sourceProv))
 
-	err = s.service.DeleteAlertRule(ctx, user, name, provenance)
+	err = s.service.DeleteAlertRule(ctx, user, name, managerProps)
 	if err != nil {
 		return old, false, err
 	}

@@ -36,6 +36,16 @@ const (
 	// Deprecated: this is used as a shim/migration path for legacy file provisioning
 	// Previously this was a "file:" prefix
 	ManagerKindClassicFP ManagerKind = "classic-file-provisioning"
+
+	// Deprecated: this is used as a shim/migration path for legacy API provisioning,
+	// where the resource was managed via the provisioning HTTP API but the specific
+	// tool (Terraform, script, etc.) was not recorded. Use ManagerKindTerraform,
+	// ManagerKindKubectl, etc. for new resources.
+	ManagerKindClassicAPI ManagerKind = "classic-api-provisioning"
+
+	// Deprecated: this is used as a shim/migration path for resources that were
+	// converted from Prometheus definitions.
+	ManagerKindClassicConvertedPrometheus ManagerKind = "classic-converted-prometheus"
 )
 
 // ParseManagerKindString parses a string into a ManagerKind.
@@ -55,9 +65,23 @@ func ParseManagerKindString(v string) ManagerKind {
 		return ManagerKindGrafana
 	case string(ManagerKindClassicFP): // nolint:staticcheck
 		return ManagerKindClassicFP // nolint:staticcheck
+	case string(ManagerKindClassicAPI): // nolint:staticcheck
+		return ManagerKindClassicAPI // nolint:staticcheck
+	case string(ManagerKindClassicConvertedPrometheus): // nolint:staticcheck
+		return ManagerKindClassicConvertedPrometheus // nolint:staticcheck
 	default:
 		return ManagerKindUnknown
 	}
+}
+
+// IsClassic returns true for shim kinds that represent legacy provisioning mechanisms.
+// Classic kinds do not require a manager Identity.
+func (k ManagerKind) IsClassic() bool {
+	switch k { //nolint:staticcheck
+	case ManagerKindClassicFP, ManagerKindClassicAPI, ManagerKindClassicConvertedPrometheus:
+		return true
+	}
+	return false
 }
 
 // SourceProperties is used to identify the source of a provisioned resource.
