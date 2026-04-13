@@ -77,7 +77,7 @@ func TestNormalizeGrafanaSQLRequest_ConvertsMetricsQuery(t *testing.T) {
 	req := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			GrafanaConfig: backend.NewGrafanaCfg(map[string]string{
-				featuretoggles.EnabledFeatures: featuremgmt.FlagDsAbstractionApp,
+				featuretoggles.EnabledFeatures: "dsAbstractionApp",
 			}),
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{UID: "ds-1"},
 		},

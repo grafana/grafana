@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	schemas "github.com/grafana/schemads"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 )
 
@@ -23,8 +22,8 @@ func (s *Service) normalizeGrafanaSQLRequest(ctx context.Context, req *backend.Q
 		return req, nil
 	}
 
-	gf := req.PluginContext.GrafanaConfig
-	if gf == nil || !gf.FeatureToggles().IsEnabled(featuremgmt.FlagDsAbstractionApp) {
+	grafanaConfig := req.PluginContext.GrafanaConfig
+	if grafanaConfig == nil || !grafanaConfig.FeatureToggles().IsEnabled("dsAbstractionApp") {
 		return req, nil
 	}
 

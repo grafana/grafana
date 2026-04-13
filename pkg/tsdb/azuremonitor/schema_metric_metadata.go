@@ -97,7 +97,7 @@ func aggregationEnumValues(def *metricDefinitionFull) []string {
 	if primary != "" {
 		seen[primary] = struct{}{}
 	}
-	var all []string
+	all := make([]string, 0, len(seen))
 	for s := range seen {
 		all = append(all, s)
 	}
