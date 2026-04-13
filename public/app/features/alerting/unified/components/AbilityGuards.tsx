@@ -53,7 +53,7 @@ function useAbilitiesForActions(actions: Action[]): Abilities<Action> {
 
 // ── <Ability> — single-action gate ───────────────────────────────────────────
 
-interface AbilityGateProps {
+interface AbilityProps {
   action: Action;
   children: ChildrenOrRenderProp<Ability>;
 }
