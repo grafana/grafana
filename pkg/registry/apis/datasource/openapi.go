@@ -213,12 +213,28 @@ func transformOpenAPI(p PluginSpecTransformOptions) (*spec3.OpenAPI, error) {
 func (p *PluginSpecTransformOptions) applyRoutes(prefix string, routes map[string]*spec3.Path) error {
 	var params []*spec3.Parameter
 
-	for k, v := range p.oas.Paths.Paths {
-		if strings.HasPrefix(k, prefix) {
-			if params == nil && v.Get != nil {
-				params = v.Get.Parameters[0:2]
+	cfg := p.oas.Paths.Paths[p.cfgPath+"/{name}"]
+	if cfg == nil {
+		return fmt.Errorf("expecting registered path for: %s", p.cfgPath+"/{name}")
+	}
+	if strings.Contains(prefix, "{namespace}") {
+		for _, p := range cfg.Parameters {
+			if p.Name == "namespace" {
+				params = append(params, p)
 			}
+		}
+	}
+	if strings.Contains(prefix, "{name}") {
+		for _, p := range cfg.Parameters {
+			if p.Name == "name" {
+				params = append(params, p)
+			}
+		}
+	}
 
+	// Remove all the paths that were not specified
+	for k := range p.oas.Paths.Paths {
+		if strings.HasPrefix(k, prefix) {
 			delete(p.oas.Paths.Paths, k)
 		}
 	}
