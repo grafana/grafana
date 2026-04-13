@@ -4,7 +4,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, EmptyState, LoadingPlaceholder, Pagination, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { MetadataRow } from 'app/features/alerting/unified/components/notification-policies/Policy';
-import { useAlertmanagerAbilityState } from 'app/features/alerting/unified/hooks/abilities/notificationAbilities';
+import { useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/abilities/notificationAbilities';
 import { AlertmanagerAction } from 'app/features/alerting/unified/hooks/abilities/types';
 import {
   type AlertmanagerGroup,
@@ -54,7 +54,7 @@ export const PoliciesList = () => {
 
   const search = queryParams.get('search');
 
-  const { granted: shouldFetchContactPoints } = useAlertmanagerAbilityState(AlertmanagerAction.ViewContactPoint);
+  const { granted: shouldFetchContactPoints } = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
   const { contactPoints: receivers } = useGrafanaContactPoints({
     skip: !shouldFetchContactPoints,
     fetchStatuses: false,

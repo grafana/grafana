@@ -22,8 +22,8 @@ import {
 import { useIsRuleEditable } from '../useIsRuleEditable';
 
 import {
-  type AbilityState,
-  type AbilityStates,
+  type Abilities,
+  type Ability,
   ExternalRuleAction,
   Granted,
   InsufficientPermissions,
@@ -37,10 +37,10 @@ import {
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
 /**
- * Builds the AbilityState for a silence action.
+ * Builds the Ability for a silence action.
  * Extracted to avoid repeating the same if-chain in both the Ruler and Prom paths.
  */
-function buildSilenceAbility(loading: boolean, supported: boolean, canSilence: boolean): AbilityState {
+function buildSilenceAbility(loading: boolean, supported: boolean, canSilence: boolean): Ability {
   if (loading) {
     return Loading;
   }
@@ -56,11 +56,7 @@ function buildSilenceAbility(loading: boolean, supported: boolean, canSilence: b
   return Granted;
 }
 
-function fromPermissions(
-  supported: boolean,
-  loading: boolean,
-  ...anyOfPermissions: AccessControlAction[]
-): AbilityState {
+function fromPermissions(supported: boolean, loading: boolean, ...anyOfPermissions: AccessControlAction[]): Ability {
   if (loading) {
     return Loading;
   }
@@ -76,13 +72,13 @@ function fromPermissions(
 
 // ── Grafana-managed rule abilities (global / list level) ──────────────────────
 
-export function useRuleAbilityStates(): AbilityStates<RuleAction> {
+export function useRuleAbilities(): Abilities<RuleAction> {
   const canCreate = ctx.hasPermission(AccessControlAction.AlertingRuleCreate);
   const canRead = ctx.hasPermission(AccessControlAction.AlertingRuleRead);
   const canUpdate = ctx.hasPermission(AccessControlAction.AlertingRuleUpdate);
   const canDelete = ctx.hasPermission(AccessControlAction.AlertingRuleDelete);
 
-  return useMemo<AbilityStates<RuleAction>>(
+  return useMemo<Abilities<RuleAction>>(
     () => ({
       [RuleAction.Create]: canCreate ? Granted : InsufficientPermissions([AccessControlAction.AlertingRuleCreate]),
       [RuleAction.View]: canRead ? Granted : InsufficientPermissions([AccessControlAction.AlertingRuleRead]),
@@ -102,18 +98,18 @@ export function useRuleAbilityStates(): AbilityStates<RuleAction> {
   );
 }
 
-export function useRuleAbilityState(action: RuleAction): AbilityState {
-  const all = useRuleAbilityStates();
+export function useRuleAbility(action: RuleAction): Ability {
+  const all = useRuleAbilities();
   return useMemo(() => all[action], [all, action]);
 }
 
 // ── External datasource rule abilities (global / list level) ──────────────────
 
-export function useExternalRuleAbilityStates(): AbilityStates<ExternalRuleAction> {
+export function useExternalRuleAbilities(): Abilities<ExternalRuleAction> {
   const canWrite = ctx.hasPermission(AccessControlAction.AlertingRuleExternalWrite);
   const canRead = ctx.hasPermission(AccessControlAction.AlertingRuleExternalRead);
 
-  return useMemo<AbilityStates<ExternalRuleAction>>(
+  return useMemo<Abilities<ExternalRuleAction>>(
     () => ({
       [ExternalRuleAction.CreateAlertRule]: canWrite
         ? Granted
@@ -132,8 +128,8 @@ export function useExternalRuleAbilityStates(): AbilityStates<ExternalRuleAction
   );
 }
 
-export function useExternalRuleAbilityState(action: ExternalRuleAction): AbilityState {
-  const all = useExternalRuleAbilityStates();
+export function useExternalRuleAbility(action: ExternalRuleAction): Ability {
+  const all = useExternalRuleAbilities();
   return useMemo(() => all[action], [all, action]);
 }
 
@@ -165,31 +161,31 @@ export interface RuleEditAbilityResult {
    * Edit (update) the rule. Denied when: loading, ruler unavailable, provisioned
    * (`PROVISIONED`), plugin-managed (`IS_PLUGIN_MANAGED`), or no folder edit permission.
    */
-  update: AbilityState;
+  update: Ability;
   /** Delete the rule. Same conditions as `update` but checks delete permission. */
-  delete: AbilityState;
+  delete: Ability;
   /**
    * Restore the rule to a previous version. Same as `update` but additionally
    * returns `NOT_SUPPORTED` for non-Grafana-managed rules (cloud/recording rules
    * do not have version history).
    */
-  restore: AbilityState;
+  restore: Ability;
   /**
    * Pause / resume the rule. Same as `restore` — only applicable to Grafana-managed
    * alerting rules; returns `NOT_SUPPORTED` for recording rules and cloud rules.
    */
-  pause: AbilityState;
+  pause: Ability;
   /**
    * Duplicate the rule. Not blocked by provisioning (a provisioned rule can be
    * duplicated to create a new editable copy). Returns `IS_PLUGIN_MANAGED` when
    * the rule is plugin-owned, otherwise checks the create permission.
    */
-  duplicate: AbilityState;
+  duplicate: Ability;
   /**
    * Permanently delete the rule (purge from trash). Only applicable to Grafana-managed
    * alerting rules. Requires both delete permission and Grafana admin status.
    */
-  deletePermanently: AbilityState;
+  deletePermanently: Ability;
   /** True while async checks (ruler, plugin settings) are still in flight. */
   loading: boolean;
 }
@@ -224,7 +220,7 @@ export function useRuleAdministrationAbility(
     const loading = editableLoading || pluginLoading;
     const rulesPermissions = getRulesPermissions(rulesSourceName);
 
-    function computeEdit(hasPermission: boolean, permission: AccessControlAction): AbilityState {
+    function computeEdit(hasPermission: boolean, permission: AccessControlAction): Ability {
       if (loading) {
         return Loading;
       }
@@ -250,7 +246,7 @@ export function useRuleAdministrationAbility(
     const grafanaOnlyUpdate = isGrafanaManagedRule ? update : NotSupported;
 
     // Duplicate is not blocked by provisioning — a provisioned rule can be copied.
-    function computeDuplicate(): AbilityState {
+    function computeDuplicate(): Ability {
       if (loading) {
         return Loading;
       }
@@ -261,7 +257,7 @@ export function useRuleAdministrationAbility(
     }
 
     // Permanent deletion requires both delete permission and Grafana admin status.
-    function computeDeletePermanently(): AbilityState {
+    function computeDeletePermanently(): Ability {
       if (!isGrafanaManagedRule) {
         return NotSupported;
       }
@@ -301,10 +297,10 @@ export function useRuleAdministrationAbility(
 // ── Focused per-rule ability hooks ────────────────────────────────────────────
 
 /**
- * Returns the silence `AbilityState` for a rule.
+ * Returns the silence `Ability` for a rule.
  * Checks alertmanager configuration and folder-level silence permissions.
  */
-export function useRuleSilenceAbility(rule: RulerRuleDTO | undefined): AbilityState {
+export function useRuleSilenceAbility(rule: RulerRuleDTO | undefined): Ability {
   const { silenceSupported, canSilenceInFolder, silenceLoading } = useCanSilence(rule);
   return useMemo(
     () => buildSilenceAbility(silenceLoading, silenceSupported, canSilenceInFolder),
@@ -313,21 +309,21 @@ export function useRuleSilenceAbility(rule: RulerRuleDTO | undefined): AbilitySt
 }
 
 /**
- * Returns the explore `AbilityState`.
+ * Returns the explore `Ability`.
  * This is a pure synchronous global RBAC check — `DataSourcesExplore` has no
  * folder-scoped or async dependency, so no rule or group identifier is needed.
  */
-export function useRuleExploreAbility(): AbilityState {
+export function useRuleExploreAbility(): Ability {
   return fromPermissions(true, false, AccessControlAction.DataSourcesExplore);
 }
 
 /**
- * Returns the export/modify-export `AbilityState` for a rule.
+ * Returns the export/modify-export `Ability` for a rule.
  * Only applicable to Grafana-managed alerting rules; returns `NOT_SUPPORTED` for cloud rules.
  */
-export function useRuleExportAbility(rule: RulerRuleDTO | undefined): AbilityState {
+export function useRuleExportAbility(rule: RulerRuleDTO | undefined): Ability {
   const isGrafanaManagedRule = rulerRuleType.grafana.rule(rule);
-  const exportAbility = useRuleAbilityState(RuleAction.ExportRules);
+  const exportAbility = useRuleAbility(RuleAction.ExportRules);
   return useMemo(() => (isGrafanaManagedRule ? exportAbility : NotSupported), [isGrafanaManagedRule, exportAbility]);
 }
 
@@ -338,29 +334,29 @@ type SkipToken = typeof skipToken;
 
 export interface PromRuleAdministrationAbilityResult {
   /** Edit the rule. Denied when: loading, provisioned, plugin-managed, or no folder edit permission. */
-  update: AbilityState;
+  update: Ability;
   /** Delete the rule. Same conditions as `update` but checks delete permission. */
-  delete: AbilityState;
+  delete: Ability;
   /**
    * Pause/resume the rule. Same as `update` but `NOT_SUPPORTED` for recording rules —
    * only alerting rules can be paused.
    */
-  pause: AbilityState;
+  pause: Ability;
   /**
    * Restore the rule to a previous version. Same as `update` but `NOT_SUPPORTED` for
    * recording rules — only alerting rules have version history.
    */
-  restore: AbilityState;
+  restore: Ability;
   /**
    * Duplicate the rule. Not blocked by provisioning. Returns `IS_PLUGIN_MANAGED` when
    * the rule is plugin-owned, otherwise checks the create permission.
    */
-  duplicate: AbilityState;
+  duplicate: Ability;
   /**
    * Permanently delete the rule (purge from trash). Only applicable to Grafana-managed
    * alerting rules. Requires both delete permission and Grafana admin status.
    */
-  deletePermanently: AbilityState;
+  deletePermanently: Ability;
   /** True while async checks (folder metadata, plugin settings) are still in flight. */
   loading: boolean;
 }
@@ -401,7 +397,7 @@ export function usePromRuleAdministrationAbility(
     const loading = editableLoading || pluginLoading;
     const rulesPermissions = getRulesPermissions('grafana');
 
-    function computeEdit(hasPermission: boolean, permission: AccessControlAction): AbilityState {
+    function computeEdit(hasPermission: boolean, permission: AccessControlAction): Ability {
       if (loading) {
         return Loading;
       }
@@ -421,9 +417,9 @@ export function usePromRuleAdministrationAbility(
     const del = computeEdit(isRemovable ?? false, rulesPermissions.delete);
 
     // Pause and restore only apply to alerting rules
-    const alertingOnly = (base: AbilityState): AbilityState => (isAlertingRule ? base : NotSupported);
+    const alertingOnly = (base: Ability): Ability => (isAlertingRule ? base : NotSupported);
 
-    function computeDuplicate(): AbilityState {
+    function computeDuplicate(): Ability {
       if (loading) {
         return Loading;
       }
@@ -434,7 +430,7 @@ export function usePromRuleAdministrationAbility(
     }
 
     // Permanent deletion requires both delete permission and Grafana admin status.
-    function computeDeletePermanently(): AbilityState {
+    function computeDeletePermanently(): Ability {
       if (!isAlertingRule) {
         return NotSupported;
       }
@@ -463,11 +459,11 @@ export function usePromRuleAdministrationAbility(
 }
 
 /**
- * Returns the silence `AbilityState` for a Grafana PromRule.
+ * Returns the silence `Ability` for a Grafana PromRule.
  * Checks alertmanager configuration and folder-level silence permissions.
  * Pass `skipToken` when no prom rule is available.
  */
-export function usePromRuleSilenceAbility(rule: GrafanaPromRuleDTO | SkipToken): AbilityState {
+export function usePromRuleSilenceAbility(rule: GrafanaPromRuleDTO | SkipToken): Ability {
   const promRule = rule === skipToken ? undefined : rule;
   const isAlertingRule = promRule ? prometheusRuleType.grafana.alertingRule(promRule) : false;
   const { silenceSupported, silenceLoading } = useGrafanaRulesSilenceSupport();
@@ -480,14 +476,14 @@ export function usePromRuleSilenceAbility(rule: GrafanaPromRuleDTO | SkipToken):
 }
 
 /**
- * Returns the export/modify-export `AbilityState` for a Grafana PromRule.
+ * Returns the export/modify-export `Ability` for a Grafana PromRule.
  * Only applicable to Grafana-managed **alerting** rules (not recording rules).
  * Pass `skipToken` when no prom rule is available.
  */
-export function usePromRuleExportAbility(rule: GrafanaPromRuleDTO | SkipToken): AbilityState {
+export function usePromRuleExportAbility(rule: GrafanaPromRuleDTO | SkipToken): Ability {
   const promRule = rule === skipToken ? undefined : rule;
   const isAlertingRule = promRule ? prometheusRuleType.grafana.alertingRule(promRule) : false;
-  const exportAbility = useRuleAbilityState(RuleAction.ExportRules);
+  const exportAbility = useRuleAbility(RuleAction.ExportRules);
   return useMemo(() => (isAlertingRule ? exportAbility : NotSupported), [isAlertingRule, exportAbility]);
 }
 

@@ -11,7 +11,7 @@ import { WithReturnButton } from '../components/WithReturnButton';
 import { GrafanaRuleGroupExporter } from '../components/export/GrafanaRuleGroupExporter';
 import { FolderActionsButton } from '../components/folder-actions/FolderActionsButton';
 import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
-import { useRuleAbilityState } from '../hooks/abilities/ruleAbilities';
+import { useRuleAbility } from '../hooks/abilities/ruleAbilities';
 import { RuleAction } from '../hooks/abilities/types';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { makeFolderAlertsLink } from '../utils/misc';
@@ -224,8 +224,8 @@ interface GrafanaGroupActionsProps {
 function GrafanaGroupActions({ folderUid, groupName }: GrafanaGroupActionsProps) {
   const [showExportDrawer, setShowExportDrawer] = useState(false);
 
-  const { granted: canEdit } = useRuleAbilityState(RuleAction.Update);
-  const { granted: canExport } = useRuleAbilityState(RuleAction.ExportRules);
+  const { granted: canEdit } = useRuleAbility(RuleAction.Update);
+  const { granted: canExport } = useRuleAbility(RuleAction.ExportRules);
 
   if (!canEdit && !canExport) {
     return null;

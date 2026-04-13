@@ -33,7 +33,7 @@ export enum ExternalRuleAction {
 // Actions on Grafana-managed alertmanager notification entities:
 // contact points, templates, policies, silences, time intervals, alert groups.
 // These apply regardless of which alertmanager is selected; the permission checks
-// inside useAllAlertmanagerAbilityStates differ by AM type.
+// inside useAllAlertmanagerAbilities differ by AM type.
 export enum AlertmanagerAction {
   // contact points
   CreateContactPoint = 'create-contact-point',
@@ -100,7 +100,7 @@ export type Action =
   | FolderBulkAction
   | EnrichmentAction;
 
-// ── AbilityState ─────────────────────────────────────────────────────────────
+// ── Ability ─────────────────────────────────────────────────────────────
 
 /**
  * Discriminated union representing the outcome of an ability check.
@@ -121,19 +121,19 @@ export type Action =
  *
  * @example
  * // Common case — just check granted
- * const ability = useRulerRuleAbilityState(rule, groupId, RuleAction.Update);
+ * const ability = useRulerRuleAbility(rule, groupId, RuleAction.Update);
  * if (ability.granted) { ... }
  *
  * @example
  * // Rich UI using utility functions
- * const ability = useAlertmanagerAbilityState(AlertmanagerAction.ExportContactPoint);
+ * const ability = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
  * {isAvailable(ability) && (
  *   <Tooltip content={isInsufficientPermissions(ability) ? `Requires: ${ability.anyOfPermissions.join(', ')}` : undefined}>
  *     <Button disabled={!ability.granted}>Export</Button>
  *   </Tooltip>
  * )}
  */
-export type AbilityState =
+export type Ability =
   | { granted: true }
   | { granted: false; cause: 'LOADING' }
   | { granted: false; cause: 'NOT_SUPPORTED' }
@@ -141,42 +141,42 @@ export type AbilityState =
   | { granted: false; cause: 'IS_PLUGIN_MANAGED' }
   | { granted: false; cause: 'INSUFFICIENT_PERMISSIONS'; anyOfPermissions: AccessControlAction[] };
 
-/** Map of every action in domain T to its {@link AbilityState}. */
-export type AbilityStates<T extends Action> = Record<T, AbilityState>;
+/** Map of every action in domain T to its {@link Ability}. */
+export type Abilities<T extends Action> = Record<T, Ability>;
 
 // ── Sentinel constants ────────────────────────────────────────────────────────
 
 /** The action is permitted. */
-export const Granted: AbilityState = { granted: true };
+export const Granted: Ability = { granted: true };
 
 /** Async checks are still in flight — re-evaluate once loading is complete. */
-export const Loading: AbilityState = { granted: false, cause: 'LOADING' };
+export const Loading: Ability = { granted: false, cause: 'LOADING' };
 
 /**
  * The action is not applicable in the current context.
  * Use for wrong alertmanager type, disabled feature flags, or wrong rule type.
  * UI convention: hide the button entirely.
  */
-export const NotSupported: AbilityState = { granted: false, cause: 'NOT_SUPPORTED' };
+export const NotSupported: Ability = { granted: false, cause: 'NOT_SUPPORTED' };
 
 /**
  * The resource cannot be mutated because it is provisioned (Terraform, Ansible, provisioning API).
  * UI convention: show the button disabled with a tooltip explaining it is provisioned.
  */
-export const Provisioned: AbilityState = { granted: false, cause: 'PROVISIONED' };
+export const Provisioned: Ability = { granted: false, cause: 'PROVISIONED' };
 
 /**
  * The resource is owned by an installed plugin and cannot be mutated through the Grafana UI.
  * UI convention: show the button disabled with a tooltip naming the owning plugin.
  */
-export const IsPluginManaged: AbilityState = { granted: false, cause: 'IS_PLUGIN_MANAGED' };
+export const IsPluginManaged: Ability = { granted: false, cause: 'IS_PLUGIN_MANAGED' };
 
 /**
  * The user lacks the RBAC permissions required to perform the action.
  * `anyOfPermissions` lists every permission that would grant access — the user needs any one.
  * UI convention: show the button disabled with a tooltip listing the required permissions.
  */
-export function InsufficientPermissions(anyOfPermissions: AccessControlAction[]): AbilityState {
+export function InsufficientPermissions(anyOfPermissions: AccessControlAction[]): Ability {
   return { granted: false, cause: 'INSUFFICIENT_PERMISSIONS', anyOfPermissions };
 }
 
@@ -192,7 +192,7 @@ export function InsufficientPermissions(anyOfPermissions: AccessControlAction[])
  * }
  */
 export function isInsufficientPermissions(
-  ability: AbilityState
+  ability: Ability
 ): ability is { granted: false; cause: 'INSUFFICIENT_PERMISSIONS'; anyOfPermissions: AccessControlAction[] } {
   return !ability.granted && ability.cause === 'INSUFFICIENT_PERMISSIONS';
 }

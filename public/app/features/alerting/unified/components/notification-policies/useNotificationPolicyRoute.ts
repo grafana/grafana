@@ -20,7 +20,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { useAlertmanagerAbilityState } from '../../hooks/abilities/notificationAbilities';
+import { useAlertmanagerAbility } from '../../hooks/abilities/notificationAbilities';
 import { AlertmanagerAction } from '../../hooks/abilities/types';
 import { useAsync } from '../../hooks/useAsync';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
@@ -339,7 +339,7 @@ export function useCreateRoutingTree() {
  */
 export function useCreatePolicyAction(allPolicies: Route[] | undefined) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const createAbility = useAlertmanagerAbilityState(AlertmanagerAction.CreateNotificationPolicy);
+  const createAbility = useAlertmanagerAbility(AlertmanagerAction.CreateNotificationPolicy);
   const [createTrigger] = useCreateRoutingTree();
 
   const existingPolicyNames = useMemo(

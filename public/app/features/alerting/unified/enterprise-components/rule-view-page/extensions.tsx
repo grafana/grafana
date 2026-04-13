@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { FeatureBadge, useStyles2 } from '@grafana/ui';
 
 import { useAlertRule } from '../../components/rule-viewer/RuleContext';
-import { useEnrichmentAbilityState } from '../../hooks/abilities/otherAbilities';
+import { useEnrichmentAbility } from '../../hooks/abilities/otherAbilities';
 import { EnrichmentAction } from '../../hooks/abilities/types';
 import { rulerRuleType } from '../../utils/rules';
 
@@ -73,7 +73,7 @@ export function useRuleViewExtensionTabs(args: RuleViewTabBuilderArgs): NavModel
 
   // Resolve ability flags here — not inside the builder callbacks — so that
   // hook rules are never violated by stored callbacks.
-  const { granted: canReadEnrichments } = useEnrichmentAbilityState(EnrichmentAction.Read);
+  const { granted: canReadEnrichments } = useEnrichmentAbility(EnrichmentAction.Read);
 
   return getRuleViewExtensionTabs(args, isGrafanaAlertRule, { canReadEnrichments });
 }

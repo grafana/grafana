@@ -12,7 +12,7 @@ import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/c
 
 import { AbilityAny } from '../../components/AbilityGuards';
 import { isAvailable } from '../../hooks/abilities/abilityUtils';
-import { useAlertmanagerAbilityState, useAlertmanagerAbilityStates } from '../../hooks/abilities/notificationAbilities';
+import { useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/abilities/notificationAbilities';
 import { AlertmanagerAction } from '../../hooks/abilities/types';
 import { makeAMLink } from '../../utils/misc';
 import { DynamicTable, type DynamicTableColumnProps } from '../DynamicTable';
@@ -46,8 +46,8 @@ export const TimeIntervalsTable = () => {
     });
   }, [data]);
 
-  const createAbility = useAlertmanagerAbilityState(AlertmanagerAction.CreateTimeInterval);
-  const exportAbility = useAlertmanagerAbilityState(AlertmanagerAction.ExportTimeIntervals);
+  const createAbility = useAlertmanagerAbility(AlertmanagerAction.CreateTimeInterval);
+  const exportAbility = useAlertmanagerAbility(AlertmanagerAction.ExportTimeIntervals);
   const columns = useColumns(alertManagerSourceName, hideActions);
 
   if (isLoading) {
@@ -135,7 +135,7 @@ export const TimeIntervalsTable = () => {
 };
 
 function useColumns(alertManagerSourceName: string, hideActions = false) {
-  const [editAbility, deleteAbility] = useAlertmanagerAbilityStates([
+  const [editAbility, deleteAbility] = useAlertmanagerAbilities([
     AlertmanagerAction.UpdateTimeInterval,
     AlertmanagerAction.DeleteTimeInterval,
   ]);

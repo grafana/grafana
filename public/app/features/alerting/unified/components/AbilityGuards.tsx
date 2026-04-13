@@ -1,12 +1,12 @@
 import { type ReactNode, useMemo } from 'react';
 
 import {
-  useAllAlertmanagerAbilityStates,
-  useAllExternalAlertmanagerAbilityStates,
+  useAllAlertmanagerAbilities,
+  useAllExternalAlertmanagerAbilities,
 } from '../hooks/abilities/notificationAbilities';
-import { useEnrichmentAbilityStates, useFolderBulkActionAbilityStates } from '../hooks/abilities/otherAbilities';
-import { useExternalRuleAbilityStates, useRuleAbilityStates } from '../hooks/abilities/ruleAbilities';
-import { type AbilityState, type AbilityStates, type Action, NotSupported } from '../hooks/abilities/types';
+import { useEnrichmentAbilities, useFolderBulkActionAbilities } from '../hooks/abilities/otherAbilities';
+import { useExternalRuleAbilities, useRuleAbilities } from '../hooks/abilities/ruleAbilities';
+import { type Abilities, type Ability, type Action, NotSupported } from '../hooks/abilities/types';
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
@@ -18,23 +18,23 @@ function isRenderProp<T>(children: ChildrenOrRenderProp<T>): children is RenderP
 }
 
 /**
- * Resolves AbilityStates for the given actions by merging all six action-domain
+ * Resolves Abilities for the given actions by merging all six action-domain
  * hooks. This covers Grafana rules, external rules, alertmanager actions,
  * external alertmanager actions, folder bulk actions, and enrichment actions.
  *
  * Note: this hook always calls all six domain hooks unconditionally (rules of hooks).
  * The result is memoised so repeated renders with the same action set are cheap.
  */
-function useAbilityStatesForActions(actions: Action[]): AbilityStates<Action> {
-  const amStates = useAllAlertmanagerAbilityStates();
-  const extAmStates = useAllExternalAlertmanagerAbilityStates();
-  const ruleStates = useRuleAbilityStates();
-  const extRuleStates = useExternalRuleAbilityStates();
-  const folderBulkStates = useFolderBulkActionAbilityStates();
-  const enrichmentStates = useEnrichmentAbilityStates();
+function useAbilitiesForActions(actions: Action[]): Abilities<Action> {
+  const amStates = useAllAlertmanagerAbilities();
+  const extAmStates = useAllExternalAlertmanagerAbilities();
+  const ruleStates = useRuleAbilities();
+  const extRuleStates = useExternalRuleAbilities();
+  const folderBulkStates = useFolderBulkActionAbilities();
+  const enrichmentStates = useEnrichmentAbilities();
 
   return useMemo(() => {
-    const merged: Partial<AbilityStates<Action>> = {
+    const merged: Partial<Abilities<Action>> = {
       ...amStates,
       ...extAmStates,
       ...ruleStates,
@@ -43,19 +43,19 @@ function useAbilityStatesForActions(actions: Action[]): AbilityStates<Action> {
       ...enrichmentStates,
     };
 
-    return actions.reduce<AbilityStates<Action>>((acc, action) => {
+    return actions.reduce<Abilities<Action>>((acc, action) => {
       acc[action] = merged[action] ?? NotSupported;
       return acc;
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    }, {} as AbilityStates<Action>);
+    }, {} as Abilities<Action>);
   }, [amStates, extAmStates, ruleStates, extRuleStates, folderBulkStates, enrichmentStates, actions]);
 }
 
 // ── <Ability> — single-action gate ───────────────────────────────────────────
 
-interface AbilityProps {
+interface AbilityGateProps {
   action: Action;
-  children: ChildrenOrRenderProp<AbilityState>;
+  children: ChildrenOrRenderProp<Ability>;
 }
 
 /**
@@ -78,11 +78,11 @@ interface AbilityProps {
  *   }
  * </Ability>
  */
-export function Ability({ action, children }: AbilityProps) {
-  const states = useAbilityStatesForActions([action]);
+export function AbilityGate({ action, children }: AbilityProps) {
+  const states = useAbilitiesForActions([action]);
   const state = states[action];
 
-  if (isRenderProp<AbilityState>(children)) {
+  if (isRenderProp<Ability>(children)) {
     return <>{children(state)}</>;
   }
 
@@ -93,7 +93,7 @@ export function Ability({ action, children }: AbilityProps) {
 
 interface AbilityAnyProps {
   actions: Action[];
-  children: ChildrenOrRenderProp<AbilityState[]>;
+  children: ChildrenOrRenderProp<Ability[]>;
 }
 
 /**
@@ -105,16 +105,16 @@ interface AbilityAnyProps {
  * </AbilityAny>
  *
  * @example
- * // Render-prop — receives AbilityState[] in the same order as `actions`
+ * // Render-prop — receives Ability[] in the same order as `actions`
  * <AbilityAny actions={[RuleAction.Update, RuleAction.Delete]}>
  *   {(states) => states.some(s => s.loading) ? <Spinner /> : <Menu />}
  * </AbilityAny>
  */
 export function AbilityAny({ actions, children }: AbilityAnyProps) {
-  const states = useAbilityStatesForActions(actions);
+  const states = useAbilitiesForActions(actions);
   const stateList = actions.map((a) => states[a]);
 
-  if (isRenderProp<AbilityState[]>(children)) {
+  if (isRenderProp<Ability[]>(children)) {
     return <>{children(stateList)}</>;
   }
 
@@ -125,7 +125,7 @@ export function AbilityAny({ actions, children }: AbilityAnyProps) {
 
 interface AbilityEveryProps {
   actions: Action[];
-  children: ChildrenOrRenderProp<AbilityState[]>;
+  children: ChildrenOrRenderProp<Ability[]>;
 }
 
 /**
@@ -137,10 +137,10 @@ interface AbilityEveryProps {
  * </AbilityEvery>
  */
 export function AbilityEvery({ actions, children }: AbilityEveryProps) {
-  const states = useAbilityStatesForActions(actions);
+  const states = useAbilitiesForActions(actions);
   const stateList = actions.map((a) => states[a]);
 
-  if (isRenderProp<AbilityState[]>(children)) {
+  if (isRenderProp<Ability[]>(children)) {
     return <>{children(stateList)}</>;
   }
 

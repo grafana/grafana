@@ -1,4 +1,4 @@
-import { type AbilityState } from './types';
+import { type Ability } from './types';
 
 /**
  * True when the action is granted — both supported in context and permitted by RBAC.
@@ -7,27 +7,27 @@ import { type AbilityState } from './types';
  * const exploreAbility = useRuleExploreAbility(rule.rulerRule, groupId);
  * const canExplore = isGranted(exploreAbility);
  */
-export function isGranted(ability: AbilityState): boolean {
+export function isGranted(ability: Ability): boolean {
   return ability.granted === true;
 }
 
 /** True while async checks (folder metadata, plugin settings) are still resolving. */
-export function isLoading(ability: AbilityState): boolean {
+export function isLoading(ability: Ability): boolean {
   return !ability.granted && ability.cause === 'LOADING';
 }
 
 /** True when the action doesn't exist in this context (wrong AM type, disabled feature flag). */
-export function isNotSupported(ability: AbilityState): boolean {
+export function isNotSupported(ability: Ability): boolean {
   return !ability.granted && ability.cause === 'NOT_SUPPORTED';
 }
 
 /** True when the resource is provisioned and read-only (Terraform, Ansible, provisioning API). */
-export function isProvisioned(ability: AbilityState): boolean {
+export function isProvisioned(ability: Ability): boolean {
   return !ability.granted && ability.cause === 'PROVISIONED';
 }
 
 /** True when the resource is owned by an installed plugin and cannot be mutated via the UI. */
-export function isPluginManaged(ability: AbilityState): boolean {
+export function isPluginManaged(ability: Ability): boolean {
   return !ability.granted && ability.cause === 'IS_PLUGIN_MANAGED';
 }
 
@@ -43,7 +43,7 @@ export function isPluginManaged(ability: AbilityState): boolean {
  *   <Button disabled={!isGranted(exportAbility)} onClick={handleExport}>Export</Button>
  * )}
  */
-export function isAvailable(ability: AbilityState): boolean {
+export function isAvailable(ability: Ability): boolean {
   return (
     ability.granted ||
     ability.cause === 'PROVISIONED' ||

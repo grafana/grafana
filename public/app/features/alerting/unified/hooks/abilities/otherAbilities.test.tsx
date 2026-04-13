@@ -8,7 +8,7 @@ import { grantPermissionsHelper } from '../../test/test-utils';
 import * as misc from '../../utils/misc';
 
 import { isNotSupported } from './abilityUtils';
-import { useEnrichmentAbilityState, useEnrichmentAbilityStates } from './otherAbilities';
+import { useEnrichmentAbilities, useEnrichmentAbility } from './otherAbilities';
 import { EnrichmentAction, isInsufficientPermissions } from './types';
 
 setupMswServer();
@@ -30,7 +30,7 @@ describe('otherAbilities — enrichment', () => {
     grantPermissionsHelper([]);
     jest.spyOn(misc, 'isAdmin').mockReturnValue(true);
 
-    const { result } = renderHook(() => useEnrichmentAbilityStates(), { wrapper: wrapper() });
+    const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
 
     expect(result.current[EnrichmentAction.Read].granted).toBe(true);
     expect(result.current[EnrichmentAction.Write].granted).toBe(true);
@@ -40,7 +40,7 @@ describe('otherAbilities — enrichment', () => {
     jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
     grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsRead]);
 
-    const { result } = renderHook(() => useEnrichmentAbilityStates(), { wrapper: wrapper() });
+    const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
 
     expect(result.current[EnrichmentAction.Read].granted).toBe(true);
     expect(result.current[EnrichmentAction.Write].granted).toBe(false);
@@ -51,7 +51,7 @@ describe('otherAbilities — enrichment', () => {
     jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
     grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsWrite]);
 
-    const { result } = renderHook(() => useEnrichmentAbilityStates(), { wrapper: wrapper() });
+    const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
 
     expect(result.current[EnrichmentAction.Read].granted).toBe(false);
     expect(isInsufficientPermissions(result.current[EnrichmentAction.Read])).toBe(true);
@@ -62,7 +62,7 @@ describe('otherAbilities — enrichment', () => {
     jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
     grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsRead, AccessControlAction.AlertingEnrichmentsWrite]);
 
-    const { result } = renderHook(() => useEnrichmentAbilityStates(), { wrapper: wrapper() });
+    const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
 
     expect(result.current[EnrichmentAction.Read].granted).toBe(true);
     expect(result.current[EnrichmentAction.Write].granted).toBe(true);
@@ -72,7 +72,7 @@ describe('otherAbilities — enrichment', () => {
     jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
     grantPermissionsHelper([]);
 
-    const { result } = renderHook(() => useEnrichmentAbilityStates(), { wrapper: wrapper() });
+    const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
 
     expect(result.current[EnrichmentAction.Read].granted).toBe(false);
     expect(isInsufficientPermissions(result.current[EnrichmentAction.Read])).toBe(true);
@@ -80,11 +80,11 @@ describe('otherAbilities — enrichment', () => {
     expect(isInsufficientPermissions(result.current[EnrichmentAction.Write])).toBe(true);
   });
 
-  it('returns correct ability for a single action via useEnrichmentAbilityState', () => {
+  it('returns correct ability for a single action via useEnrichmentAbility', () => {
     jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
     grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsRead]);
 
-    const { result } = renderHook(() => useEnrichmentAbilityState(EnrichmentAction.Read), { wrapper: wrapper() });
+    const { result } = renderHook(() => useEnrichmentAbility(EnrichmentAction.Read), { wrapper: wrapper() });
 
     expect(result.current.granted).toBe(true);
   });
@@ -94,7 +94,7 @@ describe('otherAbilities — enrichment', () => {
     jest.spyOn(misc, 'isAdmin').mockReturnValue(true);
     grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsRead, AccessControlAction.AlertingEnrichmentsWrite]);
 
-    const { result } = renderHook(() => useEnrichmentAbilityStates(), { wrapper: wrapper() });
+    const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
 
     expect(isNotSupported(result.current[EnrichmentAction.Read])).toBe(true);
     expect(isNotSupported(result.current[EnrichmentAction.Write])).toBe(true);

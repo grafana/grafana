@@ -5,7 +5,7 @@ import { LinkButton, Stack, Tooltip } from '@grafana/ui';
 
 import { ROUTES_META_SYMBOL, type Route } from '../../../../../../plugins/datasource/alertmanager/types';
 import { isAvailable } from '../../../hooks/abilities/abilityUtils';
-import { useAlertmanagerAbilityStates } from '../../../hooks/abilities/notificationAbilities';
+import { useAlertmanagerAbilities } from '../../../hooks/abilities/notificationAbilities';
 import { AlertmanagerAction } from '../../../hooks/abilities/types';
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { createRelativeUrl } from '../../../utils/url';
@@ -24,7 +24,7 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
 
-  const [updateAbility, deleteAbility, exportAbility] = useAlertmanagerAbilityStates([
+  const [updateAbility, deleteAbility, exportAbility] = useAlertmanagerAbilities([
     AlertmanagerAction.UpdateNotificationPolicyTree,
     AlertmanagerAction.DeleteNotificationPolicy,
     AlertmanagerAction.ExportNotificationPolicies,

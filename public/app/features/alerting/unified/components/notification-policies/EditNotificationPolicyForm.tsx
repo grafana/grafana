@@ -21,7 +21,7 @@ import {
 import MuteTimingsSelector from 'app/features/alerting/unified/components/alertmanager-entities/MuteTimingsSelector';
 import { ExternalAlertmanagerContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { handleContactPointSelect } from 'app/features/alerting/unified/components/notification-policies/utils';
-import { useAlertmanagerAbilityState } from 'app/features/alerting/unified/hooks/abilities/notificationAbilities';
+import { useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/abilities/notificationAbilities';
 import { AlertmanagerAction } from 'app/features/alerting/unified/hooks/abilities/types';
 import { MatcherOperator, type RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
@@ -54,7 +54,7 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
   const { selectedAlertmanager, isGrafanaAlertmanager } = useAlertmanager();
-  const { granted: canSeeMuteTimings } = useAlertmanagerAbilityState(AlertmanagerAction.ViewTimeInterval);
+  const { granted: canSeeMuteTimings } = useAlertmanagerAbility(AlertmanagerAction.ViewTimeInterval);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
 
   const emptyMatcher = [{ name: '', operator: MatcherOperator.equal, value: '' }];

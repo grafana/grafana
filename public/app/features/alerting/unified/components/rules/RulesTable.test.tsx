@@ -4,7 +4,7 @@ import { byRole } from 'testing-library-selector';
 import { setPluginLinksHook } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
-import { useEnrichmentAbilityState } from '../../hooks/abilities/otherAbilities';
+import { useEnrichmentAbility } from '../../hooks/abilities/otherAbilities';
 import {
   type PromRuleAdministrationAbilityResult,
   type RuleEditAbilityResult,
@@ -16,7 +16,7 @@ import {
   useRuleExportAbility,
   useRuleSilenceAbility,
 } from '../../hooks/abilities/ruleAbilities';
-import { type AbilityState, Granted, InsufficientPermissions, NotSupported } from '../../hooks/abilities/types';
+import { type Ability, Granted, InsufficientPermissions, NotSupported } from '../../hooks/abilities/types';
 import { getCloudRule, getGrafanaRule } from '../../mocks';
 import { mimirDataSource } from '../../mocks/server/configure';
 
@@ -29,8 +29,8 @@ jest.mock('@grafana/assistant', () => ({
 jest.mock('../../hooks/abilities/ruleAbilities');
 jest.mock('../../hooks/abilities/otherAbilities');
 
-/** Denied AbilityState for simple cases */
-const Denied: AbilityState = NotSupported;
+/** Denied Ability for simple cases */
+const Denied: Ability = NotSupported;
 
 /** A fully-denied RuleEditAbilityResult (ruler path) */
 function deniedEditAbility(): RuleEditAbilityResult {
@@ -92,7 +92,7 @@ const mocks = {
   usePromRuleAdministrationAbility: jest.mocked(usePromRuleAdministrationAbility),
   usePromRuleSilenceAbility: jest.mocked(usePromRuleSilenceAbility),
   usePromRuleExportAbility: jest.mocked(usePromRuleExportAbility),
-  useEnrichmentAbilityState: jest.mocked(useEnrichmentAbilityState),
+  useEnrichmentAbility: jest.mocked(useEnrichmentAbility),
 };
 
 setPluginLinksHook(() => ({
@@ -130,7 +130,7 @@ describe('RulesTable RBAC', () => {
     mocks.usePromRuleAdministrationAbility.mockReturnValue(deniedPromAdminAbility());
     mocks.usePromRuleSilenceAbility.mockReturnValue(Denied);
     mocks.usePromRuleExportAbility.mockReturnValue(Denied);
-    mocks.useEnrichmentAbilityState.mockReturnValue(Denied);
+    mocks.useEnrichmentAbility.mockReturnValue(Denied);
   });
 
   describe('Grafana rules action buttons', () => {

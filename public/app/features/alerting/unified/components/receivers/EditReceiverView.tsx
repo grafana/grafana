@@ -1,6 +1,6 @@
 import { type GrafanaManagedContactPoint, type Receiver } from 'app/plugins/datasource/alertmanager/types';
 
-import { useAlertmanagerAbilityState } from '../../hooks/abilities/notificationAbilities';
+import { useAlertmanagerAbility } from '../../hooks/abilities/notificationAbilities';
 import { AlertmanagerAction } from '../../hooks/abilities/types';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export const EditReceiverView = ({ contactPoint, alertmanagerName }: Props) => {
-  const editAbility = useAlertmanagerAbilityState(AlertmanagerAction.UpdateContactPoint);
+  const editAbility = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
 
   const readOnly = !editAbility.granted;
 

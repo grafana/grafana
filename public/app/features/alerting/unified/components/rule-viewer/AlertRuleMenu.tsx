@@ -18,7 +18,7 @@ import {
 import { PromAlertingRuleState, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { isGranted } from '../../hooks/abilities/abilityUtils';
-import { useEnrichmentAbilityState } from '../../hooks/abilities/otherAbilities';
+import { useEnrichmentAbility } from '../../hooks/abilities/otherAbilities';
 import {
   skipToken,
   usePromRuleAdministrationAbility,
@@ -102,7 +102,7 @@ const AlertRuleMenu = ({
 
   const extensionsAvailable = ruleExtensionLinks.length > 0;
 
-  const enrichmentReadAbility = useEnrichmentAbilityState(EnrichmentAction.Read);
+  const enrichmentReadAbility = useEnrichmentAbility(EnrichmentAction.Read);
 
   /**
    * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.

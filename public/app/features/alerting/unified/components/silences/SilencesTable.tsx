@@ -23,7 +23,7 @@ import { type AlertmanagerAlert, type Silence, SilenceState } from 'app/plugins/
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { isAvailable } from '../../hooks/abilities/abilityUtils';
-import { useAlertmanagerAbilityState } from '../../hooks/abilities/notificationAbilities';
+import { useAlertmanagerAbility } from '../../hooks/abilities/notificationAbilities';
 import { AlertmanagerAction } from '../../hooks/abilities/types';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
@@ -51,7 +51,7 @@ const API_QUERY_OPTIONS = { pollingInterval: SILENCES_POLL_INTERVAL_MS, refetchO
 
 const SilencesTable = () => {
   const { selectedAlertmanager: alertManagerSourceName = '' } = useAlertmanager();
-  const { granted: canPreview } = useAlertmanagerAbilityState(AlertmanagerAction.PreviewSilencedInstances);
+  const { granted: canPreview } = useAlertmanagerAbility(AlertmanagerAction.PreviewSilencedInstances);
 
   const { data: alertManagerAlerts = [], isLoading: amAlertsIsLoading } =
     alertmanagerApi.endpoints.getAlertmanagerAlerts.useQuery(
@@ -279,7 +279,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 function useColumns(alertManagerSourceName: string) {
-  const updateAbility = useAlertmanagerAbilityState(AlertmanagerAction.UpdateSilence);
+  const updateAbility = useAlertmanagerAbility(AlertmanagerAction.UpdateSilence);
   const [expireSilence] = alertSilencesApi.endpoints.expireSilence.useMutation();
 
   const isGrafanaFlavoredAlertmanager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;

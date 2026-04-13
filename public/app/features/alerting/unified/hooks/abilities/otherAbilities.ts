@@ -7,8 +7,8 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { isAdmin } from '../../utils/misc';
 
 import {
-  type AbilityState,
-  type AbilityStates,
+  type Abilities,
+  type Ability,
   EnrichmentAction,
   FolderBulkAction,
   Granted,
@@ -18,7 +18,7 @@ import {
 
 // ── Folder bulk action abilities ──────────────────────────────────────────────
 
-export function useFolderBulkActionAbilityStates(): AbilityStates<FolderBulkAction> {
+export function useFolderBulkActionAbilities(): Abilities<FolderBulkAction> {
   const admin = isAdmin();
   return useMemo(
     () => ({
@@ -29,14 +29,14 @@ export function useFolderBulkActionAbilityStates(): AbilityStates<FolderBulkActi
   );
 }
 
-export function useFolderBulkActionAbilityState(action: FolderBulkAction): AbilityState {
-  const all = useFolderBulkActionAbilityStates();
+export function useFolderBulkActionAbility(action: FolderBulkAction): Ability {
+  const all = useFolderBulkActionAbilities();
   return useMemo(() => all[action], [all, action]);
 }
 
 // ── Enrichment abilities ──────────────────────────────────────────────────────
 
-export function useEnrichmentAbilityStates(): AbilityStates<EnrichmentAction> {
+export function useEnrichmentAbilities(): Abilities<EnrichmentAction> {
   const userIsAdmin = isAdmin();
   const hasReadPermission = ctx.hasPermission(AccessControlAction.AlertingEnrichmentsRead);
   const hasWritePermission = ctx.hasPermission(AccessControlAction.AlertingEnrichmentsWrite);
@@ -46,7 +46,7 @@ export function useEnrichmentAbilityStates(): AbilityStates<EnrichmentAction> {
     const readAllowed = userIsAdmin || hasReadPermission;
     const writeAllowed = userIsAdmin || hasWritePermission;
 
-    function enrichmentState(allowed: boolean, permission: AccessControlAction): AbilityState {
+    function enrichmentState(allowed: boolean, permission: AccessControlAction): Ability {
       if (!supported) {
         return NotSupported;
       }
@@ -63,7 +63,7 @@ export function useEnrichmentAbilityStates(): AbilityStates<EnrichmentAction> {
   }, [userIsAdmin, hasReadPermission, hasWritePermission, supported]);
 }
 
-export function useEnrichmentAbilityState(action: EnrichmentAction): AbilityState {
-  const all = useEnrichmentAbilityStates();
+export function useEnrichmentAbility(action: EnrichmentAction): Ability {
+  const all = useEnrichmentAbilities();
   return useMemo(() => all[action], [all, action]);
 }

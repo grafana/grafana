@@ -6,7 +6,7 @@ import { useExportMuteTimingsDrawer } from 'app/features/alerting/unified/compon
 
 import { AbilityAny } from '../../components/AbilityGuards';
 import { isAvailable } from '../../hooks/abilities/abilityUtils';
-import { useAlertmanagerAbilityState } from '../../hooks/abilities/notificationAbilities';
+import { useAlertmanagerAbility } from '../../hooks/abilities/notificationAbilities';
 import { AlertmanagerAction } from '../../hooks/abilities/types';
 import { isLoading } from '../../hooks/useAsync';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -26,7 +26,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
   });
   const [showDeleteDrawer, setShowDeleteDrawer] = useState(false);
   const [ExportDrawer, showExportDrawer] = useExportMuteTimingsDrawer();
-  const exportAbility = useAlertmanagerAbilityState(AlertmanagerAction.ExportTimeIntervals);
+  const exportAbility = useAlertmanagerAbility(AlertmanagerAction.ExportTimeIntervals);
 
   const closeDeleteModal = () => setShowDeleteDrawer(false);
 

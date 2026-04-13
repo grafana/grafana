@@ -15,11 +15,7 @@ import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { isAvailable } from './abilityUtils';
-import {
-  useAlertmanagerAbilityState,
-  useAlertmanagerAbilityStates,
-  useAllAlertmanagerAbilityStates,
-} from './notificationAbilities';
+import { useAlertmanagerAbilities, useAlertmanagerAbility, useAllAlertmanagerAbilities } from './notificationAbilities';
 import { AlertmanagerAction, isInsufficientPermissions } from './types';
 
 setupMswServer();
@@ -38,7 +34,7 @@ describe('notificationAbilities', () => {
       })
     );
 
-    const { result } = renderHook(() => useAllAlertmanagerAbilityStates(), {
+    const { result } = renderHook(() => useAllAlertmanagerAbilities(), {
       wrapper: createAlertmanagerWrapper('does-not-exist'),
     });
     expect(result.current).toMatchSnapshot();
@@ -54,7 +50,7 @@ describe('notificationAbilities', () => {
 
     grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingInstanceRead]);
 
-    const { result } = renderHook(() => useAllAlertmanagerAbilityStates(), {
+    const { result } = renderHook(() => useAllAlertmanagerAbilities(), {
       wrapper: createAlertmanagerWrapper(GRAFANA_RULES_SOURCE_NAME),
     });
 
@@ -64,7 +60,7 @@ describe('notificationAbilities', () => {
     });
 
     // read permission was granted — view should be granted
-    const { result: viewResult } = renderHook(() => useAlertmanagerAbilityState(AlertmanagerAction.ViewSilence), {
+    const { result: viewResult } = renderHook(() => useAlertmanagerAbility(AlertmanagerAction.ViewSilence), {
       wrapper: createAlertmanagerWrapper(GRAFANA_RULES_SOURCE_NAME),
     });
     expect(viewResult.current.granted).toBe(true);
@@ -88,7 +84,7 @@ describe('notificationAbilities', () => {
       AccessControlAction.AlertingInstancesExternalWrite,
     ]);
 
-    const { result } = renderHook(() => useAllAlertmanagerAbilityStates(), {
+    const { result } = renderHook(() => useAllAlertmanagerAbilities(), {
       wrapper: createAlertmanagerWrapper('mimir'),
     });
 
@@ -107,7 +103,7 @@ describe('notificationAbilities', () => {
 
     const { result } = renderHook(
       () =>
-        useAlertmanagerAbilityStates([
+        useAlertmanagerAbilities([
           AlertmanagerAction.ViewContactPoint,
           AlertmanagerAction.CreateContactPoint,
           AlertmanagerAction.ExportContactPoint,

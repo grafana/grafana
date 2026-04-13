@@ -10,7 +10,7 @@ import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerti
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Field, Icon, Input, Label, Stack, Tooltip } from '@grafana/ui';
-import { useAlertmanagerAbilityState } from 'app/features/alerting/unified/hooks/abilities/notificationAbilities';
+import { useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/abilities/notificationAbilities';
 import { AlertmanagerAction } from 'app/features/alerting/unified/hooks/abilities/types';
 import { type ObjectMatcher, type RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
@@ -32,7 +32,7 @@ interface NotificationPoliciesFilterProps {
 }
 
 const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: NotificationPoliciesFilterProps) => {
-  const { granted: canSeeContactPoints } = useAlertmanagerAbilityState(AlertmanagerAction.ViewContactPoint);
+  const { granted: canSeeContactPoints } = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
   const { isGrafanaAlertmanager } = useAlertmanager();
   const [searchParams, setSearchParams] = useURLSearchParams();
   const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);

@@ -8,7 +8,7 @@ import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getDatasourceAPIUid } from '../utils/datasource';
 
-import { useAlertmanagerAbilityState } from './abilities/notificationAbilities';
+import { useAlertmanagerAbility } from './abilities/notificationAbilities';
 import { AlertmanagerAction } from './abilities/types';
 
 interface UseSilenceViewDataResult {
@@ -33,7 +33,7 @@ export function useSilenceViewData(): UseSilenceViewDataResult {
     accessControl: true,
   });
 
-  const { granted: canPreview } = useAlertmanagerAbilityState(AlertmanagerAction.PreviewSilencedInstances);
+  const { granted: canPreview } = useAlertmanagerAbility(AlertmanagerAction.PreviewSilencedInstances);
 
   const { data: alertManagerAlerts = [] } = alertmanagerApi.endpoints.getAlertmanagerAlerts.useQuery(
     {
