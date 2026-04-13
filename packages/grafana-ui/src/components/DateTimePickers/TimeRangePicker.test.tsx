@@ -247,7 +247,7 @@ describe('TimePickerTooltip', () => {
   it('renders time range with browser timezone', () => {
     render(<TimePickerTooltip timeRange={timeRange} timeZone="browser" />);
 
-    expect(screen.getByText('Local browser time')).toBeInTheDocument();
+    expect(screen.getByText('Browser Time')).toBeInTheDocument();
     expect(screen.getByText(/E[DS]T/)).toBeInTheDocument(); // this was mocked at the beginning, in beforeAll block. matches either daylight savings time or standard time
   });
 

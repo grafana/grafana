@@ -132,7 +132,7 @@ test.describe(
       await setTimeRange(page, dashboardPage, selectors, {
         from: 'now-6h',
         to: 'now',
-        zone: 'UTC',
+        zone: 'Coordinated Universal Time',
       });
 
       await expect(relativeTimeRow).toBeVisible();
