@@ -14,6 +14,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
 import { replaceVariables } from '@grafana-plugins/loki/querybuilder/parsingUtils';
 
+import { getLogsTableFieldConfigRegistry } from '../logsTableFieldConfig';
 import { extractLogsFieldsTransform } from '../transforms/extractLogsFieldsTransform';
 
 interface Props {
@@ -42,14 +43,11 @@ export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props
     };
 
     extractFields()
-      .then(async (data) => {
-        // Use the panel plugin registry so `custom.width` and other table custom keys resolve
-        // (see setDynamicConfigValue). Dynamic import avoids a require cycle with module.tsx.
-        const { plugin: logsTablePlugin } = await import('../module');
+      .then((data) => {
         const extractedFrames = applyFieldOverrides({
           data,
           fieldConfig,
-          fieldConfigRegistry: logsTablePlugin.fieldConfigRegistry,
+          fieldConfigRegistry: getLogsTableFieldConfigRegistry(),
           replaceVariables: replaceVariables ?? getTemplateSrv().replace.bind(getTemplateSrv()),
           theme,
           timeZone,
