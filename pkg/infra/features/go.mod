@@ -5,7 +5,7 @@ go 1.25.9
 require (
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/grafana/authlib v0.0.0-20260316143530-e1d123886039
-	github.com/grafana/grafana-plugin-sdk-go v0.291.2-0.20260413142251-3aab7a6c8e61
+	github.com/grafana/grafana-plugin-sdk-go v0.291.0
 	github.com/open-feature/go-sdk v1.17.1
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7
 	github.com/puzpuzpuz/xsync/v4 v4.4.0
@@ -46,7 +46,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	golang.org/x/net v0.52.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/tools v0.43.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260406210006-6f92a3bedf2d // indirect
