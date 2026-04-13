@@ -155,12 +155,12 @@ func InstallAPIs(
 	builderMetrics *builder.BuilderMetrics,
 	apiResourceConfig *serverstore.ResourceConfig,
 ) error {
+	logger := logging.FromContext(ctx)
 	effectiveOptsGetter := restOpsGetter
 	if effectiveOptsGetter == nil {
+		logger.Warn("no RESTOptionsGetter configured, using noop; unified storage will not be available")
 		effectiveOptsGetter = &noopRESTOptionsGetter{}
 	}
-
-	logger := logging.FromContext(ctx)
 	for _, installer := range appInstallers {
 		logger.Debug("Installing APIs for app installer", "app", installer.ManifestData().AppName)
 		wrapper := &serverWrapper{
