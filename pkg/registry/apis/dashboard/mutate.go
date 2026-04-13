@@ -31,7 +31,7 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 	switch a.GetResource().Resource {
 	case dashboardV0.DASHBOARD_RESOURCE:
 		return b.mutateDashboard(ctx, a)
-	case dashboardV2beta1.VariableResourceInfo.GroupVersionResource().Resource:
+	case dashboardV2.VariableResourceInfo.GroupVersionResource().Resource:
 		return mutateVariable(a)
 
 	case dashboardV0.LIBRARY_PANEL_RESOURCE:
@@ -145,7 +145,7 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 }
 
 func mutateVariable(a admission.Attributes) error {
-	variable, ok := a.GetObject().(*dashboardV2beta1.Variable)
+	variable, ok := a.GetObject().(*dashboardV2.Variable)
 	if !ok {
 		return fmt.Errorf("mutation error: expected variable, got %T", a.GetObject())
 	}

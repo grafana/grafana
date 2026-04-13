@@ -1,6 +1,8 @@
 package conversion
 
 import (
+	"encoding/json"
+
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
@@ -199,6 +201,19 @@ func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSo
 		})); err != nil {
 		return err
 	}
+	if err := s.AddConversionFunc((*dashv2beta1.Variable)(nil), (*dashv2.Variable)(nil),
+		func(a, b interface{}, _ conversion.Scope) error {
+			in := a.(*dashv2beta1.Variable)
+			out := b.(*dashv2.Variable)
+			if err := convertVariableViaJSON(in, out); err != nil {
+				return err
+			}
+			out.APIVersion = dashv2.APIVERSION
+			out.Kind = in.Kind
+			return nil
+		}); err != nil {
+		return err
+	}
 
 	// v2 conversions
 	if err := s.AddConversionFunc((*dashv2.Dashboard)(nil), (*dashv0.Dashboard)(nil),
@@ -225,6 +240,27 @@ func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSo
 		})); err != nil {
 		return err
 	}
+	if err := s.AddConversionFunc((*dashv2.Variable)(nil), (*dashv2beta1.Variable)(nil),
+		func(a, b interface{}, _ conversion.Scope) error {
+			in := a.(*dashv2.Variable)
+			out := b.(*dashv2beta1.Variable)
+			if err := convertVariableViaJSON(in, out); err != nil {
+				return err
+			}
+			out.APIVersion = dashv2beta1.APIVERSION
+			out.Kind = in.Kind
+			return nil
+		}); err != nil {
+		return err
+	}
 
 	return nil
+}
+
+func convertVariableViaJSON(in any, out any) error {
+	raw, err := json.Marshal(in)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(raw, out)
 }

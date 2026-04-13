@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	authlib "github.com/grafana/authlib/types"
-	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -56,7 +56,7 @@ func findVariableNameConflict(list *unstructured.UnstructuredList, folderUID, ex
 func (b *DashboardsAPIBuilder) validateVariableNameUniqueness(
 	ctx context.Context,
 	namespace string,
-	variable *dashv2beta1.Variable,
+	variable *dashv2.Variable,
 	excludeMetadataName string,
 ) error {
 	if b.variableClientProvider == nil {

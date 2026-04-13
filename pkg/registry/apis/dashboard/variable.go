@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 )
 
-func getVariableName(spec dashv2beta1.VariableSpec) string {
+func getVariableName(spec dashv2.VariableSpec) string {
 	switch {
 	case spec.QueryVariableKind != nil:
 		return spec.QueryVariableKind.Spec.Name
@@ -32,7 +32,7 @@ func getVariableName(spec dashv2beta1.VariableSpec) string {
 	}
 }
 
-func countVariableKinds(spec dashv2beta1.VariableSpec) int {
+func countVariableKinds(spec dashv2.VariableSpec) int {
 	count := 0
 	if spec.QueryVariableKind != nil {
 		count++
@@ -64,7 +64,7 @@ func countVariableKinds(spec dashv2beta1.VariableSpec) int {
 	return count
 }
 
-func validateVariable(variable *dashv2beta1.Variable) error {
+func validateVariable(variable *dashv2.Variable) error {
 	if variable == nil {
 		return fmt.Errorf("variable payload is required")
 	}
