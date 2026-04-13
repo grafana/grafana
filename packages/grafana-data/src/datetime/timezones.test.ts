@@ -25,23 +25,5 @@ describe('getTimeZoneInfo', () => {
       const result = getTimeZoneInfo('Europe/Warsaw', Date.now());
       expect(result?.ianaName).toBe('Europe/Warsaw');
     });
-
-    it('should list Singapore before Antarctica or Malaysia for Asia/Singapore', () => {
-      const result = getTimeZoneInfo('Asia/Singapore', Date.now());
-      expect(result).not.toBeUndefined();
-      expect(result!.countries[0]).toEqual({ code: 'SG', name: 'Singapore' });
-    });
-
-    it('should list Japan before Australia for Asia/Tokyo', () => {
-      const result = getTimeZoneInfo('Asia/Tokyo', Date.now());
-      expect(result).not.toBeUndefined();
-      expect(result!.countries[0]).toEqual({ code: 'JP', name: 'Japan' });
-    });
-
-    it('should list Australia before Antarctica for Antarctica/Macquarie', () => {
-      const result = getTimeZoneInfo('Antarctica/Macquarie', Date.now());
-      expect(result).not.toBeUndefined();
-      expect(result!.countries[0]).toEqual({ code: 'AU', name: 'Australia' });
-    });
   });
 });

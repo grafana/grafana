@@ -425,27 +425,8 @@ const countryByCode: Record<string, string> = {
   ZW: 'Zimbabwe',
 };
 
-const allCountries = moment.tz.countries();
-
-// Pre-compute the fraction of each country's zones in each IANA region.
-// e.g. for Australia: { Australia: 11/13, Antarctica: 1/13, Asia: 1/13 }
-const regionFractionByCountry: Record<string, Record<string, number>> = {};
-
-for (const code of allCountries) {
-  const zones = moment.tz.zonesForCountry(code);
-  const regionCounts: Record<string, number> = {};
-  for (const z of zones) {
-    const region = z.split('/')[0];
-    regionCounts[region] = (regionCounts[region] || 0) + 1;
-  }
-  regionFractionByCountry[code] = {};
-  for (const [region, count] of Object.entries(regionCounts)) {
-    regionFractionByCountry[code][region] = count / zones.length;
-  }
-}
-
 const countriesByTimeZone = ((): Record<string, TimeZoneCountry[]> => {
-  const result = allCountries.reduce<Record<string, TimeZoneCountry[]>>((all, code) => {
+  return moment.tz.countries().reduce<Record<string, TimeZoneCountry[]>>((all, code) => {
     const timeZones = moment.tz.zonesForCountry(code);
     return timeZones.reduce((all: Record<string, TimeZoneCountry[]>, timeZone) => {
       if (!all[timeZone]) {
@@ -462,24 +443,4 @@ const countriesByTimeZone = ((): Record<string, TimeZoneCountry[]> => {
       return all;
     }, all);
   }, {});
-
-  // Sort each zone's country list by relevance:
-  // 1. Country name appears in the timezone name (e.g. "Singapore" in "Asia/Singapore")
-  // 2. Higher fraction of the country's zones in the zone's region
-  for (const [timeZone, countries] of Object.entries(result)) {
-    const zoneRegion = timeZone.split('/')[0];
-    const zoneLower = timeZone.toLowerCase();
-    countries.sort((a, b) => {
-      const aNameMatch = zoneLower.includes(a.name.toLowerCase()) ? 0 : 1;
-      const bNameMatch = zoneLower.includes(b.name.toLowerCase()) ? 0 : 1;
-      if (aNameMatch !== bNameMatch) {
-        return aNameMatch - bNameMatch;
-      }
-      const aFraction = regionFractionByCountry[a.code]?.[zoneRegion] ?? 0;
-      const bFraction = regionFractionByCountry[b.code]?.[zoneRegion] ?? 0;
-      return bFraction - aFraction;
-    });
-  }
-
-  return result;
 })();
