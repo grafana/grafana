@@ -68,8 +68,9 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
   }, [sceneContext]);
 
   const variables = useMemo(() => {
-    void ancestorVarsVersion;
     return collectAncestorSceneVariables(sceneContext);
+    // Recompute when any ancestor SceneVariableSet emits (see subscribeAncestorVariableSets).
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- ancestorVarsVersion is an intentional cache bust
   }, [sceneContext, ancestorVarsVersion]);
 
   const variableOptions = useMemo(() => {
