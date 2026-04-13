@@ -362,7 +362,7 @@ func spanLinksToReferences(links []*tracev11.Span_Link) []*TraceReference {
 
 		traceID := link.TraceId
 		traceIDHex := hex.EncodeToString(traceID[:])
-	
+
 		spanID := link.SpanId
 		spanIDHex := hex.EncodeToString(spanID[:])
 
