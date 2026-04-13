@@ -42,7 +42,7 @@ function setupKBarMock(activeIndex = 0) {
   (useKBar as jest.Mock).mockImplementation((collector?: (state: unknown) => unknown) => {
     const state = { searchQuery: '', currentRootActionId: null, activeIndex };
     return {
-      ...(collector ? collector(state) : {}),
+      ...(collector ? (collector(state) as object) : {}),
       query: mockQuery,
       options: {},
     };
