@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	commonv11 "github.com/grafana/tempo/pkg/tempopb/common/v1"
@@ -123,7 +122,6 @@ func spanToSpanRow(span *tracev11.Span, libraryTags *commonv11.InstrumentationSc
 	// If the id representation changed from hexstring to something else we need to change the transformBase64IDToHexString in the frontend code
 	traceID := span.TraceId
 	traceIDHex := hex.EncodeToString(traceID[:])
-	traceIDHex = strings.TrimPrefix(traceIDHex, strings.Repeat("0", 16))
 
 	spanID := span.SpanId
 	spanIDHex := hex.EncodeToString(spanID[:])
@@ -364,8 +362,7 @@ func spanLinksToReferences(links []*tracev11.Span_Link) []*TraceReference {
 
 		traceID := link.TraceId
 		traceIDHex := hex.EncodeToString(traceID[:])
-		traceIDHex = strings.TrimLeft(traceIDHex, "0")
-
+	
 		spanID := link.SpanId
 		spanIDHex := hex.EncodeToString(spanID[:])
 
