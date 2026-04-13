@@ -413,7 +413,7 @@ describe('adhoc actions', () => {
         toKeyedAction(
           key,
           changeVariableEditorExtended({
-            infoText: 'This data source does not support ad hoc filters yet.',
+            infoText: 'This data source does not support filters yet.',
           })
         )
       );
@@ -424,7 +424,7 @@ describe('adhoc actions', () => {
     it('then correct actions are dispatched', async () => {
       const key = 'key';
       const datasource = { uid: 'elasticsearch' };
-      const loadingText = 'Ad hoc filters are applied automatically to all queries that target this data source';
+      const loadingText = 'Filters are applied automatically to all queries that target this data source';
       const variable = adHocBuilder()
         .withId('Filters')
         .withRootStateKey(key)

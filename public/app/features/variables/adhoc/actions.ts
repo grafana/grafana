@@ -111,8 +111,8 @@ export const changeVariableDatasource = (
 
     // TS TODO: ds is not typed to be optional - is this check unnecessary or is the type incorrect?
     const message = ds?.getTagKeys
-      ? 'Ad hoc filters are applied automatically to all queries that target this data source'
-      : 'This data source does not support ad hoc filters yet.';
+      ? 'Filters are applied automatically to all queries that target this data source'
+      : 'This data source does not support filters yet.';
 
     dispatch(
       toKeyedAction(
