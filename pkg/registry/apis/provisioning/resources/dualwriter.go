@@ -130,7 +130,7 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 	}
 
 	// Always use the provisioning identity when writing
-	ctx, _, err = identity.WithProvisioningIdentity(ctx, r.repo.Config().Namespace)
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
 	if err != nil {
 		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
@@ -390,7 +390,7 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 	}
 
 	// Always use the provisioning identity when writing
-	ctx, _, err = identity.WithProvisioningIdentity(ctx, r.repo.Config().Namespace)
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
 	if err != nil {
 		return nil, fmt.Errorf("unable to use provisioning identity %w", err)
 	}
@@ -586,7 +586,7 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	}
 
 	// Always use the provisioning identity when writing
-	ctx, _, err = identity.WithProvisioningIdentity(ctx, r.repo.Config().Namespace)
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, newParsed.Obj.GetNamespace())
 	if err != nil {
 		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
