@@ -5,11 +5,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -85,6 +87,23 @@ func TestIntegrationVariablesV2beta1(t *testing.T) {
 	folder2 := buildFolderObject(helper.Namespacer(admin.Identity.GetOrgID()), "Folder 2")
 	createdFolder2, err := folderClient.Resource.Create(ctx, folder2, metav1.CreateOptions{})
 	require.NoError(t, err)
+
+	t.Run("editor cannot create variable in folder without edit access", func(t *testing.T) {
+		editorID, err := identity.UserIdentifier(editor.Identity.GetID())
+		require.NoError(t, err)
+		adminID, err := identity.UserIdentifier(admin.Identity.GetID())
+		require.NoError(t, err)
+
+		setFolderPermissions(t, helper, admin, createdFolder2.GetName(), []ResourcePermissionSetting{
+			{UserID: &adminID, Level: ResourcePermissionLevelAdmin},
+			{UserID: &editorID, Level: ResourcePermissionLevelView},
+		})
+
+		restrictedFolderVariable := buildVariableObject("folder-editor-denied", "editorDenied", createdFolder2.GetName())
+		_, err = editorVariableClient.Resource.Create(ctx, restrictedFolderVariable, metav1.CreateOptions{})
+		require.Error(t, err)
+		require.True(t, k8serrors.IsForbidden(err), "expected forbidden error, got: %v", err)
+	})
 
 	folderVariable := buildVariableObject("folder-region", "region", createdFolder1.GetName())
 	createdFolderVariable, err := variableClient.Resource.Create(ctx, folderVariable, metav1.CreateOptions{})
