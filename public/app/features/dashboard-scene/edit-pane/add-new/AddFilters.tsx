@@ -4,7 +4,12 @@ import { t } from '@grafana/i18n';
 import { sceneGraph, SceneVariableSet } from '@grafana/scenes';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
-import { getNextAvailableId, getVariableScene } from '../../settings/variables/utils';
+import {
+  getNextAvailableId,
+  getVariableNamePrefix,
+  getVariableScene,
+  ADHOC_VARIABLE_TYPE,
+} from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 import { dashboardEditActions } from '../shared';
 
@@ -17,12 +22,13 @@ function openAddFilterPane(dashboard: DashboardScene) {
     return;
   }
 
-  const name = 'filter';
-  const type = 'adhoc';
-  const newVar = getVariableScene(type, { name: getNextAvailableId(name, variablesSet.state.variables ?? []) });
+  const name = getVariableNamePrefix(ADHOC_VARIABLE_TYPE);
+  const newVar = getVariableScene(ADHOC_VARIABLE_TYPE, {
+    name: getNextAvailableId(name, variablesSet.state.variables ?? []),
+  });
   dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
   dashboard.state.editPane.selectObject(newVar, { force: true, multi: false });
-  DashboardInteractions.variableTypeSelected({ type });
+  DashboardInteractions.variableTypeSelected({ type: ADHOC_VARIABLE_TYPE });
 }
 
 export function AddFilters({ dashboardScene }: { dashboardScene: DashboardScene }) {
