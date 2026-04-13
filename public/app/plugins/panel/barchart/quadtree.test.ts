@@ -23,7 +23,7 @@ describe('pointWithin', () => {
     { args: [5, -1, 0, 0, 10, 10], expected: false, desc: 'returns false when point is above rect' },
     { args: [5, 11, 0, 0, 10, 10], expected: false, desc: 'returns false when point is below rect' },
     { args: [1, 1, 0, 0, 0, 0], expected: false, desc: 'returns false for degenerate rect when point is outside' },
-  ])('pointWithin tests: $test.desc', (test) => {
+  ])('pointWithin tests: $desc', (test) => {
     // @ts-expect-error tuple type mismatch
     expect(pointWithin(...test.args)).toBe(test.expected);
   });
