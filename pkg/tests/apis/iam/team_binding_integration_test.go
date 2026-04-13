@@ -25,6 +25,7 @@ import (
 )
 
 func TestIntegrationTeamBindings(t *testing.T) {
+	t.Skip("flaky: context cancelled on basic roles fetch during Delete authz check — see https://github.com/grafana/grafana/pull/121625")
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// TODO: Add rest.Mode5 when it's supported

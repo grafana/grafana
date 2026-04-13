@@ -72,7 +72,7 @@ func NewQueryAPIBuilder(
 	// Include well typed query definitions
 	var queryTypes *datasourceV0.QueryTypeDefinitionList
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes) {
+	if features.IsEnabledGlobally(featuremgmt.FlagDatasourcesQueryTypes) {
 		// Read the expression query definitions
 		raw, err := expr.QueryTypeDefinitionListJSON()
 		if err != nil {

@@ -106,11 +106,11 @@ func RegisterAPIService(
 			accessControl,
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			DataSourceAPIBuilderConfig{
-				LoadQueryTypes:              features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
+				LoadQueryTypes:              features.IsEnabledGlobally(featuremgmt.FlagDatasourcesQueryTypes),
 				UseDualWriter:               features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
 				EnableResourceEndpoint:      features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint),
 				EnableHealthEndpoint:        features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint),
-				EnableChunkedQueryStreaming: features.IsEnabledGlobally(featuremgmt.FlagChunkedQueryStreaming),
+				EnableChunkedQueryStreaming: features.IsEnabledGlobally(featuremgmt.FlagDatasourcesChunkedQueryStreaming),
 			},
 		)
 		if err != nil {

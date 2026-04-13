@@ -1235,20 +1235,6 @@
     },
     {
       "metadata": {
-        "name": "chunkedQueryStreaming",
-        "resourceVersion": "1775111395417",
-        "creationTimestamp": "2026-04-02T06:29:55Z",
-        "deletionTimestamp": "2026-04-12T08:08:02Z"
-      },
-      "spec": {
-        "description": "Allow requesting query results as chunked jsonl rather than single json blob",
-        "stage": "experimental",
-        "codeowner": "@grafana/aws-datasources",
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "clearPreviousFieldValues",
         "resourceVersion": "1775070445977",
         "creationTimestamp": "2026-04-01T19:07:25Z"
@@ -1748,7 +1734,8 @@
       "metadata": {
         "name": "datasourceQueryTypes",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-05-23T16:46:28Z"
+        "creationTimestamp": "2024-05-23T16:46:28Z",
+        "deletionTimestamp": "2026-04-13T16:32:15Z"
       },
       "spec": {
         "description": "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
@@ -1775,13 +1762,41 @@
     {
       "metadata": {
         "name": "datasources.chunkedQueryStreaming",
-        "resourceVersion": "1775981282165",
-        "creationTimestamp": "2026-04-12T08:08:02Z"
+        "resourceVersion": "1776098015598",
+        "creationTimestamp": "2026-04-13T16:33:35Z"
       },
       "spec": {
         "description": "Allow requesting query results as chunked jsonl rather than single json blob",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.loadOpenAPI",
+        "resourceVersion": "1776097935569",
+        "creationTimestamp": "2026-04-13T16:32:15Z"
+      },
+      "spec": {
+        "description": "Load the openapi spec from spec.{version}.openapi.{yaml|json}",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.queryTypes",
+        "resourceVersion": "1776097935569",
+        "creationTimestamp": "2026-04-13T16:32:15Z"
+      },
+      "spec": {
+        "description": "Load Query types from spec.{version}.query.{yaml|json}",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
         "expression": "false"
       }
     },
@@ -4642,6 +4657,19 @@
     },
     {
       "metadata": {
+        "name": "querycaching.enableConnectionsClient",
+        "resourceVersion": "1776093426820",
+        "creationTimestamp": "2026-04-13T15:17:06Z"
+      },
+      "spec": {
+        "description": "Use connections client instead of storage to resolve datasource plugin ID in query caching",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "querycaching.handlersReadFromK8SApi",
         "resourceVersion": "1775842665327",
         "creationTimestamp": "2026-04-10T17:37:45Z",
@@ -5755,6 +5783,23 @@
       },
       "spec": {
         "description": "Use openFGA as main authorization engine and disable legacy RBAC clietn.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "zanzanaSearchUsersPermissions",
+        "resourceVersion": "1776076870099",
+        "creationTimestamp": "2026-03-25T09:17:53Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-13 10:41:10.099738 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Search users permissions using Zanzana.",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,

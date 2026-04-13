@@ -48,7 +48,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			featuremgmt.FlagQueryServiceWithConnections,                // enables CRUD endpoints
 			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint, // enables resource endpoint
 			featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint,   // enables health endpoint
-			featuremgmt.FlagChunkedQueryStreaming,                      // enable chunked streaming responses for queries
+			featuremgmt.FlagDatasourcesChunkedQueryStreaming,           // enable chunked streaming responses for queries
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"datasources.grafana-testdata-datasource.datasource.grafana.app": {
