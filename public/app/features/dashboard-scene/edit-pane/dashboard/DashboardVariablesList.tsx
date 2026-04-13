@@ -10,7 +10,7 @@ import { Box, Button } from '@grafana/ui';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
-import { isEditableVariableType } from '../../settings/variables/utils';
+import { isAdHocVariable, isEditableVariableType } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
@@ -35,7 +35,7 @@ export function DashboardVariablesList({ variableSet }: { variableSet: SceneVari
     if (!config.featureToggles.dashboardUnifiedDrilldownControls) {
       return editable;
     }
-    return editable.filter((v) => v.state.type !== 'adhoc');
+    return editable.filter((v) => !isAdHocVariable(v));
   }, [variables]);
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(editable), [editable]);
 
