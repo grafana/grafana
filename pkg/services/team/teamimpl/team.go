@@ -5,10 +5,12 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamk8s"
@@ -67,7 +69,7 @@ func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) e
 }
 
 func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
+	if s.isKubernetesTeamServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
 		return s.k8sService.SearchTeams(ctx, query)
 	}
 
@@ -75,7 +77,7 @@ func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery)
 }
 
 func (s *Service) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
+	if s.isKubernetesTeamServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
 		return s.k8sService.GetTeamByID(ctx, query)
 	}
 
@@ -152,4 +154,8 @@ func (s *Service) isKubernetesTeamServiceEnabled(ctx context.Context) bool {
 	}
 
 	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx))
+}
+
+func (s *Service) shouldFallbackToLegacy(ctx context.Context) bool {
+	return identity.IsServiceIdentity(ctx) && contexthandler.FromContext(ctx) == nil
 }
