@@ -24,7 +24,7 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../../variables/utils';
 
 import { openAddVariablePane } from './VariableTypeSelectionPane';
-import { isEditableVariableType } from './utils';
+import { isAdHocVariable, isEditableVariableType } from './utils';
 
 function useEditPaneOptions(this: VariableSetEditableElement, set: SceneVariableSet): OptionsPaneCategoryDescriptor[] {
   const variableListId = useId();
@@ -62,7 +62,7 @@ export class VariableSetEditableElement implements EditableDashboardElement {
     );
 
     if (config.featureToggles.dashboardUnifiedDrilldownControls) {
-      variables = variables.filter((variable) => variable.state.type !== 'adhoc');
+      variables = variables.filter((variable) => !isAdHocVariable(variable));
     }
 
     const { visible, controlsMenu, hidden } = partitionVariablesByDisplay(variables);
@@ -106,7 +106,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
       if (!isEditableVariableType(variable.state.type)) {
         return false;
       }
-      if (config.featureToggles.dashboardUnifiedDrilldownControls && variable.state.type === 'adhoc') {
+      if (config.featureToggles.dashboardUnifiedDrilldownControls && isAdHocVariable(variable)) {
         return false;
       }
       return true;
