@@ -1243,8 +1243,8 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "zanzanaSearchUsersPermissions",
-			Description:  "Search users permissions using Zanzana.",
+			Name:         "zanzanaMergeUserPermissions",
+			Description:  "Merge Zanzana permissions into legacy RBAC for access-control API endpoints.",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,

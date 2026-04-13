@@ -724,10 +724,10 @@ export interface FeatureToggles {
   */
   zanzanaNoLegacyClient?: boolean;
   /**
-  * Search users permissions using Zanzana.
+  * Merge Zanzana permissions into legacy RBAC for access-control API endpoints.
   * @default false
   */
-  zanzanaSearchUsersPermissions?: boolean;
+  zanzanaMergeUserPermissions?: boolean;
   /**
   * Enables reload of dashboards on scopes, time range and variables changes
   * @default false
