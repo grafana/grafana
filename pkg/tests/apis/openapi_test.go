@@ -33,7 +33,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // library panels in v0
 			featuremgmt.FlagQueryServiceWithConnections,
 			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint,
-			featuremgmt.FlagDatasourcesQueryTypes,
+			// featuremgmt.FlagDatasourcesQueryTypes,
 			featuremgmt.FlagDatasourcesLoadOpenAPI,
 			featuremgmt.FlagKubernetesShortURLs,
 			featuremgmt.FlagKubernetesCorrelations,

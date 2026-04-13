@@ -17,14 +17,21 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-func TestK8sRESTAdapter_Create_GenerateName(t *testing.T) {
-	ctx := identity.WithServiceIdentityContext(t.Context(), 1)
+func TestK8sRESTAdapter_Create(t *testing.T) {
+	const userUID = "test-user-uid-123"
+	ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{
+		Type:    authtypes.TypeUser,
+		UserUID: userUID,
+		OrgID:   1,
+	})
 
 	store := NewMemoryStore()
 	adapter := &k8sRESTAdapter{
 		store:        store,
 		accessClient: authtypes.FixedAccessClient(true),
 	}
+
+	expectedCreatedBy := authtypes.NewTypeID(authtypes.TypeUser, userUID)
 
 	t.Run("should generate name from generateName", func(t *testing.T) {
 		anno := &annotationV0.Annotation{
@@ -49,6 +56,7 @@ func TestK8sRESTAdapter_Create_GenerateName(t *testing.T) {
 			"expected name to start with prefix 'test-anno-', got: %s", result.Name)
 		assert.Greater(t, len(result.Name), len("test-anno-"),
 			"expected name to have random suffix appended")
+		assert.Equal(t, expectedCreatedBy, result.GetCreatedBy())
 	})
 
 	t.Run("should accept explicit name", func(t *testing.T) {
@@ -70,6 +78,7 @@ func TestK8sRESTAdapter_Create_GenerateName(t *testing.T) {
 		result := created.(*annotationV0.Annotation)
 		assert.Equal(t, "my-annotation-name", result.Name,
 			"expected name to match the provided name")
+		assert.Equal(t, expectedCreatedBy, result.GetCreatedBy())
 	})
 
 	t.Run("should reject when both name and generateName are empty", func(t *testing.T) {
@@ -87,6 +96,22 @@ func TestK8sRESTAdapter_Create_GenerateName(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "metadata.name or metadata.generateName is required",
 			"expected error message about missing name/generateName")
+	})
+
+	t.Run("should return error when identity is not in context", func(t *testing.T) {
+		anno := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "anno-no-identity",
+				Namespace: "default",
+			},
+			Spec: annotationV0.AnnotationSpec{
+				Text: "test annotation",
+				Time: 12345,
+			},
+		}
+
+		_, err := adapter.Create(t.Context(), anno, nil, nil)
+		require.Error(t, err)
 	})
 
 	t.Run("name takes precedence over generateName", func(t *testing.T) {
@@ -111,6 +136,7 @@ func TestK8sRESTAdapter_Create_GenerateName(t *testing.T) {
 		// When both are provided, name takes priority
 		assert.Equal(t, "my-special-name", result.Name,
 			"expected name to match the provided name, not the generateName")
+		assert.Equal(t, expectedCreatedBy, result.GetCreatedBy())
 	})
 }
 

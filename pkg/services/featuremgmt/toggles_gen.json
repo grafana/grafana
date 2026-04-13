@@ -1735,7 +1735,7 @@
         "name": "datasourceQueryTypes",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-05-23T16:46:28Z",
-        "deletionTimestamp": "2026-04-13T11:51:16Z"
+        "deletionTimestamp": "2026-04-13T16:32:15Z"
       },
       "spec": {
         "description": "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
@@ -1761,12 +1761,22 @@
     },
     {
       "metadata": {
+        "name": "datasources.chunkedQueryStreaming",
+        "resourceVersion": "1776098015598",
+        "creationTimestamp": "2026-04-13T16:33:35Z"
+      },
+      "spec": {
+        "description": "Allow requesting query results as chunked jsonl rather than single json blob",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.loadOpenAPI",
-        "resourceVersion": "1776093721373",
-        "creationTimestamp": "2026-04-13T11:51:16Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2026-04-13 15:22:01.373933 +0000 UTC"
-        }
+        "resourceVersion": "1776097935569",
+        "creationTimestamp": "2026-04-13T16:32:15Z"
       },
       "spec": {
         "description": "Load the openapi spec from spec.{version}.openapi.{yaml|json}",
@@ -1779,11 +1789,8 @@
     {
       "metadata": {
         "name": "datasources.queryTypes",
-        "resourceVersion": "1776093721373",
-        "creationTimestamp": "2026-04-13T11:51:16Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2026-04-13 15:22:01.373933 +0000 UTC"
-        }
+        "resourceVersion": "1776097935569",
+        "creationTimestamp": "2026-04-13T16:32:15Z"
       },
       "spec": {
         "description": "Load Query types from spec.{version}.query.{yaml|json}",

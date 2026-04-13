@@ -490,6 +490,14 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
+			Name:        "datasources.chunkedQueryStreaming",
+			Description: "Allow requesting query results as chunked jsonl rather than single json blob",
+			Stage:       FeatureStageExperimental,
+			Expression:  "false",
+			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:            "datasourceLegacyIdApi",
 			Description:     "Register legacy datasource apis that use the numeric id",
 			Stage:           FeatureStageExperimental,

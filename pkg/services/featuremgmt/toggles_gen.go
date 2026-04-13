@@ -183,6 +183,10 @@ const (
 	// Load the openapi spec from spec.{version}.openapi.{yaml|json}
 	FlagDatasourcesLoadOpenAPI = "datasources.loadOpenAPI"
 
+	// FlagDatasourcesChunkedQueryStreaming
+	// Allow requesting query results as chunked jsonl rather than single json blob
+	FlagDatasourcesChunkedQueryStreaming = "datasources.chunkedQueryStreaming"
+
 	// FlagDatasourceLegacyIdApi
 	// Register legacy datasource apis that use the numeric id
 	FlagDatasourceLegacyIdApi = "datasourceLegacyIdApi"
