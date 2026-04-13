@@ -277,7 +277,7 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 	}
 
 	// Use the same identity that would eventually write the resource (via Run)
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, f.Obj.GetNamespace())
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, f.Repo.Namespace)
 	if err != nil {
 		return err
 	}
@@ -354,7 +354,7 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	}
 
 	// Always use the provisioning identity when writing
-	identityCtx, _, err := identity.WithProvisioningIdentity(ctx, f.Obj.GetNamespace())
+	identityCtx, _, err := identity.WithProvisioningIdentity(ctx, f.Repo.Namespace)
 	ctx, identitySpan := tracing.Start(identityCtx, "provisioning.resources.run_resource.set_identity")
 
 	if err != nil {
