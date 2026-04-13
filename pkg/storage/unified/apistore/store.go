@@ -784,7 +784,11 @@ func (s *Storage) validateMinimumResourceVersion(minimumResourceVersion string, 
 	// Enforce the storage.Interface guarantee that the resource version of the returned data
 	// "will be at least 'resourceVersion'".
 	if rvMin > rvActual {
-		return storage.NewTooLargeResourceVersionError(minimumRV, actualRevision, 0)
+		// NOTE, the etcd3 flavor throws a 504 using storage.NewTooLargeResourceVersionError
+		// We are throwing a 401 because this is a client error rather than a server error
+		return apierrors.NewResourceExpired(
+			fmt.Sprintf("too large resource version: %d (current %d)", rvMin, rvActual),
+		)
 	}
 	return nil
 }
