@@ -2445,7 +2445,9 @@
       "recipient-notification-fires": "Выберите, кто должен получать уведомление при активации правила оповещения."
     },
     "open-drawer-icon-button": {
-      "details": ""
+      "details": "",
+      "instance-details": "",
+      "rule-details": ""
     },
     "option-customfield": {
       "label-custom-template": "Пользовательский шаблон",
@@ -3603,6 +3605,7 @@
       }
     },
     "triage": {
+      "clear-filters": "",
       "collapse": "",
       "collapse-all": "",
       "collapse-sidebar": "",
@@ -3619,6 +3622,7 @@
         "no-label": ""
       },
       "instance-details-drawer": {
+        "alert-instance-label": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Сведения об экземпляре",
@@ -3647,6 +3651,7 @@
           "folder-only": ""
         }
       },
+      "severity-filter-title": "",
       "show-fewer-values": "",
       "state-filter-title": "",
       "state-firing": "",
@@ -4380,6 +4385,9 @@
       "total_many": "{{count}} элементов",
       "total_other": "{{count}} элемента"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Этот элемент находится в другом репозитории."
@@ -4978,6 +4986,9 @@
       "light-theme": "Светлая",
       "scopes": "Области"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "Поиск с помощью Grafana Assistant",
       "message": "Результаты не найдены"
@@ -5053,24 +5064,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Подключайте данные к Grafana с помощью источников данных, интеграций и приложений",
-          "title": "Новое подключение"
+          "subtitle": "Подключайте данные к Grafana с помощью источников данных, интеграций и приложений"
         },
         "collector": {
-          "subtitle": "Управляйте конфигурацией Grafana Alloy, нашего дистрибутива OpenTelemetry Collector",
-          "title": "Система сбора данных"
+          "subtitle": "Управляйте конфигурацией Grafana Alloy, нашего дистрибутива OpenTelemetry Collector"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "Управляйте существующими подключениями к источникам данных",
-          "title": "Источники данных"
+          "subtitle": "Управляйте существующими подключениями к источникам данных"
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "Управляйте активными интеграциями",
-          "title": "Интеграции"
+          "subtitle": "Управляйте активными интеграциями"
         },
         "private-data-source-connections": {
-          "subtitle": "Управляйте подключениями к источникам данных из частных сетей",
-          "title": "Подключение частных источников данных"
+          "subtitle": "Управляйте подключениями к источникам данных из частных сетей"
         },
         "subtitle": "Подключите свои источники данных и приложения к Grafana Cloud. На этой странице можно управлять всеми параметрами — от поглощения данных до подключений к частным сетям и конвейеров телеметрии."
       }
@@ -5130,11 +5145,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Подключитесь к новому источнику данных",
-          "title": "Новое подключение"
+          "subtitle": "Подключитесь к новому источнику данных"
         },
         "data-sources": {
-          "subtitle": "Управляйте существующими подключениями к источникам данных",
           "title": "Просмотрите настроенные источники данных"
         },
         "subtitle": "На этой странице вы можете управлять существующими подключениями к источникам данных и добавлять новые."
@@ -5184,10 +5197,6 @@
       "view-json-diff": "Просмотреть JSON Diff, чтобы увидеть все изменения"
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "Добавить новую",
     "alert": {
@@ -5229,6 +5238,14 @@
       "back-button": "Назад",
       "next-button": "Далее",
       "save-button": "Сохранить"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "Выбранный целевой источник данных должен экспортировать редактор запросов.",
@@ -5295,11 +5312,6 @@
       "transform-required": "Выберите тип преобразования",
       "type-label": "Тип",
       "type-tooltip": "Тип преобразования, которое будет применено к исходным данным."
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "Выполнить запрос"
     }
   },
   "dashboard": {
@@ -6943,7 +6955,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "Правила отображения/скрытия не будут действовать",
@@ -7767,6 +7784,7 @@
       "placeholder-descriptive-text": "Поясняющий текст",
       "placeholder-label-name": "Название метки",
       "placeholder-variable-name": "Название переменной",
+      "run-query": "",
       "text-running-query": "Выполняется запрос...",
       "title": {
         "delete-variable": "Удаление переменной"
@@ -8213,8 +8231,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Не поддерживается",
+      "badge-text-success": "",
       "badge-text-supported": "Поддерживается",
       "label": {
+        "advisor": "",
         "alerting": "Оповещение",
         "type": "Тип"
       }
@@ -8641,7 +8661,6 @@
       "give-feedback": "Отправить отзыв"
     },
     "logs-meta-row": {
-      "download": "Загрузить",
       "label": {
         "deduplication-count": "Количество дедупликаций",
         "showing-only-selected-fields": "Отображаются только выбранные поля"
@@ -9000,22 +9019,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "Показать результаты в визуализации журналов",
-        "show-results-in-table-visualisation": "Показать результаты в визуализации таблицы",
-        "show-results-newest-to-oldest": "Показать результаты от новых к старым",
-        "show-results-oldest-to-newest": "Показать результаты от старых к новым"
+        "show-results-in-table-visualisation": "Показать результаты в визуализации таблицы"
       },
       "label": {
         "logs": "Журналы",
-        "newest-first": "Сначала новые",
-        "oldest-first": "Сначала старые",
         "table": "Таблица"
       },
-      "label-deduplication": "Дедупликация",
-      "label-display-results": "Показать результаты",
-      "label-prettify-json": "Форматировать JSON",
-      "label-time": "Время",
-      "label-unique-labels": "Уникальные метки",
-      "label-wrap-lines": "Переносить строки",
       "title-feedback": "Обратная связь",
       "title-logs": "Журналы",
       "title-logs-volume": "Объем журналов"
@@ -9110,8 +9119,7 @@
       "tooltip-s-m-h": "10 с, 1 мин, 30 мин, 1 ч"
     },
     "sql-expr": {
-      "button-run-query": "Выполнить запрос",
-      "tooltip-experimental": "Интеграция LLM с SQL-выражениями является экспериментальной. При обнаружении проблем свяжитесь с командой Grafana."
+      "button-run-query": "Выполнить запрос"
     },
     "sql-schema": {
       "error-title": "Ошибка",
@@ -11525,6 +11533,12 @@
       "show-search": "Результат поиска по журналам",
       "show-timestamps": "Показать метки времени",
       "show-unique-labels": "Показать уникальные метки",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "Скрыть метки времени",
         "label": "Метки времени журнала",
@@ -11551,9 +11565,6 @@
         "not-supported": ""
       },
       "wrap-lines": "Переносить строки"
-    },
-    "logs-navigation": {
-      "scroll-top": "Прокрутить вверх"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12347,7 +12358,7 @@
     },
     "quick-add": {
       "aria-label": "Новое",
-      "new-template-dashboard-button": "Дашборд из шаблона"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "Последние записи в блоге"
   },
@@ -12444,6 +12455,8 @@
       "description": "Полученные вами уведомления будут отображаться здесь.",
       "title": "Вы всё прочитали!"
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "Закрыть уведомления",
       "title-alert": "На этой странице отображаются предыдущие ошибки и предупреждения. После закрытия их невозможно восстановить"
@@ -13517,6 +13530,7 @@
       "token-label": "Токен доступа к проекту",
       "token-required": "Требуется токен GitLab",
       "url-description": "URL-адрес репозитория GitLab",
+      "url-pattern": "",
       "url-required": "Требуется указать URL-адрес репозитория"
     },
     "history-view": {
@@ -14479,11 +14493,11 @@
       "view-as-list": "Просмотр в виде списка"
     },
     "dashboard-actions": {
-      "import": "Импорт",
+      "import": "",
       "new": "Новые элементы",
       "new-dashboard": "Новый дашборд",
       "new-folder": "Новая папка",
-      "new-template-dashboard": "Дашборд из шаблона"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Оценка"
@@ -14960,6 +14974,7 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
+      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -14967,6 +14982,7 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
+      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -14974,6 +14990,7 @@
       "bullet-1": "",
       "bullet-2": "",
       "bullet-3": "",
+      "cta": "",
       "subtitle": "",
       "title": ""
     },
@@ -14984,19 +15001,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "Чтобы сгенерировать рекомендации по SQL, добавьте хотя бы один запрос данных",
-    "ai-explain-title": "Объяснение SQL-выражений с поддержкой ИИ",
-    "ai-suggestions-title": "Рекомендации по SQL-выражениям с поддержкой ИИ",
-    "apply": "Применить",
-    "code-label": "{{ language }}",
-    "copy": "Копировать",
-    "explain-empty-query-tooltip": "Введите SQL-выражение, чтобы получить объяснение",
     "explain-query": "Объяснить запрос",
-    "explanation-modal-title": "Объяснение SQL-запроса",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "История рекомендаций по SQL",
-    "suggestions": "Рекомендации",
-    "view-explanation": "Просмотреть объяснение"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "Добавить в избранное",
@@ -15459,11 +15466,12 @@
     },
     "range-content": {
       "apply-button": "Применить временной диапазон",
-      "default-error": "Введите прошедшую дату или «{{now}}»",
+      "default-error": "",
       "fiscal-year": "Отчетный год: {{from}} – {{to}}",
       "from-input": "Время начала",
       "open-input-calendar": "Открыть календарь",
-      "range-error": "Время начала не может быть позже времени окончания",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Время окончания"
     },
     "range-picker": {
@@ -16750,6 +16758,10 @@
   },
   "xychart": {
     "category-xychart": "График XY",
+    "errors": {
+      "nodata": "",
+      "unknown": ""
+    },
     "name-fill-opacity": "Прозрачность заливки",
     "name-line-style": "Стиль линии",
     "name-line-width": "Ширина линии",

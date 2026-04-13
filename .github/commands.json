@@ -1037,14 +1037,6 @@
   },
   {
     "type": "label",
-    "name": "team/grafana-aws-datasources",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/97"
-    }
-  },
-  {
-    "type": "label",
     "name": "datasource/Zabbix",
     "action": "addToProject",
     "addToProject": {

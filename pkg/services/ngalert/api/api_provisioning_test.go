@@ -2245,7 +2245,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		OrgID: 1,
 		/*
 			Permissions: map[int64]map[string][]string{
-				1: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}},
+				1: {folder.ActionFoldersCreate: {}, folder.ActionFoldersRead: {folder.ScopeFoldersAll}},
 			},
 		*/
 	}
@@ -2336,7 +2336,7 @@ func createTestRequestCtx() contextmodel.ReqContext {
 		SignedInUser: &user.SignedInUser{
 			OrgID: 1,
 			Permissions: map[int64]map[string][]string{
-				1: {dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}},
+				1: {folder.ActionFoldersRead: {folder.ScopeFoldersAll}},
 			},
 		},
 		Logger: &logtest.Fake{},

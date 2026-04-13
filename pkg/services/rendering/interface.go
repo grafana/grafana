@@ -94,6 +94,7 @@ type renderCSVFunc func(ctx context.Context, renderKey string, options CSVOpts) 
 type renderKeyProvider interface {
 	get(ctx context.Context, opts AuthOpts) (string, error)
 	afterRequest(ctx context.Context, opts AuthOpts, renderKey string)
+	validate(ctx context.Context, key string) (*RenderUser, bool)
 }
 
 type CapabilitySupportRequestResult struct {

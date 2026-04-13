@@ -42,6 +42,98 @@ setPluginImportUtils({
 });
 
 describe('DashboardEditPane', () => {
+  describe('Selection', () => {
+    it('Can select dashboard', () => {
+      const scene = buildTestScene();
+      scene.state.editPane.state.selectionContext.onSelect({ id: scene.state.key! }, {});
+      expect(scene.state.editPane.getSelectedObject()).toBe(scene);
+    });
+
+    it('single panel and multi panel selection', () => {
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+      const panel1 = scene.onCreateNewPanel();
+
+      expect(editPane.getSelectedObject()).toBe(panel1);
+
+      // Selecting same object should clear selection
+      editPane.selectObject(panel1);
+
+      expect(editPane.getSelectedObject()).toBeNull();
+
+      const panel2 = scene.onCreateNewPanel();
+      editPane.state.selectionContext.onSelect({ id: panel1.state.key! }, { multi: true });
+
+      expect(editPane.state.selectionContext.selected).toHaveLength(2);
+
+      // Selecting one that is already selected should remove it
+      editPane.state.selectionContext.onSelect({ id: panel2.state.key! }, { multi: true });
+
+      expect(editPane.state.selectionContext.selected).toHaveLength(1);
+      expect(editPane.getSelectedObject()).toBe(panel1);
+    });
+
+    it('Clear selection should select dashboard when docked', () => {
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+
+      const panel = scene.onCreateNewPanel();
+      editPane.clearSelection();
+
+      expect(editPane.getSelectedObject()).toBeNull();
+
+      editPane.setState({ isDocked: true });
+      editPane.selectObject(panel);
+      editPane.clearSelection();
+
+      expect(editPane.getSelectedObject()).toBe(scene);
+    });
+
+    it('Force selecting should keep selecting if already selected', () => {
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+
+      // This selects panel
+      const panel = scene.onCreateNewPanel();
+
+      // Force select
+      editPane.state.selectionContext.onSelect({ id: panel.state.key! }, { multi: false, force: true });
+
+      expect(editPane.getSelectedObject()).toBe(panel);
+      expect(editPane.state.selectionContext.selected).toHaveLength(1);
+
+      // Force select with multi
+      editPane.state.selectionContext.onSelect({ id: panel.state.key! }, { multi: true, force: true });
+
+      // Still only 1 item selected
+      expect(editPane.state.selectionContext.selected).toHaveLength(1);
+    });
+
+    it('Selecting tab with closed edit pane should not select tab', () => {
+      const { editPane, tab1 } = setupWithTwoTabs();
+
+      // Selecting tab with closed edit pane should not select tab
+      editPane.selectObject(tab1);
+      expect(editPane.getSelectedObject()).toBeNull();
+    });
+
+    it('Selecting tab with open edit pane should select tab', () => {
+      const { editPane, tab1 } = setupWithTwoTabs();
+
+      // Selecting tab with closed edit pane should not select tab
+      editPane.openPane('code');
+      editPane.selectObject(tab1);
+      expect(editPane.getSelectedObject()).toBe(tab1);
+    });
+
+    it('Force selecting tab should always select it', () => {
+      const { editPane, tab1 } = setupWithTwoTabs();
+
+      editPane.selectObject(tab1, { force: true });
+      expect(editPane.getSelectedObject()).toBe(tab1);
+    });
+  });
+
   it('Handles edit action events that adds objects', () => {
     const scene = buildTestScene();
     const editPane = scene.state.editPane;
@@ -51,14 +143,14 @@ describe('DashboardEditPane', () => {
     expect(editPane.state.undoStack).toHaveLength(1);
 
     // Should select object
-    expect(editPane.getSelection()).toBeDefined();
+    expect(editPane.getSelectedObject()).toBeDefined();
 
     editPane.undoAction();
 
     expect(editPane.state.undoStack).toHaveLength(0);
 
     // should clear selection
-    expect(editPane.getSelection()).toBeUndefined();
+    expect(editPane.getSelectedObject()).toBeNull();
   });
 
   it('when new action comes in clears redo stack', () => {
@@ -113,7 +205,7 @@ describe('DashboardEditPane', () => {
     activateFullSceneTree(dashboard);
 
     const editPane = dashboard.state.editPane;
-    editPane.selectObject(variable, variable.state.key!, { force: true });
+    editPane.selectObject(variable, { force: true });
 
     const changedVariable = new ConstantVariable({ name: 'service' });
     dashboardEditActions.changeVariableType({
@@ -123,17 +215,17 @@ describe('DashboardEditPane', () => {
     });
 
     expect(variableSet.state.variables[0]).toBe(changedVariable);
-    expect(editPane.getSelection()).toBe(changedVariable);
+    expect(editPane.getSelectedObject()).toBe(changedVariable);
 
     editPane.undoAction();
 
     expect(variableSet.state.variables[0]).toBe(variable);
-    expect(editPane.getSelection()).toBe(variable);
+    expect(editPane.getSelectedObject()).toBe(variable);
 
     editPane.redoAction();
 
     expect(variableSet.state.variables[0]).toBe(changedVariable);
-    expect(editPane.getSelection()).toBe(changedVariable);
+    expect(editPane.getSelectedObject()).toBe(changedVariable);
   });
 
   describe('Selecting repeated elements', () => {
@@ -166,7 +258,7 @@ describe('DashboardEditPane', () => {
 
       editPane.state.selectionContext.onSelect({ id: clonePanel.state.key! }, {});
 
-      expect(editPane.getSelection()).toBe(sourcePanel);
+      expect(editPane.getSelectedObject()).toBe(sourcePanel);
     });
 
     it('Selecting a repeated tab inside a repeated row selects the source tab', () => {
@@ -188,8 +280,9 @@ describe('DashboardEditPane', () => {
           }),
         ],
       });
-      const { editPane, variables } = buildTestSceneWithRepeat(layoutManager);
+      const { scene, editPane, variables } = buildTestSceneWithRepeat(layoutManager);
       editPane.enableSelection();
+      editPane.selectObject(scene);
 
       const [sourceRow] = layoutManager.state.rows;
       const [sourceTab] = (sourceRow.state.layout as TabsLayoutManager).state.tabs;
@@ -214,7 +307,7 @@ describe('DashboardEditPane', () => {
 
       editPane.state.selectionContext.onSelect({ id: clonedTabInClonedRow.state.key! }, {});
 
-      expect(editPane.getSelection()).toBe(sourceTab);
+      expect(editPane.getSelectedObject()).toBe(sourceTab);
     });
   });
 
@@ -397,6 +490,7 @@ function buildTestSceneWithRepeat(layoutManager: DashboardLayoutManager) {
   return {
     variables,
     editPane: scene.state.editPane,
+    scene,
   };
 }
 
