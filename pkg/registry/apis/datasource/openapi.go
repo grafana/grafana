@@ -58,6 +58,29 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 			p.Description = "DataSource identifier"
 		}
 	}
+	// Add explicit response format
+	query.Post.Responses = &spec3.Responses{
+		ResponsesProps: spec3.ResponsesProps{
+			StatusCodeResponses: map[int]*spec3.Response{
+				200: {
+					ResponseProps: spec3.ResponseProps{
+						Description: "OK",
+						Content: map[string]*spec3.MediaType{
+							"application/json": {
+								MediaTypeProps: spec3.MediaTypeProps{
+									Schema: &spec.Schema{
+										SchemaProps: spec.SchemaProps{
+											Ref: spec.MustCreateRef("#/components/schemas/" + datasourceV0.QueryDataResponse{}.OpenAPIModelName()),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 
 	// Hide the resource routes -- explicit ones will be added if defined below
 	prefix := root + "namespaces/{namespace}/datasources/{name}/resource"
@@ -83,10 +106,6 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 
 	if b.schemaProvider == nil || !b.cfg.LoadOpenAPISpec {
 		return oas, nil
-	}
-
-	if b.pluginJSON.ID == "grafana-testdata-datasource" {
-		fmt.Printf("XXXX")
 	}
 
 	custom, err := b.schemaProvider.GetOpenAPI(b.GetGroupVersion().Version)

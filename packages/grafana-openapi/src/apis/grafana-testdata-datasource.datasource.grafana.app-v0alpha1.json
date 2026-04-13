@@ -201,7 +201,6 @@
                 "": {
                   "summary": "Empty testdata",
                   "value": {
-                    "apiVersion": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
                     "kind": "DataSource",
                     "metadata": {
                       "name": "my-testdata-datasource"
@@ -214,7 +213,6 @@
                 "with-url": {
                   "summary": "Testdata with URL (not used)",
                   "value": {
-                    "apiVersion": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
                     "kind": "DataSource",
                     "metadata": {
                       "name": "testdata-with-url"
@@ -235,7 +233,6 @@
                 "": {
                   "summary": "Empty testdata",
                   "value": {
-                    "apiVersion": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
                     "kind": "DataSource",
                     "metadata": {
                       "name": "my-testdata-datasource"
@@ -248,7 +245,6 @@
                 "with-url": {
                   "summary": "Testdata with URL (not used)",
                   "value": {
-                    "apiVersion": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
                     "kind": "DataSource",
                     "metadata": {
                       "name": "testdata-with-url"
@@ -895,6 +891,65 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/QueryRequestSchema"
+              },
+              "examples": {
+                "multiple series-2": {
+                  "summary": "multiple series",
+                  "value": {
+                    "debug": false,
+                    "from": "now-1h",
+                    "queries": [
+                      {
+                        "intervalMs": 5000,
+                        "maxDataPoints": 1000,
+                        "refId": "A",
+                        "scenarioId": "random_walk",
+                        "seriesCount": 10,
+                        "spread": 0.2
+                      }
+                    ],
+                    "to": "now"
+                  }
+                },
+                "pulse wave example-1": {
+                  "summary": "pulse wave example",
+                  "value": {
+                    "debug": false,
+                    "from": "now-1h",
+                    "queries": [
+                      {
+                        "intervalMs": 5000,
+                        "maxDataPoints": 1000,
+                        "pulseWave": {
+                          "offCount": 20,
+                          "offValue": 1.23,
+                          "onCount": 10,
+                          "onValue": 4.56,
+                          "timeStep": 1000
+                        },
+                        "refId": "A",
+                        "scenarioId": "predictable_pulse"
+                      }
+                    ],
+                    "to": "now"
+                  }
+                },
+                "simple random walk-0": {
+                  "summary": "simple random walk",
+                  "value": {
+                    "debug": false,
+                    "from": "now-1h",
+                    "queries": [
+                      {
+                        "intervalMs": 5000,
+                        "maxDataPoints": 1000,
+                        "refId": "A",
+                        "scenarioId": "random_walk"
+                      }
+                    ],
+                    "to": "now"
+                  }
+                }
               }
             }
           }
@@ -903,7 +958,7 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/QueryDataResponse"
                 }
@@ -931,7 +986,7 @@
         }
       ]
     },
-    "/datasources/{name}/resource": {
+    "/datasources/{name}/resources": {
       "summary": "hello world",
       "get": {
         "tags": ["Route"],
@@ -961,7 +1016,7 @@
         }
       ]
     },
-    "/datasources/{name}/resource/boom": {
+    "/datasources/{name}/resources/boom": {
       "summary": "force a panic",
       "get": {
         "tags": ["Route"],
@@ -1008,7 +1063,7 @@
         }
       ]
     },
-    "/datasources/{name}/resource/scenarios": {
+    "/datasources/{name}/resources/scenarios": {
       "summary": "hello world",
       "get": {
         "tags": ["Route"],
@@ -1039,7 +1094,7 @@
         }
       ]
     },
-    "/datasources/{name}/resource/sim/{key}": {
+    "/datasources/{name}/resources/sim/{key}": {
       "description": "Get list of simulations",
       "get": {
         "tags": ["Route"],
@@ -1110,7 +1165,7 @@
         }
       ]
     },
-    "/datasources/{name}/resource/sims": {
+    "/datasources/{name}/resources/sims": {
       "description": "Get list of simulations",
       "get": {
         "tags": ["Route"],
@@ -1141,7 +1196,7 @@
         }
       ]
     },
-    "/datasources/{name}/resource/stream": {
+    "/datasources/{name}/resources/stream": {
       "summary": "Get streaming response",
       "get": {
         "tags": ["Route"],
@@ -1221,7 +1276,7 @@
         }
       ]
     },
-    "/datasources/{name}/resource/test": {
+    "/datasources/{name}/resources/test": {
       "summary": "Echo any request",
       "post": {
         "tags": ["Route"],
@@ -1262,7 +1317,7 @@
         }
       ]
     },
-    "/datasources/{name}/resource/test/json": {
+    "/datasources/{name}/resources/test/json": {
       "summary": "Echo json request",
       "post": {
         "tags": ["Route"],
@@ -1339,6 +1394,299 @@
           }
         }
       ]
+    },
+    "/querytypes": {
+      "get": {
+        "tags": ["QueryTypeDefinition"],
+        "description": "list objects of kind QueryTypeDefinition",
+        "operationId": "listQueryTypeDefinition",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryTypeDefinitionList"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryTypeDefinitionList"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryTypeDefinitionList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "list",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "QueryTypeDefinition",
+          "version": "v0alpha1"
+        }
+      },
+      "parameters": [
+        {
+          "name": "allowWatchBookmarks",
+          "in": "query",
+          "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "continue",
+          "in": "query",
+          "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "fieldSelector",
+          "in": "query",
+          "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "labelSelector",
+          "in": "query",
+          "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "resourceVersion",
+          "in": "query",
+          "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "resourceVersionMatch",
+          "in": "query",
+          "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "sendInitialEvents",
+          "in": "query",
+          "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "timeoutSeconds",
+          "in": "query",
+          "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "watch",
+          "in": "query",
+          "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/querytypes/{name}": {
+      "get": {
+        "tags": ["QueryTypeDefinition"],
+        "description": "read the specified QueryTypeDefinition",
+        "operationId": "getQueryTypeDefinition",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryTypeDefinition"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryTypeDefinition"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "QueryTypeDefinition",
+          "version": "v0alpha1"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the QueryTypeDefinition",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/querytypes/{name}/validate": {
+      "post": {
+        "tags": ["QueryTypeDefinition"],
+        "description": "Verify if a query payload matches the expected value and return a clean version",
+        "operationId": "connectPostQueryTypeDefinitionValidate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryRequestSchema"
+              },
+              "examples": {
+                "multiple series-2": {
+                  "summary": "multiple series",
+                  "value": {
+                    "debug": false,
+                    "from": "now-1h",
+                    "queries": [
+                      {
+                        "intervalMs": 5000,
+                        "maxDataPoints": 1000,
+                        "refId": "A",
+                        "scenarioId": "random_walk",
+                        "seriesCount": 10,
+                        "spread": 0.2
+                      }
+                    ],
+                    "to": "now"
+                  }
+                },
+                "pulse wave example-1": {
+                  "summary": "pulse wave example",
+                  "value": {
+                    "debug": false,
+                    "from": "now-1h",
+                    "queries": [
+                      {
+                        "intervalMs": 5000,
+                        "maxDataPoints": 1000,
+                        "pulseWave": {
+                          "offCount": 20,
+                          "offValue": 1.23,
+                          "onCount": 10,
+                          "onValue": 4.56,
+                          "timeStep": 1000
+                        },
+                        "refId": "A",
+                        "scenarioId": "predictable_pulse"
+                      }
+                    ],
+                    "to": "now"
+                  }
+                },
+                "simple random walk-0": {
+                  "summary": "simple random walk",
+                  "value": {
+                    "debug": false,
+                    "from": "now-1h",
+                    "queries": [
+                      {
+                        "intervalMs": 5000,
+                        "maxDataPoints": 1000,
+                        "refId": "A",
+                        "scenarioId": "random_walk"
+                      }
+                    ],
+                    "to": "now"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryDataRequest"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "QueryDataRequest",
+          "version": "v0alpha1"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "The query type name, or {any}",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          },
+          "example": "{any}"
+        }
+      ]
     }
   },
   "components": {
@@ -1380,7 +1728,371 @@
           "queries": {
             "type": "array",
             "items": {
-              "type": "object"
+              "description": "TestDataQuery defines model for TestDataQuery.",
+              "type": "object",
+              "properties": {
+                "alias": {
+                  "type": "string"
+                },
+                "channel": {
+                  "description": "Used for live query",
+                  "type": "string"
+                },
+                "csvContent": {
+                  "type": "string"
+                },
+                "csvFileName": {
+                  "type": "string"
+                },
+                "csvWave": {
+                  "type": "array",
+                  "items": {
+                    "description": "CSVWave defines model for CSVWave.",
+                    "type": "object",
+                    "properties": {
+                      "labels": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "timeStep": {
+                        "type": "integer"
+                      },
+                      "valuesCSV": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "datasource": {
+                  "description": "The datasource",
+                  "type": "object",
+                  "required": ["type"],
+                  "properties": {
+                    "apiVersion": {
+                      "description": "The apiserver version",
+                      "type": "string"
+                    },
+                    "type": {
+                      "description": "The datasource plugin type",
+                      "type": "string",
+                      "pattern": "^grafana-testdata-datasource$|^testdata$"
+                    },
+                    "uid": {
+                      "description": "Datasource UID (NOTE: name in k8s)",
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "dropPercent": {
+                  "description": "Drop percentage (the chance we will lose a point 0-100)",
+                  "type": "number"
+                },
+                "errorSource": {
+                  "description": "Possible enum values:\n - `\"plugin\"` \n - `\"downstream\"` ",
+                  "type": "string",
+                  "enum": ["plugin", "downstream"],
+                  "x-enum-description": {}
+                },
+                "errorType": {
+                  "description": "Possible enum values:\n - `\"frontend_exception\"` \n - `\"frontend_observable\"` \n - `\"server_panic\"` ",
+                  "type": "string",
+                  "enum": ["frontend_exception", "frontend_observable", "server_panic"],
+                  "x-enum-description": {}
+                },
+                "flamegraphDiff": {
+                  "type": "boolean"
+                },
+                "hide": {
+                  "description": "true if query is disabled (ie should not be returned to the dashboard)\nNOTE: this does not always imply that the query should not be executed since\nthe results from a hidden query may be used as the input to other queries (SSE etc)",
+                  "type": "boolean"
+                },
+                "intervalMs": {
+                  "description": "Interval is the suggested duration between time points in a time series query.\nNOTE: the values for intervalMs is not saved in the query model.  It is typically calculated\nfrom the interval required to fill a pixels in the visualization",
+                  "type": "number"
+                },
+                "labels": {
+                  "type": "string"
+                },
+                "levelColumn": {
+                  "type": "boolean"
+                },
+                "lines": {
+                  "type": "integer"
+                },
+                "max": {
+                  "type": "number"
+                },
+                "maxDataPoints": {
+                  "description": "MaxDataPoints is the maximum number of data points that should be returned from a time series query.\nNOTE: the values for maxDataPoints is not saved in the query model.  It is typically calculated\nfrom the number of pixels visible in a visualization",
+                  "type": "integer"
+                },
+                "min": {
+                  "type": "number"
+                },
+                "nodes": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    },
+                    "seed": {
+                      "type": "integer"
+                    },
+                    "type": {
+                      "description": "Possible enum values:\n - `\"random\"` \n - `\"random edges\"` \n - `\"response_medium\"` \n - `\"response_small\"` \n - `\"feature_showcase\"` ",
+                      "type": "string",
+                      "enum": ["random", "random edges", "response_medium", "response_small", "feature_showcase"],
+                      "x-enum-description": {}
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "noise": {
+                  "type": "number"
+                },
+                "points": {
+                  "type": "array",
+                  "items": {
+                    "type": "array"
+                  }
+                },
+                "pulseWave": {
+                  "type": "object",
+                  "properties": {
+                    "offCount": {
+                      "type": "integer"
+                    },
+                    "offValue": {
+                      "type": "number"
+                    },
+                    "onCount": {
+                      "type": "integer"
+                    },
+                    "onValue": {
+                      "type": "number"
+                    },
+                    "timeStep": {
+                      "type": "integer"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "queryType": {
+                  "description": "QueryType is an optional identifier for the type of query.\nIt can be used to distinguish different types of queries.",
+                  "type": "string"
+                },
+                "rawFrameContent": {
+                  "type": "string"
+                },
+                "refId": {
+                  "description": "RefID is the unique identifier of the query, set by the frontend call.",
+                  "type": "string"
+                },
+                "resultAssertions": {
+                  "description": "Optionally define expected query result behavior",
+                  "type": "object",
+                  "required": ["typeVersion"],
+                  "properties": {
+                    "maxFrames": {
+                      "description": "Maximum frame count",
+                      "type": "integer"
+                    },
+                    "type": {
+                      "description": "Type asserts that the frame matches a known type structure.\n\n\nPossible enum values:\n - `\"\"` \n - `\"timeseries-wide\"` \n - `\"timeseries-long\"` \n - `\"timeseries-many\"` \n - `\"timeseries-multi\"` \n - `\"directory-listing\"` \n - `\"table\"` \n - `\"numeric-wide\"` \n - `\"numeric-multi\"` \n - `\"numeric-long\"` \n - `\"log-lines\"` ",
+                      "type": "string",
+                      "enum": [
+                        "",
+                        "timeseries-wide",
+                        "timeseries-long",
+                        "timeseries-many",
+                        "timeseries-multi",
+                        "directory-listing",
+                        "table",
+                        "numeric-wide",
+                        "numeric-multi",
+                        "numeric-long",
+                        "log-lines"
+                      ],
+                      "x-enum-description": {}
+                    },
+                    "typeVersion": {
+                      "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/.",
+                      "type": "array",
+                      "maxItems": 2,
+                      "minItems": 2,
+                      "items": {
+                        "type": "integer"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "scenarioId": {
+                  "description": "Possible enum values:\n - `\"annotations\"` \n - `\"arrow\"` \n - `\"csv_content\"` \n - `\"csv_file\"` \n - `\"csv_metric_values\"` \n - `\"datapoints_outside_range\"` \n - `\"error_with_source\"` \n - `\"exponential_heatmap_bucket_data\"` \n - `\"flame_graph\"` \n - `\"grafana_api\"` \n - `\"linear_heatmap_bucket_data\"` \n - `\"live\"` \n - `\"logs\"` \n - `\"manual_entry\"` \n - `\"no_data_points\"` \n - `\"node_graph\"` \n - `\"predictable_csv_wave\"` \n - `\"predictable_pulse\"` \n - `\"query_meta\"` \n - `\"random_walk\"` \n - `\"random_walk_table\"` \n - `\"random_walk_with_error\"` \n - `\"raw_frame\"` \n - `\"server_error_500\"` \n - `\"steps\"` \n - `\"simulation\"` \n - `\"slow_query\"` \n - `\"streaming_client\"` \n - `\"table_static\"` \n - `\"trace\"` \n - `\"usa\"` \n - `\"variables-query\"` ",
+                  "type": "string",
+                  "enum": [
+                    "annotations",
+                    "arrow",
+                    "csv_content",
+                    "csv_file",
+                    "csv_metric_values",
+                    "datapoints_outside_range",
+                    "error_with_source",
+                    "exponential_heatmap_bucket_data",
+                    "flame_graph",
+                    "grafana_api",
+                    "linear_heatmap_bucket_data",
+                    "live",
+                    "logs",
+                    "manual_entry",
+                    "no_data_points",
+                    "node_graph",
+                    "predictable_csv_wave",
+                    "predictable_pulse",
+                    "query_meta",
+                    "random_walk",
+                    "random_walk_table",
+                    "random_walk_with_error",
+                    "raw_frame",
+                    "server_error_500",
+                    "steps",
+                    "simulation",
+                    "slow_query",
+                    "streaming_client",
+                    "table_static",
+                    "trace",
+                    "usa",
+                    "variables-query"
+                  ],
+                  "x-enum-description": {}
+                },
+                "seriesCount": {
+                  "type": "integer"
+                },
+                "sim": {
+                  "type": "object",
+                  "required": ["key"],
+                  "properties": {
+                    "config": {
+                      "type": "object"
+                    },
+                    "key": {
+                      "type": "object",
+                      "required": ["tick", "type"],
+                      "properties": {
+                        "tick": {
+                          "type": "number"
+                        },
+                        "type": {
+                          "type": "string"
+                        },
+                        "uid": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "last": {
+                      "type": "boolean"
+                    },
+                    "stream": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "spanCount": {
+                  "type": "integer"
+                },
+                "spread": {
+                  "type": "number"
+                },
+                "startValue": {
+                  "type": "number"
+                },
+                "stream": {
+                  "type": "object",
+                  "required": ["noise", "speed", "spread", "type"],
+                  "properties": {
+                    "bands": {
+                      "type": "integer"
+                    },
+                    "noise": {
+                      "type": "number"
+                    },
+                    "speed": {
+                      "type": "number"
+                    },
+                    "spread": {
+                      "type": "number"
+                    },
+                    "type": {
+                      "description": "Possible enum values:\n - `\"fetch\"` \n - `\"logs\"` \n - `\"signal\"` \n - `\"traces\"` ",
+                      "type": "string",
+                      "enum": ["fetch", "logs", "signal", "traces"],
+                      "x-enum-description": {}
+                    },
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "stringInput": {
+                  "description": "common parameter used by many query types",
+                  "type": "string"
+                },
+                "timeRange": {
+                  "description": "TimeRange represents the query range\nNOTE: unlike generic /ds/query, we can now send explicit time values in each query\nNOTE: the values for timeRange are not saved in a dashboard, they are constructed on the fly",
+                  "type": "object",
+                  "required": ["from", "to"],
+                  "properties": {
+                    "from": {
+                      "description": "From is the start time of the query.",
+                      "type": "string",
+                      "default": "now-6h"
+                    },
+                    "to": {
+                      "description": "To is the end time of the query.",
+                      "type": "string",
+                      "default": "now"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "usa": {
+                  "type": "object",
+                  "properties": {
+                    "fields": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "mode": {
+                      "type": "string"
+                    },
+                    "period": {
+                      "type": "string"
+                    },
+                    "states": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "withNil": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
             }
           },
           "to": {
@@ -1394,6 +2106,179 @@
         "description": "todo... improve schema",
         "type": "object",
         "additionalProperties": true
+      },
+      "DataResponse": {
+        "description": "Generic query properties",
+        "type": "object",
+        "properties": {
+          "datasource": {
+            "description": "The datasource",
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "apiVersion": {
+                "description": "The apiserver version",
+                "type": "string"
+              },
+              "type": {
+                "description": "The datasource plugin type",
+                "type": "string"
+              },
+              "uid": {
+                "description": "Datasource UID (NOTE: name in k8s)",
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "hide": {
+            "description": "true if query is disabled (ie should not be returned to the dashboard)\nNOTE: this does not always imply that the query should not be executed since\nthe results from a hidden query may be used as the input to other queries (SSE etc)",
+            "type": "boolean"
+          },
+          "intervalMs": {
+            "description": "Interval is the suggested duration between time points in a time series query.\nNOTE: the values for intervalMs is not saved in the query model.  It is typically calculated\nfrom the interval required to fill a pixels in the visualization",
+            "type": "number"
+          },
+          "maxDataPoints": {
+            "description": "MaxDataPoints is the maximum number of data points that should be returned from a time series query.\nNOTE: the values for maxDataPoints is not saved in the query model.  It is typically calculated\nfrom the number of pixels visible in a visualization",
+            "type": "integer"
+          },
+          "queryType": {
+            "description": "QueryType is an optional identifier for the type of query.\nIt can be used to distinguish different types of queries.",
+            "type": "string"
+          },
+          "refId": {
+            "description": "RefID is the unique identifier of the query, set by the frontend call.",
+            "type": "string"
+          },
+          "resultAssertions": {
+            "description": "Optionally define expected query result behavior",
+            "type": "object",
+            "required": ["typeVersion"],
+            "properties": {
+              "maxFrames": {
+                "description": "Maximum frame count",
+                "type": "integer"
+              },
+              "type": {
+                "description": "Type asserts that the frame matches a known type structure.\n\n\nPossible enum values:\n - `\"\"` \n - `\"timeseries-wide\"` \n - `\"timeseries-long\"` \n - `\"timeseries-many\"` \n - `\"timeseries-multi\"` \n - `\"directory-listing\"` \n - `\"table\"` \n - `\"numeric-wide\"` \n - `\"numeric-multi\"` \n - `\"numeric-long\"` \n - `\"log-lines\"` ",
+                "type": "string",
+                "enum": [
+                  "",
+                  "timeseries-wide",
+                  "timeseries-long",
+                  "timeseries-many",
+                  "timeseries-multi",
+                  "directory-listing",
+                  "table",
+                  "numeric-wide",
+                  "numeric-multi",
+                  "numeric-long",
+                  "log-lines"
+                ],
+                "x-enum-description": {}
+              },
+              "typeVersion": {
+                "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/.",
+                "type": "array",
+                "maxItems": 2,
+                "minItems": 2,
+                "items": {
+                  "type": "integer"
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          "timeRange": {
+            "description": "TimeRange represents the query range\nNOTE: unlike generic /ds/query, we can now send explicit time values in each query\nNOTE: the values for timeRange are not saved in a dashboard, they are constructed on the fly",
+            "type": "object",
+            "required": ["from", "to"],
+            "properties": {
+              "from": {
+                "description": "From is the start time of the query.",
+                "type": "string",
+                "default": "now-6h"
+              },
+              "to": {
+                "description": "To is the end time of the query.",
+                "type": "string",
+                "default": "now"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": true
+      },
+      "QueryTypeDefinitionSpec": {
+        "type": "object",
+        "required": ["schema", "examples"],
+        "properties": {
+          "changelog": {
+            "description": "Changelog defines the changed from the previous version\nAll changes in the same version *must* be backwards compatible\nOnly notable changes will be shown here, for the full version history see git!",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "description": "Describe whe the query type is for",
+            "type": "string"
+          },
+          "discriminators": {
+            "description": "Multiple schemas can be defined using discriminators",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["field", "value"],
+              "properties": {
+                "field": {
+                  "description": "DiscriminatorField is the field used to link behavior to this specific\nquery type.  It is typically \"queryType\", but can be another field if necessary",
+                  "type": "string"
+                },
+                "value": {
+                  "description": "The discriminator value",
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "examples": {
+            "description": "Examples (include a wrapper) ideally a template!",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "description": "Optionally explain why the example is interesting",
+                  "type": "string"
+                },
+                "name": {
+                  "description": "Version identifier or empty if only one exists",
+                  "type": "string"
+                },
+                "saveModel": {
+                  "description": "An example value saved that can be saved in a dashboard",
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "schema": {
+            "description": "The query schema represents the properties that can be sent to the API\nIn many cases, this may be the same properties that are saved in a dashboard\nIn the case where the save model is different, we must also specify a save model",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/schema"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
       },
       "InlineSecureValue": {
         "description": "Allow access to a secure value inside",
@@ -1562,6 +2447,49 @@
           }
         ]
       },
+      "QueryDataRequest": {
+        "description": "Generic query request with shared time across all values Copied from: https://github.com/grafana/grafana/blob/main/pkg/api/dtos/models.go#L62",
+        "type": "object",
+        "required": ["from", "to", "queries"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "debug": {
+            "description": "Optionally include debug information in the response",
+            "type": "boolean"
+          },
+          "from": {
+            "description": "From is the start time of the query.",
+            "type": "string",
+            "default": ""
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "queries": {
+            "description": "Datasource queries",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DataResponse"
+            }
+          },
+          "to": {
+            "description": "To is the end time of the query.",
+            "type": "string",
+            "default": ""
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "grafana-testdata-datasource.datasource.grafana.app",
+            "kind": "QueryDataRequest",
+            "version": "v0alpha1"
+          }
+        ]
+      },
       "QueryDataResponse": {
         "description": "Wraps backend.QueryDataResponse, however it includes TypeMeta and implements runtime.Object",
         "type": "object",
@@ -1592,6 +2520,83 @@
           {
             "group": "grafana-testdata-datasource.datasource.grafana.app",
             "kind": "QueryDataResponse",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "QueryTypeDefinition": {
+        "description": "Defines a query behavior in a datasource.  This is a similar model to a CRD where the payload describes a valid query",
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ObjectMeta"
+              }
+            ]
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QueryTypeDefinitionSpec"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "grafana-testdata-datasource.datasource.grafana.app",
+            "kind": "QueryTypeDefinition",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "QueryTypeDefinitionList": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/QueryTypeDefinition"
+                }
+              ]
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "grafana-testdata-datasource.datasource.grafana.app",
+            "kind": "QueryTypeDefinitionList",
             "version": "v0alpha1"
           }
         ]
