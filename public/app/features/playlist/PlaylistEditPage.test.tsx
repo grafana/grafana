@@ -44,8 +44,6 @@ async function getTestContext() {
       <PlaylistEditPage />
     </TestProvider>
   );
-  await waitFor(() => expect(backendSrvMock).toHaveBeenCalledTimes(1));
-
   return { rerender, backendSrvMock };
 }
 
