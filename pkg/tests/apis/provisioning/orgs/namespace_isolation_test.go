@@ -3,11 +3,14 @@ package orgs
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -208,5 +211,155 @@ func TestCrossNamespaceIsolation_FolderSync(t *testing.T) {
 		assert.Len(t, orgBFolders.Items, 1, "orgB should still have 1 folder after re-sync")
 
 		t.Log("✓ Re-sync completed successfully without cross-namespace conflicts")
+	})
+
+	// Step 7: Verify namespace in files is ignored (security boundary)
+	t.Run("verify namespace in files is ignored", func(t *testing.T) {
+		// Create a repository with a dashboard that explicitly specifies a different namespace
+		repoPath := t.TempDir()
+
+		// Create a dashboard YAML with wrong namespace
+		dashboardYAML := fmt.Sprintf(`apiVersion: dashboard.grafana.app/v2beta1
+kind: Dashboard
+metadata:
+  name: namespace-test-dashboard
+  namespace: %s
+spec:
+  title: Dashboard with wrong namespace
+  layout:
+    kind: GridLayout
+    spec:
+      items: []
+`, orgBHelper.Namespace) // Try to put it in orgB's namespace
+
+		err := os.WriteFile(filepath.Join(repoPath, "test-folder", "dashboard.yaml"), []byte(dashboardYAML), 0644)
+		require.NoError(t, err)
+
+		// Create repo in orgA that syncs this dashboard
+		const repoName = "namespace-override-test"
+		orgAHelper.CreateRepo(t, common.TestRepo{
+			Name:     repoName,
+			Target:   "folder",
+			Path:     repoPath,
+			SkipSync: true,
+		})
+
+		// Sync the repository
+		orgAHelper.SyncAndWait(t, repoName, nil)
+
+		// Verify the dashboard was created in orgA's namespace, NOT orgB's
+		dashboards, err := orgAHelper.DashboardsV2beta1.Resource.List(context.Background(), metav1.ListOptions{})
+		require.NoError(t, err)
+
+		// Find our dashboard
+		var testDashboard *unstructured.Unstructured
+		for i := range dashboards.Items {
+			dash := &dashboards.Items[i]
+			if dash.GetName() == "namespace-test-dashboard" {
+				testDashboard = dash
+				break
+			}
+		}
+
+		require.NotNil(t, testDashboard, "Dashboard should have been created")
+
+		// CRITICAL: Dashboard should be in orgA's namespace, not orgB's
+		assert.Equal(t, orgAHelper.Namespace, testDashboard.GetNamespace(),
+			"Dashboard namespace should match repository namespace (orgA), not the namespace in the file (orgB)")
+		assert.NotEqual(t, orgBHelper.Namespace, testDashboard.GetNamespace(),
+			"Dashboard should NOT be in orgB namespace despite file specifying it")
+
+		// Verify orgB cannot see this dashboard
+		orgBDashboards, err := orgBHelper.DashboardsV2beta1.Resource.List(context.Background(), metav1.ListOptions{})
+		require.NoError(t, err)
+		for i := range orgBDashboards.Items {
+			dash := &orgBDashboards.Items[i]
+			assert.NotEqual(t, "namespace-test-dashboard", dash.GetName(),
+				"orgB should not have access to dashboard created in orgA")
+		}
+
+		t.Logf("✓ Namespace specified in file (%s) was correctly ignored, dashboard created in repo namespace (%s)",
+			orgBHelper.Namespace, orgAHelper.Namespace)
+	})
+
+	// Step 8: Verify namespace in files endpoint is also ignored
+	t.Run("verify namespace in files endpoint is ignored", func(t *testing.T) {
+		// Create a repository for files endpoint testing
+		repoPath := t.TempDir()
+		const repoName = "files-endpoint-test"
+
+		orgAHelper.CreateRepo(t, common.TestRepo{
+			Name:     repoName,
+			Target:   "folder",
+			Path:     repoPath,
+			SkipSync: true,
+		})
+
+		// Create a dashboard JSON that specifies orgB's namespace
+		dashboardJSON := fmt.Sprintf(`{
+  "apiVersion": "dashboard.grafana.app/v2beta1",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "files-endpoint-dashboard",
+    "namespace": "%s"
+  },
+  "spec": {
+    "title": "Dashboard via files endpoint with wrong namespace",
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": []
+      }
+    }
+  }
+}`, orgBHelper.Namespace)
+
+		// Use the files endpoint to create the dashboard
+		result := orgAHelper.AdminREST.Post().
+			Namespace(orgAHelper.Namespace).
+			Resource("repositories").
+			Name(repoName).
+			SubResource("files", "test-folder", "dashboard.json").
+			Body([]byte(dashboardJSON)).
+			SetHeader("Content-Type", "application/json").
+			Do(context.Background())
+
+		require.NoError(t, result.Error(), "files endpoint should accept the dashboard")
+
+		// Trigger sync to persist the changes
+		orgAHelper.SyncAndWait(t, repoName, nil)
+
+		// Verify the dashboard was created in orgA's namespace
+		dashboards, err := orgAHelper.DashboardsV2beta1.Resource.List(context.Background(), metav1.ListOptions{})
+		require.NoError(t, err)
+
+		var filesDashboard *unstructured.Unstructured
+		for i := range dashboards.Items {
+			dash := &dashboards.Items[i]
+			if dash.GetName() == "files-endpoint-dashboard" {
+				filesDashboard = dash
+				break
+			}
+		}
+
+		require.NotNil(t, filesDashboard, "Dashboard created via files endpoint should exist")
+
+		// CRITICAL: Dashboard should be in orgA's namespace, not orgB's
+		assert.Equal(t, orgAHelper.Namespace, filesDashboard.GetNamespace(),
+			"Files endpoint should ignore namespace in JSON and use repository namespace (orgA)")
+		assert.NotEqual(t, orgBHelper.Namespace, filesDashboard.GetNamespace(),
+			"Dashboard should NOT be in orgB namespace despite JSON specifying it")
+
+		// Verify orgB cannot see this dashboard
+		orgBDashboards, err := orgBHelper.DashboardsV2beta1.Resource.List(context.Background(), metav1.ListOptions{})
+		require.NoError(t, err)
+		for i := range orgBDashboards.Items {
+			dash := &orgBDashboards.Items[i]
+			assert.NotEqual(t, "files-endpoint-dashboard", dash.GetName(),
+				"orgB should not have access to dashboard created via files endpoint in orgA")
+		}
+
+		t.Logf("✓ Files endpoint correctly ignored namespace (%s) in JSON, dashboard created in repo namespace (%s)",
+			orgBHelper.Namespace, orgAHelper.Namespace)
 	})
 }
