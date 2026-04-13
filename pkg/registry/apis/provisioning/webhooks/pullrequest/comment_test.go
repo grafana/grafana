@@ -220,6 +220,61 @@ func TestGenerateComment(t *testing.T) {
 	}
 }
 
+func TestGenerateComment_NilParsedInTableTemplate(t *testing.T) {
+	repo := NewMockPullRequestRepo(t)
+	repo.On("CommentPullRequest", context.Background(), 1, mock.Anything).Return(nil)
+
+	info := changeInfo{
+		GrafanaBaseURL: "http://host/",
+		Changes: []fileChangeInfo{
+			{
+				Parsed: &resources.ParsedResource{
+					Info: &repository.FileInfo{
+						Path: "valid.json",
+					},
+					Action: v0alpha1.ResourceActionCreate,
+					GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+				},
+				Title:      "Valid Dashboard",
+				PreviewURL: "http://grafana/admin/preview",
+			},
+			{
+				Change: repository.VersionedFileChange{
+					Action: repository.FileActionDeleted,
+					Path:   "deleted-file.json",
+				},
+				Error: "delete feedback not yet implemented",
+			},
+		},
+	}
+
+	commenter := NewCommenter(false)
+	err := commenter.Comment(context.Background(), repo, 1, info)
+	require.NoError(t, err)
+}
+
+func TestGenerateComment_SingleChangeNilParsed(t *testing.T) {
+	repo := NewMockPullRequestRepo(t)
+	repo.On("CommentPullRequest", context.Background(), 1, mock.Anything).Return(nil)
+
+	info := changeInfo{
+		GrafanaBaseURL: "http://host/",
+		Changes: []fileChangeInfo{
+			{
+				Change: repository.VersionedFileChange{
+					Action: repository.FileActionCreated,
+					Path:   "unparseable-file.json",
+				},
+				Error: "parse error",
+			},
+		},
+	}
+
+	commenter := NewCommenter(false)
+	err := commenter.Comment(context.Background(), repo, 1, info)
+	require.NoError(t, err)
+}
+
 func TestCommenter_ShowImageRendererNote(t *testing.T) {
 	t.Run("note appears when showImageRendererNote is true", func(t *testing.T) {
 		repo := NewMockPullRequestRepo(t)
