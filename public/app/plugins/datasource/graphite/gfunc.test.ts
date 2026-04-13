@@ -1,4 +1,4 @@
-import gfunc, { FuncDefs, FuncInstance } from './gfunc';
+import gfunc, { type FuncDefs, FuncInstance } from './gfunc';
 
 describe('gfunc', () => {
   const INDEX: FuncDefs = {

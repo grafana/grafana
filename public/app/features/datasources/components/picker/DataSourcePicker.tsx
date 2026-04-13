@@ -6,16 +6,16 @@ import { useOverlay } from '@react-aria/overlays';
 import { debounce } from 'lodash';
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import * as React from 'react';
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceInstanceSettings, type GrafanaTheme2, type ScopedVars } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { FavoriteDatasources, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
-import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
+import { type FavoriteDatasources, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
+import { type DataQuery, type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
 import { Button, floatingUtils, Icon, Input, ModalsController, Portal, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
-import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
+import { type GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
 import { useDatasource, useDatasources } from '../../hooks';
 
@@ -44,6 +44,8 @@ export interface DataSourcePickerProps {
   noDefault?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  /** When provided, used to resolve variable expressions (e.g. section-level datasource variables) */
+  scopedVars?: ScopedVars;
 
   // DS filters
   tracing?: boolean;
@@ -95,7 +97,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
   // Used to move the focus to the footer when tabbing from the input
   const [footerRef, setFooterRef] = useState<HTMLElement | null>();
-  const currentDataSourceInstanceSettings = useDatasource(current);
+  const currentDataSourceInstanceSettings = useDatasource(current, props.scopedVars);
   const currentValue = Boolean(!current && noDefault) ? undefined : currentDataSourceInstanceSettings;
   const prefixIcon =
     filterTerm && isOpen ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={currentValue} />;
@@ -335,6 +337,7 @@ export interface PickerContentProps extends DataSourcePickerProps {
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
   const { filterTerm, onChange, current, filter, dataSources, favoriteDataSources } = props;
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings) => {
@@ -347,7 +350,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 
   return (
     <div style={props.style} ref={ref} className={styles.container}>
-      <ScrollContainer showScrollIndicators>
+      <ScrollContainer showScrollIndicators ref={scrollRef}>
         <DataSourceList
           {...props}
           favoriteDataSources={favoriteDataSources}
@@ -362,6 +365,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
             })
           }
           dataSources={dataSources}
+          scrollRef={scrollRef}
         ></DataSourceList>
       </ScrollContainer>
       <FocusScope>
@@ -381,6 +385,19 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
       borderRadius: theme.shape.radius.default,
       boxShadow: theme.shadows.z3,
       overflow: 'hidden',
+      minWidth: calculateMinWidth('97vw'),
+      [theme.breakpoints.up('md')]: {
+        minWidth: calculateMinWidth('80vw'),
+      },
+      [theme.breakpoints.up('lg')]: {
+        minWidth: calculateMinWidth('60vw'),
+      },
+      [theme.breakpoints.up('xl')]: {
+        minWidth: calculateMinWidth('50vw'),
+      },
+      [theme.breakpoints.up('xxl')]: {
+        minWidth: calculateMinWidth('40vw'),
+      },
     }),
     picker: css({
       background: theme.colors.background.secondary,
@@ -398,6 +415,10 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
       backgroundColor: theme.colors.background.secondary,
     }),
   };
+}
+
+function calculateMinWidth(width: string): string {
+  return `min(700px, ${width})`;
 }
 
 export interface FooterProps extends PickerContentProps {}

@@ -1,10 +1,10 @@
-import { ComponentType } from 'react';
+import { type ComponentType } from 'react';
 
-import { EventBus } from '../events/types';
-import { DataFrame } from '../types/dataFrame';
-import { VariableSuggestionsScope, VariableSuggestion } from '../types/dataLink';
-import { InterpolateFunction } from '../types/panel';
-import { Registry, RegistryItem } from '../utils/Registry';
+import { type EventBus } from '../events/types';
+import { type DataFrame } from '../types/dataFrame';
+import { type VariableSuggestionsScope, type VariableSuggestion } from '../types/dataLink';
+import { type InterpolateFunction } from '../types/panel';
+import { Registry, type RegistryItem } from '../utils/Registry';
 
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 

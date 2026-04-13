@@ -1,7 +1,7 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/QueryPattern.tsx
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Card, useStyles2 } from '@grafana/ui';
 
@@ -9,7 +9,7 @@ import { promqlGrammar } from '../promql';
 
 import { RawQuery } from './shared/RawQuery';
 import { promQueryModeller } from './shared/modeller_instance';
-import { PromQueryPattern } from './types';
+import { type PromQueryPattern } from './types';
 
 type Props = {
   pattern: PromQueryPattern;

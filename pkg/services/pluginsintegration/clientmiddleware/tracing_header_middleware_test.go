@@ -239,23 +239,24 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			require.Equal(t, `true`, cdt.RunStreamReq.GetHTTPHeader(`X-Grafana-From-Expr`))
 		})
 
-		t.Run("sanitizes grpc header values for invalid utf-8", func(t *testing.T) {
+		t.Run("sanitizes header values to printable ASCII for gRPC", func(t *testing.T) {
 			req, err := http.NewRequest(http.MethodGet, "/some/thing", nil)
 			require.NoError(t, err)
 
-			// Create invalid UTF-8 strings
+			// Invalid UTF-8 (raw ISO-8859-1 bytes as sent by some browsers)
 			invalidUTF8Dashboard := string([]byte{'d', 'a', 's', 'h', 0xFF, 0xFE, 'u', 'i', 'd'})
 			invalidUTF8Panel := string([]byte{'p', 'a', 'n', 'e', 'l', 0x80, 'i', 'd'})
 
-			// Set headers with various characters that need to be sanitization
-			req.Header[`X-Dashboard-Title`] = []string{invalidUTF8Dashboard} // invalid UTF-8
-			req.Header[`X-Panel-Title`] = []string{invalidUTF8Panel}         // invalid UTF-8
+			// All of the following contain bytes outside the gRPC printable-ASCII range (0x20–0x7E)
+			// and must be sanitized regardless of whether they are valid UTF-8.
+			req.Header[`X-Dashboard-Title`] = []string{invalidUTF8Dashboard} // invalid UTF-8: bytes 0xFF, 0xFE
+			req.Header[`X-Panel-Title`] = []string{invalidUTF8Panel}         // invalid UTF-8: byte 0x80
+			req.Header[`X-Dashboard-Uid`] = []string{"dashboard\x00uid"}     // null byte (0x00 < 0x20)
+			req.Header[`X-Datasource-Uid`] = []string{"datasource\tuid"}     // tab (0x09 < 0x20)
+			req.Header[`X-Grafana-From-Expr`] = []string{"café résumé"}      // valid UTF-8, but é = 0xC3 0xA9 (> 0x7E)
 
-			// Set headers that don't need sanitization
-			req.Header[`X-Dashboard-Uid`] = []string{"dashboard\x00uid"} // control character
-			req.Header[`X-Datasource-Uid`] = []string{"datasource\tuid"} // tab character
-			req.Header[`X-Query-Group-Id`] = []string{"valid-text-123"}  // valid characters
-			req.Header[`X-Grafana-From-Expr`] = []string{"café résumé"}  // extended characters
+			// Pure printable ASCII — no sanitization needed
+			req.Header[`X-Query-Group-Id`] = []string{"valid-text-123"}
 
 			pluginCtx := backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -275,15 +276,17 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			// Invalid UTF-8 should be sanitized
+			// All non-printable-ASCII bytes are percent-encoded.
+			// Invalid UTF-8 (Latin-1 bytes) is first decoded to UTF-8, then encoded.
 			require.Equal(t, "dash%C3%BF%C3%BEuid", cdt.QueryDataReq.GetHTTPHeader(`X-Dashboard-Title`))
 			require.Equal(t, "panel%C2%80id", cdt.QueryDataReq.GetHTTPHeader(`X-Panel-Title`))
-
-			// Valid characters should remain unchanged
+			// Control characters below 0x20 are percent-encoded directly.
+			require.Equal(t, "dashboard%00uid", cdt.QueryDataReq.GetHTTPHeader(`X-Dashboard-Uid`))
+			require.Equal(t, "datasource%09uid", cdt.QueryDataReq.GetHTTPHeader(`X-Datasource-Uid`))
+			// Valid UTF-8 non-ASCII bytes (> 0x7E) are percent-encoded directly.
+			require.Equal(t, "caf%C3%A9 r%C3%A9sum%C3%A9", cdt.QueryDataReq.GetHTTPHeader(`X-Grafana-From-Expr`))
+			// Pure printable ASCII is unchanged.
 			require.Equal(t, "valid-text-123", cdt.QueryDataReq.GetHTTPHeader(`X-Query-Group-Id`))
-			require.Equal(t, "café résumé", cdt.QueryDataReq.GetHTTPHeader(`X-Grafana-From-Expr`))
-			require.Equal(t, "dashboard\x00uid", cdt.QueryDataReq.GetHTTPHeader(`X-Dashboard-Uid`))
-			require.Equal(t, "datasource\tuid", cdt.QueryDataReq.GetHTTPHeader(`X-Datasource-Uid`))
 		})
 	})
 }

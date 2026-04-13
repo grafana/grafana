@@ -1,12 +1,12 @@
-import { PayloadAction } from '@reduxjs/toolkit';
+import { type PayloadAction } from '@reduxjs/toolkit';
 
-import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
+import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 
 import { GENERAL_FOLDER_UID } from '../../search/constants';
-import { BrowseDashboardsState } from '../types';
+import { type BrowseDashboardsState } from '../types';
 import { isSharedWithMe, isVirtualTeamFolder } from '../utils/dashboards';
 
-import { fetchNextChildrenPage, refetchChildren } from './actions';
+import { type fetchNextChildrenPage, type refetchChildren } from './actions';
 import { findItem } from './utils';
 
 type FetchNextChildrenPageFulfilledAction = ReturnType<typeof fetchNextChildrenPage.fulfilled>;

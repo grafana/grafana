@@ -7,19 +7,19 @@ import { Alert, Button, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useContactPointsWithStatus } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
-import { FormAmRoute } from 'app/features/alerting/unified/types/amroutes';
+import { type FormAmRoute } from 'app/features/alerting/unified/types/amroutes';
 import { addUniqueIdentifierToRoute } from 'app/features/alerting/unified/utils/amroutes';
 import { getErrorCode, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import {
-  AlertmanagerGroup,
-  ObjectMatcher,
+  type AlertmanagerGroup,
+  type ObjectMatcher,
   ROUTES_META_SYMBOL,
-  RouteWithID,
+  type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { anyOfRequestState, isError } from '../../hooks/useAsync';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { ContactPointsState } from '../../types/alerting';
+import { type ContactPointsState } from '../../types/alerting';
 import { CONTACT_POINTS_STATE_INTERVAL_MS } from '../../utils/constants';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { ERROR_NEWER_CONFIGURATION } from '../../utils/k8s/errors';
@@ -27,7 +27,7 @@ import { routeAdapter } from '../../utils/routeAdapter';
 
 import { alertmanagerApi } from './../../api/alertmanagerApi';
 import { contactPointsStateDtoToModel } from './../../api/grafana';
-import { InsertPosition } from './../../utils/routeTree';
+import { type InsertPosition } from './../../utils/routeTree';
 import { findRoutesByMatchers, findRoutesMatchingPredicate } from './Filters';
 import { useAddPolicyModal, useAlertGroupsModal, useDeletePolicyModal, useEditPolicyModal } from './Modals';
 import { Policy } from './Policy';

@@ -21,6 +21,7 @@ manifest: {
 				namespaced: {
 					"/integrationtypeschemas": {
 						"GET": {
+							name: "getIntegrationtypeschemas"
 							response: {
 								items: [...#IntegrationTypeSchemaResource]
 							}
@@ -46,6 +47,7 @@ manifest: {
 				namespaced: {
 					"/integrationtypeschemas": {
 						"GET": {
+							name: "getIntegrationtypeschemas"
 							response: {
 								items: [...#IntegrationTypeSchemaResource]
 							}

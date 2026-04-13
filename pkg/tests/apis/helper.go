@@ -36,12 +36,14 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -89,6 +91,7 @@ type K8sTestHelper struct {
 	listenerAddress string
 	env             server.TestEnv
 	Namespacer      request.NamespaceMapper
+	httpClient      *http.Client
 
 	Org1 OrgUsers // default
 	OrgB OrgUsers // some other id
@@ -106,6 +109,9 @@ type K8sTestHelperOpts struct {
 	// If provided, these users will be used instead of creating new ones
 	Org1Users *OrgUsers
 	OrgBUsers *OrgUsers
+	// CustomHTTPClient replaces the shared HTTP client for this helper only.
+	// When nil, the shared default client is used.
+	CustomHTTPClient *http.Client
 }
 
 func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
@@ -174,11 +180,16 @@ func fillK8sOpts(t *testing.T, opts K8sTestHelperOpts, createDir func(*testing.T
 func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress string, env *server.TestEnv) *K8sTestHelper {
 	t.Helper()
 
+	httpClient := sharedHTTPClient
+	if opts.CustomHTTPClient != nil {
+		httpClient = opts.CustomHTTPClient
+	}
 	c := &K8sTestHelper{
 		env:             *env,
 		listenerAddress: listenerAddress,
 		t:               t,
 		Namespacer:      request.GetNamespaceMapper(nil),
+		httpClient:      httpClient,
 	}
 
 	cfgProvider, err := configprovider.ProvideService(c.env.Cfg)
@@ -192,10 +203,10 @@ func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress st
 	require.NoError(c.t, err)
 	c.teamSvc = teamSvc
 
-	userSvc, err := userimpl.ProvideService(
+	userSvc, err := userimpl.NewLegacyService(
 		c.env.SQLStore, orgSvc, c.env.Cfg, teamSvc,
 		localcache.ProvideService(), tracing.NewNoopTracerService(), quotaService,
-		supportbundlestest.NewFakeBundleService(), nil)
+		supportbundlestest.NewFakeBundleService())
 	require.NoError(c.t, err)
 	c.userSvc = userSvc
 
@@ -619,7 +630,7 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 		req.Header.Set(k, v)
 	}
 
-	rsp, err := sharedHTTPClient.Do(req)
+	rsp, err := c.httpClient.Do(req)
 	require.NoError(c.t, err)
 
 	r := K8sResponse[T]{
@@ -754,6 +765,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 		IsAdmin:        isGrafanaAdmin,
 		Name:           name,
 	})
+	require.NoError(c.t, err)
 
 	// for tests to work we need to add grafana admins to every org
 	if isGrafanaAdmin {
@@ -830,6 +842,7 @@ func (c *K8sTestHelper) AddOrUpdateTeamMember(user User, teamID int64, permissio
 		c.teamSvc,
 		c.userSvc,
 		resourcepermissions.NewActionSetService(),
+		apiserver.ProvideDirectRestConfigProvider(),
 	)
 	require.NoError(c.t, err)
 
@@ -1133,4 +1146,82 @@ func (c *K8sTestHelper) RequireApiErrorStatus(err error, reason metav1.StatusRea
 	}
 
 	return status
+}
+
+// SearchDownTestEnv provides a two-step test environment for graceful degradation testing.
+// Step 1 (Setup) starts Grafana normally so migrations complete and test data can be created.
+// Step 2 (RestartWithSearchDown) shuts down step 1 and restarts with search_inject_failures_percent=100,
+// so operations can be tested against a broken search indexer.
+type SearchDownTestEnv struct {
+	helper   *K8sTestHelper
+	baseOpts testinfra.GrafanaOpts
+}
+
+// Setup returns the step 1 helper where search is working normally.
+func (e *SearchDownTestEnv) Setup() *K8sTestHelper {
+	return e.helper
+}
+
+// RestartWithSearchDown shuts down helper from step 1 and starts a new Grafana instance
+// with search_inject_failures_percent=100. Returns the step 2 helper.
+func (e *SearchDownTestEnv) RestartWithSearchDown(t *testing.T) *K8sTestHelper {
+	t.Helper()
+
+	helper := e.helper
+	e.helper = nil // prevent use-after-shutdown
+
+	// Shut down step 1
+	helper.Shutdown()
+
+	// Preserve DB data across restart
+	oldSkipTruncate := os.Getenv("SKIP_DB_TRUNCATE")
+	require.NoError(t, os.Setenv("SKIP_DB_TRUNCATE", "true"))
+	t.Cleanup(func() {
+		if oldSkipTruncate == "" {
+			_ = os.Unsetenv("SKIP_DB_TRUNCATE")
+		} else {
+			_ = os.Setenv("SKIP_DB_TRUNCATE", oldSkipTruncate)
+		}
+	})
+
+	// Step 2: Start with search failures, reusing orgs/users from step 1
+	step2Opts := e.baseOpts
+	step2Opts.SearchInjectFailuresPercent = 100
+
+	return NewK8sTestHelperWithOpts(t, K8sTestHelperOpts{
+		GrafanaOpts: step2Opts,
+		Org1Users:   &helper.Org1,
+		OrgBUsers:   &helper.OrgB,
+	})
+}
+
+// NewSearchDownTestEnv creates a test environment for search graceful degradation tests.
+// Step 1 starts Grafana normally (search works). Call RestartWithSearchDown to get step 2
+// where search_inject_failures_percent=100.
+func NewSearchDownTestEnv(t *testing.T, baseOpts testinfra.GrafanaOpts) *SearchDownTestEnv {
+	t.Helper()
+
+	// Share the same SQLite DB file between steps
+	if db.IsTestDbSQLite() {
+		tmpDir := t.TempDir()
+		dbPath := tmpDir + "/no-search-graceful-degradation-test.db"
+		oldVal := os.Getenv("SQLITE_TEST_DB")
+		require.NoError(t, os.Setenv("SQLITE_TEST_DB", dbPath))
+		t.Cleanup(func() {
+			if oldVal == "" {
+				_ = os.Unsetenv("SQLITE_TEST_DB")
+			} else {
+				_ = os.Setenv("SQLITE_TEST_DB", oldVal)
+			}
+		})
+	}
+
+	// Step 1: Start normally (search working) with DB cleanup disabled
+	baseOpts.DisableDBCleanup = true
+	helper := NewK8sTestHelper(t, baseOpts)
+
+	return &SearchDownTestEnv{
+		helper:   helper,
+		baseOpts: baseOpts,
+	}
 }

@@ -49,7 +49,7 @@ func (a *sqlAdapter) Get(ctx context.Context, namespace, name string) (*annotati
 		SignedInUser: user,
 		OrgID:        orgID,
 		Limit:        1000,
-		AlertID:      -1,
+		Type:         "annotation",
 	}
 
 	items, err := a.repo.Find(ctx, query)
@@ -63,7 +63,7 @@ func (a *sqlAdapter) Get(ctx context.Context, namespace, name string) (*annotati
 		}
 	}
 
-	return nil, apierrors.NewNotFound(annotationV0.AnnotationKind().GroupVersionResource().GroupResource(), name)
+	return nil, apierrors.NewNotFound(annotationGR, name)
 }
 
 func (a *sqlAdapter) List(ctx context.Context, namespace string, opts ListOptions) (*AnnotationList, error) {
@@ -99,7 +99,7 @@ func (a *sqlAdapter) List(ctx context.Context, namespace string, opts ListOption
 		To:           opts.To,
 		Limit:        queryLimit,
 		Offset:       offset,
-		AlertID:      -1,
+		Type:         "annotation",
 		// CreatedBy holds the uid of the user to filter by. The SQL layer resolves
 		// this to a numeric user_id via subquery.
 		UserUID:  opts.CreatedBy,

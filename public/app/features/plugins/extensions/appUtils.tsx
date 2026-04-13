@@ -1,4 +1,4 @@
-import { AppPluginConfig, ExtensionInfo, PluginExtensionPoints } from '@grafana/data';
+import { type AppPluginConfig, type ExtensionInfo, PluginExtensionPoints } from '@grafana/data';
 
 /**
  * Returns a list of app plugin configs that match the given plugin ids.
@@ -32,7 +32,8 @@ export function getExtensionPointPluginDependenciesSync(extensionPointId: string
     .filter(
       (app) =>
         app.extensions.addedLinks.some((link) => link.targets.includes(extensionPointId)) ||
-        app.extensions.addedComponents.some((component) => component.targets.includes(extensionPointId))
+        app.extensions.addedComponents.some((component) => component.targets.includes(extensionPointId)) ||
+        app.extensions.addedFunctions.some((fn) => fn.targets.includes(extensionPointId))
     )
     .map((app) => app.id)
     .reduce((acc: string[], id: string) => {
