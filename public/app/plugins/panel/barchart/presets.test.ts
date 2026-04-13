@@ -236,8 +236,7 @@ describe('barchartPresetsSupplier', () => {
       'when rowCountMax is %s, first preset cardOptions.maxRows is undefined',
       (i) => {
         const dataSummary = getPanelDataSummary([createPresetFrame(3, 1000)]);
-        //@ts-expect-error
-        dataSummary.rowCountMax = i;
+        dataSummary.rowCountMax = i as number;
         const presets = barchartPresetsSupplier({ dataSummary });
         expect(presets![0].cardOptions?.maxRows).toEqual(undefined);
       }
