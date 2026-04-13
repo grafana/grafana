@@ -327,10 +327,6 @@ const (
 	// Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
 	FlagNewDashboardWithFiltersAndGroupBy = "newDashboardWithFiltersAndGroupBy"
 
-	// FlagDashboardAdHocAndGroupByWrapper
-	// Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it
-	FlagDashboardAdHocAndGroupByWrapper = "dashboardAdHocAndGroupByWrapper"
-
 	// FlagCloudWatchNewLabelParsing
 	// Updates CloudWatch label parsing to be more accurate
 	FlagCloudWatchNewLabelParsing = "cloudWatchNewLabelParsing"
@@ -406,6 +402,10 @@ const (
 	// FlagZanzanaNoLegacyClient
 	// Use openFGA as main authorization engine and disable legacy RBAC clietn.
 	FlagZanzanaNoLegacyClient = "zanzanaNoLegacyClient"
+
+	// FlagZanzanaSearchUsersPermissions
+	// Search users permissions using Zanzana.
+	FlagZanzanaSearchUsersPermissions = "zanzanaSearchUsersPermissions"
 
 	// FlagReloadDashboardsOnParamsChange
 	// Enables reload of dashboards on scopes, time range and variables changes
@@ -929,6 +929,10 @@ const (
 	// FlagCacheConfigUnifiedStorageMigration
 	// Enables cache configs data migration to unified storage
 	FlagCacheConfigUnifiedStorageMigration = "cacheConfigUnifiedStorageMigration"
+
+	// FlagQuerycachingRedirectToK8SApi
+	// Redirect caching service cache config reads from legacy storage to K8s API
+	FlagQuerycachingRedirectToK8SApi = "querycaching.redirectToK8SApi"
 
 	// FlagCompiledBootScript
 	// Boots the frontend using the boot.js script built from TS instead of the embedded boot script

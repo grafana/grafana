@@ -1417,20 +1417,6 @@
     },
     {
       "metadata": {
-        "name": "dashboardAdHocAndGroupByWrapper",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-12-18T18:58:21Z"
-      },
-      "spec": {
-        "description": "Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "dashboardAssistantPopover",
         "resourceVersion": "1773181791824",
         "creationTimestamp": "2026-03-10T22:29:51Z"
@@ -3216,6 +3202,24 @@
     },
     {
       "metadata": {
+        "name": "kubernetesQueryCachingRedirect",
+        "resourceVersion": "1775757646293",
+        "creationTimestamp": "2026-04-09T17:57:20Z",
+        "deletionTimestamp": "2026-04-10T17:37:19Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-09 18:00:46.293739 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Redirect caching service cache config reads from legacy storage to K8s API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesServiceAccountTokensApi",
         "resourceVersion": "1773060933794",
         "creationTimestamp": "2026-03-09T12:55:33Z"
@@ -4465,6 +4469,21 @@
     },
     {
       "metadata": {
+        "name": "queryCachingReadFromK8s",
+        "resourceVersion": "1775757121813",
+        "creationTimestamp": "2026-04-09T17:52:01Z",
+        "deletionTimestamp": "2026-04-09T17:57:20Z"
+      },
+      "spec": {
+        "description": "Read query cache configs from K8s API instead of legacy storage in the caching handler",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "queryEditorNext",
         "resourceVersion": "1775058514147",
         "creationTimestamp": "2026-02-18T17:05:38Z",
@@ -4591,6 +4610,61 @@
         "stage": "experimental",
         "codeowner": "@grafana/data-sources-plugins",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "querycaching.handlersReadFromK8SApi",
+        "resourceVersion": "1775842665327",
+        "creationTimestamp": "2026-04-10T17:37:45Z",
+        "deletionTimestamp": "2026-04-10T18:24:54Z"
+      },
+      "spec": {
+        "description": "Redirect caching service cache config reads from legacy storage to K8s API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "querycaching.handlersReadFromK8sApi",
+        "resourceVersion": "1775842639855",
+        "creationTimestamp": "2026-04-10T17:37:19Z",
+        "deletionTimestamp": "2026-04-10T17:37:45Z"
+      },
+      "spec": {
+        "description": "Redirect caching service cache config reads from legacy storage to K8s API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "querycaching.redirectToK8SApi",
+        "resourceVersion": "1775845520196",
+        "creationTimestamp": "2026-04-10T18:25:20Z"
+      },
+      "spec": {
+        "description": "Redirect caching service cache config reads from legacy storage to K8s API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "querycaching.redirectToK8sApi",
+        "resourceVersion": "1775845494083",
+        "creationTimestamp": "2026-04-10T18:24:54Z",
+        "deletionTimestamp": "2026-04-10T18:25:20Z"
+      },
+      "spec": {
+        "description": "Redirect caching service cache config reads from legacy storage to K8s API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "expression": "false"
       }
     },
@@ -5239,8 +5313,11 @@
     {
       "metadata": {
         "name": "teamLBACApiWriteFromAppPlatform",
-        "resourceVersion": "1775774995035",
-        "creationTimestamp": "2026-04-09T22:49:55Z"
+        "resourceVersion": "1775845194547",
+        "creationTimestamp": "2026-04-09T22:49:55Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-10 18:19:54.547668 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server",
@@ -5651,6 +5728,23 @@
       },
       "spec": {
         "description": "Use openFGA as main authorization engine and disable legacy RBAC clietn.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "zanzanaSearchUsersPermissions",
+        "resourceVersion": "1776076870099",
+        "creationTimestamp": "2026-03-25T09:17:53Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-13 10:41:10.099738 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Search users permissions using Zanzana.",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,

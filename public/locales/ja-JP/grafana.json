@@ -4304,6 +4304,9 @@
       "libraryPanel_other": "{{count}}個のライブラリパネル",
       "total_other": "{{count}}個のアイテム"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "このアイテムは、選択したアイテムと同じリポジトリにありません。"
@@ -8099,8 +8102,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "サポート対象外",
+      "badge-text-success": "",
       "badge-text-supported": "サポート対象",
       "label": {
+        "advisor": "",
         "alerting": "アラート",
         "type": "種類"
       }
@@ -14230,11 +14235,11 @@
       "view-as-list": "リストとして表示"
     },
     "dashboard-actions": {
-      "import": "インポート",
+      "import": "",
       "new": "新規",
       "new-dashboard": "新しいダッシュボード",
       "new-folder": "新規フォルダ",
-      "new-template-dashboard": "テンプレートからダッシュボードを作成"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "スコア"
@@ -15197,11 +15202,12 @@
     },
     "range-content": {
       "apply-button": "時間範囲を適用",
-      "default-error": "過去の日付または「{{now}}」を入力してください",
+      "default-error": "",
       "fiscal-year": "会計年度：{{from}}～{{to}}",
       "from-input": "開始",
       "open-input-calendar": "カレンダー",
-      "range-error": "「開始月」を「終了月」より後にすることはできません",
+      "range-error": "",
+      "required-error": "",
       "to-input": "終了月"
     },
     "range-picker": {

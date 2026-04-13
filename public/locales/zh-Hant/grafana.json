@@ -4304,6 +4304,9 @@
       "libraryPanel_other": "{{count}} 個資料庫面板",
       "total_other": "{{count}} 個項目"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "此項目與所選項目不在同一儲存庫中。"
@@ -8099,8 +8102,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "不支援",
+      "badge-text-success": "",
       "badge-text-supported": "支援",
       "label": {
+        "advisor": "",
         "alerting": "警報",
         "type": "類型"
       }
@@ -14230,11 +14235,11 @@
       "view-as-list": "以清單形式檢視"
     },
     "dashboard-actions": {
-      "import": "匯入",
+      "import": "",
       "new": "新",
       "new-dashboard": "新儀表板",
       "new-folder": "新資料夾",
-      "new-template-dashboard": "來自範本的儀表板"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "分數"
@@ -15197,11 +15202,12 @@
     },
     "range-content": {
       "apply-button": "套用時間範圍",
-      "default-error": "請輸入過去的日期或「{{now}}」",
+      "default-error": "",
       "fiscal-year": "會計年度：{{from}} - {{to}}",
       "from-input": "自",
       "open-input-calendar": "開啟行事曆",
-      "range-error": "「自」不能晚於「至」",
+      "range-error": "",
+      "required-error": "",
       "to-input": "至"
     },
     "range-picker": {
