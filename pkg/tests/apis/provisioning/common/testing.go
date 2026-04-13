@@ -412,19 +412,32 @@ func TestdataPath(filename string) string {
 }
 
 // RenderObject reads the filePath and renders it as a template with the given values.
-// The template is expected to be a YAML or JSON file.
-//
-// The values object is mutated to also include the helper property as `h`.
-func (h *ProvisioningTestHelper) RenderObject(t *testing.T, filePath string, values map[string]any) *unstructured.Unstructured {
+// The template is expected to be a YAML or JSON file. Values can be any type (struct, map, etc.).
+func (h *ProvisioningTestHelper) RenderObject(t *testing.T, filePath string, values any) *unstructured.Unstructured {
 	t.Helper()
 	file := readTestFile(t, filePath)
 
-	if values == nil {
-		values = make(map[string]any)
+	funcMap := template.FuncMap{
+		"provisioningPath": func() string { return h.ProvisioningPath },
+		"toJSON": func(v any) string {
+			if v == nil {
+				return "[]"
+			}
+			if s, ok := v.(string); ok {
+				if s == "" {
+					return "[]"
+				}
+				return s
+			}
+			b, err := json.Marshal(v)
+			if err != nil || string(b) == "null" {
+				return "[]"
+			}
+			return string(b)
+		},
 	}
-	values["h"] = h
 
-	tmpl, err := template.New(filePath).Parse(string(file))
+	tmpl, err := template.New(filePath).Funcs(funcMap).Parse(string(file))
 	require.NoError(t, err, "failed to parse template")
 
 	var buf strings.Builder
@@ -718,22 +731,19 @@ func (v RepositoryTemplateValues) AddToTemplateVars(templateVars map[string]any)
 		templateVars["SyncIntervalSeconds"] = *v.SyncIntervalSeconds
 	}
 	if v.Workflows != nil {
-		workflowsJSON, err := json.Marshal(*v.Workflows)
-		if err == nil {
-			templateVars["Workflows"] = string(workflowsJSON)
-		}
+		templateVars["Workflows"] = *v.Workflows
 	}
 }
 
 type LocalRepositorySpec struct {
-	Name               string
-	SyncEnabled        bool
-	SyncTarget         string
-	SyncIntervalSecond int
-	Path               string
-	Title              string
-	Description        string
-	Workflows          []string
+	Name                string
+	SyncEnabled         bool
+	SyncTarget          string
+	SyncIntervalSeconds int
+	Path                string
+	Title               string
+	Description         string
+	Workflows           []string
 }
 
 func (h *ProvisioningTestHelper) CreateLocalRepository(t *testing.T, repo LocalRepositorySpec) {
@@ -743,28 +753,7 @@ func (h *ProvisioningTestHelper) CreateLocalRepository(t *testing.T, repo LocalR
 		repo.SyncTarget = "folder"
 	}
 
-	templateVars := map[string]any{
-		"Name":        repo.Name,
-		"SyncEnabled": repo.SyncEnabled,
-		"SyncTarget":  repo.SyncTarget,
-		"Path":        repo.Path,
-	}
-	if repo.SyncIntervalSecond > 0 {
-		templateVars["SyncIntervalSeconds"] = repo.SyncIntervalSecond
-	}
-	if repo.Title != "" {
-		templateVars["Title"] = repo.Title
-	}
-	if repo.Description != "" {
-		templateVars["Description"] = repo.Description
-	}
-	if repo.Workflows != nil {
-		workflowsJSON, err := json.Marshal(repo.Workflows)
-		require.NoError(t, err)
-		templateVars["Workflows"] = string(workflowsJSON)
-	}
-
-	localRepo := h.RenderObject(t, TestdataPath("local.json.tmpl"), templateVars)
+	localRepo := h.RenderObject(t, TestdataPath("local.json.tmpl"), repo)
 
 	_, err := h.Repositories.Resource.Create(t.Context(), localRepo, metav1.CreateOptions{})
 	require.NoError(t, err)
@@ -776,7 +765,7 @@ type GitHubRepositorySpec struct {
 	GenerateName              string
 	SyncEnabled               bool
 	SyncTarget                string
-	SyncIntervalSecond        int
+	SyncIntervalSeconds       int
 	URL                       string
 	Branch                    string
 	Path                      string
@@ -796,31 +785,7 @@ func (h *ProvisioningTestHelper) CreateGitHubRepository(t *testing.T, repo GitHu
 		repo.SyncTarget = "folder"
 	}
 
-	templateVars := map[string]any{
-		"Name":                      repo.Name,
-		"GenerateName":              repo.GenerateName,
-		"SyncEnabled":               repo.SyncEnabled,
-		"SyncTarget":                repo.SyncTarget,
-		"URL":                       repo.URL,
-		"Branch":                    repo.Branch,
-		"Path":                      repo.Path,
-		"Title":                     repo.Title,
-		"Description":               repo.Description,
-		"Token":                     repo.Token,
-		"TokenUser":                 repo.TokenUser,
-		"WebhookSecret":             repo.WebhookSecret,
-		"GenerateDashboardPreviews": repo.GenerateDashboardPreviews,
-	}
-	if repo.SyncIntervalSecond > 0 {
-		templateVars["SyncIntervalSeconds"] = repo.SyncIntervalSecond
-	}
-	if repo.Workflows != nil {
-		workflowsJSON, err := json.Marshal(repo.Workflows)
-		require.NoError(t, err)
-		templateVars["Workflows"] = string(workflowsJSON)
-	}
-
-	githubRepo := h.RenderObject(t, TestdataPath("github.json.tmpl"), templateVars)
+	githubRepo := h.RenderObject(t, TestdataPath("github.json.tmpl"), repo)
 	createdRepo, err := h.Repositories.Resource.Create(t.Context(), githubRepo, metav1.CreateOptions{})
 	require.NoError(t, err)
 	createdName := createdRepo.GetName()

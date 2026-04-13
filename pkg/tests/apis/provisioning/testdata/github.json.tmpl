@@ -19,7 +19,7 @@
             "target": "{{ or .SyncTarget "folder" }}",
             "intervalSeconds": {{ or .SyncIntervalSeconds 60 }}
         },
-        "workflows": {{ or .Workflows "[]" }}
+        "workflows": {{ toJSON .Workflows }}
     },
     "secure": {
         "token": { "create": "{{ or .Token "" }}" },
