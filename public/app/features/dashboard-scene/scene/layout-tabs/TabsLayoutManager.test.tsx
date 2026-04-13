@@ -41,6 +41,49 @@ function buildTabsLayoutManager(tabs: TabItem[] = []) {
 }
 
 describe('TabsLayoutManager', () => {
+  describe('TabItem.getSlug', () => {
+    it('returns a plain slug when there are no collisions', () => {
+      const tab = new TabItem({ title: 'Overview' });
+      buildTabsLayoutManager([tab]);
+      expect(tab.getSlug()).toBe('overview');
+    });
+
+    it('disambiguates tabs whose titles differ only by special characters', () => {
+      const tab1 = new TabItem({ title: 'Foo' });
+      const tab2 = new TabItem({ title: 'Foo!' });
+      buildTabsLayoutManager([tab1, tab2]);
+
+      const slug1 = tab1.getSlug();
+      const slug2 = tab2.getSlug();
+
+      expect(slug1).not.toBe(slug2);
+      // both slugs should still be prefixed with the base slug
+      expect(slug1).toMatch(/^foo/);
+      expect(slug2).toMatch(/^foo/);
+    });
+
+    it('disambiguates all tabs in a larger collision group', () => {
+      const tab1 = new TabItem({ title: 'Metrics' });
+      const tab2 = new TabItem({ title: 'Metrics!' });
+      const tab3 = new TabItem({ title: 'Metrics?' });
+      buildTabsLayoutManager([tab1, tab2, tab3]);
+
+      const slugs = [tab1.getSlug(), tab2.getSlug(), tab3.getSlug()];
+      const uniqueSlugs = new Set(slugs);
+
+      expect(uniqueSlugs.size).toBe(3);
+    });
+
+    it('does not affect tabs with non-colliding titles', () => {
+      const tab1 = new TabItem({ title: 'Alpha' });
+      const tab2 = new TabItem({ title: 'Beta' });
+      buildTabsLayoutManager([tab1, tab2]);
+
+      expect(tab1.getSlug()).toBe('alpha');
+      expect(tab2.getSlug()).toBe('beta');
+    });
+  });
+
   describe('URL sync', () => {
     it('when on top level', () => {
       const tabsLayoutManager = buildTabsLayoutManager([new TabItem({ title: 'Performance' })]);

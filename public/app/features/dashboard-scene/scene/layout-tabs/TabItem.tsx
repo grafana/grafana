@@ -122,7 +122,31 @@ export class TabItem
   }
 
   public getSlug(): string {
-    return kbn.slugifyForUrl(interpolateSectionTitle(this, this.state.title ?? 'Tab'));
+    const baseSlug = kbn.slugifyForUrl(interpolateSectionTitle(this, this.state.title ?? 'Tab'));
+
+    //check for slug collisions among sibling tabs. When two different tabs produce
+    // the same base slug
+    let parent: TabsLayoutManager | undefined;
+    try {
+      parent = this.getParentLayout();
+    } catch {
+      // tab is not yet attached to a layout so no collision check is possible
+      return baseSlug;
+    }
+
+    const siblings = parent.getTabsIncludingRepeats();
+    const slugCollision = siblings.some(
+      (sibling) =>
+        sibling !== this &&
+        kbn.slugifyForUrl(interpolateSectionTitle(sibling, sibling.state.title ?? 'Tab')) === baseSlug
+    );
+
+    if (slugCollision) {
+      // apend a short suffix derived from the tab's unique scene key hence each colliding tab gets a distinct slug
+      return `${baseSlug}-${this.state.key}`;
+    }
+
+    return baseSlug;
   }
 
   public isCurrentTab() {
