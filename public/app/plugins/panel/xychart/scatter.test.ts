@@ -1,0 +1,236 @@
+import {
+  createDataFrame,
+  createTheme,
+  FieldType,
+  getDisplayProcessor,
+  MappingType,
+  ThresholdsMode,
+  type Field,
+} from '@grafana/data';
+import { FieldColorModeId, VisibilityMode } from '@grafana/schema';
+
+import { PointShape } from './panelcfg.gen';
+import { prepConfig } from './scatter';
+import { type XYSeries } from './types2';
+
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  UPlotConfigBuilder: jest.fn().mockImplementation(() => ({
+    addScale: jest.fn(),
+    addAxis: jest.fn(),
+    addSeries: jest.fn(),
+    setCursor: jest.fn(),
+    addHook: jest.fn(),
+    setMode: jest.fn(),
+  })),
+}));
+
+const theme = createTheme();
+
+function makeField(opts: {
+  name: string;
+  values: number[];
+  type?: FieldType;
+  config?: Record<string, unknown>;
+}): Field {
+  const { name, values, type = FieldType.number, config = {} } = opts;
+
+  const field = createDataFrame({
+    fields: [
+      {
+        name,
+        type,
+        values,
+        config: {
+          custom: {
+            pointSize: { fixed: 5, min: 1, max: 10 },
+            axisLabel: '',
+            axisPlacement: 'auto',
+            ...((config.custom as Record<string, unknown>) ?? {}),
+          },
+          ...Object.fromEntries(Object.entries(config).filter(([k]) => k !== 'custom')),
+        },
+      },
+    ],
+  }).fields[0];
+
+  field.display = getDisplayProcessor({ field, theme });
+
+  return field;
+}
+
+function makeSeries(overrides?: Partial<XYSeries>): XYSeries {
+  return {
+    showPoints: VisibilityMode.Always,
+    pointShape: PointShape.Circle,
+    pointStrokeWidth: 1,
+    fillOpacity: 50,
+    showLine: false,
+    lineWidth: 1,
+    lineStyle: { fill: 'solid' },
+    name: { value: 'Series A' },
+    x: { field: makeField({ name: 'x', values: [1, 2, 3] }) },
+    y: { field: makeField({ name: 'y', values: [10, 20, 30], config: { unit: 'y' } }) },
+    color: { fixed: '#ff0000' },
+    size: { fixed: 5 },
+    _rest: [],
+    ...overrides,
+  };
+}
+
+describe('prepConfig', () => {
+  it('returns null builder and warn when xySeries is empty', () => {
+    const result = prepConfig([], theme);
+    expect(result.builder).toBeNull();
+    expect(result.warn).toBeTruthy();
+  });
+
+  it('returns non-null builder when series provided', () => {
+    const result = prepConfig([makeSeries()], theme);
+    expect(result.builder).not.toBeNull();
+  });
+
+  it('returns null warn when series provided', () => {
+    const result = prepConfig([makeSeries()], theme);
+    expect(result.warn).toBeNull();
+  });
+});
+
+describe('prepData', () => {
+  it('returns faceted data with null first element', () => {
+    const series = makeSeries();
+    const { prepData } = prepConfig([series], theme);
+    const data = prepData!([series]);
+    expect(data[0]).toBeNull();
+  });
+
+  it('each series entry has [xValues, yValues, diameters, colors] shape', () => {
+    const series = makeSeries();
+    const { prepData } = prepConfig([series], theme);
+    const data = prepData!([series]);
+    const entry = data[1] as unknown[][];
+    expect(entry).toHaveLength(4);
+    expect(entry[0]).toEqual([1, 2, 3]);
+    expect(entry[1]).toEqual([10, 20, 30]);
+  });
+
+  it('uses fixed size when no size field mapped', () => {
+    const series = makeSeries({ size: { fixed: 7 } });
+    const { prepData } = prepConfig([series], theme);
+    const data = prepData!([series]);
+    const entry = data[1] as unknown[][];
+    expect(entry[2]).toEqual([7, 7, 7]);
+  });
+
+  it('fills fixed color when no color field mapped', () => {
+    const series = makeSeries({ color: { fixed: '#00ff00' } });
+    const { prepData } = prepConfig([series], theme);
+    const data = prepData!([series]);
+    const entry = data[1] as unknown[][];
+    expect(entry[3]).toEqual(['#00ff00', '#00ff00', '#00ff00']);
+  });
+
+  it('computes quadratic size scaling when size field mapped', () => {
+    const sizeField = makeField({ name: 'sz', values: [0, 50, 100] });
+    const series = makeSeries({
+      size: { field: sizeField, min: 2, max: 10, fixed: 5 },
+    });
+    const { prepData } = prepConfig([series], theme);
+    const data = prepData!([series]);
+    const diams = data[1]![2] as number[];
+
+    // Math: min=0, max=100, minPx=2²=4, maxPx=10²=100, pxRange=96
+    // val=0:   pct=0,   area=4+0*96=4,     diam=√4=2
+    // val=50:  pct=0.5, area=4+0.5*96=52,  diam=√52≈7.211
+    // val=100: pct=1,   area=4+1*96=100,   diam=√100=10
+    expect(diams[0]).toBeCloseTo(2, 5);
+    expect(diams[1]).toBeCloseTo(Math.sqrt(52), 5);
+    expect(diams[2]).toBeCloseTo(10, 5);
+  });
+
+  it('size scaling uses global min/max across multiple series', () => {
+    const series1 = makeSeries({
+      x: { field: makeField({ name: 'x', values: [1, 2] }) },
+      y: { field: makeField({ name: 'y', values: [10, 20], config: { unit: 'y' } }) },
+      size: { field: makeField({ name: 'sz', values: [0, 50] }), min: 2, max: 10, fixed: 5 },
+    });
+    const series2 = makeSeries({
+      name: { value: 'Series B' },
+      x: { field: makeField({ name: 'x', values: [3, 4] }) },
+      y: { field: makeField({ name: 'y', values: [30, 40], config: { unit: 'y' } }) },
+      size: { field: makeField({ name: 'sz', values: [50, 100] }), min: 2, max: 10, fixed: 5 },
+    });
+    const allSeries = [series1, series2];
+    const { prepData } = prepConfig(allSeries, theme);
+    const data = prepData!(allSeries);
+
+    // Global range: min=0, max=100 (across both series)
+    // series1 val=0: pct=0, diam=√4=2
+    // series2 val=100: pct=1, diam=√100=10
+    const diams1 = data[1]![2] as number[];
+    const diams2 = data[2]![2] as number[];
+    expect(diams1[0]).toBeCloseTo(2, 5);
+    expect(diams2[1]).toBeCloseTo(10, 5);
+  });
+});
+
+describe('fieldValueColors via prepConfig', () => {
+  it('does not throw with threshold-based color field', () => {
+    const colorField = makeField({
+      name: 'temp',
+      values: [10, 50, 90],
+      config: {
+        color: { mode: FieldColorModeId.Thresholds },
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 30, color: 'yellow' },
+            { value: 70, color: 'red' },
+          ],
+        },
+      },
+    });
+
+    const series = makeSeries({
+      color: { field: colorField, fixed: '#ff0000' },
+      x: { field: makeField({ name: 'x', values: [1, 2, 3] }) },
+      y: { field: makeField({ name: 'y', values: [10, 20, 30], config: { unit: 'y' } }) },
+    });
+
+    const { prepData } = prepConfig([series], theme);
+    const data = prepData!([series]);
+    expect(data).toHaveLength(2);
+    expect(data[1]).toHaveLength(4);
+  });
+
+  it('does not throw with value mapping color field', () => {
+    const colorField = makeField({
+      name: 'status',
+      values: [1, 2, 3],
+      config: {
+        mappings: [
+          {
+            type: MappingType.ValueToText,
+            options: {
+              '1': { text: 'low', color: 'green' },
+              '2': { text: 'med', color: 'yellow' },
+              '3': { text: 'high', color: 'red' },
+            },
+          },
+        ],
+      },
+    });
+
+    const series = makeSeries({
+      color: { field: colorField, fixed: '#ff0000' },
+      x: { field: makeField({ name: 'x', values: [1, 2, 3] }) },
+      y: { field: makeField({ name: 'y', values: [10, 20, 30], config: { unit: 'y' } }) },
+    });
+
+    const { prepData } = prepConfig([series], theme);
+    const data = prepData!([series]);
+    expect(data).toHaveLength(2);
+    expect(data[1]).toHaveLength(4);
+  });
+});
