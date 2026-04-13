@@ -58,7 +58,7 @@ function makePreset(
       },
       overrides: fieldConfig.overrides,
     },
-    cardOptions: { previewModifier, maxRows },
+    cardOptions: { previewModifier, maxRows, maxSeries: MAX_PREVIEW_SERIES },
   };
 }
 
@@ -247,6 +247,7 @@ const FC_MULTI_STACKED_BARS: FieldConfigSource<Partial<GraphFieldConfig>> = {
 
 const FEW_POINTS_THRESHOLD = 80;
 const MAX_PREVIEW_BAR_ROWS = 30;
+const MAX_PREVIEW_SERIES = 8;
 
 export const timeseriesPresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = ({ dataSummary }) => {
   if (
