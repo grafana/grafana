@@ -127,7 +127,7 @@
             "spec": {
               "options": {
                 "mode": "markdown",
-                "content": "| Type | Name | Value |\n|---|---|---|\n| Custom | `sec_custom` | $sec_custom |\n| Textbox | `sec_textbox` | $sec_textbox |\n| Constant | `sec_constant` | $sec_constant |\n| Interval | `sec_interval` | $sec_interval |\n| Datasource | `sec_datasource` | $sec_datasource |\n| Switch | `sec_switch` | $sec_switch |\n| Query | `sec_query` | $sec_query |\n| Filter | `sec_adhoc` | (filter bar) |\n| Group By | `sec_groupby` | (group bar) |"
+                "content": "| Type | Name | Value |\n|---|---|---|\n| Custom | `sec_custom` | $sec_custom |\n| Textbox | `sec_textbox` | $sec_textbox |\n| Constant | `sec_constant` | $sec_constant |\n| Interval | `sec_interval` | $sec_interval |\n| Datasource | `sec_datasource` | $sec_datasource |\n| Switch | `sec_switch` | $sec_switch |\n| Query | `sec_query` | $sec_query |\n| Ad Hoc | `sec_adhoc` | (filter bar) |\n| Group By | `sec_groupby` | (group bar) |"
               },
               "fieldConfig": { "defaults": {}, "overrides": [] }
             }
@@ -714,7 +714,7 @@
                             "group": "grafana-testdata-datasource",
                             "spec": {
                               "name": "sec_adhoc",
-                              "label": "Filter",
+                              "label": "Ad Hoc",
                               "baseFilters": [],
                               "filters": [],
                               "defaultKeys": [],
