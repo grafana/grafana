@@ -1939,7 +1939,7 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 // Unix timestamps (SQL backend).
 func resourceVersionTime(rv int64) time.Time {
 	micro := rv
-	if isSnowflake(rv) {
+	if IsSnowflake(rv) {
 		micro = rvmanager.RVFromSnowflake(rv)
 	}
 	return time.UnixMicro(micro)
