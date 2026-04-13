@@ -4331,6 +4331,9 @@
       "total_one": "{{count}} item",
       "total_other": "{{count}} item"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Dit item bevindt zich niet in dezelfde repository als de geselecteerde items."
@@ -8142,8 +8145,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Niet ondersteund",
+      "badge-text-success": "",
       "badge-text-supported": "Ondersteund",
       "label": {
+        "advisor": "",
         "alerting": "Alerting",
         "type": "Type"
       }
@@ -14316,11 +14321,11 @@
       "view-as-list": "Weergeven als lijst"
     },
     "dashboard-actions": {
-      "import": "Importeren",
+      "import": "",
       "new": "Nieuw",
       "new-dashboard": "Nieuw dashboard",
       "new-folder": "Nieuwe map",
-      "new-template-dashboard": "Dashboard van sjabloon"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Score"
@@ -15285,11 +15290,12 @@
     },
     "range-content": {
       "apply-button": "Tijdsbereik toepassen",
-      "default-error": "Voer een datum in het verleden of '{{now}}' in",
+      "default-error": "",
       "fiscal-year": "Boekjaar: {{from}} - {{to}}",
       "from-input": "Van",
       "open-input-calendar": "Open kalender",
-      "range-error": "'Van' mag niet na 'Tot' zijn",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Aan"
     },
     "range-picker": {

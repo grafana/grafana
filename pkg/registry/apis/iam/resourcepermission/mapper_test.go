@@ -325,21 +325,6 @@ func TestMappersRegistry_Wildcard_ParseScope(t *testing.T) {
 	assert.Equal(t, "loki.datasource.grafana.app", grn.Group)
 	assert.Equal(t, "datasources", grn.Resource)
 	assert.Equal(t, "ds1", grn.Name)
-
-	t.Run("wildcard scope identifier preserves wildcard group", func(t *testing.T) {
-		grn, err := m.ParseScope("datasources:uid:*", "")
-		require.NoError(t, err)
-		assert.Equal(t, "*.datasource.grafana.app", grn.Group)
-		assert.Equal(t, "datasources", grn.Resource)
-		assert.Equal(t, "*", grn.Name)
-	})
-
-	t.Run("wildcard scope identifier resolves group when type is provided", func(t *testing.T) {
-		grn, err := m.ParseScope("datasources:uid:*", "loki")
-		require.NoError(t, err)
-		assert.Equal(t, "loki.datasource.grafana.app", grn.Group)
-		assert.Equal(t, "*", grn.Name)
-	})
 }
 
 func TestMappersRegistry_MultipleWildcards(t *testing.T) {

@@ -76,6 +76,7 @@ require (
 	github.com/dolthub/vitess v0.0.0-20260225173707-20566e4abe9e // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
+	github.com/envoyproxy/protoc-gen-validate v1.3.0 // indirect
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
@@ -128,7 +129,7 @@ require (
 	github.com/google/pprof v0.0.0-20260115054156-294ebfa9ad83 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.7.0 // indirect
-	github.com/grafana/alerting v0.0.0-20260330164719-5946ccd00861 // indirect
+	github.com/grafana/alerting v0.0.0-20260330161147-03db0b961b17 // indirect
 	github.com/grafana/authlib v0.0.0-20260316143530-e1d123886039 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
@@ -136,6 +137,8 @@ require (
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.0 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.291.0 // indirect
 	github.com/grafana/grafana/apps/dashboard v0.0.0 // indirect
+	github.com/grafana/grafana/apps/folder v0.0.0 // indirect
+	github.com/grafana/grafana/apps/iam v0.0.0 // indirect
 	github.com/grafana/grafana/apps/provisioning v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/apiserver v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/infra/features v0.0.0 // indirect
@@ -213,6 +216,7 @@ require (
 	github.com/olekukonko/tablewriter v1.1.4 // indirect
 	github.com/open-feature/go-sdk v1.17.1 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 // indirect
+	github.com/openfga/api/proto v0.0.0-20260122164422-25e22cb1875b // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect

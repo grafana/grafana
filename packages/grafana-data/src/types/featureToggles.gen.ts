@@ -284,11 +284,6 @@ export interface FeatureToggles {
   */
   scanRowInvalidDashboardParseFallbackEnabled?: boolean;
   /**
-  * Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
-  * @default false
-  */
-  datasourceQueryTypes?: boolean;
-  /**
   * Register legacy datasource apis that use the numeric id
   * @default false
   */
@@ -728,6 +723,11 @@ export interface FeatureToggles {
   * @default false
   */
   zanzanaNoLegacyClient?: boolean;
+  /**
+  * Search users permissions using Zanzana.
+  * @default false
+  */
+  zanzanaSearchUsersPermissions?: boolean;
   /**
   * Enables reload of dashboards on scopes, time range and variables changes
   * @default false
