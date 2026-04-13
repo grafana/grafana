@@ -1565,7 +1565,7 @@ func TestIntegrationProvisioning_IncrementalSync_FileRenameIntoRelocatedFolder(t
 			"src/stay.json":    common.DashboardJSON("dash-stay", "Staying Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireFolderState(t, helper.Folders, folderUID, "Source Folder", "src", "")
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"dash-move": {Title: "Moving Dashboard", SourcePath: "src/move.json", Folder: folderUID},
@@ -1588,7 +1588,7 @@ func TestIntegrationProvisioning_IncrementalSync_FileRenameIntoRelocatedFolder(t
 		// The incremental sync should succeed (with a warning for the
 		// now-missing _folder.json in src/). The file rename of move.json
 		// into dst/ must not fail with an ID conflict error.
-		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 
 		// dst/ should carry the stable UID.
 		common.RequireFolderState(t, helper.Folders, folderUID, "Source Folder", "dst", "")
@@ -1621,7 +1621,7 @@ func TestIntegrationProvisioning_IncrementalSync_FileRenameIntoRelocatedFolder(t
 			"teamB/migrate.json": common.DashboardJSON("dash-migrate", "Migrate Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithWarning(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 		common.RequireFolderState(t, helper.Folders, srcUID, "Team A", "teamA", "")
 		teamBUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "teamB")
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
@@ -1645,7 +1645,7 @@ func TestIntegrationProvisioning_IncrementalSync_FileRenameIntoRelocatedFolder(t
 
 		// The dashboard rename into teamC/ must not fail with
 		// an ID conflict error for srcUID (registered at teamA/ in the tree).
-		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 
 		// teamC/ should carry the stable UID from the moved _folder.json.
 		common.RequireFolderState(t, helper.Folders, srcUID, "Team A", "teamC", "")
@@ -1676,7 +1676,7 @@ func TestIntegrationProvisioning_IncrementalSync_FileRenameIntoRelocatedFolder(t
 			"teamB/nested/migrate.json": common.DashboardJSON("dash-migrate", "Migrate Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithWarning(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
 		common.RequireFolderState(t, helper.Folders, srcUID, "Team A", "teamA", "")
 
 		// Move teamA's _folder.json to teamC/ and move the nested
@@ -1699,7 +1699,7 @@ func TestIntegrationProvisioning_IncrementalSync_FileRenameIntoRelocatedFolder(t
 		// directory lookup in applyIncrementalChanges only checks
 		// teamC/nested/. Without propagating the ancestor relocation,
 		// the ID conflict check rejects the valid move.
-		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
 
 		// teamC/ should carry the stable UID.
 		common.RequireFolderState(t, helper.Folders, srcUID, "Team A", "teamC", "")
@@ -1737,7 +1737,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDConflict(t *testing.T)
 			"thief/dash.json":    common.DashboardJSON("thief-dash", "Thief Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireFolderState(t, helper.Folders, ownerUID, "Owner Folder", "owner", "")
 		common.RequireFolderState(t, helper.Folders, thiefUID, "Thief Folder", "thief", "")
 
@@ -1797,7 +1797,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDConflict(t *testing.T)
 			"thief/dash.json":    common.DashboardJSON("thief-dash", "Thief Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireFolderState(t, helper.Folders, movingUID, "Moving Folder", "src", "")
 		common.RequireFolderState(t, helper.Folders, thiefUID, "Thief Folder", "thief", "")
 
@@ -1869,7 +1869,7 @@ func TestIntegrationProvisioning_IncrementalSync_NestedFolderRenameWithStableUID
 			"team/project/dash.json":    common.DashboardJSON("nrs-dash", "Nested Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"team", "team/project"})
 
 		parentBefore, err := helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
@@ -1892,7 +1892,7 @@ func TestIntegrationProvisioning_IncrementalSync_NestedFolderRenameWithStableUID
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		// Parent folder updated in place with new source path.
 		parentAfter, err := helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
@@ -1940,7 +1940,7 @@ func TestIntegrationProvisioning_IncrementalSync_NestedFolderRenameWithStableUID
 			"org/team/project/dash.json":    common.DashboardJSON("3l-dash", "Deep Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{
 			"org", "org/team", "org/team/project",
 		})
@@ -1965,7 +1965,7 @@ func TestIntegrationProvisioning_IncrementalSync_NestedFolderRenameWithStableUID
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 
 		// Grandparent updated in place.
 		gpAfter, err := helper.Folders.Resource.Get(ctx, grandparentUID, metav1.GetOptions{})
