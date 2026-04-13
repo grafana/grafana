@@ -185,7 +185,12 @@ export function DataSourcesListView({
         </ul>
       ) : (
         <div ref={scrollRef} className={styles.listContainer}>
-          <ul className={styles.virtualList} role="list" aria-label={t('data-sources.list.label', 'Data sources')} style={{ height: rowVirtualizer.getTotalSize() }}>
+          <ul
+            className={styles.virtualList}
+            role="list"
+            aria-label={t('data-sources.list.label', 'Data sources')}
+            style={{ height: rowVirtualizer.getTotalSize() }}
+          >
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               const dataSource = dataSources[virtualRow.index];
               if (!dataSource) {
