@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,7 +31,8 @@ func ToDashboardErrorResponse(ctx context.Context, pluginStore pluginstore.Store
 	}
 
 	// --- 400 Bad Request ---
-	if errors.Is(err, dashboards.ErrFolderNotFound) {
+	if errors.Is(err, dashboards.ErrFolderNotFound) ||
+		errors.Is(err, folder.ErrNameExists) {
 		return response.Error(http.StatusBadRequest, err.Error(), nil)
 	}
 
