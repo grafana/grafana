@@ -403,6 +403,10 @@ const (
 	// Use openFGA as main authorization engine and disable legacy RBAC clietn.
 	FlagZanzanaNoLegacyClient = "zanzanaNoLegacyClient"
 
+	// FlagZanzanaSearchUsersPermissions
+	// Search users permissions using Zanzana.
+	FlagZanzanaSearchUsersPermissions = "zanzanaSearchUsersPermissions"
+
 	// FlagReloadDashboardsOnParamsChange
 	// Enables reload of dashboards on scopes, time range and variables changes
 	FlagReloadDashboardsOnParamsChange = "reloadDashboardsOnParamsChange"

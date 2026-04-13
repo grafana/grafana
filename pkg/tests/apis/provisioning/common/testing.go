@@ -88,7 +88,9 @@ u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
 type ProvisioningTestHelper struct {
 	*apis.K8sTestHelper
 	ProvisioningPath string
+	Namespace        string // Namespace for this helper (set by WithNamespace or defaults to "default")
 
+	// Default clients for Org1 (backwards compatibility)
 	Repositories       *apis.K8sResourceClient
 	Connections        *apis.K8sResourceClient
 	Jobs               *apis.K8sResourceClient
@@ -100,6 +102,93 @@ type ProvisioningTestHelper struct {
 	AdminREST          *rest.RESTClient
 	EditorREST         *rest.RESTClient
 	ViewerREST         *rest.RESTClient
+}
+
+// WithNamespace returns a new ProvisioningTestHelper scoped to the specified namespace and user.
+// This is useful for multi-org testing where you need separate helpers for different organizations.
+func (h *ProvisioningTestHelper) WithNamespace(namespace string, user apis.User) *ProvisioningTestHelper {
+	gv := &schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"}
+
+	return &ProvisioningTestHelper{
+		ProvisioningPath: h.ProvisioningPath,
+		Namespace:        namespace,
+		K8sTestHelper:    h.K8sTestHelper,
+
+		Repositories: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       provisioning.RepositoryResourceInfo.GroupVersionResource(),
+		}),
+		Connections: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       provisioning.ConnectionResourceInfo.GroupVersionResource(),
+		}),
+		Jobs: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       provisioning.JobResourceInfo.GroupVersionResource(),
+		}),
+		Folders: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       folder.FolderResourceInfo.GroupVersionResource(),
+		}),
+		DashboardsV0: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       dashboardV0.DashboardResourceInfo.GroupVersionResource(),
+		}),
+		DashboardsV1: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
+		}),
+		DashboardsV2alpha1: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       dashboardsV2alpha1.DashboardResourceInfo.GroupVersionResource(),
+		}),
+		DashboardsV2beta1: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       dashboardsV2beta1.DashboardResourceInfo.GroupVersionResource(),
+		}),
+		AdminREST:  user.RESTClient(nil, gv),
+		EditorREST: user.RESTClient(nil, gv),
+		ViewerREST: user.RESTClient(nil, gv),
+	}
+}
+
+// Cleanup deletes all provisioning resources in the helper's namespace.
+// This should be called (typically via defer) after tests that create resources in specific namespaces.
+func (h *ProvisioningTestHelper) Cleanup(t *testing.T) {
+	t.Helper()
+	ctx := context.Background()
+
+	// Delete all repositories
+	if err := h.Repositories.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		t.Logf("warning: failed to delete repositories: %v", err)
+	}
+
+	// Delete all connections
+	if err := h.Connections.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		t.Logf("warning: failed to delete connections: %v", err)
+	}
+
+	// Delete all folders
+	if err := h.Folders.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		t.Logf("warning: failed to delete folders: %v", err)
+	}
+
+	// Delete all dashboards (V0, V1, V2alpha1, V2beta1)
+	for _, client := range []*apis.K8sResourceClient{h.DashboardsV0, h.DashboardsV1, h.DashboardsV2alpha1, h.DashboardsV2beta1} {
+		if client != nil {
+			if err := client.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil && !apierrors.IsNotFound(err) {
+				t.Logf("warning: failed to delete dashboards: %v", err)
+			}
+		}
+	}
 }
 
 func (h *ProvisioningTestHelper) SyncAndWait(t *testing.T, repo string, options *provisioning.SyncJobOptions) {
@@ -114,7 +203,7 @@ func (h *ProvisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 	})
 
 	result := h.AdminREST.Post().
-		Namespace("default").
+		Namespace(h.Namespace).
 		Resource("repositories").
 		Name(repo).
 		SubResource("jobs").
@@ -1006,6 +1095,7 @@ func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provis
 
 	h := &ProvisioningTestHelper{
 		ProvisioningPath: provisioningPath,
+		Namespace:        "default", // Default namespace (org1)
 		K8sTestHelper:    k8sHelper,
 
 		Repositories:       repositories,
