@@ -2,20 +2,10 @@ package playlist
 
 import (
 	"encoding/json"
-	"fmt"
-	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 
-	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
-	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -69,51 +59,6 @@ func UnstructuredToLegacyPlaylistDTO(item unstructured.Unstructured) *PlaylistDT
 		}
 	}
 	return dto
-}
-
-func convertToK8sResource(v *PlaylistDTO, namespacer request.NamespaceMapper) *playlistv0alpha1.Playlist {
-	gvk := playlistv1.PlaylistKind().GroupVersionKind()
-	return convertToK8sResourceWithVersion(v, namespacer, gvk).(*playlistv1.Playlist)
-}
-
-// v0alpha1 and v1 are type aliases, so this can be used for both. the gvk param is only used to set the correct metadata, which is handled by the kind's zerovalue
-func convertToK8sResourceWithVersion(v *PlaylistDTO, namespacer request.NamespaceMapper, gvk schema.GroupVersionKind) runtime.Object {
-	spec := playlistv1.PlaylistSpec{
-		Title:    v.Name,
-		Interval: v.Interval,
-	}
-	for _, item := range v.Items {
-		spec.Items = append(spec.Items, playlistv1.PlaylistItem{
-			Type:  playlistv1.PlaylistPlaylistItemType(item.Type),
-			Value: item.Value,
-		})
-	}
-
-	p := &playlistv1.Playlist{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              v.Uid,
-			UID:               types.UID(v.Uid),
-			ResourceVersion:   fmt.Sprintf("%d", v.UpdatedAt),
-			CreationTimestamp: metav1.NewTime(time.UnixMilli(v.CreatedAt)),
-			Namespace:         namespacer(v.OrgID),
-		},
-		Spec: spec,
-	}
-	meta, err := utils.MetaAccessor(p)
-	if err == nil {
-		meta.SetUpdatedTimestampMillis(v.UpdatedAt)
-		if v.Id > 0 {
-			meta.SetDeprecatedInternalID(v.Id) // nolint:staticcheck
-		}
-	}
-
-	p.UID = gapiutil.CalculateClusterWideUID(p)
-
-	// set the correct TypeMeta based on the requested version
-	p.APIVersion = gvk.GroupVersion().String()
-	p.Kind = gvk.Kind
-
-	return p
 }
 
 // Read legacy ID from metadata annotations

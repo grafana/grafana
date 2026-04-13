@@ -4331,6 +4331,9 @@
       "total_one": "{{count}} objekt",
       "total_other": "{{count}} objekt"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Det här objektet finns inte i samma lagringsplats som de valda objekten."
@@ -8142,8 +8145,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Stöds inte",
+      "badge-text-success": "",
       "badge-text-supported": "Stöds",
       "label": {
+        "advisor": "",
         "alerting": "Varnar",
         "type": "Typ"
       }
@@ -14316,11 +14321,11 @@
       "view-as-list": "Visa som lista"
     },
     "dashboard-actions": {
-      "import": "Importera",
+      "import": "",
       "new": "Nyhet",
       "new-dashboard": "Ny instrumentpanel",
       "new-folder": "Ny mapp",
-      "new-template-dashboard": "Instrumentpanel från mall"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Betyg"
@@ -15285,11 +15290,12 @@
     },
     "range-content": {
       "apply-button": "Tillämpa tidsintervall",
-      "default-error": "Ange ett tidigare datum eller ”{{now}}”",
+      "default-error": "",
       "fiscal-year": "Räkenskapsår: {{from}}–{{to}}",
       "from-input": "Från",
       "open-input-calendar": "Öppna kalendern",
-      "range-error": "”Från” kan inte vara efter ”Till”",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Till"
     },
     "range-picker": {

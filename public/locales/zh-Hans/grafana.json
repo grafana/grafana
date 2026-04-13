@@ -4304,6 +4304,9 @@
       "libraryPanel_other": "{{count}} 个库面板",
       "total_other": "{{count}} 个项目"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "此项目与所选项目不在同一个存储库中。"
@@ -8099,8 +8102,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "不支持",
+      "badge-text-success": "",
       "badge-text-supported": "支持",
       "label": {
+        "advisor": "",
         "alerting": "警报",
         "type": "类型"
       }
@@ -14230,11 +14235,11 @@
       "view-as-list": "以列表形式查看"
     },
     "dashboard-actions": {
-      "import": "导入",
+      "import": "",
       "new": "新建",
       "new-dashboard": "新建仪表板",
       "new-folder": "新建文件夹",
-      "new-template-dashboard": "来自模板的数据面板"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "分数"
@@ -15197,11 +15202,12 @@
     },
     "range-content": {
       "apply-button": "应用时间范围",
-      "default-error": "请输入过去的日期或“{{now}}”",
+      "default-error": "",
       "fiscal-year": "财政年度：{{from}} - {{to}}",
       "from-input": "来自",
       "open-input-calendar": "打开日历",
-      "range-error": "“发件人”不能在“收件人”之后",
+      "range-error": "",
+      "required-error": "",
       "to-input": "结束"
     },
     "range-picker": {

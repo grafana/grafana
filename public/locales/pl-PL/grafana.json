@@ -4385,6 +4385,9 @@
       "total_many": "{{count}} elementów",
       "total_other": "{{count}} elementu"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Ten element nie znajduje się w tym samym repozytorium co wybrane elementy."
@@ -8228,8 +8231,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Nieobsługiwane",
+      "badge-text-success": "",
       "badge-text-supported": "Obsługiwane",
       "label": {
+        "advisor": "",
         "alerting": "Alerty",
         "type": "Typ"
       }
@@ -14488,11 +14493,11 @@
       "view-as-list": "Wyświetl jako listę"
     },
     "dashboard-actions": {
-      "import": "Importuj",
+      "import": "",
       "new": "Nowy",
       "new-dashboard": "Nowy pulpit",
       "new-folder": "Nowy folder",
-      "new-template-dashboard": "Pulpit z szablonu"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Wynik"
@@ -15461,11 +15466,12 @@
     },
     "range-content": {
       "apply-button": "Zastosuj zakres czasu",
-      "default-error": "Podaj datę z przeszłości lub wybierz „{{now}}”",
+      "default-error": "",
       "fiscal-year": "Rok podatkowy: {{from}} – {{to}}",
       "from-input": "Od",
       "open-input-calendar": "Otwórz kalendarz",
-      "range-error": "Wartość „Od” nie może następować po wartości „Do”",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Do"
     },
     "range-picker": {
