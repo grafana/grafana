@@ -32,7 +32,7 @@ test.describe(
 
       // Change timezone to UTC
       await page.getByTestId(selectors.components.TimeZonePicker.containerV2).click();
-      await page.getByRole('option', { name: 'UTC' }).click();
+      await page.getByRole('option', { name: 'Coordinated Universal Time ' }).click();
 
       // Close settings and refresh
       await dashboardPage

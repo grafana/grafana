@@ -97,7 +97,7 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
   switch (zone) {
     case InternalTimeZones.utc: {
       return {
-        name: 'UTC',
+        name: 'Coordinated Universal Time',
         ianaName: 'UTC',
         zone,
         countries: [],
@@ -131,7 +131,7 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
         abbreviation: 'Your local time',
         offsetInMins: new Date().getTimezoneOffset(),
         ...info,
-        name: 'Local browser time',
+        name: 'Browser Time',
         ianaName: info?.ianaName ?? '',
         zone,
       };

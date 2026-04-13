@@ -74,7 +74,7 @@ describe('SharedPreferences', () => {
   it('renders the timezone preference', async () => {
     await setup();
     const tzSelect = getSelectParent(screen.getByLabelText('Timezone'));
-    expect(tzSelect).toHaveTextContent('Local browser time');
+    expect(tzSelect).toHaveTextContent('Browser Time');
   });
 
   it('renders the week start preference', async () => {
