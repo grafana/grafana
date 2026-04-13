@@ -2,13 +2,17 @@ import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
-import { setBackendSrv } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 
 import { SharedPreferences } from './SharedPreferences';
+
+jest.mock('app/core/services/theme', () => ({
+  changeTheme: jest.fn(),
+}));
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -30,7 +34,7 @@ const selectComboboxOptionInTest = async (input: HTMLElement, optionOrOptions: s
 
 const setup = async () => {
   const view = render(<SharedPreferences resourceUri="user" preferenceType="user" />);
-  const themeSelect = await screen.findByRole('combobox', { name: 'Interface theme' });
+  const themeSelect = await screen.findByRole('combobox', { name: /interface theme/i });
   await waitFor(() => expect(themeSelect).not.toBeDisabled());
   return view;
 };
@@ -175,6 +179,28 @@ describe('SharedPreferences', () => {
         bookmarkUrls: [],
       },
     });
+  });
+
+  it('saves bright pink when selected from interface theme', async () => {
+    const originalGrafanaconThemes = config.featureToggles.grafanaconThemes;
+    config.featureToggles.grafanaconThemes = true;
+    try {
+      const capture = captureRequests();
+      const { user } = await setup();
+
+      await selectComboboxOptionInTest(
+        await screen.findByRole('combobox', { name: /interface theme/i }),
+        'Bright pink'
+      );
+      await user.click(screen.getByText('Save preferences'));
+
+      const requests = await capture;
+      const newPreferences = await getPrefsUpdateRequest(requests);
+
+      expect(newPreferences.theme).toBe('brightpink');
+    } finally {
+      config.featureToggles.grafanaconThemes = originalGrafanaconThemes;
+    }
   });
 
   it('refreshes the page after saving preferences', async () => {
