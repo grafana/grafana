@@ -21,6 +21,8 @@ import {
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
 
+import { isAdHocVariable } from './utils';
+
 export interface DashboardFiltersSetState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
 }
@@ -91,7 +93,7 @@ export class DashboardFiltersSet extends SceneObjectBase<DashboardFiltersSetStat
     if (!(variableSet instanceof SceneVariableSet)) {
       return [];
     }
-    return variableSet.state.variables.filter((v) => v.state.type === 'adhoc');
+    return variableSet.state.variables.filter(isAdHocVariable);
   }
 
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.state.dashboardRef);

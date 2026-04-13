@@ -16,6 +16,7 @@ import {
 } from '../../scene/types/EditableDashboardElement';
 import { DashboardLinksSet } from '../../settings/links/DashboardLinksSet';
 import { DashboardFiltersSet } from '../../settings/variables/DashboardFiltersSet';
+import { isAdHocVariable } from '../../settings/variables/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 
 import { DashboardAnnotationsList } from './DashboardAnnotationsList';
@@ -144,8 +145,7 @@ function useFiltersCategory(dashboard: DashboardScene): OptionsPaneCategoryDescr
       id: 'dashboard-filters',
     });
 
-    const hasFilters =
-      $variables instanceof SceneVariableSet && $variables.state.variables.some((v) => v.state.type === 'adhoc');
+    const hasFilters = $variables instanceof SceneVariableSet && $variables.state.variables.some(isAdHocVariable);
 
     if (hasFilters) {
       category.addItem(
@@ -184,7 +184,7 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
 
     if ($variables instanceof SceneVariableSet && $variables.state.variables.length) {
       const hasVariables = config.featureToggles.dashboardUnifiedDrilldownControls
-        ? $variables.state.variables.some((v) => v.state.type !== 'adhoc')
+        ? $variables.state.variables.some((v) => !isAdHocVariable(v))
         : true;
 
       if (hasVariables) {
