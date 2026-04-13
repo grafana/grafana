@@ -176,7 +176,7 @@ const (
 	FlagScanRowInvalidDashboardParseFallbackEnabled = "scanRowInvalidDashboardParseFallbackEnabled"
 
 	// FlagDatasourcesQueryTypes
-	// Load Query types from spec.{version}.query.types.{yaml|json}
+	// Load Query types from spec.{version}.query.{yaml|json}
 	FlagDatasourcesQueryTypes = "datasources.queryTypes"
 
 	// FlagDatasourcesLoadOpenAPI

@@ -473,7 +473,7 @@ var (
 		},
 		{
 			Name:            "datasources.queryTypes",
-			Description:     "Load Query types from spec.{version}.query.types.{yaml|json} ",
+			Description:     "Load Query types from spec.{version}.query.{yaml|json} ",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
