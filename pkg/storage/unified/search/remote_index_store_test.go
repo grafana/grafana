@@ -2,11 +2,11 @@ package search
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
-	"crypto/rand"
 	"path/filepath"
 	"strings"
 	"testing"
