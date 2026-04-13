@@ -598,10 +598,9 @@ func TestSnapshotAuthorizer(t *testing.T) {
 		assert.Equal(t, authorizer.DecisionDeny, decision)
 	})
 
-	t.Run("public mode allows anonymous get", func(t *testing.T) {
-		auth := NewSnapshotAuthorizer(acmock.New(), true)
+	t.Run("allows anonymous get", func(t *testing.T) {
+		auth := NewSnapshotAuthorizer(acmock.New(), false)
 
-		// No user in context, but public mode is on
 		decision, _, err := auth.Authorize(context.Background(), &testAttributes{
 			isResource: true,
 			resource:   "snapshots",
@@ -611,8 +610,8 @@ func TestSnapshotAuthorizer(t *testing.T) {
 		assert.Equal(t, authorizer.DecisionAllow, decision)
 	})
 
-	t.Run("public mode allows anonymous get dashboard subresource", func(t *testing.T) {
-		auth := NewSnapshotAuthorizer(acmock.New(), true)
+	t.Run("allows anonymous get dashboard subresource", func(t *testing.T) {
+		auth := NewSnapshotAuthorizer(acmock.New(), false)
 
 		decision, _, err := auth.Authorize(context.Background(), &testAttributes{
 			isResource:  true,
@@ -624,8 +623,8 @@ func TestSnapshotAuthorizer(t *testing.T) {
 		assert.Equal(t, authorizer.DecisionAllow, decision)
 	})
 
-	t.Run("public mode still denies anonymous create", func(t *testing.T) {
-		auth := NewSnapshotAuthorizer(acmock.New(), true)
+	t.Run("denies anonymous create", func(t *testing.T) {
+		auth := NewSnapshotAuthorizer(acmock.New(), false)
 
 		decision, _, _ := auth.Authorize(context.Background(), &testAttributes{
 			isResource: true,
