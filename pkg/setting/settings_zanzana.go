@@ -136,6 +136,9 @@ type ZanzanaServerSettings struct {
 	AllowInsecure bool
 	// Page size for Read queries in reconciler. Default is 100.
 	ReadPageSize int32
+	// Max unique folder checks per batch-check phase before switching from OpenFGA BatchCheck
+	// to ListObjects. Reduces graph exploration when many distinct folders are checked. Default 20.
+	FolderCheckBatchThreshold int
 }
 
 type OpenFgaServerSettings struct {
@@ -336,6 +339,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zs.SigningKeysURL = serverSec.Key("signing_keys_url").MustString("")
 	zs.AllowInsecure = serverSec.Key("allow_insecure").MustBool(false)
 	zs.ReadPageSize = int32(serverSec.Key("read_page_size").MustInt(defaultReadPageSize))
+	zs.FolderCheckBatchThreshold = serverSec.Key("folder_check_batch_threshold").MustInt(20)
 
 	// Cache settings
 	zs.CacheSettings.CheckCacheLimit = uint32(serverSec.Key("check_cache_limit").MustUint(10000))
