@@ -95,14 +95,7 @@ export function AddFilterButton({ dashboard }: { dashboard: DashboardScene }) {
 
   return (
     <Box display="flex" paddingTop={1} paddingBottom={1}>
-      <Button
-        fullWidth
-        icon="plus"
-        size="sm"
-        variant="secondary"
-        onClick={onAddFilter}
-        data-testid={selectors.components.PanelEditor.ElementEditPane.addFilterButton}
-      >
+      <Button fullWidth icon="plus" size="sm" variant="secondary" onClick={onAddFilter}>
         <Trans i18nKey="dashboard-scene.filters-list.add-filter">Add filter</Trans>
       </Button>
     </Box>
