@@ -4331,6 +4331,9 @@
       "total_one": "{{count}} Element",
       "total_other": "{{count}} Elemente"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Dieses Element ist nicht im selben Repository wie die ausgewählten Elemente."
@@ -6888,7 +6891,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "Regeln zum Ein-/Ausblenden funktionieren nicht",
@@ -8137,8 +8145,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Nicht unterstützt",
+      "badge-text-success": "",
       "badge-text-supported": "Unterstützt",
       "label": {
+        "advisor": "",
         "alerting": "Meldungen",
         "type": "Typ"
       }
@@ -8565,7 +8575,6 @@
       "give-feedback": "Feedback geben"
     },
     "logs-meta-row": {
-      "download": "Download",
       "label": {
         "deduplication-count": "Anzahl der Deduplizierungen",
         "showing-only-selected-fields": "Nur ausgewählte Felder werden angezeigt"
@@ -8920,22 +8929,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "Ergebnisse in der Logs-Visualisierung anzeigen",
-        "show-results-in-table-visualisation": "Ergebnisse in der Tabellenvisualisierung anzeigen",
-        "show-results-newest-to-oldest": "Ergebnisse vom neuesten bis ältesten anzeigen",
-        "show-results-oldest-to-newest": "Ergebnisse vom ältesten bis neuesten anzeigen"
+        "show-results-in-table-visualisation": "Ergebnisse in der Tabellenvisualisierung anzeigen"
       },
       "label": {
         "logs": "Logs",
-        "newest-first": "Neueste zuerst",
-        "oldest-first": "Älteste zuerst",
         "table": "Tabelle"
       },
-      "label-deduplication": "Deduplizierung",
-      "label-display-results": "Ergebnisse anzeigen",
-      "label-prettify-json": "JSON verschönern",
-      "label-time": "Zeit",
-      "label-unique-labels": "Eindeutige Labels",
-      "label-wrap-lines": "Zeilen umbrechen",
       "title-feedback": "Feedback",
       "title-logs": "Logs",
       "title-logs-volume": "Logs-Volumen"
@@ -9030,8 +9029,7 @@
       "tooltip-s-m-h": "10 s, 1 min., 30 min., 1 h"
     },
     "sql-expr": {
-      "button-run-query": "Abfrage ausführen",
-      "tooltip-experimental": "Die Integration des SQL Expressions LLM ist experimentell. Bitte melden Sie Probleme dem Grafana-Team."
+      "button-run-query": "Abfrage ausführen"
     },
     "sql-schema": {
       "error-title": "Fehler",
@@ -11442,9 +11440,6 @@
       },
       "wrap-lines": "Zeilen umbrechen"
     },
-    "logs-navigation": {
-      "scroll-top": "Nach oben scrollen"
-    },
     "logs-panel": {
       "render-common-labels": {
         "common-labels": "Allgemeine Labels:"
@@ -12237,7 +12232,7 @@
     },
     "quick-add": {
       "aria-label": "Neu",
-      "new-template-dashboard-button": "Dashboard aus Vorlage"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "Das Neueste aus dem Blog"
   },
@@ -13391,6 +13386,7 @@
       "token-label": "Projektzugriffstoken",
       "token-required": "GitLab-Token erforderlich",
       "url-description": "Die GitLab-Repository-URL",
+      "url-pattern": "",
       "url-required": "Repository-URL erforderlich"
     },
     "history-view": {
@@ -14325,11 +14321,11 @@
       "view-as-list": "Als Liste anzeigen"
     },
     "dashboard-actions": {
-      "import": "Importieren",
+      "import": "",
       "new": "Neu",
       "new-dashboard": "Neues Dashboard",
       "new-folder": "Neuer Ordner",
-      "new-template-dashboard": "Dashboard aus Vorlage"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Wertung"
@@ -14831,19 +14827,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "Fügen Sie mindestens eine Datenabfrage hinzu, um SQL-Vorschläge zu generieren.",
-    "ai-explain-title": "KI-gestützte Erklärung von SQL-Ausdrücken",
-    "ai-suggestions-title": "KI-gestützte Vorschläge für SQL-Ausdrücke",
-    "apply": "Anwenden",
-    "code-label": "{{ language }}",
-    "copy": "Kopieren",
-    "explain-empty-query-tooltip": "Geben Sie einen SQL-Ausdruck ein, um eine Erklärung zu erhalten",
     "explain-query": "Abfrage erklären",
-    "explanation-modal-title": "Erklärung der SQL-Abfrage",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "Verlauf der SQL-Vorschläge",
-    "suggestions": "Vorschläge",
-    "view-explanation": "Erklärung anzeigen"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "Als Favorit markieren",
@@ -15304,11 +15290,12 @@
     },
     "range-content": {
       "apply-button": "Zeitbereich anwenden",
-      "default-error": "Bitte geben Sie ein vergangenes Datum oder „{{now}}“ ein",
+      "default-error": "",
       "fiscal-year": "Geschäftsjahr: {{from}}–{{to}}",
       "from-input": "Ab",
       "open-input-calendar": "Kalender öffnen",
-      "range-error": "„Von“ darf nicht nach „Bis“ sein",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Bis"
     },
     "range-picker": {

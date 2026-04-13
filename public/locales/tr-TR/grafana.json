@@ -4331,6 +4331,9 @@
       "total_one": "{{count}} öge",
       "total_other": "{{count}} öge"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Bu öge, seçilen ögelerle aynı depoda değil."
@@ -6888,7 +6891,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "Göster/gizle kuralları çalışmayacaktır",
@@ -8137,8 +8145,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Desteklemiyor",
+      "badge-text-success": "",
       "badge-text-supported": "Destekli",
       "label": {
+        "advisor": "",
         "alerting": "Uyarı sistemi",
         "type": "Tür"
       }
@@ -8565,7 +8575,6 @@
       "give-feedback": "Geri bildirim gönder"
     },
     "logs-meta-row": {
-      "download": "İndir",
       "label": {
         "deduplication-count": "Yinelenenleri kaldırma sayısı",
         "showing-only-selected-fields": "Sadece seçilen alanlar gösteriliyor"
@@ -8920,22 +8929,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "Sonuçları günlük kaydı görselleştirmesinde göster",
-        "show-results-in-table-visualisation": "Sonuçları tablo görselleştirmesinde göster",
-        "show-results-newest-to-oldest": "Sonuçları yeniden eskiye sıralayarak göster",
-        "show-results-oldest-to-newest": "Sonuçları eskiden yeniye sıralayarak göster"
+        "show-results-in-table-visualisation": "Sonuçları tablo görselleştirmesinde göster"
       },
       "label": {
         "logs": "Günlük kayıtları",
-        "newest-first": "Yeniden eskiye",
-        "oldest-first": "Eskiden yeniye",
         "table": "Tablo"
       },
-      "label-deduplication": "Yinelenenleri kaldırma",
-      "label-display-results": "Sonuçları görüntüle",
-      "label-prettify-json": "JSON'u düzenle",
-      "label-time": "Zaman",
-      "label-unique-labels": "Benzersiz etiketler",
-      "label-wrap-lines": "Satırları kaydır",
       "title-feedback": "Geri Bildirim",
       "title-logs": "Günlük kayıtları",
       "title-logs-volume": "Günlük kaydı birimi"
@@ -9030,8 +9029,7 @@
       "tooltip-s-m-h": "10 sn, 1 dk, 30 dk, 1 sa"
     },
     "sql-expr": {
-      "button-run-query": "Sorgu çalıştır",
-      "tooltip-experimental": "SQL İfadeleri LLM entegrasyonu deneyseldir. Karşılaştığınız sorunları lütfen Grafana ekibine bildirin."
+      "button-run-query": "Sorgu çalıştır"
     },
     "sql-schema": {
       "error-title": "Hata",
@@ -11442,9 +11440,6 @@
       },
       "wrap-lines": "Satırları kaydır"
     },
-    "logs-navigation": {
-      "scroll-top": "En üste kaydır"
-    },
     "logs-panel": {
       "render-common-labels": {
         "common-labels": "Ortak etiketler:"
@@ -12237,7 +12232,7 @@
     },
     "quick-add": {
       "aria-label": "Yeni",
-      "new-template-dashboard-button": "Şablondan pano"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "Blog'tan son gönderiler"
   },
@@ -13391,6 +13386,7 @@
       "token-label": "Proje Erişim Belirteci",
       "token-required": "GitLab belirteci gereklidir",
       "url-description": "GitLab depo URL'si",
+      "url-pattern": "",
       "url-required": "Depo URL'si gereklidir"
     },
     "history-view": {
@@ -14325,11 +14321,11 @@
       "view-as-list": "Liste olarak görüntüle"
     },
     "dashboard-actions": {
-      "import": "İçe aktar",
+      "import": "",
       "new": "Yeni",
       "new-dashboard": "Yeni pano",
       "new-folder": "Yeni klasör",
-      "new-template-dashboard": "Şablondan pano"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Puan"
@@ -14831,19 +14827,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "SQL önerileri oluşturmak için en az bir veri sorgusu ekleyin",
-    "ai-explain-title": "Yapay zekâ destekli SQL ifadesi açıklaması",
-    "ai-suggestions-title": "Yapay zekâ destekli SQL ifadesi önerileri",
-    "apply": "Uygula",
-    "code-label": "{{ language }}",
-    "copy": "Kopyala",
-    "explain-empty-query-tooltip": "Açıklama almak için bir SQL ifadesi girin",
     "explain-query": "Sorguyu açıkla",
-    "explanation-modal-title": "SQL Sorgu Açıklaması",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "SQL Öneri Geçmişi",
-    "suggestions": "Öneriler",
-    "view-explanation": "Açıklamayı göster"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "Favori olarak işaretle",
@@ -15304,11 +15290,12 @@
     },
     "range-content": {
       "apply-button": "Zaman aralığını uygula",
-      "default-error": "Lütfen geçmiş bir tarih veya \"{{now}}\" ifadesini girin",
+      "default-error": "",
       "fiscal-year": "Mali yıl: {{from}}-{{to}}",
       "from-input": "Başlangıç",
       "open-input-calendar": "Takvimi aç",
-      "range-error": "\"Başlangıç\", \"Bitiş\" sonrasına denk gelen bir tarih olamaz.",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Bitiş"
     },
     "range-picker": {
