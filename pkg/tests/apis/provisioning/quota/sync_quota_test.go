@@ -24,9 +24,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		const repo = "quota-deletion-test-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json":   "dashboard1.json",
 				"../testdata/text-options.json": "dashboard2.json",
@@ -69,9 +69,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		const repo = "quota-within-limit-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
@@ -114,9 +114,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		const repo = "quota-blocks-creation-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json":   "dashboard1.json",
 				"../testdata/text-options.json": "dashboard2.json",
@@ -179,9 +179,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 
 		// Step 1: Create a repo with 1 dashboard (2 resources total: 1 root folder + 1 dashboard)
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
@@ -264,9 +264,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 
 		// Total: 5 resources → 5/6, within quota.
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json":   "subfolder/dashboard1.json",
 				"../testdata/text-options.json": "subfolder/nested/dashboard2.json",
@@ -380,9 +380,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		const repo = "quota-net-change-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json":    "dashboard1.json",
 				"../testdata/text-options.json":  "dashboard2.json",
@@ -428,9 +428,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		const repo = "quota-net-change-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json":    "dashboard1.json",
 				"../testdata/text-options.json":  "dashboard2.json",

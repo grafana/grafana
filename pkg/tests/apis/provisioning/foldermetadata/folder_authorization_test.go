@@ -26,7 +26,7 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repoName,
-		Target:                 "instance",
+		SyncTarget:             "instance",
 		SkipResourceAssertions: true,
 	})
 

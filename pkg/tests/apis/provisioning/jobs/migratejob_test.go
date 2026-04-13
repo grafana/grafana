@@ -59,8 +59,8 @@ func TestIntegrationProvisioning_PullJobUnmanagedConflict(t *testing.T) {
 
 	testRepo := common.TestRepo{
 		Name:                   repo,
-		Target:                 "folder",
-		Path:                   repoPath,
+		SyncTarget:             "folder",
+		LocalPath:              repoPath,
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	}
@@ -127,7 +127,7 @@ func TestIntegrationProvisioning_MigrateTakeover(t *testing.T) {
 	const repo = "migrate-takeover-repo"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Target:             "instance",
+		SyncTarget:         "instance",
 		Copies:             map[string]string{},
 		ExpectedDashboards: 2,
 		ExpectedFolders:    0,
@@ -210,8 +210,8 @@ func TestIntegrationProvisioning_SecondMigrateOnlyExportsNewDashboards(t *testin
 	repo1Path := filepath.Join(helper.ProvisioningPath, repo1)
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:               repo1,
-		Target:             "folder",
-		Path:               repo1Path,
+		SyncTarget:         "folder",
+		LocalPath:          repo1Path,
 		Copies:             map[string]string{},
 		ExpectedDashboards: 2,
 		ExpectedFolders:    1,
@@ -232,8 +232,8 @@ func TestIntegrationProvisioning_SecondMigrateOnlyExportsNewDashboards(t *testin
 	repo2Path := filepath.Join(helper.ProvisioningPath, repo2)
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo2,
-		Target:                 "folder",
-		Path:                   repo2Path,
+		SyncTarget:             "folder",
+		LocalPath:              repo2Path,
 		Copies:                 map[string]string{},
 		SkipResourceAssertions: true,
 	})

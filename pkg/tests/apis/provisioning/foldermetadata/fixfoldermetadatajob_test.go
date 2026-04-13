@@ -18,8 +18,8 @@ func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 
 	const repo = "fix-folder-metadata-test-repo"
 	testRepo := common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "dashboard1.json",
 		},
@@ -80,7 +80,7 @@ func TestIntegrationProvisioning_FixFolderMetadataJob_RemovesKeepFiles(t *testin
 	const repo = "fix-folder-metadata-keep-files"
 	testRepo := common.TestRepo{
 		Name:                   repo,
-		Target:                 "folder",
+		SyncTarget:             "folder",
 		SkipResourceAssertions: true,
 	}
 	helper.CreateLocalRepo(t, testRepo)

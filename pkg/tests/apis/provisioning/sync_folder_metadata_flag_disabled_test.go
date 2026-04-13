@@ -18,8 +18,8 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagDisabled(t *
 	const repo = "missing-folder-meta-disabled"
 	helper := sharedHelper(t)
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"testdata/all-panels.json": "myfolder/dashboard.json",
 		},

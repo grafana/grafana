@@ -768,8 +768,9 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	testRepo := common.TestRepo{
 		Name:               repo,
 		Template:           common.TestdataPath("github.json.tmpl"),
-		Target:             "folder",
-		TemplateValues:     common.RepositoryTemplateValues{Path: "grafana/", Workflows: &[]string{}},
+		SyncTarget:         "folder",
+		Path:               "grafana/",
+		Workflows:          []string{},
 		ExpectedDashboards: 3,
 		ExpectedFolders:    3, // Folder sync creates an additional folder for the repository itself
 	}
@@ -1079,8 +1080,8 @@ func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testin
 
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repoName,
-		Path:                   repoPath,
-		Target:                 "folder",
+		LocalPath:              repoPath,
+		SyncTarget:             "folder",
 		SkipResourceAssertions: true,
 	})
 	helper.WaitForHealthyRepository(t, repoName)
@@ -1136,7 +1137,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 	// Set up the repository.
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
-		Target:                 "folder",
+		SyncTarget:             "folder",
 		ExpectedDashboards:     0,
 		ExpectedFolders:        1, // folder sync creates a folder for the repo
 		SkipResourceAssertions: false,
@@ -1324,7 +1325,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	// Set up the repository and the file to import.
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Target:             "folder",
+		SyncTarget:         "folder",
 		Copies:             map[string]string{"../testdata/all-panels.json": "all-panels.json"},
 		ExpectedDashboards: 1,
 		ExpectedFolders:    1, // folder sync creates a folder
@@ -1383,8 +1384,9 @@ func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.
 	testRepo := common.TestRepo{
 		Name:               repo,
 		Template:           common.TestdataPath("github.json.tmpl"),
-		Target:             "folder",
-		TemplateValues:     common.RepositoryTemplateValues{Path: "grafana/", Workflows: &[]string{}},
+		SyncTarget:         "folder",
+		Path:               "grafana/",
+		Workflows:          []string{},
 		ExpectedDashboards: 3,
 		ExpectedFolders:    3,
 	}
@@ -1468,8 +1470,8 @@ func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Path:                   repoPath,
-			Target:                 "folder",
+			LocalPath:              repoPath,
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true,
 		})
 
@@ -1510,8 +1512,8 @@ func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Path:                   repoPath,
-			Target:                 "folder",
+			LocalPath:              repoPath,
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true,
 		})
 
@@ -1553,7 +1555,7 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 	const repo = "job-permissions-test"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Target:             "folder",
+		SyncTarget:         "folder",
 		Copies:             map[string]string{}, // No files needed for this test
 		ExpectedDashboards: 0,
 		ExpectedFolders:    1, // Repository creates a folder
@@ -1638,8 +1640,9 @@ func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 	testRepo := common.TestRepo{
 		Name:               repo,
 		Template:           common.TestdataPath("github.json.tmpl"),
-		Target:             "folder",
-		TemplateValues:     common.RepositoryTemplateValues{Path: "grafana/", Workflows: &[]string{}},
+		SyncTarget:         "folder",
+		Path:               "grafana/",
+		Workflows:          []string{},
 		ExpectedDashboards: 3,
 		ExpectedFolders:    3, // Repository creates folders
 	}
@@ -1698,15 +1701,11 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 
 	t.Run("repository with empty path syncs from root", func(t *testing.T) {
 		const repo = "empty-path-test"
-		syncEnabled := true
 		testRepo := common.TestRepo{
-			Name:     repo,
-			Template: common.TestdataPath("github.json.tmpl"),
-			Target:   "folder",
-			TemplateValues: common.RepositoryTemplateValues{
-				SyncEnabled: &syncEnabled,
-				Workflows:   &[]string{},
-			},
+			Name:               repo,
+			Template:           common.TestdataPath("github.json.tmpl"),
+			SyncTarget:         "folder",
+			Workflows:          []string{},
 			ExpectedDashboards: 3, // Syncs 3 dashboards from grafana/ directory
 			ExpectedFolders:    6, // Creates 6 folders: repo root, assets, gifs, grafana, DemoFolder, DemoDeeperFolder
 		}
@@ -1726,17 +1725,13 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 	t.Run("multiple repositories with empty path - creation succeeds but sync warns on ownership conflicts", func(t *testing.T) {
 		const repo1 = "empty-path-repo-1"
 		const repo2 = "empty-path-repo-2"
-		syncEnabled := true
 
 		// Step 1: Create first repository with empty path - syncs successfully
 		testRepo1 := common.TestRepo{
-			Name:     repo1,
-			Template: common.TestdataPath("github.json.tmpl"),
-			Target:   "folder",
-			TemplateValues: common.RepositoryTemplateValues{
-				SyncEnabled: &syncEnabled,
-				Workflows:   &[]string{},
-			},
+			Name:               repo1,
+			Template:           common.TestdataPath("github.json.tmpl"),
+			SyncTarget:         "folder",
+			Workflows:          []string{},
 			ExpectedDashboards: 3, // Successfully syncs 3 dashboards
 			ExpectedFolders:    6, // Successfully creates 6 folders
 		}
@@ -1746,13 +1741,10 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 		// Creation should succeed (no duplicate path validation error)
 		// but sync should warn because dashboards are owned by repo1
 		testRepo2 := common.TestRepo{
-			Name:     repo2,
-			Template: common.TestdataPath("github.json.tmpl"),
-			Target:   "folder",
-			TemplateValues: common.RepositoryTemplateValues{
-				SyncEnabled: &syncEnabled,
-				Workflows:   &[]string{},
-			},
+			Name:                   repo2,
+			Template:               common.TestdataPath("github.json.tmpl"),
+			SyncTarget:             "folder",
+			Workflows:              []string{},
 			SkipResourceAssertions: true, // Skip because we can't easily count per-repo resources
 		}
 		helper.CreateLocalRepo(t, testRepo2)
@@ -2489,11 +2481,11 @@ func TestIntegrationProvisioning_FolderTitleUpdatesOnSync(t *testing.T) {
 
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:               repoName,
-		Target:             "folder",
+		SyncTarget:         "folder",
 		Copies:             map[string]string{"../testdata/all-panels.json": "all-panels.json"},
 		ExpectedDashboards: 1,
 		ExpectedFolders:    1,
-		TemplateValues:     common.RepositoryTemplateValues{Title: initialTitle},
+		Title:              initialTitle,
 	})
 
 	// Verify the root folder has the initial title.

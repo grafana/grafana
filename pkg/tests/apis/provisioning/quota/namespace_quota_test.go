@@ -34,15 +34,15 @@ func TestIntegrationProvisioning_NamespaceRepositoryQuota(t *testing.T) {
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 0})
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo1Name,
-		Path:                   repo1Path,
-		Target:                 "folder",
+		LocalPath:              repo1Path,
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo2Name,
-		Path:                   repo2Path,
-		Target:                 "folder",
+		LocalPath:              repo2Path,
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})

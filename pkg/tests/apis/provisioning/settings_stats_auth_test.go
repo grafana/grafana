@@ -116,7 +116,7 @@ func TestIntegrationProvisioning_StatsAuthorization(t *testing.T) {
 	const repo = "stats-auth-test"
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:               repo,
-		Target:             "folder",
+		SyncTarget:         "folder",
 		Copies:             map[string]string{},
 		ExpectedDashboards: 0,
 		ExpectedFolders:    1,

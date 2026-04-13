@@ -20,7 +20,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "folder",
+			SyncTarget:             "folder",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -63,7 +63,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "folder",
+			SyncTarget:             "folder",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -96,7 +96,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "folder",
+			SyncTarget:             "folder",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -140,7 +140,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "folder",
+			SyncTarget:             "folder",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -171,7 +171,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "folder",
+			SyncTarget:             "folder",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})

@@ -19,7 +19,7 @@ func TestIntegrationProvisioning_ExportJobAuthorization(t *testing.T) {
 	const repo = "export-auth-test"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Target:             "instance",
+		SyncTarget:         "instance",
 		Copies:             map[string]string{},
 		ExpectedDashboards: 0,
 		ExpectedFolders:    0,

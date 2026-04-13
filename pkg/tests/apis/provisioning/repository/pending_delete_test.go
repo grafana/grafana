@@ -24,7 +24,7 @@ func TestIntegrationProvisioning_PendingDeleteLabel_SkipsReconciliation(t *testi
 	const repoName = "pending-delete-skip-test"
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repoName,
-		Target:                 "folder",
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})

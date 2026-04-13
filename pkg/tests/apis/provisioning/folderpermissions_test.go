@@ -23,7 +23,7 @@ func TestIntegrationFolderPermissions_ProvisionedFolders(t *testing.T) {
 	helper := sharedHelper(t)
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:            repoName,
-		Target:          "folder",
+		SyncTarget:      "folder",
 		ExpectedFolders: 1,
 		Copies: map[string]string{
 			"testdata/all-panels.json": "folder/subfolder/dashboard.json",
@@ -74,7 +74,7 @@ func TestIntegrationFolderPermissions_UnprovisionedFolders(t *testing.T) {
 	helper := sharedHelper(t)
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:            repo,
-		Target:          "folder",
+		SyncTarget:      "folder",
 		ExpectedFolders: 1,
 	})
 

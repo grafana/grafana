@@ -19,7 +19,7 @@ func TestIntegrationProvisioning_FixFolderMetadataJobFlagDisabled(t *testing.T) 
 	const repo = "fixfoldermeta-flag-disabled"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Target:             "folder",
+		SyncTarget:         "folder",
 		Copies:             map[string]string{},
 		ExpectedDashboards: 0,
 		ExpectedFolders:    1,

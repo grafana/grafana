@@ -15,8 +15,8 @@ func TestIntegrationProvisioning_MigrateDisabledByConfiguration(t *testing.T) {
 
 	const repo = "test-repository"
 	testRepo := common.TestRepo{
-		Name:   repo,
-		Target: "instance",
+		Name:       repo,
+		SyncTarget: "instance",
 	}
 	helper.CreateLocalRepo(t, testRepo)
 
@@ -49,8 +49,8 @@ func TestIntegrationProvisioning_ExportDisabledByConfiguration(t *testing.T) {
 
 	const repo = "test-repository"
 	testRepo := common.TestRepo{
-		Name:   repo,
-		Target: "instance",
+		Name:       repo,
+		SyncTarget: "instance",
 	}
 	helper.CreateLocalRepo(t, testRepo)
 

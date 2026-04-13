@@ -22,8 +22,8 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 	ctx := context.Background()
 	const repo = "move-test-repo"
 	testRepo := common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json":    "dashboard1.json",
 			"../testdata/text-options.json":  "dashboard2.json",
@@ -240,7 +240,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		const refRepo = "move-ref-test-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   refRepo,
-			Target:                 "folder",
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true, // HACK: I am not sure why sometimes it's 6 or 3 dashbaords.
 		})
 

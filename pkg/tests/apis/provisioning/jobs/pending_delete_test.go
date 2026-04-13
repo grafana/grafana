@@ -28,7 +28,7 @@ func TestIntegrationProvisioning_JobPendingDeleteLabel_SkipsExecution(t *testing
 	// the resource is present in Grafana.
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:               repoName,
-		Target:             "folder",
+		SyncTarget:         "folder",
 		ExpectedDashboards: 1,
 		ExpectedFolders:    1, // folder sync creates a root folder for the repository
 		Copies: map[string]string{

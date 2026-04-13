@@ -78,7 +78,7 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 		const repo = "export-meta-new-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -112,7 +112,7 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 		const repo = "export-existing-folder-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -154,7 +154,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		const repo = "nested-middle-existing-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -206,7 +206,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		const repo = "nested-two-level-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -243,7 +243,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		const repo = "nested-three-level-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -289,7 +289,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		const repo = "nested-siblings-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Target:                 "instance",
+			SyncTarget:             "instance",
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})

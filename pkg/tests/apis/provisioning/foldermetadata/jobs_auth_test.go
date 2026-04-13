@@ -19,7 +19,7 @@ func TestIntegrationProvisioning_JobsAuthorization(t *testing.T) {
 	const repo = "jobs-auth-test"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Target:             "folder",
+		SyncTarget:         "folder",
 		Copies:             map[string]string{},
 		ExpectedDashboards: 0,
 		ExpectedFolders:    1,

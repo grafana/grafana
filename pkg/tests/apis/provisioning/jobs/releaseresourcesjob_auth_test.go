@@ -72,7 +72,7 @@ func TestIntegrationProvisioning_ReleaseResourcesJobAuthorization(t *testing.T) 
 		const repo = "release-conflict-test"
 		testRepo := common.TestRepo{
 			Name:               repo,
-			Target:             "folder",
+			SyncTarget:         "folder",
 			Copies:             map[string]string{},
 			ExpectedDashboards: 0,
 			ExpectedFolders:    1,

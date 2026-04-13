@@ -27,9 +27,9 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
 
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:   repo,
-			Path:   repoPath,
-			Target: "folder",
+			Name:       repo,
+			LocalPath:  repoPath,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"testdata/all-panels.json": "dashboard1.json",
 			},
@@ -72,8 +72,8 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Path:                   repoPath,
-			Target:                 "folder",
+			LocalPath:              repoPath,
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true,
 		})
 
@@ -112,8 +112,8 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Path:                   repoPath,
-			Target:                 "folder",
+			LocalPath:              repoPath,
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true,
 		})
 
@@ -178,8 +178,8 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Path:                   repoPath,
-			Target:                 "folder",
+			LocalPath:              repoPath,
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true,
 		})
 

@@ -27,8 +27,8 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		// Create repository first
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			Path:                   helper.ProvisioningPath,
-			Target:                 "folder",
+			LocalPath:              helper.ProvisioningPath,
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true,
 		})
 
@@ -112,8 +112,8 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		repoName := "bom-embedded-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repoName,
-			Path:                   helper.ProvisioningPath,
-			Target:                 "folder",
+			LocalPath:              helper.ProvisioningPath,
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true,
 		})
 
@@ -186,8 +186,8 @@ func TestIntegrationProvisioning_BOMs(t *testing.T) {
 		repoName := "bom-deletion-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repoName,
-			Path:                   helper.ProvisioningPath,
-			Target:                 "folder",
+			LocalPath:              helper.ProvisioningPath,
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true,
 		})
 
@@ -282,8 +282,8 @@ spec:
 		repoName := "bom-yaml-repo"
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repoName,
-			Path:                   helper.ProvisioningPath,
-			Target:                 "folder",
+			LocalPath:              helper.ProvisioningPath,
+			SyncTarget:             "folder",
 			SkipResourceAssertions: true,
 		})
 

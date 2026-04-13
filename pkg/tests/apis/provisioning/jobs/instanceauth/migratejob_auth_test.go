@@ -19,7 +19,7 @@ func TestIntegrationProvisioning_MigrateJobAuthorization(t *testing.T) {
 	const repo = "migrate-auth-test"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Target:             "instance",
+		SyncTarget:         "instance",
 		Copies:             map[string]string{},
 		ExpectedDashboards: 0,
 		ExpectedFolders:    0,

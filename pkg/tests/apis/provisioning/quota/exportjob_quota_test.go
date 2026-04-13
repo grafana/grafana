@@ -34,7 +34,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		const repo = "export-quota-success"
 		testRepo := common.TestRepo{
 			Name:               repo,
-			Target:             "instance",
+			SyncTarget:         "instance",
 			Copies:             map[string]string{},
 			ExpectedDashboards: 2,
 			ExpectedFolders:    0,
@@ -77,7 +77,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		const repo = "export-quota-resources-exceeded"
 		testRepo := common.TestRepo{
 			Name:               repo,
-			Target:             "instance",
+			SyncTarget:         "instance",
 			Copies:             map[string]string{},
 			ExpectedDashboards: 2,
 			ExpectedFolders:    0,
@@ -143,7 +143,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		const repo = "export-quota-folders-exceeded"
 		testRepo := common.TestRepo{
 			Name:               repo,
-			Target:             "instance",
+			SyncTarget:         "instance",
 			Copies:             map[string]string{},
 			ExpectedDashboards: 1,
 			ExpectedFolders:    2,

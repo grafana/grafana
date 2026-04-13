@@ -23,7 +23,7 @@ func TestIntegrationProvisioning_FullSync_FolderMovePreservesPermissions(t *test
 
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
-		Target:                 "folder",
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
@@ -116,7 +116,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveDoesNotPreservePermissionsFo
 
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
-		Target:                 "folder",
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
@@ -189,7 +189,7 @@ func TestIntegrationProvisioning_FullSync_NestedFolderMovePreservesPermissions(t
 
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
-		Target:                 "folder",
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
@@ -245,7 +245,7 @@ func TestIntegrationProvisioning_FullSync_RootToLeafMovePreservesPermissions(t *
 
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
-		Target:                 "folder",
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
@@ -299,7 +299,7 @@ func TestIntegrationProvisioning_FullSync_LeafToRootMovePreservesPermissions(t *
 
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
-		Target:                 "folder",
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
@@ -354,7 +354,7 @@ func TestIntegrationProvisioning_FullSync_MetadataFolderMovedUnderLegacyPreserve
 
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
-		Target:                 "folder",
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})

@@ -19,8 +19,8 @@ func TestIntegrationProvisioning_Stats(t *testing.T) {
 	const repo = "stats-test-repo1"
 
 	testRepo := common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"testdata/all-panels.json":   "dashboard1.json",
 			"testdata/text-options.json": "folder/dashboard2.json",

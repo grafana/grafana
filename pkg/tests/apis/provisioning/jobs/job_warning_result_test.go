@@ -18,8 +18,8 @@ func TestIntegrationProvisioning_JobWarningResult(t *testing.T) {
 	// Create a test repository with a malformed dashboard file
 	const repo = "job-warning-test-repo"
 	testRepo := common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/invalid.json": "dashboard1.json",
 		},
@@ -73,8 +73,8 @@ func TestIntegrationProvisioning_JobWarningResult_MissingName(t *testing.T) {
 	// Create a test repository with a dashboard file missing the name field
 	const repo = "job-warning-missing-name-repo"
 	testRepo := common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/dashboard-missing-name.json": "dashboard-no-name.json",
 		},
@@ -119,8 +119,8 @@ func TestIntegrationProvisioning_JobWarningResult_DashboardRefreshInterval(t *te
 	// Create a test repository with a dashboard file with refresh interval too low
 	const repo = "job-warning-refresh-interval-repo"
 	testRepo := common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/dashboard-refresh-too-low.json": "dashboard-refresh-low.json",
 		},
@@ -166,8 +166,8 @@ func TestIntegrationProvisioning_JobWarningResult_DuplicateName(t *testing.T) {
 	// The second file processed should trigger a "duplicate resource name" validation warning.
 	const repo = "job-warning-duplicate-name-repo"
 	testRepo := common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/dashboard-duplicate-name.json":      "dashboard-dup1.json",
 			"../testdata/dashboard-duplicate-name-copy.json": "dashboard-dup2.json",

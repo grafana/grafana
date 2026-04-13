@@ -19,7 +19,7 @@ func TestIntegrationProvisioning_PullRequestJobRejected(t *testing.T) {
 	const repo = "pr-job-rejected-test"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Target:             "folder",
+		SyncTarget:         "folder",
 		Copies:             map[string]string{},
 		ExpectedDashboards: 0,
 		ExpectedFolders:    1,

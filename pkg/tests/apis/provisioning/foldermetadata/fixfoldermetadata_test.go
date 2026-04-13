@@ -29,9 +29,9 @@ func TestIntegrationProvisioning_FixFolderMetadata_MissingFile(t *testing.T) {
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:   repoName,
-		Path:   repoPath,
-		Target: "folder",
+		Name:       repoName,
+		LocalPath:  repoPath,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			// A dashboard inside parent/child/ causes both folders to be
 			// created in Grafana during sync.
@@ -67,9 +67,9 @@ func TestIntegrationProvisioning_FixFolderMetadata_ValidFile(t *testing.T) {
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:   repoName,
-		Path:   repoPath,
-		Target: "folder",
+		Name:       repoName,
+		LocalPath:  repoPath,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},
@@ -104,9 +104,9 @@ func TestIntegrationProvisioning_FixFolderMetadata_SkipsExistingMetadata(t *test
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:   repoName,
-		Path:   repoPath,
-		Target: "folder",
+		Name:       repoName,
+		LocalPath:  repoPath,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},
@@ -139,9 +139,9 @@ func TestIntegrationProvisioning_FixFolderMetadata_SkipsMalformedMetadata(t *tes
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:   repoName,
-		Path:   repoPath,
-		Target: "folder",
+		Name:       repoName,
+		LocalPath:  repoPath,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},

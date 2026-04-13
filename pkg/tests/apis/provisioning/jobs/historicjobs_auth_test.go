@@ -19,7 +19,7 @@ func TestIntegrationProvisioning_HistoricJobsAuthorization(t *testing.T) {
 	const repo = "historicjobs-auth-test"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Target:             "folder",
+		SyncTarget:         "folder",
 		Copies:             map[string]string{}, // No files needed for this test
 		ExpectedDashboards: 0,
 		ExpectedFolders:    1, // Repository creates a folder

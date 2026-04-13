@@ -23,7 +23,7 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 	originalName := "original-repo"
 	originalRepo := common.TestRepo{
 		Name:               originalName,
-		Target:             "instance",
+		SyncTarget:         "instance",
 		Copies:             map[string]string{},
 		ExpectedDashboards: 0,
 		ExpectedFolders:    0,
@@ -111,7 +111,7 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 			repoName := fmt.Sprintf("limit-test-repo-%d", i)
 			limitTestRepo := common.TestRepo{
 				Name:               repoName,
-				Target:             "folder",
+				SyncTarget:         "folder",
 				Copies:             map[string]string{},
 				ExpectedDashboards: 0,
 				ExpectedFolders:    i,

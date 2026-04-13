@@ -29,7 +29,7 @@ func TestIntegrationHealth(t *testing.T) {
 	repo := "test-repo-health"
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:            repo,
-		Target:          "folder",
+		SyncTarget:      "folder",
 		ExpectedFolders: 1,
 	})
 

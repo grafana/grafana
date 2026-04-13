@@ -661,78 +661,31 @@ func (h *ProvisioningTestHelper) ValidateManagedDashboardsFolderMetadata(t *test
 }
 
 type TestRepo struct {
-	Name                   string
-	Target                 string
-	Path                   string
-	TemplateValues         RepositoryTemplateValues
+	// Template fields (directly accessible by Go templates via .FieldName)
+	Name                      string
+	Title                     string
+	Description               string
+	SyncEnabled               bool
+	SyncTarget                string
+	SyncIntervalSeconds       int
+	Path                      string
+	Workflows                 []string
+	URL                       string
+	Branch                    string
+	Token                     string
+	TokenUser                 string
+	WebhookSecret             string
+	GenerateName              string
+	GenerateDashboardPreviews bool
+
+	// Test control fields (not used by templates)
+	LocalPath              string
 	Copies                 map[string]string
 	ExpectedDashboards     int
 	ExpectedFolders        int
 	SkipSync               bool
 	SkipResourceAssertions bool
 	Template               string
-}
-
-type RepositoryTemplateValues struct {
-	Title                     string
-	Description               string
-	URL                       string
-	Branch                    string
-	Path                      string
-	Token                     string
-	TokenUser                 string
-	WebhookSecret             string
-	GenerateName              string
-	GenerateDashboardPreviews *bool
-	SyncEnabled               *bool
-	SyncTarget                string
-	SyncIntervalSeconds       *int
-	Workflows                 *[]string
-}
-
-func (v RepositoryTemplateValues) AddToTemplateVars(templateVars map[string]any) {
-	if v.Title != "" {
-		templateVars["Title"] = v.Title
-	}
-	if v.Description != "" {
-		templateVars["Description"] = v.Description
-	}
-	if v.URL != "" {
-		templateVars["URL"] = v.URL
-	}
-	if v.Branch != "" {
-		templateVars["Branch"] = v.Branch
-	}
-	if v.Path != "" {
-		templateVars["Path"] = v.Path
-	}
-	if v.Token != "" {
-		templateVars["Token"] = v.Token
-	}
-	if v.TokenUser != "" {
-		templateVars["TokenUser"] = v.TokenUser
-	}
-	if v.WebhookSecret != "" {
-		templateVars["WebhookSecret"] = v.WebhookSecret
-	}
-	if v.GenerateName != "" {
-		templateVars["GenerateName"] = v.GenerateName
-	}
-	if v.GenerateDashboardPreviews != nil {
-		templateVars["GenerateDashboardPreviews"] = *v.GenerateDashboardPreviews
-	}
-	if v.SyncEnabled != nil {
-		templateVars["SyncEnabled"] = *v.SyncEnabled
-	}
-	if v.SyncTarget != "" {
-		templateVars["SyncTarget"] = v.SyncTarget
-	}
-	if v.SyncIntervalSeconds != nil {
-		templateVars["SyncIntervalSeconds"] = *v.SyncIntervalSeconds
-	}
-	if v.Workflows != nil {
-		templateVars["Workflows"] = *v.Workflows
-	}
 }
 
 type LocalRepositorySpec struct {
@@ -796,44 +749,39 @@ func (h *ProvisioningTestHelper) CreateGitHubRepository(t *testing.T, repo GitHu
 }
 
 func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
-	if repo.Target == "" {
-		repo.Target = "instance"
+	// Apply template defaults
+	if repo.SyncTarget == "" {
+		repo.SyncTarget = "instance"
+	}
+	repo.SyncEnabled = !repo.SkipSync
+	if repo.Workflows == nil {
+		repo.Workflows = []string{"write"}
 	}
 
-	// Use custom path if provided, otherwise use default provisioning path
-	repoPath := h.ProvisioningPath
-	if repo.Path != "" {
-		repoPath = repo.Path
-		// Ensure the directory exists
-		err := os.MkdirAll(repoPath, 0o750)
+	// Handle filesystem path
+	localPath := h.ProvisioningPath
+	if repo.LocalPath != "" {
+		localPath = repo.LocalPath
+		err := os.MkdirAll(localPath, 0o750)
 		require.NoError(t, err, "should be able to create repository path")
 	}
-
-	templateVars := map[string]any{
-		"Name":        repo.Name,
-		"SyncEnabled": !repo.SkipSync,
-		"SyncTarget":  repo.Target,
-		"Workflows":   `["write"]`,
+	if repo.Path == "" {
+		repo.Path = localPath
 	}
-	if repo.Path != "" {
-		templateVars["Path"] = repoPath
-	}
-	repo.TemplateValues.AddToTemplateVars(templateVars)
 
 	tmpl := TestdataPath("local.json.tmpl")
 	if repo.Template != "" {
 		tmpl = repo.Template
 	}
-	localTmp := h.RenderObject(t, tmpl, templateVars)
+	localTmp := h.RenderObject(t, tmpl, repo)
 
 	_, err := h.Repositories.Resource.Create(t.Context(), localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
 	h.WaitForHealthyRepository(t, repo.Name)
 
 	for from, to := range repo.Copies {
-		if repo.Path != "" {
-			// Copy to custom path
-			fullPath := path.Join(repoPath, to)
+		if repo.LocalPath != "" {
+			fullPath := path.Join(localPath, to)
 			err := os.MkdirAll(path.Dir(fullPath), 0o750)
 			require.NoError(t, err, "failed to create directories for custom path")
 			file := readTestFile(t, from)

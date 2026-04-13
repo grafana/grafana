@@ -19,8 +19,8 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 
 		const repo = "quota-unlimited-repo"
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
@@ -77,8 +77,8 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 
 		const repo = "quota-exceeded-repo"
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				// Adding 2 dashboards + 1 root folder will exceed the limit of 2
 				"../testdata/all-panels.json":   "dashboard1.json",
@@ -142,8 +142,8 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 
 		const repo = "quota-within-repo"
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				// Adding 1 dashboard, well under the limit of 10
 				"../testdata/all-panels.json": "dashboard1.json",
@@ -234,8 +234,8 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 
 		const repo = "quota-status-configured-repo"
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
@@ -291,8 +291,8 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 
 		const repo = "quota-status-unlimited-repo"
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
