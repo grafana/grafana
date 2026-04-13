@@ -12,7 +12,13 @@ import { useSelector } from 'app/types/store';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
-import { ITEM_ICONS, findCreateActionGroups } from './utils';
+import {
+  ALERTING_GROUP_COLOR_DARK_NAME,
+  ALERTING_GROUP_COLOR_LIGHT_NAME,
+  DASHBOARD_GROUP_COLOR_NAME,
+  ITEM_ICONS,
+  findCreateActionGroups,
+} from './utils';
 
 export interface Props {}
 
@@ -73,11 +79,11 @@ export const QuickAdd = ({}: Props) => {
 
   const MenuActions = () => {
     const groupColors: Record<string, string> = {
-      'dashboards/browse': theme.visualization.getColorByName('semi-dark-green'),
+      'dashboards/browse': theme.visualization.getColorByName(DASHBOARD_GROUP_COLOR_NAME),
       alerting:
         theme.colors.mode === 'dark'
-          ? theme.visualization.getColorByName('light-purple') // #CA95E5 — lighter, better contrast on dark bg
-          : theme.visualization.getColorByName('semi-dark-purple'), // #8F3BB8 — darker, better contrast on white
+          ? theme.visualization.getColorByName(ALERTING_GROUP_COLOR_LIGHT_NAME)
+          : theme.visualization.getColorByName(ALERTING_GROUP_COLOR_DARK_NAME),
     };
 
     return (

@@ -4331,6 +4331,9 @@
       "total_one": "{{count}} articolo",
       "total_other": "{{count}} articoli"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Questo elemento non si trova nello stesso repository degli elementi selezionati."
@@ -8142,8 +8145,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Non supportata",
+      "badge-text-success": "",
       "badge-text-supported": "Supportata",
       "label": {
+        "advisor": "",
         "alerting": "Avvisi",
         "type": "Tipo"
       }
@@ -14316,11 +14321,11 @@
       "view-as-list": "Mostra come elenco"
     },
     "dashboard-actions": {
-      "import": "Importa",
+      "import": "",
       "new": "Nuovo",
       "new-dashboard": "Nuovo dashboard",
       "new-folder": "Nuova cartella",
-      "new-template-dashboard": "Dashboard da modello"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Punteggio"
@@ -15285,11 +15290,12 @@
     },
     "range-content": {
       "apply-button": "Applica intervallo di tempo",
-      "default-error": "Inserisci una data passata o \"{{now}}\"",
+      "default-error": "",
       "fiscal-year": "Anno fiscale: {{from}} - {{to}}",
       "from-input": "Da",
       "open-input-calendar": "Apri calendario",
-      "range-error": "\"Da\" non può essere successivo a \"A\"",
+      "range-error": "",
+      "required-error": "",
       "to-input": "A"
     },
     "range-picker": {

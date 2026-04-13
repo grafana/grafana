@@ -4331,6 +4331,9 @@
       "total_one": "{{count}} Element",
       "total_other": "{{count}} Elemente"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Dieses Element ist nicht im selben Repository wie die ausgewählten Elemente."
@@ -8142,8 +8145,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Nicht unterstützt",
+      "badge-text-success": "",
       "badge-text-supported": "Unterstützt",
       "label": {
+        "advisor": "",
         "alerting": "Meldungen",
         "type": "Typ"
       }
@@ -14316,11 +14321,11 @@
       "view-as-list": "Als Liste anzeigen"
     },
     "dashboard-actions": {
-      "import": "Importieren",
+      "import": "",
       "new": "Neu",
       "new-dashboard": "Neues Dashboard",
       "new-folder": "Neuer Ordner",
-      "new-template-dashboard": "Dashboard aus Vorlage"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Wertung"
@@ -15285,11 +15290,12 @@
     },
     "range-content": {
       "apply-button": "Zeitbereich anwenden",
-      "default-error": "Bitte geben Sie ein vergangenes Datum oder „{{now}}“ ein",
+      "default-error": "",
       "fiscal-year": "Geschäftsjahr: {{from}}–{{to}}",
       "from-input": "Ab",
       "open-input-calendar": "Kalender öffnen",
-      "range-error": "„Von“ darf nicht nach „Bis“ sein",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Bis"
     },
     "range-picker": {

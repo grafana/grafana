@@ -147,7 +147,6 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 	err = info.Parsed.DryRun(ctx)
 	if err != nil {
 		info.Error = err.Error()
-		return info
 	}
 
 	// Dashboards get special handling

@@ -589,11 +589,6 @@ export interface FeatureToggles {
   */
   newDashboardWithFiltersAndGroupBy?: boolean;
   /**
-  * Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it
-  * @default false
-  */
-  dashboardAdHocAndGroupByWrapper?: boolean;
-  /**
   * Renders ad hoc filters and group by in a single unified control
   * @default false
   */
@@ -733,6 +728,11 @@ export interface FeatureToggles {
   * @default false
   */
   zanzanaNoLegacyClient?: boolean;
+  /**
+  * Search users permissions using Zanzana.
+  * @default false
+  */
+  zanzanaSearchUsersPermissions?: boolean;
   /**
   * Enables reload of dashboards on scopes, time range and variables changes
   * @default false
@@ -959,6 +959,11 @@ export interface FeatureToggles {
   * @default false
   */
   teamLBACApiReadFromAppPlatform?: boolean;
+  /**
+  * Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
+  * @default false
+  */
+  teamLBACApiWriteFromAppPlatform?: boolean;
   /**
   * Enables Advisor app
   * @default true
