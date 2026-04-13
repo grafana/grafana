@@ -77,5 +77,6 @@ func TestQueryTypeDefinitions(t *testing.T) {
 	data, err := os.ReadFile("./query.types.json")
 	if err == nil {
 		err = os.WriteFile(path.Join(dir, "spec.v0alpha1.query.json"), data, 0644)
+		require.NoError(t, err)
 	}
 }

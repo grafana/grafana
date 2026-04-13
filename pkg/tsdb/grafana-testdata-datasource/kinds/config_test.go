@@ -37,7 +37,8 @@ func TestSpecProvider(t *testing.T) {
 	if writeSpec {
 		raw, err := info.ToYAML()
 		require.NoError(t, err)
-		os.WriteFile(path.Join(dir, fname), raw, 0600)
+		err = os.WriteFile(path.Join(dir, fname), raw, 0600)
+		require.NoError(t, err)
 		require.FailNow(t, "spec did not exist")
 	}
 }
