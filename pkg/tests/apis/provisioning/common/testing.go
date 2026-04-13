@@ -417,27 +417,7 @@ func (h *ProvisioningTestHelper) RenderObject(t *testing.T, filePath string, val
 	t.Helper()
 	file := readTestFile(t, filePath)
 
-	funcMap := template.FuncMap{
-		"provisioningPath": func() string { return h.ProvisioningPath },
-		"toJSON": func(v any) string {
-			if v == nil {
-				return "[]"
-			}
-			if s, ok := v.(string); ok {
-				if s == "" {
-					return "[]"
-				}
-				return s
-			}
-			b, err := json.Marshal(v)
-			if err != nil || string(b) == "null" {
-				return "[]"
-			}
-			return string(b)
-		},
-	}
-
-	tmpl, err := template.New(filePath).Funcs(funcMap).Parse(string(file))
+	tmpl, err := template.New(filePath).Parse(string(file))
 	require.NoError(t, err, "failed to parse template")
 
 	var buf strings.Builder
@@ -660,6 +640,16 @@ func (h *ProvisioningTestHelper) ValidateManagedDashboardsFolderMetadata(t *test
 	}
 }
 
+func marshalWorkflows(t *testing.T, workflows []string) string {
+	t.Helper()
+	if workflows == nil {
+		workflows = []string{}
+	}
+	b, err := json.Marshal(workflows)
+	require.NoError(t, err)
+	return string(b)
+}
+
 type TestRepo struct {
 	// Template fields (directly accessible by Go templates via .FieldName)
 	Name                      string
@@ -670,6 +660,7 @@ type TestRepo struct {
 	SyncIntervalSeconds       int
 	Path                      string
 	Workflows                 []string
+	WorkflowsJSON             string
 	URL                       string
 	Branch                    string
 	Token                     string
@@ -697,6 +688,7 @@ type LocalRepositorySpec struct {
 	Title               string
 	Description         string
 	Workflows           []string
+	WorkflowsJSON       string
 }
 
 func (h *ProvisioningTestHelper) CreateLocalRepository(t *testing.T, repo LocalRepositorySpec) {
@@ -705,6 +697,10 @@ func (h *ProvisioningTestHelper) CreateLocalRepository(t *testing.T, repo LocalR
 	if repo.SyncTarget == "" {
 		repo.SyncTarget = "folder"
 	}
+	if repo.Path == "" {
+		repo.Path = h.ProvisioningPath
+	}
+	repo.WorkflowsJSON = marshalWorkflows(t, repo.Workflows)
 
 	localRepo := h.RenderObject(t, TestdataPath("local.json.tmpl"), repo)
 
@@ -729,6 +725,7 @@ type GitHubRepositorySpec struct {
 	WebhookSecret             string
 	GenerateDashboardPreviews bool
 	Workflows                 []string
+	WorkflowsJSON             string
 }
 
 func (h *ProvisioningTestHelper) CreateGitHubRepository(t *testing.T, repo GitHubRepositorySpec) string {
@@ -737,6 +734,7 @@ func (h *ProvisioningTestHelper) CreateGitHubRepository(t *testing.T, repo GitHu
 	if repo.SyncTarget == "" {
 		repo.SyncTarget = "folder"
 	}
+	repo.WorkflowsJSON = marshalWorkflows(t, repo.Workflows)
 
 	githubRepo := h.RenderObject(t, TestdataPath("github.json.tmpl"), repo)
 	createdRepo, err := h.Repositories.Resource.Create(t.Context(), githubRepo, metav1.CreateOptions{})
@@ -749,16 +747,12 @@ func (h *ProvisioningTestHelper) CreateGitHubRepository(t *testing.T, repo GitHu
 }
 
 func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
-	// Apply template defaults
 	if repo.SyncTarget == "" {
 		repo.SyncTarget = "instance"
 	}
 	repo.SyncEnabled = !repo.SkipSync
-	if repo.Workflows == nil {
-		repo.Workflows = []string{"write"}
-	}
+	repo.WorkflowsJSON = marshalWorkflows(t, repo.Workflows)
 
-	// Handle filesystem path
 	localPath := h.ProvisioningPath
 	if repo.LocalPath != "" {
 		localPath = repo.LocalPath
@@ -2474,14 +2468,14 @@ func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget 
 	require.NoError(t, err)
 
 	repoObj := h.RenderObject(t, TestdataPath("git.json.tmpl"), map[string]any{
-		"Name":       repoName,
-		"Title":      fmt.Sprintf("Test Repository %s", repoName),
-		"URL":        remote.URL,
-		"Branch":     "main",
-		"TokenUser":  user.Username,
-		"SyncTarget": syncTarget,
-		"Token":      user.Password,
-		"Workflows":  string(workflowsJSON),
+		"Name":          repoName,
+		"Title":         fmt.Sprintf("Test Repository %s", repoName),
+		"URL":           remote.URL,
+		"Branch":        "main",
+		"TokenUser":     user.Username,
+		"SyncTarget":    syncTarget,
+		"Token":         user.Password,
+		"WorkflowsJSON": string(workflowsJSON),
 	})
 
 	_, err = h.Repositories.Resource.Create(ctx, repoObj, metav1.CreateOptions{})
@@ -2688,14 +2682,14 @@ func (h *GitTestHelper) CreateExportGitRepo(t *testing.T, repoName string) {
 	require.NoError(t, err, "failed to initialize local repo with remote")
 
 	repoObj := h.RenderObject(t, TestdataPath("git.json.tmpl"), map[string]any{
-		"Name":       repoName,
-		"Title":      repoName,
-		"URL":        remote.URL,
-		"Branch":     "main",
-		"TokenUser":  user.Username,
-		"SyncTarget": "instance",
-		"Token":      user.Password,
-		"Workflows":  `["write"]`,
+		"Name":          repoName,
+		"Title":         repoName,
+		"URL":           remote.URL,
+		"Branch":        "main",
+		"TokenUser":     user.Username,
+		"SyncTarget":    "instance",
+		"Token":         user.Password,
+		"WorkflowsJSON": `["write"]`,
 	})
 
 	_, err = h.Repositories.Resource.Create(ctx, repoObj, metav1.CreateOptions{})

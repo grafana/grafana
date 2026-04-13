@@ -41,6 +41,7 @@ func TestIntegrationProvisioning_InlineSecrets(t *testing.T) {
 				"SyncEnabled":   true,
 				"SyncTarget":    "folder",
 				"GenerateName":  "test-",
+				"WorkflowsJSON": `[]`,
 			},
 			inputFile: common.TestdataPath("github.json.tmpl"),
 			expectedFields: []expectedField{

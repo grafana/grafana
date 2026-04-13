@@ -74,8 +74,8 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 		path   string
 		values map[string]any
 	}{
-		{path: common.TestdataPath("github.json.tmpl"), values: map[string]any{"Path": "grafana/"}},
-		{path: common.TestdataPath("local.json.tmpl")},
+		{path: common.TestdataPath("github.json.tmpl"), values: map[string]any{"Path": "grafana/", "WorkflowsJSON": `[]`}},
+		{path: common.TestdataPath("local.json.tmpl"), values: map[string]any{"Path": helper.ProvisioningPath, "WorkflowsJSON": `[]`}},
 	}
 
 	for _, inputFile := range inputFiles {
@@ -327,8 +327,10 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			name: "should succeed with valid local repository",
 			repo: func() *unstructured.Unstructured {
 				return helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
-					"Name":        "valid-repo",
-					"SyncEnabled": true,
+					"Name":          "valid-repo",
+					"SyncEnabled":   true,
+					"Path":          helper.ProvisioningPath,
+					"WorkflowsJSON": `[]`,
 				})
 			}(),
 		},
@@ -336,8 +338,10 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			name: "should error if mutually exclusive finalizers are set",
 			repo: func() *unstructured.Unstructured {
 				localTmp := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
-					"Name":        "repo-with-invalid-finalizers",
-					"SyncEnabled": true,
+					"Name":          "repo-with-invalid-finalizers",
+					"SyncEnabled":   true,
+					"Path":          helper.ProvisioningPath,
+					"WorkflowsJSON": `[]`,
 				})
 
 				// Setting finalizers to trigger a failure
@@ -355,8 +359,10 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			name: "should error if unknown finalizer is set",
 			repo: func() *unstructured.Unstructured {
 				localTmp := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
-					"Name":        "repo-with-unknown-finalizer",
-					"SyncEnabled": true,
+					"Name":          "repo-with-unknown-finalizer",
+					"SyncEnabled":   true,
+					"Path":          helper.ProvisioningPath,
+					"WorkflowsJSON": `[]`,
 				})
 
 				// Setting an unknown finalizer
@@ -514,11 +520,12 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			t.Run(test.name, func(t *testing.T) {
 				repoName := fmt.Sprintf("git-path-test-%d", i+1)
 				gitRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
-					"Name":        repoName,
-					"URL":         baseURL,
-					"Path":        test.path,
-					"SyncEnabled": true, // Sync enabled triggers path conflict checks
-					"SyncTarget":  "folder",
+					"Name":          repoName,
+					"URL":           baseURL,
+					"Path":          test.path,
+					"SyncEnabled":   true,
+					"SyncTarget":    "folder",
+					"WorkflowsJSON": `[]`,
 				})
 
 				_, err := helper.Repositories.Resource.Create(ctx, gitRepo, metav1.CreateOptions{FieldValidation: "Strict"})
@@ -546,11 +553,12 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 
 		// Create an initial repo with sync disabled and a specific path
 		firstRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
-			"Name":        "git-sync-disabled-1",
-			"URL":         baseURL,
-			"Path":        "demo/nested",
-			"SyncEnabled": false,
-			"SyncTarget":  "folder",
+			"Name":          "git-sync-disabled-1",
+			"URL":           baseURL,
+			"Path":          "demo/nested",
+			"SyncEnabled":   false,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
 		})
 		_, err := helper.Repositories.Resource.Create(ctx, firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "First repository should be created successfully")
@@ -558,33 +566,36 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		// Create a second repo pointing to same URL with a child path and sync disabled.
 		// This simulates the wizard onboarding flow where sync is not yet enabled.
 		secondRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
-			"Name":        "git-sync-disabled-2",
-			"URL":         baseURL,
-			"Path":        "demo/nested/child",
-			"SyncEnabled": false,
-			"SyncTarget":  "folder",
+			"Name":          "git-sync-disabled-2",
+			"URL":           baseURL,
+			"Path":          "demo/nested/child",
+			"SyncEnabled":   false,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
 		})
 		_, err = helper.Repositories.Resource.Create(ctx, secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "Second repository with child path should succeed when sync is disabled")
 
 		// Create a third repo with the same path (duplicate) and sync disabled
 		thirdRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
-			"Name":        "git-sync-disabled-3",
-			"URL":         baseURL,
-			"Path":        "demo/nested",
-			"SyncEnabled": false,
-			"SyncTarget":  "folder",
+			"Name":          "git-sync-disabled-3",
+			"URL":           baseURL,
+			"Path":          "demo/nested",
+			"SyncEnabled":   false,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
 		})
 		_, err = helper.Repositories.Resource.Create(ctx, thirdRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "Third repository with duplicate path should succeed when sync is disabled")
 
 		// Create a fourth repo with empty path (root) and sync disabled - wizard step 1 scenario
 		fourthRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
-			"Name":        "git-sync-disabled-4",
-			"URL":         baseURL,
-			"Path":        "",
-			"SyncEnabled": false,
-			"SyncTarget":  "folder",
+			"Name":          "git-sync-disabled-4",
+			"URL":           baseURL,
+			"Path":          "",
+			"SyncEnabled":   false,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
 		})
 		_, err = helper.Repositories.Resource.Create(ctx, fourthRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "Fourth repository with empty path should succeed when sync is disabled")
@@ -596,22 +607,24 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 
 		// Create an initial repo with sync enabled and a specific path
 		firstRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
-			"Name":        "git-enable-sync-1",
-			"URL":         baseURL,
-			"Path":        "demo/nested",
-			"SyncEnabled": true,
-			"SyncTarget":  "folder",
+			"Name":          "git-enable-sync-1",
+			"URL":           baseURL,
+			"Path":          "demo/nested",
+			"SyncEnabled":   true,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
 		})
 		_, err := helper.Repositories.Resource.Create(ctx, firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "First repository should be created successfully")
 
 		// Create second repo with conflicting child path but sync disabled (should succeed)
 		secondRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
-			"Name":        "git-enable-sync-2",
-			"URL":         baseURL,
-			"Path":        "demo/nested/child",
-			"SyncEnabled": false,
-			"SyncTarget":  "folder",
+			"Name":          "git-enable-sync-2",
+			"URL":           baseURL,
+			"Path":          "demo/nested/child",
+			"SyncEnabled":   false,
+			"SyncTarget":    "folder",
+			"WorkflowsJSON": `[]`,
 		})
 		created, err := helper.Repositories.Resource.Create(ctx, secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "Second repository with child path should succeed when sync is disabled")
@@ -628,6 +641,8 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"Name":                "valid-repo-testinterval",
 			"SyncEnabled":         true,
 			"SyncIntervalSeconds": 5,
+			"Path":                helper.ProvisioningPath,
+			"WorkflowsJSON":       `[]`,
 		})
 		created, err := helper.Repositories.Resource.Create(ctx, r, metav1.CreateOptions{})
 		require.NoError(t, err)
@@ -638,8 +653,10 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 
 	t.Run("should automatically add finalizers during creation", func(t *testing.T) {
 		r := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
-			"Name":        "repo-auto-finalizers",
-			"SyncEnabled": false,
+			"Name":          "repo-auto-finalizers",
+			"SyncEnabled":   false,
+			"Path":          helper.ProvisioningPath,
+			"WorkflowsJSON": `[]`,
 		})
 
 		// Verify the template doesn't have finalizers set (or set them explicitly to nil)
@@ -658,8 +675,10 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 	t.Run("should re-add finalizers when removed during update", func(t *testing.T) {
 		// Create a repository with finalizers
 		r := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
-			"Name":        "repo-update-finalizers",
-			"SyncEnabled": false,
+			"Name":          "repo-update-finalizers",
+			"SyncEnabled":   false,
+			"Path":          helper.ProvisioningPath,
+			"WorkflowsJSON": `[]`,
 		})
 
 		created, err := helper.Repositories.Resource.Create(ctx, r, metav1.CreateOptions{})
@@ -699,9 +718,10 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 	helper.CopyToProvisioningPath(t, "../testdata/invalid-dashboard-schema.json", "invalid-dashboard-schema.json")
 
 	localTmp := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
-		"Name":        repo,
-		"SyncEnabled": true,
-		"Workflows":   `["write"]`,
+		"Name":          repo,
+		"SyncEnabled":   true,
+		"Path":          helper.ProvisioningPath,
+		"WorkflowsJSON": `["write"]`,
 	})
 	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
@@ -833,11 +853,12 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 			t.Run(test.name, func(t *testing.T) {
 				// Create repository directly without health checks since we're only testing URL cleanup
 				input := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
-					"Name":        test.name,
-					"URL":         test.input,
-					"SyncTarget":  "folder",
-					"SyncEnabled": false, // Disable sync since we're just testing URL cleanup,
-					"Path":        fmt.Sprintf("grafana-%s/", test.name),
+					"Name":          test.name,
+					"URL":           test.input,
+					"SyncTarget":    "folder",
+					"SyncEnabled":   false,
+					"Path":          fmt.Sprintf("grafana-%s/", test.name),
+					"WorkflowsJSON": `[]`,
 				})
 
 				_, err := helper.Repositories.Resource.Create(ctx, input, metav1.CreateOptions{})
@@ -861,8 +882,9 @@ func TestIntegrationProvisioning_ReadOnlyRepositoryNoWebhook(t *testing.T) {
 	t.Run("repository with no workflows should not create a webhook", func(t *testing.T) {
 		repoName := "readonly-no-webhook"
 		input := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
-			"Name":        repoName,
-			"SyncEnabled": false,
+			"Name":          repoName,
+			"SyncEnabled":   false,
+			"WorkflowsJSON": `[]`,
 		})
 
 		_, err := helper.Repositories.Resource.Create(ctx, input, metav1.CreateOptions{})
