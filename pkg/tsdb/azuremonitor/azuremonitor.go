@@ -89,8 +89,9 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return responses, nil
 	}
 
-	req, sqlErrs := s.normalizeGrafanaSQLRequest(ctx, req)
-	resp, err := s.queryMux.QueryData(azusercontext.WithUserFromQueryReq(ctx, req), req)
+	ctxWithUser := azusercontext.WithUserFromQueryReq(ctx, req)
+	req, sqlErrs := s.normalizeGrafanaSQLRequest(ctxWithUser, req)
+	resp, err := s.queryMux.QueryData(ctxWithUser, req)
 	if err != nil {
 		return nil, err
 	}

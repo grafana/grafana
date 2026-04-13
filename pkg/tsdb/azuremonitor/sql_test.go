@@ -49,6 +49,7 @@ func TestNormalizeGrafanaSQLRequest_ConvertsMetricsQuery(t *testing.T) {
 	tp := map[string]any{
 		subscription:  sub,
 		metricName:    "Percentage CPU",
+		aggregation:   "Average",
 		resourceGroup: "rg1",
 		resourceName:  "vm1",
 		region:        "westeurope",
@@ -65,7 +66,6 @@ func TestNormalizeGrafanaSQLRequest_ConvertsMetricsQuery(t *testing.T) {
 		TableParameterValues:          tpMap,
 		Filters:                       nil,
 	}
-	// RefId from embedded CommonQueryProperties — set via raw JSON for test
 	raw, err := json.Marshal(map[string]any{
 		"refId":                 "A",
 		"table":                 sq.Table,
@@ -98,7 +98,7 @@ func TestNormalizeGrafanaSQLRequest_ConvertsMetricsQuery(t *testing.T) {
 	am, ok := decoded["azureMonitor"].(map[string]any)
 	require.True(t, ok)
 	require.Equal(t, "Percentage CPU", am["metricName"])
-	// Table token is denormalized by replacing "-" with "/" (see fallbackDenormalizeNamespace).
+	require.Equal(t, "Average", am["aggregation"])
 	require.Equal(t, "microsoft.compute/virtualmachines", am["metricNamespace"])
 	res := am["resources"].([]any)
 	require.Len(t, res, 1)
@@ -107,12 +107,12 @@ func TestNormalizeGrafanaSQLRequest_ConvertsMetricsQuery(t *testing.T) {
 	require.Equal(t, "vm1", r0["resourceName"])
 }
 
-func TestNormalizeGrafanaSQLRequest_MissingResourceScope(t *testing.T) {
+func TestNormalizeGrafanaSQLRequest_MissingAggregation(t *testing.T) {
 	s := &Service{}
 	raw, err := json.Marshal(map[string]any{
-		"refId":        "A",
-		"table":        "microsoft.compute-virtualmachines",
-		"grafanaSql":   true,
+		"refId":      "A",
+		"table":      "microsoft.compute-virtualmachines",
+		"grafanaSql": true,
 		"tableParameterValues": map[string]any{
 			subscription: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
 			metricName:   "Percentage CPU",
@@ -128,7 +128,60 @@ func TestNormalizeGrafanaSQLRequest_MissingResourceScope(t *testing.T) {
 		Queries: []backend.DataQuery{{RefID: "A", JSON: raw}},
 	}
 	out, errs := s.normalizeGrafanaSQLRequest(context.Background(), req)
+	require.Contains(t, errs["A"].Error(), "aggregation")
+	require.Empty(t, out.Queries)
+}
+
+func TestNormalizeGrafanaSQLRequest_MissingResourceGroup(t *testing.T) {
+	s := &Service{}
+	raw, err := json.Marshal(map[string]any{
+		"refId":      "A",
+		"table":      "microsoft.compute-virtualmachines",
+		"grafanaSql": true,
+		"tableParameterValues": map[string]any{
+			subscription: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+			metricName:   "Percentage CPU",
+			aggregation:  "Average",
+		},
+	})
+	require.NoError(t, err)
+	req := &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{
+			GrafanaConfig: backend.NewGrafanaCfg(map[string]string{
+				featuretoggles.EnabledFeatures: featuremgmt.FlagDsAbstractionApp,
+			}),
+		},
+		Queries: []backend.DataQuery{{RefID: "A", JSON: raw}},
+	}
+	out, errs := s.normalizeGrafanaSQLRequest(context.Background(), req)
 	require.Contains(t, errs["A"].Error(), "resourceGroup")
+	require.Empty(t, out.Queries)
+}
+
+func TestNormalizeGrafanaSQLRequest_MultiResourceRequiresRegion(t *testing.T) {
+	s := &Service{}
+	raw, err := json.Marshal(map[string]any{
+		"refId":      "A",
+		"table":      "microsoft.compute-virtualmachines",
+		"grafanaSql": true,
+		"tableParameterValues": map[string]any{
+			subscription: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+			metricName:   "Percentage CPU",
+			aggregation:  "Average",
+			resourceGroup: "rg1",
+		},
+	})
+	require.NoError(t, err)
+	req := &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{
+			GrafanaConfig: backend.NewGrafanaCfg(map[string]string{
+				featuretoggles.EnabledFeatures: featuremgmt.FlagDsAbstractionApp,
+			}),
+		},
+		Queries: []backend.DataQuery{{RefID: "A", JSON: raw}},
+	}
+	out, errs := s.normalizeGrafanaSQLRequest(context.Background(), req)
+	require.Contains(t, errs["A"].Error(), "region")
 	require.Empty(t, out.Queries)
 }
 

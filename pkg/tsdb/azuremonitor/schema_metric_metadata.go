@@ -330,17 +330,7 @@ func (p *metricsSchema) metricsColumnsEnriched(ctx context.Context, dsInfo types
 
 	eqOps := []schemas.Operator{schemas.OperatorEquals, schemas.OperatorIn}
 	cols := make([]schemas.Column, 0, len(base)+len(def.Dimensions)+2)
-	for _, c := range base {
-		if c.Name == "aggregation" {
-			enumVals := aggregationEnumValues(def)
-			if len(enumVals) > 0 {
-				c.Type = schemas.ColumnTypeEnum
-				c.Values = enumVals
-				c.Description = "Aggregation (from metric definition supportedAggregationTypes)."
-			}
-		}
-		cols = append(cols, c)
-	}
+	cols = append(cols, base...)
 	for _, d := range def.Dimensions {
 		dimName := strings.TrimSpace(d.Value)
 		if dimName == "" {
@@ -401,9 +391,7 @@ func (p *metricsSchema) ColumnValues(ctx context.Context, req *schemas.ColumnVal
 	}
 
 	for _, col := range req.Columns {
-		switch col {
-		case "aggregation":
-			out[col] = aggregationEnumValues(def)
+		switch {
 		default:
 			if dim, ok := decodeDimensionColumnName(col); ok {
 				vals, err := fetchDimensionValuesMetadata(ctx, dsInfo, sub, ns, rg, rn, region, mn, dim, req.TimeRange)

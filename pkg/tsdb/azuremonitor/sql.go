@@ -18,7 +18,7 @@ var azureSubscriptionIDSuffix = regexp.MustCompile(`(?i)[0-9a-f]{8}-[0-9a-f]{4}-
 
 // normalizeGrafanaSQLRequest translates dsabstraction SQL queries into Azure Monitor metrics JSON.
 // sqlErrors maps refId to validation errors for queries that were not converted.
-func (s *Service) normalizeGrafanaSQLRequest(_ context.Context, req *backend.QueryDataRequest) (*backend.QueryDataRequest, map[string]error) {
+func (s *Service) normalizeGrafanaSQLRequest(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataRequest, map[string]error) {
 	if req == nil || len(req.Queries) == 0 {
 		return req, nil
 	}
@@ -58,11 +58,17 @@ func (s *Service) normalizeGrafanaSQLRequest(_ context.Context, req *backend.Que
 			continue
 		}
 
+		agg := strParam(tp, aggregation)
+		if agg == "" {
+			sqlErrors[q.RefID] = fmt.Errorf("azure monitor sql: aggregation table parameter is required")
+			continue
+		}
+
 		rg := strParam(tp, resourceGroup)
 		rn := strParam(tp, resourceName)
-		region := strParam(tp, region)
-		if rg == "" || rn == "" {
-			sqlErrors[q.RefID] = fmt.Errorf("azure monitor sql: resourceGroup and resourceName table parameters are required")
+		rgn := strParam(tp, region)
+		if rg == "" {
+			sqlErrors[q.RefID] = fmt.Errorf("azure monitor sql: resourceGroup table parameter is required")
 			continue
 		}
 
@@ -75,19 +81,44 @@ func (s *Service) normalizeGrafanaSQLRequest(_ context.Context, req *backend.Que
 		az := dataquery.NewAzureMetricQuery()
 		az.MetricNamespace = &ns
 		az.MetricName = &metricName
-		if region != "" {
-			az.Region = &region
+		az.Aggregation = &agg
+		if rgn != "" {
+			az.Region = &rgn
 		}
 
-		res := dataquery.AzureMonitorResource{}
-		res.Subscription = &sub
-		res.ResourceGroup = &rg
-		res.ResourceName = &rn
-		res.MetricNamespace = &ns
-		if region != "" {
-			res.Region = &region
+		var resources []dataquery.AzureMonitorResource
+		if rn != "" {
+			res := dataquery.AzureMonitorResource{}
+			res.Subscription = &sub
+			res.ResourceGroup = &rg
+			res.ResourceName = &rn
+			res.MetricNamespace = &ns
+			if rgn != "" {
+				res.Region = &rgn
+			}
+			resources = []dataquery.AzureMonitorResource{res}
+		} else {
+			if rgn == "" {
+				sqlErrors[q.RefID] = fmt.Errorf("azure monitor sql: region table parameter is required for multi-resource queries (when resourceName is omitted)")
+				continue
+			}
+			dsInfo, err := s.getDataSourceFromPluginReq(ctx, req)
+			if err != nil {
+				sqlErrors[q.RefID] = fmt.Errorf("azure monitor sql: %w", err)
+				continue
+			}
+			discovered, err := discoverResourcesForAzureMonitorSQL(ctx, dsInfo, sub, rg, ns)
+			if err != nil {
+				sqlErrors[q.RefID] = err
+				continue
+			}
+			resources = discovered
+			r := rgn
+			for i := range resources {
+				resources[i].Region = &r
+			}
 		}
-		az.Resources = []dataquery.AzureMonitorResource{res}
+		az.Resources = resources
 
 		if err := applyMetricSQLFilters(az, sq.Filters); err != nil {
 			sqlErrors[q.RefID] = err
@@ -176,14 +207,6 @@ func applyMetricSQLFilters(az *dataquery.AzureMetricQuery, filters []schemas.Col
 			continue
 		}
 		switch f.Name {
-		case "aggregation":
-			v, err := firstFilterStringValue(f.Conditions)
-			if err != nil {
-				return err
-			}
-			if v != "" {
-				az.Aggregation = &v
-			}
 		case "dimensions":
 			dims, err := dimensionFiltersFromSQL(f.Conditions)
 			if err != nil {
@@ -212,18 +235,6 @@ func applyMetricSQLFilters(az *dataquery.AzureMetricQuery, filters []schemas.Col
 		}
 	}
 	return nil
-}
-
-func firstFilterStringValue(conds []schemas.FilterCondition) (string, error) {
-	for _, c := range conds {
-		if c.Operator == schemas.OperatorIn && len(c.Values) > 0 {
-			return strings.TrimSpace(fmt.Sprint(c.Values[0])), nil
-		}
-		if c.Value != nil {
-			return strings.TrimSpace(fmt.Sprint(c.Value)), nil
-		}
-	}
-	return "", nil
 }
 
 func collectFilterStringValues(conds []schemas.FilterCondition) []string {

@@ -466,6 +466,13 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 					})
 				}
 			}
+
+			resourceNameField := data.NewFieldFromFieldType(data.FieldTypeString, len(series.Data))
+			resourceNameField.Name = "resourceName"
+			for i := 0; i < len(series.Data); i++ {
+				resourceNameField.Set(i, resourceName)
+			}
+			frame.Fields = append(frame.Fields, resourceNameField)
 		}
 
 		requestedAgg := query.Params.Get("aggregation")

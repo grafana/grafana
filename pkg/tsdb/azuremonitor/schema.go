@@ -27,6 +27,7 @@ const (
 	metricDefinitionsAPIVersion    = "2018-01-01"
 	subscription                   = "subscription"
 	metricName                     = "metric_name"
+	aggregation                    = "aggregation"
 	resourceGroup                  = "resourceGroup"
 	region                         = "region"
 	resourceName                   = "resourceName"
@@ -59,6 +60,7 @@ func metricsTableParameters() []schemas.TableParameter {
 	return []schemas.TableParameter{
 		{Name: subscription, Root: true, Required: true},
 		{Name: metricName, DependsOn: []string{subscription}, Required: true},
+		{Name: aggregation, DependsOn: []string{subscription, metricName}, Required: true},
 		{Name: resourceGroup, DependsOn: []string{subscription}, Required: false},
 		{Name: region, DependsOn: []string{subscription}, Required: false},
 		{Name: resourceName, DependsOn: []string{subscription, resourceGroup, region}, Required: false},
@@ -76,7 +78,7 @@ func metricsColumns() []schemas.Column {
 	return []schemas.Column{
 		{Name: "time", Type: schemas.ColumnTypeDatetime, Operators: timeOps, Description: "Metric sample time (aligned with query time range and grain)."},
 		{Name: "value", Type: schemas.ColumnTypeFloat64, Description: "Metric value for the selected aggregation."},
-		{Name: "aggregation", Type: schemas.ColumnTypeString, Operators: eqOps, Description: "Optional aggregation override (e.g. Average, Total)."},
+		{Name: "resourceName", Type: schemas.ColumnTypeString, Operators: eqOps, Description: "Name of the Azure resource (populated for multi-resource queries)."},
 		{Name: "dimensions", Type: schemas.ColumnTypeJSON, Description: `Optional dimension filters as JSON array: [{"dimension":"DimName","operator":"eq","filters":["v1"]}]`},
 	}
 }
@@ -187,6 +189,20 @@ func (p *metricsSchema) TableParameterValues(ctx context.Context, req *schemas.T
 			return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
 		}
 		out[req.TableParameter] = names
+	case aggregation:
+		subRaw := req.DependencyValues[subscription]
+		sub := parseSubscriptionIDFromParameter(subRaw)
+		mn := strings.TrimSpace(req.DependencyValues[metricName])
+		if sub == "" || mn == "" {
+			return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
+		}
+		ns := fallbackDenormalizeNamespace(stripTableParameterValues(req.Table))
+		vals, err := listAggregationValuesForMetric(ctx, dsInfo, sub, ns, mn, req.DependencyValues)
+		if err != nil {
+			p.logger.Warn("failed to list aggregation values", "error", err)
+			return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
+		}
+		out[req.TableParameter] = vals
 	default:
 		// Optional scoping parameters: not enumerated in v1 (return empty).
 		return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
@@ -475,6 +491,31 @@ func fetchMetricNamesForResource(ctx context.Context, dsInfo types.DatasourceInf
 	}
 	sort.Strings(names)
 	return names, nil
+}
+
+func listAggregationValuesForMetric(ctx context.Context, dsInfo types.DatasourceInfo, subscription, namespace, metricNameVal string, deps map[string]string) ([]string, error) {
+	sub := parseSubscriptionIDFromParameter(subscription)
+	if sub == "" {
+		return nil, nil
+	}
+
+	rg := deps[resourceGroup]
+	rn := deps[resourceName]
+	rgn := deps[region]
+
+	if rg == "" || rn == "" {
+		return nil, nil
+	}
+
+	defs, err := fetchMetricDefinitionsForResource(ctx, dsInfo, sub, namespace, rg, rn, rgn)
+	if err != nil {
+		return nil, err
+	}
+	def := findMetricDefinition(defs, metricNameVal)
+	if def == nil {
+		return nil, nil
+	}
+	return aggregationEnumValues(def), nil
 }
 
 func fallbackDenormalizeNamespace(tableBase string) string {
