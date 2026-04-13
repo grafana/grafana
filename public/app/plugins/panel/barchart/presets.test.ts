@@ -85,14 +85,15 @@ describe('barchartPresetsSupplier', () => {
       const presets = barchartPresetsSupplier({ dataSummary });
 
       expect(presets).toHaveLength(3);
-      expect(presets).toMatchSnapshot();
+      expect(presets![0]).toMatchObject({ name: 'Palette classic' });
+      expect(presets![1]).toMatchObject({ name: 'Fixed purple hue' });
+      expect(presets![2]).toMatchObject({ name: 'Viridis hue' });
     });
     it.each([2, 3, 10])('returns 4 presets when data has %i number fields', (i) => {
       const dataSummary = getPanelDataSummary([createPresetFrame(i)]);
       const presets = barchartPresetsSupplier({ dataSummary });
 
       expect(presets).toHaveLength(4);
-      expect(presets).toMatchSnapshot();
     });
   });
 
@@ -101,7 +102,51 @@ describe('barchartPresetsSupplier', () => {
       const dataSummary = getPanelDataSummary([createPresetFrame(1)]);
       const presets = barchartPresetsSupplier({ dataSummary });
 
-      expect(presets).toMatchSnapshot();
+      expect(presets).toHaveLength(3);
+      expect(presets![0]).toMatchObject({
+        name: 'Palette classic',
+        options: {
+          barRadius: 0.05,
+          barWidth: 0.95,
+          groupWidth: 0.8,
+          stacking: 'none',
+          xField: 'time',
+          xTickLabelSpacing: 100,
+        },
+        cardOptions: {
+          previewModifier: {},
+        },
+      });
+
+      expect(presets![1]).toMatchObject({
+        name: 'Fixed purple hue',
+        options: {
+          barRadius: 0,
+          barWidth: 0.9,
+          groupWidth: 0.8,
+          stacking: 'none',
+          xField: 'time',
+          xTickLabelSpacing: 100,
+        },
+        cardOptions: {
+          previewModifier: {},
+        },
+      });
+
+      expect(presets![2]).toMatchObject({
+        name: 'Viridis hue',
+        options: {
+          barRadius: 0,
+          barWidth: 0.9,
+          groupWidth: 0.8,
+          stacking: 'none',
+          xField: 'time',
+          xTickLabelSpacing: 100,
+        },
+        cardOptions: {
+          previewModifier: {},
+        },
+      });
     });
   });
 
@@ -132,11 +177,49 @@ describe('barchartPresetsSupplier', () => {
         },
       };
 
-      if (previewModifier) {
-        previewModifier(suggestion);
-      }
+      // before previewModifier
+      expect(suggestion).toEqual({
+        fieldConfig: {
+          defaults: {
+            custom: {
+              axisPlacement: undefined,
+            },
+          },
+          overrides: [],
+        },
+        options: {
+          barWidth: 0.5,
+          legend: {
+            calcs: [],
+            displayMode: 'list',
+            placement: 'right',
+            showLegend: true,
+          },
+        },
+      });
 
-      expect(suggestion).toMatchSnapshot();
+      previewModifier!(suggestion);
+
+      // after previewModifier
+      expect(suggestion).toEqual({
+        fieldConfig: {
+          defaults: {
+            custom: {
+              axisPlacement: 'hidden',
+            },
+          },
+          overrides: [],
+        },
+        options: {
+          barWidth: 0.8,
+          legend: {
+            calcs: [],
+            displayMode: 'hidden',
+            placement: 'right',
+            showLegend: false,
+          },
+        },
+      });
     });
   });
 
