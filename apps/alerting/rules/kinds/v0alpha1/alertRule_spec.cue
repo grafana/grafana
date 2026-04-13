@@ -30,6 +30,9 @@ AlertRuleSpec: #RuleSpec & {
 #NotificationSettingsType: "SimplifiedRouting" | "NamedRoutingTree"
 
 #SimplifiedRouting: {
+	// This is technically optional and there is a hack in the Makefile that
+	// manually sets SimplifiedRouting as the default if type is absent
+
 	type:     #NotificationSettingsType & "SimplifiedRouting"
 	receiver: string
 	groupBy?: [...string]
