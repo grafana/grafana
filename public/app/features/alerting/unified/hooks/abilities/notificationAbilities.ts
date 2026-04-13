@@ -28,12 +28,32 @@ import {
 
 // ── Internal helper ───────────────────────────────────────────────────────────
 
+// TODO: Per-entity ability hooks for alertmanager resources
+//
+// Three mechanisms currently live outside the ability system and should be
+// integrated as focused per-entity hooks in a future iteration:
+//
+// 1. K8s annotation-based (contact points — Grafana AM k8s API only)
+//    canEditEntity / canDeleteEntity / canAdminEntity / canModifyProtectedEntity / canTestEntity
+//    → proposed: useContactPointAbility(cp) returning { edit, delete, test, admin, editProtected }
+//    Files: ContactPointHeader.tsx, GrafanaReceiverForm.tsx, useTestContactPoint.ts, contact-points/utils.ts
+//
+// 2. Silence accessControl response field
+//    silence.accessControl.create / .write (populated when API is called with accesscontrol=true)
+//    → proposed: useSilenceAbility(silence) returning { edit, recreate }
+//    Files: SilencesTable.tsx, SilencesEditor.tsx
+//
+// 3. Provisioning-only gating (templates, mute timings, notification policies)
+//    isProvisionedResource(entity.provenance) checked inline in every component
+//    → proposed: useTemplateAbility(template), useMuteTimingAbility(muteTiming)
+//    Files: TemplatesTable.tsx, TemplateForm.tsx, MuteTimingActionsButtons.tsx, MuteTimingForm.tsx,
+//           ActionButtons.tsx, Policy.tsx
+
 /**
- * Builds an Ability from a supported flag and a list of AccessControlActions.
+ * Builds an `Ability` from a supported flag and an explicit list of `AccessControlActions`.
  * The user is considered allowed if they hold ANY of the listed permissions.
- * Used only inside `useMemo` callbacks so it re-evaluates `ctx.hasPermission` lazily.
  */
-function from(supported: boolean, ...anyOfPermissions: AccessControlAction[]): Ability {
+function makeAbility(supported: boolean, anyOfPermissions: AccessControlAction[]): Ability {
   if (!supported) {
     return NotSupported;
   }
@@ -72,105 +92,92 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
 
     return {
       // -- contact points --
-      [AlertmanagerAction.CreateContactPoint]: from(
-        hasConfigurationAPI,
+      [AlertmanagerAction.CreateContactPoint]: makeAbility(hasConfigurationAPI, [
         notificationsPermissions.create,
         // TODO: Move this into the permissions config and generalise that code to allow for an array of permissions
-        ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingReceiversCreate] : [])
-      ),
-      [AlertmanagerAction.ViewContactPoint]: from(
-        true,
+        ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingReceiversCreate] : []),
+      ]),
+      [AlertmanagerAction.ViewContactPoint]: makeAbility(true, [
         notificationsPermissions.read,
-        ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_CONTACT_POINTS_READ : [])
-      ),
-      [AlertmanagerAction.UpdateContactPoint]: from(
-        hasConfigurationAPI,
+        ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_CONTACT_POINTS_READ : []),
+      ]),
+      [AlertmanagerAction.UpdateContactPoint]: makeAbility(hasConfigurationAPI, [
         notificationsPermissions.update,
-        ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingReceiversWrite] : [])
-      ),
-      [AlertmanagerAction.DeleteContactPoint]: from(
-        hasConfigurationAPI,
+        ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingReceiversWrite] : []),
+      ]),
+      [AlertmanagerAction.DeleteContactPoint]: makeAbility(hasConfigurationAPI, [
         notificationsPermissions.delete,
-        ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingReceiversWrite] : [])
-      ),
+        ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingReceiversWrite] : []),
+      ]),
       // At the time of writing, only Grafana flavored alertmanager supports exporting,
       // and if a user can view the contact point, then they can also export it.
       [AlertmanagerAction.ExportContactPoint]: exportContact,
       // -- notification templates --
-      [AlertmanagerAction.CreateNotificationTemplate]: from(
-        hasConfigurationAPI,
+      [AlertmanagerAction.CreateNotificationTemplate]: makeAbility(hasConfigurationAPI, [
         notificationsPermissions.create,
-        ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingTemplatesWrite] : [])
-      ),
-      [AlertmanagerAction.ViewNotificationTemplate]: from(
-        true,
+        ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingTemplatesWrite] : []),
+      ]),
+      [AlertmanagerAction.ViewNotificationTemplate]: makeAbility(true, [
         notificationsPermissions.read,
-        ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingTemplatesRead] : [])
-      ),
-      [AlertmanagerAction.UpdateNotificationTemplate]: from(
-        hasConfigurationAPI,
+        ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingTemplatesRead] : []),
+      ]),
+      [AlertmanagerAction.UpdateNotificationTemplate]: makeAbility(hasConfigurationAPI, [
         notificationsPermissions.update,
-        ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingTemplatesWrite] : [])
-      ),
-      [AlertmanagerAction.DeleteNotificationTemplate]: from(hasConfigurationAPI, notificationsPermissions.delete),
-      // -- notification policies --
-      [AlertmanagerAction.CreateNotificationPolicy]: from(
-        hasConfigurationAPI,
-        notificationsPermissions.create,
-        ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_NOTIFICATION_POLICIES_MODIFY : [])
-      ),
-      [AlertmanagerAction.ViewNotificationPolicyTree]: from(
-        true,
-        notificationsPermissions.read,
-        ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_NOTIFICATION_POLICIES_READ : [])
-      ),
-      [AlertmanagerAction.UpdateNotificationPolicyTree]: from(
-        hasConfigurationAPI,
-        notificationsPermissions.update,
-        ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_NOTIFICATION_POLICIES_MODIFY : [])
-      ),
-      [AlertmanagerAction.DeleteNotificationPolicy]: from(
-        hasConfigurationAPI,
+        ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingTemplatesWrite] : []),
+      ]),
+      [AlertmanagerAction.DeleteNotificationTemplate]: makeAbility(hasConfigurationAPI, [
         notificationsPermissions.delete,
-        ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_NOTIFICATION_POLICIES_MODIFY : [])
-      ),
-      [AlertmanagerAction.ExportNotificationPolicies]: from(
-        isGrafanaFlavoredAlertmanager,
-        notificationsPermissions.read
-      ),
-      [AlertmanagerAction.DecryptSecrets]: from(
-        isGrafanaFlavoredAlertmanager,
-        notificationsPermissions.provisioning.readSecrets
-      ),
+      ]),
+      // -- notification policies --
+      [AlertmanagerAction.CreateNotificationPolicy]: makeAbility(hasConfigurationAPI, [
+        notificationsPermissions.create,
+        ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_NOTIFICATION_POLICIES_MODIFY : []),
+      ]),
+      [AlertmanagerAction.ViewNotificationPolicyTree]: makeAbility(true, [
+        notificationsPermissions.read,
+        ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_NOTIFICATION_POLICIES_READ : []),
+      ]),
+      [AlertmanagerAction.UpdateNotificationPolicyTree]: makeAbility(hasConfigurationAPI, [
+        notificationsPermissions.update,
+        ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_NOTIFICATION_POLICIES_MODIFY : []),
+      ]),
+      [AlertmanagerAction.DeleteNotificationPolicy]: makeAbility(hasConfigurationAPI, [
+        notificationsPermissions.delete,
+        ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_NOTIFICATION_POLICIES_MODIFY : []),
+      ]),
+      [AlertmanagerAction.ExportNotificationPolicies]: makeAbility(isGrafanaFlavoredAlertmanager, [
+        notificationsPermissions.read,
+      ]),
+      [AlertmanagerAction.DecryptSecrets]: makeAbility(isGrafanaFlavoredAlertmanager, [
+        notificationsPermissions.provisioning.readSecrets,
+      ]),
       [AlertmanagerAction.ViewAutogeneratedPolicyTree]: autogenerated,
       // -- silences --
-      [AlertmanagerAction.CreateSilence]: from(true, instancePermissions.create),
-      [AlertmanagerAction.ViewSilence]: from(true, instancePermissions.read),
-      [AlertmanagerAction.UpdateSilence]: from(true, instancePermissions.update),
-      [AlertmanagerAction.PreviewSilencedInstances]: from(true, instancePermissions.read),
+      [AlertmanagerAction.CreateSilence]: makeAbility(true, [instancePermissions.create]),
+      [AlertmanagerAction.ViewSilence]: makeAbility(true, [instancePermissions.read]),
+      [AlertmanagerAction.UpdateSilence]: makeAbility(true, [instancePermissions.update]),
+      [AlertmanagerAction.PreviewSilencedInstances]: makeAbility(true, [instancePermissions.read]),
       // -- time intervals --
-      [AlertmanagerAction.CreateTimeInterval]: from(
-        hasConfigurationAPI,
+      [AlertmanagerAction.CreateTimeInterval]: makeAbility(hasConfigurationAPI, [
         notificationsPermissions.create,
-        ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_MODIFY : [])
-      ),
-      [AlertmanagerAction.ViewTimeInterval]: from(
-        true,
+        ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_MODIFY : []),
+      ]),
+      [AlertmanagerAction.ViewTimeInterval]: makeAbility(true, [
         notificationsPermissions.read,
-        ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_READ : [])
-      ),
-      [AlertmanagerAction.UpdateTimeInterval]: from(
-        hasConfigurationAPI,
+        ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_READ : []),
+      ]),
+      [AlertmanagerAction.UpdateTimeInterval]: makeAbility(hasConfigurationAPI, [
         notificationsPermissions.update,
-        ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_MODIFY : [])
-      ),
-      [AlertmanagerAction.DeleteTimeInterval]: from(
-        hasConfigurationAPI,
+        ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_MODIFY : []),
+      ]),
+      [AlertmanagerAction.DeleteTimeInterval]: makeAbility(hasConfigurationAPI, [
         notificationsPermissions.delete,
-        ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_MODIFY : [])
-      ),
-      [AlertmanagerAction.ExportTimeIntervals]: from(isGrafanaFlavoredAlertmanager, notificationsPermissions.read),
-      [AlertmanagerAction.ViewAlertGroups]: from(true, instancePermissions.read),
+        ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_MODIFY : []),
+      ]),
+      [AlertmanagerAction.ExportTimeIntervals]: makeAbility(isGrafanaFlavoredAlertmanager, [
+        notificationsPermissions.read,
+      ]),
+      [AlertmanagerAction.ViewAlertGroups]: makeAbility(true, [instancePermissions.read]),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAlertmanager, hasConfigurationAPI, isGrafanaFlavoredAlertmanager, admin]);
@@ -193,14 +200,12 @@ export function useAllExternalAlertmanagerAbilities(): Abilities<ExternalAlertma
 
   return useMemo<Abilities<ExternalAlertmanagerAction>>(
     () => ({
-      [ExternalAlertmanagerAction.ViewExternalConfiguration]: from(
-        true,
-        AccessControlAction.AlertingNotificationsExternalRead
-      ),
-      [ExternalAlertmanagerAction.UpdateExternalConfiguration]: from(
-        hasConfigurationAPI,
-        AccessControlAction.AlertingNotificationsExternalWrite
-      ),
+      [ExternalAlertmanagerAction.ViewExternalConfiguration]: makeAbility(true, [
+        AccessControlAction.AlertingNotificationsExternalRead,
+      ]),
+      [ExternalAlertmanagerAction.UpdateExternalConfiguration]: makeAbility(hasConfigurationAPI, [
+        AccessControlAction.AlertingNotificationsExternalWrite,
+      ]),
     }),
     [hasConfigurationAPI]
   );

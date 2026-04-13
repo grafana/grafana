@@ -56,7 +56,12 @@ function buildSilenceAbility(loading: boolean, supported: boolean, canSilence: b
   return Granted;
 }
 
-function fromPermissions(supported: boolean, loading: boolean, ...anyOfPermissions: AccessControlAction[]): Ability {
+/**
+ * Builds an `Ability` from a supported flag, a loading flag, and an explicit list
+ * of `AccessControlActions`. The user is considered allowed if they hold ANY of the
+ * listed permissions.
+ */
+function makeAbility(supported: boolean, loading: boolean, anyOfPermissions: AccessControlAction[]): Ability {
   if (loading) {
     return Loading;
   }
@@ -253,7 +258,7 @@ export function useRuleAdministrationAbility(
       if (isPluginManaged) {
         return IsPluginManaged;
       }
-      return fromPermissions(true, false, rulesPermissions.create);
+      return makeAbility(true, false, [rulesPermissions.create]);
     }
 
     // Permanent deletion requires both delete permission and Grafana admin status.
@@ -314,7 +319,7 @@ export function useRuleSilenceAbility(rule: RulerRuleDTO | undefined): Ability {
  * folder-scoped or async dependency, so no rule or group identifier is needed.
  */
 export function useRuleExploreAbility(): Ability {
-  return fromPermissions(true, false, AccessControlAction.DataSourcesExplore);
+  return makeAbility(true, false, [AccessControlAction.DataSourcesExplore]);
 }
 
 /**
@@ -426,7 +431,7 @@ export function usePromRuleAdministrationAbility(
       if (isPluginManaged) {
         return IsPluginManaged;
       }
-      return fromPermissions(true, false, rulesPermissions.create);
+      return makeAbility(true, false, [rulesPermissions.create]);
     }
 
     // Permanent deletion requires both delete permission and Grafana admin status.
