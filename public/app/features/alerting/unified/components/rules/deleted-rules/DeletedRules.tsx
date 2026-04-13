@@ -3,13 +3,14 @@ import { useMemo, useState } from 'react';
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, type Column, EmptyState, InteractiveTable, Stack, Tooltip } from '@grafana/ui';
-import { type GrafanaRuleDefinition, type RulerGrafanaRuleDTO } from 'app/types/unified-alerter-dto';
 import { type RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import { type GrafanaRuleDefinition, type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { trackDeletedRuleRestoreFail, trackDeletedRuleRestoreSuccess } from '../../../Analytics';
 import { shouldAllowPermanentlyDeletingRules } from '../../../featureToggles';
-import { isAvailable, isGranted, isInsufficientPermissions } from '../../../hooks/abilities/abilityUtils';
+import { isAvailable, isGranted } from '../../../hooks/abilities/abilityUtils';
 import { useRuleAdministrationAbility } from '../../../hooks/abilities/ruleAbilities';
+import { isInsufficientPermissions } from '../../../hooks/abilities/types';
 import { UpdatedByUser } from '../../rule-viewer/tabs/version-history/UpdatedBy';
 
 import { ConfirmDeletedPermanentlyModal } from './ConfirmDeletePermanantlyModal';
