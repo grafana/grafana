@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"fmt"
 	"math/rand/v2"
 	"strconv"
 	"time"
@@ -124,6 +125,11 @@ func (td *TenantDeleter) runDeletionPass(ctx context.Context) {
 			continue
 		}
 
+		if record.DeletedAt != "" {
+			// Already fully deleted; skip.
+			continue
+		}
+
 		deleteAfter, err := time.Parse(time.RFC3339, record.DeleteAfter)
 		if err != nil {
 			td.log.Warn("failed to parse delete-after time", "tenant", tenantName, "value", record.DeleteAfter)
@@ -224,6 +230,12 @@ func (td *TenantDeleter) deleteTenant(ctx context.Context, tenantName string, gr
 		return nil
 	}
 
-	// we delete the pending-delete record at the end to ensure idempotency
-	return td.pendingDeleteStore.Delete(ctx, tenantName)
+	// Mark the record as fully deleted rather than removing it, so we retain
+	// an audit trail of when deletion completed.
+	record, err := td.pendingDeleteStore.Get(ctx, tenantName)
+	if err != nil {
+		return fmt.Errorf("reading pending delete record for timestamp update: %w", err)
+	}
+	record.DeletedAt = time.Now().UTC().Format(time.RFC3339)
+	return td.pendingDeleteStore.Upsert(ctx, tenantName, record)
 }

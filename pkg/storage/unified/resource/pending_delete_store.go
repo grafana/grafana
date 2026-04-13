@@ -26,6 +26,10 @@ type PendingDeleteRecord struct {
 	DeleteAfter      string `json:"deleteAfter"`
 	LabelingComplete bool   `json:"labelingComplete"`
 	Force            bool   `json:"force,omitempty"`
+	// DeletedAt is set to an RFC3339 timestamp after all tenant data has been
+	// successfully deleted. Records with this field set are skipped by the
+	// tenant deleter.
+	DeletedAt string `json:"deletedAt,omitempty"`
 }
 
 // PendingDeleteStore manages pending-delete records in the KV store and keeps
