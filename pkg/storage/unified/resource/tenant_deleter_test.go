@@ -279,9 +279,10 @@ func TestRunDeletionPass_DryRun(t *testing.T) {
 	}
 	assert.Equal(t, 1, count, "data should not be deleted in dry-run mode")
 
-	// Pending delete record should still exist.
-	_, err := pds.Get(t.Context(), testStacksNS1)
-	assert.NoError(t, err)
+	// Pending delete record should still exist without DeletedAt.
+	record, err := pds.Get(t.Context(), testStacksNS1)
+	require.NoError(t, err)
+	assert.Empty(t, record.DeletedAt, "DeletedAt should not be set in dry-run mode")
 }
 
 // TestRunDeletionPass_NoDataSetsDeletedAt verifies that an expired tenant
@@ -486,7 +487,7 @@ func TestDeleteTenant_MultipleGroupResources(t *testing.T) {
 }
 
 // TestRunDeletionPass_DeletesExpiredForceRecord verifies that the deleter can
-// delete tenant data and remove the pending-delete record even when Force=true.
+// delete tenant data and mark the pending-delete record with DeletedAt even when Force=true.
 func TestRunDeletionPass_DeletesExpiredForceRecord(t *testing.T) {
 	td, ds, pds := newTestTenantDeleter(t, false)
 
