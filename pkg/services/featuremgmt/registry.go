@@ -472,13 +472,30 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "datasourceQueryTypes",
-			Description:     "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
+			Name:            "datasources.queryTypes",
+			Description:     "Load Query types from spec.{version}.query.{yaml|json}",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{Go: true},
+		},
+		{
+			Name:            "datasources.loadOpenAPI",
+			Description:     "Load the openapi spec from spec.{version}.openapi.{yaml|json}",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+			Expression:      "false",
+			Generate:        Generate{Go: true},
+		},
+		{
+			Name:        "datasources.chunkedQueryStreaming",
+			Description: "Allow requesting query results as chunked jsonl rather than single json blob",
+			Stage:       FeatureStageExperimental,
+			Expression:  "false",
+			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Generate:    Generate{Go: true},
 		},
 		{
 			Name:            "datasourceLegacyIdApi",
