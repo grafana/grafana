@@ -6,6 +6,7 @@ import { LocalValueVariable, type SceneObject, sceneGraph } from '@grafana/scene
 import { Combobox, type ComboboxOption, Select } from '@grafana/ui';
 import { useSelector } from 'app/types/store';
 
+import { useUserDefinedVariables } from '../../../dashboard-scene/utils/variables';
 import { getLastKey, getVariablesByKey } from '../../../variables/state/selectors';
 
 export interface Props {
@@ -55,8 +56,7 @@ interface Props2 {
 }
 
 export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2) => {
-  const sceneVars = useMemo(() => sceneGraph.getVariables(sceneContext.getRoot()), [sceneContext]);
-  const variables = sceneVars.useState().variables;
+  const variables = useUserDefinedVariables(sceneContext);
 
   const variableOptions = useMemo(() => {
     const options: ComboboxOption[] = variables
