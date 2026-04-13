@@ -81,6 +81,9 @@ export const versionedComponents = {
     newPanelButton: {
       '12.4.0': 'data-testid sidebar add new panel',
     },
+    configurePanelButton: {
+      '13.0.0': 'data-testid edit pane configure panel button',
+    },
   },
   EditPaneHeader: {
     deleteButton: {

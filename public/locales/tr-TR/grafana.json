@@ -4331,6 +4331,9 @@
       "total_one": "{{count}} öge",
       "total_other": "{{count}} öge"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Bu öge, seçilen ögelerle aynı depoda değil."
@@ -8142,8 +8145,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Desteklemiyor",
+      "badge-text-success": "",
       "badge-text-supported": "Destekli",
       "label": {
+        "advisor": "",
         "alerting": "Uyarı sistemi",
         "type": "Tür"
       }
@@ -14316,11 +14321,11 @@
       "view-as-list": "Liste olarak görüntüle"
     },
     "dashboard-actions": {
-      "import": "İçe aktar",
+      "import": "",
       "new": "Yeni",
       "new-dashboard": "Yeni pano",
       "new-folder": "Yeni klasör",
-      "new-template-dashboard": "Şablondan pano"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Puan"
@@ -15285,11 +15290,12 @@
     },
     "range-content": {
       "apply-button": "Zaman aralığını uygula",
-      "default-error": "Lütfen geçmiş bir tarih veya \"{{now}}\" ifadesini girin",
+      "default-error": "",
       "fiscal-year": "Mali yıl: {{from}}-{{to}}",
       "from-input": "Başlangıç",
       "open-input-calendar": "Takvimi aç",
-      "range-error": "\"Başlangıç\", \"Bitiş\" sonrasına denk gelen bir tarih olamaz.",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Bitiş"
     },
     "range-picker": {

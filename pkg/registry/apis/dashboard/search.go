@@ -592,7 +592,11 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 			}, {
 				Name:  resource.SEARCH_FIELD_TITLE,
 				Type:  resourcepb.QueryFieldType_TEXT,
-				Boost: 2, // standard analyzer (word-level matching with ngrams)
+				Boost: 2, // standard analyzer (word-level matching)
+			}, {
+				Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
+				Type:  resourcepb.QueryFieldType_TEXT,
+				Boost: 1, // ngram analyzer (partial/prefix matching)
 			},
 		}
 

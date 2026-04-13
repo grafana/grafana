@@ -766,6 +766,7 @@ type bleveIndex struct {
 	updaterCancel   context.CancelFunc // If not nil, the updater goroutine is running with context associated with this cancel function.
 	updaterWg       sync.WaitGroup
 
+	indexMetrics     *resource.BleveIndexMetrics
 	updateLatency    prometheus.Histogram
 	updatedDocuments prometheus.Summary
 
@@ -793,6 +794,7 @@ func (b *bleveBackend) newBleveIndex(
 		logger:            logger,
 		updaterFn:         updaterFn,
 		minUpdateInterval: b.opts.IndexMinUpdateInterval,
+		indexMetrics:      b.indexMetrics,
 	}
 	bi.updaterCond = sync.NewCond(&bi.updaterMu)
 	if b.indexMetrics != nil {
@@ -1301,8 +1303,25 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 					}, {
 						Name:  resource.SEARCH_FIELD_TITLE,
 						Type:  resourcepb.QueryFieldType_TEXT,
-						Boost: 2, // standard analyzer (word-level matching with ngrams)
+						Boost: 2, // standard analyzer (word-level matching)
+					}, {
+						Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
+						Type:  resourcepb.QueryFieldType_TEXT,
+						Boost: 1, // ngram analyzer (partial/prefix matching)
 					},
+				}
+			} else if b.indexMetrics != nil && b.indexMetrics.SearchLegacyQueryFields != nil {
+				// Track requests from clients that don't yet include title_ngram in their query fields.
+				// When this counter stops incrementing, it is safe to remove the ngram mapping from the title field.
+				hasNgram := false
+				for _, f := range queryFields {
+					if f.Name == resource.SEARCH_FIELD_TITLE_NGRAM {
+						hasNgram = true
+						break
+					}
+				}
+				if !hasNgram {
+					b.indexMetrics.SearchLegacyQueryFields.Inc()
 				}
 			}
 
@@ -1399,7 +1418,7 @@ func removeSmallTerms(query string) string {
 	validWords := make([]string, 0, len(words))
 
 	for _, word := range words {
-		if len(word) >= EDGE_NGRAM_MIN_TOKEN {
+		if len(word) >= NGRAM_MIN_TOKEN {
 			validWords = append(validWords, word)
 		}
 	}
