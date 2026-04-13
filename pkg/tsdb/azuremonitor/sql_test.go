@@ -61,16 +61,16 @@ func TestNormalizeGrafanaSQLRequest_ConvertsMetricsQuery(t *testing.T) {
 	require.NoError(t, json.Unmarshal(tpJSON, &tpMap))
 
 	sq := schemas.Query{
-		Table:                         "microsoft.compute-virtualmachines",
-		GrafanaSql:                    true,
-		TableParameterValues:          tpMap,
-		Filters:                       nil,
+		Table:                "microsoft.compute-virtualmachines",
+		GrafanaSql:           true,
+		TableParameterValues: tpMap,
+		Filters:              nil,
 	}
 	raw, err := json.Marshal(map[string]any{
-		"refId":                 "A",
-		"table":                 sq.Table,
-		"grafanaSql":            true,
-		"tableParameterValues":  tp,
+		"refId":                "A",
+		"table":                sq.Table,
+		"grafanaSql":           true,
+		"tableParameterValues": tp,
 	})
 	require.NoError(t, err)
 
@@ -165,9 +165,9 @@ func TestNormalizeGrafanaSQLRequest_MultiResourceRequiresRegion(t *testing.T) {
 		"table":      "microsoft.compute-virtualmachines",
 		"grafanaSql": true,
 		"tableParameterValues": map[string]any{
-			subscription: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-			metricName:   "Percentage CPU",
-			aggregation:  "Average",
+			subscription:  "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+			metricName:    "Percentage CPU",
+			aggregation:   "Average",
 			resourceGroup: "rg1",
 		},
 	})
