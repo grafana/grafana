@@ -12,44 +12,20 @@ function rect(x: number, y: number, w: number, h: number, sidx?: number, didx?: 
 }
 
 describe('pointWithin', () => {
-  it('returns true when point is strictly inside rect', () => {
-    expect(pointWithin(5, 5, 0, 0, 10, 10)).toBe(true);
-  });
-
-  it('returns true when point is on left boundary', () => {
-    expect(pointWithin(0, 5, 0, 0, 10, 10)).toBe(true);
-  });
-
-  it('returns true when point is on right boundary', () => {
-    expect(pointWithin(10, 5, 0, 0, 10, 10)).toBe(true);
-  });
-
-  it('returns true when point is on top boundary', () => {
-    expect(pointWithin(5, 0, 0, 0, 10, 10)).toBe(true);
-  });
-
-  it('returns true when point is on bottom boundary', () => {
-    expect(pointWithin(5, 10, 0, 0, 10, 10)).toBe(true);
-  });
-
-  it('returns false when point is outside to the left', () => {
-    expect(pointWithin(-1, 5, 0, 0, 10, 10)).toBe(false);
-  });
-
-  it('returns false when point is outside to the right', () => {
-    expect(pointWithin(11, 5, 0, 0, 10, 10)).toBe(false);
-  });
-
-  it('returns false when point is above rect', () => {
-    expect(pointWithin(5, -1, 0, 0, 10, 10)).toBe(false);
-  });
-
-  it('returns false when point is below rect', () => {
-    expect(pointWithin(5, 11, 0, 0, 10, 10)).toBe(false);
-  });
-
-  it('returns false for degenerate rect when point is outside', () => {
-    expect(pointWithin(1, 1, 0, 0, 0, 0)).toBe(false);
+  it.each([
+    { args: [5, 5, 0, 0, 10, 10], expected: true, desc: 'returns true when point is strictly inside rect' },
+    { args: [0, 5, 0, 0, 10, 10], expected: true, desc: 'returns true when point is on left boundary' },
+    { args: [10, 5, 0, 0, 10, 10], expected: true, desc: 'returns true when point is on right boundary' },
+    { args: [5, 0, 0, 0, 10, 10], expected: true, desc: 'returns true when point is on top boundary' },
+    { args: [5, 10, 0, 0, 10, 10], expected: true, desc: 'returns true when point is on bottom boundary' },
+    { args: [-1, 5, 0, 0, 10, 10], expected: false, desc: 'returns false when point is outside to the left' },
+    { args: [11, 5, 0, 0, 10, 10], expected: false, desc: 'returns false when point is outside to the right' },
+    { args: [5, -1, 0, 0, 10, 10], expected: false, desc: 'returns false when point is above rect' },
+    { args: [5, 11, 0, 0, 10, 10], expected: false, desc: 'returns false when point is below rect' },
+    { args: [1, 1, 0, 0, 0, 0], expected: false, desc: 'returns false for degenerate rect when point is outside' },
+  ])('pointWithin tests: $test.desc', (test) => {
+    // @ts-expect-error tuple type mismatch
+    expect(pointWithin(...test.args)).toBe(test.expected);
   });
 });
 
