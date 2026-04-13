@@ -315,7 +315,7 @@ func (p *metricsSchema) metricsColumnsEnriched(ctx context.Context, dsInfo types
 	if sub == "" {
 		return base
 	}
-	ns := fallbackDenormalizeNamespace(stripTableParameterValues(table))
+	ns := convertNamespace(stripTableParameterValues(table))
 	region := strings.TrimSpace(tp[region])
 
 	defs, err := fetchMetricDefinitionsForResource(ctx, dsInfo, sub, ns, rg, rn, region)
@@ -370,7 +370,7 @@ func (p *metricsSchema) ColumnValues(ctx context.Context, req *schemas.ColumnVal
 	}
 
 	table := stripTableParameterValues(req.Table)
-	ns := fallbackDenormalizeNamespace(table)
+	ns := convertNamespace(table)
 	sub := parseSubscriptionIDFromParameter(tp[subscription])
 	mn := strings.TrimSpace(tp[metricName])
 	rg := strings.TrimSpace(tp[resourceGroup])

@@ -182,7 +182,7 @@ func (p *metricsSchema) TableParameterValues(ctx context.Context, req *schemas.T
 		if sub == "" {
 			return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
 		}
-		ns := fallbackDenormalizeNamespace(stripTableParameterValues(req.Table))
+		ns := convertNamespace(stripTableParameterValues(req.Table))
 		names, err := listMetricNamesForTable(ctx, dsInfo, sub, ns, req.DependencyValues)
 		if err != nil {
 			p.logger.Warn("failed to list metric names", "error", err)
@@ -196,15 +196,56 @@ func (p *metricsSchema) TableParameterValues(ctx context.Context, req *schemas.T
 		if sub == "" || mn == "" {
 			return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
 		}
-		ns := fallbackDenormalizeNamespace(stripTableParameterValues(req.Table))
+		ns := convertNamespace(stripTableParameterValues(req.Table))
 		vals, err := listAggregationValuesForMetric(ctx, dsInfo, sub, ns, mn, req.DependencyValues)
 		if err != nil {
 			p.logger.Warn("failed to list aggregation values", "error", err)
 			return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
 		}
 		out[req.TableParameter] = vals
+	case resourceGroup:
+		subRaw := req.DependencyValues[subscription]
+		sub := parseSubscriptionIDFromParameter(subRaw)
+		if sub == "" {
+			return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
+		}
+		ns := convertNamespace(stripTableParameterValues(req.Table))
+		vals, err := listResourceGroupsForNamespace(ctx, dsInfo, sub, ns)
+		if err != nil {
+			p.logger.Warn("failed to list resource groups", "error", err)
+			return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
+		}
+		out[req.TableParameter] = vals
+	case region:
+		subRaw := req.DependencyValues[subscription]
+		sub := parseSubscriptionIDFromParameter(subRaw)
+		if sub == "" {
+			return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
+		}
+		ns := convertNamespace(stripTableParameterValues(req.Table))
+		rg := strings.TrimSpace(req.DependencyValues[resourceGroup])
+		vals, err := listRegionsForNamespace(ctx, dsInfo, sub, ns, rg)
+		if err != nil {
+			p.logger.Warn("failed to list regions", "error", err)
+			return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
+		}
+		out[req.TableParameter] = vals
+	case resourceName:
+		subRaw := req.DependencyValues[subscription]
+		sub := parseSubscriptionIDFromParameter(subRaw)
+		if sub == "" {
+			return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
+		}
+		ns := convertNamespace(stripTableParameterValues(req.Table))
+		rg := strings.TrimSpace(req.DependencyValues[resourceGroup])
+		rgn := strings.TrimSpace(req.DependencyValues[region])
+		vals, err := listResourceNamesForNamespace(ctx, dsInfo, sub, ns, rg, rgn)
+		if err != nil {
+			p.logger.Warn("failed to list resource names", "error", err)
+			return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
+		}
+		out[req.TableParameter] = vals
 	default:
-		// Optional scoping parameters: not enumerated in v1 (return empty).
 		return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
 	}
 
@@ -518,7 +559,71 @@ func listAggregationValuesForMetric(ctx context.Context, dsInfo types.Datasource
 	return aggregationEnumValues(def), nil
 }
 
-func fallbackDenormalizeNamespace(tableBase string) string {
+func listResourceGroupsForNamespace(ctx context.Context, dsInfo types.DatasourceInfo, subscription, namespace string) ([]string, error) {
+	nsEsc := strings.ReplaceAll(namespace, `'`, `\'`)
+	kql := fmt.Sprintf("Resources | where type =~ '%s' | distinct resourceGroup | order by resourceGroup asc", nsEsc)
+	return runResourceGraphStringColumn(ctx, dsInfo, subscription, kql, "resourcegroup")
+}
+
+func listRegionsForNamespace(ctx context.Context, dsInfo types.DatasourceInfo, subscription, namespace, rg string) ([]string, error) {
+	nsEsc := strings.ReplaceAll(namespace, `'`, `\'`)
+	kql := fmt.Sprintf("Resources | where type =~ '%s'", nsEsc)
+	if rg != "" {
+		rgEsc := strings.ReplaceAll(rg, `'`, `\'`)
+		kql += fmt.Sprintf(" | where resourceGroup =~ '%s'", rgEsc)
+	}
+	kql += " | distinct location | order by location asc"
+	return runResourceGraphStringColumn(ctx, dsInfo, subscription, kql, "location")
+}
+
+func listResourceNamesForNamespace(ctx context.Context, dsInfo types.DatasourceInfo, subscription, namespace, rg, rgn string) ([]string, error) {
+	if rg == "" {
+		return nil, nil
+	}
+	nsEsc := strings.ReplaceAll(namespace, `'`, `\'`)
+	rgEsc := strings.ReplaceAll(rg, `'`, `\'`)
+	kql := fmt.Sprintf("Resources | where type =~ '%s' | where resourceGroup =~ '%s'", nsEsc, rgEsc)
+	if rgn != "" {
+		rgnEsc := strings.ReplaceAll(rgn, `'`, `\'`)
+		kql += fmt.Sprintf(" | where location =~ '%s'", rgnEsc)
+	}
+	kql += " | project name | order by name asc"
+	return runResourceGraphStringColumn(ctx, dsInfo, subscription, kql, "name")
+}
+
+// runResourceGraphStringColumn runs a KQL query and extracts a single string column from the result rows.
+func runResourceGraphStringColumn(ctx context.Context, dsInfo types.DatasourceInfo, subscription, kql, columnName string) ([]string, error) {
+	tbl, err := runResourceGraphQuery(ctx, dsInfo, subscription, kql)
+	if err != nil {
+		return nil, err
+	}
+	colIdx := -1
+	for i, c := range tbl.Columns {
+		if strings.EqualFold(strings.TrimSpace(c.Name), columnName) {
+			colIdx = i
+			break
+		}
+	}
+	if colIdx < 0 || len(tbl.Rows) == 0 {
+		return nil, nil
+	}
+	out := make([]string, 0, len(tbl.Rows))
+	for _, row := range tbl.Rows {
+		if colIdx >= len(row) {
+			continue
+		}
+		v := strings.TrimSpace(fmt.Sprint(row[colIdx]))
+		if v != "" {
+			out = append(out, v)
+		}
+	}
+	if len(out) == 0 {
+		return nil, nil
+	}
+	return out, nil
+}
+
+func convertNamespace(tableBase string) string {
 	return strings.ReplaceAll(tableBase, "-", "/")
 }
 

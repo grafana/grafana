@@ -42,7 +42,7 @@ func (s *Service) normalizeGrafanaSQLRequest(ctx context.Context, req *backend.Q
 		}
 
 		baseTable := stripTableParameterValues(sq.Table)
-		ns := fallbackDenormalizeNamespace(baseTable)
+		ns := convertNamespace(baseTable)
 
 		tp := mergeTableParams(sq.Table, sq.TableParameterValues)
 		subRaw := strParam(tp, subscription)
