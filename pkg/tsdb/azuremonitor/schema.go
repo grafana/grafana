@@ -422,26 +422,23 @@ func listSubscriptionParameterValues(ctx context.Context, dsInfo types.Datasourc
 	return out, nil
 }
 
-func listMetricNamesForTable(ctx context.Context, dsInfo types.DatasourceInfo, subscription, namespace string, deps map[string]string) ([]string, error) {
-	sub := parseSubscriptionIDFromParameter(subscription)
-	if sub == "" {
-		return nil, nil
-	}
-	// Prefer a concrete resource when resourceGroup and resourceName are present.
-	rg := deps[resourceGroup]
-	rn := deps[resourceName]
-	region := deps[region]
+// sampleResourceForNamespace resolves a concrete (resourceGroup, resourceName, region) tuple
+// for a given metric namespace. It prefers explicit values from deps when available, falling
+// back to Azure Resource Graph to discover the first resource of this ARM type.
+func sampleResourceForNamespace(ctx context.Context, dsInfo types.DatasourceInfo, sub, namespace string, deps map[string]string) (rg, rn, rgn string, err error) {
+	rg = strings.TrimSpace(deps[resourceGroup])
+	rn = strings.TrimSpace(deps[resourceName])
+	rgn = strings.TrimSpace(deps[region])
 
 	if rg != "" && rn != "" {
-		return fetchMetricNamesForResource(ctx, dsInfo, sub, namespace, rg, rn, region)
+		return rg, rn, rgn, nil
 	}
 
-	// Otherwise pick the first resource of this ARM type in the subscription.
 	escaped := strings.ReplaceAll(namespace, `'`, `\'`)
 	kql := fmt.Sprintf("Resources | where type =~ '%s' | project name, resourceGroup, location | limit 1", escaped)
-	tbl, err := runResourceGraphQuery(ctx, dsInfo, sub, kql)
-	if err != nil {
-		return nil, err
+	tbl, qErr := runResourceGraphQuery(ctx, dsInfo, sub, kql)
+	if qErr != nil {
+		return "", "", "", qErr
 	}
 	nameCol, rgCol, locCol := -1, -1, -1
 	for i, c := range tbl.Columns {
@@ -455,19 +452,33 @@ func listMetricNamesForTable(ctx context.Context, dsInfo types.DatasourceInfo, s
 		}
 	}
 	if nameCol < 0 || rgCol < 0 || len(tbl.Rows) == 0 {
-		return nil, nil
+		return "", "", "", nil
 	}
 	row := tbl.Rows[0]
-	name, _ := row[nameCol].(string)
-	rgVal, _ := row[rgCol].(string)
-	loc := ""
+	rn, _ = row[nameCol].(string)
+	rg, _ = row[rgCol].(string)
 	if locCol >= 0 && locCol < len(row) {
-		loc, _ = row[locCol].(string)
+		loc, _ := row[locCol].(string)
+		if rgn == "" {
+			rgn = loc
+		}
 	}
-	if region == "" {
-		region = loc
+	return rg, rn, rgn, nil
+}
+
+func listMetricNamesForTable(ctx context.Context, dsInfo types.DatasourceInfo, subscription, namespace string, deps map[string]string) ([]string, error) {
+	sub := parseSubscriptionIDFromParameter(subscription)
+	if sub == "" {
+		return nil, nil
 	}
-	return fetchMetricNamesForResource(ctx, dsInfo, sub, namespace, rgVal, name, region)
+	rg, rn, rgn, err := sampleResourceForNamespace(ctx, dsInfo, sub, namespace, deps)
+	if err != nil {
+		return nil, err
+	}
+	if rg == "" || rn == "" {
+		return nil, nil
+	}
+	return fetchMetricNamesForResource(ctx, dsInfo, sub, namespace, rg, rn, rgn)
 }
 
 func fetchMetricNamesForResource(ctx context.Context, dsInfo types.DatasourceInfo, subscription, namespace, resourceGroup, resourceName, region string) ([]string, error) {
@@ -539,15 +550,13 @@ func listAggregationValuesForMetric(ctx context.Context, dsInfo types.Datasource
 	if sub == "" {
 		return nil, nil
 	}
-
-	rg := deps[resourceGroup]
-	rn := deps[resourceName]
-	rgn := deps[region]
-
+	rg, rn, rgn, err := sampleResourceForNamespace(ctx, dsInfo, sub, namespace, deps)
+	if err != nil {
+		return nil, err
+	}
 	if rg == "" || rn == "" {
 		return nil, nil
 	}
-
 	defs, err := fetchMetricDefinitionsForResource(ctx, dsInfo, sub, namespace, rg, rn, rgn)
 	if err != nil {
 		return nil, err

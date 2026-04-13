@@ -35,6 +35,77 @@ func argDSInfo(srv *httptest.Server) types.DatasourceInfo {
 	}
 }
 
+func TestSampleResourceForNamespace(t *testing.T) {
+	sub := "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+	ns := "microsoft.compute/virtualmachines"
+
+	t.Run("uses explicit deps when both rg and rn are set", func(t *testing.T) {
+		deps := map[string]string{
+			resourceGroup: "my-rg",
+			resourceName:  "my-vm",
+			region:        "westeurope",
+		}
+		rg, rn, rgn, err := sampleResourceForNamespace(context.Background(), types.DatasourceInfo{}, sub, ns, deps)
+		require.NoError(t, err)
+		require.Equal(t, "my-rg", rg)
+		require.Equal(t, "my-vm", rn)
+		require.Equal(t, "westeurope", rgn)
+	})
+
+	t.Run("falls back to ARG when rg is missing", func(t *testing.T) {
+		body := `{"data":{"columns":[{"name":"name","type":"string"},{"name":"resourceGroup","type":"string"},{"name":"location","type":"string"}],"rows":[["vm-discovered","rg-discovered","eastus"]]}}`
+		srv := argTestServer(t, body, func(kql string) {
+			require.Contains(t, kql, "limit 1")
+		})
+		defer srv.Close()
+
+		rg, rn, rgn, err := sampleResourceForNamespace(context.Background(), argDSInfo(srv), sub, ns, map[string]string{})
+		require.NoError(t, err)
+		require.Equal(t, "rg-discovered", rg)
+		require.Equal(t, "vm-discovered", rn)
+		require.Equal(t, "eastus", rgn)
+	})
+
+	t.Run("falls back to ARG when rn is missing", func(t *testing.T) {
+		body := `{"data":{"columns":[{"name":"name","type":"string"},{"name":"resourceGroup","type":"string"},{"name":"location","type":"string"}],"rows":[["vm-x","rg-x","northeurope"]]}}`
+		srv := argTestServer(t, body, nil)
+		defer srv.Close()
+
+		rg, rn, rgn, err := sampleResourceForNamespace(context.Background(), argDSInfo(srv), sub, ns, map[string]string{
+			resourceGroup: "my-rg",
+		})
+		require.NoError(t, err)
+		require.Equal(t, "rg-x", rg)
+		require.Equal(t, "vm-x", rn)
+		require.Equal(t, "northeurope", rgn)
+	})
+
+	t.Run("preserves explicit region over ARG location", func(t *testing.T) {
+		body := `{"data":{"columns":[{"name":"name","type":"string"},{"name":"resourceGroup","type":"string"},{"name":"location","type":"string"}],"rows":[["vm-1","rg-1","eastus"]]}}`
+		srv := argTestServer(t, body, nil)
+		defer srv.Close()
+
+		rg, rn, rgn, err := sampleResourceForNamespace(context.Background(), argDSInfo(srv), sub, ns, map[string]string{
+			region: "westeurope",
+		})
+		require.NoError(t, err)
+		require.Equal(t, "rg-1", rg)
+		require.Equal(t, "vm-1", rn)
+		require.Equal(t, "westeurope", rgn)
+	})
+
+	t.Run("returns empty when ARG finds no resources", func(t *testing.T) {
+		body := `{"data":{"columns":[{"name":"name","type":"string"},{"name":"resourceGroup","type":"string"},{"name":"location","type":"string"}],"rows":[]}}`
+		srv := argTestServer(t, body, nil)
+		defer srv.Close()
+
+		rg, rn, _, err := sampleResourceForNamespace(context.Background(), argDSInfo(srv), sub, ns, map[string]string{})
+		require.NoError(t, err)
+		require.Empty(t, rg)
+		require.Empty(t, rn)
+	})
+}
+
 func TestListResourceGroupsForNamespace(t *testing.T) {
 	t.Run("returns distinct resource groups", func(t *testing.T) {
 		body := `{"data":{"columns":[{"name":"resourceGroup","type":"string"}],"rows":[["rg-alpha"],["rg-beta"]]}}`
