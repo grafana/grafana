@@ -3,6 +3,7 @@ package annotation
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	authtypes "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -49,14 +50,15 @@ func canAccessAnnotation(ctx context.Context, accessClient authtypes.AccessClien
 			Name:      "organization",
 		}
 	} else {
-		// Dashboard annotation: use dashboard.grafana.app/annotations virtual resource,
+		// Dashboard annotation: use dashboards/annotations subresource,
 		// which maps to annotation actions scoped to dashboards:uid:<dashboardUID>.
 		checkReq = authtypes.CheckRequest{
-			Verb:      verb,
-			Group:     "dashboard.grafana.app",
-			Resource:  "annotations",
-			Namespace: namespace,
-			Name:      *anno.Spec.DashboardUID,
+			Verb:        verb,
+			Group:       "dashboard.grafana.app",
+			Resource:    "dashboards",
+			Subresource: "annotations",
+			Namespace:   namespace,
+			Name:        *anno.Spec.DashboardUID,
 		}
 	}
 
@@ -66,4 +68,55 @@ func canAccessAnnotation(ctx context.Context, accessClient authtypes.AccessClien
 	}
 
 	return resp.Allowed, nil
+}
+
+// canAccessAnnotations checks permissions for a batch of annotations,
+// returning a boolean slice aligned with the input items slice
+func canAccessAnnotations(ctx context.Context, accessClient authtypes.AccessClient, namespace string, items []annotationV0.Annotation, verb string) ([]bool, error) {
+	if len(items) == 0 {
+		return nil, nil
+	}
+
+	authInfo, ok := authtypes.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, apierrors.NewUnauthorized("no identity found for request")
+	}
+
+	checks := make([]authtypes.BatchCheckItem, 0, len(items))
+	for i, anno := range items {
+		var item authtypes.BatchCheckItem
+		item.CorrelationID = strconv.Itoa(i)
+		item.Verb = verb
+
+		if anno.Spec.DashboardUID == nil || *anno.Spec.DashboardUID == "" {
+			item.Group = "annotation.grafana.app"
+			item.Resource = "annotations"
+			item.Name = "organization"
+		} else {
+			item.Group = "dashboard.grafana.app"
+			item.Resource = "annotations"
+			item.Name = *anno.Spec.DashboardUID
+		}
+
+		checks = append(checks, item)
+	}
+
+	allowed := make([]bool, len(items))
+	for start := 0; start < len(checks); start += authtypes.MaxBatchCheckItems {
+		end := min(start+authtypes.MaxBatchCheckItems, len(checks))
+		res, err := accessClient.BatchCheck(ctx, authInfo, authtypes.BatchCheckRequest{
+			Namespace: namespace,
+			Checks:    checks[start:end],
+		})
+		if err != nil {
+			return nil, fmt.Errorf("batch authz check failed: %w", err)
+		}
+		for id, result := range res.Results {
+			if idx, err := strconv.Atoi(id); err == nil {
+				allowed[idx] = result.Allowed
+			}
+		}
+	}
+
+	return allowed, nil
 }

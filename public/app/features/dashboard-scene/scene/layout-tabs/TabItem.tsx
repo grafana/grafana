@@ -125,6 +125,11 @@ export class TabItem
     return kbn.slugifyForUrl(interpolateSectionTitle(this, this.state.title ?? 'Tab'));
   }
 
+  public isCurrentTab() {
+    const parentLayout = this.getParentLayout();
+    return parentLayout.state.currentTabSlug === this.getSlug();
+  }
+
   public switchLayout(layout: DashboardLayoutManager) {
     const currentLayout = this.state.layout;
 
@@ -150,13 +155,6 @@ export class TabItem
   }
 
   public onConfirmDelete() {
-    const layout = this.getParentLayout();
-
-    if (layout.shouldUngroup()) {
-      layout.removeTab(this);
-      return;
-    }
-
     if (this.getLayout().getVizPanels().length === 0) {
       this.onDelete();
       return;

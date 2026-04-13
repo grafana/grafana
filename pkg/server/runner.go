@@ -2,14 +2,14 @@ package server
 
 import (
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
 type Runner struct {
@@ -28,6 +28,7 @@ func NewRunner(cfg *setting.Cfg, sqlStore db.DB, settingsProvider setting.Provid
 	encryptionService encryption.Internal, features featuremgmt.FeatureToggles,
 	secretsService *manager.SecretsService, secretsMigrator secrets.Migrator,
 	userService user.Service, secretsConsolidationService contracts.ConsolidationService,
+	_ *secret.DependencyRegisterer, // ensures secret DB migrations run before CLI commands
 ) Runner {
 	return Runner{
 		Cfg:                         cfg,

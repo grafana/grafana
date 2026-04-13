@@ -23,13 +23,17 @@ type Service struct {
 
 var _ team.Service = (*Service)(nil)
 
+func (s *Service) LegacySearchService() team.Service {
+	return s.legacyService
+}
+
 func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider) (*Service, error) {
 	legacyService, err := NewLegacyService(db, cfg, tracer)
 	if err != nil {
 		return nil, err
 	}
 
-	k8sService := teamk8s.NewTeamK8sService(log.New("team.k8s"), cfg, configProvider, legacyService)
+	k8sService := teamk8s.NewTeamK8sService(log.New("team.k8s"), cfg, configProvider)
 
 	return &Service{
 		legacyService:     legacyService,
@@ -55,19 +59,17 @@ func (s *Service) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) e
 }
 
 func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
-	// TODO enable Kubernetes team service for DeleteTeam once the implementation is complete.
-	// if s.isKubernetesTeamServiceEnabled(ctx) {
-	// 	return s.k8sService.DeleteTeam(ctx, cmd)
-	// }
+	if s.isKubernetesTeamServiceEnabled(ctx) {
+		return s.k8sService.DeleteTeam(ctx, cmd)
+	}
 
 	return s.legacyService.DeleteTeam(ctx, cmd)
 }
 
 func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
-	// TODO enable Kubernetes team service for SearchTeams once the implementation is complete.
-	// if s.isKubernetesTeamServiceEnabled(ctx) {
-	// 	return s.k8sService.SearchTeams(ctx, query)
-	// }
+	if s.isKubernetesTeamServiceEnabled(ctx) {
+		return s.k8sService.SearchTeams(ctx, query)
+	}
 
 	return s.legacyService.SearchTeams(ctx, query)
 }

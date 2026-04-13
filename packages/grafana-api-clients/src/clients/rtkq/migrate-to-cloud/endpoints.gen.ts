@@ -354,7 +354,6 @@ export type DashboardMeta = {
   hasAcl?: boolean;
   isFolder?: boolean;
   isSnapshot?: boolean;
-  isStarred?: boolean;
   provisioned?: boolean;
   provisionedExternalId?: string;
   publicDashboardEnabled?: boolean;

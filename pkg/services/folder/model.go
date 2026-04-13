@@ -24,6 +24,16 @@ var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-
 var ErrFolderNotEmpty = errutil.BadRequest("folder.not-empty", errutil.WithPublicMessage("Folder cannot be deleted: folder is not empty"))
 var ErrFolderCannotBeParentOfItself = errors.New("folder cannot be parent of itself")
 
+var ErrVersionMismatch = errors.New("the folder has been changed by someone else")
+var ErrTitleEmpty = errors.New("folder title cannot be empty")
+var ErrSameUIDExists = errors.New("a folder/dashboard with the same uid already exists")
+var ErrInvalidUID = errors.New("invalid uid for folder provided")
+var ErrAccessDenied = errors.New("access denied to folder")
+var ErrMoveAccessDenied = errutil.Forbidden("folders.forbiddenMove", errutil.WithPublicMessage("Access denied to the destination folder"))
+var ErrAccessEscalation = errutil.Forbidden("folders.accessEscalation", errutil.WithPublicMessage("Cannot move a folder to a folder where you have higher permissions"))
+var ErrCreationAccessDenied = errutil.Forbidden("folders.forbiddenCreation", errutil.WithPublicMessage("not enough permissions to create a folder in the selected location"))
+var ErrNameExists = errutil.BadGateway("folder.name-exists", errutil.WithPublicMessage("A folder with that name already exists"))
+
 const (
 	GeneralFolderUID      = "general"
 	RootFolderUID         = ""
@@ -258,14 +268,6 @@ type GetChildrenQuery struct {
 
 	// array of folder uids to filter by
 	FolderUIDs []string `json:"-"`
-}
-
-type HasEditPermissionInFoldersQuery struct {
-	SignedInUser identity.Requester
-}
-
-type HasAdminPermissionInDashboardsOrFoldersQuery struct {
-	SignedInUser identity.Requester
 }
 
 // GetDescendantCountsQuery captures the information required by the folder service

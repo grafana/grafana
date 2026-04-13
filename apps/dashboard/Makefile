@@ -65,6 +65,9 @@ post-generate-cleanup: ## Clean up the generated code
 	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_codec_gen.go
 	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go
 	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_schema_gen.go
+	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_spec_gen.go
+	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_status_gen.go
+	@rm -f ./pkg/apis/dashboard/v1beta1/zz_generated.openapi.go
 	@echo "Removed generated v1beta1 files (v1beta1 is a thin wrapper around v1)"
 
 .PHONY: generate-golden-files

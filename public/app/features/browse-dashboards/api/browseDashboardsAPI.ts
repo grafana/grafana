@@ -14,7 +14,7 @@ import { appEvents } from 'app/core/app_events';
 import { buildNotificationButton } from 'app/core/components/AppNotifications/NotificationButton';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
-import { setStarred } from 'app/core/reducers/navBarTree';
+import { setStarred, updateDashboardName } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyFolder, type Resource, type ResourceList } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
@@ -479,10 +479,14 @@ export const browseDashboardsAPI = createApi({
         }
       },
 
-      onQueryStarted: ({ folderUid }, { queryFulfilled, dispatch }) => {
+      onQueryStarted: ({ folderUid, dashboard }, { queryFulfilled, dispatch }) => {
         dashboardWatcher.ignoreNextSave();
         queryFulfilled.then(async ({ data }) => {
-          await contextSrv.fetchUserPermissions();
+          try {
+            await contextSrv.fetchUserPermissions();
+          } catch (err) {
+            console.error('Failed to refresh user permissions after save', err);
+          }
           dispatch(
             refetchChildren({
               parentUID: folderUid,
@@ -492,6 +496,12 @@ export const browseDashboardsAPI = createApi({
           // version 1 means a newly created dashboard — only then does the resource count change
           if (data.version === 1) {
             invalidateQuotaUsage(dispatch);
+          }
+          // Update starred dashboard name in nav sidebar (no-ops if dashboard isn't starred)
+          const title = dashboard.title;
+          if (title && data.url) {
+            const url = locationUtil.stripBaseFromUrl(data.url);
+            dispatch(updateDashboardName({ id: data.uid, title, url }));
           }
         });
       },

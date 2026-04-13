@@ -2,7 +2,7 @@ import { type Page, type Locator } from '@playwright/test';
 
 import { test, expect, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { getCell, getCellHeight, getColumnIdx, waitForTableLoad } from './table-utils';
+import { getCell, getCellHeight, getColumnIdx, getSelectedFilterCount, waitForTableLoad } from './table-utils';
 
 const DASHBOARD_UID = 'dcb9f5e9-8066-4397-889e-864b99555dbb';
 
@@ -388,11 +388,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // The List component is virtualized so we can't rely on DOM element count — instead click
     // "Select all" (which operates on the full data array) and parse the "N selected" label.
     await minFilterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
-    const allMinSelectAllText =
-      (await minFilterContainer
-        .getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll)
-        .textContent()) ?? '';
-    const allMinOptionCount = parseInt(allMinSelectAllText.match(/(\d+) selected/)?.[1] ?? '0', 10);
+    const allMinOptionCount = await getSelectedFilterCount(minFilterContainer, selectors);
 
     // Close without applying
     await minFilterContainer.getByRole('button', { name: 'Cancel' }).click();
@@ -426,11 +422,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(minFilterContainer, 'filter popup for min is visible after click').toBeVisible();
 
     await minFilterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
-    const crossFilteredSelectAllText =
-      (await minFilterContainer
-        .getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll)
-        .textContent()) ?? '';
-    const crossFilteredMinOptionCount = parseInt(crossFilteredSelectAllText.match(/(\d+) selected/)?.[1] ?? '0', 10);
+    const crossFilteredMinOptionCount = await getSelectedFilterCount(minFilterContainer, selectors);
 
     // With Info filtered to "up" only, Min options must be a subset of (or equal to) the full set.
     // In practice the data has multiple Info values, so the Min option list should be smaller.

@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { isString } from 'lodash';
 import { useCallback, useId, useState } from 'react';
 import * as React from 'react';
 
@@ -56,7 +55,7 @@ export const TimePickerFooter = (props: Props) => {
 
   const style = useStyles2(getStyle);
 
-  if (!isString(timeZone)) {
+  if (typeof timeZone !== 'string') {
     return null;
   }
 
@@ -124,13 +123,10 @@ export const TimePickerFooter = (props: Props) => {
                 <TimeZonePicker
                   includeInternal={true}
                   onChange={(timeZone) => {
-                    onToggleChangeTimeSettings();
-
-                    if (isString(timeZone)) {
+                    if (typeof timeZone === 'string') {
                       onChangeTimeZone(timeZone);
                     }
                   }}
-                  onBlur={onToggleChangeTimeSettings}
                   menuShouldPortal={false}
                 />
               </section>

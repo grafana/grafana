@@ -8,6 +8,7 @@ import { CustomVariable, SceneTimeRange, SceneVariableSet, useSceneObjectState }
 import { Sidebar, useSidebar } from '@grafana/ui';
 
 import { ElementEditPane } from '../../edit-pane/ElementEditPane';
+import { getEditableElementForSelection } from '../../edit-pane/shared';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
@@ -145,17 +146,19 @@ describe('VariableEditableElement', () => {
     renderVariableEditPane(dashboard);
 
     await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
-    expect(dashboard.state.editPane.getSelection()).toBeInstanceOf(VariableTypeChange);
+    expect(dashboard.state.editPane.getSelectedObject()).toBeInstanceOf(VariableTypeChange);
     expect(screen.getByText('Choose variable type')).toBeInTheDocument();
   });
 });
 
 function VariableEditPaneHarness({ dashboard }: { dashboard: DashboardScene }) {
   const editPane = dashboard.state.editPane;
-  const { selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
-  const selectedObject = selection?.getFirstObject();
-  const editableElement = useMemo(() => selection?.createSelectionElement(), [selection]);
-  const isNewElement = selection?.isNewElement() ?? false;
+  const { selectionContext, isNewElement } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const selectedObject = editPane.getSelectedObject();
+  const editableElement = useMemo(
+    () => getEditableElementForSelection(editPane, selectionContext.selected),
+    [editPane, selectionContext.selected]
+  );
 
   if (!editableElement) {
     return null;
@@ -206,7 +209,7 @@ function buildDashboardVariableScene() {
   });
 
   activateFullSceneTree(dashboard);
-  dashboard.state.editPane.selectObject(variable, variable.state.key!, { force: true });
+  dashboard.state.editPane.selectObject(variable, { force: true });
 
   return { dashboard, variableSet };
 }
