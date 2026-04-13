@@ -77,4 +77,81 @@ describe('KBarResults', () => {
       expect(screen.queryByRole('option')).not.toBeInTheDocument();
     });
   });
+
+  describe('action items', () => {
+    it('renders with role="option"', () => {
+      render(<KBarResults items={[createAction({ name: 'Explore' })]} onRender={renderItem} />);
+
+      expect(screen.getByRole('option')).toBeInTheDocument();
+    });
+
+    it('includes the group name in aria-label when preceded by a group header', () => {
+      render(<KBarResults items={['Dashboards', createAction({ id: 'home', name: 'Home' })]} onRender={renderItem} />);
+
+      expect(screen.getByRole('option')).toHaveAttribute('aria-label', 'Dashboards: Home');
+    });
+
+    it('does not add a group prefix when there is no preceding group header', () => {
+      render(<KBarResults items={[createAction({ id: 'home', name: 'Home' })]} onRender={renderItem} />);
+
+      expect(screen.getByRole('option')).not.toHaveAttribute('aria-label');
+    });
+
+    it('uses the most recent group label when there are multiple groups', () => {
+      render(
+        <KBarResults
+          items={[
+            'Dashboards',
+            createAction({ id: 'home', name: 'Home' }),
+            'Folders',
+            createAction({ id: 'folder-1', name: 'My Folder' }),
+          ]}
+          onRender={renderItem}
+        />
+      );
+
+      const options = screen.getAllByRole('option');
+      expect(options[0]).toHaveAttribute('aria-label', 'Dashboards: Home');
+      expect(options[1]).toHaveAttribute('aria-label', 'Folders: My Folder');
+    });
+
+    it('marks the active item with aria-selected="true" and others with aria-selected="false"', () => {
+      setupKBarMock(1);
+      render(
+        <KBarResults
+          items={[createAction({ id: 'home', name: 'Home' }), createAction({ id: 'explore', name: 'Explore' })]}
+          onRender={renderItem}
+        />
+      );
+
+      const options = screen.getAllByRole('option');
+      expect(options[0]).toHaveAttribute('aria-selected', 'false');
+      expect(options[1]).toHaveAttribute('aria-selected', 'true');
+    });
+
+    it('renders as an anchor tag when the item has a URL', () => {
+      render(<KBarResults items={[createAction({ name: 'Home', url: '/dashboard/home' })]} onRender={renderItem} />);
+
+      // The <a> has role="option" which overrides the implicit link role
+      expect(screen.getByRole('option')).toHaveAttribute('href', '/dashboard/home');
+    });
+
+    it('passes target attribute through to anchor tags', () => {
+      render(
+        <KBarResults
+          items={[createAction({ name: 'External', url: 'https://example.com', target: '_blank' })]}
+          onRender={renderItem}
+        />
+      );
+
+      expect(screen.getByRole('option')).toHaveAttribute('target', '_blank');
+    });
+  });
+
+  it('calls onRender for every item', () => {
+    const items = ['Group', createAction({ name: 'Home' })];
+    render(<KBarResults items={items} onRender={renderItem} />);
+
+    expect(renderItem).toHaveBeenCalledTimes(2);
+  });
 });
