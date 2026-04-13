@@ -1,13 +1,19 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState, sceneUtils } from '@grafana/scenes';
+import {
+  type SceneComponentProps,
+  sceneGraph,
+  SceneObjectBase,
+  type SceneObjectState,
+  sceneUtils,
+} from '@grafana/scenes';
 import { Drawer, useStyles2 } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../../utils/utils';
-import { DashboardScene } from '../DashboardScene';
+import { type DashboardScene } from '../DashboardScene';
 
 import { DashboardFiltersOverview } from './DashboardFiltersOverview';
 import { DashboardFiltersOverviewSearch } from './DashboardFiltersOverviewSearch';
@@ -59,6 +65,7 @@ function DashboardFiltersOverviewDrawerRenderer({ model }: SceneComponentProps<D
       }
       onClose={model.onClose}
       size="sm"
+      scrollableContent={false}
     >
       <DashboardFiltersOverview
         adhocFilters={adHocVar}
@@ -78,6 +85,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
     overflow: 'hidden',
     minWidth: 0,
+    paddingRight: theme.spacing(2),
   }),
   drawerTitle: css({
     flex: 1,

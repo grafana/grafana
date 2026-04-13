@@ -39,14 +39,14 @@ func (s *AlertRuleSpec) NoDataStateOrDefault() string {
 	if s.NoDataState == "" {
 		return DefaultNoDataState
 	}
-	return s.NoDataState
+	return string(s.NoDataState)
 }
 
 func (s *AlertRuleSpec) ExecErrStateOrDefault() string {
 	if s.ExecErrState == "" {
 		return DefaultExecErrState
 	}
-	return s.ExecErrState
+	return string(s.ExecErrState)
 }
 
 func (d *AlertRulePromDuration) ToDuration() (time.Duration, error) {
@@ -123,4 +123,24 @@ func (spec *AlertRuleSpec) ClampDurations() error {
 		}
 	}
 	return nil
+}
+
+func (e *AlertRuleExpression) IsSource() bool {
+	return e.Source != nil && *e.Source
+}
+
+func (e *AlertRuleExpression) GetDatasource() *string {
+	return (*string)(e.DatasourceUID)
+}
+
+func (e *AlertRuleExpression) HasValidRelativeTimeRange() bool {
+	if e.RelativeTimeRange == nil {
+		return false
+	}
+	from, errFrom := ToDuration(string(e.RelativeTimeRange.From))
+	to, errTo := ToDuration(string(e.RelativeTimeRange.To))
+	if errFrom != nil || errTo != nil {
+		return false
+	}
+	return from > to
 }

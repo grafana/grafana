@@ -1,15 +1,15 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/OperationParamEditor.tsx
 import { css } from '@emotion/css';
-import { ComponentType } from 'react';
+import { type ComponentType } from 'react';
 
-import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue, toOption } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { AutoSizeInput, Button, Checkbox, Select, useStyles2, Stack } from '@grafana/ui';
 
 import { LabelParamEditor } from '../components/LabelParamEditor';
 
 import { getOperationParamId } from './param_utils';
-import { QueryBuilderOperationParamDef, QueryBuilderOperationParamEditorProps } from './types';
+import { type QueryBuilderOperationParamDef, type QueryBuilderOperationParamEditorProps } from './types';
 
 /**
  * Registry of operation parameter editors that can be referenced by key.

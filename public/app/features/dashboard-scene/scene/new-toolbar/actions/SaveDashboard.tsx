@@ -3,7 +3,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, ButtonGroup, Dropdown, Menu } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { ToolbarActionProps } from '../types';
+import { type ToolbarActionProps } from '../types';
 
 export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
   const { meta, isDirty, uid, editview, editPanel } = dashboard.state;
@@ -50,6 +50,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
         size={buttonSize}
         data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
         variant={isDirty ? 'primary' : 'secondary'}
+        data-testactive={isDirty || undefined} // used in e2e tests to verify if dsahboard has unsaved changes
       >
         <Trans i18nKey="dashboard.toolbar.new.save-dashboard.label">Save</Trans>
       </Button>

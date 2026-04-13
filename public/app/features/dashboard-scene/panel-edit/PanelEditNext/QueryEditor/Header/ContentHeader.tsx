@@ -1,17 +1,22 @@
 import { css } from '@emotion/css';
 import { upperFirst } from 'lodash';
-import { RefObject, useRef } from 'react';
+import { type RefObject, useMemo, useRef } from 'react';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
-import { Button, useStyles2, Icon, Text } from '@grafana/ui';
+import { type DataQuery } from '@grafana/schema';
+import { Button, Icon, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
-import { ExpressionQuery } from 'app/features/expressions/types';
+import { type ExpressionQuery } from 'app/features/expressions/types';
 
-import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
-import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
-import { AlertRule, Transformation } from '../types';
+import { getQueryEditorTypeConfig, type QueryEditorTypeConfig, QueryEditorType } from '../../constants';
+import {
+  useActionsContext,
+  useQueryEditorUIContext,
+  useQueryRunnerContext,
+  useQueryEditorTypeConfig,
+} from '../QueryEditorContext';
+import { type AlertRule, type Transformation } from '../types';
 import { getEditorBorderColor } from '../utils';
 
 import { EditableQueryName } from './EditableQueryName';
@@ -39,13 +44,21 @@ interface PendingPickerHeaderProps {
   onCancel?: () => void;
   cancelLabel: React.ReactNode;
   styles: ReturnType<typeof getStyles>;
+  typeConfig: Record<QueryEditorType, QueryEditorTypeConfig>;
 }
 
-function PendingPickerHeader({ editorType, label, onCancel, cancelLabel, styles }: PendingPickerHeaderProps) {
+function PendingPickerHeader({
+  editorType,
+  label,
+  onCancel,
+  cancelLabel,
+  styles,
+  typeConfig,
+}: PendingPickerHeaderProps) {
   return (
     <div className={styles.container}>
       <div className={styles.leftSection}>
-        <Icon name={QUERY_EDITOR_TYPE_CONFIG[editorType].icon} size="sm" />
+        <Icon name={typeConfig[editorType].icon} size="sm" />
         <Text weight="light" variant="body" color="secondary">
           {label}
         </Text>
@@ -73,6 +86,7 @@ export interface ContentHeaderProps {
   onCancelPendingTransformation?: () => void;
   onChangeDataSource: (ds: DataSourceInstanceSettings, refId: string) => void;
   onUpdateQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
+  isMultiSelection?: boolean;
   /**
    * Optional callback to render additional elements in the header's left section.
    *
@@ -88,6 +102,11 @@ export interface ContentHeaderProps {
    * Used downstream for saved queries positioning.
    */
   containerRef?: RefObject<HTMLDivElement>;
+  /**
+   * Optional type config for query editor types (icons, colors, labels).
+   * If not provided, will be computed from the current theme.
+   */
+  typeConfig?: Record<QueryEditorType, QueryEditorTypeConfig>;
 }
 
 /**
@@ -111,12 +130,17 @@ export function ContentHeader({
   onCancelPendingTransformation,
   onChangeDataSource,
   onUpdateQuery,
+  isMultiSelection,
   renderHeaderExtras,
   containerRef: externalContainerRef,
+  typeConfig: typeConfigProp,
 }: ContentHeaderProps) {
   // Fallback ref if none provided (for saved queries positioning)
   const internalContainerRef = useRef<HTMLDivElement>(null);
   const containerRef = externalContainerRef || internalContainerRef;
+  const theme = useTheme2();
+  // Use provided typeConfig or compute from theme (for standalone usage)
+  const typeConfig = useMemo(() => typeConfigProp ?? getQueryEditorTypeConfig(theme), [typeConfigProp, theme]);
 
   const styles = useStyles2(getStyles, { cardType, selectedAlert });
 
@@ -128,6 +152,7 @@ export function ContentHeader({
         onCancel={onCancelPendingExpression}
         cancelLabel={<Trans i18nKey="query-editor-next.header.pending-expression-cancel">Cancel</Trans>}
         styles={styles}
+        typeConfig={typeConfig}
       />
     );
   }
@@ -140,6 +165,7 @@ export function ContentHeader({
         onCancel={onCancelPendingTransformation}
         cancelLabel={<Trans i18nKey="query-editor-next.header.pending-transformation-cancel">Cancel</Trans>}
         styles={styles}
+        typeConfig={typeConfig}
       />
     );
   }
@@ -151,7 +177,7 @@ export function ContentHeader({
   return (
     <div className={styles.container} ref={containerRef}>
       <div className={styles.leftSection}>
-        <Icon name={QUERY_EDITOR_TYPE_CONFIG[cardType].icon} size="sm" />
+        <Icon name={typeConfig[cardType].icon} size="sm" />
 
         {cardType === QueryEditorType.Alert && selectedAlert && (
           <>
@@ -198,7 +224,13 @@ export function ContentHeader({
 
         {selectedQuery && cardType !== QueryEditorType.Alert && (
           <>
-            <EditableQueryName query={selectedQuery} queries={queries} onQueryUpdate={onUpdateQuery} />
+            <EditableQueryName
+              key={selectedQuery.refId}
+              query={selectedQuery}
+              queries={queries}
+              onQueryUpdate={onUpdateQuery}
+              readOnly={isMultiSelection}
+            />
             {renderHeaderExtras && <div className={styles.headerExtras}>{renderHeaderExtras()}</div>}
           </>
         )}
@@ -225,6 +257,7 @@ export function ContentHeaderSceneWrapper({
     selectedAlert,
     selectedQuery,
     selectedTransformation,
+    selectedQueryRefIds,
     cardType,
     pendingExpression,
     setPendingExpression,
@@ -233,6 +266,7 @@ export function ContentHeaderSceneWrapper({
   } = useQueryEditorUIContext();
   const { queries } = useQueryRunnerContext();
   const { changeDataSource, updateSelectedQuery } = useActionsContext();
+  const typeConfig = useQueryEditorTypeConfig();
 
   return (
     <ContentHeader
@@ -247,7 +281,9 @@ export function ContentHeaderSceneWrapper({
       onCancelPendingTransformation={() => setPendingTransformation(null)}
       onChangeDataSource={changeDataSource}
       onUpdateQuery={updateSelectedQuery}
+      isMultiSelection={selectedQueryRefIds.length > 1}
       renderHeaderExtras={renderHeaderExtras}
+      typeConfig={typeConfig}
     />
   );
 }
@@ -261,13 +297,14 @@ const getStyles = (
   theme: GrafanaTheme2,
   { cardType, selectedAlert }: { cardType: QueryEditorType; selectedAlert: AlertRule | null }
 ) => {
-  const borderColor = getEditorBorderColor(theme, cardType, selectedAlert?.state);
+  const borderColor = getEditorBorderColor({ theme, editorType: cardType, alertState: selectedAlert?.state });
 
   return {
     container: css({
-      borderLeft: `4px solid ${borderColor}`,
+      position: 'relative',
       backgroundColor: theme.colors.background.secondary,
       padding: theme.spacing(0.5),
+      paddingLeft: `calc(${theme.spacing(0.5)} + 4px)`,
       borderTopLeftRadius: theme.shape.radius.default,
       borderTopRightRadius: theme.shape.radius.default,
       display: 'flex',
@@ -275,6 +312,18 @@ const getStyles = (
       justifyContent: 'space-between',
       gap: theme.spacing(1),
       minHeight: theme.spacing(5),
+
+      // psuedo-element to show the border color on the left of the header
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: 4,
+        background: borderColor,
+        borderTopLeftRadius: theme.shape.radius.default,
+      },
     }),
     leftSection: css({
       display: 'flex',

@@ -2,10 +2,16 @@ import { css } from '@emotion/css';
 import { negate } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { Status } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { type Status } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
+import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { CorrelationData, CorrelationsData, FetchError, isFetchError, reportInteraction } from '@grafana/runtime';
+import {
+  type CorrelationData,
+  type CorrelationsData,
+  type FetchError,
+  isFetchError,
+  reportInteraction,
+} from '@grafana/runtime';
 import {
   Badge,
   Button,
@@ -25,8 +31,8 @@ import { useNavModel } from 'app/core/hooks/useNavModel';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { AddCorrelationForm } from './Forms/AddCorrelationForm';
-import { EditCorrelationForm } from './Forms/EditCorrelationForm';
+import { AddCorrelationFormWrapper } from './Forms/AddCorrelationForm';
+import { EditCorrelationFormWrapper } from './Forms/EditCorrelationForm';
 import { EmptyCorrelationsCTA } from './components/EmptyCorrelationsCTA';
 import type { Correlation, GetCorrelationsParams, RemoveCorrelationParams } from './types';
 
@@ -207,7 +213,7 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
               </Alert>
             )
           }
-          {isAdding && <AddCorrelationForm onClose={() => setIsAdding(false)} onCreated={handleAdded} />}
+          {isAdding && <AddCorrelationFormWrapper onClose={() => setIsAdding(false)} onCreated={handleAdded} />}
 
           {correlations && corrData.length >= 1 && (
             <>
@@ -260,7 +266,7 @@ function ExpendedRow({ correlation: { source, ...correlation }, readOnly, onUpda
       ? { ...correlation, type: 'query', sourceUID: source.uid, targetUID: correlation.target.uid }
       : { ...correlation, type: 'external', sourceUID: source.uid };
 
-  return <EditCorrelationForm correlation={corr} onUpdated={onUpdated} readOnly={readOnly} />;
+  return <EditCorrelationFormWrapper correlation={corr} onUpdated={onUpdated} readOnly={readOnly} />;
 }
 
 const getDatasourceCellStyles = (theme: GrafanaTheme2) => ({

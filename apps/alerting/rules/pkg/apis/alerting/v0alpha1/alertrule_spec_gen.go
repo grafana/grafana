@@ -23,6 +23,58 @@ type AlertRulePromDuration string
 // +k8s:openapi-gen=true
 type AlertRuleTemplateString string
 
+// +k8s:openapi-gen=true
+type AlertRuleNoDataState string
+
+const (
+	AlertRuleNoDataStateNoData   AlertRuleNoDataState = "NoData"
+	AlertRuleNoDataStateOk       AlertRuleNoDataState = "Ok"
+	AlertRuleNoDataStateAlerting AlertRuleNoDataState = "Alerting"
+	AlertRuleNoDataStateKeepLast AlertRuleNoDataState = "KeepLast"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for AlertRuleNoDataState.
+func (AlertRuleNoDataState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleNoDataState"
+}
+
+// +k8s:openapi-gen=true
+type AlertRuleExecErrState string
+
+const (
+	AlertRuleExecErrStateError    AlertRuleExecErrState = "Error"
+	AlertRuleExecErrStateOk       AlertRuleExecErrState = "Ok"
+	AlertRuleExecErrStateAlerting AlertRuleExecErrState = "Alerting"
+	AlertRuleExecErrStateKeepLast AlertRuleExecErrState = "KeepLast"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for AlertRuleExecErrState.
+func (AlertRuleExecErrState) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleExecErrState"
+}
+
+// TODO(@moustafab): this should be imported from the notifications package
+// +k8s:openapi-gen=true
+type AlertRuleNotificationSettings struct {
+	Receiver            string                     `json:"receiver"`
+	GroupBy             []string                   `json:"groupBy,omitempty"`
+	GroupWait           *AlertRulePromDuration     `json:"groupWait,omitempty"`
+	GroupInterval       *AlertRulePromDuration     `json:"groupInterval,omitempty"`
+	RepeatInterval      *AlertRulePromDuration     `json:"repeatInterval,omitempty"`
+	MuteTimeIntervals   []AlertRuleTimeIntervalRef `json:"muteTimeIntervals,omitempty"`
+	ActiveTimeIntervals []AlertRuleTimeIntervalRef `json:"activeTimeIntervals,omitempty"`
+}
+
+// NewAlertRuleNotificationSettings creates a new AlertRuleNotificationSettings object.
+func NewAlertRuleNotificationSettings() *AlertRuleNotificationSettings {
+	return &AlertRuleNotificationSettings{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for AlertRuleNotificationSettings.
+func (AlertRuleNotificationSettings) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleNotificationSettings"
+}
+
 // TODO(@moustafab): validate regex for time interval ref
 // +k8s:openapi-gen=true
 type AlertRuleTimeIntervalRef string
@@ -85,69 +137,48 @@ type AlertRulePromDurationWMillis string
 type AlertRuleDatasourceUID string
 
 // +k8s:openapi-gen=true
+type AlertRulePanelRef struct {
+	DashboardUID string `json:"dashboardUID"`
+	PanelID      int64  `json:"panelID"`
+}
+
+// NewAlertRulePanelRef creates a new AlertRulePanelRef object.
+func NewAlertRulePanelRef() *AlertRulePanelRef {
+	return &AlertRulePanelRef{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for AlertRulePanelRef.
+func (AlertRulePanelRef) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePanelRef"
+}
+
+// +k8s:openapi-gen=true
 type AlertRuleSpec struct {
-	Title                       string                                     `json:"title"`
-	Paused                      *bool                                      `json:"paused,omitempty"`
-	Trigger                     AlertRuleIntervalTrigger                   `json:"trigger"`
-	Labels                      map[string]AlertRuleTemplateString         `json:"labels,omitempty"`
-	Annotations                 map[string]AlertRuleTemplateString         `json:"annotations,omitempty"`
-	For                         *string                                    `json:"for,omitempty"`
-	KeepFiringFor               *string                                    `json:"keepFiringFor,omitempty"`
-	MissingSeriesEvalsToResolve *int64                                     `json:"missingSeriesEvalsToResolve,omitempty"`
-	NoDataState                 string                                     `json:"noDataState"`
-	ExecErrState                string                                     `json:"execErrState"`
-	NotificationSettings        *AlertRuleV0alpha1SpecNotificationSettings `json:"notificationSettings,omitempty"`
-	Expressions                 AlertRuleExpressionMap                     `json:"expressions"`
-	PanelRef                    *AlertRuleV0alpha1SpecPanelRef             `json:"panelRef,omitempty"`
+	Title                       string                             `json:"title"`
+	Paused                      *bool                              `json:"paused,omitempty"`
+	Trigger                     AlertRuleIntervalTrigger           `json:"trigger"`
+	Labels                      map[string]AlertRuleTemplateString `json:"labels,omitempty"`
+	Annotations                 map[string]AlertRuleTemplateString `json:"annotations,omitempty"`
+	For                         *string                            `json:"for,omitempty"`
+	KeepFiringFor               *string                            `json:"keepFiringFor,omitempty"`
+	MissingSeriesEvalsToResolve *int64                             `json:"missingSeriesEvalsToResolve,omitempty"`
+	NoDataState                 AlertRuleNoDataState               `json:"noDataState"`
+	ExecErrState                AlertRuleExecErrState              `json:"execErrState"`
+	NotificationSettings        *AlertRuleNotificationSettings     `json:"notificationSettings,omitempty"`
+	Expressions                 AlertRuleExpressionMap             `json:"expressions"`
+	PanelRef                    *AlertRulePanelRef                 `json:"panelRef,omitempty"`
 }
 
 // NewAlertRuleSpec creates a new AlertRuleSpec object.
 func NewAlertRuleSpec() *AlertRuleSpec {
 	return &AlertRuleSpec{
 		Trigger:      *NewAlertRuleIntervalTrigger(),
-		NoDataState:  "NoData",
-		ExecErrState: "Error",
+		NoDataState:  AlertRuleNoDataStateNoData,
+		ExecErrState: AlertRuleExecErrStateError,
 	}
 }
 
 // OpenAPIModelName returns the OpenAPI model name for AlertRuleSpec.
 func (AlertRuleSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleSpec"
-}
-
-// +k8s:openapi-gen=true
-type AlertRuleV0alpha1SpecNotificationSettings struct {
-	Receiver            string                     `json:"receiver"`
-	GroupBy             []string                   `json:"groupBy,omitempty"`
-	GroupWait           *AlertRulePromDuration     `json:"groupWait,omitempty"`
-	GroupInterval       *AlertRulePromDuration     `json:"groupInterval,omitempty"`
-	RepeatInterval      *AlertRulePromDuration     `json:"repeatInterval,omitempty"`
-	MuteTimeIntervals   []AlertRuleTimeIntervalRef `json:"muteTimeIntervals,omitempty"`
-	ActiveTimeIntervals []AlertRuleTimeIntervalRef `json:"activeTimeIntervals,omitempty"`
-}
-
-// NewAlertRuleV0alpha1SpecNotificationSettings creates a new AlertRuleV0alpha1SpecNotificationSettings object.
-func NewAlertRuleV0alpha1SpecNotificationSettings() *AlertRuleV0alpha1SpecNotificationSettings {
-	return &AlertRuleV0alpha1SpecNotificationSettings{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for AlertRuleV0alpha1SpecNotificationSettings.
-func (AlertRuleV0alpha1SpecNotificationSettings) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleV0alpha1SpecNotificationSettings"
-}
-
-// +k8s:openapi-gen=true
-type AlertRuleV0alpha1SpecPanelRef struct {
-	DashboardUID string `json:"dashboardUID"`
-	PanelID      int64  `json:"panelID"`
-}
-
-// NewAlertRuleV0alpha1SpecPanelRef creates a new AlertRuleV0alpha1SpecPanelRef object.
-func NewAlertRuleV0alpha1SpecPanelRef() *AlertRuleV0alpha1SpecPanelRef {
-	return &AlertRuleV0alpha1SpecPanelRef{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for AlertRuleV0alpha1SpecPanelRef.
-func (AlertRuleV0alpha1SpecPanelRef) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleV0alpha1SpecPanelRef"
 }

@@ -1,7 +1,7 @@
 // Libraries
 import { memo } from 'react';
 
-import { PluginConfigPageProps, DataSourcePluginMeta, DataSourceJsonData } from '@grafana/data';
+import { type PluginConfigPageProps, type DataSourcePluginMeta, type DataSourceJsonData } from '@grafana/data';
 import { LinkButton } from '@grafana/ui';
 
 // Types

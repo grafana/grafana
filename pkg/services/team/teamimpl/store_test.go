@@ -36,7 +36,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 
 	t.Run("Testing Team commands and queries", func(t *testing.T) {
 		sqlStore, cfg := db.InitTestDBWithCfg(t)
-		teamSvc, err := ProvideService(sqlStore, cfg, tracing.InitializeTracerForTest())
+		teamSvc, err := ProvideService(sqlStore, cfg, tracing.InitializeTracerForTest(), nil)
 		require.NoError(t, err)
 		testUser := &user.SignedInUser{
 			OrgID: 1,
@@ -55,7 +55,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
-			quotaService, supportbundlestest.NewFakeBundleService(),
+			quotaService, supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
 
@@ -333,6 +333,26 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, queryResult.Teams[1].ID, teamIds[1])
 			})
 
+			t.Run("Should be able to query teams by UIDs", func(t *testing.T) {
+				allTeamsQuery := &team.SearchTeamsQuery{OrgID: testOrgID, Query: "", SignedInUser: testUser}
+				allTeamsQueryResult, err := teamSvc.SearchTeams(context.Background(), allTeamsQuery)
+				require.NoError(t, err)
+				require.Equal(t, len(allTeamsQueryResult.Teams), 2)
+
+				teamUIDs := make([]string, 0, len(allTeamsQueryResult.Teams))
+				for _, tm := range allTeamsQueryResult.Teams {
+					teamUIDs = append(teamUIDs, tm.UID)
+				}
+
+				query := &team.SearchTeamsQuery{OrgID: testOrgID, SignedInUser: testUser, UIDs: teamUIDs}
+				queryResult, err := teamSvc.SearchTeams(context.Background(), query)
+				require.NoError(t, err)
+				require.Len(t, queryResult.Teams, 2)
+				require.EqualValues(t, queryResult.TotalCount, 2)
+				assert.Contains(t, teamUIDs, queryResult.Teams[0].UID)
+				assert.Contains(t, teamUIDs, queryResult.Teams[1].UID)
+			})
+
 			t.Run("Should be able to return all teams a user is member of", func(t *testing.T) {
 				sqlStore = db.InitTestDB(t)
 				setup()
@@ -463,7 +483,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				userSvc, err := userimpl.ProvideService(
 					sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
-					quotaService, supportbundlestest.NewFakeBundleService(),
+					quotaService, supportbundlestest.NewFakeBundleService(), nil,
 				)
 				require.NoError(t, err)
 				setup()
@@ -552,7 +572,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 	}
 
 	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
-	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
+	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(t, err)
 
 	// Seed 10 teams
@@ -593,7 +613,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 
 	// Seed 2 teams with 2 members
 	setup := func(store db.DB, cfg *setting.Cfg) {
-		teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
+		teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest(), nil)
 		require.NoError(t, err)
 
 		team1Cmd := team.CreateTeamCommand{
@@ -619,7 +639,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			store, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
-			quotaService, supportbundlestest.NewFakeBundleService(),
+			quotaService, supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
 
@@ -654,7 +674,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 
 	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
 	setup(store, cfg)
-	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
+	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(t, err)
 
 	type getTeamMembersTestCase struct {

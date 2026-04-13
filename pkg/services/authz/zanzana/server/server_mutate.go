@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
 type OperationGroup string
@@ -101,7 +102,8 @@ func getOperationGroup(operation *authzextv1.MutateOperation) (OperationGroup, e
 		return OperationGroupFolder, nil
 	case *authzextv1.MutateOperation_CreatePermission, *authzextv1.MutateOperation_DeletePermission:
 		return OperationGroupPermission, nil
-	case *authzextv1.MutateOperation_UpdateUserOrgRole, *authzextv1.MutateOperation_DeleteUserOrgRole, *authzextv1.MutateOperation_AddUserOrgRole:
+	case *authzextv1.MutateOperation_UpdateUserOrgRole, *authzextv1.MutateOperation_DeleteUserOrgRole, *authzextv1.MutateOperation_AddUserOrgRole,
+		*authzextv1.MutateOperation_UpdateServiceAccountOrgRole, *authzextv1.MutateOperation_DeleteServiceAccountOrgRole, *authzextv1.MutateOperation_AddServiceAccountOrgRole:
 		return OperationGroupUserOrgRole, nil
 	case *authzextv1.MutateOperation_CreateRoleBinding, *authzextv1.MutateOperation_DeleteRoleBinding:
 		return OperationGroupRoleBinding, nil
@@ -155,11 +157,18 @@ func deduplicateTupleKeys(writeTuples []*openfgav1.TupleKey, deleteTuples []*ope
 // WriteTuples writes tuples directly to OpenFGA for a given store.
 // This is used internally by mutate operations and the reconciler.
 // Tuples are automatically deduplicated before writing.
-func (s *Server) WriteTuples(ctx context.Context, store *storeInfo, writeTuples []*openfgav1.TupleKey, deleteTuples []*openfgav1.TupleKeyWithoutCondition) error {
+func (s *Server) WriteTuples(ctx context.Context, store *zanzana.StoreInfo, writeTuples []*openfgav1.TupleKey, deleteTuples []*openfgav1.TupleKeyWithoutCondition) error {
+	ctx, span := s.tracer.Start(ctx, "server.WriteTuples")
+	defer span.End()
+
+	defer func(t time.Time) {
+		s.metrics.requestDurationSeconds.WithLabelValues("WriteTuples").Observe(time.Since(t).Seconds())
+	}(time.Now())
+
 	return s.writeTuples(ctx, store, writeTuples, deleteTuples)
 }
 
-func (s *Server) writeTuples(ctx context.Context, store *storeInfo, writeTuples []*openfgav1.TupleKey, deleteTuples []*openfgav1.TupleKeyWithoutCondition) error {
+func (s *Server) writeTuples(ctx context.Context, store *zanzana.StoreInfo, writeTuples []*openfgav1.TupleKey, deleteTuples []*openfgav1.TupleKeyWithoutCondition) error {
 	writeReq := &openfgav1.WriteRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,

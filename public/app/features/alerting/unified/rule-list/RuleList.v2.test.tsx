@@ -10,7 +10,7 @@ import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, grantUserRole, mockDataSource } from '../mocks';
 import { setGrafanaRuleGroupExportResolver } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
-import { RulesFilter } from '../search/rulesSearchParser';
+import { type RulesFilter } from '../search/rulesSearchParser';
 import { setupDataSources } from '../testSetup/datasources';
 
 import RuleListPage, { RuleListActions } from './RuleList.v2';
@@ -72,9 +72,11 @@ alertingFactory.dataSource.build({ name: 'Mimir', uid: 'mimir' });
 alertingFactory.dataSource.build({ name: 'Prometheus', uid: 'prometheus' });
 
 describe('RuleListPage v2', () => {
-  it('should show grouped view by default', () => {
+  it('should show grouped view by default', async () => {
     render(<RuleListPage />);
 
+    // Wait for the lazy-loaded RulesFilterV2 (Suspense) to settle before asserting
+    await waitFor(() => expect(ui.searchInput.get()).toBeInTheDocument());
     expect(ui.groupedView.get()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
@@ -187,11 +189,11 @@ describe('RuleListActions', () => {
     moreButton: byRole('button', { name: /more/i }),
     moreMenu: byRole('menu'),
     menuOptions: {
-      newAlertRuleForExport: byRole('link', { name: /new alert rule for export/i }),
-      newGrafanaRecordingRule: byRole('link', { name: /new grafana recording rule/i }),
-      newDataSourceRecordingRule: byRole('link', { name: /new data source recording rule/i }),
-      importAlertRules: byRole('link', { name: /import alert rules/i }),
-      importToGma: byRole('link', { name: /import to gma/i }),
+      newAlertRuleForExport: byRole('menuitem', { name: /new alert rule for export/i }),
+      newGrafanaRecordingRule: byRole('menuitem', { name: /new grafana recording rule/i }),
+      newDataSourceRecordingRule: byRole('menuitem', { name: /new data source recording rule/i }),
+      importAlertRules: byRole('menuitem', { name: /import alert rules/i }),
+      importToGma: byRole('menuitem', { name: /import to grafana alerting/i }),
       exportAllGrafanaRules: byRole('menuitem', { name: /export all grafana rules/i }),
     },
     exportDrawer: byRole('dialog', { name: /export/i }),
@@ -325,10 +327,10 @@ describe('RuleListActions', () => {
     });
   });
 
-  describe('Import to GMA Wizard', () => {
+  describe('Import to Grafana Alerting Wizard', () => {
     testWithFeatureToggles({ enable: ['alertingMigrationWizardUI'] });
 
-    it('should show "Import to GMA" option when user is admin with required permissions', async () => {
+    it('should show "Import to Grafana Alerting" option when user is admin with required permissions', async () => {
       grantUserRole(OrgRole.Admin);
       grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingNotificationsWrite]);
 
@@ -339,7 +341,7 @@ describe('RuleListActions', () => {
       expect(ui.menuOptions.importToGma.query(menu)).toBeInTheDocument();
     });
 
-    it('should not show "Import to GMA" option when user is not admin', async () => {
+    it('should not show "Import to Grafana Alerting" option when user is not admin', async () => {
       grantUserRole(OrgRole.Viewer);
       grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingNotificationsWrite]);
 
@@ -543,7 +545,7 @@ describe('RuleListPage v2 - Default search auto-apply', () => {
   // These tests verify that the default search is applied at the page level,
   // BEFORE child components mount, preventing double API requests.
 
-  testWithFeatureToggles({ enable: ['alertingListViewV2', 'alertingSavedSearches'] });
+  testWithFeatureToggles({ enable: ['alertingListViewV2'] });
 
   beforeEach(() => {
     // Clear the visited flag so the hook detects this as a first visit

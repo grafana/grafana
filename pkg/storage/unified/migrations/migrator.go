@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/dskit/backoff"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"google.golang.org/grpc/metadata"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/backoff"
+	"github.com/grafana/grafana/pkg/infra/log"
 
-	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -25,15 +24,7 @@ type MigrateOptions struct {
 	Progress    func(count int, msg string)
 }
 
-// MigrationTableLocker abstracts locking of legacy database tables during migration.
-type MigrationTableLocker interface {
-	// LockMigrationTables locks legacy tables during migration to prevent concurrent updates.
-	LockMigrationTables(ctx context.Context, tables []string) (func(context.Context) error, error)
-}
-
 // Read from legacy and write into unified storage
-//
-//go:generate mockery --name UnifiedMigrator --structname MockUnifiedMigrator --inpackage --filename migrator_mock.go --with-expecter
 type UnifiedMigrator interface {
 	Migrate(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error)
 	RebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error
@@ -41,7 +32,6 @@ type UnifiedMigrator interface {
 
 // unifiedMigration handles the migration of legacy resources to unified storage
 type unifiedMigration struct {
-	tableLocker    MigrationTableLocker
 	streamProvider streamProvider
 	client         resource.SearchClient
 	log            log.Logger
@@ -76,12 +66,10 @@ func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts Mi
 
 // This can migrate Folders, Dashboards, LibraryPanels and Playlists
 func ProvideUnifiedMigrator(
-	sql legacysql.LegacyDatabaseProvider,
 	client resource.ResourceClient,
 	registry *MigrationRegistry,
 ) UnifiedMigrator {
 	return newUnifiedMigrator(
-		&legacyTableLocker{sql: sql},
 		&resourceClientStreamProvider{client: client},
 		client,
 		log.New("storage.unified.migrator"),
@@ -90,14 +78,12 @@ func ProvideUnifiedMigrator(
 }
 
 func newUnifiedMigrator(
-	tableLocker MigrationTableLocker,
 	streamProvider streamProvider,
 	client resource.SearchClient,
 	log log.Logger,
 	registry *MigrationRegistry,
 ) UnifiedMigrator {
 	return &unifiedMigration{
-		tableLocker:    tableLocker,
 		streamProvider: streamProvider,
 		client:         client,
 		log:            log,
@@ -118,24 +104,39 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 		return nil, fmt.Errorf("missing resource selector")
 	}
 
-	lockTables := m.lockTablesForResources(opts.Resources)
-	unlockTables, err := m.tableLocker.LockMigrationTables(ctx, lockTables)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err := unlockTables(ctx); err != nil {
-			m.log.Error("error unlocking legacy tables", "error", err, "namespace", opts.Namespace)
-		}
-	}()
+	// Use a cancellable context for the stream so that if a migration function
+	// fails, the server-side handler is notified and releases its bulk lock.
+	streamCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-	stream, err := m.streamProvider.createStream(ctx, opts, m.registry)
+	origResources := opts.Resources
+
+	// TODO... the migrator must be able to dynamically define the groups
+	// The bulk processor will clean up any resources in these groups, and
+	// initialize authorization scoped to this set of resources
+	if len(opts.Resources) == 1 && opts.Resources[0].Group == "datasource.grafana.app" {
+		// This should be loaded from the DB, or the plugin scanning
+		plugins := []string{
+			"alertmanager", "azuremonitor", "cloud-monitoring", "cloudwatch", "dashboard", "elasticsearch",
+			"grafana-postgresql-datasource", "grafana-pyroscope-datasource", "grafana-testdata-datasource",
+			"graphite", "influxdb", "jaeger", "loki", "mixed", "mssql", "mysql", "opentsdb", "parca", "prometheus",
+			"tempo", "zipkin",
+		}
+		opts.Resources = make([]schema.GroupResource, 0, len(plugins))
+		for _, p := range plugins {
+			opts.Resources = append(opts.Resources, schema.GroupResource{
+				Group: p + ".datasource.grafana.app", Resource: "datasources",
+			})
+		}
+	}
+
+	stream, err := m.streamProvider.createStream(streamCtx, opts, m.registry)
 	if err != nil {
 		return nil, err
 	}
 
 	migratorFuncs := []MigratorFunc{}
-	for _, res := range opts.Resources {
+	for _, res := range origResources {
 		fn := m.registry.GetMigratorFunc(res)
 		if fn == nil {
 			return nil, fmt.Errorf("unsupported resource: %s/%s", res.Group, res.Resource)
@@ -252,19 +253,4 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 	}
 
 	return nil
-}
-
-func (m *unifiedMigration) lockTablesForResources(resources []schema.GroupResource) []string {
-	tables := make([]string, 0, len(resources))
-	seen := make(map[string]struct{})
-	for _, res := range resources {
-		for _, table := range m.registry.GetLockTables(res) {
-			if _, ok := seen[table]; ok {
-				continue
-			}
-			seen[table] = struct{}{}
-			tables = append(tables, table)
-		}
-	}
-	return tables
 }

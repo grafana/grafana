@@ -13,12 +13,13 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 
+	prom_model "github.com/prometheus/common/model"
+
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	prom_model "github.com/prometheus/common/model"
 )
 
 func TestMain(m *testing.M) {
@@ -53,7 +54,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:  rule.Title,
-			Metric: rule.Record.Metric,
+			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
 					QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -151,7 +152,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:  rule.Title,
-			Metric: rule.Record.Metric,
+			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
 					QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -236,7 +237,7 @@ func TestIntegrationCRUD(t *testing.T) {
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
-				Metric: rule.Record.Metric,
+				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -288,7 +289,7 @@ func TestIntegrationCRUD(t *testing.T) {
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
-				Metric: rule.Record.Metric,
+				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -346,7 +347,7 @@ func TestIntegrationCRUD(t *testing.T) {
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
-				Metric: rule.Record.Metric,
+				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -398,7 +399,7 @@ func TestIntegrationCRUD(t *testing.T) {
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
-				Metric: rule.Record.Metric,
+				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -417,7 +418,7 @@ func TestIntegrationCRUD(t *testing.T) {
 		}
 
 		created, err := adminClient.Create(ctx, recordingRule, v1.CreateOptions{})
-		require.ErrorContains(t, err, "no query marked as source")
+		require.ErrorContains(t, err, "one expression must be marked as source")
 		require.Nil(t, created)
 	})
 	t.Run("should not be able to create rule with interval less than base", func(t *testing.T) {
@@ -434,7 +435,7 @@ func TestIntegrationCRUD(t *testing.T) {
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
-				Metric: rule.Record.Metric,
+				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -488,7 +489,7 @@ func TestIntegrationPatch(t *testing.T) {
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:  rule.Title,
-			Metric: rule.Record.Metric,
+			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
 					QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -589,7 +590,7 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
-				Metric: rule.Record.Metric,
+				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -634,7 +635,7 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
-				Metric: rule.Record.Metric,
+				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -671,7 +672,7 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
-				Metric: rule.Record.Metric,
+				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     util.Pointer(rule.Data[0].QueryType),

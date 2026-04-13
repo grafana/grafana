@@ -1,9 +1,9 @@
-import { HistoryItem, TimeRange } from '@grafana/data';
+import { type HistoryItem, type TimeRange } from '@grafana/data';
 
 import { DEFAULT_COMPLETION_LIMIT, METRIC_LABEL } from '../../../constants';
 import { type PrometheusLanguageProviderInterface } from '../../../language_provider';
 import { removeQuotesIfExist } from '../../../language_utils';
-import { PromQuery } from '../../../types';
+import { type PromQuery } from '../../../types';
 import { escapeForUtf8Support, isValidLegacyName } from '../../../utf8_support';
 
 export const CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT = 'codeModeSuggestionsIncomplete';
@@ -57,6 +57,13 @@ export class DataProvider {
 
     this.queryLabelKeys = this.languageProvider.queryLabelKeys.bind(this.languageProvider);
     this.queryLabelValues = this.languageProvider.queryLabelValues.bind(this.languageProvider);
+
+    // Ensure metadata is loaded for completions. The builder mode triggers this via its own
+    // components, but the code editor does not, so we need to fetch it here if not already cached.
+    const existingMetadata = this.languageProvider.retrieveMetricsMetadata();
+    if (Object.keys(existingMetadata).length === 0) {
+      this.languageProvider.queryMetricsMetadata();
+    }
   }
 
   /**

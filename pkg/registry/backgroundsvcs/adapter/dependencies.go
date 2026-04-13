@@ -39,6 +39,11 @@ const (
 
 	// FixedRolesLoader is the module name for the fixed roles loader service.
 	FixedRolesLoader = accesscontrol.FixedRolesLoaderServiceName
+
+	// IAMRolesSyncer is the module name for the IAM roles syncer service.
+	// In OSS a noop (always-disabled) module is registered so the dependency
+	// graph resolves; enterprise overwrites it with the real implementation.
+	IAMRolesSyncer = accesscontrol.IAMRolesSyncerServiceName
 )
 
 // dependencyMap returns the module dependency relationships for the background service system.
@@ -50,10 +55,11 @@ func dependencyMap() map[string][]string {
 		Tracing:            {},
 		GrafanaAPIServer:   {Tracing},
 		PluginStore:        {GrafanaAPIServer},
-		InstallSync:        {PluginStore},
-		PluginInstaller:    {InstallSync},
-		FixedRolesLoader:   {PluginInstaller},
+		PluginInstaller:    {PluginStore},
+		IAMRolesSyncer:     {GrafanaAPIServer},
+		FixedRolesLoader:   {PluginInstaller, IAMRolesSyncer},
 		Provisioning:       {PluginStore, PluginInstaller, FixedRolesLoader},
+		InstallSync:        {Provisioning},
 		Core:               {GrafanaAPIServer, PluginStore, PluginInstaller, FixedRolesLoader, Provisioning, InstallSync},
 		BackgroundServices: {Core},
 	}

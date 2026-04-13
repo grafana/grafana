@@ -2,10 +2,10 @@ import { uniq } from 'lodash';
 
 import { v2Tags } from './SearchTraceQLEditor/mocks';
 import { TraceqlSearchScope } from './dataquery.gen';
-import { TempoDatasource } from './datasource';
+import { type TempoDatasource } from './datasource';
 import TempoLanguageProvider from './language_provider';
 import { intrinsics } from './traceql/traceql';
-import { Scope } from './types';
+import { type Scope } from './types';
 
 describe('Language_provider', () => {
   describe('should get correct tags', () => {
@@ -292,6 +292,50 @@ describe('Language_provider', () => {
           lp.generateQueryFromFilters({ adhocFilters: [{ key: 'name', operator: '=', value: 'my-server' }] })
         ).toBe('{name="my-server"}');
       });
+    });
+  });
+
+  describe('getOptionsV2', () => {
+    it('sorts returned tag values alphabetically', async () => {
+      const metadataRequest = jest.fn().mockResolvedValue({
+        tagValues: [
+          { type: 'string', value: 'zebra' },
+          { type: 'string', value: 'api' },
+          { type: 'string', value: 'cache' },
+        ],
+      });
+      const datasource = {
+        metadataRequest,
+        instanceSettings: {
+          jsonData: {},
+        },
+      } as unknown as TempoDatasource;
+      const lp = new TempoLanguageProvider(datasource);
+
+      const options = await lp.getOptionsV2({ tag: 'resource.service.name' });
+
+      expect(options.map((option) => option.value)).toEqual(['api', 'cache', 'zebra']);
+    });
+
+    it('sorts returned tag values alphabetically regardless of case', async () => {
+      const metadataRequest = jest.fn().mockResolvedValue({
+        tagValues: [
+          { type: 'string', value: 'Hosted Grafana - Prod' },
+          { type: 'string', value: 'api' },
+          { type: 'string', value: 'beta' },
+        ],
+      });
+      const datasource = {
+        metadataRequest,
+        instanceSettings: {
+          jsonData: {},
+        },
+      } as unknown as TempoDatasource;
+      const lp = new TempoLanguageProvider(datasource);
+
+      const options = await lp.getOptionsV2({ tag: 'resource.service.name' });
+
+      expect(options.map((option) => option.value)).toEqual(['api', 'beta', 'Hosted Grafana - Prod']);
     });
   });
 

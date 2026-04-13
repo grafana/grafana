@@ -1,6 +1,7 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { iconOptions } from '../../utils/storybook/icons';
+import { Stack } from '../Layout/Stack/Stack';
 
 import { Badge } from './Badge';
 import mdx from './Badge.mdx';
@@ -33,5 +34,17 @@ Basic.args = {
   color: 'blue',
   icon: 'rocket',
 };
+
+export const Examples: StoryFn<typeof Badge> = () => (
+  <Stack direction="column" alignItems="flex-start">
+    <Badge text="Blue" color="blue" icon="check" />
+    <Badge text="Red" color="red" icon="check" />
+    <Badge text="Green" color="green" icon="check" />
+    <Badge text="Orange" color="orange" icon="check" />
+    <Badge text="Purple" color="purple" icon="check" />
+    <Badge text="Dark Grey" color="darkgrey" icon="check" />
+    <Badge text="Brand" color="brand" icon="check" />
+  </Stack>
+);
 
 export default meta;

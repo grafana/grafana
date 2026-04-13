@@ -1,9 +1,11 @@
-import { memo, useEffect, useState } from 'react';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Alert, Box, Button, Checkbox, Field, LoadingPlaceholder, Stack, Text, TextLink } from '@grafana/ui';
-import { Job } from 'app/api/clients/provisioning/v0alpha1';
+import { type Job } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
 
@@ -11,7 +13,7 @@ import { useStepStatus } from './StepStatusContext';
 import { useCreateSyncJob } from './hooks/useCreateSyncJob';
 import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
-import { WizardFormData, WizardStep } from './types';
+import { type WizardFormData, type WizardStep } from './types';
 import { getSyncStepStatus } from './utils/getSteps';
 
 export interface SynchronizeStepProps {
@@ -53,6 +55,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({
     setStepStatusInfo,
   });
   const [job, setJob] = useState<Job>();
+  const provisioningFolderMetadataEnabled = useBooleanFlagValue('provisioningFolderMetadata', false);
 
   useEffect(() => {
     // This useEffect is used to update the step status info based on the repository status and the form errors
@@ -80,17 +83,17 @@ export const SynchronizeStep = memo(function SynchronizeStep({
 
   const isButtonDisabled = hasError || !isHealthy;
 
-  const startSynchronization = async () => {
+  const startSynchronization = useCallback(async () => {
     const response = await createSyncJob(requiresMigration);
     if (response) {
       setJob(response);
     }
-  };
+  }, [createSyncJob, requiresMigration]);
 
-  const retryJob = () => {
+  const retryJob = useCallback(() => {
     setJob(undefined);
-    startSynchronization();
-  };
+    void startSynchronization();
+  }, [startSynchronization]);
 
   if (isLoading || healthStatusNotReady) {
     return (
@@ -159,12 +162,14 @@ export const SynchronizeStep = memo(function SynchronizeStep({
                   Alerts and library panels are not supported in provisioned folders.
                 </Trans>
               </li>
-              <li>
-                <Trans i18nKey="provisioning.wizard.alert-point-permissions">
-                  Fine-grained permissions are not supported. Default permissions apply: Admin, Editor, and Viewer roles
-                  are preserved with their standard access levels.
-                </Trans>
-              </li>
+              {!provisioningFolderMetadataEnabled && (
+                <li>
+                  <Trans i18nKey="provisioning.wizard.alert-point-permissions">
+                    Fine-grained permissions are not supported. Default permissions apply: Admin, Editor, and Viewer
+                    roles are preserved with their standard access levels.
+                  </Trans>
+                </li>
+              )}
               <li>
                 <Trans i18nKey="provisioning.wizard.alert-point-3">
                   The duration of this process depends on the number of resources involved.
@@ -210,30 +215,35 @@ export const SynchronizeStep = memo(function SynchronizeStep({
           </Stack>
         </Alert>
       )}
-      <Text element="h3">
-        <Trans i18nKey="provisioning.synchronize-step.options">Options</Trans>
-      </Text>
-      <Field noMargin>
-        <Checkbox
-          {...register('migrate.migrateResources')}
-          id="migrate-resources"
-          label={t('provisioning.wizard.sync-option-migrate-resources', 'Migrate existing resources')}
-          checked={syncTarget === 'instance' ? true : undefined}
-          disabled={syncTarget === 'instance'}
-          description={
-            syncTarget === 'instance' ? (
-              <Trans i18nKey="provisioning.synchronize-step.instance-migrate-resources-description">
-                Instance sync requires all resources to be managed. Existing resources will be migrated automatically.
-              </Trans>
-            ) : (
-              <Trans i18nKey="provisioning.synchronize-step.migrate-resources-description">
-                Import existing dashboards from connected external storage into the provisioning folder created in the
-                previous step
-              </Trans>
-            )
-          }
-        />
-      </Field>
+      {config.featureToggles.provisioningExport && (
+        <>
+          <Text element="h3">
+            <Trans i18nKey="provisioning.synchronize-step.options">Options</Trans>
+          </Text>
+          <Field noMargin>
+            <Checkbox
+              {...register('migrate.migrateResources')}
+              id="migrate-resources"
+              label={t('provisioning.wizard.sync-option-migrate-resources', 'Migrate existing resources')}
+              checked={syncTarget === 'instance' ? true : undefined}
+              disabled={syncTarget === 'instance'}
+              description={
+                syncTarget === 'instance' ? (
+                  <Trans i18nKey="provisioning.synchronize-step.instance-migrate-resources-description">
+                    Instance sync requires all resources to be managed. Existing resources will be migrated
+                    automatically.
+                  </Trans>
+                ) : (
+                  <Trans i18nKey="provisioning.synchronize-step.migrate-resources-description">
+                    Import existing dashboards from connected external storage into the provisioning folder created in
+                    the previous step
+                  </Trans>
+                )
+              }
+            />
+          </Field>
+        </>
+      )}
       <Field noMargin>
         <Button variant="primary" onClick={startSynchronization} disabled={isButtonDisabled}>
           <Trans i18nKey="provisioning.wizard.button-start">Begin synchronization</Trans>

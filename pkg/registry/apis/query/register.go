@@ -72,7 +72,7 @@ func NewQueryAPIBuilder(
 	// Include well typed query definitions
 	var queryTypes *datasourceV0.QueryTypeDefinitionList
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes) {
+	if features.IsEnabledGlobally(featuremgmt.FlagDatasourcesQueryTypes) {
 		// Read the expression query definitions
 		raw, err := expr.QueryTypeDefinitionListJSON()
 		if err != nil {
@@ -168,7 +168,8 @@ func RegisterAPIService(
 }
 
 func (b *QueryAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return datasourceV0.SchemeGroupVersion
+	// TODO, finish rename return datasourceV0.SchemeGroupVersion
+	return schema.GroupVersion{Group: "query.grafana.app", Version: datasourceV0.VERSION}
 }
 
 func addKnownTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
@@ -185,9 +186,10 @@ func addKnownTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
 }
 
 func (b *QueryAPIBuilder) InstallSchema(scheme *apiruntime.Scheme) error {
-	addKnownTypes(scheme, datasourceV0.SchemeGroupVersion)
-	metav1.AddToGroupVersion(scheme, datasourceV0.SchemeGroupVersion)
-	return scheme.SetVersionPriority(datasourceV0.SchemeGroupVersion)
+	gv := b.GetGroupVersion()
+	addKnownTypes(scheme, gv)
+	metav1.AddToGroupVersion(scheme, gv)
+	return scheme.SetVersionPriority(gv)
 }
 
 func (b *QueryAPIBuilder) AllowedV0Alpha1Resources() []string {

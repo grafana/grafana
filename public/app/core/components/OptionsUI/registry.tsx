@@ -1,45 +1,45 @@
-import { BooleanFieldSettings } from '@react-awesome-query-builder/ui';
+import type { BooleanFieldSettings } from '@react-awesome-query-builder/ui';
 
 import {
-  FieldConfigPropertyItem,
+  type FieldConfigPropertyItem,
   FieldType,
   standardEditorsRegistry,
-  StandardEditorsRegistryItem,
-  ThresholdsConfig,
-  ThresholdsFieldConfigSettings,
+  type StandardEditorsRegistryItem,
+  type ThresholdsConfig,
+  type ThresholdsFieldConfigSettings,
   ThresholdsMode,
   thresholdsOverrideProcessor,
-  ValueMapping,
-  ValueMappingFieldConfigSettings,
+  type ValueMapping,
+  type ValueMappingFieldConfigSettings,
   valueMappingsOverrideProcessor,
-  DataLink,
+  type DataLink,
   dataLinksOverrideProcessor,
-  NumberFieldConfigSettings,
+  type NumberFieldConfigSettings,
   numberOverrideProcessor,
-  StringFieldConfigSettings,
+  type StringFieldConfigSettings,
   stringOverrideProcessor,
   identityOverrideProcessor,
-  TimeZone,
-  FieldColor,
-  FieldColorConfigSettings,
-  StatsPickerConfigSettings,
+  type TimeZone,
+  type FieldColor,
+  type FieldColorConfigSettings,
+  type StatsPickerConfigSettings,
   displayNameOverrideProcessor,
-  FieldNamePickerConfigSettings,
+  type FieldNamePickerConfigSettings,
   booleanOverrideProcessor,
-  Action,
-  DataLinksFieldConfigSettings,
+  type Action,
+  type DataLinksFieldConfigSettings,
 } from '@grafana/data';
 import { actionsOverrideProcessor } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { FieldConfig } from '@grafana/schema';
+import { type FieldConfig } from '@grafana/schema';
 import { RadioButtonGroup, TimeZonePicker, Switch } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { ThresholdsValueEditor } from 'app/features/dimensions/editors/ThresholdsEditor/thresholds';
 import { ValueMappingsEditor } from 'app/features/dimensions/editors/ValueMappingsEditor/ValueMappingsEditor';
 
-import { DashboardPicker, DashboardPickerOptions } from './DashboardPicker';
+import { DashboardPicker, type DashboardPickerOptions } from './DashboardPicker';
 import { ActionsValueEditor } from './actions';
-import { ColorValueEditor, ColorValueEditorSettings } from './color';
+import { ColorValueEditor, type ColorValueEditorSettings } from './color';
 import { FieldColorEditor } from './fieldColor';
 import { DataLinksValueEditor } from './links';
 import { MultiSelectValueEditor } from './multiSelect';
@@ -456,7 +456,7 @@ export const getAllStandardFieldConfigs = () => {
   const filterable: FieldConfigPropertyItem<FieldConfig, boolean | undefined, {}> = {
     id: 'filterable',
     path: 'filterable',
-    name: t('options-ui.registry.standard-field-configs.name-ad-hoc', 'Ad-hoc filterable'),
+    name: t('options-ui.registry.standard-field-configs.name-ad-hoc', 'Filterable'),
     hideFromDefaults: true,
     editor: standardEditorsRegistry.get('boolean').editor,
     override: standardEditorsRegistry.get('boolean').editor,

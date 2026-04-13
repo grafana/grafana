@@ -206,8 +206,6 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 
 		deletes := []string{ //nolint:prealloc
 			"DELETE FROM star WHERE org_id = ?",
-			"DELETE FROM playlist_item WHERE playlist_id IN (SELECT id FROM playlist WHERE org_id = ?)",
-			"DELETE FROM playlist WHERE org_id = ?",
 			"DELETE FROM dashboard_tag WHERE org_id = ?",
 			"DELETE FROM api_key WHERE org_id = ?",
 			"DELETE FROM data_source WHERE org_id = ?",
@@ -232,12 +230,10 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 			"DELETE FROM builtin_role WHERE org_id = ?",
 		}
 
-		// Add registered deletes
 		deletes = append(deletes, ss.deletes...)
 
 		for _, sql := range deletes {
-			_, err := sess.Exec(sql, cmd.ID)
-			if err != nil {
+			if _, err := sess.Exec(sql, cmd.ID); err != nil {
 				return err
 			}
 		}

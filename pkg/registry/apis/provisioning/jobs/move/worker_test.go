@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -414,8 +413,7 @@ func TestMoveWorker_moveFiles(t *testing.T) {
 
 			for i, path := range tt.paths {
 				if i < len(tt.moveResults) {
-					// Use the same logic as constructTargetPath to build expected target
-					expectedTarget := "new/location/" + filepath.Base(path)
+					expectedTarget := safepath.Join("new/location", safepath.Base(path))
 					if safepath.IsDir(path) {
 						expectedTarget += "/"
 					}
@@ -446,6 +444,32 @@ func TestMoveWorker_moveFiles(t *testing.T) {
 			mockProgress.AssertExpectations(t)
 		})
 	}
+}
+
+func TestMoveWorker_moveFilesToRoot(t *testing.T) {
+	mockRepo := &mockReaderWriter{
+		MockRepository: repository.NewMockRepository(t),
+	}
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+
+	opts := provisioning.MoveJobOptions{
+		TargetPath: "/",
+		Ref:        "main",
+	}
+
+	mockRepo.On("Move", mock.Anything, "nested/dashboard.json", "dashboard.json", "main", "Move nested/dashboard.json to dashboard.json").Return(nil)
+	mockProgress.On("SetMessage", mock.Anything, "Moving nested/dashboard.json to dashboard.json").Return()
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Path() == "nested/dashboard.json" && result.Action() == repository.FileActionRenamed && result.Error() == nil
+	})).Return()
+	mockProgress.On("TooManyErrors").Return(nil)
+
+	worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := worker.moveFiles(context.Background(), mockRepo, mockProgress, opts, "nested/dashboard.json")
+	require.NoError(t, err)
+
+	mockRepo.AssertExpectations(t)
+	mockProgress.AssertExpectations(t)
 }
 
 func TestMoveWorker_constructTargetPath(t *testing.T) {
@@ -484,6 +508,24 @@ func TestMoveWorker_constructTargetPath(t *testing.T) {
 			jobTargetPath:  "archive/",
 			sourcePath:     "deep/nested/folder/",
 			expectedTarget: "archive/folder/",
+		},
+		{
+			name:           "file to root path",
+			jobTargetPath:  "/",
+			sourcePath:     "nested/dashboard.json",
+			expectedTarget: "dashboard.json",
+		},
+		{
+			name:           "folder to root path",
+			jobTargetPath:  "/",
+			sourcePath:     "nested/folder/",
+			expectedTarget: "folder/",
+		},
+		{
+			name:           "root-level file to root path is no-op path",
+			jobTargetPath:  "/",
+			sourcePath:     "dashboard.json",
+			expectedTarget: "dashboard.json",
 		},
 	}
 

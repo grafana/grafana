@@ -9,7 +9,7 @@ import { SaveBeforeShareModal } from '../../../sharing/SaveBeforeShareModal';
 import ShareMenu from '../../../sharing/ShareButton/ShareMenu';
 import { buildShareUrl } from '../../../sharing/ShareButton/utils';
 import { DashboardInteractions } from '../../../utils/interactions';
-import { ToolbarActionProps } from '../types';
+import { type ToolbarActionProps } from '../types';
 
 import { ShareExportDashboardButton } from './ShareExportDashboardButton';
 
@@ -18,7 +18,7 @@ const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButt
 export const ShareDashboardButton = ({ dashboard }: ToolbarActionProps) => {
   const { showModal, hideModal } = useContext(ModalsContext);
 
-  const [_, buildUrl] = useAsyncFn(async () => {
+  const [{ loading }, buildUrl] = useAsyncFn(async () => {
     DashboardInteractions.toolbarShareClick();
     await buildShareUrl(dashboard);
   }, [dashboard]);
@@ -49,6 +49,7 @@ export const ShareDashboardButton = ({ dashboard }: ToolbarActionProps) => {
       arrowTestId={newShareButtonSelector.arrowMenu}
       dashboard={dashboard}
       variant={!dashboard.state.isEditing ? 'primary' : 'canvas'}
+      loading={loading}
     />
   );
 };

@@ -1,28 +1,28 @@
 import { chain } from 'lodash';
 
 import {
-  DataFrame,
-  DataLink,
+  type DataFrame,
+  type DataLink,
   DataLinkBuiltInVars,
   deprecationWarning,
-  Field,
+  type Field,
   FieldType,
   getFieldDisplayName,
-  InterpolateFunction,
-  KeyValue,
-  LinkModel,
+  type InterpolateFunction,
+  type KeyValue,
+  type LinkModel,
   locationUtil,
-  ScopedVars,
+  type ScopedVars,
   textUtil,
-  TypedVariableModel,
+  type TypedVariableModel,
   urlUtil,
   VariableOrigin,
-  VariableSuggestion,
+  type VariableSuggestion,
   VariableSuggestionsScope,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
-import { DashboardLink, VariableFormatID } from '@grafana/schema';
+import { type DashboardLink, VariableFormatID } from '@grafana/schema';
 import { getConfig } from 'app/core/config';
 
 const timeRangeVars = [
@@ -84,7 +84,7 @@ const isRecordOrArray = (value: unknown): value is Record<string, unknown> | unk
   typeof value === 'object' && value !== null;
 
 const getVariableValueProperties = (variable: TypedVariableModel): string[] => {
-  if (!('options' in variable) || !variable.options[0].properties) {
+  if (!('options' in variable) || !variable.options?.[0]?.properties) {
     return [];
   }
 
@@ -146,6 +146,12 @@ const getFieldVars = (dataFrames: DataFrame[]) => {
       value: `${DataLinkBuiltInVars.fieldName}`,
       label: t('panel.get-field-vars.label.name', 'Name'),
       documentation: 'Field name of the clicked datapoint (in ms epoch)',
+      origin: VariableOrigin.Field,
+    },
+    {
+      value: `${DataLinkBuiltInVars.fieldDisplayName}`,
+      label: t('panel.get-field-vars.label.display-name', 'Display name'),
+      documentation: 'Display name of the field (includes overrides and transformations)',
       origin: VariableOrigin.Field,
     },
     ...labels.map((label) => ({
