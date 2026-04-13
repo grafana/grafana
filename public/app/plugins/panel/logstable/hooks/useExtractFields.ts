@@ -42,10 +42,14 @@ export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props
     };
 
     extractFields()
-      .then((data) => {
+      .then(async (data) => {
+        // Use the panel plugin registry so `custom.width` and other table custom keys resolve
+        // (see setDynamicConfigValue). Dynamic import avoids a require cycle with module.tsx.
+        const { plugin: logsTablePlugin } = await import('../module');
         const extractedFrames = applyFieldOverrides({
           data,
           fieldConfig,
+          fieldConfigRegistry: logsTablePlugin.fieldConfigRegistry,
           replaceVariables: replaceVariables ?? getTemplateSrv().replace.bind(getTemplateSrv()),
           theme,
           timeZone,

@@ -1,6 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
-import { type DataFrame, DataFrameType, FieldType, toDataFrame } from '@grafana/data';
+import { type DataFrame, DataFrameType, FieldType, standardEditorsRegistry, toDataFrame } from '@grafana/data';
+import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 // Internal package imports, but not exposed to end users, how do we expect plugin developers to test anything that contains a transform?
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { TableCellDisplayMode } from '@grafana/ui';
@@ -36,6 +37,11 @@ const testLogsFrame = parseLogsFrame(testLogsDataFrame[0]);
 
 describe('useOrganizeFields', () => {
   beforeAll(() => {
+    try {
+      standardEditorsRegistry.setInit(getAllOptionEditors);
+    } catch {
+      // already initialized in this Jest worker
+    }
     mockTransformationsRegistry([organizeFieldsTransformer, extractFieldsTransformer]);
   });
 
