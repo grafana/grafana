@@ -1,55 +1,61 @@
 package hardcoded
 
 import (
+	"fmt"
+
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	pluginspec "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/plugin"
 )
 
-const TESTDATA_APIVERSION = "grafana-testdata-datasource.datasource.grafana.app/v0alpha1"
+func TestdataOpenAPIExtension(apiVersion string) (*pluginspec.OpenAPIExtension, error) {
+	if apiVersion != "v0alpha1" {
+		return nil, fmt.Errorf("only v0 supported right now")
+	}
 
-func TestdataOpenAPIExtension() (*datasourceV0.DataSourceOpenAPIExtension, error) {
-	oas := &datasourceV0.DataSourceOpenAPIExtension{
-		SecureValues: []datasourceV0.SecureValueInfo{ // empty
-			// {
-			// 	Key:         "aaa",
-			// 	Description: "describe aaa",
-			// 	Required:    true,
-			// }, {
-			// 	Key:         "bbb",
-			// 	Description: "describe bbb",
-			// },
-		},
+	oas := &pluginspec.OpenAPIExtension{
+		Settings: pluginspec.Settings{
+			Schema: &spec.Schema{},
 
-		Examples: map[string]*spec3.Example{
-			"": {
-				ExampleProps: spec3.ExampleProps{
-					Summary: "Empty testdata",
-					Value: map[string]any{
-						"apiVersion": TESTDATA_APIVERSION,
-						"kind":       "DataSource",
-						"metadata": map[string]any{
-							"name": "my-testdata-datasource",
-						},
-						"spec": map[string]any{
-							"title": "My TestData Datasource",
+			SecureValues: []pluginspec.SecureValueInfo{
+				{
+					Key:         "aaa",
+					Description: "describe aaa",
+					Required:    true,
+				}, {
+					Key:         "bbb",
+					Description: "describe bbb",
+				},
+			},
+
+			Examples: map[string]*spec3.Example{
+				"": { // empty is the default one displayed in swagger
+					ExampleProps: spec3.ExampleProps{
+						Summary: "Empty testdata",
+						Value: map[string]any{
+							"kind": "DataSource",
+							"metadata": map[string]any{
+								"name": "my-testdata-datasource",
+							},
+							"spec": map[string]any{
+								"title": "My TestData Datasource",
+							},
 						},
 					},
 				},
-			},
-			"with-url": {
-				ExampleProps: spec3.ExampleProps{
-					Summary: "Testdata with URL (not used)",
-					Value: map[string]any{
-						"apiVersion": TESTDATA_APIVERSION,
-						"kind":       "DataSource",
-						"metadata": map[string]any{
-							"name": "testdata-with-url",
-						},
-						"spec": map[string]any{
-							"title": "TestData with URL",
-							"url":   "http://example.com",
+				"with-url": {
+					ExampleProps: spec3.ExampleProps{
+						Summary: "Testdata with URL (not used)",
+						Value: map[string]any{
+							"kind": "DataSource",
+							"metadata": map[string]any{
+								"name": "testdata-with-url",
+							},
+							"spec": map[string]any{
+								"title": "TestData with URL",
+								"url":   "http://example.com",
+							},
 						},
 					},
 				},
@@ -58,7 +64,7 @@ func TestdataOpenAPIExtension() (*datasourceV0.DataSourceOpenAPIExtension, error
 	}
 
 	// Dummy spec
-	p := &spec.Schema{} //SchemaProps: spec.SchemaProps{Type: []string{"object"}}}
+	p := oas.Settings.Schema
 	p.Description = "Test data does not require any explicit configuration"
 	p.Required = []string{"title"}
 	p.AdditionalProperties = &spec.SchemaOrBool{Allows: false}
@@ -69,7 +75,6 @@ func TestdataOpenAPIExtension() (*datasourceV0.DataSourceOpenAPIExtension, error
 	p.Example = map[string]any{
 		"url": "http://xxxx",
 	}
-	oas.DataSourceSpec = p
 
 	// Resource routes
 	// https://github.com/grafana/grafana/blob/main/pkg/tsdb/grafana-testdata-datasource/resource_handler.go#L20
@@ -101,20 +106,22 @@ func TestdataOpenAPIExtension() (*datasourceV0.DataSourceOpenAPIExtension, error
 		},
 	}
 
-	oas.Routes = map[string]*spec3.Path{
-		"": {
-			PathProps: spec3.PathProps{
-				Summary: "hello world",
-				Get: &spec3.Operation{
-					OperationProps: spec3.OperationProps{
-						Responses: &spec3.Responses{
-							ResponsesProps: spec3.ResponsesProps{
-								Default: &spec3.Response{
-									ResponseProps: spec3.ResponseProps{
-										Content: map[string]*spec3.MediaType{
-											"text/plain": {
-												MediaTypeProps: spec3.MediaTypeProps{
-													Schema: spec.StringProperty(),
+	oas.Routes = &pluginspec.Routes{
+		Resource: map[string]*spec3.Path{
+			"": {
+				PathProps: spec3.PathProps{
+					Summary: "hello world",
+					Get: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Responses: &spec3.Responses{
+								ResponsesProps: spec3.ResponsesProps{
+									Default: &spec3.Response{
+										ResponseProps: spec3.ResponseProps{
+											Content: map[string]*spec3.MediaType{
+												"text/plain": {
+													MediaTypeProps: spec3.MediaTypeProps{
+														Schema: spec.StringProperty(),
+													},
 												},
 											},
 										},
@@ -125,153 +132,152 @@ func TestdataOpenAPIExtension() (*datasourceV0.DataSourceOpenAPIExtension, error
 					},
 				},
 			},
-		},
-		"/scenarios": {
-			PathProps: spec3.PathProps{
-				Summary: "hello world",
-				Get: &spec3.Operation{
-					OperationProps: spec3.OperationProps{
-						Responses: unstructuredResponse,
-					},
-				},
-			},
-		},
-		"/stream": {
-			PathProps: spec3.PathProps{
-				Summary: "Get streaming response",
-				Get: &spec3.Operation{
-					OperationProps: spec3.OperationProps{
-						Parameters: []*spec3.Parameter{
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "count",
-									In:          "query",
-									Schema:      spec.Int64Property(),
-									Description: "number of points that will be returned",
-									Example:     10,
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "start",
-									In:          "query",
-									Schema:      spec.Int64Property(),
-									Description: "the start value",
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "flush",
-									In:          "query",
-									Schema:      spec.Int64Property(),
-									Description: "How often the result is flushed (1-100%)",
-									Example:     100,
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "speed",
-									In:          "query",
-									Schema:      spec.StringProperty(),
-									Description: "the clock cycle",
-									Example:     "100ms",
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "format",
-									In:          "query",
-									Schema:      spec.StringProperty().WithEnum("json", "influx"),
-									Description: "the response format",
-								},
-							},
+			"/scenarios": {
+				PathProps: spec3.PathProps{
+					Summary: "hello world",
+					Get: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Responses: unstructuredResponse,
 						},
-						Responses: unstructuredResponse,
 					},
 				},
 			},
-		},
-		"/boom": {
-			PathProps: spec3.PathProps{
-				Summary: "force a panic",
-				Get: &spec3.Operation{
-					OperationProps: spec3.OperationProps{
-						Responses: unstructuredResponse,
-					},
-				},
-				Post: &spec3.Operation{
-					OperationProps: spec3.OperationProps{
-						Responses: unstructuredResponse,
-					},
-				},
-			},
-		},
-		"/test": {
-			PathProps: spec3.PathProps{
-				Summary: "Echo any request",
-				Post: &spec3.Operation{
-					OperationProps: spec3.OperationProps{
-						RequestBody: unstructuredRequest,
-						Responses:   unstructuredResponse,
-					},
-				},
-			},
-		},
-		"/test/json": {
-			PathProps: spec3.PathProps{
-				Summary: "Echo json request",
-				Post: &spec3.Operation{
-					OperationProps: spec3.OperationProps{
-						RequestBody: unstructuredRequest,
-						Responses:   unstructuredResponse,
-					},
-				},
-			},
-		},
-		"/sims": {
-			PathProps: spec3.PathProps{
-				Description: "Get list of simulations",
-				Get: &spec3.Operation{
-					OperationProps: spec3.OperationProps{
-						Responses: unstructuredResponse,
-					},
-				},
-			},
-		},
-		"/sim/{key}": {
-			PathProps: spec3.PathProps{
-				Description: "Get list of simulations",
-				Get: &spec3.Operation{
-					OperationProps: spec3.OperationProps{
-						Parameters: []*spec3.Parameter{
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "key",
-									In:          "path",
-									Description: "simulation key (should include hz)",
+			"/stream": {
+				PathProps: spec3.PathProps{
+					Summary: "Get streaming response",
+					Get: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Parameters: []*spec3.Parameter{
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "count",
+										In:          "query",
+										Schema:      spec.Int64Property(),
+										Description: "number of points that will be returned",
+										Example:     10,
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "start",
+										In:          "query",
+										Schema:      spec.Int64Property(),
+										Description: "the start value",
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "flush",
+										In:          "query",
+										Schema:      spec.Int64Property(),
+										Description: "How often the result is flushed (1-100%)",
+										Example:     100,
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "speed",
+										In:          "query",
+										Schema:      spec.StringProperty(),
+										Description: "the clock cycle",
+										Example:     "100ms",
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "format",
+										In:          "query",
+										Schema:      spec.StringProperty().WithEnum("json", "influx"),
+										Description: "the response format",
+									},
 								},
 							},
+							Responses: unstructuredResponse,
 						},
-						Responses: unstructuredResponse,
-					},
-				},
-				Post: &spec3.Operation{
-					OperationProps: spec3.OperationProps{
-						Parameters: []*spec3.Parameter{
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "key",
-									In:          "path",
-									Description: "simulation key (should include hz)",
-								},
-							},
-						},
-						RequestBody: unstructuredRequest,
-						Responses:   unstructuredResponse,
 					},
 				},
 			},
-		},
-	}
+			"/boom": {
+				PathProps: spec3.PathProps{
+					Summary: "force a panic",
+					Get: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Responses: unstructuredResponse,
+						},
+					},
+					Post: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Responses: unstructuredResponse,
+						},
+					},
+				},
+			},
+			"/test": {
+				PathProps: spec3.PathProps{
+					Summary: "Echo any request",
+					Post: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							RequestBody: unstructuredRequest,
+							Responses:   unstructuredResponse,
+						},
+					},
+				},
+			},
+			"/test/json": {
+				PathProps: spec3.PathProps{
+					Summary: "Echo json request",
+					Post: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							RequestBody: unstructuredRequest,
+							Responses:   unstructuredResponse,
+						},
+					},
+				},
+			},
+			"/sims": {
+				PathProps: spec3.PathProps{
+					Description: "Get list of simulations",
+					Get: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Responses: unstructuredResponse,
+						},
+					},
+				},
+			},
+			"/sim/{key}": {
+				PathProps: spec3.PathProps{
+					Description: "Get list of simulations",
+					Get: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Parameters: []*spec3.Parameter{
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "key",
+										In:          "path",
+										Description: "simulation key (should include hz)",
+									},
+								},
+							},
+							Responses: unstructuredResponse,
+						},
+					},
+					Post: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Parameters: []*spec3.Parameter{
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "key",
+										In:          "path",
+										Description: "simulation key (should include hz)",
+									},
+								},
+							},
+							RequestBody: unstructuredRequest,
+							Responses:   unstructuredResponse,
+						},
+					},
+				},
+			},
+		}}
 	return oas, nil
 }

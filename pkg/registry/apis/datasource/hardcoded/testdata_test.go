@@ -10,7 +10,7 @@ import (
 )
 
 func TestSpec(t *testing.T) {
-	info, err := TestdataOpenAPIExtension()
+	info, err := TestdataOpenAPIExtension("v0alpha1")
 	require.NoError(t, err)
 	require.NotNil(t, info)
 

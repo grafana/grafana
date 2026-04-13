@@ -9,6 +9,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	pluginspec "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/plugin"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
@@ -84,14 +85,14 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		return oas, nil
 	}
 
-	custom, err := b.schemaProvider()
+	custom, err := b.schemaProvider(b.GetGroupVersion().Version)
 	if err != nil {
 		return nil, err
 	}
 	return applyCustomSchemas(root, ds, oas, custom)
 }
 
-func applyCustomSchemas(root string, ds *spec.Schema, oas *spec3.OpenAPI, custom *datasourceV0.DataSourceOpenAPIExtension) (*spec3.OpenAPI, error) {
+func applyCustomSchemas(root string, ds *spec.Schema, oas *spec3.OpenAPI, custom *pluginspec.OpenAPIExtension) (*spec3.OpenAPI, error) {
 	if custom == nil {
 		return oas, nil // nothing special
 	}
@@ -100,8 +101,8 @@ func applyCustomSchemas(root string, ds *spec.Schema, oas *spec3.OpenAPI, custom
 	maps.Copy(oas.Components.Schemas, custom.Schemas)
 
 	// Replace the generic DataSourceSpec with the explicit one
-	if custom.DataSourceSpec != nil {
-		oas.Components.Schemas["DataSourceSpec"] = custom.DataSourceSpec
+	if custom.Settings.Schema != nil {
+		oas.Components.Schemas["DataSourceSpec"] = custom.Settings.Schema
 		ds.Properties["spec"] = spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Ref: spec.MustCreateRef("#/components/schemas/DataSourceSpec"),
@@ -109,7 +110,7 @@ func applyCustomSchemas(root string, ds *spec.Schema, oas *spec3.OpenAPI, custom
 		}
 	}
 
-	if len(custom.SecureValues) > 0 {
+	if len(custom.Settings.SecureValues) > 0 {
 		example := common.InlineSecureValues{}
 		ref := spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue")
 		secure := &spec.Schema{
@@ -119,7 +120,7 @@ func applyCustomSchemas(root string, ds *spec.Schema, oas *spec3.OpenAPI, custom
 			}}
 		secure.Description = "custom secure value definition"
 
-		for _, v := range custom.SecureValues {
+		for _, v := range custom.Settings.SecureValues {
 			secure.Properties[v.Key] = spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Description: v.Description,
@@ -146,16 +147,16 @@ func applyCustomSchemas(root string, ds *spec.Schema, oas *spec3.OpenAPI, custom
 	}
 
 	// Add examples to the POST request
-	if len(custom.Examples) > 0 {
+	if len(custom.Settings.Examples) > 0 {
 		ds := oas.Paths.Paths[root+"namespaces/{namespace}/datasources"]
 		if ds != nil && ds.Post != nil {
 			for _, c := range ds.Post.RequestBody.Content {
-				c.Examples = custom.Examples
+				c.Examples = custom.Settings.Examples
 			}
 		}
 	}
 
-	if len(custom.Routes) > 0 {
+	if custom.Routes != nil && len(custom.Routes.Resource) > 0 {
 		ds := oas.Paths.Paths[root+"namespaces/{namespace}/datasources/{name}"]
 		if ds == nil || len(ds.Parameters) < 2 {
 			return nil, fmt.Errorf("missing Parameters")
@@ -168,7 +169,7 @@ func applyCustomSchemas(root string, ds *spec.Schema, oas *spec3.OpenAPI, custom
 			}
 		}
 
-		for k, v := range custom.Routes {
+		for k, v := range custom.Routes.Resource {
 			if k != "" && !strings.HasPrefix(k, "/") {
 				return nil, fmt.Errorf("path must have slash prefix")
 			}
