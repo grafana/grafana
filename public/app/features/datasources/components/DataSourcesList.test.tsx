@@ -1,8 +1,9 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { getMockDataSources } from '../mocks/dataSourcesMocks';
 
@@ -61,6 +62,10 @@ const setup = (overrides: Partial<ViewProps> = {}) => {
 };
 
 describe('<DataSourcesList>', () => {
+  beforeAll(() => {
+    mockBoundingClientRect({ height: 500, width: 800 });
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseQueryParams.mockReturnValue([{ starred: undefined }, mockUpdateQueryParams]);
@@ -100,19 +105,38 @@ describe('<DataSourcesList>', () => {
     expect(screen.queryByRole('link', { name: 'dataSource-199' })).not.toBeInTheDocument();
   });
 
-  it('should keep all datasource rows mounted during keyboard navigation', async () => {
+  it('should increase overscan during keyboard navigation', async () => {
     setup({
       dataSources: getMockDataSources(200),
       dataSourcesCount: 200,
     });
 
-    expect((await screen.findAllByRole('listitem')).length).toBeLessThan(200);
+    const initialItems = await screen.findAllByRole('listitem');
+    expect(initialItems.length).toBeLessThan(200);
 
     const user = userEvent.setup();
     await user.tab();
 
-    expect(await screen.findByRole('link', { name: 'dataSource-199' })).toBeInTheDocument();
-    expect(await screen.findAllByRole('listitem')).toHaveLength(200);
+    // After Tab, more items should be rendered due to increased overscan,
+    // but not necessarily all of them (overscan is capped)
+    const itemsAfterTab = await screen.findAllByRole('listitem');
+    expect(itemsAfterTab.length).toBeGreaterThan(initialItems.length);
+  });
+
+  it('should render loading skeletons when loading', async () => {
+    setup({ isLoading: true, dataSourcesCount: 10 });
+
+    const list = await screen.findByRole('list');
+    expect(list).toBeInTheDocument();
+    // LOADING_SKELETON_COUNT = 20
+    await waitFor(() => expect(list.children).toHaveLength(20));
+  });
+
+  it('should have role="list" and aria-label on list elements', async () => {
+    setup();
+
+    const list = await screen.findByRole('list');
+    expect(list).toHaveAttribute('aria-label', 'Data sources');
   });
 
   describe('Favorites functionality', () => {

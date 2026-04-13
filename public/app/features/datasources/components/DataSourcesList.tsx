@@ -23,6 +23,7 @@ import { DataSourcesListHeader } from './DataSourcesListHeader';
 
 const ROW_ESTIMATE_HEIGHT = 120;
 const VIRTUAL_LIST_OVERSCAN = 5;
+const VIRTUAL_LIST_KEYBOARD_OVERSCAN = 100;
 const LOADING_SKELETON_COUNT = 20;
 const VIRTUAL_LIST_INITIAL_RECT = { width: 0, height: 500 };
 
@@ -139,7 +140,7 @@ export function DataSourcesListView({
       const measuredHeight = element.getBoundingClientRect().height;
       return measuredHeight > 0 ? measuredHeight : ROW_ESTIMATE_HEIGHT;
     },
-    overscan: keepAllRowsMounted ? dataSources.length : VIRTUAL_LIST_OVERSCAN,
+    overscan: keepAllRowsMounted ? VIRTUAL_LIST_KEYBOARD_OVERSCAN : VIRTUAL_LIST_OVERSCAN,
     gap: rowGap,
     initialRect: VIRTUAL_LIST_INITIAL_RECT,
   });
@@ -177,27 +178,14 @@ export function DataSourcesListView({
       {dataSources.length === 0 && !isLoading ? (
         <EmptyState variant="not-found" message={t('data-sources.empty-state.message', 'No data sources found')} />
       ) : isLoading ? (
-        <ul className={styles.loadingList}>
+        <ul className={styles.loadingList} role="list" aria-label={t('data-sources.list.label', 'Data sources')}>
           {new Array(LOADING_SKELETON_COUNT).fill(null).map((_, index) => (
             <DataSourcesListCard.Skeleton key={index} hasExploreRights={hasExploreRights} />
           ))}
         </ul>
-      ) : keepAllRowsMounted ? (
-        <ul className={styles.fullList}>
-          {dataSources.map((dataSource, index) => (
-            <li key={dataSource.uid} aria-setsize={dataSources.length} aria-posinset={index + 1}>
-              <DataSourcesListCard
-                dataSource={dataSource}
-                hasWriteRights={hasWriteRights}
-                hasExploreRights={hasExploreRights}
-                failure={datasourceFailureByUID.get(dataSource.uid)}
-              />
-            </li>
-          ))}
-        </ul>
       ) : (
         <div ref={scrollRef} className={styles.listContainer}>
-          <ul className={styles.virtualList} style={{ height: rowVirtualizer.getTotalSize() }}>
+          <ul className={styles.virtualList} role="list" aria-label={t('data-sources.list.label', 'Data sources')} style={{ height: rowVirtualizer.getTotalSize() }}>
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               const dataSource = dataSources[virtualRow.index];
               if (!dataSource) {
@@ -240,13 +228,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       minHeight: 0,
     }),
     loadingList: css({
-      listStyle: 'none',
-      display: 'grid',
-      gap: theme.spacing(1),
-      padding: 0,
-      margin: 0,
-    }),
-    fullList: css({
       listStyle: 'none',
       display: 'grid',
       gap: theme.spacing(1),
