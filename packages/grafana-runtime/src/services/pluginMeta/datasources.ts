@@ -1,17 +1,23 @@
-import type { DataSourcePluginMeta } from '@grafana/data';
+import { type DataSourcePluginMeta, PluginType } from '@grafana/data';
 
 import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
 import { getBackendSrv } from '../backendSrv';
 
+import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
+import { logPluginMetaWarning } from './logging';
 import { getDatasourcePluginMapper } from './mappers/mappers';
 import { initPluginMetas, refetchPluginMetas } from './plugins';
-import type { DatasourcePluginMetas } from './types';
+import type { DatasourcePluginMetas, PluginMetasResponse } from './types';
 
 let datasources: DatasourcePluginMetas = {};
 
 function initialized(): boolean {
   return Boolean(Object.keys(datasources).length);
+}
+
+function setDatasources(input: DatasourcePluginMetas) {
+  datasources = input;
 }
 
 function extractFromConfig(
@@ -26,16 +32,29 @@ function extractFromConfig(
   return seen;
 }
 
-async function initDatasourcePluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
+function setMetas(metas: PluginMetasResponse) {
+  if (!metas.items.length) {
+    // something failed while trying to fetch plugin meta
+    // fallback to config.datasources from bootdata
     // eslint-disable-next-line no-restricted-syntax
-    datasources = extractFromConfig(config.datasources);
+    setDatasources(extractFromConfig(config.datasources));
+    logPluginMetaWarning(FALLBACK_TO_BOOTDATA_WARNING, PluginType.datasource);
+    return;
+  }
+
+  const mapper = getDatasourcePluginMapper();
+  setDatasources(mapper(metas));
+}
+
+async function initDatasourcePluginMetas(): Promise<void> {
+  if (!getFeatureFlagClient().getBooleanValue('enableDatasourceMetaApiPluginLoading', false)) {
+    // eslint-disable-next-line no-restricted-syntax
+    setDatasources(extractFromConfig(config.datasources));
     return;
   }
 
   const metas = await initPluginMetas();
-  const mapper = getDatasourcePluginMapper();
-  datasources = mapper(metas);
+  setMetas(metas);
 }
 
 export async function getDatasourcePluginMetas(): Promise<DataSourcePluginMeta[]> {
@@ -86,17 +105,16 @@ export function setDatasourcePluginMetas(override: DatasourcePluginMetas): void 
     throw new Error('setDatasourcePluginMetas() function can only be called from tests.');
   }
 
-  datasources = structuredClone(override);
+  setDatasources(structuredClone(override));
 }
 
 export async function refetchDatasourcePluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
+  if (!getFeatureFlagClient().getBooleanValue('enableDatasourceMetaApiPluginLoading', false)) {
     const settings = await getBackendSrv().get('/api/frontend/settings');
-    datasources = extractFromConfig(settings.datasources);
+    setDatasources(extractFromConfig(settings.datasources));
     return;
   }
 
   const metas = await refetchPluginMetas();
-  const mapper = getDatasourcePluginMapper();
-  datasources = mapper(metas);
+  setMetas(metas);
 }

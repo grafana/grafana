@@ -22,9 +22,9 @@ jest.mock('./plugins', () => ({
 const initPluginMetasMock = jest.mocked(initPluginMetas);
 const refetchPluginMetasMock = jest.mocked(refetchPluginMetas);
 
-describe('when useMTPlugins flag is enabled', () => {
+describe('when enableDatasourceMetaApiPluginLoading flag is enabled', () => {
   beforeAll(() => {
-    setTestFlags({ useMTPlugins: true });
+    setTestFlags({ enableDatasourceMetaApiPluginLoading: true });
   });
 
   afterAll(() => {
@@ -32,10 +32,17 @@ describe('when useMTPlugins flag is enabled', () => {
   });
 
   describe('and datasources is not initialized', () => {
+    let consoleSpy: jest.SpyInstance;
+
     beforeEach(() => {
       setDatasourcePluginMetas({});
       jest.resetAllMocks();
       initPluginMetasMock.mockResolvedValue({ items: [] });
+      consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      consoleSpy.mockRestore();
     });
 
     it('getDatasourcePluginMetas should call initPluginMetas and return correct result', async () => {
@@ -146,10 +153,13 @@ describe('when useMTPlugins flag is enabled', () => {
 
   describe('and refetchDatasourcePluginMetas is called', () => {
     let backendSrv: BackendSrv;
+    let consoleSpy: jest.SpyInstance;
+
     beforeEach(() => {
       setDatasourcePluginMetas({});
       jest.resetAllMocks();
       refetchPluginMetasMock.mockResolvedValue({ items: [] });
+      consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
       backendSrv = {
         chunked: jest.fn(),
         delete: jest.fn(),
@@ -164,6 +174,10 @@ describe('when useMTPlugins flag is enabled', () => {
       setBackendSrv(backendSrv);
     });
 
+    afterEach(() => {
+      consoleSpy.mockRestore();
+    });
+
     it('should call refetchPluginMetas', async () => {
       await refetchDatasourcePluginMetas();
 
@@ -171,11 +185,31 @@ describe('when useMTPlugins flag is enabled', () => {
       expect(backendSrv.get).not.toHaveBeenCalled();
     });
   });
+
+  describe('and API returns empty items', () => {
+    beforeEach(() => {
+      setDatasourcePluginMetas({});
+      jest.resetAllMocks();
+      initPluginMetasMock.mockResolvedValue({ items: [] });
+    });
+
+    it('should fall back to bootdata and log a warning', async () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const result = await getDatasourcePluginMetas();
+
+      expect(result).toEqual([]);
+      expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('falling back to bootdata'));
+
+      consoleSpy.mockRestore();
+    });
+  });
 });
 
-describe('when useMTPlugins flag is disabled', () => {
+describe('when enableDatasourceMetaApiPluginLoading flag is disabled', () => {
   beforeAll(() => {
-    setTestFlags({ useMTPlugins: false });
+    setTestFlags({ enableDatasourceMetaApiPluginLoading: false });
   });
 
   afterAll(() => {
