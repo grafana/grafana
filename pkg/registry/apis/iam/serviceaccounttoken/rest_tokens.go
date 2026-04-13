@@ -224,7 +224,7 @@ func (s *TokensREST) handleGet(ctx context.Context, ns claims.NamespaceInfo, saN
 	}
 
 	resp := &iamv0alpha1.SATokenResponse{
-		TokenItem: mapTokenItem(*token, saName),
+		TokenItem: mapTokenItem(*token),
 	}
 	responder.Object(http.StatusOK, resp)
 }
@@ -242,7 +242,7 @@ func (s *TokensREST) handleList(ctx context.Context, ns claims.NamespaceInfo, sa
 
 	items := make([]iamv0alpha1.TokenItem, 0, len(res.Items))
 	for _, t := range res.Items {
-		items = append(items, mapTokenItem(t, saName))
+		items = append(items, mapTokenItem(t))
 	}
 
 	resp := &iamv0alpha1.ListSATokenResponse{
@@ -264,19 +264,15 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 		}
 	}
 
-	var tokenName string
-	if req.TokenName != nil {
-		tokenName = *req.TokenName
-	}
-	if tokenName == "" {
+	if req.TokenName == "" {
 		// TODO: Add the default (sa-1-...)
 		responder.Error(apierrors.NewBadRequest("tokenName is required"))
 		return
 	}
 
 	var expires *int64
-	if req.ExpiresInSeconds != nil && *req.ExpiresInSeconds > 0 {
-		exp := time.Now().Unix() + *req.ExpiresInSeconds
+	if req.ExpiresInSeconds > 0 {
+		exp := time.Now().Unix() + req.ExpiresInSeconds
 		expires = &exp
 	}
 
@@ -289,7 +285,7 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 
 	// --- Write to legacy api_key table (Mode0 / Mode1) ---
 	if err := s.legacyStore.SaveServiceAccountTokenHash(ctx, ns, legacy.SaveServiceAccountTokenHashCommand{
-		TokenName:         tokenName,
+		TokenName:         req.TokenName,
 		HashedKey:         keyResult.HashedKey,
 		ServiceAccountUID: saName,
 		Expires:           expires,
@@ -301,11 +297,16 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 	// --- Write to custom DB (Mode5 / MT) ---
 	// Write also to the custom store if configured in Mode1 and Mode5.
 
+	var respExpires int64
+	if expires != nil {
+		respExpires = *expires
+	}
+
 	resp := &iamv0alpha1.CreateSATokenResponse{
 		CreateTokenBody: iamv0alpha1.CreateTokenBody{
 			Token:                   keyResult.ClientSecret,
-			ServiceAccountTokenName: tokenName,
-			Expires:                 expires,
+			ServiceAccountTokenName: req.TokenName,
+			Expires:                 respExpires,
 		},
 	}
 	responder.Object(http.StatusCreated, resp)
@@ -353,20 +354,18 @@ func (s *TokensREST) handleDelete(ctx context.Context, ns claims.NamespaceInfo, 
 	responder.Object(http.StatusOK, resp)
 }
 
-func mapTokenItem(t legacy.ServiceAccountToken, saName string) iamv0alpha1.TokenItem {
-	created := t.Created.Unix()
+func mapTokenItem(t legacy.ServiceAccountToken) iamv0alpha1.TokenItem {
 	item := iamv0alpha1.TokenItem{
 		Title:   t.Name,
 		Revoked: t.Revoked,
-		Expires: t.Expires,
-		Created: &created,
-		ServiceAccountRef: iamv0alpha1.ServiceAccountRef{
-			Name: saName,
-		},
+		Created: t.Created.Unix(),
+		Updated: t.Updated.Unix(),
+	}
+	if t.Expires != nil {
+		item.Expires = *t.Expires
 	}
 	if t.LastUsed != nil {
-		lu := t.LastUsed.Unix()
-		item.LastUsed = &lu
+		item.LastUsed = t.LastUsed.Unix()
 	}
 	return item
 }

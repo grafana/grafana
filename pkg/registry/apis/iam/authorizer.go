@@ -173,7 +173,7 @@ func newServiceAccountAuthorizer(accessClient authlib.AccessClient) authorizer.A
 	return gfauthorizer.NewResourceAuthorizerWithSubresourceHandlers(accessClient, map[string]gfauthorizer.SubresourceCheck{
 		"tokens": func(ctx context.Context, ident authlib.AuthInfo, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 			res, err := accessClient.Check(ctx, ident, authlib.CheckRequest{
-				Verb:      utils.VerbGet,
+				Verb:      attr.GetVerb(),
 				Group:     attr.GetAPIGroup(),
 				Resource:  attr.GetResource(),
 				Namespace: attr.GetNamespace(),
@@ -183,7 +183,7 @@ func newServiceAccountAuthorizer(accessClient authlib.AccessClient) authorizer.A
 				return authorizer.DecisionDeny, "", err
 			}
 			if !res.Allowed {
-				return authorizer.DecisionDeny, "requires serviceaccount get", nil
+				return authorizer.DecisionDeny, fmt.Sprintf("requires serviceaccount %s", attr.GetVerb()), nil
 			}
 			return authorizer.DecisionAllow, "", nil
 		},

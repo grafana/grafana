@@ -4,15 +4,15 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 // CreateTokenRequestBody is the request body for POST /tokens.
 type CreateTokenRequestBody struct {
-	TokenName        *string `json:"tokenName,omitempty"`
-	ExpiresInSeconds *int64  `json:"expiresInSeconds,omitempty"`
+	TokenName        string `json:"tokenName"`
+	ExpiresInSeconds int64  `json:"expiresInSeconds"`
 }
 
 // +k8s:deepcopy-gen=true
 type CreateTokenBody struct {
 	Token                   string `json:"token"`
 	ServiceAccountTokenName string `json:"serviceAccountTokenName"`
-	Expires                 *int64 `json:"expires,omitempty"`
+	Expires                 int64  `json:"expires"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -23,18 +23,13 @@ type CreateSATokenResponse struct {
 }
 
 // +k8s:deepcopy-gen=true
-type ServiceAccountRef struct {
-	Name string `json:"name"`
-}
-
-// +k8s:deepcopy-gen=true
 type TokenItem struct {
-	Title             string            `json:"title"`
-	Revoked           bool              `json:"revoked"`
-	Expires           *int64            `json:"expires,omitempty"`
-	Created           *int64            `json:"created,omitempty"`
-	LastUsed          *int64            `json:"lastUsed,omitempty"`
-	ServiceAccountRef ServiceAccountRef `json:"serviceAccountRef"`
+	Title    string `json:"title"`
+	Revoked  bool   `json:"revoked"`
+	Expires  int64  `json:"expires"`
+	Created  int64  `json:"created"`
+	Updated  int64  `json:"updated"`
+	LastUsed int64  `json:"lastUsed"`
 }
 
 // +k8s:deepcopy-gen=true
