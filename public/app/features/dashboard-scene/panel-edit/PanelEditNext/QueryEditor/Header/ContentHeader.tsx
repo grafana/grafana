@@ -22,6 +22,11 @@ import { getEditorBorderColor } from '../utils';
 import { EditableQueryName } from './EditableQueryName';
 import { HeaderActions } from './HeaderActions';
 
+interface DatasourceSectionProps {
+  selectedQuery: DataQuery;
+  onChange: (ds: DataSourceInstanceSettings) => void;
+}
+
 function DatasourceSection({ selectedQuery, onChange }: DatasourceSectionProps) {
   const styles = useStyles2(getDatasourceSectionStyles);
 
@@ -32,11 +37,10 @@ function DatasourceSection({ selectedQuery, onChange }: DatasourceSectionProps) 
   );
 }
 
-const Separator = () => (
-  <Text variant="h4" color="secondary">
-    /
-  </Text>
-);
+const Separator = () => {
+  const styles = useStyles2(getSeparatorStyles);
+  return <div className={styles.separator} />;
+};
 
 interface PendingPickerHeaderProps {
   editorType: QueryEditorType;
@@ -288,11 +292,6 @@ export function ContentHeaderSceneWrapper({
   );
 }
 
-interface DatasourceSectionProps {
-  selectedQuery: DataQuery;
-  onChange: (ds: DataSourceInstanceSettings) => void;
-}
-
 const getStyles = (
   theme: GrafanaTheme2,
   { cardType, selectedAlert }: { cardType: QueryEditorType; selectedAlert: AlertRule | null }
@@ -342,14 +341,21 @@ const getStyles = (
 // TODO: This is a hacky solution to create an inline datasource picker.
 const getDatasourceSectionStyles = (theme: GrafanaTheme2) => ({
   dataSourcePickerWrapper: css({
-    // Target the Input component inside the picker
     input: {
       border: 'none',
       backgroundColor: theme.colors.background.secondary,
     },
-    // Remove borders from all nested divs
     '& > div, & div': {
       border: 'none',
     },
+  }),
+});
+
+const getSeparatorStyles = (theme: GrafanaTheme2) => ({
+  separator: css({
+    height: theme.spacing(4),
+    margin: `0 ${theme.spacing(0.5)}`,
+    width: 1.5,
+    backgroundColor: theme.colors.border.weak,
   }),
 });
