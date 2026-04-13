@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/oklog/ulid/v2"
@@ -101,7 +100,6 @@ func TestRemoteIndexStore_UploadDownloadBleveIndex(t *testing.T) {
 			srcDir := createTestBleveIndex(t)
 			meta := IndexMeta{
 				GrafanaBuildVersion:   "11.0.0",
-				UploadTimestamp:       time.Now().Truncate(time.Second),
 				LatestResourceVersion: 99,
 			}
 
@@ -149,7 +147,7 @@ func TestRemoteIndexStore_ListIndexes(t *testing.T) {
 			keys := make([]ulid.ULID, 0, 3)
 			for range 3 {
 				srcDir := createTestBleveIndex(t)
-				meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
+				meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
 				key, err := store.UploadIndex(ctx, ns, srcDir, meta)
 				require.NoError(t, err)
 				keys = append(keys, key)
@@ -182,7 +180,7 @@ func TestRemoteIndexStore_DeleteIndex(t *testing.T) {
 			ns := newTestNsResource()
 
 			srcDir := createTestBleveIndex(t)
-			meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
+			meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
 			indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
 			require.NoError(t, err)
 			t.Cleanup(func() { _ = store.DeleteIndex(ctx, ns, indexKey) })
@@ -209,7 +207,7 @@ func TestRemoteIndexStore_DownloadRejectsPathTraversal(t *testing.T) {
 	ns := newTestNsResource()
 
 	srcDir := createTestBleveIndex(t)
-	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
+	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
 	indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
 	require.NoError(t, err)
 
@@ -242,7 +240,7 @@ func TestRemoteIndexStore_UploadRejectsPathTraversal(t *testing.T) {
 	require.NoError(t, os.WriteFile(externalFile, []byte("another"), 0600))
 	require.NoError(t, os.Symlink(externalFile, filepath.Join(srcDir, "sneaky.zap")))
 
-	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
+	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
 	_, err := store.UploadIndex(ctx, ns, srcDir, meta)
 	require.Error(t, err)
 	require.ErrorIs(t, err, ErrNonRegularFile)
@@ -262,7 +260,7 @@ func TestRemoteIndexStore_UploadRejectsNonRegularFiles(t *testing.T) {
 	require.NoError(t, os.WriteFile(externalFile, []byte("secret"), 0600))
 	require.NoError(t, os.Symlink(externalFile, filepath.Join(srcDir, "sneaky.zap")))
 
-	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
+	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
 	_, err := store.UploadIndex(ctx, ns, srcDir, meta)
 	require.Error(t, err)
 	require.ErrorIs(t, err, ErrNonRegularFile)
@@ -329,7 +327,7 @@ func TestRemoteIndexStore_DownloadValidatesCompleteness(t *testing.T) {
 	ns := newTestNsResource()
 
 	srcDir := createTestBleveIndex(t)
-	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
+	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
 	indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
 	require.NoError(t, err)
 
@@ -356,7 +354,7 @@ func TestRemoteIndexStore_UploadRejectsEmptyDirectory(t *testing.T) {
 	ns := newTestNsResource()
 
 	emptyDir := t.TempDir()
-	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
+	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
 	_, err := store.UploadIndex(ctx, ns, emptyDir, meta)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "no files to upload")
@@ -373,7 +371,7 @@ func TestRemoteIndexStore_UploadExcludesMetaJSON(t *testing.T) {
 	// Plant a stale meta.json in the source directory
 	require.NoError(t, os.WriteFile(filepath.Join(srcDir, "meta.json"), []byte(`{"stale":"data"}`), 0600))
 
-	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
+	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
 	indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
 	require.NoError(t, err)
 
@@ -439,7 +437,7 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 		t.Helper()
 		store := NewRemoteIndexStore(bucket)
 		srcDir := createTestBleveIndex(t)
-		meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
+		meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
 		key, err := store.UploadIndex(ctx, ns, srcDir, meta)
 		require.NoError(t, err)
 		return key
@@ -451,7 +449,7 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 		store := NewRemoteIndexStore(&errorBucket{CDKBucket: real, uploadErr: fmt.Errorf("upload network timeout")})
 
 		_, err := store.UploadIndex(ctx, ns, createTestBleveIndex(t),
-			IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10})
+			IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "upload network timeout")
 	})
@@ -462,7 +460,7 @@ func TestRemoteIndexStore_BucketErrors(t *testing.T) {
 		store := NewRemoteIndexStore(&errorBucket{CDKBucket: real, writeAllErr: fmt.Errorf("write quota exceeded")})
 
 		_, err := store.UploadIndex(ctx, ns, createTestBleveIndex(t),
-			IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10})
+			IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "write quota exceeded")
 	})
@@ -532,7 +530,7 @@ func TestRemoteIndexStore_CleanupIncompleteUploads(t *testing.T) {
 
 	// Upload a complete index (has meta.json)
 	srcDir := createTestBleveIndex(t)
-	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
+	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
 	completeKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
 	require.NoError(t, err)
 
@@ -568,7 +566,7 @@ func TestRemoteIndexStore_CleanupIncompleteUploads_NoneFound(t *testing.T) {
 
 	// Upload a complete index
 	srcDir := createTestBleveIndex(t)
-	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
+	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
 	_, err := store.UploadIndex(ctx, ns, srcDir, meta)
 	require.NoError(t, err)
 
@@ -587,7 +585,7 @@ func TestRemoteIndexStore_CleanupIncompleteUploads_CorruptManifest(t *testing.T)
 
 	// Upload a valid complete index
 	srcDir := createTestBleveIndex(t)
-	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", UploadTimestamp: time.Now().Truncate(time.Second), LatestResourceVersion: 10}
+	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
 	completeKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
 	require.NoError(t, err)
 

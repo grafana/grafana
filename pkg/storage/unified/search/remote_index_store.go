@@ -100,6 +100,7 @@ func nsPrefix(ns resource.NamespacedResource) string {
 func (s *remoteIndexStore) UploadIndex(ctx context.Context, nsResource resource.NamespacedResource, localDir string, meta IndexMeta) (_ ulid.ULID, retErr error) {
 	indexKey := ulid.Make()
 	pfx := indexPrefix(nsResource, indexKey.String())
+	meta.UploadTimestamp = ulid.Time(indexKey.Time())
 
 	absLocalDir, err := filepath.Abs(localDir)
 	if err != nil {
@@ -350,10 +351,6 @@ func safeDownloadPath(localPath, realDest, relPath string) (string, error) {
 }
 
 // downloadFile creates localPath and streams the remote object into it.
-// Note: there is a residual TOCTOU window between safeDownloadPath's symlink
-// check and os.Create. This is mitigated by the destination always being the
-// Grafana-controlled bleve cache directory (cfg.IndexPath), not a user-writable
-// location, so an attacker cannot inject symlinks between the check and create.
 func (s *remoteIndexStore) downloadFile(ctx context.Context, objectKey, localPath string) error {
 	f, err := os.Create(localPath) //nolint:gosec // path validated by safeDownloadPath
 	if err != nil {
@@ -491,11 +488,18 @@ func (s *remoteIndexStore) CleanupIncompleteUploads(ctx context.Context, nsResou
 
 	// Second pass: delete incomplete prefixes.
 	// A prefix is incomplete if it has no meta.json, or if the meta.json is
-	// unparseable or has an empty file manifest (truncated/corrupt upload).
+	// positively known to be invalid (unparseable or empty file manifest).
 	cleaned := 0
 	for keyStr, info := range prefixes {
-		if info.metaKey != "" && s.isValidManifest(ctx, info.metaKey) {
-			continue
+		if info.metaKey != "" {
+			valid, err := s.isValidManifest(ctx, info.metaKey)
+			if err != nil {
+				s.log.Warn("skipping prefix due to manifest read error", "key", keyStr, "err", err)
+				continue
+			}
+			if valid {
+				continue
+			}
 		}
 		s.log.Info("cleaning up incomplete upload", "key", keyStr, "objects", len(info.keys))
 		for _, key := range info.keys {
@@ -509,16 +513,17 @@ func (s *remoteIndexStore) CleanupIncompleteUploads(ctx context.Context, nsResou
 	return cleaned, nil
 }
 
-// isValidManifest reads and parses a meta.json object, returning true only if
-// it contains valid JSON with a non-empty Files map.
-func (s *remoteIndexStore) isValidManifest(ctx context.Context, metaKey string) bool {
+// isValidManifest reads and parses a meta.json object.
+// Returns (true, nil) for a valid manifest, (false, nil) for a positively
+// invalid one (corrupt JSON or empty Files), and (false, err) for read errors.
+func (s *remoteIndexStore) isValidManifest(ctx context.Context, metaKey string) (bool, error) {
 	data, err := s.bucket.ReadAll(ctx, metaKey)
 	if err != nil {
-		return false
+		return false, err
 	}
 	var meta IndexMeta
 	if err := json.Unmarshal(data, &meta); err != nil {
-		return false
+		return false, nil
 	}
-	return len(meta.Files) > 0
+	return len(meta.Files) > 0, nil
 }
