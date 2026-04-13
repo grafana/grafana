@@ -1232,6 +1232,7 @@ var (
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
 			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:            "reloadDashboardsOnParamsChange",

@@ -5737,8 +5737,11 @@
     {
       "metadata": {
         "name": "zanzanaSearchUsersPermissions",
-        "resourceVersion": "1774430273302",
-        "creationTimestamp": "2026-03-25T09:17:53Z"
+        "resourceVersion": "1776076870099",
+        "creationTimestamp": "2026-03-25T09:17:53Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-13 10:41:10.099738 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Search users permissions using Zanzana.",
