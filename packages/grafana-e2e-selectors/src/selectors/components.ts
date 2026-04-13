@@ -748,9 +748,6 @@ export const versionedComponents = {
       addLinkButton: {
         '12.6.0': 'data-testid add link button',
       },
-      addFilterButton: {
-        '13.0.0': 'data-testid add filter button',
-      },
       variableNameInput: {
         '12.0.0': 'data-testid variable name input',
       },
