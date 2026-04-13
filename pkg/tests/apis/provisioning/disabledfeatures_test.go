@@ -17,6 +17,7 @@ func TestIntegrationProvisioning_MigrateDisabledByConfiguration(t *testing.T) {
 	testRepo := common.TestRepo{
 		Name:       repo,
 		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 	}
 	helper.CreateLocalRepo(t, testRepo)
 
@@ -51,6 +52,7 @@ func TestIntegrationProvisioning_ExportDisabledByConfiguration(t *testing.T) {
 	testRepo := common.TestRepo{
 		Name:       repo,
 		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 	}
 	helper.CreateLocalRepo(t, testRepo)
 

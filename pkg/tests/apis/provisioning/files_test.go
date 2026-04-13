@@ -57,6 +57,7 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 		Name:       repo,
 		LocalPath:  helper.ProvisioningPath,
 		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			"testdata/all-panels.json":    "dashboard1.json",
 			"testdata/text-options.json":  "folder/dashboard2.json",
@@ -170,6 +171,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		Name:       repo,
 		LocalPath:  helper.ProvisioningPath,
 		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			"testdata/all-panels.json": "all-panels.json",
 		},
@@ -401,6 +403,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		Name:       repo1,
 		LocalPath:  path.Join(helper.ProvisioningPath, "repo1"),
 		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			"testdata/all-panels.json": "dashboard1.json",
 		},
@@ -412,6 +415,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		Name:       repo2,
 		LocalPath:  path.Join(helper.ProvisioningPath, "repo2"),
 		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			"testdata/timeline-demo.json": "dashboard2.json",
 		},
@@ -610,6 +614,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 		Name:       repo,
 		LocalPath:  helper.ProvisioningPath,
 		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			"testdata/all-panels.json": "dashboard1.json",
 		},
