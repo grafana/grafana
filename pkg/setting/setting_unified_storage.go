@@ -24,7 +24,7 @@ const (
 	DashboardResource   = "dashboards.dashboard.grafana.app"
 	ShortURLResource    = "shorturls.shorturl.grafana.app"
 	StarsResource       = "stars.collections.grafana.app"
-	DataSourceResources = "datasources.*.datasource.grafana.app" // All datasources
+	DataSourceResources = "datasources.datasource.grafana.app" // All datasources
 )
 
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
