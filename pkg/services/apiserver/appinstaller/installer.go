@@ -165,6 +165,11 @@ func InstallAPIs(
 	apiResourceConfig *serverstore.ResourceConfig,
 ) error {
 	logger := logging.FromContext(ctx)
+	effectiveOptsGetter := restOpsGetter
+	if effectiveOptsGetter == nil {
+		logger.Warn("no RESTOptionsGetter configured, using noop; unified storage will not be available")
+		effectiveOptsGetter = &noopRESTOptionsGetter{}
+	}
 	for _, installer := range appInstallers {
 		logger.Debug("Installing APIs for app installer", "app", installer.ManifestData().AppName)
 
@@ -178,12 +183,12 @@ func InstallAPIs(
 			GenericAPIServer:  appsdkapiserver.NewKubernetesGenericAPIServer(server),
 			installer:         installer,
 			storageOpts:       storageOpts,
-			restOptionsGetter: restOpsGetter,
+			restOptionsGetter: effectiveOptsGetter,
 			dualWriteService:  dualWriteService,
 			builderMetrics:    builderMetrics,
 			apiResourceConfig: apiResourceConfig,
 		}
-		if err := installer.InstallAPIs(wrapper, restOpsGetter); err != nil {
+		if err := installer.InstallAPIs(wrapper, effectiveOptsGetter); err != nil {
 			return fmt.Errorf("failed to install APIs for app %s: %w", installer.ManifestData().AppName, err)
 		}
 		logger.Info("Installed APIs for app", "app", installer.ManifestData().AppName)
