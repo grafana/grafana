@@ -2,6 +2,7 @@ package setting
 
 import (
 	"slices"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/leaderelection"
@@ -258,6 +259,14 @@ type OpenFgaCacheSettings struct {
 	SharedIteratorTTL time.Duration
 }
 
+// ZanzanaRolloutSettings controls per-resource tenant routing to Zanzana.
+// Keys are "group/resource" (e.g. "dashboard.grafana.app/dashboards"),
+// values are fractions in [0.0, 1.0]. Tenants are assigned deterministically
+// via a hash of namespace+resource; the same tenant always lands in the same bucket.
+type ZanzanaRolloutSettings struct {
+	ResourcePercentages map[string]float64
+}
+
 const (
 	defaultReadPageSize = 100
 )
@@ -412,4 +421,20 @@ func (cfg *Cfg) readZanzanaSettings() {
 		TLSCertPath: grpcStoreSec.Key("tls_cert_path").MustString(""),
 		TLSKeyPath:  grpcStoreSec.Key("tls_key_path").MustString(""),
 	}
+
+	// Rollout settings
+	rolloutSec := cfg.SectionWithEnvOverrides("zanzana.rollout")
+	rollout := ZanzanaRolloutSettings{ResourcePercentages: make(map[string]float64)}
+	for resource, value := range rolloutSec.KeysHash() {
+		if resource == "" {
+			continue
+		}
+		pct, err := strconv.ParseFloat(value, 64)
+		if err != nil || pct < 0 || pct > 1 {
+			cfg.Logger.Warn("invalid zanzana.rollout percentage, skipping", "resource", resource, "value", value)
+			continue
+		}
+		rollout.ResourcePercentages[resource] = pct
+	}
+	cfg.ZanzanaRollout = rollout
 }

@@ -4304,6 +4304,9 @@
       "libraryPanel_other": "라이브러리 패널 {{count}}개",
       "total_other": "항목 {{count}}개"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "이 항목은 선택한 항목과는 다른 리포지토리에 있습니다."
@@ -6856,7 +6859,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "규칙 표시/숨기기가 작동하지 않습니다",
@@ -8094,8 +8102,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "지원되지 않음",
+      "badge-text-success": "",
       "badge-text-supported": "지원됨",
       "label": {
+        "advisor": "",
         "alerting": "경고",
         "type": "유형"
       }
@@ -8522,7 +8532,6 @@
       "give-feedback": "피드백 제출하기"
     },
     "logs-meta-row": {
-      "download": "다운로드",
       "label": {
         "deduplication-count": "중복 제거 횟수",
         "showing-only-selected-fields": "선택한 필드만 표시 중"
@@ -8875,22 +8884,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "로그 시각화에 결과 표시",
-        "show-results-in-table-visualisation": "테이블 시각화에 결과 표시",
-        "show-results-newest-to-oldest": "최신순으로 결과 표시",
-        "show-results-oldest-to-newest": "오래된 순으로 결과 표시"
+        "show-results-in-table-visualisation": "테이블 시각화에 결과 표시"
       },
       "label": {
         "logs": "로그",
-        "newest-first": "최신순",
-        "oldest-first": "오래된 순",
         "table": "표"
       },
-      "label-deduplication": "중복 제거",
-      "label-display-results": "결과 표시",
-      "label-prettify-json": "JSON을 보기 좋게 정리",
-      "label-time": "시간",
-      "label-unique-labels": "고유 라벨",
-      "label-wrap-lines": "줄 바꿈",
       "title-feedback": "피드백",
       "title-logs": "로그",
       "title-logs-volume": "로그 볼륨"
@@ -8985,8 +8984,7 @@
       "tooltip-s-m-h": "10초, 1분, 30분, 1시간"
     },
     "sql-expr": {
-      "button-run-query": "쿼리 실행",
-      "tooltip-experimental": "SQL 표현식 LLM 통합 기능은 실험 단계입니다. 문제가 발생하면 Grafana 팀에 보고해 주세요."
+      "button-run-query": "쿼리 실행"
     },
     "sql-schema": {
       "error-title": "오류",
@@ -11379,9 +11377,6 @@
       },
       "wrap-lines": "줄 바꿈"
     },
-    "logs-navigation": {
-      "scroll-top": "맨 위로 스크롤"
-    },
     "logs-panel": {
       "render-common-labels": {
         "common-labels": "일반 레이블:"
@@ -12174,7 +12169,7 @@
     },
     "quick-add": {
       "aria-label": "신규",
-      "new-template-dashboard-button": "템플릿 기반 대시보드"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "블로그 최근 글"
   },
@@ -13319,6 +13314,7 @@
       "token-label": "프로젝트 액세스 토큰",
       "token-required": "GitLab 토큰은 필수 항목입니다",
       "url-description": "GitLab 리포지토리 URL",
+      "url-pattern": "",
       "url-required": "리포지토리 URL은 필수 항목입니다"
     },
     "history-view": {
@@ -14239,11 +14235,11 @@
       "view-as-list": "리스트로 보기"
     },
     "dashboard-actions": {
-      "import": "가져오기",
+      "import": "",
       "new": "신규",
       "new-dashboard": "새 대시보드",
       "new-folder": "새 폴더",
-      "new-template-dashboard": "템플릿 기반 대시보드"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "점수"
@@ -14744,19 +14740,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "SQL 제안을 생성하려면, 최소 하나 이상의 데이터 쿼리를 추가하세요.",
-    "ai-explain-title": "AI 기반 SQL 표현식 설명",
-    "ai-suggestions-title": "AI 기반 SQL 표현식 제안",
-    "apply": "적용",
-    "code-label": "{{ language }}",
-    "copy": "복사",
-    "explain-empty-query-tooltip": "설명을 확인하려면 SQL 표현식을 입력하세요.",
     "explain-query": "쿼리 설명",
-    "explanation-modal-title": "SQL 쿼리 설명",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "SQL 제안 내역",
-    "suggestions": "제안",
-    "view-explanation": "설명 보기"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "즐겨찾기로 표시",
@@ -15216,11 +15202,12 @@
     },
     "range-content": {
       "apply-button": "시간 범위 적용",
-      "default-error": "과거 날짜 또는 '{{now}}'을(를) 입력하세요",
+      "default-error": "",
       "fiscal-year": "회계 연도: {{from}} - {{to}}",
       "from-input": "최저",
       "open-input-calendar": "캘린더 열기",
-      "range-error": "'시작 시간'은 '종료 시간' 이후일 수 없습니다.",
+      "range-error": "",
+      "required-error": "",
       "to-input": "종료 시간"
     },
     "range-picker": {

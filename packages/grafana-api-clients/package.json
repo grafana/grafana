@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/api-clients",
-  "version": "13.0.0-pre",
+  "version": "13.1.0-pre",
   "description": "Grafana API client utilities",
   "keywords": [
     "grafana",
@@ -37,11 +37,17 @@
     "./internal/rtkq/legacy/migrate-to-cloud": {
       "@grafana-app/source": "./src/clients/rtkq/migrate-to-cloud/index.ts"
     },
-    "./internal/rtkq/legacy/preferences": {
+    "./internal/rtkq/legacy/preferences/user": {
       "@grafana-app/source": "./src/clients/rtkq/preferences/user/index.ts"
     },
     "./internal/rtkq/legacy/user": {
       "@grafana-app/source": "./src/clients/rtkq/user/index.ts"
+    },
+    "./internal/rtkq/legacy/preferences/org": {
+      "@grafana-app/source": "./src/clients/rtkq/preferences/org/index.ts"
+    },
+    "./internal/rtkq/legacy/preferences/team": {
+      "@grafana-app/source": "./src/clients/rtkq/preferences/team/index.ts"
     },
     "./rtkq/advisor/v0alpha1": {
       "@grafana-app/source": "./src/clients/rtkq/advisor/v0alpha1/index.ts",

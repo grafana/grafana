@@ -566,7 +566,8 @@
       "metadata": {
         "name": "alertingNotificationHistoryTriage",
         "resourceVersion": "1772614382283",
-        "creationTimestamp": "2026-03-04T08:53:02Z"
+        "creationTimestamp": "2026-03-04T08:53:02Z",
+        "deletionTimestamp": "2026-04-09T17:07:43Z"
       },
       "spec": {
         "description": "Enables the notification history timeline in the triage instance details drawer",
@@ -924,13 +925,17 @@
     {
       "metadata": {
         "name": "analyticsFramework",
-        "resourceVersion": "1772205128141",
-        "creationTimestamp": "2026-02-27T15:12:08Z"
+        "resourceVersion": "1775746176648",
+        "creationTimestamp": "2026-02-27T15:12:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-09 14:49:36.648721 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables new analytics framework",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -1245,6 +1250,20 @@
     },
     {
       "metadata": {
+        "name": "clickHouseConfigValidation",
+        "resourceVersion": "1775754463440",
+        "creationTimestamp": "2026-04-09T17:07:43Z"
+      },
+      "spec": {
+        "description": "Enables validation on the ClickHouse data source configuration page",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "cloudRBACRoles",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-01-10T13:19:01Z"
@@ -1393,20 +1412,6 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
-        "name": "dashboardAdHocAndGroupByWrapper",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-12-18T18:58:21Z"
-      },
-      "spec": {
-        "description": "Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -1780,6 +1785,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasourcesApiServerEnableHealthEndpointRedirect",
+        "resourceVersion": "1774543694579",
+        "creationTimestamp": "2026-03-26T16:48:14Z"
+      },
+      "spec": {
+        "description": "Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
         "expression": "false"
       }
     },
@@ -2352,7 +2370,22 @@
       "metadata": {
         "name": "functionalSharedPreferences",
         "resourceVersion": "1771763406238",
-        "creationTimestamp": "2026-02-22T12:30:06Z"
+        "creationTimestamp": "2026-02-22T12:30:06Z",
+        "deletionTimestamp": "2026-04-04T12:16:21Z"
+      },
+      "spec": {
+        "description": "Whether to use the new SharedPreferences functional component",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.newPreferencesPage",
+        "resourceVersion": "1775304981849",
+        "creationTimestamp": "2026-04-04T12:16:21Z"
       },
       "spec": {
         "description": "Whether to use the new SharedPreferences functional component",
@@ -2583,6 +2616,23 @@
     },
     {
       "metadata": {
+        "name": "influxDBConfigValidation",
+        "resourceVersion": "1775754463440",
+        "creationTimestamp": "2026-02-13T15:53:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-09 17:07:43.440663 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables validation on the InfluxDB data source configuration page",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "influxdbBackendMigration",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2022-02-09T18:26:16Z",
@@ -2625,13 +2675,17 @@
     {
       "metadata": {
         "name": "inlineLogDetailsNoScrolls",
-        "resourceVersion": "1772636622548",
-        "creationTimestamp": "2026-03-04T15:03:42Z"
+        "resourceVersion": "1775746176648",
+        "creationTimestamp": "2026-03-04T15:03:42Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-09 14:49:36.648721 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables an inline version of Log Details that creates no new scrolls",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -3140,6 +3194,24 @@
       },
       "spec": {
         "description": "Adds support for Kubernetes querycaching",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesQueryCachingRedirect",
+        "resourceVersion": "1775757646293",
+        "creationTimestamp": "2026-04-09T17:57:20Z",
+        "deletionTimestamp": "2026-04-10T17:37:19Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-09 18:00:46.293739 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Redirect caching service cache config reads from legacy storage to K8s API",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "requiresRestart": true,
@@ -4397,6 +4469,21 @@
     },
     {
       "metadata": {
+        "name": "queryCachingReadFromK8s",
+        "resourceVersion": "1775757121813",
+        "creationTimestamp": "2026-04-09T17:52:01Z",
+        "deletionTimestamp": "2026-04-09T17:57:20Z"
+      },
+      "spec": {
+        "description": "Read query cache configs from K8s API instead of legacy storage in the caching handler",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "queryEditorNext",
         "resourceVersion": "1775058514147",
         "creationTimestamp": "2026-02-18T17:05:38Z",
@@ -4528,6 +4615,61 @@
     },
     {
       "metadata": {
+        "name": "querycaching.handlersReadFromK8SApi",
+        "resourceVersion": "1775842665327",
+        "creationTimestamp": "2026-04-10T17:37:45Z",
+        "deletionTimestamp": "2026-04-10T18:24:54Z"
+      },
+      "spec": {
+        "description": "Redirect caching service cache config reads from legacy storage to K8s API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "querycaching.handlersReadFromK8sApi",
+        "resourceVersion": "1775842639855",
+        "creationTimestamp": "2026-04-10T17:37:19Z",
+        "deletionTimestamp": "2026-04-10T17:37:45Z"
+      },
+      "spec": {
+        "description": "Redirect caching service cache config reads from legacy storage to K8s API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "querycaching.redirectToK8SApi",
+        "resourceVersion": "1775845520196",
+        "creationTimestamp": "2026-04-10T18:25:20Z"
+      },
+      "spec": {
+        "description": "Redirect caching service cache config reads from legacy storage to K8s API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "querycaching.redirectToK8sApi",
+        "resourceVersion": "1775845494083",
+        "creationTimestamp": "2026-04-10T18:24:54Z",
+        "deletionTimestamp": "2026-04-10T18:25:20Z"
+      },
+      "spec": {
+        "description": "Redirect caching service cache config reads from legacy storage to K8s API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "rbacIAMClient",
         "resourceVersion": "1774034789603",
         "creationTimestamp": "2026-03-20T19:26:29Z",
@@ -4643,7 +4785,8 @@
       "metadata": {
         "name": "rendererDisableAppPluginsPreload",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-02-24T14:43:06Z"
+        "creationTimestamp": "2025-02-24T14:43:06Z",
+        "deletionTimestamp": "2026-04-09T15:47:18Z"
       },
       "spec": {
         "description": "Disable pre-loading app plugins when the request is coming from the renderer",
@@ -5162,6 +5305,22 @@
       },
       "spec": {
         "description": "Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "teamLBACApiWriteFromAppPlatform",
+        "resourceVersion": "1775845194547",
+        "creationTimestamp": "2026-04-09T22:49:55Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-10 18:19:54.547668 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "expression": "false"
