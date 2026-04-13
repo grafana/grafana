@@ -1,10 +1,10 @@
 package kinds
 
 import (
-	v2beta1 "github.com/grafana/grafana/sdkkinds/dashboard/v2beta1"
+	v2 "github.com/grafana/grafana/sdkkinds/dashboard/v2"
 )
 
-globalVariableV2beta1: {
+globalVariableV2: {
 	kind:       "Variable"
 	pluralName: "Variables"
 	selectableFields: [
@@ -17,6 +17,6 @@ globalVariableV2beta1: {
 		operations: ["CREATE", "UPDATE"]
 	}
 	schema: {
-		spec: v2beta1.VariableKind
+		spec: v2.VariableKind
 	}
 }
