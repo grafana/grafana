@@ -177,7 +177,7 @@ function VariableLabel({
   layout?: ControlsLayout;
 }) {
   const { state } = variable;
-  const elementId = `var-${state.key}`;
+  const elementId = sceneUtils.getVariableControlId(state.type, state.key);
 
   if (variable.state.hide === VariableHide.hideLabel) {
     return null;

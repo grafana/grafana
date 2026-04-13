@@ -518,6 +518,88 @@ func TestNeedsSending(t *testing.T) {
 	}
 }
 
+func TestTransitionSetsResolvedAt(t *testing.T) {
+	evaluatedAt := time.Now()
+	logger := log.NewNopLogger()
+	noImage := func(string) *ngmodels.Image { return nil }
+
+	baseRule := &ngmodels.AlertRule{
+		IntervalSeconds: 60,
+		ExecErrState:    ngmodels.ErrorErrState,
+		NoDataState:     ngmodels.NoData,
+	}
+
+	tests := []struct {
+		name           string
+		initialState   eval.State
+		resultState    eval.State
+		expectResolved bool
+	}{
+		{
+			name:           "Alerting -> Normal sets ResolvedAt",
+			initialState:   eval.Alerting,
+			resultState:    eval.Normal,
+			expectResolved: true,
+		},
+		{
+			name:           "Error -> Normal sets ResolvedAt",
+			initialState:   eval.Error,
+			resultState:    eval.Normal,
+			expectResolved: true,
+		},
+		{
+			name:           "NoData -> Normal sets ResolvedAt",
+			initialState:   eval.NoData,
+			resultState:    eval.Normal,
+			expectResolved: true,
+		},
+		{
+			name:           "Recovering -> Normal sets ResolvedAt",
+			initialState:   eval.Recovering,
+			resultState:    eval.Normal,
+			expectResolved: true,
+		},
+		{
+			name:           "Normal -> Normal does not set ResolvedAt",
+			initialState:   eval.Normal,
+			resultState:    eval.Normal,
+			expectResolved: false,
+		},
+		{
+			name:           "Pending -> Normal does not set ResolvedAt",
+			initialState:   eval.Pending,
+			resultState:    eval.Normal,
+			expectResolved: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			state := &State{
+				State:       tc.initialState,
+				StartsAt:    evaluatedAt.Add(-time.Minute),
+				EndsAt:      evaluatedAt.Add(time.Minute),
+				Annotations: make(data.Labels),
+			}
+
+			result := eval.Result{
+				State:       tc.resultState,
+				EvaluatedAt: evaluatedAt,
+			}
+
+			transition := state.transition(baseRule, result, nil, logger, noImage, false)
+
+			if tc.expectResolved {
+				require.NotNil(t, state.ResolvedAt, "ResolvedAt should be set for %s -> %s", tc.initialState, tc.resultState)
+				assert.Equal(t, evaluatedAt, *state.ResolvedAt)
+				assert.Equal(t, tc.initialState, transition.PreviousState)
+			} else {
+				assert.Nil(t, state.ResolvedAt, "ResolvedAt should not be set for %s -> %s", tc.initialState, tc.resultState)
+			}
+		})
+	}
+}
+
 func TestGetLastEvaluationValuesForCondition(t *testing.T) {
 	genState := func(latestResult *Evaluation) *State {
 		return &State{
