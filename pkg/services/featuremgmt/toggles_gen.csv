@@ -114,7 +114,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-03-25,oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,false
 2025-11-19,refreshTokenRequired,experimental,@grafana/identity-access-team,false,false,false
 2024-04-04,newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,false,false
-2025-12-18,dashboardAdHocAndGroupByWrapper,experimental,@grafana/dashboards-squad,false,false,false
 2026-03-09,dashboardUnifiedDrilldownControls,privatePreview,@grafana/dashboards-squad,false,false,true
 2026-03-02,adHocFilterDefaultValues,experimental,@grafana/dashboards-squad,false,false,true
 2024-04-05,cloudWatchNewLabelParsing,GA,@grafana/data-sources-plugins,false,false,false
@@ -189,6 +188,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-05-22,teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,teamHttpHeadersFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
 2026-03-16,teamLBACApiReadFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
+2026-04-09,teamLBACApiWriteFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
 2025-01-20,grafanaAdvisor,GA,@grafana/plugins-platform-backend,false,false,false
 2025-01-15,elasticsearchImprovedParsing,experimental,@grafana/data-sources-plugins,false,false,false
 2025-01-21,datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
@@ -347,6 +347,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-04-01,enableDatasourceMetaApiPluginLoading,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-04-02,enableColorblindSafePanelOptions,experimental,@grafana/dataviz-squad,false,false,true
 2026-04-03,cacheConfigUnifiedStorageMigration,experimental,@grafana/grafana-operator-experience-squad,false,true,false
+2026-04-10,querycaching.redirectToK8SApi,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-04-02,compiledBootScript,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-02-13,influxDBConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
 2026-04-09,clickHouseConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false

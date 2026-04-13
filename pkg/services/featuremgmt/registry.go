@@ -992,15 +992,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "dashboardAdHocAndGroupByWrapper",
-			Description:  "Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDashboardsSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "dashboardUnifiedDrilldownControls",
 			Description:  "Renders ad hoc filters and group by in a single unified control",
 			Stage:        FeatureStagePrivatePreview,
@@ -1620,6 +1611,14 @@ var (
 		{
 			Name:        "teamLBACApiReadFromAppPlatform",
 			Description: "Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Owner:       identityAccessTeam,
+			Expression:  "false",
+		},
+		{
+			Name:        "teamLBACApiWriteFromAppPlatform",
+			Description: "Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       identityAccessTeam,
@@ -2978,6 +2977,14 @@ var (
 			Expression:      "false",
 			RequiresRestart: true,
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:        "querycaching.redirectToK8SApi",
+			Description: "Redirect caching service cache config reads from legacy storage to K8s API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
 		},
 		{
 			Name:         "compiledBootScript",

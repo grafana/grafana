@@ -4304,6 +4304,9 @@
       "libraryPanel_other": "{{count}} panel pustaka",
       "total_other": "{{count}} item"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Item ini tidak berada di repositori yang sama dengan item yang dipilih."
@@ -8099,8 +8102,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Tidak didukung",
+      "badge-text-success": "",
       "badge-text-supported": "Didukung",
       "label": {
+        "advisor": "",
         "alerting": "Alerting",
         "type": "Jenis"
       }
@@ -14230,11 +14235,11 @@
       "view-as-list": "Lihat sebagai daftar"
     },
     "dashboard-actions": {
-      "import": "Impor",
+      "import": "",
       "new": "Baru",
       "new-dashboard": "Dasbor baru",
       "new-folder": "Folder baru",
-      "new-template-dashboard": "Dasbor dari templat"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Skor"
@@ -15197,11 +15202,12 @@
     },
     "range-content": {
       "apply-button": "Gunakan rentang waktu",
-      "default-error": "Masukkan tanggal sebelumnya atau \"{{now}}\"",
+      "default-error": "",
       "fiscal-year": "Tahun fiskal: {{from}} - {{to}}",
       "from-input": "Dari",
       "open-input-calendar": "Buka kalender",
-      "range-error": "\"Dari\" tidak boleh setelah \"Hingga\"",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Hingga"
     },
     "range-picker": {

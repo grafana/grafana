@@ -327,10 +327,6 @@ const (
 	// Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
 	FlagNewDashboardWithFiltersAndGroupBy = "newDashboardWithFiltersAndGroupBy"
 
-	// FlagDashboardAdHocAndGroupByWrapper
-	// Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it
-	FlagDashboardAdHocAndGroupByWrapper = "dashboardAdHocAndGroupByWrapper"
-
 	// FlagCloudWatchNewLabelParsing
 	// Updates CloudWatch label parsing to be more accurate
 	FlagCloudWatchNewLabelParsing = "cloudWatchNewLabelParsing"
@@ -546,6 +542,10 @@ const (
 	// FlagTeamLBACApiReadFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
 	FlagTeamLBACApiReadFromAppPlatform = "teamLBACApiReadFromAppPlatform"
+
+	// FlagTeamLBACApiWriteFromAppPlatform
+	// Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
+	FlagTeamLBACApiWriteFromAppPlatform = "teamLBACApiWriteFromAppPlatform"
 
 	// FlagGrafanaAdvisor
 	// Enables Advisor app
@@ -929,6 +929,10 @@ const (
 	// FlagCacheConfigUnifiedStorageMigration
 	// Enables cache configs data migration to unified storage
 	FlagCacheConfigUnifiedStorageMigration = "cacheConfigUnifiedStorageMigration"
+
+	// FlagQuerycachingRedirectToK8SApi
+	// Redirect caching service cache config reads from legacy storage to K8s API
+	FlagQuerycachingRedirectToK8SApi = "querycaching.redirectToK8SApi"
 
 	// FlagCompiledBootScript
 	// Boots the frontend using the boot.js script built from TS instead of the embedded boot script

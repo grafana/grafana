@@ -4331,6 +4331,9 @@
       "total_one": "{{count}} elemento",
       "total_other": "{{count}} elementos"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Este elemento no está en el mismo repositorio que los elementos seleccionados."
@@ -8142,8 +8145,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "No admitida",
+      "badge-text-success": "",
       "badge-text-supported": "Consolidada",
       "label": {
+        "advisor": "",
         "alerting": "Alertas",
         "type": "Tipo"
       }
@@ -14316,11 +14321,11 @@
       "view-as-list": "Ver como lista"
     },
     "dashboard-actions": {
-      "import": "Importar",
+      "import": "",
       "new": "Nuevo",
       "new-dashboard": "Nuevo panel de control",
       "new-folder": "Nueva carpeta",
-      "new-template-dashboard": "Dashboard desde plantilla"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Puntuación"
@@ -15285,11 +15290,12 @@
     },
     "range-content": {
       "apply-button": "Aplicar intervalo de tiempo",
-      "default-error": "Introduce una fecha pasada o «{{now}}»",
+      "default-error": "",
       "fiscal-year": "Año fiscal: {{from}} - {{to}}",
       "from-input": "Desde",
       "open-input-calendar": "Abrir calendario",
-      "range-error": "«Desde» no puede ser posterior a «hasta»",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Hasta"
     },
     "range-picker": {
