@@ -5,7 +5,7 @@ import { useMemo, type ReactNode } from 'react';
 import { type ActionModel, type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../utils/floating';
 import { Portal } from '../Portal/Portal';
 import { VizTooltipFooter } from '../VizTooltip/VizTooltipFooter';
@@ -26,7 +26,6 @@ interface Props {
  * @internal
  */
 export const DataLinksActionsTooltip = ({ links, actions, value, coords, onTooltipClose }: Props) => {
-  const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const placement = 'right-start';
 
@@ -78,7 +77,7 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
     <>
       {/* TODO: we can remove `value` from this component when TableRT is fully deprecated */}
       {value}
-      <Portal zIndex={theme.zIndex.tooltip}>
+      <Portal>
         <div
           ref={refCallback}
           {...getReferenceProps()}
