@@ -34,6 +34,11 @@ func (ss *SQLStore) inTransactionWithRetry(ctx context.Context, fn func(ctx cont
 func (ss *SQLStore) inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, bus bus.Bus, callback DBTransactionFunc, retry int) error {
 	sess, isNew, span, err := startSessionOrUseExisting(ctx, engine, true, ss.tracer)
 	if err != nil {
+		if ss.dbCfg.PwdFilePath != "" && IsAuthError(err) && retry == 0 {
+			tsclogger.FromContext(ctx).Info("Database auth error on session start, attempting credential refresh", "error", err)
+			ss.attemptCredentialRefresh()
+			return ss.inTransactionWithRetryCtx(ctx, ss.engine, bus, callback, retry+1)
+		}
 		return err
 	}
 
