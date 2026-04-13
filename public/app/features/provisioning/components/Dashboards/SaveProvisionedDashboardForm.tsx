@@ -81,11 +81,10 @@ export function SaveProvisionedDashboardForm({
     reset(defaultValues);
   }, [defaultValues, reset]);
 
-  // Auto-sync filename from title for new dashboards.
+  // Sync filename from title for new dashboards.
   // dirtyFields.path is false when only setValue() has updated the path (shouldDirty defaults to false),
   // and becomes true when the user manually types in the filename input (Controller onChange marks it dirty).
   // This lets us stop auto-syncing once the user has intentionally customised the filename.
-  // We use getValues() instead of watching path to avoid re-triggering when setValue updates it.
   useEffect(() => {
     if (!isNew || dirtyFields.path) {
       return;
