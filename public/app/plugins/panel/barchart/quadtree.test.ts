@@ -108,8 +108,6 @@ describe('findRects', () => {
     qt.add(r2);
     const result = findRects(qt);
     expect(result).toEqual([r1, r2]);
-    // Rects are currently copied, not references. If this changes in the future just make sure that doesn't break anything!
-    expect(result).not.toBe([r1, r2]);
   });
 
   it('filters by sidx when provided', () => {
