@@ -230,7 +230,8 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await user.type(titleInput, 'New Dashboard');
     await user.type(descriptionInput, 'New Description');
-    await user.type(filenameInput, 'test-dashboard.json');
+    // Use a filename distinct from the default path to keep dirtyFields.path true
+    await user.type(filenameInput, 'custom-filename.json');
     await user.type(commentInput, 'Initial commit');
 
     const submitButton = screen.getByRole('button', { name: /save/i });
@@ -241,7 +242,7 @@ describe('SaveProvisionedDashboardForm', () => {
     });
 
     const request = requireCapturedRequest(capturedRequest);
-    expect(request.url.pathname).toContain('/repositories/test-repo/files/test-dashboard.json');
+    expect(request.url.pathname).toContain('/repositories/test-repo/files/custom-filename.json');
     expect(request.url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
     expect(request.url.searchParams.get('message')).toBe('Initial commit');
     expect(request.body).toEqual(newDashboard);
@@ -444,6 +445,122 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await waitFor(() => {
       expect(saveButton).toBeEnabled();
+    });
+  });
+
+  describe('title-to-filename auto-sync', () => {
+    it('should auto-update filename when the title changes for a new dashboard', async () => {
+      const { user } = setup({
+        defaultValues: {
+          ref: 'dashboard/2023-01-01-abcde',
+          path: 'new-dashboard-2023-01-01-abcde.json',
+          repo: 'test-repo',
+          comment: '',
+          folder: { uid: 'folder-uid', title: '' },
+          title: '',
+          description: '',
+          workflow: 'write',
+        },
+      });
+
+      const titleInput = screen.getByRole('textbox', { name: /title/i });
+      await user.type(titleInput, 'My Cool Dashboard');
+
+      const filenameInput = screen.getByRole('textbox', { name: /filename/i });
+      await waitFor(() => {
+        expect(filenameInput).toHaveValue('my-cool-dashboard.json');
+      });
+    });
+
+    it('should keep directory in folder picker when auto-syncing filename', async () => {
+      const { user } = setup({
+        defaultValues: {
+          ref: 'dashboard/2023-01-01-abcde',
+          path: 'dashboards/new-dashboard-2023-01-01-abcde.json',
+          repo: 'test-repo',
+          comment: '',
+          folder: { uid: 'folder-uid', title: '' },
+          title: '',
+          description: '',
+          workflow: 'write',
+        },
+      });
+
+      const titleInput = screen.getByRole('textbox', { name: /title/i });
+      await user.type(titleInput, 'My Cool Dashboard');
+
+      const filenameInput = screen.getByRole('textbox', { name: /filename/i });
+      const folderCombobox = screen.getByRole('combobox', { name: /folder/i });
+      await waitFor(() => {
+        expect(filenameInput).toHaveValue('my-cool-dashboard.json');
+        expect(folderCombobox).toHaveValue('dashboards');
+      });
+    });
+
+    it('should stop auto-syncing once the user manually edits the filename', async () => {
+      const { user } = setup({
+        defaultValues: {
+          ref: 'dashboard/2023-01-01-abcde',
+          path: 'new-dashboard-2023-01-01-abcde.json',
+          repo: 'test-repo',
+          comment: '',
+          folder: { uid: 'folder-uid', title: '' },
+          title: '',
+          description: '',
+          workflow: 'write',
+        },
+      });
+
+      const filenameInput = screen.getByRole('textbox', { name: /filename/i });
+      await user.clear(filenameInput);
+      await user.type(filenameInput, 'custom-name.json');
+
+      const titleInput = screen.getByRole('textbox', { name: /title/i });
+      await user.type(titleInput, 'Some New Title');
+
+      await waitFor(() => {
+        expect(filenameInput).toHaveValue('custom-name.json');
+      });
+    });
+
+    it('should not auto-sync for special-character-only titles', async () => {
+      const { user } = setup({
+        defaultValues: {
+          ref: 'dashboard/2023-01-01-abcde',
+          path: 'new-dashboard-2023-01-01-abcde.json',
+          repo: 'test-repo',
+          comment: '',
+          folder: { uid: 'folder-uid', title: '' },
+          title: '',
+          description: '',
+          workflow: 'write',
+        },
+      });
+
+      const titleInput = screen.getByRole('textbox', { name: /title/i });
+      await user.type(titleInput, '!!!');
+
+      const filenameInput = screen.getByRole('textbox', { name: /filename/i });
+      expect(filenameInput).toHaveValue('new-dashboard-2023-01-01-abcde.json');
+    });
+
+    it('should not auto-sync for existing dashboards', async () => {
+      setup({
+        isNew: false,
+        defaultValues: {
+          ref: 'dashboard/2023-01-01-abcde',
+          path: 'existing-dashboard.json',
+          repo: 'test-repo',
+          comment: '',
+          folder: { uid: 'folder-uid', title: '' },
+          title: 'Existing Dashboard',
+          description: '',
+          workflow: 'write',
+        },
+      });
+
+      const pathInput = screen.getByRole('textbox', { name: /path/i });
+      expect(pathInput).toHaveValue('existing-dashboard.json');
     });
   });
 
