@@ -67,7 +67,7 @@ describe('SharedPreferencesFunctional', () => {
   it('renders the timezone preference', async () => {
     await setup();
     const tzSelect = getSelectParent(screen.getByLabelText('Timezone'));
-    expect(tzSelect).toHaveTextContent('Browser Time');
+    expect(tzSelect).toHaveTextContent('Local browser time');
   });
 
   it('renders the week start preference', async () => {
@@ -110,7 +110,7 @@ describe('SharedPreferencesFunctional', () => {
       await screen.findByRole('combobox', { name: /home dashboard/i }),
       new RegExp(dashboardToSelect.title)
     );
-    await selectOptionInTest(screen.getByLabelText('Timezone'), 'Australia/Sydney');
+    await selectOptionInTest(screen.getByLabelText('Timezone'), 'Sydney');
     await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: 'Week start' }), 'Saturday');
     await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /language/i }), 'Français');
 

@@ -393,7 +393,6 @@ export {
 } from './datetime/moment_wrapper';
 export {
   InternalTimeZones,
-  timeZoneFormatUserFriendly,
   getZone,
   type TimeZoneCountry,
   type TimeZoneInfo,

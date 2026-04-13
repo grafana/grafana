@@ -32,7 +32,7 @@ test.describe(
 
       // Change timezone to UTC
       await page.getByTestId(selectors.components.TimeZonePicker.containerV2).click();
-      await page.getByRole('option', { name: 'Coordinated Universal Time ' }).click();
+      await page.getByRole('option', { name: 'UTC' }).click();
 
       // Close settings and refresh
       await dashboardPage
@@ -62,9 +62,9 @@ test.describe(
       // Open dashboard settings
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.settingsButton).click();
 
-      // Change timezone to America/Chicago
+      // Change timezone to Chicago
       await page.getByTestId(selectors.components.TimeZonePicker.containerV2).click();
-      await page.getByRole('option', { name: toTimeZone }).click();
+      await page.getByRole('option', { name: 'Chicago' }).click();
 
       // Close settings and refresh
       await dashboardPage
@@ -132,7 +132,7 @@ test.describe(
       await setTimeRange(page, dashboardPage, selectors, {
         from: 'now-6h',
         to: 'now',
-        zone: 'Coordinated Universal Time',
+        zone: 'UTC',
       });
 
       await expect(relativeTimeRow).toBeVisible();
@@ -150,7 +150,7 @@ test.describe(
       await setTimeRange(page, dashboardPage, selectors, {
         from: 'now-6h',
         to: 'now',
-        zone: 'Asia/Tokyo',
+        zone: 'Tokyo',
       });
 
       await expect(relativeTimeRow).toBeVisible();
@@ -168,7 +168,7 @@ test.describe(
       await setTimeRange(page, dashboardPage, selectors, {
         from: 'now-6h',
         to: 'now',
-        zone: 'America/Los Angeles',
+        zone: 'Los Angeles',
       });
 
       await expect(relativeTimeRow).toBeVisible();
