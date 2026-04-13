@@ -300,12 +300,10 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     );
   };
 
-  const getDrawerBody = () => getInstanceDetailsBody();
-
   if (error || loading || !rule) {
     return (
       <Drawer title={getDrawerTitle()} onClose={handleDrawerClose} width={drawerWidth}>
-        {getDrawerBody()}
+        {getInstanceDetailsBody()}
       </Drawer>
     );
   }
@@ -353,7 +351,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
       onClose={handleDrawerClose}
       width={drawerWidth}
     >
-      {getDrawerBody()}
+      {getInstanceDetailsBody()}
     </Drawer>
   );
 }
