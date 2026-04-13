@@ -4304,6 +4304,9 @@
       "libraryPanel_other": "라이브러리 패널 {{count}}개",
       "total_other": "항목 {{count}}개"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "이 항목은 선택한 항목과는 다른 리포지토리에 있습니다."
@@ -8099,8 +8102,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "지원되지 않음",
+      "badge-text-success": "",
       "badge-text-supported": "지원됨",
       "label": {
+        "advisor": "",
         "alerting": "경고",
         "type": "유형"
       }
@@ -14230,11 +14235,11 @@
       "view-as-list": "리스트로 보기"
     },
     "dashboard-actions": {
-      "import": "가져오기",
+      "import": "",
       "new": "신규",
       "new-dashboard": "새 대시보드",
       "new-folder": "새 폴더",
-      "new-template-dashboard": "템플릿 기반 대시보드"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "점수"
@@ -15197,11 +15202,12 @@
     },
     "range-content": {
       "apply-button": "시간 범위 적용",
-      "default-error": "과거 날짜 또는 '{{now}}'을(를) 입력하세요",
+      "default-error": "",
       "fiscal-year": "회계 연도: {{from}} - {{to}}",
       "from-input": "최저",
       "open-input-calendar": "캘린더 열기",
-      "range-error": "'시작 시간'은 '종료 시간' 이후일 수 없습니다.",
+      "range-error": "",
+      "required-error": "",
       "to-input": "종료 시간"
     },
     "range-picker": {

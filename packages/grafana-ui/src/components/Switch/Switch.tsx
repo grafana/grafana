@@ -39,6 +39,7 @@ export const Switch = forwardRef<HTMLInputElement, Props>(
             !disabled && onChange?.(event);
           }}
           id={switchId}
+          aria-invalid={!!invalid}
           {...inputProps}
           ref={ref}
         />
