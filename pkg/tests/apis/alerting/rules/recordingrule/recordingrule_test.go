@@ -722,7 +722,7 @@ func TestIntegrationListWithLabelSelectors(t *testing.T) {
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:  rule.Title,
-				Metric: rule.Record.Metric,
+				Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 				Expressions: v0alpha1.RecordingRuleExpressionMap{
 					"A": {
 						QueryType:     util.Pointer(rule.Data[0].QueryType),

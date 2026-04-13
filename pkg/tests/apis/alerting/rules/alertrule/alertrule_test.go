@@ -752,8 +752,8 @@ func TestIntegrationListWithLabelSelectors(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  string(rule.NoDataState),
-				ExecErrState: string(rule.ExecErrState),
+				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
+				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
 			},
 		}
 	}
