@@ -103,42 +103,94 @@ type ProvisioningTestHelper struct {
 	ViewerREST         *rest.RESTClient
 }
 
-// OrgContext provides org-specific context for operations
-type OrgContext struct {
-	User      apis.User
-	Namespace string
-	OrgID     int64
-}
+// WithNamespace returns a new ProvisioningTestHelper scoped to the specified namespace and user.
+// This is useful for multi-org testing where you need separate helpers for different organizations.
+func (h *ProvisioningTestHelper) WithNamespace(namespace string, user apis.User) *ProvisioningTestHelper {
+	gv := &schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"}
 
-// DefaultOrgContext returns the default org context (Org1)
-func (h *ProvisioningTestHelper) DefaultOrgContext() *OrgContext {
-	return &OrgContext{
-		User:      h.Org1.Admin,
-		Namespace: h.Namespacer(h.Org1.OrgID),
-		OrgID:     h.Org1.OrgID,
+	return &ProvisioningTestHelper{
+		ProvisioningPath: h.ProvisioningPath,
+		K8sTestHelper:    h.K8sTestHelper,
+
+		Repositories: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       provisioning.RepositoryResourceInfo.GroupVersionResource(),
+		}),
+		Connections: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       provisioning.ConnectionResourceInfo.GroupVersionResource(),
+		}),
+		Jobs: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       provisioning.JobResourceInfo.GroupVersionResource(),
+		}),
+		Folders: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       folder.FolderResourceInfo.GroupVersionResource(),
+		}),
+		DashboardsV0: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       dashboardV0.DashboardResourceInfo.GroupVersionResource(),
+		}),
+		DashboardsV1: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
+		}),
+		DashboardsV2alpha1: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       dashboardsV2alpha1.DashboardResourceInfo.GroupVersionResource(),
+		}),
+		DashboardsV2beta1: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       dashboardsV2beta1.DashboardResourceInfo.GroupVersionResource(),
+		}),
+		AdminREST:  user.RESTClient(nil, gv),
+		EditorREST: user.RESTClient(nil, gv),
+		ViewerREST: user.RESTClient(nil, gv),
 	}
 }
 
-// OrgContextFor returns org context for a specific OrgUsers
-func (h *ProvisioningTestHelper) OrgContextFor(orgUsers apis.OrgUsers) *OrgContext {
-	return &OrgContext{
-		User:      orgUsers.Admin,
-		Namespace: h.Namespacer(orgUsers.OrgID),
-		OrgID:     orgUsers.OrgID,
+// Cleanup deletes all provisioning resources in the helper's namespace.
+// This should be called (typically via defer) after tests that create resources in specific namespaces.
+func (h *ProvisioningTestHelper) Cleanup(t *testing.T) {
+	t.Helper()
+	ctx := context.Background()
+
+	// Delete all repositories
+	if err := h.Repositories.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		t.Logf("warning: failed to delete repositories: %v", err)
+	}
+
+	// Delete all connections
+	if err := h.Connections.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		t.Logf("warning: failed to delete connections: %v", err)
+	}
+
+	// Delete all folders
+	if err := h.Folders.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		t.Logf("warning: failed to delete folders: %v", err)
+	}
+
+	// Delete all dashboards (V0, V1, V2alpha1, V2beta1)
+	for _, client := range []*apis.K8sResourceClient{h.DashboardsV0, h.DashboardsV1, h.DashboardsV2alpha1, h.DashboardsV2beta1} {
+		if client != nil {
+			if err := client.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil && !apierrors.IsNotFound(err) {
+				t.Logf("warning: failed to delete dashboards: %v", err)
+			}
+		}
 	}
 }
 
 func (h *ProvisioningTestHelper) SyncAndWait(t *testing.T, repo string, options *provisioning.SyncJobOptions) {
-	h.SyncAndWaitWithOrg(t, repo, options, nil)
-}
-
-// SyncAndWaitWithOrg triggers a sync job and waits for completion, optionally in a specific org context
-func (h *ProvisioningTestHelper) SyncAndWaitWithOrg(t *testing.T, repo string, options *provisioning.SyncJobOptions, orgCtx *OrgContext) {
 	t.Helper()
-
-	if orgCtx == nil {
-		orgCtx = h.DefaultOrgContext()
-	}
 
 	if options == nil {
 		options = &provisioning.SyncJobOptions{}
@@ -148,11 +200,8 @@ func (h *ProvisioningTestHelper) SyncAndWaitWithOrg(t *testing.T, repo string, o
 		Pull:   options,
 	})
 
-	gv := &schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"}
-	restClient := orgCtx.User.RESTClient(t, gv)
-
-	result := restClient.Post().
-		Namespace(orgCtx.Namespace).
+	result := h.AdminREST.Post().
+		Namespace(h.Repositories.Args.Namespace).
 		Resource("repositories").
 		Name(repo).
 		SubResource("jobs").
@@ -162,7 +211,7 @@ func (h *ProvisioningTestHelper) SyncAndWaitWithOrg(t *testing.T, repo string, o
 
 	if apierrors.IsAlreadyExists(result.Error()) {
 		// Wait for all jobs to finish as we don't have the name.
-		h.AwaitJobsWithOrg(t, repo, orgCtx)
+		h.AwaitJobs(t, repo)
 		return
 	}
 
@@ -174,7 +223,7 @@ func (h *ProvisioningTestHelper) SyncAndWaitWithOrg(t *testing.T, repo string, o
 
 	name := unstruct.GetName()
 	require.NotEmpty(t, name, "expecting name to be set")
-	h.AwaitJobsWithOrg(t, repo, orgCtx)
+	h.AwaitJobs(t, repo)
 }
 
 func (h *ProvisioningTestHelper) TriggerJobAndWaitForSuccess(t *testing.T, repo string, spec provisioning.JobSpec) {
@@ -2908,208 +2957,3 @@ func RetryOnConflict(fn func() error) error {
 	return err
 }
 
-// ============================================================================
-// Org-aware helper methods for multi-org/multi-namespace testing
-// ============================================================================
-
-// CreateRepoWithOrg creates a repository in a specific org context
-func (h *ProvisioningTestHelper) CreateRepoWithOrg(t *testing.T, repo TestRepo, orgCtx *OrgContext) {
-	t.Helper()
-
-	if orgCtx == nil {
-		// Fall back to default implementation for backwards compatibility
-		h.CreateRepo(t, repo)
-		return
-	}
-
-	if repo.Target == "" {
-		repo.Target = "instance"
-	}
-
-	// Use custom path if provided, otherwise use default provisioning path
-	repoPath := h.ProvisioningPath
-	if repo.Path != "" {
-		repoPath = repo.Path
-		// Ensure the directory exists
-		err := os.MkdirAll(repoPath, 0o750)
-		require.NoError(t, err, "should be able to create repository path")
-	}
-
-	templateVars := map[string]any{
-		"Name":        repo.Name,
-		"SyncEnabled": !repo.SkipSync,
-		"SyncTarget":  repo.Target,
-	}
-	if repo.Path != "" {
-		templateVars["Path"] = repoPath
-	}
-	// Add custom values from TestRepo
-	for key, value := range repo.Values {
-		templateVars[key] = value
-	}
-
-	var thisFile string
-	if _, file, _, ok := runtime.Caller(0); ok {
-		thisFile = file
-	}
-	tmpl := filepath.Join(filepath.Dir(thisFile), "../testdata/local-write.json.tmpl")
-	if repo.Template != "" {
-		tmpl = repo.Template
-	}
-	localTmp := h.RenderObject(t, tmpl, templateVars)
-
-	// Create repository in org's namespace
-	repoClient := h.GetResourceClient(apis.ResourceClientArgs{
-		User:      orgCtx.User,
-		Namespace: orgCtx.Namespace,
-		GVR:       provisioning.RepositoryResourceInfo.GroupVersionResource(),
-	})
-
-	_, err := repoClient.Resource.Create(t.Context(), localTmp, metav1.CreateOptions{})
-	require.NoError(t, err, "should create repository in namespace %s", orgCtx.Namespace)
-
-	// Wait for healthy repository
-	h.WaitForHealthyRepositoryWithOrg(t, repo.Name, orgCtx)
-
-	// Copy files if provided
-	for from, to := range repo.Copies {
-		if repo.Path != "" {
-			// Copy to custom path
-			fullPath := path.Join(repoPath, to)
-			err := os.MkdirAll(path.Dir(fullPath), 0o750)
-			require.NoError(t, err, "failed to create directories for custom path")
-			file := readTestFile(t, from)
-			err = os.WriteFile(fullPath, file, 0o600)
-			require.NoError(t, err, "failed to write file to custom path")
-		} else {
-			h.CopyToProvisioningPath(t, from, to)
-		}
-	}
-
-	if !repo.SkipSync {
-		// Trigger and wait for initial sync
-		h.SyncAndWaitWithOrg(t, repo.Name, nil, orgCtx)
-	}
-}
-
-// WaitForHealthyRepositoryWithOrg waits for a repository to become healthy in a specific org context
-func (h *ProvisioningTestHelper) WaitForHealthyRepositoryWithOrg(t *testing.T, repoName string, orgCtx *OrgContext) {
-	t.Helper()
-
-	if orgCtx == nil {
-		h.WaitForHealthyRepository(t, repoName)
-		return
-	}
-
-	repoClient := h.GetResourceClient(apis.ResourceClientArgs{
-		User:      orgCtx.User,
-		Namespace: orgCtx.Namespace,
-		GVR:       provisioning.RepositoryResourceInfo.GroupVersionResource(),
-	})
-
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		obj, err := repoClient.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
-		if err != nil {
-			collect.Errorf("failed to get repository: %v", err)
-			return
-		}
-
-		conditions, found, err := unstructured.NestedSlice(obj.Object, "status", "conditions")
-		if err != nil || !found {
-			collect.Errorf("no conditions found")
-			return
-		}
-
-		for _, c := range conditions {
-			condition := c.(map[string]interface{})
-			if condition["type"] == "Ready" && condition["status"] == "True" {
-				return
-			}
-		}
-		collect.Errorf("repository not ready")
-	}, WaitTimeoutDefault, WaitIntervalDefault, "repository should become healthy in namespace %s", orgCtx.Namespace)
-}
-
-// AwaitJobsWithOrg waits for all jobs for a repository to complete in a specific org context
-func (h *ProvisioningTestHelper) AwaitJobsWithOrg(t *testing.T, repoName string, orgCtx *OrgContext) {
-	t.Helper()
-
-	if orgCtx == nil {
-		h.AwaitJobs(t, repoName)
-		return
-	}
-
-	jobsClient := h.GetResourceClient(apis.ResourceClientArgs{
-		User:      orgCtx.User,
-		Namespace: orgCtx.Namespace,
-		GVR:       provisioning.JobResourceInfo.GroupVersionResource(),
-	})
-
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		jobs, err := jobsClient.Resource.List(t.Context(), metav1.ListOptions{})
-		if err != nil {
-			collect.Errorf("failed to list jobs: %v", err)
-			return
-		}
-
-		for _, job := range jobs.Items {
-			state, found, _ := unstructured.NestedString(job.Object, "status", "state")
-			if !found {
-				collect.Errorf("job %s has no state", job.GetName())
-				return
-			}
-			// Job is complete if state is success, error, or warning
-			if state != string(provisioning.JobStateSuccess) && state != string(provisioning.JobStateError) && state != string(provisioning.JobStateWarning) {
-				collect.Errorf("job %s still running (state: %s)", job.GetName(), state)
-				return
-			}
-			if state == string(provisioning.JobStateError) {
-				message, _, _ := unstructured.NestedString(job.Object, "status", "message")
-				collect.Errorf("job %s failed: %s", job.GetName(), message)
-				return
-			}
-		}
-	}, WaitTimeoutDefault, WaitIntervalDefault, "all jobs should complete in namespace %s", orgCtx.Namespace)
-}
-
-// GetFoldersWithOrg lists folders in a specific org context
-func (h *ProvisioningTestHelper) GetFoldersWithOrg(t *testing.T, orgCtx *OrgContext) *unstructured.UnstructuredList {
-	t.Helper()
-
-	if orgCtx == nil {
-		folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		require.NoError(t, err)
-		return folders
-	}
-
-	foldersClient := h.GetResourceClient(apis.ResourceClientArgs{
-		User:      orgCtx.User,
-		Namespace: orgCtx.Namespace,
-		GVR:       schema.GroupVersionResource{Group: "folder.grafana.app", Resource: "folders", Version: "v1"},
-	})
-
-	folders, err := foldersClient.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err, "should list folders in namespace %s", orgCtx.Namespace)
-	return folders
-}
-
-// GetDashboardsWithOrg lists dashboards in a specific org context
-func (h *ProvisioningTestHelper) GetDashboardsWithOrg(t *testing.T, orgCtx *OrgContext) *unstructured.UnstructuredList {
-	t.Helper()
-
-	if orgCtx == nil {
-		dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		require.NoError(t, err)
-		return dashboards
-	}
-
-	dashboardsClient := h.GetResourceClient(apis.ResourceClientArgs{
-		User:      orgCtx.User,
-		Namespace: orgCtx.Namespace,
-		GVR:       schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards", Version: "v1"},
-	})
-
-	dashboards, err := dashboardsClient.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err, "should list dashboards in namespace %s", orgCtx.Namespace)
-	return dashboards
-}
