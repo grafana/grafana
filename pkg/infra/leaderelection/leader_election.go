@@ -1,3 +1,17 @@
+// Package leaderelection provides a thin wrapper around
+// k8s.io/client-go/tools/leaderelection for leader election via Kubernetes
+// Lease objects.
+//
+// Important: the underlying library does NOT guarantee that only one client is
+// acting as leader at any given time (i.e. it does not provide fencing).
+// Brief dual-leader windows are possible during network partitions or clock
+// skew. This package inherits that limitation.
+//
+// For callers where single-leader semantics are critical, additional
+// distributed-lock or fencing mechanisms should be layered on top. We may
+// improve this in the future.
+//
+// See https://pkg.go.dev/k8s.io/client-go/tools/leaderelection for details.
 package leaderelection
 
 import (
