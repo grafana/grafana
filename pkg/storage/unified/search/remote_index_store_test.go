@@ -26,42 +26,23 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// testBucketSetup holds a named bucket configuration for multi-backend tests.
-//
-// fileblob always runs. Set CDK_TEST_BUCKET_URL to also run against a real provider:
+// testBucket returns a bucket for testing. Uses CDK_TEST_BUCKET_URL if set,
+// otherwise falls back to a local fileblob.
 //
 //	CDK_TEST_BUCKET_URL=gs://my-test-bucket go test ./pkg/storage/unified/search/... -v
-type testBucketSetup struct {
-	name    string
-	bucket  *blob.Bucket
-	cleanup func()
-}
-
-func testBucketSetups(t *testing.T) []testBucketSetup {
+func testBucket(t *testing.T) *blob.Bucket {
 	t.Helper()
-	var setups []testBucketSetup
-
-	dir := t.TempDir()
-	fb, err := fileblob.OpenBucket(dir, nil)
-	require.NoError(t, err)
-	setups = append(setups, testBucketSetup{
-		name:    "fileblob",
-		bucket:  fb,
-		cleanup: func() { _ = fb.Close() },
-	})
-
 	if bucketURL := os.Getenv("CDK_TEST_BUCKET_URL"); bucketURL != "" {
-		ctx := context.Background()
-		rb, err := blob.OpenBucket(ctx, bucketURL)
+		b, err := blob.OpenBucket(context.Background(), bucketURL)
 		require.NoError(t, err)
-		setups = append(setups, testBucketSetup{
-			name:    "remote:" + bucketURL,
-			bucket:  rb,
-			cleanup: func() { _ = rb.Close() },
-		})
+		t.Cleanup(func() { _ = b.Close() })
+		return b
 	}
-
-	return setups
+	dir := t.TempDir()
+	b, err := fileblob.OpenBucket(dir, nil)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = b.Close() })
+	return b
 }
 
 func newTestNsResource() resource.NamespacedResource {
@@ -90,144 +71,108 @@ func createTestBleveIndex(t *testing.T) string {
 	return dir
 }
 
-// --- Multi-backend tests (fileblob + optional remote) ---
-
 func TestRemoteIndexStore_UploadDownloadBleveIndex(t *testing.T) {
-	for _, setup := range testBucketSetups(t) {
-		t.Run(setup.name, func(t *testing.T) {
-			t.Cleanup(setup.cleanup)
-			store := NewBucketRemoteIndexStore(setup.bucket)
-			ctx := context.Background()
-			ns := newTestNsResource()
+	store := NewBucketRemoteIndexStore(testBucket(t))
+	ctx := context.Background()
+	ns := newTestNsResource()
 
-			srcDir := createTestBleveIndex(t)
-			meta := IndexMeta{
-				GrafanaBuildVersion:   "11.0.0",
-				LatestResourceVersion: 99,
-			}
-
-			indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
-			require.NoError(t, err)
-			t.Cleanup(func() { _ = store.DeleteIndex(ctx, ns, indexKey) })
-
-			destDir := filepath.Join(t.TempDir(), "downloaded")
-			gotMeta, err := store.DownloadIndex(ctx, ns, indexKey, destDir)
-			require.NoError(t, err)
-			assert.Equal(t, meta.GrafanaBuildVersion, gotMeta.GrafanaBuildVersion)
-			assert.Equal(t, meta.LatestResourceVersion, gotMeta.LatestResourceVersion)
-
-			// Open and query the downloaded index
-			idx, err := bleve.Open(destDir)
-			require.NoError(t, err)
-
-			count, err := idx.DocCount()
-			require.NoError(t, err)
-			assert.Equal(t, uint64(3), count)
-
-			result, err := idx.Search(bleve.NewSearchRequest(bleve.NewMatchQuery("Production")))
-			require.NoError(t, err)
-			assert.Equal(t, uint64(1), result.Total)
-			assert.Equal(t, "dash-1", result.Hits[0].ID)
-
-			result2, err := idx.Search(bleve.NewSearchRequest(bleve.NewMatchQuery("ops")))
-			require.NoError(t, err)
-			assert.Equal(t, uint64(2), result2.Total)
-
-			require.NoError(t, idx.Close())
-			require.NoError(t, store.DeleteIndex(ctx, ns, indexKey))
-		})
+	srcDir := createTestBleveIndex(t)
+	meta := IndexMeta{
+		GrafanaBuildVersion:   "11.0.0",
+		LatestResourceVersion: 99,
 	}
+
+	indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = store.DeleteIndex(ctx, ns, indexKey) })
+
+	destDir := filepath.Join(t.TempDir(), "downloaded")
+	gotMeta, err := store.DownloadIndex(ctx, ns, indexKey, destDir)
+	require.NoError(t, err)
+	assert.Equal(t, meta.GrafanaBuildVersion, gotMeta.GrafanaBuildVersion)
+	assert.Equal(t, meta.LatestResourceVersion, gotMeta.LatestResourceVersion)
+
+	// Open and query the downloaded index
+	idx, err := bleve.Open(destDir)
+	require.NoError(t, err)
+
+	count, err := idx.DocCount()
+	require.NoError(t, err)
+	assert.Equal(t, uint64(3), count)
+
+	result, err := idx.Search(bleve.NewSearchRequest(bleve.NewMatchQuery("Production")))
+	require.NoError(t, err)
+	assert.Equal(t, uint64(1), result.Total)
+	assert.Equal(t, "dash-1", result.Hits[0].ID)
+
+	result2, err := idx.Search(bleve.NewSearchRequest(bleve.NewMatchQuery("ops")))
+	require.NoError(t, err)
+	assert.Equal(t, uint64(2), result2.Total)
+
+	require.NoError(t, idx.Close())
 }
 
-func TestRemoteIndexStore_ListIndexes(t *testing.T) {
-	for _, setup := range testBucketSetups(t) {
-		t.Run(setup.name, func(t *testing.T) {
-			t.Cleanup(setup.cleanup)
-			store := NewBucketRemoteIndexStore(setup.bucket)
-			ctx := context.Background()
-			ns := newTestNsResource()
+func TestRemoteIndexStore_ListAndDeleteIndexes(t *testing.T) {
+	store := NewBucketRemoteIndexStore(testBucket(t))
+	ctx := context.Background()
+	ns := newTestNsResource()
 
-			keys := make([]ulid.ULID, 0, 3)
-			for range 3 {
-				srcDir := createTestBleveIndex(t)
-				meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
-				key, err := store.UploadIndex(ctx, ns, srcDir, meta)
+	keys := make([]ulid.ULID, 0, 3)
+	for range 3 {
+		srcDir := createTestBleveIndex(t)
+		meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
+		key, err := store.UploadIndex(ctx, ns, srcDir, meta)
+		require.NoError(t, err)
+		keys = append(keys, key)
+		t.Cleanup(func() { _ = store.DeleteIndex(ctx, ns, key) })
+	}
+
+	indexes, err := store.ListIndexes(ctx, ns)
+	require.NoError(t, err)
+	assert.Len(t, indexes, 3)
+	for _, key := range keys {
+		assert.Contains(t, indexes, key)
+	}
+
+	for _, key := range keys {
+		require.NoError(t, store.DeleteIndex(ctx, ns, key))
+	}
+	indexes, err = store.ListIndexes(ctx, ns)
+	require.NoError(t, err)
+	assert.Empty(t, indexes)
+
+	// Download of a deleted index should fail
+	_, err = store.DownloadIndex(ctx, ns, keys[0], filepath.Join(t.TempDir(), "dl"))
+	require.Error(t, err)
+}
+
+func TestValidateManifestPaths(t *testing.T) {
+	tests := []struct {
+		name    string
+		files   map[string]int64
+		wantErr string
+	}{
+		{name: "valid paths", files: map[string]int64{"store/root.bolt": 100, "store/00001.zap": 200}},
+		{name: "path traversal", files: map[string]int64{"../../../tmp/escape": 100}, wantErr: "invalid path"},
+		{name: "absolute path", files: map[string]int64{"/tmp/escape": 100}, wantErr: "invalid path"},
+		{name: "non-canonical dotslash", files: map[string]int64{"./store/root.bolt": 100}, wantErr: "non-canonical"},
+		{name: "non-canonical double dot", files: map[string]int64{"store/../store/root.bolt": 100}, wantErr: "non-canonical"},
+		{name: "dot entry", files: map[string]int64{".": 100}, wantErr: "invalid path"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateManifestPaths(tt.files)
+			if tt.wantErr == "" {
 				require.NoError(t, err)
-				keys = append(keys, key)
-				t.Cleanup(func() { _ = store.DeleteIndex(ctx, ns, key) })
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.wantErr)
 			}
-
-			indexes, err := store.ListIndexes(ctx, ns)
-			require.NoError(t, err)
-			assert.Len(t, indexes, 3)
-			for _, key := range keys {
-				assert.Contains(t, indexes, key)
-			}
-
-			for _, key := range keys {
-				require.NoError(t, store.DeleteIndex(ctx, ns, key))
-			}
-			indexes, err = store.ListIndexes(ctx, ns)
-			require.NoError(t, err)
-			assert.Empty(t, indexes)
-		})
-	}
-}
-
-func TestRemoteIndexStore_DeleteIndex(t *testing.T) {
-	for _, setup := range testBucketSetups(t) {
-		t.Run(setup.name, func(t *testing.T) {
-			t.Cleanup(setup.cleanup)
-			store := NewBucketRemoteIndexStore(setup.bucket)
-			ctx := context.Background()
-			ns := newTestNsResource()
-
-			srcDir := createTestBleveIndex(t)
-			meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
-			indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
-			require.NoError(t, err)
-			t.Cleanup(func() { _ = store.DeleteIndex(ctx, ns, indexKey) })
-
-			require.NoError(t, store.DeleteIndex(ctx, ns, indexKey))
-
-			indexes, err := store.ListIndexes(ctx, ns)
-			require.NoError(t, err)
-			assert.NotContains(t, indexes, indexKey)
-
-			_, err = store.DownloadIndex(ctx, ns, indexKey, t.TempDir())
-			require.Error(t, err)
 		})
 	}
 }
 
 // --- memblob-only tests (require direct bucket manipulation) ---
-
-func TestRemoteIndexStore_DownloadRejectsPathTraversal(t *testing.T) {
-	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	defer func() { _ = bucket.Close() }()
-	store := NewBucketRemoteIndexStore(bucket)
-	ns := newTestNsResource()
-
-	srcDir := createTestBleveIndex(t)
-	meta := IndexMeta{GrafanaBuildVersion: "11.0.0", LatestResourceVersion: 10}
-	indexKey, err := store.UploadIndex(ctx, ns, srcDir, meta)
-	require.NoError(t, err)
-
-	// Tamper with meta.json to include a path traversal entry
-	pfx := indexPrefix(ns, indexKey.String())
-	metaRaw, err := bucket.ReadAll(ctx, pfx+"meta.json")
-	require.NoError(t, err)
-	require.NoError(t, json.Unmarshal(metaRaw, &meta))
-	meta.Files["../../../etc/another-file"] = 100
-	metaBytes, err := json.Marshal(meta)
-	require.NoError(t, err)
-	require.NoError(t, bucket.WriteAll(ctx, pfx+"meta.json", metaBytes, nil))
-
-	_, err = store.DownloadIndex(ctx, ns, indexKey, filepath.Join(t.TempDir(), "dl"))
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "invalid manifest")
-}
 
 func TestRemoteIndexStore_UploadRejectsNonRegularFiles(t *testing.T) {
 	ctx := context.Background()
@@ -338,7 +283,7 @@ func TestRemoteIndexStore_DownloadValidatesCompleteness(t *testing.T) {
 
 	_, err = store.DownloadIndex(ctx, ns, indexKey, filepath.Join(t.TempDir(), "dl"))
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "downloading")
+	require.Contains(t, err.Error(), "not found")
 }
 
 func TestRemoteIndexStore_UploadRejectsEmptyDirectory(t *testing.T) {
