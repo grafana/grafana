@@ -38,22 +38,22 @@ type resourceTranslation struct {
 	typ      string
 	group    string
 	resource string
-	mapping  map[string]actionMappig
+	mapping  map[string]actionMapping
 }
 
-type actionMappig struct {
+type actionMapping struct {
 	relation    string
 	group       string
 	resource    string
 	subresource string
 }
 
-func newMapping(relation, subresource string) actionMappig {
+func newMapping(relation, subresource string) actionMapping {
 	return newScopedMapping(relation, "", "", subresource)
 }
 
-func newScopedMapping(relation, group, resource, subresource string) actionMappig {
-	return actionMappig{relation, group, resource, subresource}
+func newScopedMapping(relation, group, resource, subresource string) actionMapping {
+	return actionMapping{relation, group, resource, subresource}
 }
 
 var (
@@ -69,7 +69,7 @@ var resourceTranslations = map[string]resourceTranslation{
 		typ:      TypeFolder,
 		group:    folderGroup,
 		resource: folderResource,
-		mapping: map[string]actionMappig{
+		mapping: map[string]actionMapping{
 			"folders:read":      newMapping(RelationGet, ""),
 			"folders:write":     newMapping(RelationUpdate, ""),
 			"folders:create":    newMapping(RelationCreate, ""),
@@ -91,7 +91,7 @@ var resourceTranslations = map[string]resourceTranslation{
 		typ:      TypeResource,
 		group:    dashboardGroup,
 		resource: dashboardResource,
-		mapping: map[string]actionMappig{
+		mapping: map[string]actionMapping{
 			"dashboards:read":   newMapping(RelationGet, ""),
 			"dashboards:write":  newMapping(RelationUpdate, ""),
 			"dashboards:create": newMapping(RelationCreate, ""),
@@ -165,7 +165,7 @@ func IsBasicRole(name string) bool {
 	return slices.Contains(basicRolesUIDs, name)
 }
 
-func actionListParams(translation resourceTranslation, m actionMappig) (group, resource, verb string, ok bool) {
+func actionListParams(translation resourceTranslation, m actionMapping) (group, resource, verb string, ok bool) {
 	group = translation.group
 	resource = translation.resource
 	if m.group != "" && m.resource != "" {
