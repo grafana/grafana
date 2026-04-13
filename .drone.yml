@@ -4092,7 +4092,7 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.24.3
+    GO_VERSION: 1.26.1
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -4167,7 +4167,7 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.24.3
+    GO_VERSION: 1.26.1
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -4284,7 +4284,7 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.24.3
+    GO_VERSION: 1.26.1
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -4521,7 +4521,7 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.24.3
+    GO_VERSION: 1.26.1
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -4665,7 +4665,7 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.24.3
+    GO_VERSION: 1.26.1
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -4792,7 +4792,7 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GO_VERSION: 1.24.3
+    GO_VERSION: 1.26.1
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
