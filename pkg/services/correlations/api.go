@@ -209,7 +209,7 @@ func (s *CorrelationsService) getCorrelationHandler(c *contextmodel.ReqContext) 
 		OrgId:     c.GetOrgID(),
 	}
 
-	correlation, err := s.getCorrelation(c.Req.Context(), query)
+	correlation, err := s.GetCorrelation(c.Req.Context(), query)
 	if err != nil {
 		if errors.Is(err, ErrCorrelationNotFound) {
 			return response.Error(http.StatusNotFound, "Correlation not found", err)
@@ -255,7 +255,7 @@ func (s *CorrelationsService) getCorrelationsBySourceUIDHandler(c *contextmodel.
 		OrgId:     c.GetOrgID(),
 	}
 
-	correlations, err := s.getCorrelationsBySourceUID(c.Req.Context(), query)
+	correlations, err := s.GetCorrelationsBySourceUID(c.Req.Context(), query)
 	if err != nil {
 		if errors.Is(err, ErrCorrelationNotFound) {
 			return response.Error(http.StatusNotFound, "No correlation found", err)
@@ -314,7 +314,7 @@ func (s *CorrelationsService) getCorrelationsHandler(c *contextmodel.ReqContext)
 		SourceUIDs: sourceUIDs,
 	}
 
-	correlations, err := s.getCorrelations(c.Req.Context(), query)
+	correlations, err := s.GetCorrelations(c.Req.Context(), query)
 	if err != nil {
 		if errors.Is(err, ErrCorrelationNotFound) {
 			return response.Error(http.StatusNotFound, "No correlation found", err)
