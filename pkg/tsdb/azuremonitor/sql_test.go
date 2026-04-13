@@ -10,7 +10,6 @@ import (
 	schemas "github.com/grafana/schemads"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 )
 
@@ -122,7 +121,7 @@ func TestNormalizeGrafanaSQLRequest_MissingAggregation(t *testing.T) {
 	req := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			GrafanaConfig: backend.NewGrafanaCfg(map[string]string{
-				featuretoggles.EnabledFeatures: featuremgmt.FlagDsAbstractionApp,
+				featuretoggles.EnabledFeatures: "dsAbstractionApp",
 			}),
 		},
 		Queries: []backend.DataQuery{{RefID: "A", JSON: raw}},
@@ -148,7 +147,7 @@ func TestNormalizeGrafanaSQLRequest_MissingResourceGroup(t *testing.T) {
 	req := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			GrafanaConfig: backend.NewGrafanaCfg(map[string]string{
-				featuretoggles.EnabledFeatures: featuremgmt.FlagDsAbstractionApp,
+				featuretoggles.EnabledFeatures: "dsAbstractionApp",
 			}),
 		},
 		Queries: []backend.DataQuery{{RefID: "A", JSON: raw}},
@@ -175,7 +174,7 @@ func TestNormalizeGrafanaSQLRequest_MultiResourceRequiresRegion(t *testing.T) {
 	req := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			GrafanaConfig: backend.NewGrafanaCfg(map[string]string{
-				featuretoggles.EnabledFeatures: featuremgmt.FlagDsAbstractionApp,
+				featuretoggles.EnabledFeatures: "dsAbstractionApp",
 			}),
 		},
 		Queries: []backend.DataQuery{{RefID: "A", JSON: raw}},
