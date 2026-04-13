@@ -198,8 +198,8 @@ require (
 	github.com/googleapis/gax-go/v2 v2.15.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/grafana/alerting v0.0.0-20260330161147-03db0b961b17 // indirect
-	github.com/grafana/authlib v0.0.0-20260316143530-e1d123886039 // indirect
-	github.com/grafana/authlib/types v0.0.0-20260316143530-e1d123886039 // indirect
+	github.com/grafana/authlib v0.0.0-20260409220714-9b5cc084c9fd // indirect
+	github.com/grafana/authlib/types v0.0.0-20260409220714-9b5cc084c9fd // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
 	github.com/grafana/grafana-aws-sdk v1.4.3 // indirect

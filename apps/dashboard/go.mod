@@ -4,7 +4,7 @@ go 1.25.9
 
 require (
 	cuelang.org/go v0.11.1
-	github.com/grafana/authlib/types v0.0.0-20260316143530-e1d123886039
+	github.com/grafana/authlib/types v0.0.0-20260409220714-9b5cc084c9fd
 	github.com/grafana/grafana-app-sdk v0.53.1
 	github.com/grafana/grafana-app-sdk/logging v0.53.0
 	github.com/grafana/grafana-plugin-sdk-go v0.291.0
@@ -63,7 +63,7 @@ require (
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/authlib v0.0.0-20260316143530-e1d123886039 // indirect
+	github.com/grafana/authlib v0.0.0-20260409220714-9b5cc084c9fd // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect

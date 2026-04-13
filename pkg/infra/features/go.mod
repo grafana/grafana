@@ -4,7 +4,7 @@ go 1.25.9
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0
-	github.com/grafana/authlib v0.0.0-20260316143530-e1d123886039
+	github.com/grafana/authlib v0.0.0-20260409220714-9b5cc084c9fd
 	github.com/grafana/grafana-plugin-sdk-go v0.291.0
 	github.com/open-feature/go-sdk v1.17.1
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7
@@ -19,7 +19,7 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/grafana/authlib/types v0.0.0-20260316143530-e1d123886039 // indirect
+	github.com/grafana/authlib/types v0.0.0-20260409220714-9b5cc084c9fd // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
