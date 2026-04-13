@@ -202,7 +202,9 @@ function DataSourcesListLoading({ hasExploreRights }: { hasExploreRights: boolea
   return (
     <ul className={styles.loadingList} aria-label={t('data-sources.list.label', 'Data sources')}>
       {new Array(LOADING_SKELETON_COUNT).fill(null).map((_, index) => (
-        <DataSourcesListCard.Skeleton key={index} hasExploreRights={hasExploreRights} />
+        <li key={index}>
+          <DataSourcesListCard.Skeleton hasExploreRights={hasExploreRights} />
+        </li>
       ))}
     </ul>
   );
