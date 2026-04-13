@@ -167,6 +167,8 @@ func TestCrossNamespaceIsolation_FolderSync(t *testing.T) {
 	})
 
 	// Step 5: Verify dashboards are also isolated
+	// NOTE: simple-dashboard.json has metadata.namespace: "wrong-namespace"
+	// This test verifies that namespace is ignored and dashboards are created in repo namespace
 	t.Run("verify dashboard isolation", func(t *testing.T) {
 		orgADashboards, err := orgAHelper.DashboardsV2alpha1.Resource.List(context.Background(), metav1.ListOptions{})
 		require.NoError(t, err)
@@ -177,22 +179,28 @@ func TestCrossNamespaceIsolation_FolderSync(t *testing.T) {
 		assert.NotEmpty(t, orgADashboards.Items, "orgA should have dashboards")
 		assert.NotEmpty(t, orgBDashboards.Items, "orgB should have dashboards")
 
-		// Verify all orgA dashboards are in orgA namespace
+		// Verify all orgA dashboards are in orgA namespace (not "wrong-namespace" from file)
 		for i := range orgADashboards.Items {
 			dash := &orgADashboards.Items[i]
 			assert.Equal(t, orgAHelper.Namespace, dash.GetNamespace(),
-				fmt.Sprintf("orgA dashboard %s should be in orgA namespace", dash.GetName()))
+				fmt.Sprintf("orgA dashboard %s should be in orgA namespace, not 'wrong-namespace' from file", dash.GetName()))
+			assert.NotEqual(t, "wrong-namespace", dash.GetNamespace(),
+				"Dashboard namespace from file should be ignored")
 		}
 
-		// Verify all orgB dashboards are in orgB namespace
+		// Verify all orgB dashboards are in orgB namespace (not "wrong-namespace" from file)
 		for i := range orgBDashboards.Items {
 			dash := &orgBDashboards.Items[i]
 			assert.Equal(t, orgBHelper.Namespace, dash.GetNamespace(),
-				fmt.Sprintf("orgB dashboard %s should be in orgB namespace", dash.GetName()))
+				fmt.Sprintf("orgB dashboard %s should be in orgB namespace, not 'wrong-namespace' from file", dash.GetName()))
+			assert.NotEqual(t, "wrong-namespace", dash.GetNamespace(),
+				"Dashboard namespace from file should be ignored")
 		}
 
-		t.Logf("✓ orgA has %d dashboard(s) in namespace '%s'", len(orgADashboards.Items), orgAHelper.Namespace)
-		t.Logf("✓ orgB has %d dashboard(s) in namespace '%s'", len(orgBDashboards.Items), orgBHelper.Namespace)
+		t.Logf("✓ orgA has %d dashboard(s) in namespace '%s' (namespace 'wrong-namespace' from file was ignored)",
+			len(orgADashboards.Items), orgAHelper.Namespace)
+		t.Logf("✓ orgB has %d dashboard(s) in namespace '%s' (namespace 'wrong-namespace' from file was ignored)",
+			len(orgBDashboards.Items), orgBHelper.Namespace)
 	})
 
 	// Step 6: Verify re-sync maintains isolation
