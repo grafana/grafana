@@ -32,6 +32,21 @@ export const KBarResults = (props: KBarResultsProps) => {
   const itemsRef = React.useRef(props.items);
   itemsRef.current = props.items;
 
+  // A11y: Pre-compute the group label for each item so that option items can
+  // announce their section even when the section header has scrolled out of
+  // the virtual window and is no longer in the DOM.
+  const itemGroupLabels = React.useMemo(() => {
+    const labels: Array<string | null> = [];
+    let currentGroup: string | null = null;
+    for (const item of props.items) {
+      if (typeof item === 'string') {
+        currentGroup = item;
+      }
+      labels.push(currentGroup);
+    }
+    return labels;
+  }, [props.items]);
+
   const rowVirtualizer = useVirtual({
     size: itemsRef.current.length,
     parentRef,
@@ -175,18 +190,26 @@ export const KBarResults = (props: KBarResultsProps) => {
           // Preferably this change is upstreamed and ActionImpl has this
           const { target, url } = item;
 
-          const handlers = typeof item !== 'string' && {
+          const isStringItem = typeof item === 'string';
+          const groupLabel = itemGroupLabels[virtualRow.index];
+
+          const handlers = !isStringItem && {
             onPointerMove: () =>
               pointerMoved && activeIndex !== virtualRow.index && query.setActiveIndex(virtualRow.index),
             onPointerDown: () => query.setActiveIndex(virtualRow.index),
             onClick: (ev: React.MouseEvent) => execute(ev, item),
           };
-          const active = virtualRow.index === activeIndex;
+          const active = !isStringItem && virtualRow.index === activeIndex;
 
           const childProps = {
-            id: getListboxItemId(virtualRow.index),
-            role: 'option',
-            'aria-selected': active,
+            ...(isStringItem
+              ? { 'aria-hidden': true }
+              : {
+                  id: getListboxItemId(virtualRow.index),
+                  role: 'option',
+                  'aria-selected': active,
+                  ...(groupLabel ? { 'aria-label': `${groupLabel}: ${item.name}` } : undefined),
+                }),
             style: {
               position: 'absolute',
               top: 0,
