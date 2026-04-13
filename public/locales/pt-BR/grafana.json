@@ -4331,6 +4331,9 @@
       "total_one": "{{count}} item",
       "total_other": "{{count}} itens"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Este item não está no mesmo repositório que os itens selecionados."
@@ -8142,8 +8145,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Não suportado",
+      "badge-text-success": "",
       "badge-text-supported": "Compatível",
       "label": {
+        "advisor": "",
         "alerting": "Alertas",
         "type": "Tipo"
       }
@@ -14316,11 +14321,11 @@
       "view-as-list": "Visualizar como lista"
     },
     "dashboard-actions": {
-      "import": "Importar",
+      "import": "",
       "new": "Novo",
       "new-dashboard": "Novo painel de controle",
       "new-folder": "Nova pasta",
-      "new-template-dashboard": "Painel do modelo"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Pontuação"
@@ -15285,11 +15290,12 @@
     },
     "range-content": {
       "apply-button": "Aplicar intervalo de tempo",
-      "default-error": "Insira uma data que já passou ou \"{{now}}\"",
+      "default-error": "",
       "fiscal-year": "Exercício fiscal: de {{from}} a {{to}}",
       "from-input": "De",
       "open-input-calendar": "Abrir calendário",
-      "range-error": "\"De\" não pode ser após \"Para\"",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Até"
     },
     "range-picker": {

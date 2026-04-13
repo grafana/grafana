@@ -186,10 +186,7 @@ func (m *MappersRegistry) ParseScope(scope, datasourceType string) (*groupResour
 		return nil, fmt.Errorf("%w: %s", errUnknownGroupResource, parts[0])
 	}
 
-	group := gr.Group
-	if parts[2] != "*" || datasourceType != "" {
-		group = resolveGroup(group, datasourceType)
-	}
+	group := resolveGroup(gr.Group, datasourceType)
 
 	return &groupResourceName{Group: group, Resource: gr.Resource, Name: parts[2]}, nil
 }
@@ -286,10 +283,7 @@ func (m *MappersRegistry) ParseScopeCtx(ctx context.Context, ns types.NamespaceI
 	}
 
 	entry := m.entries[gr]
-	group := gr.Group
-	if parts[2] != "*" || datasourceType != "" {
-		group = resolveGroup(group, datasourceType)
-	}
+	group := resolveGroup(gr.Group, datasourceType)
 
 	name := parts[2]
 	if isIDScoped(entry.mapper) && store != nil {

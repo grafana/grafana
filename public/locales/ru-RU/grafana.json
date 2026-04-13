@@ -4385,6 +4385,9 @@
       "total_many": "{{count}} элементов",
       "total_other": "{{count}} элемента"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Этот элемент находится в другом репозитории."
@@ -8228,8 +8231,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Не поддерживается",
+      "badge-text-success": "",
       "badge-text-supported": "Поддерживается",
       "label": {
+        "advisor": "",
         "alerting": "Оповещение",
         "type": "Тип"
       }
@@ -14488,11 +14493,11 @@
       "view-as-list": "Просмотр в виде списка"
     },
     "dashboard-actions": {
-      "import": "Импорт",
+      "import": "",
       "new": "Новые элементы",
       "new-dashboard": "Новый дашборд",
       "new-folder": "Новая папка",
-      "new-template-dashboard": "Дашборд из шаблона"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Оценка"
@@ -15461,11 +15466,12 @@
     },
     "range-content": {
       "apply-button": "Применить временной диапазон",
-      "default-error": "Введите прошедшую дату или «{{now}}»",
+      "default-error": "",
       "fiscal-year": "Отчетный год: {{from}} – {{to}}",
       "from-input": "Время начала",
       "open-input-calendar": "Открыть календарь",
-      "range-error": "Время начала не может быть позже времени окончания",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Время окончания"
     },
     "range-picker": {
