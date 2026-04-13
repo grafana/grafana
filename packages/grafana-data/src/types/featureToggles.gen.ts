@@ -284,11 +284,6 @@ export interface FeatureToggles {
   */
   scanRowInvalidDashboardParseFallbackEnabled?: boolean;
   /**
-  * Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
-  * @default false
-  */
-  datasourceQueryTypes?: boolean;
-  /**
   * Register legacy datasource apis that use the numeric id
   * @default false
   */

@@ -81,11 +81,15 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	ds.Properties["apiVersion"] = *spec.StringProperty().WithEnum(b.GetGroupVersion().String())
 	ds.Properties["kind"] = *spec.StringProperty().WithEnum("DataSource")
 
-	if b.schemaProvider == nil {
+	if b.schemaProvider == nil || !b.cfg.LoadOpenAPISpec {
 		return oas, nil
 	}
 
-	custom, err := b.schemaProvider(b.GetGroupVersion().Version)
+	if b.pluginJSON.ID == "grafana-testdata-datasource" {
+		fmt.Printf("XXXX")
+	}
+
+	custom, err := b.schemaProvider.GetOpenAPI(b.GetGroupVersion().Version)
 	if err != nil {
 		return nil, err
 	}

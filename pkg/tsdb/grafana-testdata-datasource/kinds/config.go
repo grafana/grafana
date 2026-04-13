@@ -1,24 +1,18 @@
-package hardcoded
+package kinds
 
 import (
-	"fmt"
-
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginspec"
 )
 
-func TestdataOpenAPIExtension(apiVersion string) (*pluginspec.OpenAPIExtension, error) {
-	if apiVersion != "v0alpha1" {
-		return nil, fmt.Errorf("only v0 supported right now")
-	}
-
+func OpenAPISpec() *pluginspec.OpenAPIExtension {
 	oas := &pluginspec.OpenAPIExtension{
 		Settings: pluginspec.Settings{
 			Spec: &spec.Schema{},
 
-			SecureValues: []pluginspec.SecureValueInfo{}, // none
+			SecureValues: nil, // none
 
 			Examples: map[string]*spec3.Example{
 				"": { // empty is the default one displayed in swagger
@@ -270,5 +264,5 @@ func TestdataOpenAPIExtension(apiVersion string) (*pluginspec.OpenAPIExtension, 
 				},
 			},
 		}}
-	return oas, nil
+	return oas
 }

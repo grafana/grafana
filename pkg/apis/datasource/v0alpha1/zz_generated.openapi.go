@@ -8,12 +8,11 @@
 package v0alpha1
 
 import (
-	common "k8s.io/kube-openapi/pkg/common"
-	spec "k8s.io/kube-openapi/pkg/validation/spec"
-
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	datasourcev0alpha1 "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	common "k8s.io/kube-openapi/pkg/common"
+	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
@@ -929,40 +928,5 @@ func schema_pkg_apis_datasource_v0alpha1_SchemaInfo(ref common.ReferenceCallback
 		},
 		Dependencies: []string{
 			BasicColumn{}.OpenAPIModelName(), SampleRows{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_datasource_v0alpha1_SecureValueInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"string": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The key",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"description": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Description",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"required": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Required secure values",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"string"},
-			},
-		},
 	}
 }

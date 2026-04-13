@@ -1734,7 +1734,8 @@
       "metadata": {
         "name": "datasourceQueryTypes",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-05-23T16:46:28Z"
+        "creationTimestamp": "2024-05-23T16:46:28Z",
+        "deletionTimestamp": "2026-04-13T11:51:16Z"
       },
       "spec": {
         "description": "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
@@ -1755,6 +1756,34 @@
         "description": "redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.loadOpenAPI",
+        "resourceVersion": "1776081076605",
+        "creationTimestamp": "2026-04-13T11:51:16Z"
+      },
+      "spec": {
+        "description": "Load the openapi spec from spec.{version}.openapi.{yaml|json} ",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.queryTypes",
+        "resourceVersion": "1776081076605",
+        "creationTimestamp": "2026-04-13T11:51:16Z"
+      },
+      "spec": {
+        "description": "Load Query types from spec.{version}.query.types.{yaml|json} ",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
         "expression": "false"
       }
     },

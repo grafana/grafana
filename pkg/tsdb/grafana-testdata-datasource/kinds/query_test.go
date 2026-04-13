@@ -30,7 +30,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 	err = builder.AddQueries(
 		schemabuilder.QueryTypeInfo{
 			Name:   "default",
-			GoType: reflect.TypeOf(&TestDataQuery{}),
+			GoType: reflect.TypeFor[*TestDataQuery](),
 			Examples: []data.QueryExample{
 				{
 					Name: "simple random walk",

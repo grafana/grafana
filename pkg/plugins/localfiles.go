@@ -25,6 +25,9 @@ type LocalFS struct {
 // NewLocalFS returns a new LocalFS that can access any file in the specified base path on the filesystem.
 // basePath must use os-specific path separator for Open() to work properly.
 func NewLocalFS(basePath string) LocalFS {
+	if strings.Contains(basePath, "grafana-testdata") {
+		fmt.Printf("XXXX")
+	}
 	return LocalFS{basePath: basePath}
 }
 
