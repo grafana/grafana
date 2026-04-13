@@ -3585,11 +3585,13 @@
       },
       "instance-details-drawer": {
         "alert-instance-label": "Alert Instance",
+        "back": "Back",
         "declare-incident": "Declare incident",
         "declare-incident-no-permission": "You do not have permission to access Incident",
         "instance-details": "Instance details",
         "silence-button": "Silence",
-        "silence-no-permission": "You do not have permission to create silences"
+        "silence-no-permission": "You do not have permission to create silences",
+        "silence-title-with-name": "Silence {{name}}"
       },
       "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
