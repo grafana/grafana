@@ -161,6 +161,8 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		}
 	}
 
+	treeRoot.AddSection(s.buildDataConnectionsNavLink(c))
+
 	orgAdminNode, err := s.getAdminNode(c)
 
 	if orgAdminNode != nil && len(orgAdminNode.Children) > 0 {
@@ -171,16 +173,8 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 
 	s.addHelpLinks(treeRoot, c)
 
-	// Added before addAppLinks so plugins can find it via FindById("connections")
-	treeRoot.AddSection(s.buildDataConnectionsNavLink(c))
-
 	if err := s.addAppLinks(treeRoot, c); err != nil {
 		return nil, err
-	}
-
-	// Remove if no datasource items and no plugin pages landed in it
-	if connectionsNode := treeRoot.FindById("connections"); connectionsNode != nil && len(connectionsNode.Children) == 0 {
-		treeRoot.RemoveSectionByID("connections")
 	}
 
 	// NOTE: empty admin section cleanup is intentionally NOT done here.
@@ -622,10 +616,11 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 	hasAccess := ac.HasAccess(s.accessControl, c)
 
 	var children []*navtree.NavLink
+
 	baseUrl := s.cfg.AppSubURL + "/connections"
 
 	if hasAccess(datasources.ConfigurationPageAccess) {
-		// Add new connection
+		// Add new connection — requires create/write permissions
 		children = append(children, &navtree.NavLink{
 			Id:       "connections-add-new-connection",
 			Text:     "Add new connection",
@@ -635,7 +630,7 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 			Keywords: []string{"csv", "graphite", "json", "loki", "prometheus", "sql", "tempo"},
 		})
 
-		// Data sources
+		// Data sources — also requires write permissions to be useful
 		children = append(children, &navtree.NavLink{
 			Id:       "connections-datasources",
 			Text:     "Data sources",
@@ -645,6 +640,11 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 		})
 	}
 
+	// Always return the section so that plugin pages registered under the
+	// "connections" section ID (via addAppLinks) can be attached regardless
+	// of the user's datasource permissions. The section is pruned after all
+	// app links are processed if it still has no children (see
+	// NavTreeRoot.RemoveEmptyConnectionsSection called in setIndexViewData).
 	return &navtree.NavLink{
 		Text:       "Connections",
 		Icon:       "adjust-circle",
