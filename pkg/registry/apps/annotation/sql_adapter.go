@@ -63,7 +63,7 @@ func (a *sqlAdapter) Get(ctx context.Context, namespace, name string) (*annotati
 		}
 	}
 
-	return nil, apierrors.NewNotFound(annotationV0.AnnotationKind().GroupVersionResource().GroupResource(), name)
+	return nil, apierrors.NewNotFound(annotationGR, name)
 }
 
 func (a *sqlAdapter) List(ctx context.Context, namespace string, opts ListOptions) (*AnnotationList, error) {
