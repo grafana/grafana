@@ -36,7 +36,6 @@ export {
   getDatasourcePluginMeta,
   getDatasourcePluginMetas,
   getDatasourcePluginMetasMap,
-  getDatasourcePluginMetasMapSync,
   setDatasourcePluginMetas,
   refetchDatasourcePluginMetas,
 } from '../services/pluginMeta/datasources';

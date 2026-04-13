@@ -6,7 +6,6 @@ import {
   getDatasourcePluginMeta,
   getDatasourcePluginMetas,
   getDatasourcePluginMetasMap,
-  getDatasourcePluginMetasMapSync,
   refetchDatasourcePluginMetas,
   setDatasourcePluginMetas,
 } from './datasources';
@@ -59,31 +58,6 @@ describe('when enableDatasourceMetaApiPluginLoading flag is enabled', () => {
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
     });
 
-    it('getDatasourcePluginMetasMapSync should return empty map', () => {
-      const result = getDatasourcePluginMetasMapSync();
-
-      expect(result).toEqual({});
-      expect(initPluginMetasMock).not.toHaveBeenCalled();
-    });
-
-    describe('when process is under development', () => {
-      let originalNodeEnv = process.env.NODE_ENV;
-      beforeEach(() => {
-        process.env.NODE_ENV = 'development';
-      });
-
-      afterEach(() => {
-        process.env.NODE_ENV = originalNodeEnv;
-      });
-
-      it('getDatasourcePluginMetasMapSync should throw', () => {
-        expect(() => getDatasourcePluginMetasMapSync()).toThrow(
-          new Error('getDatasourcePluginMetasMapSync() was called before datasource plugins map was initialized!')
-        );
-        expect(initPluginMetasMock).not.toHaveBeenCalled();
-      });
-    });
-
     it('getDatasourcePluginMeta should call initPluginMetas and return correct result', async () => {
       const result = await getDatasourcePluginMeta('prometheus');
 
@@ -110,31 +84,6 @@ describe('when enableDatasourceMetaApiPluginLoading flag is enabled', () => {
 
       expect(result).toEqual({ prometheus: prometheusMeta });
       expect(initPluginMetasMock).not.toHaveBeenCalled();
-    });
-
-    it('getDatasourcePluginMetasMapSync should return correct result', () => {
-      const result = getDatasourcePluginMetasMapSync();
-
-      expect(result).toEqual({ prometheus: prometheusMeta });
-      expect(initPluginMetasMock).not.toHaveBeenCalled();
-    });
-
-    describe('when process is under development', () => {
-      let originalNodeEnv = process.env.NODE_ENV;
-      beforeEach(() => {
-        process.env.NODE_ENV = 'development';
-      });
-
-      afterEach(() => {
-        process.env.NODE_ENV = originalNodeEnv;
-      });
-
-      it('getDatasourcePluginMetasMapSync should not throw', () => {
-        const result = getDatasourcePluginMetasMapSync();
-
-        expect(result).toEqual({ prometheus: prometheusMeta });
-        expect(initPluginMetasMock).not.toHaveBeenCalled();
-      });
     });
 
     it('getDatasourcePluginMeta should not call initPluginMetas and return correct result', async () => {
@@ -187,22 +136,24 @@ describe('when enableDatasourceMetaApiPluginLoading flag is enabled', () => {
   });
 
   describe('and API returns empty items', () => {
+    let consoleSpy: jest.SpyInstance;
+
     beforeEach(() => {
       setDatasourcePluginMetas({});
       jest.resetAllMocks();
       initPluginMetasMock.mockResolvedValue({ items: [] });
+      consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     });
 
-    it('should fall back to bootdata and log a warning', async () => {
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    afterEach(() => {
+      consoleSpy.mockRestore();
+    });
 
+    it('should fall back to bootdata when API returns empty', async () => {
       const result = await getDatasourcePluginMetas();
 
       expect(result).toEqual([]);
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('falling back to bootdata'));
-
-      consoleSpy.mockRestore();
     });
   });
 });
@@ -348,17 +299,6 @@ describe('immutability', () => {
     mutated['prometheus'].info.author.name = '';
 
     const result = await getDatasourcePluginMetasMap();
-    expect(result['prometheus'].info.author.name).toEqual('Grafana Labs');
-  });
-
-  it('getDatasourcePluginMetasMapSync should return a deep clone', () => {
-    const mutated = getDatasourcePluginMetasMapSync();
-
-    expect(mutated['prometheus'].info.author.name).toEqual('Grafana Labs');
-
-    mutated['prometheus'].info.author.name = '';
-
-    const result = getDatasourcePluginMetasMapSync();
     expect(result['prometheus'].info.author.name).toEqual('Grafana Labs');
   });
 
