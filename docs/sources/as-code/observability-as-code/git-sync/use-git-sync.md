@@ -100,9 +100,9 @@ To update or delete your repository configuration after you complete setup:
 ## Manage folder permissions
 
 {{< admonition type="caution" >}}
-To modify permissions, each provisioned folder must include the `_folder.json` metadata file with the folder's UID. The metadata file is created automatically when you connect your repository with Git Sync using the UI.
+To modify permissions, each provisioned folder must include the `_folder.json` metadata file with the folder's UID, which defines a stable folder ID used to set folder permissions. Without it, the folder's permissions will be lost if you move that folder to a different path in the Git repository.
 
-If your folder is missing the file, you'll see a warning in the Grafana UI with instructions on how to add the missing metadata.
+The metadata file is created automatically when you connect your repository with Git Sync using the UI. If your folder is missing the file, you'll see a warning in the Grafana UI with instructions on how to add the missing metadata.
 {{< /admonition >}}
 
 By default, folders provisioned with Git Sync have these roles with its associated permissions:
