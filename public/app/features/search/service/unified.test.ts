@@ -22,8 +22,8 @@ describe('Unified Storage Searcher', () => {
 
     server.use(
       getCustomSearchHandler([
-        { name: 'folder1', title: 'Folder 1', resource: 'folder' },
-        { name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboard', folder: 'folder1' },
+        { name: 'folder1', title: 'Folder 1', resource: 'folders' },
+        { name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboards', folder: 'folder1' },
       ])
     );
 
@@ -44,9 +44,9 @@ describe('Unified Storage Searcher', () => {
   it('should perform search and sync folders with missing folder', async () => {
     server.use(
       getCustomSearchHandler([
-        { name: 'folder2', title: 'Folder 2', resource: 'folder' },
-        { name: 'db1', title: 'DB 1', resource: 'dashboard', folder: 'folder1' },
-        { name: 'db2', title: 'DB 2', resource: 'dashboard', folder: 'folder2' },
+        { name: 'folder2', title: 'Folder 2', resource: 'folders' },
+        { name: 'db1', title: 'DB 1', resource: 'dashboards', folder: 'folder1' },
+        { name: 'db2', title: 'DB 2', resource: 'dashboards', folder: 'folder2' },
       ])
     );
 
@@ -104,19 +104,19 @@ describe('Unified Storage Searcher', () => {
         {
           name: 'team-owned-dashboard',
           title: 'Team owned dashboard',
-          resource: 'dashboard',
+          resource: 'dashboards',
           ownerReferences: ['iam.grafana.app/Team/team-a'],
         },
         {
           name: 'other-team-dashboard',
           title: 'Other team dashboard',
-          resource: 'dashboard',
+          resource: 'dashboards',
           ownerReferences: ['iam.grafana.app/Team/team-b'],
         },
         {
           name: 'unowned-dashboard',
           title: 'Unowned dashboard',
-          resource: 'dashboard',
+          resource: 'dashboards',
         },
       ])
     );
@@ -138,7 +138,7 @@ describe('toDashboardResults', () => {
   it('can create dashboard search results and set meta sortBy so column is added for sprinkles sort field', () => {
     const mockHits: SearchHit[] = [
       {
-        resource: 'dashboard',
+        resource: 'dashboards',
         name: 'Main Dashboard',
         title: 'Main Dashboard Title',
         location: '/dashboards/1',
@@ -148,7 +148,7 @@ describe('toDashboardResults', () => {
         url: '/dashboards/1/main-dashboard-title',
       },
       {
-        resource: 'dashboard',
+        resource: 'dashboards',
         name: 'Main Dashboard',
         title: 'Main Dashboard Title',
         location: '/dashboards/1',
@@ -177,7 +177,7 @@ describe('toDashboardResults', () => {
   it('will trim "-" from the sort field name', () => {
     const mockHits: SearchHit[] = [
       {
-        resource: 'dashboard',
+        resource: 'dashboards',
         name: 'Main Dashboard',
         title: 'Main Dashboard Title',
         location: '/dashboards/1',
@@ -210,8 +210,8 @@ describe('toDashboardResults', () => {
 
       server.use(
         getCustomSearchHandler([
-          { name: 'folder1', title: 'Folder 1', resource: 'folder' },
-          { name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboard', folder: 'folder1' },
+          { name: 'folder1', title: 'Folder 1', resource: 'folders' },
+          { name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboards', folder: 'folder1' },
         ])
       );
 
@@ -228,8 +228,8 @@ describe('toDashboardResults', () => {
 
       server.use(
         getCustomSearchHandler([
-          { name: 'folder1', title: 'Folder 1', resource: 'folder' },
-          { name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboard', folder: 'folder1' },
+          { name: 'folder1', title: 'Folder 1', resource: 'folders' },
+          { name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboards', folder: 'folder1' },
         ])
       );
 
