@@ -349,6 +349,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-04-02,enableColorblindSafePanelOptions,experimental,@grafana/dataviz-squad,false,false,true
 2026-04-03,cacheConfigUnifiedStorageMigration,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-04-10,querycaching.redirectToK8SApi,experimental,@grafana/grafana-operator-experience-squad,false,false,false
+2026-04-13,querycaching.enableConnectionsClient,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-04-02,compiledBootScript,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-02-13,influxDBConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
 2026-04-09,clickHouseConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false

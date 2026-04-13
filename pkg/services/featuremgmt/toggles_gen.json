@@ -4650,6 +4650,19 @@
     },
     {
       "metadata": {
+        "name": "querycaching.enableConnectionsClient",
+        "resourceVersion": "1776093426820",
+        "creationTimestamp": "2026-04-13T15:17:06Z"
+      },
+      "spec": {
+        "description": "Use connections client instead of storage to resolve datasource plugin ID in query caching",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "querycaching.handlersReadFromK8SApi",
         "resourceVersion": "1775842665327",
         "creationTimestamp": "2026-04-10T17:37:45Z",
