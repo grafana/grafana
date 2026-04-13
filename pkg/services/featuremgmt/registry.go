@@ -473,7 +473,7 @@ var (
 		},
 		{
 			Name:            "datasources.queryTypes",
-			Description:     "Load Query types from spec.{version}.query.{yaml|json} ",
+			Description:     "Load Query types from spec.{version}.query.{yaml|json}",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
@@ -482,7 +482,7 @@ var (
 		},
 		{
 			Name:            "datasources.loadOpenAPI",
-			Description:     "Load the openapi spec from spec.{version}.openapi.{yaml|json} ",
+			Description:     "Load the openapi spec from spec.{version}.openapi.{yaml|json}",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
