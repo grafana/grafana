@@ -40,6 +40,7 @@ import (
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 )
 
 const (
@@ -768,9 +769,21 @@ func (s *Storage) validateMinimumResourceVersion(minimumResourceVersion string, 
 		return apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %v", err))
 	}
 
+	// Normalize both to microsecond format for cross-format comparison.
+	// RVs may be in either snowflake or microsecond format depending
+	// on which backend produced them.
+	rvMin := int64(minimumRV)
+	if !resource.IsSnowflake(rvMin) {
+		rvMin = rvmanager.SnowflakeFromRV(rvMin)
+	}
+	rvActual := int64(actualRevision)
+	if !resource.IsSnowflake(rvActual) {
+		rvActual = rvmanager.SnowflakeFromRV(rvActual)
+	}
+
 	// Enforce the storage.Interface guarantee that the resource version of the returned data
 	// "will be at least 'resourceVersion'".
-	if minimumRV > actualRevision {
+	if rvMin > rvActual {
 		return storage.NewTooLargeResourceVersionError(minimumRV, actualRevision, 0)
 	}
 	return nil
