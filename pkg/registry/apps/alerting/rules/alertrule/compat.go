@@ -53,8 +53,8 @@ func convertToK8sResource(
 			},
 			Labels:                      make(map[string]model.AlertRuleTemplateString),
 			Annotations:                 make(map[string]model.AlertRuleTemplateString),
-			NoDataState:                 string(rule.NoDataState),
-			ExecErrState:                string(rule.ExecErrState),
+			NoDataState:                 model.AlertRuleNoDataState(rule.NoDataState),
+			ExecErrState:                model.AlertRuleExecErrState(rule.ExecErrState),
 			MissingSeriesEvalsToResolve: rule.MissingSeriesEvalsToResolve,
 		},
 	}
@@ -78,7 +78,7 @@ func convertToK8sResource(
 
 	if rule.PanelID != nil && rule.DashboardUID != nil &&
 		*rule.PanelID > 0 && *rule.DashboardUID != "" {
-		k8sRule.Spec.PanelRef = &model.AlertRuleV0alpha1SpecPanelRef{
+		k8sRule.Spec.PanelRef = &model.AlertRulePanelRef{
 			PanelID:      *rule.PanelID,
 			DashboardUID: *rule.DashboardUID,
 		}
@@ -97,7 +97,7 @@ func convertToK8sResource(
 	}
 
 	if setting := rule.ContactPointRouting(); setting != nil {
-		nfSetting := model.AlertRuleV0alpha1SpecNotificationSettings{
+		nfSetting := model.AlertRuleNotificationSettings{
 			Receiver: setting.Receiver,
 			GroupBy:  setting.GroupBy,
 		}
@@ -314,7 +314,7 @@ func convertToBaseDomainModel(orgID int64, k8sRule *model.AlertRule) (*ngmodels.
 	return domainRule, nil
 }
 
-func convertNotificationSettings(sourceSettings *model.AlertRuleV0alpha1SpecNotificationSettings) (ngmodels.NotificationSettings, error) {
+func convertNotificationSettings(sourceSettings *model.AlertRuleNotificationSettings) (ngmodels.NotificationSettings, error) {
 	settings := ngmodels.ContactPointRouting{
 		Receiver: sourceSettings.Receiver,
 		GroupBy:  sourceSettings.GroupBy,

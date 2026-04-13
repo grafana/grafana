@@ -40,7 +40,7 @@ test.describe(
         const groupByOption = groupByOptions.nth(1);
 
         await groupByOption.click();
-        await page.keyboard.press('Escape');
+        await page.locator('body').click();
 
         const selectedValues = await groupByValues.allTextContents();
 
@@ -81,7 +81,7 @@ test.describe(
 
         const groupByOption = groupByOptions.nth(1);
         await groupByOption.click();
-        await page.keyboard.press('Escape');
+        await page.locator('body').click();
 
         const afterEditOptionsCount = await groupByValues.count();
 
@@ -110,6 +110,8 @@ test.describe(
         await groupByVariable.fill(textTwo!);
         await page.keyboard.press('Enter');
 
+        // Need to press escape twice - once to close the menu and once to blur the input
+        await page.keyboard.press('Escape');
         await page.keyboard.press('Escape');
 
         await expect(page.getByText(textOne!, { exact: false }).first()).toBeVisible();

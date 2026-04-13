@@ -4385,6 +4385,9 @@
       "total_many": "{{count}} položka",
       "total_other": "{{count}} položka"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Tato položka není ve stejném úložišti jako vybrané položky."
@@ -4983,6 +4986,9 @@
       "light-theme": "Světlý",
       "scopes": "Rozsahy"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "Hledat pomocí asistenta Grafana",
       "message": "Nebyly nalezeny žádné výsledky"
@@ -5058,24 +5064,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Připojte data ke Grafaně prostřednictvím zdrojů dat, integrací a aplikací",
-          "title": "Přidat nové připojení"
+          "subtitle": "Připojte data ke Grafaně prostřednictvím zdrojů dat, integrací a aplikací"
         },
         "collector": {
-          "subtitle": "Spravujte konfiguraci Grafana Alloy, naší distribuce kolektoru OpenTelemetry",
-          "title": ""
+          "subtitle": "Spravujte konfiguraci Grafana Alloy, naší distribuce kolektoru OpenTelemetry"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "Spravujte stávající připojení zdrojů dat",
-          "title": "Zdroje dat"
+          "subtitle": "Spravujte stávající připojení zdrojů dat"
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "Spravujte své aktivní integrace",
-          "title": "Integrace"
+          "subtitle": "Spravujte své aktivní integrace"
         },
         "private-data-source-connections": {
-          "subtitle": "Spravujte připojení k soukromé síti pro zdroje dat",
-          "title": "Připojení k soukromé síti zdroje dat"
+          "subtitle": "Spravujte připojení k soukromé síti pro zdroje dat"
         },
         "subtitle": "Připojte svou infrastrukturu ke Grafana Cloud pomocí zdrojů dat, integrací a aplikací. Na této stránce můžete přidat a spravovat vše od příjmu dat až po soukromá připojení a telemetrické řetězení."
       }
@@ -5135,11 +5145,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Připojit k novému zdroji dat",
-          "title": "Přidat nové připojení"
+          "subtitle": "Připojit k novému zdroji dat"
         },
         "data-sources": {
-          "subtitle": "Spravujte stávající připojení zdrojů dat",
           "title": "Zobrazit nakonfigurované zdroje dat"
         },
         "subtitle": "Spravujte připojení zdrojů dat na jednom místě. Na této stránce můžete přidat nový zdroj dat nebo spravovat stávající připojení."
@@ -5189,10 +5197,6 @@
       "view-json-diff": "Zobrazit JSON diff pro zobrazení všech změn"
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "Přidat nový",
     "alert": {
@@ -5234,6 +5238,14 @@
       "back-button": "Zpět",
       "next-button": "Další",
       "save-button": "Uložit"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "Vybraný cílový zdroj dat musí exportovat editor dotazů.",
@@ -5300,11 +5312,6 @@
       "transform-required": "Vyberte typ transformace",
       "type-label": "Typ",
       "type-tooltip": "Typ transformace, která bude použita na zdrojová data."
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "Spustit dotaz"
     }
   },
   "dashboard": {
@@ -6948,7 +6955,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "Pravidla pro zobrazení/skrytí nebudou fungovat",
@@ -7772,6 +7784,7 @@
       "placeholder-descriptive-text": "Popisný text",
       "placeholder-label-name": "Název štítku",
       "placeholder-variable-name": "Název proměnné",
+      "run-query": "",
       "text-running-query": "Spouštění dotazu…",
       "title": {
         "delete-variable": "Odstranit proměnnou"
@@ -8218,8 +8231,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Nepodporováno",
+      "badge-text-success": "",
       "badge-text-supported": "Podporováno",
       "label": {
+        "advisor": "",
         "alerting": "Výstrahy",
         "type": "Typ"
       }
@@ -8646,7 +8661,6 @@
       "give-feedback": "Poskytnout zpětnou vazbu"
     },
     "logs-meta-row": {
-      "download": "Stáhnout",
       "label": {
         "deduplication-count": "Počet deduplikací",
         "showing-only-selected-fields": "Zobrazují se pouze vybraná pole"
@@ -9005,22 +9019,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "Zobrazit výsledky ve vizualizaci protokolů",
-        "show-results-in-table-visualisation": "Zobrazit výsledky ve vizualizaci tabulky",
-        "show-results-newest-to-oldest": "Zobrazit výsledky od nejnovějších po nejstarší",
-        "show-results-oldest-to-newest": "Zobrazit výsledky od nejstarších po nejnovější"
+        "show-results-in-table-visualisation": "Zobrazit výsledky ve vizualizaci tabulky"
       },
       "label": {
         "logs": "Protokoly",
-        "newest-first": "Seřadit od nejnovějších",
-        "oldest-first": "Seřadit od nejstarších",
         "table": "Tabulka"
       },
-      "label-deduplication": "Deduplikace",
-      "label-display-results": "Zobrazit výsledky",
-      "label-prettify-json": "Zkrášlit JSON",
-      "label-time": "Čas",
-      "label-unique-labels": "Jedinečné štítky",
-      "label-wrap-lines": "Zalomit řádky",
       "title-feedback": "Zpětná vazba",
       "title-logs": "Protokoly",
       "title-logs-volume": "Objem protokolů"
@@ -9115,8 +9119,7 @@
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
     },
     "sql-expr": {
-      "button-run-query": "Spustit dotaz",
-      "tooltip-experimental": "Integrace LLM pro výrazy jazyka SQL je experimentální. Jakékoli problémy nahlaste týmu Grafana."
+      "button-run-query": "Spustit dotaz"
     },
     "sql-schema": {
       "error-title": "Chyba",
@@ -11530,6 +11533,12 @@
       "show-search": "Výsledek vyhledávání v protokolech",
       "show-timestamps": "Zobrazit časová razítka",
       "show-unique-labels": "Zobrazit jedinečné štítky",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "Skrýt časová razítka",
         "label": "Časová razítka protokolu",
@@ -11556,9 +11565,6 @@
         "not-supported": ""
       },
       "wrap-lines": "Zalomit řádky"
-    },
-    "logs-navigation": {
-      "scroll-top": "Posunout nahoru"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12352,7 +12358,7 @@
     },
     "quick-add": {
       "aria-label": "Nové",
-      "new-template-dashboard-button": "Nástěnka ze šablony"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "Novinky z blogu"
   },
@@ -12449,6 +12455,8 @@
       "description": "Oznámení, která jste obdrželi, se zobrazí tady",
       "title": "Všechno máte dokončeno."
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "Odmítnout oznámení",
       "title-alert": "Tato stránka zobrazuje minulé chyby a varování. Po zamítnutí je nelze načíst."
@@ -13522,6 +13530,7 @@
       "token-label": "Přístupový token projektu",
       "token-required": "Je vyžadován token GitLab",
       "url-description": "Adresa URL úložiště GitLab",
+      "url-pattern": "",
       "url-required": "Adresa URL úložiště je povinná"
     },
     "history-view": {
@@ -14484,11 +14493,11 @@
       "view-as-list": "Zobrazit jako seznam"
     },
     "dashboard-actions": {
-      "import": "Importovat",
+      "import": "",
       "new": "Nové",
       "new-dashboard": "Nová nástěnka",
       "new-folder": "Nová složka",
-      "new-template-dashboard": "Nástěnka ze šablony"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Skóre"
@@ -14992,19 +15001,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "Přidejte alespoň jeden dotaz na data a vygenerujte návrhy SQL",
-    "ai-explain-title": "Vysvětlení SQL výrazu pomocí umělé inteligence",
-    "ai-suggestions-title": "Návrhy SQL výrazů pomocí umělé inteligence",
-    "apply": "Použít",
-    "code-label": "{{ language }}",
-    "copy": "Kopírovat",
-    "explain-empty-query-tooltip": "Zadejte SQL výraz a získejte vysvětlení",
     "explain-query": "Vysvětlit dotaz",
-    "explanation-modal-title": "Vysvětlení dotazu SQL",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "Historie návrhů SQL",
-    "suggestions": "Návrhy",
-    "view-explanation": "Zobrazit vysvětlení"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "Označit jako oblíbené",
@@ -15467,11 +15466,12 @@
     },
     "range-content": {
       "apply-button": "Použít časový rozsah",
-      "default-error": "Zadejte dřívější datum nebo „{{now}}“",
+      "default-error": "",
       "fiscal-year": "Fiskální rok: {{from}}–{{to}}",
       "from-input": "Od",
       "open-input-calendar": "Otevřít kalendář",
-      "range-error": "„Od“ nemůže být po „Do“",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Do"
     },
     "range-picker": {

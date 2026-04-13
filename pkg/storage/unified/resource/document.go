@@ -343,6 +343,7 @@ const (
 	SEARCH_FIELD_RV                 = "rv"
 	SEARCH_FIELD_TITLE              = "title"
 	SEARCH_FIELD_TITLE_PHRASE       = "title_phrase" // filtering/sorting on title by full phrase
+	SEARCH_FIELD_TITLE_NGRAM        = "title_ngram"  // ngram analysis for partial/prefix matching on title
 	SEARCH_FIELD_DESCRIPTION        = "description"
 	SEARCH_FIELD_TAGS               = "tags"
 	SEARCH_FIELD_LABELS             = "labels" // All labels, not a specific one

@@ -4331,6 +4331,9 @@
       "total_one": "{{count}} articolo",
       "total_other": "{{count}} articoli"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Questo elemento non si trova nello stesso repository degli elementi selezionati."
@@ -4923,6 +4926,9 @@
       "light-theme": "Chiaro",
       "scopes": "Ambiti di applicazione"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "Cerca con Grafana Assistant",
       "message": "Nessun risultato trovato"
@@ -4998,24 +5004,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Collega i dati a Grafana tramite origini dati, integrazioni e app",
-          "title": "Aggiungi nuovo collegamento"
+          "subtitle": "Collega i dati a Grafana tramite origini dati, integrazioni e app"
         },
         "collector": {
-          "subtitle": "Gestisci la configurazione di Grafana Alloy, la nostra distribuzione di OpenTelemetry Collector",
-          "title": ""
+          "subtitle": "Gestisci la configurazione di Grafana Alloy, la nostra distribuzione di OpenTelemetry Collector"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "Gestisci le connessioni alle origini dati esistenti",
-          "title": "Fonti dei dati"
+          "subtitle": "Gestisci le connessioni alle origini dati esistenti"
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "Gestisci le integrazioni attive",
-          "title": "Integrazioni"
+          "subtitle": "Gestisci le integrazioni attive"
         },
         "private-data-source-connections": {
-          "subtitle": "Gestisci le connessioni di rete private per le origini dati",
-          "title": "Private data source connect"
+          "subtitle": "Gestisci le connessioni di rete private per le origini dati"
         },
         "subtitle": "Connetti la tua infrastruttura a Grafana Cloud utilizzando origini dati, integrazioni e app. Utilizza questa pagina per aggiungere e gestire tutto, dall'acquisizione dei dati alle connessioni private e alle pipeline di telemetria."
       }
@@ -5075,11 +5085,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Connettiti a una nuova origine dati",
-          "title": "Aggiungi nuovo collegamento"
+          "subtitle": "Connettiti a una nuova origine dati"
         },
         "data-sources": {
-          "subtitle": "Gestisci le connessioni alle origini dati esistenti",
           "title": "Visualizza origini dati configurate"
         },
         "subtitle": "Gestisci le connessioni alle origini dati in un unico posto. Utilizza questa pagina per aggiungere una nuova origine dati o gestire le connessioni esistenti."
@@ -5129,10 +5137,6 @@
       "view-json-diff": "Visualizza la differenza JSON per vedere tutte le modifiche"
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "Aggiungi nuovo",
     "alert": {
@@ -5174,6 +5178,14 @@
       "back-button": "Indietro",
       "next-button": "Avanti",
       "save-button": "Salva"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "L'origine dati di destinazione selezionata deve esportare un editor di query.",
@@ -5240,11 +5252,6 @@
       "transform-required": "Seleziona un tipo di trasformazione",
       "type-label": "Tipo",
       "type-tooltip": "Il tipo di trasformazione che verrà applicato ai dati di origine."
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "Esegui query"
     }
   },
   "dashboard": {
@@ -6884,7 +6891,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "Mostra/nascondi regole non funzionerà",
@@ -7694,6 +7706,7 @@
       "placeholder-descriptive-text": "Testo descrittivo",
       "placeholder-label-name": "Nome etichetta",
       "placeholder-variable-name": "Nome variabile",
+      "run-query": "",
       "text-running-query": "Esecuzione della query in corso...",
       "title": {
         "delete-variable": "Elimina variabile"
@@ -8132,8 +8145,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Non supportata",
+      "badge-text-success": "",
       "badge-text-supported": "Supportata",
       "label": {
+        "advisor": "",
         "alerting": "Avvisi",
         "type": "Tipo"
       }
@@ -8560,7 +8575,6 @@
       "give-feedback": "Lascia un feedback"
     },
     "logs-meta-row": {
-      "download": "Scarica",
       "label": {
         "deduplication-count": "Conteggio di deduplicazione",
         "showing-only-selected-fields": "Visualizzazione solo dei campi selezionati"
@@ -8915,22 +8929,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "Mostra i risultati nella visualizzazione dei registri",
-        "show-results-in-table-visualisation": "Mostra i risultati nella visualizzazione della tabella",
-        "show-results-newest-to-oldest": "Mostra i risultati dal più recente al più vecchio",
-        "show-results-oldest-to-newest": "Mostra i risultati dal più vecchio al più recente"
+        "show-results-in-table-visualisation": "Mostra i risultati nella visualizzazione della tabella"
       },
       "label": {
         "logs": "Registri",
-        "newest-first": "Prima il più recente",
-        "oldest-first": "Prima il meno recente",
         "table": "Tabella"
       },
-      "label-deduplication": "Deduplicazione",
-      "label-display-results": "Mostra risultati",
-      "label-prettify-json": "Migliora JSON",
-      "label-time": "Tempo",
-      "label-unique-labels": "Etichette univoche",
-      "label-wrap-lines": "A capo",
       "title-feedback": "Feedback",
       "title-logs": "Registri",
       "title-logs-volume": "Volume dei registri"
@@ -9025,8 +9029,7 @@
       "tooltip-s-m-h": "10 s, 1 m, 30 m, 1 h"
     },
     "sql-expr": {
-      "button-run-query": "Esegui query",
-      "tooltip-experimental": "L'integrazione LLM delle Espressioni SQL è sperimentale. Segnala eventuali problemi al team Grafana."
+      "button-run-query": "Esegui query"
     },
     "sql-schema": {
       "error-title": "Errore",
@@ -11404,6 +11407,12 @@
       "show-search": "Cerca nel risultato dei registri",
       "show-timestamps": "Mostra marca temporale",
       "show-unique-labels": "Mostra etichette univoche",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "Nascondi marca temporale",
         "label": "Marche temporali del registro",
@@ -11430,9 +11439,6 @@
         "not-supported": ""
       },
       "wrap-lines": "A capo"
-    },
-    "logs-navigation": {
-      "scroll-top": "Scorri verso l'alto"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12226,7 +12232,7 @@
     },
     "quick-add": {
       "aria-label": "Nuovo",
-      "new-template-dashboard-button": "Dashboard da modello"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "Ultime dal blog"
   },
@@ -12317,6 +12323,8 @@
       "description": "Le notifiche che hai ricevuto verranno visualizzate qui",
       "title": "È tutto aggiornato!"
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "Ignora le notifiche",
       "title-alert": "Questa pagina mostra gli errori e gli avvisi passati. Una volta eliminati, non possono essere recuperati."
@@ -13378,6 +13386,7 @@
       "token-label": "Token di accesso al progetto",
       "token-required": "Il token GitLab è obbligatorio",
       "url-description": "L'URL del repository GitLab",
+      "url-pattern": "",
       "url-required": "L'URL del repository è obbligatorio"
     },
     "history-view": {
@@ -14312,11 +14321,11 @@
       "view-as-list": "Mostra come elenco"
     },
     "dashboard-actions": {
-      "import": "Importa",
+      "import": "",
       "new": "Nuovo",
       "new-dashboard": "Nuovo dashboard",
       "new-folder": "Nuova cartella",
-      "new-template-dashboard": "Dashboard da modello"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Punteggio"
@@ -14818,19 +14827,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "Aggiungi almeno una query di dati per generare suggerimenti SQL",
-    "ai-explain-title": "Spiegazione dell'espressione SQL basata sull'IA",
-    "ai-suggestions-title": "Suggerimenti di espressioni SQL basate sull'IA",
-    "apply": "Applica",
-    "code-label": "{{ language }}",
-    "copy": "Copia",
-    "explain-empty-query-tooltip": "Inserisci un'espressione SQL per ottenere una spiegazione",
     "explain-query": "Spiega query",
-    "explanation-modal-title": "Spiegazione query SQL",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "Cronologia dei suggerimenti SQL",
-    "suggestions": "Suggerimenti",
-    "view-explanation": "Visualizza spiegazione"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "Contrassegna come preferito",
@@ -15291,11 +15290,12 @@
     },
     "range-content": {
       "apply-button": "Applica intervallo di tempo",
-      "default-error": "Inserisci una data passata o \"{{now}}\"",
+      "default-error": "",
       "fiscal-year": "Anno fiscale: {{from}} - {{to}}",
       "from-input": "Da",
       "open-input-calendar": "Apri calendario",
-      "range-error": "\"Da\" non può essere successivo a \"A\"",
+      "range-error": "",
+      "required-error": "",
       "to-input": "A"
     },
     "range-picker": {

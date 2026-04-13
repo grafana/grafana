@@ -447,7 +447,16 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	actionSetService := resourcepermissions.NewActionSetService()
 	permissionRegistry := permreg.ProvidePermissionRegistry()
 	serverLockService := serverlock.ProvideService(sqlStore, tracingService)
-	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService)
+	storeProvider := store2.ProvideDefaultStoreProvider()
+	server, err := authz.ProvideEmbeddedZanzanaServer(cfg, sqlStore, tracingService, featureToggles, registerer, eventualRestConfigProvider, storeProvider)
+	if err != nil {
+		return nil, err
+	}
+	zanzanaClient, err := authz.ProvideZanzanaClient(cfg, sqlStore, server, featureToggles, registerer)
+	if err != nil {
+		return nil, err
+	}
+	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient)
 	if err != nil {
 		return nil, err
 	}
@@ -487,15 +496,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	contextHandler := grpccontext.ProvideContextHandler(tracingService)
 	authenticator := interceptors.ProvideAuthenticator(apikeyService, userimplService, acimplService, contextHandler)
 	grpcserverProvider, err := grpcserver.ProvideService(cfg, featureToggles, authenticator, tracer, registerer)
-	if err != nil {
-		return nil, err
-	}
-	storeProvider := store2.ProvideDefaultStoreProvider()
-	server, err := authz.ProvideEmbeddedZanzanaServer(cfg, sqlStore, tracingService, featureToggles, registerer, eventualRestConfigProvider, storeProvider)
-	if err != nil {
-		return nil, err
-	}
-	zanzanaClient, err := authz.ProvideZanzanaClient(cfg, sqlStore, server, featureToggles, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -646,7 +646,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	pluginInstaller := manager4.ProvideInstaller(pluginManagementCfg, inMemory, loaderLoader, repoManager, serviceregistrationService)
+	pluginInstaller := manager4.ProvideInstaller(pluginManagementCfg, inMemory, loaderLoader, repoManager, serviceregistrationService, acimplService)
 	ossProvider := guardian.ProvideGuardian()
 	cacheServiceImpl := service7.ProvideCacheService(cacheService, sqlStore, ossProvider)
 	shortURLService := shorturlimpl.ProvideService(sqlStore)
@@ -803,7 +803,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service14, cacheServiceImpl, plugincontextProvider, cfg)
 	v := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
-	appInstaller, err := playlist2.RegisterAppInstaller(featureToggles)
+	appInstaller, err := playlist2.RegisterAppInstaller(featureToggles, acimplService, accessControl)
 	if err != nil {
 		return nil, err
 	}
@@ -1144,7 +1144,16 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	actionSetService := resourcepermissions.NewActionSetService()
 	permissionRegistry := permreg.ProvidePermissionRegistry()
 	serverLockService := serverlock.ProvideService(sqlStore, tracingService)
-	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService)
+	storeProvider := store2.ProvideDefaultStoreProvider()
+	server, err := authz.ProvideEmbeddedZanzanaServer(cfg, sqlStore, tracingService, featureToggles, registerer, eventualRestConfigProvider, storeProvider)
+	if err != nil {
+		return nil, err
+	}
+	zanzanaClient, err := authz.ProvideZanzanaClient(cfg, sqlStore, server, featureToggles, registerer)
+	if err != nil {
+		return nil, err
+	}
+	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1184,15 +1193,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	contextHandler := grpccontext.ProvideContextHandler(tracingService)
 	authenticator := interceptors.ProvideAuthenticator(apikeyService, userimplService, acimplService, contextHandler)
 	grpcserverProvider, err := grpcserver.ProvideService(cfg, featureToggles, authenticator, tracer, registerer)
-	if err != nil {
-		return nil, err
-	}
-	storeProvider := store2.ProvideDefaultStoreProvider()
-	server, err := authz.ProvideEmbeddedZanzanaServer(cfg, sqlStore, tracingService, featureToggles, registerer, eventualRestConfigProvider, storeProvider)
-	if err != nil {
-		return nil, err
-	}
-	zanzanaClient, err := authz.ProvideZanzanaClient(cfg, sqlStore, server, featureToggles, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -1332,7 +1332,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	pluginInstaller := manager4.ProvideInstaller(pluginManagementCfg, inMemory, loaderLoader, repoManager, serviceregistrationService)
+	pluginInstaller := manager4.ProvideInstaller(pluginManagementCfg, inMemory, loaderLoader, repoManager, serviceregistrationService, acimplService)
 	ossProvider := guardian.ProvideGuardian()
 	cacheServiceImpl := service7.ProvideCacheService(cacheService, sqlStore, ossProvider)
 	userAuthTokenService, err := authimpl.ProvideUserAuthTokenService(sqlStore, serverLockService, quotaService, secretsService, cfg, tracingService, featureToggles)
@@ -1502,7 +1502,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service14, cacheServiceImpl, plugincontextProvider, cfg)
 	v := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
-	appInstaller, err := playlist2.RegisterAppInstaller(featureToggles)
+	appInstaller, err := playlist2.RegisterAppInstaller(featureToggles, acimplService, accessControl)
 	if err != nil {
 		return nil, err
 	}
@@ -1796,7 +1796,16 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (Runner, error) {
 	actionSetService := resourcepermissions.NewActionSetService()
 	permissionRegistry := permreg.ProvidePermissionRegistry()
 	serverLockService := serverlock.ProvideService(sqlStore, tracingService)
-	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService)
+	storeProvider := store2.ProvideDefaultStoreProvider()
+	server, err := authz.ProvideEmbeddedZanzanaServer(cfg, sqlStore, tracingService, featureToggles, registerer, eventualRestConfigProvider, storeProvider)
+	if err != nil {
+		return Runner{}, err
+	}
+	zanzanaClient, err := authz.ProvideZanzanaClient(cfg, sqlStore, server, featureToggles, registerer)
+	if err != nil {
+		return Runner{}, err
+	}
+	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient)
 	if err != nil {
 		return Runner{}, err
 	}
