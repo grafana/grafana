@@ -45,6 +45,21 @@ describe('MultiCombobox', () => {
     expect(screen.getByText('C')).toBeInTheDocument();
   });
 
+  it('should open the menu when clicking the dropdown icon', async () => {
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+      { label: 'C', value: 'c' },
+    ];
+    render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} />);
+
+    const dropdownIcon = screen.getByTestId('icon-angle-down');
+    await user.click(dropdownIcon);
+
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'A' })).toBeInTheDocument();
+  });
+
   it('should render with value', () => {
     const options = [
       { label: 'A', value: 'a' },
