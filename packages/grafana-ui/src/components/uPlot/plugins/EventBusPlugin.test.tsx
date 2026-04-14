@@ -53,6 +53,25 @@ describe('EventBusPlugin', () => {
     unsubscribeSpy.mockRestore();
   });
 
+  it('registers hooks again when config instance changes', () => {
+    const first = new UPlotConfigBuilder();
+    const second = new UPlotConfigBuilder();
+    const bus = new EventBusSrv();
+    const spyFirst = jest.spyOn(first, 'addHook');
+    const spySecond = jest.spyOn(second, 'addHook');
+
+    const { rerender } = render(<EventBusPlugin config={first} eventBus={bus} />);
+
+    expect(spyFirst).toHaveBeenCalledWith('init', expect.any(Function));
+
+    rerender(<EventBusPlugin config={second} eventBus={bus} />);
+
+    expect(spySecond).toHaveBeenCalledWith('init', expect.any(Function));
+
+    spyFirst.mockRestore();
+    spySecond.mockRestore();
+  });
+
   describe('handleCursorUpdate', () => {
     const height = 400;
     const time = 42;
@@ -74,6 +93,7 @@ describe('EventBusPlugin', () => {
 
     beforeEach(() => {
       setCursor.mockClear();
+      valToPos.mockClear();
     });
 
     it('DataHoverEvent external hover', () => {
@@ -88,6 +108,27 @@ describe('EventBusPlugin', () => {
       expect(valToPos).toHaveBeenCalledWith(time, 'x');
       expect(setCursor).toHaveBeenCalledWith({ left, top: height / 2 });
     });
+
+    it('ignores uPlot DataHoverEvent external hover', () => {
+      render(<EventBusPlugin config={config} eventBus={eventBus} />);
+      initUPlot();
+      eventBus.publish(
+        new DataHoverEvent({
+          point: { time },
+        }).setTags(['uplot'])
+      );
+
+      expect(valToPos).not.toHaveBeenCalled();
+      expect(setCursor).not.toHaveBeenCalled();
+    });
+
+    it('ignores uPlot DataHoverClearEvent', () => {
+      render(<EventBusPlugin config={config} eventBus={eventBus} />);
+      initUPlot();
+      eventBus.publish(new DataHoverClearEvent().setTags(['uplot']));
+      expect(setCursor).not.toHaveBeenCalled();
+    });
+
     it('LegacyGraphHoverEvent external hover', () => {
       render(<EventBusPlugin config={config} eventBus={eventBus} />);
       initUPlot();
