@@ -1025,7 +1025,7 @@
         "evaluation-interval": "Interwał oceny",
         "labels": "Etykiety",
         "metric-name": "Nazwa wskaźnika",
-        "runbook-url": "Adres URL runbooka"
+        "runbook-url": "Adres URL elementu runbook"
       },
       "view-dashboard": "Wyświetl pulpit",
       "view-panel": "Wyświetl panel"
@@ -3623,11 +3623,13 @@
       },
       "instance-details-drawer": {
         "alert-instance-label": "",
+        "back": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Szczegóły instancji",
         "silence-button": "",
-        "silence-no-permission": ""
+        "silence-no-permission": "",
+        "silence-title-with-name": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "W wybranym zakresie czasu nie ma żadnych instancji alertów w stanie uruchomienia lub oczekiwania.",
@@ -4385,6 +4387,9 @@
       "total_many": "{{count}} elementów",
       "total_other": "{{count}} elementu"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Ten element nie znajduje się w tym samym repozytorium co wybrane elementy."
@@ -4453,7 +4458,7 @@
       "non-folder-item": "Element {{itemKind}} {{itemUID}} poza folderem",
       "root-title": "Pulpity",
       "search-placeholder": "Przeszukaj foldery",
-      "shared-with-me": "Udostępnione dla mnie",
+      "shared-with-me": "Udostępnione mnie",
       "team-folders": "",
       "unknown-error": "Nieznany błąd"
     },
@@ -4900,7 +4905,7 @@
       "label-disable-one-click": "",
       "name-tooltip-mode": "Tryb podpowiedzi",
       "tooltip-mode-options": {
-        "label-disabled": "Wyłączony",
+        "label-disabled": "Wyłączono",
         "label-enabled": "Włączony"
       }
     },
@@ -5012,7 +5017,7 @@
     "apply": "Zastosuj",
     "cancel": "Anuluj",
     "collapse": "Zwiń",
-    "disabled": "Wyłączone",
+    "disabled": "Wyłączono",
     "discard": "Odrzuć",
     "edit": "Edytuj",
     "help": "Pomoc",
@@ -6952,7 +6957,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "Reguły pokazywania/ukrywania nie będą działać",
@@ -8223,8 +8233,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Nieobsługiwane",
+      "badge-text-success": "",
       "badge-text-supported": "Obsługiwane",
       "label": {
+        "advisor": "",
         "alerting": "Alerty",
         "type": "Typ"
       }
@@ -8651,7 +8663,6 @@
       "give-feedback": "Przekaż opinię"
     },
     "logs-meta-row": {
-      "download": "Pobierz",
       "label": {
         "deduplication-count": "Liczba deduplikacji",
         "showing-only-selected-fields": "Wyświetlanie tylko wybranych pól"
@@ -9010,22 +9021,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "Pokaż wyniki w wizualizacji logów",
-        "show-results-in-table-visualisation": "Pokaż wyniki w wizualizacji tabeli",
-        "show-results-newest-to-oldest": "Pokaż wyniki od najnowszych do najstarszych",
-        "show-results-oldest-to-newest": "Pokaż wyniki od najstarszych do najnowszych"
+        "show-results-in-table-visualisation": "Pokaż wyniki w wizualizacji tabeli"
       },
       "label": {
         "logs": "Logi",
-        "newest-first": "Od najnowszych",
-        "oldest-first": "Od najstarszych",
         "table": "Tabela"
       },
-      "label-deduplication": "Deduplikacja",
-      "label-display-results": "Wyświetl wyniki",
-      "label-prettify-json": "Formatowanie JSON",
-      "label-time": "Czas",
-      "label-unique-labels": "Unikalne etykiety",
-      "label-wrap-lines": "Zawijaj wiersze",
       "title-feedback": "Opinia",
       "title-logs": "Logi",
       "title-logs-volume": "Wolumin logów"
@@ -9120,8 +9121,7 @@
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
     },
     "sql-expr": {
-      "button-run-query": "Uruchom zapytanie",
-      "tooltip-experimental": "Integracja LLM z wyrażeniami SQL jest eksperymentalna. Wszelkie problemy zgłaszaj zespołowi Grafana."
+      "button-run-query": "Uruchom zapytanie"
     },
     "sql-schema": {
       "error-title": "Błąd",
@@ -9910,7 +9910,7 @@
         },
         "pressure": {
           "formats": {
-            "name-bars": "bary",
+            "name-bars": "Słupki",
             "name-hectopascals": "hektopaskale",
             "name-inches-mercury": "cale słupa rtęci",
             "name-kilobars": "kilobary",
@@ -10554,7 +10554,7 @@
           "not-equals": ""
         },
         "remove-all": "Usuń wszystkie wyświetlane wartości z filtra",
-        "select-all": "Wybierz wszystko",
+        "select-all": "Zaznacz wszystkie",
         "selected": "Wybrano {{ numSelected }}",
         "selected-some-hidden": "Wybrano {{ numSelected }} (ukryte: {{ numHidden }})"
       },
@@ -10625,7 +10625,7 @@
             "description-center": "Pośrodku"
           },
           "draw-style": {
-            "label-bars": "Paski",
+            "label-bars": "Słupki",
             "label-lines": "Linie",
             "label-points": "Punkty"
           },
@@ -11568,9 +11568,6 @@
       },
       "wrap-lines": "Zawijaj wiersze"
     },
-    "logs-navigation": {
-      "scroll-top": "Przewiń w górę"
-    },
     "logs-panel": {
       "render-common-labels": {
         "common-labels": "Typowe etykiety:"
@@ -12363,7 +12360,7 @@
     },
     "quick-add": {
       "aria-label": "Nowy",
-      "new-template-dashboard-button": "Pulpit z szablonu"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "Najnowsze na blogu"
   },
@@ -12504,7 +12501,7 @@
         "description-no-value": "Co pokazać, gdy nie ma wartości",
         "description-value-mappings": "Zmodyfikuj wyświetlany tekst na podstawie wartości wejściowej",
         "name-actions": "Działania",
-        "name-ad-hoc": "Możliwość filtrowania ad hoc",
+        "name-ad-hoc": "",
         "name-color-scheme": "Schemat kolorów",
         "name-data-links": "Połączenia danych",
         "name-decimals": "Miejsca dziesiętne",
@@ -12963,6 +12960,7 @@
       "title-button-disabled": "Wtyczka nie nadaje się jeszcze do użytku, ukończenie instalacji może zająć trochę czasu."
     },
     "install-controls": {
+      "contact-us": "",
       "install": "Zainstaluj",
       "installing": "Instalowanie",
       "update": "Aktualizuj",
@@ -13535,6 +13533,7 @@
       "token-label": "Token dostępu do projektu",
       "token-required": "Wymagany jest token GitLab",
       "url-description": "Adres URL repozytorium GitLab",
+      "url-pattern": "",
       "url-required": "Adres URL repozytorium jest wymagany"
     },
     "history-view": {
@@ -14497,11 +14496,11 @@
       "view-as-list": "Wyświetl jako listę"
     },
     "dashboard-actions": {
-      "import": "Importuj",
+      "import": "",
       "new": "Nowy",
       "new-dashboard": "Nowy pulpit",
       "new-folder": "Nowy folder",
-      "new-template-dashboard": "Pulpit z szablonu"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Wynik"
@@ -15005,19 +15004,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "Aby wygenerować sugestie SQL, dodaj co najmniej jedno zapytanie o dane",
-    "ai-explain-title": "Wyjaśnienie wyrażenia SQL oparte na AI",
-    "ai-suggestions-title": "Sugestie wyrażeń SQL oparte na AI",
-    "apply": "Zastosuj",
-    "code-label": "{{ language }}",
-    "copy": "Kopiuj",
-    "explain-empty-query-tooltip": "Wprowadź wyrażenie SQL, aby otrzymać wyjaśnienie",
     "explain-query": "Wyjaśnij zapytanie",
-    "explanation-modal-title": "Wyjaśnienie zapytania SQL",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "Historia sugestii SQL",
-    "suggestions": "Sugestie",
-    "view-explanation": "Pokaż wyjaśnienie"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "Dodaj do ulubionych",
@@ -15480,11 +15469,12 @@
     },
     "range-content": {
       "apply-button": "Zastosuj zakres czasu",
-      "default-error": "Podaj datę z przeszłości lub wybierz „{{now}}”",
+      "default-error": "",
       "fiscal-year": "Rok podatkowy: {{from}} – {{to}}",
       "from-input": "Od",
       "open-input-calendar": "Otwórz kalendarz",
-      "range-error": "Wartość „Od” nie może następować po wartości „Do”",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Do"
     },
     "range-picker": {
@@ -16662,7 +16652,7 @@
           "alphabetical-caseinsensitive-asc": "Alfabetycznie (bez rozróżniania wielkości liter, rosnąco)",
           "alphabetical-caseinsensitive-desc": "Alfabetycznie (bez rozróżniania wielkości liter, malejąco)",
           "alphabetical-desc": "Alfabetycznie (malejąco)",
-          "disabled": "Wyłączone",
+          "disabled": "Wyłączono",
           "natural-asc": "Naturalnie (rosnąco)",
           "natural-desc": "Naturalnie (malejąco)",
           "numerical-asc": "Numerycznie (rosnąco)",

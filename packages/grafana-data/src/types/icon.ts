@@ -169,6 +169,7 @@ export const availableIconsIndex = {
   'gf-traces': true,
   globe: true,
   grafana: true,
+  grid: true,
   'graph-bar': true,
   'hand-pointer': true,
   heart: true,

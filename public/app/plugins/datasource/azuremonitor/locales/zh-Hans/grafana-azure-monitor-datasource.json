@@ -9,7 +9,7 @@
       "button-add-resource": "添加资源",
       "button-add-resource-uri": "添加资源 URI",
       "label-namespace": "命名空间",
-      "label-region": "地区",
+      "label-region": "区域",
       "label-resource-group": "资源组",
       "label-resource-name": "资源名称",
       "label-resource-number": "资源 {{resourceNum}}",
@@ -239,7 +239,7 @@
       "button-cancel": "取消",
       "header-location": "位置",
       "header-resource-group": "资源组",
-      "header-scope": "范围",
+      "header-scope": "作用域",
       "header-type": "类型",
       "heading-selection": "选择",
       "locations-filter": "位置",
@@ -256,7 +256,7 @@
       "types-filter-placeholder": "选择资源类型"
     },
     "scope-selector": {
-      "label": "范围"
+      "label": "作用域"
     },
     "search": {
       "aria-label-resource-search": "资源搜索",
@@ -285,7 +285,7 @@
       "tooltip-time-range": "<0>指定用于查询的时间范围。<1>查询</1>选项将只使用查询中指定的时间范围。<3>数据面板</3>只使用 Grafana 时间范围。</0>。"
     },
     "top-field": {
-      "label-top": "热门"
+      "label-top": "顶部"
     },
     "trace-type-field": {
       "label-event-type": "活动类型",
@@ -313,7 +313,7 @@
       "label-custom-namespace": "自定义命名空间",
       "label-namespace": "命名空间",
       "label-query-type": "查询类型",
-      "label-region": "地区",
+      "label-region": "区域",
       "label-resource": "资源",
       "label-resource-group": "资源组",
       "label-resource-type": "资源类型",

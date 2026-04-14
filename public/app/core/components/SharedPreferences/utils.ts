@@ -4,6 +4,7 @@ import { type PreferencesSpec as UserPreferencesDTO } from '@grafana/api-clients
 import { type ThemeRegistryItem } from '@grafana/data';
 import { LANGUAGES, PSEUDO_LOCALE, t } from '@grafana/i18n';
 import { type ComboboxOption } from '@grafana/ui';
+import { type UpdatePrefsCmd } from 'app/api/clients/legacy';
 import { LOCALES } from 'app/core/internationalization/locales';
 
 export interface Props {
@@ -17,6 +18,15 @@ export type State = UserPreferencesDTO & {
   isLoading: boolean;
   isSubmitting: boolean;
 };
+
+export type PrefsState = Omit<UpdatePrefsCmd, 'theme'> & { theme?: string };
+
+export const toUpdatePrefsCmd = (state: PrefsState): UpdatePrefsCmd => ({
+  ...state,
+  // generated UpdatePrefsCmd['theme'] is narrower than the actual API; backend accepts any string
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  theme: state.theme as UpdatePrefsCmd['theme'],
+});
 
 export const compareStrings = (() => {
   let collator: Intl.Collator | undefined;

@@ -349,16 +349,13 @@ const getLabelStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'baseline',
       whiteSpace: 'nowrap',
-      columnGap: theme.spacing(0.5),
+      columnGap: theme.spacing(0.75),
     }),
     utc: css({
-      color: theme.v1.palette.orange,
-      fontSize: theme.typography.size.sm,
-      paddingLeft: '6px',
-      lineHeight: '28px',
-      verticalAlign: 'bottom',
+      color: theme.colors.warning.text,
+      fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
     }),
   };

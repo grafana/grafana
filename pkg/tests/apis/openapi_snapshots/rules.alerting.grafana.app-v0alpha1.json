@@ -2104,7 +2104,17 @@
         ]
       },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleDatasourceUID": {
-        "type": "string"
+        "type": "string",
+        "pattern": "^[a-zA-Z0-9_-]+$"
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleExecErrState": {
+        "type": "string",
+        "enum": [
+          "Error",
+          "Ok",
+          "Alerting",
+          "KeepLast"
+        ]
       },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleExpression": {
         "type": "object",
@@ -2195,6 +2205,49 @@
           }
         ]
       },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleNamedRoutingTree": {
+        "type": "object",
+        "required": [
+          "type",
+          "routingTree"
+        ],
+        "properties": {
+          "routingTree": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleNotificationSettingsType"
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleNoDataState": {
+        "type": "string",
+        "enum": [
+          "NoData",
+          "Ok",
+          "Alerting",
+          "KeepLast"
+        ]
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleNotificationSettings": {
+        "description": "TODO(@moustafab): this should be imported from the notifications package",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleSimplifiedRouting"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleNamedRoutingTree"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleNotificationSettingsType": {
+        "type": "string",
+        "enum": [
+          "SimplifiedRouting",
+          "NamedRoutingTree"
+        ]
+      },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleOperatorState": {
         "type": "object",
         "required": [
@@ -2227,11 +2280,35 @@
         },
         "additionalProperties": false
       },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePanelRef": {
+        "type": "object",
+        "required": [
+          "dashboardUID",
+          "panelID"
+        ],
+        "properties": {
+          "dashboardUID": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          },
+          "panelID": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePromDuration": {
-        "type": "string"
+        "type": "string",
+        "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$",
+        "not": {
+          "pattern": "hmuµn"
+        }
       },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePromDurationWMillis": {
-        "type": "string"
+        "type": "string",
+        "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$"
       },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleRelativeTimeRange": {
         "type": "object",
@@ -2245,6 +2322,49 @@
           },
           "to": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePromDurationWMillis"
+          }
+        },
+        "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleSimplifiedRouting": {
+        "type": "object",
+        "required": [
+          "type",
+          "receiver"
+        ],
+        "properties": {
+          "activeTimeIntervals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleTimeIntervalRef"
+            }
+          },
+          "groupBy": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "groupInterval": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePromDuration"
+          },
+          "groupWait": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePromDuration"
+          },
+          "muteTimeIntervals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleTimeIntervalRef"
+            }
+          },
+          "receiver": {
+            "type": "string"
+          },
+          "repeatInterval": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePromDuration"
+          },
+          "type": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleNotificationSettingsType"
           }
         },
         "additionalProperties": false
@@ -2266,8 +2386,7 @@
             }
           },
           "execErrState": {
-            "type": "string",
-            "default": "Error"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleExecErrState"
           },
           "expressions": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleExpressionMap"
@@ -2289,65 +2408,13 @@
             "minimum": 0
           },
           "noDataState": {
-            "type": "string",
-            "default": "NoData"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleNoDataState"
           },
           "notificationSettings": {
-            "type": "object",
-            "required": [
-              "receiver"
-            ],
-            "properties": {
-              "activeTimeIntervals": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleTimeIntervalRef"
-                }
-              },
-              "groupBy": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "groupInterval": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePromDuration"
-              },
-              "groupWait": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePromDuration"
-              },
-              "muteTimeIntervals": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleTimeIntervalRef"
-                }
-              },
-              "receiver": {
-                "type": "string"
-              },
-              "repeatInterval": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePromDuration"
-              }
-            },
-            "additionalProperties": false
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleNotificationSettings"
           },
           "panelRef": {
-            "type": "object",
-            "required": [
-              "dashboardUID",
-              "panelID"
-            ],
-            "properties": {
-              "dashboardUID": {
-                "type": "string",
-                "minLength": 1
-              },
-              "panelID": {
-                "type": "integer",
-                "minimum": 0
-              }
-            },
-            "additionalProperties": false
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePanelRef"
           },
           "paused": {
             "type": "boolean"
@@ -2427,7 +2494,8 @@
         ]
       },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleDatasourceUID": {
-        "type": "string"
+        "type": "string",
+        "pattern": "^[a-zA-Z0-9_-]+$"
       },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleExpression": {
         "type": "object",
@@ -2518,6 +2586,11 @@
           }
         ]
       },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleMetricName": {
+        "description": "TODO(@moustafab): validate the metric name regex",
+        "type": "string",
+        "pattern": "^[a-zA-Z_:][a-zA-Z0-9_:]*$"
+      },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleOperatorState": {
         "type": "object",
         "required": [
@@ -2551,10 +2624,15 @@
         "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRulePromDuration": {
-        "type": "string"
+        "type": "string",
+        "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$",
+        "not": {
+          "pattern": "hmuµn"
+        }
       },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRulePromDurationWMillis": {
-        "type": "string"
+        "type": "string",
+        "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$"
       },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleRelativeTimeRange": {
         "type": "object",
@@ -2592,13 +2670,13 @@
             }
           },
           "metric": {
-            "type": "string"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleMetricName"
           },
           "paused": {
             "type": "boolean"
           },
           "targetDatasourceUID": {
-            "type": "string"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleDatasourceUID"
           },
           "title": {
             "type": "string"
