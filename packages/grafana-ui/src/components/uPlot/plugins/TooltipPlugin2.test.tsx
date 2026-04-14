@@ -2,7 +2,9 @@ import { act, render, screen } from '@testing-library/react';
 import type uPlot from 'uplot';
 
 import { createTheme } from '@grafana/data';
+import { DashboardCursorSync } from '@grafana/schema';
 
+import { ScaleDirection, ScaleOrientation } from '../../../schema';
 import { mockThemeContext } from '../../../themes/ThemeContext';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
@@ -24,9 +26,17 @@ describe('TooltipPlugin2', () => {
     restoreTheme();
   });
 
-  const setUp = (uPlotOverrides?: Partial<uPlot>) => {
+  const setUp = (
+    uPlotOverrides?: Partial<uPlot>,
+    tooltipOverrides?: Partial<React.ComponentProps<typeof TooltipPlugin2>>
+  ) => {
     const view = render(
-      <TooltipPlugin2 config={config} hoverMode={TooltipHoverMode.xOne} render={() => <span>Tooltip content</span>} />
+      <TooltipPlugin2
+        config={config}
+        hoverMode={TooltipHoverMode.xOne}
+        render={() => <span>Tooltip content</span>}
+        {...tooltipOverrides}
+      />
     );
 
     const initCallback = addHookSpy.mock.calls.find((call) => call[0] === 'init')?.[1] as (u: uPlot) => void;
@@ -34,9 +44,11 @@ describe('TooltipPlugin2', () => {
       u: uPlot,
       seriesIdx: number | null
     ) => void;
-    const { mockU: mockUPlot } = createMockUPlot(uPlotOverrides);
+    const readyCallback = addHookSpy.mock.calls.find((call) => call[0] === 'ready')?.[1] as () => void;
+    const setLegendCallback = addHookSpy.mock.calls.find((call) => call[0] === 'setLegend')?.[1] as (u: uPlot) => void;
+    const { mockUPlot, setCursor } = createMockUPlot(uPlotOverrides);
 
-    return { view, mockUPlot, initCallback, setSeriesCallback };
+    return { view, mockUPlot, initCallback, setSeriesCallback, setCursor, readyCallback, setLegendCallback };
   };
 
   const createMockUPlot = (overrides?: Partial<uPlot>) => {
@@ -44,7 +56,7 @@ describe('TooltipPlugin2', () => {
     const over = document.createElement('div');
     const setCursor = jest.fn();
 
-    const mockU = {
+    const mockUPlot = {
       root,
       over,
       rect: { left: 0, top: 0, width: 800, height: 400, bottom: 400, right: 800 },
@@ -61,7 +73,7 @@ describe('TooltipPlugin2', () => {
       ...overrides,
     } as unknown as uPlot;
 
-    return { mockU, setCursor };
+    return { mockUPlot, setCursor };
   };
 
   describe('on hover', () => {
@@ -70,17 +82,74 @@ describe('TooltipPlugin2', () => {
 
       await act(async () => {
         initCallback(mockUPlot);
-      });
-
-      await act(async () => {
         setSeriesCallback(mockUPlot, 1);
       });
 
       expect(screen.getByText('Tooltip content')).toBeInTheDocument();
     });
 
-    it.todo('mobile device dispatches mousemove event on hover');
-    it.todo('desktop device sets uPlot cursor on hover');
+    it('touch screen dispatches mousemove event on hover', async () => {
+      const { setSeriesCallback, initCallback, mockUPlot } = setUp({
+        cursor: {
+          left: 50,
+          top: 50,
+          event: new MouseEvent('pointermove', { clientX: 100, clientY: 100 }),
+          idxs: [null, 5],
+          drag: { x: true, y: false, setScale: false },
+        },
+      });
+      const dispatchEventSpy = jest.spyOn(mockUPlot.over, 'dispatchEvent');
+
+      await act(async () => {
+        initCallback(mockUPlot);
+        setSeriesCallback(mockUPlot, 1);
+      });
+
+      expect(screen.getByText('Tooltip content')).toBeInTheDocument();
+      expect(dispatchEventSpy).toHaveBeenCalled();
+
+      const dispatched = dispatchEventSpy.mock.calls.map((call) => call[0]).find((ev) => ev.type === 'mousemove');
+      expect(dispatched).toBeInstanceOf(MouseEvent);
+      expect(dispatched?.type).toBe('mousemove');
+    });
+
+    it('desktop device sets uPlot cursor on hover', async () => {
+      config.addScale({
+        scaleKey: 'x',
+        orientation: ScaleOrientation.Horizontal,
+        direction: ScaleDirection.Right,
+        isTime: true,
+      });
+
+      const { setSeriesCallback, initCallback, mockUPlot, readyCallback, setLegendCallback, setCursor } = setUp(
+        {
+          cursor: {
+            left: 44,
+            top: 77,
+            event: undefined,
+            idxs: [null, 5],
+            drag: { x: true, y: false, setScale: false },
+          },
+        },
+        { syncMode: DashboardCursorSync.Tooltip }
+      );
+
+      await act(async () => {
+        initCallback(mockUPlot);
+        readyCallback();
+        setLegendCallback(mockUPlot);
+        setSeriesCallback(mockUPlot, 1);
+        await Promise.resolve();
+      });
+
+      expect(screen.getByText('Tooltip content')).toBeInTheDocument();
+      expect(setCursor).toHaveBeenCalledWith({ left: 44, top: 77 }, true);
+    });
+  });
+
+  describe('dataLinks', () => {
+    it.todo('renders');
+    it.todo('oneClick');
   });
 
   describe('housekeeping', () => {
