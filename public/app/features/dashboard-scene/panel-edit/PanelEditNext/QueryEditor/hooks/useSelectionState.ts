@@ -117,7 +117,8 @@ export function useSelectionState({
     // useSelectedCard visually selects queries[0] when nothing is explicitly selected
     // (no transformation either), so fall back to it as the range-select anchor.
     const hasTransformationSelected = selectedTransformationIdsRef.current.length > 0;
-    const anchorRefId = currentSelection.at(-1) ?? (hasTransformationSelected ? undefined : queriesRef.current[0]?.refId);
+    const anchorRefId =
+      currentSelection.at(-1) ?? (hasTransformationSelected ? undefined : queriesRef.current[0]?.refId);
     if (modifiers?.range && anchorRefId) {
       const rangeSelection = computeRangeSelection(
         queriesRef.current.map(({ refId }) => refId),
