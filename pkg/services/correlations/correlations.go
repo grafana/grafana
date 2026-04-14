@@ -115,24 +115,21 @@ func (s *CorrelationsService) UpdateCorrelation(ctx context.Context, cmd UpdateC
 func (s *CorrelationsService) GetCorrelation(ctx context.Context, cmd GetCorrelationQuery) (Correlation, error) {
 	client := openfeature.NewDefaultClient()
 	if client.Boolean(ctx, featuremgmt.FlagGrafanaCorrelationsSkipLegacy, false, openfeature.TransactionContext(ctx)) {
-		// Build namespace and identifier
-		namespace := authlib.OrgNamespaceFormatter(cmd.OrgId)
-		identifier := resource.Identifier{
-			Namespace: namespace,
-			Name:      cmd.UID,
-		}
-
-		// Get from app platform
 		client, err := s.getK8sClient()
 		if err != nil {
 			return Correlation{}, err
 		}
-		appCorr, err := client.Get(ctx, identifier)
+		identifier := resource.Identifier{
+			Namespace: authlib.OrgNamespaceFormatter(cmd.OrgId),
+			Name:      cmd.UID,
+		}
+
+		appPlatformCorr, err := client.Get(ctx, identifier)
 		if err != nil {
 			return Correlation{}, err
 		}
 
-		legacyCorr, err := ToCorrelation(appCorr)
+		legacyCorr, err := ToCorrelation(appPlatformCorr)
 		if err != nil {
 			return Correlation{}, err
 		}
