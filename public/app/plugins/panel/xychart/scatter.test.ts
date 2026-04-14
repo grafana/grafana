@@ -95,7 +95,7 @@ describe('prepConfig', () => {
   it('returns null builder and warn when xySeries is empty', () => {
     const result = prepConfig([], theme);
     expect(result.builder).toBeNull();
-    expect(result.warn).toBeTruthy();
+    expect(result.warn).toEqual("No data")
   });
 
   it('returns non-null builder when series provided', () => {
