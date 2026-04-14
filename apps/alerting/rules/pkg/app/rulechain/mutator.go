@@ -17,6 +17,19 @@ func NewMutator(cfg config.RuntimeConfig) *simple.Mutator {
 				return nil, nil
 			}
 
+			// Sync folder label from annotation so unified storage folder
+			// filtering works for RuleChain resources.
+			folderUID := ""
+			if r.Annotations != nil {
+				folderUID = r.Annotations[v1.FolderAnnotationKey]
+			}
+			if folderUID != "" {
+				if r.Labels == nil {
+					r.Labels = make(map[string]string)
+				}
+				r.Labels[v1.FolderLabelKey] = folderUID
+			}
+
 			if err := r.Spec.ClampDurations(); err != nil {
 				return nil, err
 			}
