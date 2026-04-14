@@ -1760,8 +1760,10 @@ func (dr *DashboardServiceImpl) getDashboardThroughK8s(ctx context.Context, quer
 
 	out, err := dr.k8sclient.GetWithPreferredAPIVersion(ctx, query.UID, query.OrgID, v1.GetOptions{}, query.K8sGetAPIVersion, "")
 	if err != nil && !apierrors.IsNotFound(err) {
+		dr.log.Debug("k8s returned non-404 error for dashboard", "uid", query.UID, "orgID", query.OrgID, "err", err)
 		return nil, err
 	} else if err != nil || out == nil {
+		dr.log.Debug("k8s returned 404 or nil for dashboard", "uid", query.UID, "orgID", query.OrgID, "k8sErr", err)
 		return nil, dashboards.ErrDashboardNotFound
 	}
 
