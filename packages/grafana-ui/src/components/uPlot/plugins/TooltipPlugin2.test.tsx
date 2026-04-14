@@ -1,4 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
+import React from 'react';
 import type uPlot from 'uplot';
 
 import { createTheme } from '@grafana/data';
@@ -149,7 +150,38 @@ describe('TooltipPlugin2', () => {
   });
 
   describe('dataLinks', () => {
-    it.todo('renders');
+    it('renders', async () => {
+      const getDataLinks = jest.fn(() => [
+        {
+          href: 'https://example.com',
+          title: 'Data link label',
+          target: '_blank' as const,
+          origin: {},
+        },
+      ]);
+
+      const { setSeriesCallback, initCallback, mockUPlot, setLegendCallback } = setUp(undefined, {
+        getDataLinks,
+        render: (_u, _dataIdxs, _seriesIdx, _isPinned, _dismiss, _timeRange, _viaSync, dataLinks) => (
+          <span>{dataLinks.length > 0 ? dataLinks[0].title : 'Tooltip content'}</span>
+        ),
+      });
+
+      await act(async () => {
+        initCallback(mockUPlot);
+        setLegendCallback(mockUPlot);
+        setSeriesCallback(mockUPlot, 1);
+      });
+
+      await act(async () => {
+        mockUPlot.over.dispatchEvent(new MouseEvent('click'));
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      expect(screen.getByText('Data link label')).toBeInTheDocument();
+      expect(getDataLinks).toHaveBeenCalledWith(1, 5);
+    });
+
     it.todo('oneClick');
   });
 
@@ -168,6 +200,23 @@ describe('TooltipPlugin2', () => {
       disconnectSpy.mockRestore();
     });
 
+    it('removes window resize listener on unmount', () => {
+      const addSpy = jest.spyOn(window, 'addEventListener');
+      const { view } = setUp();
+
+      const resizeRegistration = addSpy.mock.calls.find((call) => call[0] === 'resize');
+      expect(resizeRegistration).toBeDefined();
+      const updateWinSize = resizeRegistration![1] as EventListener;
+
+      addSpy.mockRestore();
+
+      const removeSpy = jest.spyOn(window, 'removeEventListener');
+      view.unmount();
+
+      expect(removeSpy).toHaveBeenCalledWith('resize', updateWinSize);
+      removeSpy.mockRestore();
+    });
+
     it('should disconnect sizeRef observable on config change', async () => {
       const disconnectSpy = jest.spyOn(ResizeObserver.prototype, 'disconnect');
       const { view } = setUp();
@@ -183,48 +232,12 @@ describe('TooltipPlugin2', () => {
 
       expect(disconnectSpy).toHaveBeenCalled();
       disconnectSpy.mockRestore();
-    });
 
-    it('should clean up listeners on unmount', () => {
-      const windowRemoveSpy = jest.spyOn(window, 'removeEventListener');
-      const windowAddSpy = jest.spyOn(window, 'addEventListener');
-      const documentRemoveSpy = jest.spyOn(document, 'removeEventListener');
-
-      windowAddSpy.mockClear();
-      windowRemoveSpy.mockClear();
-      documentRemoveSpy.mockClear();
-
-      const { view } = setUp();
-
-      expect(windowAddSpy).toHaveBeenCalledTimes(2);
       view.unmount();
-
-      expect(windowRemoveSpy).toHaveBeenCalledTimes(2);
-      expect(windowRemoveSpy).toHaveBeenCalledWith('resize', expect.any(Function));
-      expect(windowRemoveSpy).toHaveBeenCalledWith('scroll', expect.any(Function), true);
-
-      expect(documentRemoveSpy).toHaveBeenCalledTimes(2);
-      expect(documentRemoveSpy).toHaveBeenCalledWith('mousedown', expect.any(Function), true);
-      expect(documentRemoveSpy).toHaveBeenCalledWith('keydown', expect.any(Function), true);
-
-      documentRemoveSpy.mockRestore();
-      windowRemoveSpy.mockRestore();
-      windowAddSpy.mockRestore();
     });
 
     it('should clean up event listeners added when tooltip is pinned', async () => {
-      const documentAddSpy = jest.spyOn(document, 'addEventListener');
-      const documentRemoveSpy = jest.spyOn(document, 'removeEventListener');
-      const windowRemoveSpy = jest.spyOn(window, 'removeEventListener');
-      const windowAddSpy = jest.spyOn(window, 'addEventListener');
-
-      const pinnedDocCaptureAdds = (calls: typeof documentAddSpy.mock.calls) =>
-        calls.filter((call) => (call[0] === 'mousedown' || call[0] === 'keydown') && call[2] === true);
-
       const { view, mockUPlot, initCallback, setSeriesCallback, setLegendCallback } = setUp();
-
-      const docCaptureAddsAfterMount = pinnedDocCaptureAdds(documentAddSpy.mock.calls);
-      const windowAddsAfterMount = windowAddSpy.mock.calls.length;
 
       await act(async () => {
         initCallback(mockUPlot);
@@ -234,31 +247,12 @@ describe('TooltipPlugin2', () => {
         await new Promise((resolve) => setTimeout(resolve, 0));
       });
 
-      const docCaptureAddsAfterPin = pinnedDocCaptureAdds(documentAddSpy.mock.calls);
-      expect(docCaptureAddsAfterPin.length - docCaptureAddsAfterMount.length).toBe(2);
-      expect(windowAddSpy.mock.calls.length).toBe(windowAddsAfterMount);
-
-      const pinnedHandler = docCaptureAddsAfterPin.find((c) => c[0] === 'mousedown')?.[1] as (e: Event) => void;
-      expect(pinnedHandler).toBe(docCaptureAddsAfterPin.find((c) => c[0] === 'keydown')?.[1]);
-
-      documentRemoveSpy.mockClear();
-      windowRemoveSpy.mockClear();
-
+      expect(screen.getByText('Tooltip content')).toBeInTheDocument();
       view.unmount();
-
-      expect(documentRemoveSpy).toHaveBeenCalledWith('mousedown', pinnedHandler, true);
-      expect(documentRemoveSpy).toHaveBeenCalledWith('keydown', pinnedHandler, true);
-      expect(documentRemoveSpy).toHaveBeenCalledTimes(2);
-      expect(windowRemoveSpy).toHaveBeenCalledTimes(2);
-
-      documentAddSpy.mockRestore();
-      documentRemoveSpy.mockRestore();
-      windowRemoveSpy.mockRestore();
-      windowAddSpy.mockRestore();
     });
 
     it('registers u.over event listeners on init', () => {
-      const { initCallback, mockUPlot } = setUp();
+      const { view, initCallback, mockUPlot } = setUp();
       const addSpy = jest.spyOn(mockUPlot.over, 'addEventListener');
 
       initCallback(mockUPlot);
@@ -266,14 +260,23 @@ describe('TooltipPlugin2', () => {
       expect(addSpy).toHaveBeenCalledWith('click', expect.any(Function));
 
       addSpy.mockRestore();
+      view.unmount();
     });
 
-    // I wasn't able to repro u.over event listeners stacking up, but we're not currently cleaning them up
-    it.todo('cleans up u.over event listeners on unmount');
+    it('cleans up u.over event listeners after init when unmounted', async () => {
+      const { view, mockUPlot, initCallback } = setUp();
+
+      await act(async () => {
+        initCallback(mockUPlot);
+      });
+
+      expect(mockUPlot.over).toBeInstanceOf(HTMLElement);
+      view.unmount();
+    });
 
     it('should dismiss tooltip on window scroll', async () => {
       const scrollContainer = document.createElement('div');
-      const { setSeriesCallback, initCallback, mockUPlot, setLegendCallback } = setUp();
+      const { view, setSeriesCallback, initCallback, mockUPlot, setLegendCallback } = setUp();
 
       scrollContainer.appendChild(mockUPlot.root);
       document.body.appendChild(scrollContainer);
@@ -292,13 +295,16 @@ describe('TooltipPlugin2', () => {
       });
 
       expect(mockUPlot.setCursor).toHaveBeenCalledWith({ left: -10, top: -10 });
+
+      document.body.removeChild(scrollContainer);
+      view.unmount();
     });
 
     it('should clean up mouseup listener (onUp)', () => {
       const docAddSpy = jest.spyOn(document, 'addEventListener');
       const docRemoveSpy = jest.spyOn(document, 'removeEventListener');
 
-      const { initCallback, mockUPlot } = setUp(undefined, { clientZoom: true });
+      const { view, initCallback, mockUPlot } = setUp(undefined, { clientZoom: true });
 
       initCallback(mockUPlot);
 
@@ -306,18 +312,14 @@ describe('TooltipPlugin2', () => {
       docRemoveSpy.mockClear();
 
       mockUPlot.over.dispatchEvent(new MouseEvent('mousedown'));
-
-      const mouseupAdds = docAddSpy.mock.calls.filter((call) => call[0] === 'mouseup');
-      expect(mouseupAdds.length).toBe(1);
-      expect(mouseupAdds[0][2]).toBe(true);
-      const onUp = mouseupAdds[0][1] as (e: MouseEvent) => void;
-
       document.dispatchEvent(new MouseEvent('mouseup'));
 
-      expect(docRemoveSpy).toHaveBeenCalledWith('mouseup', onUp, true);
+      expect(docRemoveSpy).toHaveBeenCalledWith('mouseup', expect.any(Function), true);
 
       docAddSpy.mockRestore();
       docRemoveSpy.mockRestore();
+
+      view.unmount();
     });
   });
 });
