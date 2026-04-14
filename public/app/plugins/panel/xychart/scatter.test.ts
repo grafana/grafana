@@ -33,13 +33,6 @@ jest.mock('@grafana/ui', () => ({
 
 const theme = createTheme();
 
-/*
- * Why makeField has defaults and a two-level merge:
- * - prepConfig accesses custom.pointSize, axisLabel, axisPlacement directly
- * - config.custom is shallow-merged so caller overrides win
- * - Top-level keys (unit, thresholds, mappings, color) spread separately
- *   so they don't overwrite the custom defaults
- */
 function makeField(opts: {
   name: string;
   values: number[];
