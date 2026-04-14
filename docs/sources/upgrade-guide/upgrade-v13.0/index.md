@@ -29,7 +29,7 @@ Follow this sequence for best results:
 
 #### Upgrade your Grafana to latest patch version for the version you are running
 
-To ensure that the changes that are necessary for React 19 upgrade are in place in your Grafana version, please update to the latest minor version available for your Grafana. You can check which one it is on our [downloads page](https://grafana.com/grafana/download)
+To ensure that the changes required for the upgrade to React 19 are in place in your Grafana version, update to the latest minor version available for your Grafana instance. You can check the available versions on the [downloads page](https://grafana.com/grafana/download).
 
 #### Update all of your plugins
 
