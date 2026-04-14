@@ -2,6 +2,7 @@ import { config } from '@grafana/runtime';
 import { type SceneGridRow } from '@grafana/scenes';
 
 import { NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { type RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
@@ -9,6 +10,8 @@ import { type TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
+
+import { getRowFromClipboard, getTabFromClipboard } from './paste';
 
 export function addNewTabTo(layout: DashboardLayoutManager): TabItem {
   const layoutParent = layout.parent!;
@@ -71,4 +74,56 @@ export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGrid
   layout.publishEvent(new NewObjectAddedToCanvasEvent(row), true);
 
   return row;
+}
+
+export function pasteRowTo(layout: DashboardLayoutManager): void {
+  const scene = getDashboardSceneFor(layout);
+
+  if (layout instanceof RowsLayoutManager) {
+    layout.pasteRow();
+    return;
+  }
+
+  if (layout instanceof TabsLayoutManager) {
+    const currentTab = layout.getCurrentTab();
+    if (!currentTab) {
+      throw new Error('Could not find currently active tab');
+    }
+    pasteRowTo(currentTab.state.layout);
+    return;
+  }
+
+  const layoutParent = layout.parent!;
+  if (!isLayoutParent(layoutParent)) {
+    throw new Error('Parent layout is not a LayoutParent');
+  }
+
+  // Wrap current layout in rows layout, then paste the row
+  const rowsLayout = RowsLayoutManager.createFromLayout(layoutParent.getLayout());
+  layoutParent.switchLayout(rowsLayout);
+
+  const row = getRowFromClipboard(scene);
+  rowsLayout.addNewRow(row);
+}
+
+export function pasteTabTo(layout: DashboardLayoutManager): void {
+  const scene = getDashboardSceneFor(layout);
+
+  if (layout instanceof TabsLayoutManager) {
+    layout.pasteTab();
+    return;
+  }
+
+  const layoutParent = layout.parent!;
+  if (!isLayoutParent(layoutParent)) {
+    throw new Error('Parent layout is not a LayoutParent');
+  }
+
+  // Create new tabs layout and wrap the current layout in the first tab, then paste the new tab
+  const tabsLayout = TabsLayoutManager.createEmpty();
+  tabsLayout.state.tabs[0].setState({ layout: layout.clone() });
+  layoutParent.switchLayout(tabsLayout);
+
+  const tab = getTabFromClipboard(scene);
+  tabsLayout.addNewTab(tab);
 }

@@ -12,7 +12,7 @@ import { getDefaultVizPanel } from '../../utils/utils';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
 
-import { addNewRowTo, addNewTabTo } from './addNew';
+import { addNewRowTo, addNewTabTo, pasteRowTo, pasteTabTo } from './addNew';
 import { getLayoutControlsStyles } from './styles';
 import { useClipboardState } from './useClipboardState';
 
@@ -23,7 +23,7 @@ export interface Props {
 export function CanvasGridAddActions({ layoutManager }: Props) {
   const styles = useStyles2(getLayoutControlsStyles);
   const localStyles = useStyles2(getStyles);
-  const { hasCopiedPanel } = useClipboardState();
+  const { hasCopiedPanel, hasCopiedRow, hasCopiedTab } = useClipboardState();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { disableGrouping, disableTabs } = useNestingRestrictions(layoutManager);
 
@@ -110,6 +110,32 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
           }}
         >
           <Trans i18nKey="dashboard.canvas-actions.paste-panel">Paste panel</Trans>
+        </Button>
+      )}
+      {hasCopiedRow && (
+        <Button
+          data-testid={selectors.components.CanvasGridAddActions.pasteRow}
+          variant="secondary"
+          icon="clipboard-alt"
+          size="sm"
+          onClick={() => {
+            pasteRowTo(layoutManager);
+          }}
+        >
+          <Trans i18nKey="dashboard.canvas-actions.paste-row">Paste row</Trans>
+        </Button>
+      )}
+      {hasCopiedTab && !disableTabs && (
+        <Button
+          data-testid={selectors.components.CanvasGridAddActions.pasteTab}
+          variant="secondary"
+          icon="clipboard-alt"
+          size="sm"
+          onClick={() => {
+            pasteTabTo(layoutManager);
+          }}
+        >
+          <Trans i18nKey="dashboard.canvas-actions.paste-tab">Paste tab</Trans>
         </Button>
       )}
     </div>

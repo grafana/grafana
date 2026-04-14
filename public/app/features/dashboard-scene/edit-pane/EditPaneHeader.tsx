@@ -17,7 +17,7 @@ interface EditPaneHeaderProps {
 
 export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
   const elementInfo = element.getEditableElementInfo();
-  const { hasCopiedPanel } = useClipboardState();
+  const { hasCopiedPanel, hasCopiedRow, hasCopiedTab } = useClipboardState();
 
   // TODO this type check here is hacky and should be replaced with a more generic solid solution
   const canPaste = element instanceof RowItem || element instanceof TabItem ? element : undefined;
@@ -59,6 +59,20 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
                     label={t('dashboard.layout.common.paste', 'Paste')}
                     onClick={() => editPane.pastePanel(editPane.getSelectedObject(), 'editPaneHeader')}
                     data-testid={selectors.components.EditPaneHeader.paste}
+                  />
+                ) : null}
+                {pasteTarget && hasCopiedRow ? (
+                  <Menu.Item
+                    icon="clipboard-alt"
+                    label={t('dashboard.layout.common.paste-row', 'Paste row')}
+                    onClick={() => editPane.pasteRow(pasteTarget)}
+                  />
+                ) : null}
+                {pasteTarget && hasCopiedTab ? (
+                  <Menu.Item
+                    icon="clipboard-alt"
+                    label={t('dashboard.layout.common.paste-tab', 'Paste tab')}
+                    onClick={() => editPane.pasteTab(pasteTarget)}
                   />
                 ) : null}
               </Menu>
