@@ -15,6 +15,7 @@ import (
 	"k8s.io/apiserver/pkg/authentication/user"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -272,6 +273,86 @@ func TestValidator_Validate(t *testing.T) {
 			},
 		},
 		{
+			name: "valid webhook base URL",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:   "Test Repo",
+						Webhook: &provisioning.WebhookConfig{BaseURL: "https://grafana.example.com/"},
+					},
+				}
+			}(),
+			expectedErrs: 0,
+		},
+		{
+			name: "valid HTTP webhook base URL",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:   "Test Repo",
+						Webhook: &provisioning.WebhookConfig{BaseURL: "http://grafana.example.com"},
+					},
+				}
+			}(),
+			expectedErrs: 0,
+		},
+		{
+			name: "webhook base URL with unsupported scheme",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:   "Test Repo",
+						Webhook: &provisioning.WebhookConfig{BaseURL: "ftp://grafana.example.com/"},
+					},
+				}
+			}(),
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errors field.ErrorList) {
+				require.Contains(t, errors.ToAggregate().Error(), "must use HTTP or HTTPS scheme")
+			},
+		},
+		{
+			name: "webhook base URL missing host",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:   "Test Repo",
+						Webhook: &provisioning.WebhookConfig{BaseURL: "https://"},
+					},
+				}
+			}(),
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errors field.ErrorList) {
+				require.Contains(t, errors.ToAggregate().Error(), "must include a host")
+			},
+		},
+		{
+			name: "nil webhook section is allowed",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title: "Test Repo",
+					},
+				}
+			}(),
+			expectedErrs: 0,
+		},
+		{
 			name: "no finalizers on resource not marked for deletion",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
@@ -460,6 +541,106 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			operation:       admission.Update,
 			wantErr:         true,
 			wantErrContains: "Changing sync target after running sync is not supported",
+		},
+		{
+			name: "blocks UPDATE when both old and new objects have the pending-delete label",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+					Labels:     map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo (modified)",
+					Type:  provisioning.GitHubRepositoryType,
+				},
+			},
+			old: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "test",
+					Labels: map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+				},
+			},
+			operation:       admission.Update,
+			wantErr:         true,
+			wantErrContains: "namespace is pending deletion",
+		},
+		{
+			name: "allows UPDATE that removes the pending-delete label (explicit unlock)",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+					Sync:  provisioning.SyncOptions{IntervalSeconds: 60},
+				},
+			},
+			old: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+					Labels:     map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+					Sync:  provisioning.SyncOptions{IntervalSeconds: 60},
+				},
+			},
+			operation: admission.Update,
+			wantErr:   false,
+		},
+		{
+			name: "allows the UPDATE that sets the pending-delete label (old without label → new with label)",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+					Labels:     map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+					Sync:  provisioning.SyncOptions{IntervalSeconds: 60},
+				},
+			},
+			old: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+					Sync:  provisioning.SyncOptions{IntervalSeconds: 60},
+				},
+			},
+			operation: admission.Update,
+			wantErr:   false,
+		},
+		{
+			name: "blocks CREATE when incoming object carries the pending-delete label",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+					Labels:     map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+				},
+			},
+			operation:       admission.Create,
+			wantErr:         true,
+			wantErrContains: "namespace is pending deletion",
 		},
 	}
 

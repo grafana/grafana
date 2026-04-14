@@ -23,7 +23,7 @@ type MetaJSONData struct {
 	Backend            *bool                   `json:"backend,omitempty"`
 	BuildMode          *string                 `json:"buildMode,omitempty"`
 	BuiltIn            *bool                   `json:"builtIn,omitempty"`
-	Category           *MetaJSONDataCategory   `json:"category,omitempty"`
+	Category           *string                 `json:"category,omitempty"`
 	EnterpriseFeatures *MetaEnterpriseFeatures `json:"enterpriseFeatures,omitempty"`
 	Executable         *string                 `json:"executable,omitempty"`
 	HideFromList       *bool                   `json:"hideFromList,omitempty"`
@@ -271,6 +271,8 @@ type MetaSpec struct {
 	Translations map[string]string         `json:"translations,omitempty"`
 	// +listType=atomic
 	Children []string `json:"children,omitempty"`
+	// +listType=atomic
+	AliasIds []string `json:"aliasIds,omitempty"`
 }
 
 // NewMetaSpec creates a new MetaSpec object.
@@ -709,26 +711,6 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for MetaJSONDataType.
 func (MetaJSONDataType) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaJSONDataType"
-}
-
-// +k8s:openapi-gen=true
-type MetaJSONDataCategory string
-
-const (
-	MetaJSONDataCategoryTsdb       MetaJSONDataCategory = "tsdb"
-	MetaJSONDataCategoryLogging    MetaJSONDataCategory = "logging"
-	MetaJSONDataCategoryCloud      MetaJSONDataCategory = "cloud"
-	MetaJSONDataCategoryTracing    MetaJSONDataCategory = "tracing"
-	MetaJSONDataCategoryProfiling  MetaJSONDataCategory = "profiling"
-	MetaJSONDataCategorySql        MetaJSONDataCategory = "sql"
-	MetaJSONDataCategoryEnterprise MetaJSONDataCategory = "enterprise"
-	MetaJSONDataCategoryIot        MetaJSONDataCategory = "iot"
-	MetaJSONDataCategoryOther      MetaJSONDataCategory = "other"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for MetaJSONDataCategory.
-func (MetaJSONDataCategory) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaJSONDataCategory"
 }
 
 // +k8s:openapi-gen=true

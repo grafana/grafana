@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
+import { CustomVariable, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -32,13 +32,13 @@ jest.mock('../../edit-pane/shared', () => {
   };
 });
 
+let currentTestScene: unknown;
+
 jest.mock('../../utils/utils', () => {
   const actual = jest.requireActual('../../utils/utils');
   return {
     ...actual,
-    getDashboardSceneFor: jest.fn(() => ({
-      state: { isEditing: true },
-    })),
+    getDashboardSceneFor: jest.fn(() => currentTestScene ?? { state: { isEditing: true } }),
   };
 });
 
@@ -47,9 +47,20 @@ function mockSerializer(elementMap: Record<string, number> = {}) {
   for (const [name, id] of Object.entries(elementMap)) {
     reverseMap[id] = name;
   }
+
+  function ensureMapping(panelId: number): string {
+    if (reverseMap[panelId]) {
+      return reverseMap[panelId];
+    }
+    const key = `panel-${panelId}`;
+    elementMap[key] = panelId;
+    reverseMap[panelId] = key;
+    return key;
+  }
+
   return {
     getPanelIdForElement: jest.fn((name: string) => elementMap[name]),
-    getElementIdForPanel: jest.fn((id: number) => reverseMap[id]),
+    getElementIdForPanel: jest.fn((id: number) => ensureMapping(id)),
     getDSReferencesMapping: jest.fn(() => ({})),
   };
 }
@@ -84,6 +95,8 @@ function buildRowsScene(rowTitles: string[] = ['Row A', 'Row B']): DashboardScen
     }),
   };
 
+  currentTestScene = scene;
+
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return scene as unknown as DashboardScene;
 }
@@ -117,6 +130,8 @@ function buildTabsScene(tabTitles: string[] = ['Tab A', 'Tab B']): DashboardScen
       Object.assign(state, partial);
     }),
   };
+
+  currentTestScene = scene;
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return scene as unknown as DashboardScene;
@@ -155,6 +170,8 @@ function buildRowsSceneWithPanels(): DashboardScene {
       Object.assign(state, partial);
     }),
   };
+
+  currentTestScene = scene;
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return scene as unknown as DashboardScene;
@@ -196,6 +213,8 @@ function buildSceneWithLayoutParent(
     }),
   };
 
+  currentTestScene = scene;
+
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return scene as unknown as DashboardScene;
 }
@@ -226,7 +245,7 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ path: '/rows/1' });
+      expect(result.data).toMatchObject({ path: '/rows/1', row: { kind: 'RowsLayoutRow' } });
 
       const body = scene.state.body as unknown as RowsLayoutManager;
       expect(body.state.rows).toHaveLength(2);
@@ -378,7 +397,7 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ path: '/tabs/1' });
+      expect(result.data).toMatchObject({ path: '/tabs/1', tab: { kind: 'TabsLayoutTab' } });
 
       const body = scene.state.body as unknown as TabsLayoutManager;
       expect(body.state.tabs).toHaveLength(2);
@@ -573,7 +592,8 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ element: 'elem-a', parent: '/rows/1' });
+      const data = result.data as { layoutItem: { spec: { element: { name: string } } } };
+      expect(data.layoutItem.spec.element.name).toBeDefined();
 
       // Panel moved from Row 1 to Row 2
       expect(body.state.rows[0].state.layout.getVizPanels()).toHaveLength(0);
@@ -592,7 +612,8 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ element: 'elem-a', parent: 'current' });
+      const data = result.data as { layoutItem: { spec: { element: { name: string } } } };
+      expect(data.layoutItem.spec.element.name).toBe('elem-a');
       expect(result.warnings).toBeUndefined();
     });
 
@@ -609,7 +630,8 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ element: 'elem-a', parent: 'current' });
+      const data = result.data as { layoutItem: { spec: { element: { name: string } } } };
+      expect(data.layoutItem.spec.element.name).toBe('elem-a');
       expect(result.changes).toHaveLength(1);
 
       // Verify the grid item was repositioned
@@ -718,6 +740,7 @@ describe('Layout mutation commands', () => {
         }),
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       } as unknown as DashboardScene;
+      currentTestScene = scene;
 
       const executor = new DashboardMutationClient(scene);
 
@@ -762,6 +785,7 @@ describe('Layout mutation commands', () => {
         }),
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       } as unknown as DashboardScene;
+      currentTestScene = scene;
 
       const executor = new DashboardMutationClient(scene);
 
@@ -814,7 +838,7 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ path: '/tabs/0/rows/1' });
+      expect(result.data).toMatchObject({ path: '/tabs/0/rows/1', row: { kind: 'RowsLayoutRow' } });
 
       const tabBody = body.state.tabs[0].state.layout as RowsLayoutManager;
       expect(tabBody.state.rows).toHaveLength(2);
@@ -862,7 +886,7 @@ describe('Layout mutation commands', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data).toEqual({ path: '/tabs/1/rows/0' });
+      expect(result.data).toMatchObject({ path: '/tabs/1/rows/0', row: { kind: 'RowsLayoutRow' } });
 
       const t0Rows = (body.state.tabs[0].state.layout as RowsLayoutManager).state.rows;
       const t1Rows = (body.state.tabs[1].state.layout as RowsLayoutManager).state.rows;
@@ -988,6 +1012,44 @@ describe('Layout mutation commands', () => {
       const innerLayout = body.state.tabs[0].getLayout();
       expect(innerLayout).toBeInstanceOf(RowsLayoutManager);
       expect((innerLayout as RowsLayoutManager).state.rows).toHaveLength(2);
+    });
+
+    it('preserves section variable values when converting rows to tabs', async () => {
+      const sectionVariable = new CustomVariable({
+        name: 'section',
+        query: 'default',
+        value: 'fromUrl',
+        text: 'fromUrl',
+      });
+      const row = new RowItem({
+        title: 'Row 1',
+        repeatByVariable: 'server',
+        $variables: new SceneVariableSet({ variables: [sectionVariable] }),
+        layout: DefaultGridLayoutManager.fromVizPanels([]),
+      });
+      const rowsBody = new RowsLayoutManager({ rows: [row] });
+      const scene = buildSceneWithLayoutParent(rowsBody);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_TAB',
+        payload: {
+          tab: { kind: 'TabsLayoutTab', spec: { title: 'Main' } },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+
+      const body = scene.state.body as unknown as TabsLayoutManager;
+      const innerRows = body.state.tabs[0].getLayout() as RowsLayoutManager;
+      const convertedRow = innerRows.state.rows[0];
+      const convertedSectionVariable = convertedRow.state.$variables?.state.variables.find(
+        (variable) => variable instanceof CustomVariable
+      ) as CustomVariable;
+
+      expect(convertedRow.state.repeatByVariable).toBe('server');
+      expect(convertedSectionVariable.getValue()).toBe('fromUrl');
     });
 
     it('converts tabs to rows by nesting tabs inside the requested row', async () => {

@@ -18,7 +18,7 @@ import (
 
 func TestSecureLifecycle(t *testing.T) {
 	resourceWithSecureValues := func(sv common.InlineSecureValues) utils.GrafanaMetaAccessor {
-		obj, err := utils.MetaAccessor(&unstructured.Unstructured{
+		tmp := &unstructured.Unstructured{
 			Object: map[string]any{
 				"apiVersion": "something.grafana.app/v1beta1",
 				"kind":       "CustomKind",
@@ -28,16 +28,23 @@ func TestSecureLifecycle(t *testing.T) {
 				},
 				"secure": sv,
 			},
+		}
+		raw, err := tmp.MarshalJSON() // NOTE, any secret gets replaced with: [REDACTED]
+		require.NoError(t, err)
+		tmp.SetAnnotations(map[string]string{
+			utils.AnnoKeyKubectlLastAppliedConfig: string(raw),
 		})
+
+		obj, err := utils.MetaAccessor(tmp)
 		require.NoError(t, err)
 		return obj
 	}
 
 	t.Run("create secure values", func(t *testing.T) {
 		secureStore := secret.NewMockInlineSecureValueSupport(t)
-		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretAAA")).
+		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretAAA"), (*string)(nil)).
 			Return("NameForA", nil).Once()
-		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretBBB")).
+		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretBBB"), (*string)(nil)).
 			Return("NameForB", nil).Once()
 
 		info := &objectForStorage{}
@@ -57,6 +64,10 @@ func TestSecureLifecycle(t *testing.T) {
 			"a": {"name": "NameForA"},
 			"b": {"name": "NameForB"}
 		}`, asJSON(secure, true))
+
+		v := obj.GetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig)
+		require.Empty(t, v, "should exclude the last config with raw secrets")
+
 		secureStore.AssertExpectations(t)
 	})
 
@@ -69,9 +80,9 @@ func TestSecureLifecycle(t *testing.T) {
 		info := &objectForStorage{}
 		expectError := fmt.Errorf("expected error")
 		secureStore := secret.NewMockInlineSecureValueSupport(t)
-		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretAAA")).
+		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretAAA"), (*string)(nil)).
 			Return("", expectError).Maybe()
-		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretBBB")).
+		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretBBB"), (*string)(nil)).
 			Return("", expectError).Maybe()
 
 		err := prepareSecureValues(context.Background(), secureStore, obj, nil, info)
@@ -160,6 +171,9 @@ func TestSecureLifecycle(t *testing.T) {
 			"c": {"name": "NameForC"}
 		}`, asJSON(secure, true))
 
+		v := obj.GetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig)
+		require.NotEmpty(t, v, "should keep the annotations when a raw secret is not exposed")
+
 		// When there is not an error, the finish command will do a real delete
 		owner := utils.ToObjectReference(obj)
 		secureStore.On("DeleteWhenOwnedByResource", mock.Anything, owner, "NameForB").
@@ -178,14 +192,39 @@ func TestSecureLifecycle(t *testing.T) {
 	t.Run("remove invalid secure values", func(t *testing.T) {
 		secureStore := secret.NewMockInlineSecureValueSupport(t)
 		obj := resourceWithSecureValues(common.InlineSecureValues{
-			"b": common.InlineSecureValue{Remove: true},
+			"b": common.InlineSecureValue{Remove: true}, // b does not exist in previous value
 		})
 
 		// Previous values must exist for remove to execute
 		info := &objectForStorage{}
 		err := prepareSecureValues(context.Background(), secureStore, obj, resourceWithSecureValues(nil), info)
-		require.Error(t, err, "should error when previous secure values does not exist")
-		require.Equal(t, "cannot remove secure value 'b', it did not exist in the previous value", err.Error())
+		require.Nil(t, err, "should noop when previous value does not exist")
+		require.False(t, info.hasChanged, "noop remove should not mark the object as changed")
+		secure, err := obj.GetSecureValues()
+		require.NoError(t, err)
+		require.Empty(t, secure, "noop remove should be stripped before the object is written")
+		secureStore.AssertExpectations(t)
+	})
+
+	t.Run("remove invalid secure values while creating others", func(t *testing.T) {
+		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretAAA"), (*string)(nil)).
+			Return("NameForA", nil).Once()
+
+		obj := resourceWithSecureValues(common.InlineSecureValues{
+			"a": common.InlineSecureValue{Create: "SecretAAA"},
+			"b": common.InlineSecureValue{Remove: true}, // b does not exist in previous value
+		})
+
+		info := &objectForStorage{}
+		err := prepareSecureValues(context.Background(), secureStore, obj, resourceWithSecureValues(nil), info)
+		require.NoError(t, err)
+		require.True(t, info.hasChanged, "creating a secure value should still mark the object as changed")
+		secure, err := obj.GetSecureValues()
+		require.NoError(t, err)
+		require.JSONEq(t, `{
+			"a": {"name": "NameForA"}
+		}`, asJSON(secure, true))
 		secureStore.AssertExpectations(t)
 	})
 

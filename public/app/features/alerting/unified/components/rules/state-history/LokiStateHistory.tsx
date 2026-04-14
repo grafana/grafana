@@ -5,13 +5,15 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { DataFrame, GrafanaTheme2, TimeRange, dateTime } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2, type SelectableValue, type TimeRange, dateTime } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, Field, Icon, Input, Label, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Icon, Input, Label, Select, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
+import { useSlowQuery } from '../../../hooks/useSlowQuery';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
 import { PopupCard } from '../../HoverCard';
+import { StateFilterValues } from '../central-state-history/constants';
 
 import { LogRecordViewerByTimestamp } from './LogRecordViewer';
 import { LogTimelineViewer } from './LogTimelineViewer';
@@ -22,11 +24,23 @@ interface Props {
 }
 
 const STATE_HISTORY_POLLING_INTERVAL = 10 * 1000; // 10 seconds
+
+const STATE_FILTER_OPTIONS: Array<SelectableValue<string>> = [
+  { label: 'All', value: StateFilterValues.all },
+  { label: 'Alerting', value: StateFilterValues.firing },
+  { label: 'Normal', value: StateFilterValues.normal },
+  { label: 'Pending', value: StateFilterValues.pending },
+  { label: 'NoData', value: 'NoData' },
+  { label: 'Error', value: 'Error' },
+  { label: 'Recovering', value: StateFilterValues.recovering },
+];
 const MAX_TIMELINE_SERIES = 12;
 
 const LokiStateHistory = ({ ruleUID }: Props) => {
   const styles = useStyles2(getStyles);
   const [instancesFilter, setInstancesFilter] = useState('');
+  const [stateFrom, setStateFrom] = useState<string>(StateFilterValues.all);
+  const [stateTo, setStateTo] = useState<string>(StateFilterValues.all);
   const logsRef = useRef<Map<number, HTMLElement>>(new Map<number, HTMLElement>());
 
   const { getValues, setValue, register, handleSubmit } = useForm({ defaultValues: { query: '' } });
@@ -47,6 +61,8 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
       from: queryTimeRange.from.unix(),
       to: queryTimeRange.to.unix(),
       limit: 250,
+      previous: stateFrom !== StateFilterValues.all ? stateFrom : undefined,
+      current: stateTo !== StateFilterValues.all ? stateTo : undefined,
     },
     {
       refetchOnFocus: true,
@@ -54,6 +70,8 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
       pollingInterval: STATE_HISTORY_POLLING_INTERVAL,
     }
   );
+
+  const isSlowQuery = useSlowQuery(isLoading);
 
   const { dataFrames, historyRecords, commonLabels, totalRecordsCount } = useRuleHistoryRecords(
     stateHistory,
@@ -74,13 +92,28 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   const onFilterCleared = useCallback(() => {
     setInstancesFilter('');
     setValue('query', '');
+    setStateFrom(StateFilterValues.all);
+    setStateTo(StateFilterValues.all);
   }, [setInstancesFilter, setValue]);
 
   if (isLoading) {
     return (
-      <div>
-        <Trans i18nKey="alerting.loki-state-history.loading">Loading...</Trans>
-      </div>
+      <Stack direction="column" gap={1}>
+        {isSlowQuery && (
+          <Alert
+            severity="warning"
+            title={t('alerting.loki-state-history.slow-query.title', 'Query is taking longer than expected')}
+          >
+            {t(
+              'alerting.loki-state-history.slow-query.text',
+              'This query is taking longer than expected. This can happen when a regex or negation label filter matches too many alert instances. Consider using a shorter time range or a more specific filter.'
+            )}
+          </Alert>
+        )}
+        <div>
+          <Trans i18nKey="alerting.loki-state-history.loading">Loading...</Trans>
+        </div>
+      </Stack>
     );
   }
   if (isError) {
@@ -100,43 +133,74 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   }
 
   const hasMoreInstances = frameSubset.length < dataFrames.length;
-  const emptyStateMessage =
-    totalRecordsCount > 0
-      ? `No matches were found for the given filters among the ${totalRecordsCount} instances`
-      : 'No state transitions have occurred in the last 30 days';
+  const hasActiveStateFilter = stateFrom !== StateFilterValues.all || stateTo !== StateFilterValues.all;
+
+  let emptyStateMessage: string;
+  if (totalRecordsCount > 0) {
+    emptyStateMessage = `No matches were found for the given filters among the ${totalRecordsCount} instances`;
+  } else if (hasActiveStateFilter) {
+    emptyStateMessage = t(
+      'alerting.loki-state-history.no-transitions-match-filters',
+      'No state transitions match the selected filters'
+    );
+  } else {
+    emptyStateMessage = 'No state transitions have occurred in the last 30 days';
+  }
 
   return (
     <div className={styles.fullSize}>
-      <form onSubmit={handleSubmit((data) => setInstancesFilter(data.query))}>
-        <SearchFieldInput
-          {...register('query')}
-          showClearFilterSuffix={!!instancesFilter}
-          onClearFilterClick={onFilterCleared}
-        />
-        <input type="submit" hidden />
-      </form>
+      <Stack direction="row" gap={1} alignItems="flex-end">
+        <div className={styles.instancesFilterForm}>
+          <form onSubmit={handleSubmit((data) => setInstancesFilter(data.query))}>
+            <SearchFieldInput
+              {...register('query')}
+              showClearFilterSuffix={!!instancesFilter}
+              onClearFilterClick={onFilterCleared}
+            />
+            <input type="submit" hidden />
+          </form>
+        </div>
+        <Field noMargin label={t('alerting.loki-state-history.start-state', 'Start state')}>
+          <Select
+            options={STATE_FILTER_OPTIONS}
+            value={stateFrom}
+            onChange={(v) => setStateFrom(v.value ?? StateFilterValues.all)}
+            width={18}
+          />
+        </Field>
+        <Field noMargin label={t('alerting.loki-state-history.end-state', 'End state')}>
+          <Select
+            options={STATE_FILTER_OPTIONS}
+            value={stateTo}
+            onChange={(v) => setStateTo(v.value ?? StateFilterValues.all)}
+            width={18}
+          />
+        </Field>
+      </Stack>
       {!isEmpty(commonLabels) && (
-        <Stack gap={1} alignItems="center" wrap="wrap">
-          <Stack gap={0.5} alignItems="center" minWidth="fit-content">
-            <Text variant="bodySmall">
-              <Trans i18nKey="alerting.loki-state-history.common-labels">Common labels</Trans>
-            </Text>
-            <Tooltip
-              content={t(
-                'alerting.loki-state-history.tooltip-common-labels',
-                'Common labels are the ones attached to all of the alert instances'
-              )}
-            >
-              <Icon name="info-circle" size="sm" />
-            </Tooltip>
+        <div className={styles.commonLabels}>
+          <Stack gap={1} alignItems="center" wrap="wrap">
+            <Stack gap={0.5} alignItems="center" minWidth="fit-content">
+              <Text variant="bodySmall">
+                <Trans i18nKey="alerting.loki-state-history.common-labels">Common labels</Trans>
+              </Text>
+              <Tooltip
+                content={t(
+                  'alerting.loki-state-history.tooltip-common-labels',
+                  'Common labels are the ones attached to all of the alert instances'
+                )}
+              >
+                <Icon name="info-circle" size="sm" />
+              </Tooltip>
+            </Stack>
+            <AlertLabels labels={fromPairs(commonLabels)} size="sm" />
           </Stack>
-          <AlertLabels labels={fromPairs(commonLabels)} size="sm" />
-        </Stack>
+        </div>
       )}
       {isEmpty(frameSubset) ? (
         <div className={styles.emptyState}>
           {emptyStateMessage}
-          {totalRecordsCount > 0 && (
+          {(totalRecordsCount > 0 || hasActiveStateFilter) && (
             <Button variant="secondary" type="button" onClick={onFilterCleared}>
               <Trans i18nKey="alerting.loki-state-history.clear-filters">Clear filters</Trans>
             </Button>
@@ -144,9 +208,19 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
         </div>
       ) : (
         <>
-          <div className={styles.graphWrapper}>
-            <LogTimelineViewer frames={frameSubset} timeRange={frameTimeRange} />
-          </div>
+          {hasActiveStateFilter ? (
+            <div className={styles.timelineHiddenMessage}>
+              <Text variant="bodySmall" color="secondary">
+                <Trans i18nKey="alerting.loki-state-history.timeline-hidden">
+                  Timeline is hidden when state filters are active
+                </Trans>
+              </Text>
+            </div>
+          ) : (
+            <div className={styles.graphWrapper}>
+              <LogTimelineViewer frames={frameSubset} timeRange={frameTimeRange} />
+            </div>
+          )}
           {hasMoreInstances && (
             <div className={styles.moreInstancesWarning}>
               <Stack direction="row" alignItems="center" gap={1}>
@@ -200,6 +274,7 @@ const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProp
   ({ showClearFilterSuffix, onClearFilterClick, ...rest }: SearchFieldInputProps, ref) => {
     return (
       <Field
+        noMargin
         label={
           <Label htmlFor="instancesSearchInput">
             <Stack gap={0.5}>
@@ -264,6 +339,17 @@ export const getStyles = (theme: GrafanaTheme2) => ({
 
     display: 'flex',
     flexDirection: 'column',
+  }),
+  commonLabels: css({
+    padding: theme.spacing(1, 0),
+  }),
+  timelineHiddenMessage: css({
+    textAlign: 'center',
+    padding: theme.spacing(1, 0),
+  }),
+  instancesFilterForm: css({
+    flex: 1,
+    minWidth: 0,
   }),
   graphWrapper: css({
     padding: `${theme.spacing()} 0`,

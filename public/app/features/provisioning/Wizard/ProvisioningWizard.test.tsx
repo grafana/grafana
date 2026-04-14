@@ -1,15 +1,17 @@
 import { QueryStatus } from '@reduxjs/toolkit/query';
 import { screen } from '@testing-library/react';
-import { UserEvent } from '@testing-library/user-event';
+import { type UserEvent } from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import type { JSX } from 'react';
-import { render } from 'test/test-utils';
+import { act, render, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
+import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
-import { setupProvisioningMswServer } from '../mocks/server';
+import { createJob, createRepository } from '../mocks/factories';
+import { getMockLiveSrv, setupProvisioningMswServer } from '../mocks/server';
 
 import { ProvisioningWizard } from './ProvisioningWizard';
 import { StepStatusProvider } from './StepStatusContext';
@@ -62,7 +64,7 @@ async function navigateToConnectionStep(
   if (type !== 'local' && data?.token) {
     const tokenPlaceholders = {
       github: 'ghp_xxxxxxxxxxxxxxxxxxxx',
-      gitlab: 'glpat-xxxxxxxxxxxxxxxxxxxx',
+      gitlab: 'glpat-xxxxxxxxxxxxxxxxxxx',
       bitbucket: 'ATATTxxxxxxxxxxxxxxxx',
       git: 'token or password',
     };
@@ -74,13 +76,7 @@ async function navigateToConnectionStep(
   }
 
   if (type !== 'local' && data?.url) {
-    const urlPlaceholders = {
-      github: 'https://github.com/owner/repository',
-      gitlab: 'https://gitlab.com/owner/repository',
-      bitbucket: 'https://bitbucket.org/owner/repository',
-      git: 'https://git.example.com/owner/repository.git',
-    };
-    await pasteIntoInput(user, screen.getByPlaceholderText(urlPlaceholders[type]), data.url);
+    await pasteIntoInput(user, screen.getByRole('textbox', { name: /Repository URL/i }), data.url);
   }
 
   if (type !== 'local') {
@@ -114,7 +110,9 @@ async function fillConnectionForm(
   });
 
   if (type !== 'local' && data.branch) {
-    const branchCombobox = screen.getByRole('combobox');
+    // Index-based: Combobox uses downshift-generated IDs so Field's htmlFor
+    // doesn't associate and getByRole({ name }) can't match the label.
+    const branchCombobox = screen.getAllByRole('combobox')[0];
     await user.click(branchCombobox);
     await user.clear(branchCombobox);
     await user.paste(data.branch);
@@ -122,7 +120,15 @@ async function fillConnectionForm(
   }
 
   if (data.path) {
-    await pasteIntoInput(user, screen.getByRole('textbox', { name: /Path/i }), data.path);
+    if (type === 'local') {
+      await pasteIntoInput(user, screen.getByRole('textbox', { name: /Path/i }), data.path);
+    } else {
+      const pathCombobox = screen.getAllByRole('combobox')[1];
+      await user.click(pathCombobox);
+      await user.clear(pathCombobox);
+      await user.paste(data.path);
+      await user.keyboard('{Enter}');
+    }
   }
 }
 
@@ -157,6 +163,67 @@ function setupMockSubmitData() {
   });
 
   return mockSubmitData;
+}
+
+function enableSynchronizationStep() {
+  server.use(
+    http.get(`${BASE}/stats`, () => HttpResponse.json({ instance: [{ group: 'dashboard.grafana.app', count: 1 }] })),
+    http.get(`${BASE}/repositories/:name/files/`, () =>
+      HttpResponse.json({ items: [{ name: 'test.json', path: 'test.json' }] })
+    )
+  );
+}
+
+function mockRepositoryList(repository: Repository = createRepository()) {
+  server.use(
+    http.get(`${BASE}/repositories`, () =>
+      HttpResponse.json({
+        items: [repository],
+        metadata: { resourceVersion: '1' },
+      })
+    )
+  );
+}
+
+function mockSyncRepositoryLookup(repository: Repository = createRepository()) {
+  server.use(http.get(`${BASE}/repositories/:name`, () => HttpResponse.json(repository)));
+}
+
+async function navigateToBootstrapStep(user: UserEvent) {
+  enableSynchronizationStep();
+
+  await fillConnectionForm(user, 'github', {
+    token: 'test-token',
+    url: 'https://github.com/test/repo',
+    branch: 'main',
+  });
+
+  await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+  expect(await screen.findByRole('heading', { name: /3\. Choose what to synchronize/i })).toBeInTheDocument();
+}
+
+async function navigateToSynchronizationStep(user: UserEvent) {
+  await navigateToBootstrapStep(user);
+  await user.click(screen.getByRole('button', { name: /Synchronize with external storage/i }));
+  expect(await screen.findByRole('heading', { name: /4\. Synchronize with external storage/i })).toBeInTheDocument();
+}
+
+function setupWorkingJobHandlers() {
+  const createdJob = createJob({ status: { state: 'pending' } });
+  const workingJob = createJob();
+  server.use(
+    http.post(`${BASE}/repositories/:name/jobs`, () => HttpResponse.json(createdJob)),
+    http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [workingJob], metadata: { resourceVersion: '1' } }))
+  );
+  return { createdJob, workingJob };
+}
+
+async function beginSynchronization(user: UserEvent) {
+  await navigateToSynchronizationStep(user);
+  const finishButton = screen.getByRole('button', { name: /Choose additional settings/i });
+  await user.click(screen.getByRole('button', { name: /Begin synchronization/i }));
+  expect(await screen.findByText('Pulling...')).toBeInTheDocument();
+  return { finishButton };
 }
 
 describe('ProvisioningWizard', () => {
@@ -197,38 +264,6 @@ describe('ProvisioningWizard', () => {
 
       // Verify connection step
       expect(await screen.findByRole('heading', { name: /Configure repository/i })).toBeInTheDocument();
-    });
-
-    it('should progress through first 3 steps successfully', async () => {
-      // Override stats and files for this test via MSW
-      server.use(
-        http.get(`${BASE}/stats`, () =>
-          HttpResponse.json({ instance: [{ group: 'dashboard.grafana.app', count: 1 }] })
-        ),
-        http.get(`${BASE}/repositories/:name/files/`, () =>
-          HttpResponse.json({ items: [{ name: 'test.json', path: 'test.json' }] })
-        )
-      );
-
-      const { user } = setup(<ProvisioningWizard type="github" />);
-
-      await fillConnectionForm(user, 'github', {
-        token: 'test-token',
-        url: 'https://github.com/test/repo',
-      });
-
-      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
-
-      expect(await screen.findByRole('heading', { name: /3\. Choose what to synchronize/i })).toBeInTheDocument();
-
-      expect(mockUseCreateOrUpdateRepository).toHaveBeenCalled();
-
-      await user.click(screen.getByRole('button', { name: /Synchronize with external storage/i }));
-
-      expect(
-        await screen.findByRole('heading', { name: /4\. Synchronize with external storage/i })
-      ).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Begin synchronization/i })).toBeInTheDocument();
     });
 
     it('should skip sync step when there are no resources', async () => {
@@ -340,7 +375,7 @@ describe('ProvisioningWizard', () => {
       expect(screen.getByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
 
       // User edits a visible field (branch)
-      const branchCombobox = screen.getByRole('combobox');
+      const branchCombobox = screen.getAllByRole('combobox')[0];
       await user.clear(branchCombobox);
       await user.paste('develop');
       await user.keyboard('{Enter}');
@@ -366,21 +401,278 @@ describe('ProvisioningWizard', () => {
       await typeIntoTokenField(user, 'ghp_xxxxxxxxxxxxxxxxxxxx', 'test-token');
       await pasteIntoInput(
         user,
-        screen.getByPlaceholderText('https://github.com/owner/repository'),
+        screen.getByRole('textbox', { name: /Repository URL/i }),
         'https://github.com/test/repo'
       );
 
       await user.click(screen.getByRole('button', { name: /Configure repository$/i }));
       expect(await screen.findByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
 
-      const clearButton = screen.getByTitle(/Clear value/i);
-      await user.click(clearButton);
+      const clearButtons = screen.getAllByTitle(/Clear value/i);
+      await user.click(clearButtons[0]); // Clear the branch combobox
 
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 
       // Should still be on connection step due to validation
       expect(screen.getByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
       expect(screen.getByText(/Branch is required/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Repository Reconciliation', () => {
+    it('shows loading while waiting for reconciliation, then shows bootstrap content after a healthy watch event', async () => {
+      mockRepositoryList(
+        createRepository({
+          status: {
+            observedGeneration: undefined,
+          },
+        })
+      );
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+
+      await navigateToBootstrapStep(user);
+
+      expect(screen.getByText('Loading resource information...')).toBeInTheDocument();
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('repositories', {
+          type: 'MODIFIED',
+          object: createRepository(),
+        });
+      });
+
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByText('Loading resource information...')).not.toBeInTheDocument();
+      });
+    });
+
+    it('shows an unhealthy repository error and clears it after retry plus a healthy watch event', async () => {
+      mockRepositoryList(
+        createRepository({
+          status: {
+            observedGeneration: 1,
+            health: {
+              healthy: false,
+              checked: 1704067200000,
+              message: ['Connection failed'],
+            },
+          },
+        })
+      );
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+
+      await navigateToBootstrapStep(user);
+
+      expect(await screen.findByText('Repository status unhealthy')).toBeInTheDocument();
+
+      // Retry is rendered via Alert's buttonContent/onRemove, not as a standard named button
+      const retryButton = (await screen.findByText('Retry')).closest('button');
+      expect(retryButton).not.toBeNull();
+      await user.click(retryButton!);
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('repositories', {
+          type: 'MODIFIED',
+          object: createRepository(),
+        });
+      });
+
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByText('Repository status unhealthy')).not.toBeInTheDocument();
+      });
+    });
+
+    it('transitions from loading to unhealthy to healthy as repository watch events arrive', async () => {
+      mockRepositoryList(
+        createRepository({
+          status: {
+            observedGeneration: undefined,
+          },
+        })
+      );
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+
+      await navigateToBootstrapStep(user);
+
+      expect(screen.getByText('Loading resource information...')).toBeInTheDocument();
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('repositories', {
+          type: 'MODIFIED',
+          object: createRepository({
+            status: {
+              observedGeneration: 1,
+              health: {
+                healthy: false,
+                checked: 1704067200000,
+                message: ['Connection failed'],
+              },
+            },
+          }),
+        });
+      });
+
+      expect(await screen.findByText('Repository status unhealthy')).toBeInTheDocument();
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('repositories', {
+          type: 'MODIFIED',
+          object: createRepository(),
+        });
+      });
+
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByText('Repository status unhealthy')).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Synchronization Step', () => {
+    it('enables the finish button after the sync job succeeds via a watch event', async () => {
+      setupWorkingJobHandlers();
+      mockSyncRepositoryLookup();
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+      const { finishButton } = await beginSynchronization(user);
+      expect(finishButton).toBeDisabled();
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('jobs', {
+          type: 'MODIFIED',
+          object: createJob({ status: { state: 'success' } }),
+        });
+      });
+
+      await waitFor(() => {
+        expect(finishButton).toBeEnabled();
+      });
+      expect(await screen.findByText(/Your resources are now in your external storage/i)).toBeInTheDocument();
+    });
+
+    it('enables the finish button and shows a warning alert when the sync job completes with warnings', async () => {
+      setupWorkingJobHandlers();
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+      const { finishButton } = await beginSynchronization(user);
+      expect(finishButton).toBeDisabled();
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('jobs', {
+          type: 'MODIFIED',
+          object: createJob({ status: { state: 'warning', message: 'Completed with warnings' } }),
+        });
+      });
+
+      await waitFor(() => {
+        expect(finishButton).toBeEnabled();
+      });
+      expect(await screen.findByText('Job completed with warnings')).toBeInTheDocument();
+      expect(screen.getByText('Completed with warnings')).toBeInTheDocument();
+    });
+
+    it('shows an error alert and keeps the finish button disabled when the sync job fails', async () => {
+      setupWorkingJobHandlers();
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+      const { finishButton } = await beginSynchronization(user);
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('jobs', {
+          type: 'MODIFIED',
+          object: createJob({ status: { state: 'error', message: 'Sync failed' } }),
+        });
+      });
+
+      expect(await screen.findByText('Error running job')).toBeInTheDocument();
+      expect(finishButton).toBeDisabled();
+    });
+
+    it('continues showing job progress when the watch stream errors (polling fallback)', async () => {
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      try {
+        setupWorkingJobHandlers();
+
+        const { user } = setup(<ProvisioningWizard type="github" />);
+        const { finishButton } = await beginSynchronization(user);
+
+        act(() => {
+          getMockLiveSrv().emitWatchError('jobs', new Error('connection lost'));
+        });
+
+        // The polling fallback intercepts the watch error and re-fetches the job.
+        // The UI continues showing real job progress instead of an error.
+        await waitFor(() => {
+          expect(screen.getByText('Pulling...')).toBeInTheDocument();
+        });
+
+        // No error is displayed — the fallback is transparent to the user.
+        expect(screen.queryByText('Error running job')).not.toBeInTheDocument();
+        expect(finishButton).toBeDisabled();
+      } finally {
+        consoleWarnSpy.mockRestore();
+      }
+    });
+
+    it('creates a new sync job when retry is clicked after a job error', async () => {
+      const createdJobs = [
+        createJob({ status: { state: 'pending' } }),
+        createJob({
+          metadata: { name: 'job-2', uid: 'uid-2' },
+          status: { state: 'pending' },
+        }),
+      ];
+      const jobLists = {
+        'metadata.name=job-1': createJob(),
+        'metadata.name=job-2': createJob({
+          metadata: { name: 'job-2', uid: 'uid-2' },
+          status: { state: 'working', message: 'Retrying...', progress: 10 },
+        }),
+      };
+      const errorJob = createJob({
+        status: { state: 'error', message: 'Sync failed' },
+      });
+
+      let createJobCalls = 0;
+      server.use(
+        http.post(`${BASE}/repositories/:name/jobs`, () => {
+          const job = createdJobs[Math.min(createJobCalls, createdJobs.length - 1)];
+          createJobCalls++;
+          return HttpResponse.json(job);
+        }),
+        http.get(`${BASE}/jobs`, ({ request }) => {
+          const fieldSelector = new URL(request.url).searchParams.get('fieldSelector') ?? 'metadata.name=job-1';
+          return HttpResponse.json({
+            items: [jobLists[fieldSelector as keyof typeof jobLists]],
+            metadata: { resourceVersion: '1' },
+          });
+        })
+      );
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+      await navigateToSynchronizationStep(user);
+
+      await user.click(screen.getByRole('button', { name: /Begin synchronization/i }));
+      expect(await screen.findByText('Pulling...')).toBeInTheDocument();
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('jobs', { type: 'MODIFIED', object: errorJob });
+      });
+
+      // Retry is rendered via Alert's buttonContent/onRemove, not as a standard named button
+      const retryButton = (await screen.findByText('Retry')).closest('button');
+      expect(retryButton).not.toBeNull();
+      await user.click(retryButton!);
+
+      await waitFor(() => {
+        expect(createJobCalls).toBe(2);
+      });
+      expect(await screen.findByText('Retrying...')).toBeInTheDocument();
     });
   });
 
@@ -397,9 +689,8 @@ describe('ProvisioningWizard', () => {
         url: 'https://gitlab.com/test/repo',
       });
 
-      // Connection step fields
-      expect(screen.getByRole('combobox')).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
+      // Connection step fields (branch combobox + path combobox)
+      expect(screen.getAllByRole('combobox')).toHaveLength(2);
     });
 
     it('should render Bitbucket-specific fields', async () => {
@@ -416,9 +707,8 @@ describe('ProvisioningWizard', () => {
         url: 'https://bitbucket.org/test/repo',
       });
 
-      // Connection step fields
-      expect(screen.getByRole('combobox')).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
+      // Connection step fields (branch combobox + path combobox)
+      expect(screen.getAllByRole('combobox')).toHaveLength(2);
     });
 
     it('should render Git-specific fields', async () => {
@@ -435,9 +725,8 @@ describe('ProvisioningWizard', () => {
         url: 'https://git.example.com/test/repo.git',
       });
 
-      // Connection step fields
-      expect(screen.getByRole('combobox')).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
+      // Connection step fields (branch combobox + path combobox)
+      expect(screen.getAllByRole('combobox')).toHaveLength(2);
     });
 
     it('should render local repository fields', async () => {
@@ -447,7 +736,7 @@ describe('ProvisioningWizard', () => {
 
       expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
       expect(screen.queryByPlaceholderText('ghp_xxxxxxxxxxxxxxxxxxxx')).not.toBeInTheDocument();
-      expect(screen.queryByPlaceholderText('glpat-xxxxxxxxxxxxxxxxxxxx')).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText('glpat-xxxxxxxxxxxxxxxxxxx')).not.toBeInTheDocument();
       expect(screen.queryByPlaceholderText('ATATTxxxxxxxxxxxxxxxx')).not.toBeInTheDocument();
       expect(screen.queryByRole('textbox', { name: /Repository URL/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
@@ -460,7 +749,7 @@ describe('ProvisioningWizard', () => {
       await pasteIntoInput(user, screen.getByPlaceholderText('username'), 'test-user');
       await pasteIntoInput(
         user,
-        screen.getByPlaceholderText('https://bitbucket.org/owner/repository'),
+        screen.getByRole('textbox', { name: /Repository URL/i }),
         'https://bitbucket.org/test/repo'
       );
 
@@ -474,7 +763,7 @@ describe('ProvisioningWizard', () => {
       await pasteIntoInput(user, screen.getByPlaceholderText('username'), 'test-user');
       await pasteIntoInput(
         user,
-        screen.getByPlaceholderText('https://git.example.com/owner/repository.git'),
+        screen.getByRole('textbox', { name: /Repository URL/i }),
         'https://git.example.com/test/repo.git'
       );
 

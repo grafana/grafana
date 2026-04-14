@@ -1,6 +1,6 @@
-import { AngularMeta, AppPluginConfig, PluginLoadingStrategy } from '@grafana/data';
+import { type AngularMeta, type AppPluginConfig, PluginLoadingStrategy } from '@grafana/data';
 
-import { AppPluginMetas } from '../types';
+import { type AppPluginMetas } from '../types';
 
 export const app: AppPluginConfig = structuredClone({
   id: 'myorg-someplugin-app',

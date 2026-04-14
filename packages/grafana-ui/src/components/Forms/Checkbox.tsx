@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { HTMLProps, useCallback } from 'react';
+import { type HTMLProps, useCallback } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
@@ -52,6 +52,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
             disabled={disabled}
             onChange={handleOnChange}
             value={htmlValue}
+            aria-invalid={!!invalid}
             {...inputProps}
             ref={(element) => {
               if (element && indeterminate) {

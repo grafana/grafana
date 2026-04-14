@@ -6,20 +6,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"slices"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/prometheus/alertmanager/pkg/labels"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -180,7 +179,7 @@ func (st DBstore) getFolderFullpaths(ctx context.Context, orgID int64, folderUID
 		return nil, fmt.Errorf("folder service is not configured")
 	}
 	bgUser := accesscontrol.BackgroundUser("ngalert", orgID, org.RoleAdmin, []accesscontrol.Permission{
-		{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+		{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersAll},
 	})
 	folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
 		OrgID:        orgID,
@@ -832,6 +831,9 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 				NamespaceUID: converted.NamespaceUID,
 				RuleGroup:    converted.RuleGroup,
 			}
+			if query.SortByFullpath {
+				key.FolderFullpath = converted.FolderFullpath
+			}
 			if key != cursor {
 				// Check if we've reached the group limit
 				if query.Limit > 0 && groupsFetched == query.Limit {
@@ -866,9 +868,25 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 }
 
 func buildGroupCursorCondition(sess *xorm.Session, c ngmodels.GroupCursor) *xorm.Session {
+	// We need to handle this here otherwise we end up checking rule_group > "no_group_for_rule..."
+	// and skipping everything
+	ruleGroup := c.RuleGroup
+	if ngmodels.IsNoGroupRuleGroup(ruleGroup) {
+		ruleGroup = ""
+	}
+
+	if c.FolderFullpath != "" {
+		return sess.And(
+			"((folder_fullpath > ?) OR (folder_fullpath = ? AND namespace_uid > ?) OR (folder_fullpath = ? AND namespace_uid = ? AND rule_group > ?))",
+			c.FolderFullpath,
+			c.FolderFullpath, c.NamespaceUID,
+			c.FolderFullpath, c.NamespaceUID, ruleGroup,
+		)
+	}
+	// fallback to previous cursor condition if folder fullpath is not available, this means that pagination will be less efficient as it cannot take advantage of folder fullpath ordering, but at least it will work and not return duplicate or missing groups.
 	return sess.And(
 		"((namespace_uid > ?) OR (namespace_uid = ? AND rule_group > ?))",
-		c.NamespaceUID, c.NamespaceUID, c.RuleGroup,
+		c.NamespaceUID, c.NamespaceUID, ruleGroup,
 	)
 }
 
@@ -998,35 +1016,13 @@ func matchersMatchLabels(matchers labels.Matchers, lbls map[string]string) bool 
 	return true
 }
 
-// nolint:gocyclo
-func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.ListAlertRulesExtendedQuery) (q *xorm.Session, groupsSet map[string]struct{}, err error) {
-	q = sess.Table("alert_rule")
-	if query.OrgID >= 0 {
-		q = q.Where("org_id = ?", query.OrgID)
-	}
-
-	if query.DashboardUID != "" {
-		q = q.Where("dashboard_uid = ?", query.DashboardUID)
-		if query.PanelID != 0 {
-			q = q.Where("panel_id = ?", query.PanelID)
-		}
-	}
-
-	if len(query.NamespaceUIDs) > 0 {
-		args, in := getINSubQueryArgs(query.NamespaceUIDs)
-		q = q.Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Join(in, ",")), args...)
-	}
-
-	if len(query.RuleUIDs) > 0 {
-		args, in := getINSubQueryArgs(query.RuleUIDs)
-		q = q.Where(fmt.Sprintf("uid IN (%s)", strings.Join(in, ",")), args...)
-	}
-
+// This will generate the appropriate uid filter for any groups with the no group prefix
+func buildRuleGroupFilter(q *xorm.Session, ruleGroups []string) (*xorm.Session, map[string]struct{}, error) {
 	var noGroupRuleGroupRuleUIDs []string
 	var realGroups []string
-	if len(query.RuleGroups) > 0 {
-		groupsSet = make(map[string]struct{})
-		for _, group := range query.RuleGroups {
+	if len(ruleGroups) > 0 {
+		groupsSet := make(map[string]struct{})
+		for _, group := range ruleGroups {
 			if ngmodels.IsNoGroupRuleGroup(group) {
 				noGroupRuleGroup, err := ngmodels.ParseNoRuleGroup(group)
 				if err != nil {
@@ -1054,6 +1050,88 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 			q = q.Where(fmt.Sprintf("rule_group IN (%s)", strings.Join(groupIn, ",")), groupArgs...).Or(
 				fmt.Sprintf("uid IN (%s)", strings.Join(ruleUIDIn, ",")), ruleUIDArgs...,
 			)
+		}
+
+		return q, groupsSet, nil
+	}
+
+	return q, nil, nil
+}
+
+// buildRuleGroupExcludeFilter adds NOT IN conditions to exclude the given rule groups.
+// It mirrors the logic of buildRuleGroupFilter but uses NOT IN semantics.
+func buildRuleGroupExcludeFilter(q *xorm.Session, ruleGroups []string) (*xorm.Session, error) {
+	if len(ruleGroups) == 0 {
+		return q, nil
+	}
+	var noGroupRuleUIDs []string
+	var realGroups []string
+	for _, group := range ruleGroups {
+		if ngmodels.IsNoGroupRuleGroup(group) {
+			noGroupRuleGroup, err := ngmodels.ParseNoRuleGroup(group)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse rule group %q: %w", group, err)
+			}
+			noGroupRuleUIDs = append(noGroupRuleUIDs, noGroupRuleGroup.GetRuleUID())
+		} else {
+			realGroups = append(realGroups, group)
+		}
+	}
+	if len(realGroups) > 0 {
+		args, notIn := getINSubQueryArgs(realGroups)
+		q = q.Where(fmt.Sprintf("rule_group NOT IN (%s)", strings.Join(notIn, ",")), args...)
+	}
+	if len(noGroupRuleUIDs) > 0 {
+		args, notIn := getINSubQueryArgs(noGroupRuleUIDs)
+		q = q.Where(fmt.Sprintf("uid NOT IN (%s)", strings.Join(notIn, ",")), args...)
+	}
+	return q, nil
+}
+
+// nolint:gocyclo
+func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.ListAlertRulesExtendedQuery) (q *xorm.Session, groupsSet map[string]struct{}, err error) {
+	q = sess.Table("alert_rule")
+	if query.OrgID >= 0 {
+		q = q.Where("org_id = ?", query.OrgID)
+	}
+
+	if query.DashboardUID != "" {
+		q = q.Where("dashboard_uid = ?", query.DashboardUID)
+		if query.PanelID != 0 {
+			q = q.Where("panel_id = ?", query.PanelID)
+		}
+	}
+
+	if len(query.NamespaceUIDs) > 0 {
+		args, in := getINSubQueryArgs(query.NamespaceUIDs)
+		q = q.Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Join(in, ",")), args...)
+	}
+
+	if len(query.ExcludeNamespaceUIDs) > 0 {
+		args, notIn := getINSubQueryArgs(query.ExcludeNamespaceUIDs)
+		q = q.Where(fmt.Sprintf("namespace_uid NOT IN (%s)", strings.Join(notIn, ",")), args...)
+	}
+
+	if len(query.RuleUIDs) > 0 {
+		args, in := getINSubQueryArgs(query.RuleUIDs)
+		q = q.Where(fmt.Sprintf("uid IN (%s)", strings.Join(in, ",")), args...)
+	}
+
+	q, groupsSet, err = buildRuleGroupFilter(q, query.RuleGroups)
+	if err != nil {
+		return nil, groupsSet, err
+	}
+
+	q, err = buildRuleGroupExcludeFilter(q, query.ExcludeRuleGroups)
+	if err != nil {
+		return nil, groupsSet, err
+	}
+
+	if query.RuleGroupExists != nil {
+		if *query.RuleGroupExists {
+			q = q.Where("rule_group != ''")
+		} else {
+			q = q.Where("rule_group = ''")
 		}
 	}
 
@@ -1142,8 +1220,20 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		return nil, groupsSet, fmt.Errorf("unknown rule type filter %v", query.RuleType)
 	}
 
-	q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
+	if query.SortByFullpath {
+		q = applyListAlertRulesOrderByFullpath(q)
+	} else {
+		q = applyListAlertRulesOrderByNamespace(q)
+	}
 	return q, groupsSet, nil
+}
+
+func applyListAlertRulesOrderByNamespace(q *xorm.Session) *xorm.Session {
+	return q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
+}
+
+func applyListAlertRulesOrderByFullpath(q *xorm.Session) *xorm.Session {
+	return q.Asc("folder_fullpath", "namespace_uid", "rule_group", "rule_group_idx", "id")
 }
 
 func (st DBstore) handleRuleRow(rows *xorm.Rows, query *ngmodels.ListAlertRulesExtendedQuery, groupsSet map[string]struct{}) (*ngmodels.AlertRule, bool) {
@@ -1223,6 +1313,13 @@ func decodeCursor(token string) (continueCursor, error) {
 }
 
 func buildCursorCondition(sess *xorm.Session, c continueCursor) *xorm.Session {
+	// We need to handle this here otherwise we end up checking rule_group > "no_group_for_rule..."
+	// and skipping everything
+	ruleGroup := c.RuleGroup
+	if ngmodels.IsNoGroupRuleGroup(ruleGroup) {
+		ruleGroup = ""
+	}
+
 	return sess.And(`(
 		(namespace_uid > ?)
 		OR (namespace_uid = ? AND rule_group > ?)
@@ -1230,9 +1327,9 @@ func buildCursorCondition(sess *xorm.Session, c continueCursor) *xorm.Session {
 		OR (namespace_uid = ? AND rule_group = ? AND rule_group_idx = ? AND id > ?)
 	)`,
 		c.NamespaceUID,
-		c.NamespaceUID, c.RuleGroup,
-		c.NamespaceUID, c.RuleGroup, c.RuleGroupIdx,
-		c.NamespaceUID, c.RuleGroup, c.RuleGroupIdx, c.ID,
+		c.NamespaceUID, ruleGroup,
+		c.NamespaceUID, ruleGroup, c.RuleGroupIdx,
+		c.NamespaceUID, ruleGroup, c.RuleGroupIdx, c.ID,
 	)
 }
 
@@ -1312,13 +1409,9 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 			alertRulesSql.NotIn("org_id", disabledOrgs)
 		}
 
-		var groupsMap map[string]struct{}
-		if len(query.RuleGroups) > 0 {
-			alertRulesSql.In("rule_group", query.RuleGroups)
-			groupsMap = make(map[string]struct{}, len(query.RuleGroups))
-			for _, group := range query.RuleGroups {
-				groupsMap[group] = struct{}{}
-			}
+		alertRulesSql, groupsMap, err := buildRuleGroupFilter(alertRulesSql, query.RuleGroups)
+		if err != nil {
+			return err
 		}
 
 		rule := new(alertRule)
@@ -1379,13 +1472,13 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 				schedulerUser := accesscontrol.BackgroundUser("grafana_scheduler", orgID, org.RoleAdmin,
 					[]accesscontrol.Permission{
 						{
-							Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll,
+							Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersAll,
 						},
 					})
 
 				folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
 					OrgID:        orgID,
-					UIDs:         maps.Keys(uids),
+					UIDs:         slices.Collect(maps.Keys(uids)),
 					WithFullpath: true,
 					SignedInUser: schedulerUser,
 				})
@@ -1404,7 +1497,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
 func (st DBstore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
 	for _, folderUID := range folderUIDs {
-		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
+		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
 		canSave, err := st.AccessControl.Evaluate(ctx, user, evaluator)
 		if err != nil {
 			st.Logger.Error("Failed to evaluate access control", "error", err)
@@ -1412,7 +1505,7 @@ func (st DBstore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs [
 		}
 		if !canSave {
 			st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user")
-			return dashboards.ErrFolderAccessDenied
+			return folder.ErrAccessDenied
 		}
 
 		rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{

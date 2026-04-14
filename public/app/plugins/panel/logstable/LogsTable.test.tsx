@@ -3,21 +3,25 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import {
-  AbsoluteTimeRange,
-  EventBus,
-  FieldConfigSource,
-  getDefaultTimeRange,
+  type AbsoluteTimeRange,
+  CoreApp,
+  type EventBus,
+  EventBusSrv,
+  type FieldConfigSource,
   LogSortOrderChangeEvent,
   LogsSortOrder,
-  ScopedVars,
+  type ScopedVars,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { defaultTableOptions } from '@grafana/schema';
+import { PanelContextProvider } from '@grafana/ui';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
+import { LOG_LINE_BODY_FIELD_NAME } from '../../../features/logs/components/fieldSelector/logFields';
+
 import { LogsTable } from './LogsTable';
-import { Options } from './options/types';
+import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 import { getPanelData } from './testsUtils';
 
@@ -54,41 +58,52 @@ jest.mock('@grafana/runtime', () => ({
   })),
 }));
 
-const setUp = (props?: Partial<React.ComponentProps<typeof LogsTable>>, options?: Partial<Options>) => {
+const setUp = (
+  props?: Partial<React.ComponentProps<typeof LogsTable>>,
+  options?: Partial<Options>,
+  app = CoreApp.Dashboard
+) => {
   return render(
-    <LogsTable
-      data={getPanelData()}
-      id={0}
-      timeRange={getDefaultTimeRange()}
-      timeZone={'UTC'}
-      options={{
-        ...defaultOptions,
-        ...defaultTableOptions,
-        showHeader: true,
-        frameIndex: 0,
-        ...options,
+    <PanelContextProvider
+      value={{
+        app,
+        eventsScope: 'test',
+        eventBus: new EventBusSrv(),
       }}
-      transparent={false}
-      width={800}
-      height={600}
-      fieldConfig={fieldConfig}
-      renderCounter={0}
-      title={''}
-      eventBus={mockEventBus}
-      onOptionsChange={function (options: Options): void {
-        throw new Error('Function not implemented.');
-      }}
-      onFieldConfigChange={function (config: FieldConfigSource): void {
-        throw new Error('Function not implemented.');
-      }}
-      replaceVariables={function (value: string, scopedVars?: ScopedVars, format?: string | Function): string {
-        throw new Error('Function not implemented.');
-      }}
-      onChangeTimeRange={function (timeRange: AbsoluteTimeRange): void {
-        throw new Error('Function not implemented.');
-      }}
-      {...props}
-    />
+    >
+      <LogsTable
+        data={getPanelData()}
+        id={0}
+        timeZone={'UTC'}
+        options={{
+          ...defaultOptions,
+          ...defaultTableOptions,
+          showHeader: true,
+          frameIndex: 0,
+          ...options,
+        }}
+        transparent={false}
+        width={800}
+        height={600}
+        fieldConfig={fieldConfig}
+        renderCounter={0}
+        title={''}
+        eventBus={mockEventBus}
+        onOptionsChange={function (options: Options): void {
+          throw new Error('Function not implemented.');
+        }}
+        onFieldConfigChange={function (config: FieldConfigSource): void {
+          throw new Error('Function not implemented.');
+        }}
+        replaceVariables={function (value: string, scopedVars?: ScopedVars, format?: string | Function): string {
+          throw new Error('Function not implemented.');
+        }}
+        onChangeTimeRange={function (timeRange: AbsoluteTimeRange): void {
+          throw new Error('Function not implemented.');
+        }}
+        {...props}
+      />
+    </PanelContextProvider>
   );
 };
 
@@ -129,11 +144,12 @@ describe('LogsTable', () => {
     await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
     expect(container.querySelector('[role="gridcell"]')).toBeVisible();
 
-    // Table headers
+    // Table headers (time, level from labels, body by default)
     const headers = container.querySelectorAll('[role="columnheader"]');
-    expect(headers).toHaveLength(2);
+    expect(headers).toHaveLength(3);
     expect(headers[0].textContent).toEqual('timestamp');
-    expect(headers[1].textContent).toEqual('body');
+    expect(headers[1].textContent).toEqual('level');
+    expect(headers[2].textContent).toEqual('body');
   });
 
   describe('Panel controls', () => {
@@ -164,18 +180,63 @@ describe('LogsTable', () => {
     });
   });
 
+  describe('Wrap text', () => {
+    it('not in Dashboards, with logs controls enabled, when wrap text is set via options only, toggling calls onOptionsChange but not onFieldConfigChange', async () => {
+      const onOptionsChange = jest.fn();
+      const onFieldConfigChange = jest.fn();
+      setUp({ onOptionsChange, onFieldConfigChange }, { showControls: true, wrapText: false }, CoreApp.Explore);
+      await waitFor(() => expect(screen.getByLabelText('Enable text wrapping')).toBeInTheDocument());
+      expect(onOptionsChange).not.toHaveBeenCalled();
+      expect(onFieldConfigChange).not.toHaveBeenCalled();
+
+      await userEvent.click(screen.getByLabelText('Enable text wrapping'));
+
+      expect(onOptionsChange).toHaveBeenCalledTimes(1);
+      expect(onOptionsChange).toHaveBeenCalledWith(expect.objectContaining({ wrapText: true }));
+      expect(onFieldConfigChange).not.toHaveBeenCalled();
+    });
+
+    it('in Dashboards, when wrap text is set via field config, toggling calls onFieldConfigChange but not onOptionsChange', async () => {
+      const onOptionsChange = jest.fn();
+      const onFieldConfigChange = jest.fn();
+      const fieldConfigWithWrapText: FieldConfigSource = {
+        defaults: { custom: { wrapText: false } },
+        overrides: [],
+      };
+      setUp({ onOptionsChange, onFieldConfigChange, fieldConfig: fieldConfigWithWrapText }, { showControls: true });
+      await waitFor(() => expect(screen.getByLabelText('Enable text wrapping')).toBeInTheDocument());
+      expect(onOptionsChange).not.toHaveBeenCalled();
+      expect(onFieldConfigChange).not.toHaveBeenCalled();
+
+      await userEvent.click(screen.getByLabelText('Enable text wrapping'));
+
+      expect(onOptionsChange).not.toHaveBeenCalled();
+      expect(onFieldConfigChange).toHaveBeenCalledTimes(1);
+      expect(onFieldConfigChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          defaults: expect.objectContaining({
+            custom: expect.objectContaining({ wrapText: true }),
+          }),
+        })
+      );
+    });
+  });
+
   describe('fieldSelector', () => {
     it('should add to displayed fields', async () => {
       const onOptionsChange = jest.fn().mockImplementation((options: Options) => {});
       setUp({ onOptionsChange });
       await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
-      expect(screen.getByRole('checkbox', { name: /level/i })).not.toBeChecked();
+      // Level is shown by default; `service` is extracted from labels and starts unchecked
+      expect(screen.getByRole('checkbox', { name: /service/i })).not.toBeChecked();
       expect(onOptionsChange).toBeCalledTimes(0);
 
-      await userEvent.click(screen.getByRole('checkbox', { name: /level/i }));
+      await userEvent.click(screen.getByRole('checkbox', { name: /service/i }));
       expect(onOptionsChange).toBeCalledTimes(1);
       expect(onOptionsChange).toBeCalledWith(
-        expect.objectContaining({ displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, LOGS_DATAPLANE_BODY_NAME, 'level'] })
+        expect.objectContaining({
+          displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, 'level', LOG_LINE_BODY_FIELD_NAME, 'service'],
+        })
       );
     });
 
@@ -192,7 +253,7 @@ describe('LogsTable', () => {
       await userEvent.click(screen.getByRole('checkbox', { name: /level/i }));
       expect(onOptionsChange).toBeCalledTimes(1);
       expect(onOptionsChange).toBeCalledWith(
-        expect.objectContaining({ displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, LOGS_DATAPLANE_BODY_NAME] })
+        expect.objectContaining({ displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, LOG_LINE_BODY_FIELD_NAME] })
       );
     });
 
@@ -200,7 +261,7 @@ describe('LogsTable', () => {
       const onOptionsChange = jest.fn().mockImplementation((options: Options) => {});
       setUp(
         { onOptionsChange },
-        { displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, LOGS_DATAPLANE_BODY_NAME, 'level'] }
+        { displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, LOG_LINE_BODY_FIELD_NAME, 'level'] }
       );
       await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
       expect(screen.getByRole('checkbox', { name: /level/i })).toBeChecked();
@@ -209,8 +270,50 @@ describe('LogsTable', () => {
       await userEvent.click(screen.getByText('Reset'));
       expect(onOptionsChange).toBeCalledTimes(1);
       expect(onOptionsChange).toBeCalledWith(
-        expect.objectContaining({ displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, LOGS_DATAPLANE_BODY_NAME] })
+        expect.objectContaining({
+          displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, 'level', LOG_LINE_BODY_FIELD_NAME],
+        })
       );
+    });
+  });
+
+  describe('custom cell renderer', () => {
+    it('when level is the second column, renders exactly one custom cell per data row', async () => {
+      const onOptionsChange = jest.fn();
+      const { container } = setUp(
+        { onOptionsChange },
+        {
+          showInspectLogLine: true,
+        }
+      );
+      await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      expect(headers).toHaveLength(3);
+      expect(headers[0].textContent).toEqual('timestamp');
+      expect(headers[1].textContent).toEqual('level');
+
+      // Two log rows; inspect control exists only in the custom timestamp column (one per row).
+      expect(screen.getAllByLabelText('View log line')).toHaveLength(2);
+    });
+
+    it('when level is the first column, renders exactly one custom cell per data row', async () => {
+      const onOptionsChange = jest.fn();
+      const { container } = setUp(
+        { onOptionsChange },
+        {
+          showInspectLogLine: true,
+          displayedFields: ['level', LOGS_DATAPLANE_TIMESTAMP_NAME, LOGS_DATAPLANE_BODY_NAME],
+        }
+      );
+      await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      expect(headers).toHaveLength(3);
+      expect(headers[0].textContent).toEqual('level');
+      expect(headers[1].textContent).toEqual('timestamp');
+
+      expect(screen.getAllByLabelText('View log line')).toHaveLength(2);
     });
   });
 });

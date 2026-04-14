@@ -1,6 +1,6 @@
-import { CellProps, Column, HeaderProps } from 'react-table';
+import { type CellProps, type Column, type HeaderProps } from 'react-table';
 
-import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
+import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 
 /**
  * Object of what is selected in the tree. It is record where keys are categories from DashboardViewItemKind and

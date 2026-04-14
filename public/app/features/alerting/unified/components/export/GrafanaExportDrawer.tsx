@@ -5,7 +5,7 @@ import { Drawer } from '@grafana/ui';
 
 import { RuleInspectorTabs } from '../rule-editor/RuleInspector';
 
-import { ExportFormats, ExportProvider } from './providers';
+import { type ExportFormats, type ExportProvider } from './providers';
 
 interface GrafanaExportDrawerProps {
   activeTab: ExportFormats;

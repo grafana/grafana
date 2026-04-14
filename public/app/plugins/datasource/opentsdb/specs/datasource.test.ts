@@ -1,10 +1,10 @@
 import { of } from 'rxjs';
 
-import { DataQueryRequest, dateTime } from '@grafana/data';
-import { BackendSrv, FetchResponse, TemplateSrv } from '@grafana/runtime';
+import { type DataQueryRequest, dateTime } from '@grafana/data';
+import { type BackendSrv, type FetchResponse, type TemplateSrv } from '@grafana/runtime';
 
 import OpenTsDatasource from '../datasource';
-import { OpenTsdbQuery } from '../types';
+import { type OpenTsdbQuery } from '../types';
 
 export function createFetchResponse<T>(data: T): FetchResponse<T> {
   return {
@@ -291,6 +291,52 @@ describe('opentsdb', () => {
 
       expect(interpolated.tags?.host).toBe('ABC');
       expect(JSON.stringify(interpolated)).not.toContain('${host}');
+    });
+
+    it('should interpolate additional query fields', () => {
+      const { ds, templateSrv } = getTestcontext();
+
+      templateSrv.replace = jest.fn((value: unknown, scopedVars?: Record<string, { value: unknown }>) => {
+        if (typeof value !== 'string') {
+          return value as string;
+        }
+
+        return value.replace(/\$\{([^}]+)\}/g, (_, key: string) => String(scopedVars?.[key]?.value ?? ''));
+      });
+
+      const query: OpenTsdbQuery = {
+        refId: 'A',
+        metric: '${metric}',
+        alias: '${alias}',
+        downsampleInterval: '${interval}',
+        downsampleAggregator: '${downsampleAggregator}',
+        downsampleFillPolicy: '${downsampleFillPolicy}',
+        counterMax: '${counterMax}',
+        counterResetValue: '${counterResetValue}',
+      };
+
+      const scopedVars = {
+        metric: { text: 'cpu.usage', value: 'cpu.usage' },
+        aggregator: { text: 'sum', value: 'sum' },
+        alias: { text: 'CPU usage', value: 'CPU usage' },
+        interval: { text: '1m', value: '1m' },
+        downsampleAggregator: { text: 'avg', value: 'avg' },
+        downsampleFillPolicy: { text: 'zero', value: 'zero' },
+        counterMax: { text: '100', value: '100' },
+        counterResetValue: { text: '50', value: '50' },
+      };
+
+      const interpolated = ds.applyTemplateVariables(query, scopedVars);
+
+      expect(interpolated.metric).toBe('cpu.usage');
+      expect(interpolated.aggregator).toBe('avg');
+      expect(interpolated.alias).toBe('CPU usage');
+      expect(interpolated.downsampleInterval).toBe('1m');
+      expect(interpolated.downsampleAggregator).toBe('avg');
+      expect(interpolated.downsampleFillPolicy).toBe('zero');
+      expect(interpolated.counterMax).toBe('100');
+      expect(interpolated.counterResetValue).toBe('50');
+      expect(JSON.stringify(interpolated)).not.toContain('${');
     });
   });
 });

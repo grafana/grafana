@@ -1,10 +1,10 @@
-import { AnyAction } from 'redux';
+import { type AnyAction } from 'redux';
 
-import { ConstantVariableModel, LoadingState, VariableRefresh } from '@grafana/data';
+import { type ConstantVariableModel, LoadingState, VariableRefresh } from '@grafana/data';
 import * as runtime from '@grafana/runtime';
-import { DataSourceSrv, LocationService } from '@grafana/runtime';
-import { BackendSrv } from 'app/core/services/backend_srv';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DataSourceSrv, type LocationService } from '@grafana/runtime';
+import { type BackendSrv } from 'app/core/services/backend_srv';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
@@ -39,7 +39,7 @@ import {
   processVariables,
   validateVariableSelectionState,
 } from './actions';
-import { getPreloadedState, getTemplatingRootReducer, TemplatingReducerType } from './helpers';
+import { getPreloadedState, getTemplatingRootReducer, type TemplatingReducerType } from './helpers';
 import { toKeyedAction } from './keyedVariablesReducer';
 import {
   addVariable,

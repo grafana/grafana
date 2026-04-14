@@ -162,6 +162,7 @@ func TestBuildResourceURI(t *testing.T) {
 			}
 			if uri == nil {
 				t.Fatalf("Expected non-nil uri")
+				return
 			}
 			if !strings.Contains(*uri, expectedProvider) {
 				t.Errorf("Expected provider %v in uri %v", expectedProvider, *uri)

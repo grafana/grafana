@@ -2,8 +2,8 @@ import { render, screen } from '@testing-library/react';
 
 import { dateTime } from '@grafana/data';
 
-import { PrometheusDatasource } from '../../datasource';
-import { PromVisualQuery } from '../types';
+import { type PrometheusDatasource } from '../../datasource';
+import { type PromVisualQuery } from '../types';
 
 import { MetricsLabelsSection } from './MetricsLabelsSection';
 

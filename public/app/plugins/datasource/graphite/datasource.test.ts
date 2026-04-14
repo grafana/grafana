@@ -1,32 +1,33 @@
 import { isArray } from 'lodash';
 import moment from 'moment';
-import { Observable, of } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 
 import {
-  AbstractLabelMatcher,
+  type AbstractLabelMatcher,
   AbstractLabelOperator,
   CoreApp,
-  DataQueryRequest,
-  DataQueryResponse,
+  type DataQueryRequest,
+  type DataQueryResponse,
   dateMath,
   dateTime,
+  FieldType,
   getFrameDisplayName,
-  MetricFindValue,
+  type MetricFindValue,
   PluginType,
-  ScopedVars,
+  type ScopedVars,
 } from '@grafana/data';
 import {
-  BackendSrvRequest,
+  type BackendSrvRequest,
   config,
-  FetchResponse,
+  type FetchResponse,
   getTemplateSrv,
-  TemplateSrv,
-  VariableInterpolation,
+  type TemplateSrv,
+  type VariableInterpolation,
 } from '@grafana/runtime';
 
 import { fromString } from './configuration/parseLokiLabelMappings';
 import { GraphiteDatasource } from './datasource';
-import { GraphiteQuery, GraphiteQueryType, GraphiteType } from './types';
+import { type GraphiteQuery, GraphiteQueryType, GraphiteType } from './types';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
 
 const fetchMock = jest.fn();
@@ -1577,6 +1578,52 @@ describe('graphiteDatasource', () => {
       expect(requestOptions.url).toBe('/api/datasources/proxy/1/render');
       expect(data[0].text).toBe('apps.backend.backend_01');
       expect(data[1].text).toBe('apps.backend.backend_02');
+    });
+
+    it('should return metric names when queryType is GraphiteQueryType.MetricName in backend mode', async () => {
+      config.featureToggles.graphiteBackendMode = true;
+
+      const backendResponse: DataQueryResponse = {
+        data: [
+          {
+            fields: [
+              { name: 'time', type: FieldType.time, values: [1, 2], config: {} },
+              {
+                name: 'value',
+                type: FieldType.number,
+                values: [10, 12],
+                config: { displayNameFromDS: 'apps.backend.backend_01' },
+              },
+            ],
+            length: 2,
+          },
+          {
+            fields: [
+              { name: 'time', type: FieldType.time, values: [1, 2], config: {} },
+              {
+                name: 'value',
+                type: FieldType.number,
+                values: [10, 12],
+                config: { displayNameFromDS: 'apps.backend.backend_02' },
+              },
+            ],
+            length: 2,
+          },
+        ],
+      };
+      jest.spyOn(ctx.ds, 'query').mockReturnValue(of(backendResponse));
+
+      const variableQuery: GraphiteQuery = {
+        queryType: GraphiteQueryType.MetricName,
+        target: 'apps.backend.*',
+        refId: 'A',
+        datasource: ctx.ds,
+      };
+      const data = await ctx.ds.metricFindQuery(variableQuery);
+      expect(data[0].text).toBe('apps.backend.backend_01');
+      expect(data[1].text).toBe('apps.backend.backend_02');
+
+      config.featureToggles.graphiteBackendMode = false;
     });
   });
 

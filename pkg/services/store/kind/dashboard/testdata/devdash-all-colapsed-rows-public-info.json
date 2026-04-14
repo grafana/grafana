@@ -1,0 +1,37 @@
+{
+  "id": 2739313037512704,
+  "title": "All Colapsed Rows",
+  "tags": null,
+  "datasource": [
+    {
+      "uid": "default.uid",
+      "type": "default.type"
+    }
+  ],
+  "panels": [
+    {
+      "id": 2,
+      "title": "New row",
+      "type": "row",
+      "collapsed": [
+        {
+          "id": 1,
+          "title": "New panel",
+          "type": "timeseries",
+          "pluginVersion": "13.0.0-local",
+          "datasource": [
+            {
+              "uid": "default.uid",
+              "type": "default.type"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 42,
+  "linkCount": 0,
+  "timeFrom": "now-6h",
+  "timeTo": "now",
+  "timezone": "browser"
+}

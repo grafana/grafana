@@ -82,67 +82,6 @@ Content-Type: application/json
 ]
 ```
 
-## Get a single data source by id
-
-`GET /api/datasources/:datasourceId`
-
-{{< admonition type="warning" >}}
-This API is deprecated since Grafana v9.0.0 and will be removed in a future release.
-Refer to the [API for getting a single data source by UID](#get-a-single-data-source-by-uid)
-{{< /admonition >}}
-
-**Required permissions**
-
-See note in the [introduction](#data-source-api) for an explanation.
-
-| Action           | Scope                                                                        |
-| ---------------- | ---------------------------------------------------------------------------- |
-| datasources:read | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
-
-### Examples
-
-**Example Request**:
-
-```http
-GET /api/datasources/1 HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-  "id": 1,
-  "uid": "kLtEtcRGk",
-  "orgId": 1,
-  "name": "test_datasource",
-  "type": "graphite",
-  "typeLogoUrl": "",
-  "access": "proxy",
-  "url": "http://mydatasource.com",
-  "password": "",
-  "user": "",
-  "database": "",
-  "basicAuth": false,
-  "basicAuthUser": "",
-  "basicAuthPassword": "",
-  "withCredentials": false,
-  "isDefault": false,
-  "jsonData": {
-    "graphiteType": "default",
-    "graphiteVersion": "1.1"
-  },
-  "secureJsonFields": {},
-  "version": 1,
-  "readOnly": false
-}
-```
-
 ## Get a single data source by uid
 
 `GET /api/datasources/uid/:uid`
@@ -447,96 +386,6 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-## Update an existing data source by id
-
-`PUT /api/datasources/:datasourceId`
-
-{{< admonition type="warning" >}}
-This API is deprecated since Grafana v9.0.0 and will be removed in a future release.
-Refer to the [new data source update API](#update-an-existing-data-source).
-{{< /admonition >}}
-
-**Required permissions**
-
-See note in the [introduction](#data-source-api) for an explanation.
-
-| Action            | Scope                                                                        |
-| ----------------- | ---------------------------------------------------------------------------- |
-| datasources:write | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
-
-### Examples
-
-**Example Request**:
-
-```http
-PUT /api/datasources/1 HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-
-{
-  "id":1,
-  "orgId":1,
-  "name":"test_datasource",
-  "type":"graphite",
-  "access":"proxy",
-  "url":"http://mydatasource.com",
-  "password":"",
-  "user":"",
-  "database":"",
-  "basicAuth":true,
-  "basicAuthUser":"basicuser",
-  "secureJsonData": {
-    "basicAuthPassword": "basicpassword"
-  },
-  "isDefault":false,
-  "jsonData":null
-}
-```
-
-Note that the UID cannot be modified.
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-  "datasource": {
-    "id": 1,
-    "uid": "kLtEtcRGk",
-    "orgId": 1,
-    "name": "test_datasource",
-    "type": "graphite",
-    "typeLogoUrl": "",
-    "access": "proxy",
-    "url": "http://mydatasource.com",
-    "password": "",
-    "user": "",
-    "database": "",
-    "basicAuth": true,
-    "basicAuthUser": "basicuser",
-    "basicAuthPassword": "",
-    "withCredentials": false,
-    "isDefault": false,
-    "jsonData": {},
-    "secureJsonFields": {
-      "basicAuthPassword": true
-    },
-    "version": 1,
-    "readOnly": false
-  },
-  "id": 102,
-  "message": "Datasource updated",
-  "name": "test_datasource"
-}
-```
-
-{{< admonition type="note" >}}
-Similar to [creating a data source](#create-a-data-source), `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response.
-{{< /admonition >}}
-
 ## Update an existing data source
 
 `PUT /api/datasources/uid/:uid`
@@ -623,43 +472,6 @@ Content-Type: application/json
 Similar to [creating a data source](#create-a-data-source), `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response.
 {{< /admonition >}}
 
-## Delete an existing data source by id
-
-`DELETE /api/datasources/:datasourceId`
-
-{{< admonition type="warning" >}}
-This API is deprecated since Grafana v9.0.0 and will be removed in a future release.
-Refer to the [API for deleting an existing data source by UID](#delete-an-existing-data-source-by-uid)
-{{< /admonition >}}
-
-**Required permissions**
-
-See note in the [introduction](#data-source-api) for an explanation.
-
-| Action             | Scope                                                                        |
-| ------------------ | ---------------------------------------------------------------------------- |
-| datasources:delete | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
-
-### Examples
-
-**Example Request**:
-
-```http
-DELETE /api/datasources/1 HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{"message":"Data source deleted"}
-```
-
 ## Delete an existing data source by uid
 
 `DELETE /api/datasources/uid/:uid`
@@ -734,56 +546,11 @@ Content-Type: application/json
 }
 ```
 
-## Data source proxy calls by id
-
-{{< admonition type="warning" >}}
-This API is deprecated since Grafana v9.0.0 and will be removed in a future release.
-Refer to the [new data source API for proxying requests](#data-source-proxy-calls).
-{{< /admonition >}}
-
-`GET /api/datasources/proxy/:datasourceId/*`
-
-Proxies all calls to the actual data source identified by the `datasourceId`.
-
 ## Data source proxy calls
 
 `GET /api/datasources/proxy/uid/:uid/*`
 
 Proxies all calls to the actual data source identified by the `uid`.
-
-## Check data source health by id
-
-{{< admonition type="warning" >}}
-This API is deprecated since Grafana v9.0.0 and will be removed in a future release.
-Refer to the [new data source health check API](#check-data-source-health).
-{{< /admonition >}}
-
-`GET /api/datasources/:datasourceId/health`
-
-Makes a call to the health endpoint of data source identified by the given `datasourceId`. This is not mandatory - every plugin author has to <a href="https://grafana.com/tutorials/build-a-data-source-backend-plugin/#add-support-for-health-checks" target="_blank">implement support for health checks</a> in their plugin themselves.
-
-### Examples
-
-**Example Request**:
-
-```http
-GET api/datasources/112/health HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-  "message": "1. Successfully queried the CloudWatch metrics API.\n2. Successfully queried the CloudWatch logs API.",
-  "status": "OK"
-}
-```
 
 ## Check data source health
 
@@ -812,58 +579,6 @@ Content-Type: application/json
   "message": "1. Successfully queried the CloudWatch metrics API.\n2. Successfully queried the CloudWatch logs API.",
   "status": "OK"
 }
-```
-
-## Fetch data source resources by id
-
-{{< admonition type="warning" >}}
-This API is deprecated since Grafana v9.0.0 and will be removed in a future release.
-Refer to the [new data source resources API](#fetch-data-source-resources).
-{{< /admonition >}}
-
-`GET /api/datasources/:datasourceId/resources/*`
-
-Makes a call to the resources endpoint of data source identified by the given `dashboardId`.
-
-### Examples
-
-**Example Request**:
-
-```http
-GET api/datasources/112/resources/dimension-keys?region=us-east-2&namespace=AWS%2FEC2&dimensionFilters=%7B%7D&metricName=CPUUtilization HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-[
-	{
-		"text": "AutoScalingGroupName",
-		"value": "AutoScalingGroupName",
-		"label": "AutoScalingGroupName"
-	},
-	{
-		"text": "ImageId",
-		"value": "ImageId",
-		"label": "ImageId"
-	},
-	{
-		"text": "InstanceId",
-		"value": "InstanceId",
-		"label": "InstanceId"
-	},
-	{
-		"text": "InstanceType",
-		"value": "InstanceType",
-		"label": "InstanceType"
-	}
-]
 ```
 
 ## Fetch data source resources

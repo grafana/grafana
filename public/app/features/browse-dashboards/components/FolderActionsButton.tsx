@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
@@ -7,13 +8,14 @@ import { Button, Drawer, Dropdown, Icon, Menu, MenuItem, Text } from '@grafana/u
 import { appEvents } from 'app/core/app_events';
 import { FolderOwnerModal } from 'app/core/components/OwnerReferences/FolderOwnerModal';
 import { contextSrv } from 'app/core/services/context_srv';
-import { RepoType } from 'app/features/provisioning/Wizard/types';
+import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
 import { DeleteProvisionedFolderForm } from 'app/features/provisioning/components/Folders/DeleteProvisionedFolderForm';
 import { FolderPermissions } from 'app/features/provisioning/components/Folders/MissingFolderMetadataBanner';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { AccessControlAction } from 'app/types/accessControl';
 import { ShowModalReactEvent } from 'app/types/events';
-import { FolderDTO } from 'app/types/folders';
+import { type FolderDTO } from 'app/types/folders';
 
 import { useDeleteFolderMutationFacade, useMoveFolderMutationFacade } from '../../../api/clients/folder/v1beta1/hooks';
 import { ManagerKind } from '../../apiserver/types';
@@ -38,8 +40,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const [moveFolder] = useMoveFolderMutationFacade();
   const isProvisionedInstance = useIsProvisionedInstance();
   const deleteFolder = useDeleteFolderMutationFacade();
-
-  const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
+  const provisioningFolderMetadataEnabled = useBooleanFlagValue('provisioningFolderMetadata', false);
 
   const {
     canEditFolders,
@@ -55,8 +56,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   // Can only delete folders when the folder has the right permission and is not provisioned root folder
   const canDeleteFolders = canDeleteFoldersPermissions && !isProvisionedRootFolder && !isReadOnlyRepo;
   // Show permissions only if the folder is not provisioned, or if the provisioningFolderMetadata flag is enabled
-  const canShowPermissions =
-    canViewPermissions && (!isProvisionedFolder || !!config.featureToggles.provisioningFolderMetadata);
+  const canShowPermissions = canViewPermissions && (!isProvisionedFolder || provisioningFolderMetadataEnabled);
 
   const onMove = async (destinationUID: string) => {
     await moveFolder({ folderUID: folder.uid, destinationUID: destinationUID });
@@ -144,8 +144,12 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   const moveLabel = t('browse-dashboards.folder-actions-button.move', 'Move this folder');
   const deleteLabel = t('browse-dashboards.folder-actions-button.delete', 'Delete this folder');
 
-  // For now, only admins can manage folder owners
-  const showManageOwners = config.featureToggles.teamFolders && isAdmin && !isProvisionedFolder;
+  // If user can set permissions for the folder and read teams, they can manage folder owners
+  const showManageOwners =
+    config.featureToggles.teamFolders &&
+    canSetPermissions &&
+    contextSrv.hasPermission(AccessControlAction.ActionTeamsRead) &&
+    !isProvisionedFolder;
 
   const menu = (
     <Menu>
