@@ -4,7 +4,7 @@ const webpack = require('webpack');
 
 const CorsWorkerPlugin = require('./plugins/CorsWorkerPlugin');
 
-module.exports = (env = {}) => ({
+module.exports = {
   target: 'web',
   entry: {
     app: './public/app/index.ts',
@@ -17,8 +17,8 @@ module.exports = (env = {}) => ({
   output: {
     clean: true,
     path: path.resolve(__dirname, '../../public/build'),
-    filename: env.react19 ? '[name]-react19.[contenthash].js' : '[name].[contenthash].js',
-    chunkFilename: env.react19 ? '[name]-react19.[contenthash].js' : '[name].[contenthash].js',
+    filename: '[name].[contenthash].js',
+    chunkFilename: '[name].[contenthash].js',
     publicPath: 'public/build/',
   },
   resolve: {
@@ -142,4 +142,4 @@ module.exports = (env = {}) => ({
       },
     },
   },
-});
+};
