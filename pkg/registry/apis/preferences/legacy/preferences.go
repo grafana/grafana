@@ -210,17 +210,19 @@ func (s *preferenceStorage) Create(ctx context.Context, obj runtime.Object, crea
 func (s *preferenceStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	old, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
+		// Allows upsert with PATCH
 		if k8serrors.IsNotFound(err) {
 			p := &preferences.Preferences{
 				TypeMeta: metav1.TypeMeta{
-					Kind: "Preferences",
+					Kind:       "Preferences",
+					APIVersion: preferences.GroupVersion.String(),
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      name,
 					Namespace: requestK8s.NamespaceValue(ctx),
 				},
 			}
-			p.UID = gapiutil.CalculateClusterWideUID(old)
+			p.UID = gapiutil.CalculateClusterWideUID(p)
 			old = p
 		} else {
 			return nil, false, err
