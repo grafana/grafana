@@ -9,6 +9,28 @@ describe('KeyboardPlugin', () => {
   let config: UPlotConfigBuilder;
   let addHookSpy: jest.SpyInstance;
 
+  const createMockUPlot = () => {
+    const root = document.createElement('div');
+    const over = document.createElement('div');
+    over.style.width = '100px';
+    over.style.height = '200px';
+
+    const setCursor = jest.fn();
+    const setSelect = jest.fn();
+
+    const mockU = {
+      root,
+      over,
+      cursor: { left: 50, top: 100 },
+      setCursor,
+      setSelect,
+      select: { left: 10, top: 0, width: 20, height: 200 },
+      hooks: {} as { destroy?: Array<() => void> },
+    } as unknown as uPlot;
+
+    return { mockU, root, setCursor, setSelect };
+  };
+
   beforeEach(() => {
     config = new UPlotConfigBuilder();
     addHookSpy = jest.spyOn(config, 'addHook');
@@ -24,28 +46,6 @@ describe('KeyboardPlugin', () => {
   });
 
   describe('init', () => {
-    const createMockUPlot = () => {
-      const root = document.createElement('div');
-      const over = document.createElement('div');
-      over.style.width = '100px';
-      over.style.height = '200px';
-
-      const setCursor = jest.fn();
-      const setSelect = jest.fn();
-
-      const mockU = {
-        root,
-        over,
-        cursor: { left: 50, top: 100 },
-        setCursor,
-        setSelect,
-        select: { left: 0, top: 0, width: 0, height: 0 },
-        hooks: {} as { destroy?: Array<() => void> },
-      } as unknown as uPlot;
-
-      return { mockU, root, over, setCursor, setSelect };
-    };
-
     const runInit = () => {
       render(<KeyboardPlugin config={config} />);
       const initCallback = addHookSpy.mock.calls.find((call) => call[0] === 'init')?.[1] as (u: uPlot) => void;
@@ -69,7 +69,7 @@ describe('KeyboardPlugin', () => {
       addSpy.mockRestore();
     });
 
-    // Memory leak regression test: https://github.com/grafana/grafana/pull/
+    // Memory leak regression test: https://github.com/grafana/grafana/pull/53872
     it('registers destroy', () => {
       const initCallback = runInit();
       const { mockU, root } = createMockUPlot();
@@ -93,28 +93,6 @@ describe('KeyboardPlugin', () => {
   describe('keyboard interaction', () => {
     let rafQueue: FrameRequestCallback[] = [];
     let rafSpy: jest.SpyInstance;
-
-    const createMockUPlot = () => {
-      const root = document.createElement('div');
-      const over = document.createElement('div');
-      over.style.width = '100px';
-      over.style.height = '200px';
-
-      const setCursor = jest.fn();
-      const setSelect = jest.fn();
-
-      const mockU = {
-        root,
-        over,
-        cursor: { left: 50, top: 100 },
-        setCursor,
-        setSelect,
-        select: { left: 10, top: 0, width: 20, height: 200 },
-        hooks: {} as { destroy?: Array<() => void> },
-      } as unknown as uPlot;
-
-      return { mockU, root, setCursor, setSelect };
-    };
 
     const setUp = () => {
       render(<KeyboardPlugin config={config} />);
@@ -177,18 +155,13 @@ describe('KeyboardPlugin', () => {
     });
 
     it('moves the cursor while ArrowRight is held (animation frames)', () => {
-      const { root, mockU, setCursor } = setUp();
-
+      const { root, setCursor } = setUp();
       root.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
-      flushRaf(5);
+      flushRaf(2);
 
-      expect(setCursor.mock.calls.length).toBeGreaterThan(1);
-      const lastCall = setCursor.mock.calls[setCursor.mock.calls.length - 1]?.[0];
-      expect(mockU.cursor.left).toBeDefined();
-      expect(lastCall.left).toBe(51.6);
-
-      root.dispatchEvent(new KeyboardEvent('keyup', { key: 'ArrowRight' }));
-      // @todo why dispatching even without additional assertions?
+      expect(setCursor.mock.calls.length).toBe(2);
+      // 51.6 = 50(initial left) + 16(timestep) × 0.1(PIXELS_PER_MS)
+      expect(setCursor.mock.calls[setCursor.mock.calls.length - 1]?.[0].left).toBe(51.6);
     });
 
     it('clears selection and key state on blur', () => {
