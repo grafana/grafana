@@ -6,6 +6,7 @@ import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/da
 import { Trans } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 import { Button, Icon, Text, useStyles2, useTheme2 } from '@grafana/ui';
+import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { type ExpressionQuery } from 'app/features/expressions/types';
 
@@ -36,11 +37,6 @@ function DatasourceSection({ selectedQuery, onChange }: DatasourceSectionProps) 
     </div>
   );
 }
-
-const Separator = () => {
-  const styles = useStyles2(getSeparatorStyles);
-  return <div className={styles.separator} />;
-};
 
 interface PendingPickerHeaderProps {
   editorType: QueryEditorType;
@@ -188,7 +184,7 @@ export function ContentHeader({
             <Text weight="light" variant="body" color="primary">
               <Trans i18nKey="query-editor-next.header.alert">Alert</Trans>
             </Text>
-            <Separator />
+            <NavToolbarSeparator />
             <Text weight="light" variant="code" color="primary">
               {selectedAlert.rule.name}
             </Text>
@@ -201,7 +197,7 @@ export function ContentHeader({
               selectedQuery={selectedQuery}
               onChange={(ds) => onChangeDataSource(ds, selectedQuery.refId)}
             />
-            <Separator />
+            <NavToolbarSeparator />
           </>
         )}
 
@@ -210,7 +206,7 @@ export function ContentHeader({
             <Text weight="light" variant="body" color="primary">
               {upperFirst(selectedQuery.type)} <Trans i18nKey="query-editor-next.header.expression">Expression</Trans>
             </Text>
-            <Separator />
+            <NavToolbarSeparator />
           </>
         )}
 
@@ -219,7 +215,7 @@ export function ContentHeader({
             <Text weight="light" variant="body" color="primary">
               <Trans i18nKey="query-editor-next.header.transformation">Transformation</Trans>
             </Text>
-            <Separator />
+            <NavToolbarSeparator />
             <Text weight="light" variant="code" color="primary">
               {selectedTransformation.registryItem?.name || selectedTransformation.transformConfig.id}
             </Text>
@@ -348,14 +344,5 @@ const getDatasourceSectionStyles = (theme: GrafanaTheme2) => ({
     '& > div, & div': {
       border: 'none',
     },
-  }),
-});
-
-const getSeparatorStyles = (theme: GrafanaTheme2) => ({
-  separator: css({
-    height: theme.spacing(4),
-    margin: `0 ${theme.spacing(0.5)}`,
-    width: 1.5,
-    backgroundColor: theme.colors.border.weak,
   }),
 });
