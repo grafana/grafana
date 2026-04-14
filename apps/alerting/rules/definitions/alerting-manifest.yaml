@@ -80,6 +80,17 @@ spec:
           required:
           - interval
           type: object
+        NamedRoutingTree:
+          additionalProperties: false
+          properties:
+            routingTree:
+              type: string
+            type:
+              $ref: '#/components/schemas/NotificationSettingsType'
+          required:
+          - type
+          - routingTree
+          type: object
         NoDataState:
           enum:
           - NoData
@@ -88,33 +99,16 @@ spec:
           - KeepLast
           type: string
         NotificationSettings:
-          additionalProperties: false
           description: 'TODO(@moustafab): this should be imported from the notifications
             package'
-          properties:
-            activeTimeIntervals:
-              items:
-                $ref: '#/components/schemas/TimeIntervalRef'
-              type: array
-            groupBy:
-              items:
-                type: string
-              type: array
-            groupInterval:
-              $ref: '#/components/schemas/PromDuration'
-            groupWait:
-              $ref: '#/components/schemas/PromDuration'
-            muteTimeIntervals:
-              items:
-                $ref: '#/components/schemas/TimeIntervalRef'
-              type: array
-            receiver:
-              type: string
-            repeatInterval:
-              $ref: '#/components/schemas/PromDuration'
-          required:
-          - receiver
-          type: object
+          oneOf:
+          - $ref: '#/components/schemas/SimplifiedRouting'
+          - $ref: '#/components/schemas/NamedRoutingTree'
+        NotificationSettingsType:
+          enum:
+          - SimplifiedRouting
+          - NamedRoutingTree
+          type: string
         OperatorState:
           additionalProperties: false
           properties:
@@ -175,6 +169,35 @@ spec:
           required:
           - from
           - to
+          type: object
+        SimplifiedRouting:
+          additionalProperties: false
+          properties:
+            activeTimeIntervals:
+              items:
+                $ref: '#/components/schemas/TimeIntervalRef'
+              type: array
+            groupBy:
+              items:
+                type: string
+              type: array
+            groupInterval:
+              $ref: '#/components/schemas/PromDuration'
+            groupWait:
+              $ref: '#/components/schemas/PromDuration'
+            muteTimeIntervals:
+              items:
+                $ref: '#/components/schemas/TimeIntervalRef'
+              type: array
+            receiver:
+              type: string
+            repeatInterval:
+              $ref: '#/components/schemas/PromDuration'
+            type:
+              $ref: '#/components/schemas/NotificationSettingsType'
+          required:
+          - type
+          - receiver
           type: object
         TemplateString:
           type: string
@@ -245,7 +268,6 @@ spec:
       - spec.paused
       - spec.panelRef.dashboardUID
       - spec.panelRef.panelID
-      - spec.notificationSettings.receiver
     - admission:
         mutation:
           operations:

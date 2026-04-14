@@ -195,7 +195,7 @@ func (s *LegacySQL) GetTeams(ctx context.Context, id authlib.AuthInfo, admin boo
 	if !ok {
 		return nil, fmt.Errorf("expected identity.Requester")
 	}
-	req := newTeamsQueryReq(sql, xid.GetOrgID(), id.GetUID(), admin)
+	req := newTeamsQueryReq(sql, xid.GetOrgID(), id.GetIdentifier(), admin)
 
 	q, err := sqltemplate.Execute(sqlTeams, req)
 	if err != nil {

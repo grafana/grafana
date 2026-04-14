@@ -35,7 +35,12 @@ export enum ExecErrState {
 export const defaultExecErrState = (): ExecErrState => (ExecErrState.Error);
 
 // TODO(@moustafab): this should be imported from the notifications package
-export interface NotificationSettings {
+export type NotificationSettings = SimplifiedRouting | NamedRoutingTree;
+
+export const defaultNotificationSettings = (): NotificationSettings => (defaultSimplifiedRouting());
+
+export interface SimplifiedRouting {
+	type: NotificationSettingsType.SimplifiedRouting;
 	receiver: string;
 	groupBy?: string[];
 	groupWait?: PromDuration;
@@ -45,14 +50,32 @@ export interface NotificationSettings {
 	activeTimeIntervals?: TimeIntervalRef[];
 }
 
-export const defaultNotificationSettings = (): NotificationSettings => ({
+export const defaultSimplifiedRouting = (): SimplifiedRouting => ({
+	type: NotificationSettingsType.SimplifiedRouting,
 	receiver: "",
 });
+
+export enum NotificationSettingsType {
+	SimplifiedRouting = "SimplifiedRouting",
+	NamedRoutingTree = "NamedRoutingTree",
+}
+
+export const defaultNotificationSettingsType = (): NotificationSettingsType => (NotificationSettingsType.SimplifiedRouting);
 
 // TODO(@moustafab): validate regex for time interval ref
 export type TimeIntervalRef = string;
 
 export const defaultTimeIntervalRef = (): TimeIntervalRef => ("");
+
+export interface NamedRoutingTree {
+	type: NotificationSettingsType.NamedRoutingTree;
+	routingTree: string;
+}
+
+export const defaultNamedRoutingTree = (): NamedRoutingTree => ({
+	type: NotificationSettingsType.NamedRoutingTree,
+	routingTree: "",
+});
 
 // TODO: validate that only one can specify source=true
 // & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
