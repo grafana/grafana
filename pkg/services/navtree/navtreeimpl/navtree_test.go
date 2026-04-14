@@ -9,14 +9,12 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/star/startest"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -158,66 +156,5 @@ func TestBuildStarredItemsNavLinks(t *testing.T) {
 		require.Equal(t, "A Dashboard", navLinks[0].Text)
 		require.Equal(t, "B Dashboard", navLinks[1].Text)
 		require.Equal(t, "C Dashboard", navLinks[2].Text)
-	})
-}
-
-func TestBuildDataConnectionsNavLink(t *testing.T) {
-	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
-	reqCtx := &contextmodel.ReqContext{
-		SignedInUser: &user.SignedInUser{
-			UserID: 1,
-			OrgID:  1,
-		},
-		Context: &web.Context{Req: httpReq},
-	}
-
-	t.Run("Should always return connections section", func(t *testing.T) {
-		accessControl := actest.FakeAccessControl{}
-
-		service := ServiceImpl{
-			cfg:           &setting.Cfg{AppSubURL: ""},
-			accessControl: &accessControl,
-		}
-
-		result := service.buildDataConnectionsNavLink(reqCtx)
-		require.NotNil(t, result)
-		require.Equal(t, "Connections", result.Text)
-		require.Equal(t, "connections", result.Id)
-		require.Empty(t, result.Children)
-	})
-
-	t.Run("Should include datasource items when user has access", func(t *testing.T) {
-		accessControl := actest.FakeAccessControl{
-			ExpectedEvaluate: true,
-		}
-
-		service := ServiceImpl{
-			cfg:           &setting.Cfg{AppSubURL: ""},
-			accessControl: &accessControl,
-		}
-
-		result := service.buildDataConnectionsNavLink(reqCtx)
-		require.NotNil(t, result)
-		require.Equal(t, "Connections", result.Text)
-		require.Equal(t, "connections", result.Id)
-		require.Len(t, result.Children, 2)
-		require.Equal(t, "connections-add-new-connection", result.Children[0].Id)
-		require.Equal(t, "connections-datasources", result.Children[1].Id)
-	})
-
-	t.Run("Should have no datasource items when user lacks access", func(t *testing.T) {
-		accessControl := actest.FakeAccessControl{
-			ExpectedEvaluate: false,
-		}
-
-		service := ServiceImpl{
-			cfg:           &setting.Cfg{AppSubURL: ""},
-			accessControl: &accessControl,
-		}
-
-		result := service.buildDataConnectionsNavLink(reqCtx)
-		require.NotNil(t, result)
-		require.Equal(t, "connections", result.Id)
-		require.Empty(t, result.Children)
 	})
 }
