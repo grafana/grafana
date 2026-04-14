@@ -7,7 +7,7 @@ import {
   ThresholdsMode,
   type Field,
 } from '@grafana/data';
-import { FieldColorModeId, VisibilityMode } from '@grafana/schema';
+import { AxisPlacement, FieldColorModeId, VisibilityMode } from '@grafana/schema';
 
 import { PointShape } from './panelcfg.gen';
 import { prepConfig } from './scatter';
@@ -53,7 +53,7 @@ function makeField(opts: {
           custom: {
             pointSize: { fixed: 5, min: 1, max: 10 },
             axisLabel: '',
-            axisPlacement: 'auto',
+            axisPlacement: AxisPlacement.Auto,
             ...(custom as Record<string, unknown>),
           },
           ...rest,
@@ -178,8 +178,8 @@ describe('prepData', () => {
   });
 });
 
-describe('fieldValueColors via prepConfig', () => {
-  it('processes a color field with absolute thresholds without error', () => {
+describe('color field compilation', () => {
+  it('compiles absolute threshold color config without throwing', () => {
     const colorField = makeField({
       name: 'temp',
       values: [10, 50, 90],
@@ -215,7 +215,7 @@ describe('fieldValueColors via prepConfig', () => {
     ]);
   });
 
-  it('processes a color field with value-to-text mappings without error', () => {
+  it('compiles value-to-text mapping color config without throwing', () => {
     const colorField = makeField({
       name: 'status',
       values: [1, 2, 3],
