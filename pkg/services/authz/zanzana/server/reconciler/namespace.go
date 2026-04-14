@@ -129,6 +129,7 @@ func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace stri
 		"resourcepermissions": TranslateResourcePermissionToTuples,
 		"teambindings":        TranslateTeamBindingToTuples,
 		"users":               TranslateUserToTuples,
+		"serviceaccounts":     TranslateServiceAccountToTuples,
 	}
 
 	// Process each GVR type and insert translated tuples directly into the map

@@ -30,13 +30,14 @@ import {
   type EditableVariableType,
   getEditableVariableDefinition,
   getNextAvailableId,
+  getVariableNamePrefix,
   getVariableScene,
   getVariableTypeSelectOptions,
 } from './utils';
 
 export function openAddVariablePane(dashboard: DashboardScene) {
   const element = new VariableAdd({ dashboardRef: dashboard.getRef() });
-  dashboard.state.editPane.selectObject(element, element.state.key!, { force: true, multi: false });
+  dashboard.state.editPane.selectObject(element, { force: true, multi: false });
 }
 
 export function openAddSectionVariablePane(dashboard: DashboardScene, sectionOwner: SceneObject) {
@@ -44,7 +45,7 @@ export function openAddSectionVariablePane(dashboard: DashboardScene, sectionOwn
     dashboardRef: dashboard.getRef(),
     sectionOwnerRef: sectionOwner.getRef(),
   });
-  dashboard.state.editPane.selectObject(element, element.state.key!, { force: true, multi: false });
+  dashboard.state.editPane.selectObject(element, { force: true, multi: false });
 }
 
 export interface VariableAddState extends SceneObjectState {
@@ -69,7 +70,7 @@ export class VariableTypeChange extends SceneObjectBase<VariableTypeChangeState>
 export function openChangeVariableTypePane(variable: SceneVariable) {
   const dashboard = getDashboardSceneFor(variable);
   const element = new VariableTypeChange({ variableRef: variable.getRef() });
-  dashboard.state.editPane.selectObject(element, element.state.key!, { force: true, multi: false });
+  dashboard.state.editPane.selectObject(element, { force: true, multi: false });
 }
 
 function useEditPaneOptions(
@@ -226,9 +227,9 @@ export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAd
       const sectionVars = collectDescendantVariables(dashboard);
       const allVars = [...dashboardVars, ...sectionVars];
 
-      const newVar = getVariableScene(type, { name: getNextAvailableId(type, allVars) });
+      const newVar = getVariableScene(type, { name: getNextAvailableId(getVariableNamePrefix(type), allVars) });
       dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
-      dashboard.state.editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
+      dashboard.state.editPane.selectObject(newVar, { force: true, multi: false });
       DashboardInteractions.variableTypeSelected({ type });
     },
     [variableAdd]
@@ -249,7 +250,7 @@ function VariableTypeChangeSelection({ variableTypeChange }: { variableTypeChang
       }
 
       if (type === variable.state.type) {
-        dashboard.state.editPane.selectObject(variable, variable.state.key!, { force: true, multi: false });
+        dashboard.state.editPane.selectObject(variable, { force: true, multi: false });
         return;
       }
 
@@ -285,10 +286,10 @@ function SectionVariableTypeSelection({ sectionVariableAdd }: { sectionVariableA
       const allVars = [...dashboardVars, ...sectionVars];
 
       const newVar = getVariableScene(type, {
-        name: getNextAvailableId(type, allVars),
+        name: getNextAvailableId(getVariableNamePrefix(type), allVars),
       });
       dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
-      dashboard.state.editPane.selectObject(newVar, newVar.state.key!, { force: true, multi: false });
+      dashboard.state.editPane.selectObject(newVar, { force: true, multi: false });
       DashboardInteractions.sectionVariableTypeSelected({ type });
     },
     [sectionVariableAdd]

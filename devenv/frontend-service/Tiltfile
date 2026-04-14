@@ -146,6 +146,7 @@ docker_build('grafana-fs-dev',
     'public/dashboards',
     'public/app/plugins',
     'public/build/assets-manifest.json',
+    'public/build/boot.js',
     'public/gazetteer',
     'public/maps',
     'public/img/bg',
@@ -161,6 +162,7 @@ docker_build('grafana-fs-dev',
     sync('../../public/dashboards', '/grafana/public/dashboards'),
     sync('../../public/app/plugins', '/grafana/public/app/plugins'),
     sync('../../public/build/assets-manifest.json', '/grafana/public/build/assets-manifest.json'),
+    sync('../../public/build/boot.js', '/grafana/public/build/boot.js'),
     sync('./provisioning', '/ignore/provisioning'),  # Just to trigger a restart instead of rebuild
     sync('./configs/grafana-api.local.ini', '/ignore/grafana-api.local.ini'),  # Just to trigger a restart instead of rebuild
     sync('./configs/frontend-service.local.ini', '/ignore/frontend-service.local.ini'),  # Just to trigger a restart instead of rebuild
