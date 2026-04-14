@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -20,7 +20,7 @@ import (
 
 const folderLabelSelectorKey = "dashboard.grafana.app/folder"
 
-func TestIntegrationVariablesV2beta1(t *testing.T) {
+func TestIntegrationVariablesV2(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -36,15 +36,15 @@ func TestIntegrationVariablesV2beta1(t *testing.T) {
 
 	variableClient := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: admin,
-		GVR:  dashv2beta1.VariableResourceInfo.GroupVersionResource(),
+		GVR:  dashv2.VariableResourceInfo.GroupVersionResource(),
 	})
 	editorVariableClient := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: editor,
-		GVR:  dashv2beta1.VariableResourceInfo.GroupVersionResource(),
+		GVR:  dashv2.VariableResourceInfo.GroupVersionResource(),
 	})
 	viewerVariableClient := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: viewer,
-		GVR:  dashv2beta1.VariableResourceInfo.GroupVersionResource(),
+		GVR:  dashv2.VariableResourceInfo.GroupVersionResource(),
 	})
 	folderClient := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: admin,
@@ -242,8 +242,8 @@ func buildVariableObject(metadataName string, variableName string, folderUID str
 
 	return &unstructured.Unstructured{
 		Object: map[string]any{
-			"apiVersion": dashv2beta1.VariableResourceInfo.GroupVersion().String(),
-			"kind":       dashv2beta1.VariableResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": dashv2.VariableResourceInfo.GroupVersion().String(),
+			"kind":       dashv2.VariableResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]any{
 				"name":        metadataName,
 				"annotations": annotations,
