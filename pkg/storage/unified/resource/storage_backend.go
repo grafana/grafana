@@ -1793,7 +1793,7 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 				Value:           data,
 				ResourceVersion: event.ResourceVersion,
 				PreviousRV:      event.PreviousRV,
-				Timestamp:       event.ResourceVersion / time.Second.Nanoseconds(), // convert to seconds
+				Timestamp:       resourceVersionTime(event.ResourceVersion).Unix(),
 			}
 		}
 		close(events)
