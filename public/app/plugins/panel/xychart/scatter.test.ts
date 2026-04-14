@@ -211,8 +211,15 @@ describe('fieldValueColors via prepConfig', () => {
 
     const { prepData } = prepConfig([series], theme);
     const data = prepData!([series]);
-    expect(data).toHaveLength(2);
-    expect(data[1]).toHaveLength(4);
+    expect(data).toEqual([
+      null,
+      [
+        [1, 2, 3],
+        [10, 20, 30],
+        [5, 5, 5],
+        ['#ff0000', '#ff0000', '#ff0000'],
+      ],
+    ]);
   });
 
   it('processes a color field with value-to-text mappings without error', () => {
@@ -241,7 +248,14 @@ describe('fieldValueColors via prepConfig', () => {
 
     const { prepData } = prepConfig([series], theme);
     const data = prepData!([series]);
-    expect(data).toHaveLength(2);
-    expect(data[1]).toHaveLength(4);
+    expect(data).toEqual([
+      null,
+      [
+        [1, 2, 3],
+        [10, 20, 30],
+        [5, 5, 5],
+        ['#ff0000', '#ff0000', '#ff0000'],
+      ],
+    ]);
   });
 });
