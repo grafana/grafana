@@ -19,7 +19,7 @@ export type State = UserPreferencesDTO & {
   isSubmitting: boolean;
 };
 
-export type PrefsState = Omit<UpdatePrefsCmd, 'theme'> & { theme?: string };
+export type PrefsState = UserPreferencesDTO;
 
 export const toUpdatePrefsCmd = (state: PrefsState): UpdatePrefsCmd => ({
   ...state,

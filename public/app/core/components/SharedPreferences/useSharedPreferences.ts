@@ -1,7 +1,6 @@
-import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useCallback } from 'react';
 
-import { useGetPreferencesQuery } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { useGetPreferencesQuery, useUpdatePreferencesMutation } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
 
 // import {
 //   useGetOrgPreferencesQuery,
@@ -23,6 +22,15 @@ import { type Props } from './utils';
  * getPreferences
  *  - called with {namespace} (should already be provided by the generated hook)
  *  - {name} - `user-{userUID}`, `team-{teamId}`
+ *
+ * todo list:
+ * - [x] get user preferences
+ * - [ ] get org preferences
+ * - [ ] get team preferences
+ *
+ * - [ ] update user preferences
+ * - [ ] update team preferences
+ * - [ ] update org preferences
  */
 
 export const useSharedPreferences = (
@@ -30,13 +38,18 @@ export const useSharedPreferences = (
   preferencesName: Props['resourceUri']
 ) => {
   const { data, isLoading, isError } = useGetPreferencesQuery({ name: preferencesName });
+  const [updatePreferences, { data: updateData, isLoading: isUpdating, isError: isUpdateError }] =
+    useUpdatePreferencesMutation();
 
-  const updatePreferences = useCallback((prefsData: any) => {
-    console.log('Updating preferences with data:', prefsData);
-    // TODO - implement update preferences mutation
-  }, []);
+  // const updatePreferences = useCallback((prefsData: any) => {
+  //   console.log('Updating preferences with data:', prefsData);
+  //   // TODO - implement update preferences mutation
+  // }, []);
 
-  return [updatePreferences, { preferences: data?.spec, isLoading, isError, isSubmitting: false }] as const;
+  return [
+    updatePreferences,
+    { preferences: data?.spec, isLoading, isError, isSubmitting: isUpdating, isUpdateError },
+  ] as const;
 
   /**
   const teamId = preferenceType === 'team' ? resourceUri.split('/')[1] : undefined;

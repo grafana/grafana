@@ -35,7 +35,6 @@ import {
   getRegionalFormatOptions,
   getStyles,
   getTranslatedThemeName,
-  toUpdatePrefsCmd,
   type PrefsState,
   type Props,
 } from './utils';
@@ -112,9 +111,13 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
       });
     }
 
-    const prefsData = toUpdatePrefsCmd(state);
-    await updatePreferences(prefsData);
-    window.location.reload();
+    const prefsData = state;
+    await updatePreferences({
+      name: resourceUri,
+      patch: prefsData, // [TODO] - patch? that seems untyped??
+    });
+
+    // window.location.reload();
   };
 
   const handleThemeChanged = (value: ComboboxOption<string>) => {
@@ -186,6 +189,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
 
   return (
     <form onSubmit={handleSubmitForm} className={styles.form}>
+      {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
       {isError && <Alert severity="error" title="Error loading preferences!!!" />}
       <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={props.disabled}>
         <Stack direction="column" gap={2}>
