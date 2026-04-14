@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func TestEscapePatchString(t *testing.T) {
@@ -329,4 +330,28 @@ func TestSplitItems_NoFolders(t *testing.T) {
 	folderItems, resourceItems := SplitItems(items)
 	assert.Empty(t, folderItems)
 	require.Len(t, resourceItems, 1)
+}
+
+func TestReleaseAnnotationKeys(t *testing.T) {
+	t.Run("minimal item returns only manager keys", func(t *testing.T) {
+		keys := ReleaseAnnotationKeys(&provisioning.ResourceListItem{Name: "d"})
+		assert.Equal(t, []string{utils.AnnoKeyManagerKind, utils.AnnoKeyManagerIdentity}, keys)
+	})
+
+	t.Run("item with path includes sourcePath", func(t *testing.T) {
+		keys := ReleaseAnnotationKeys(&provisioning.ResourceListItem{Name: "d", Path: "a.json"})
+		assert.Contains(t, keys, utils.AnnoKeySourcePath)
+		assert.NotContains(t, keys, utils.AnnoKeySourceChecksum)
+	})
+
+	t.Run("item with hash includes sourceChecksum", func(t *testing.T) {
+		keys := ReleaseAnnotationKeys(&provisioning.ResourceListItem{Name: "d", Hash: "abc"})
+		assert.Contains(t, keys, utils.AnnoKeySourceChecksum)
+		assert.NotContains(t, keys, utils.AnnoKeySourcePath)
+	})
+
+	t.Run("item with both path and hash includes all four keys", func(t *testing.T) {
+		keys := ReleaseAnnotationKeys(&provisioning.ResourceListItem{Name: "d", Path: "a.json", Hash: "abc"})
+		assert.Len(t, keys, 4)
+	})
 }

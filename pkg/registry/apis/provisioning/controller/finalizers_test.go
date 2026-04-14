@@ -34,6 +34,8 @@ var (
 type mockDynamicClient struct {
 	deleteFunc func(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error
 	patchFunc  func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error)
+	getFunc    func(ctx context.Context, name string, options metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error)
+	updateFunc func(ctx context.Context, obj *unstructured.Unstructured, options metav1.UpdateOptions, subresources ...string) (*unstructured.Unstructured, error)
 }
 
 func (m mockDynamicClient) Create(ctx context.Context, obj *unstructured.Unstructured, options metav1.CreateOptions, subresources ...string) (*unstructured.Unstructured, error) {
@@ -41,7 +43,10 @@ func (m mockDynamicClient) Create(ctx context.Context, obj *unstructured.Unstruc
 }
 
 func (m mockDynamicClient) Update(ctx context.Context, obj *unstructured.Unstructured, options metav1.UpdateOptions, subresources ...string) (*unstructured.Unstructured, error) {
-	panic("not needed for testing")
+	if m.updateFunc != nil {
+		return m.updateFunc(ctx, obj, options, subresources...)
+	}
+	return obj, nil
 }
 
 func (m mockDynamicClient) UpdateStatus(ctx context.Context, obj *unstructured.Unstructured, options metav1.UpdateOptions) (*unstructured.Unstructured, error) {
@@ -60,7 +65,12 @@ func (m mockDynamicClient) DeleteCollection(ctx context.Context, options metav1.
 }
 
 func (m mockDynamicClient) Get(ctx context.Context, name string, options metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
-	panic("not needed for testing")
+	if m.getFunc != nil {
+		return m.getFunc(ctx, name, options, subresources...)
+	}
+	return &unstructured.Unstructured{Object: map[string]any{
+		"metadata": map[string]any{"name": name, "annotations": map[string]any{}},
+	}}, nil
 }
 
 func (m mockDynamicClient) List(ctx context.Context, opts metav1.ListOptions) (*unstructured.UnstructuredList, error) {
@@ -163,11 +173,7 @@ func TestFinalizer_process(t *testing.T) {
 			clientFactory: func() resources.ClientFactory {
 				clientFactory := resources.NewMockClientFactory(t)
 				clients := resources.NewMockResourceClients(t)
-				client := &mockDynamicClient{
-					patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
-						return &unstructured.Unstructured{}, nil
-					},
-				}
+				client := &mockDynamicClient{}
 
 				clientFactory.
 					On("Clients", mock.Anything, "default").
@@ -438,7 +444,7 @@ func TestFinalizer_process(t *testing.T) {
 				clientFactory := resources.NewMockClientFactory(t)
 				clients := resources.NewMockResourceClients(t)
 				client := &mockDynamicClient{
-					patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
+					getFunc: func(ctx context.Context, name string, options metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
 						return nil, assert.AnError
 					},
 				}
@@ -714,11 +720,13 @@ func TestReleaseExistingItems_FoldersBeforeResources(t *testing.T) {
 	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
 	client := &mockDynamicClient{
-		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
+		getFunc: func(ctx context.Context, name string, options metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
 			mu.Lock()
 			order = append(order, name)
 			mu.Unlock()
-			return nil, nil
+			return &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": name, "annotations": map[string]any{}},
+			}}, nil
 		},
 	}
 	clients.On("ForResource", mock.Anything, mock.Anything).Return(client, schema.GroupVersionKind{}, nil)
@@ -765,7 +773,7 @@ func TestReleaseExistingItems_ResourcesConcurrent(t *testing.T) {
 	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
 	client := &mockDynamicClient{
-		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
+		getFunc: func(ctx context.Context, name string, options metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
 			current := atomic.AddInt64(&concurrentCount, 1)
 			defer atomic.AddInt64(&concurrentCount, -1)
 			mu.Lock()
@@ -774,7 +782,9 @@ func TestReleaseExistingItems_ResourcesConcurrent(t *testing.T) {
 			}
 			mu.Unlock()
 			time.Sleep(1 * time.Second)
-			return nil, nil
+			return &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": name, "annotations": map[string]any{}},
+			}}, nil
 		},
 	}
 	clients.On("ForResource", mock.Anything, mock.Anything).Return(client, schema.GroupVersionKind{}, nil)

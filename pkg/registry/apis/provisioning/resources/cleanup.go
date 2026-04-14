@@ -38,6 +38,19 @@ func GetReleasePatch(item *provisioning.ResourceListItem) ([]byte, error) {
 	return json.Marshal(ops)
 }
 
+// ReleaseAnnotationKeys returns the annotation keys that should be removed
+// when releasing a resource from repository ownership.
+func ReleaseAnnotationKeys(item *provisioning.ResourceListItem) []string {
+	keys := []string{utils.AnnoKeyManagerKind, utils.AnnoKeyManagerIdentity}
+	if item.Path != "" {
+		keys = append(keys, utils.AnnoKeySourcePath)
+	}
+	if item.Hash != "" {
+		keys = append(keys, utils.AnnoKeySourceChecksum)
+	}
+	return keys
+}
+
 // EscapePatchString escapes a string for use in a JSON Pointer (RFC 6901)
 // by replacing ~ with ~0 and / with ~1.
 func EscapePatchString(s string) string {

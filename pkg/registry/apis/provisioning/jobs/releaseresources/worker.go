@@ -10,7 +10,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // Worker handles the releaseResources job action.
@@ -145,18 +145,19 @@ func (w *Worker) releaseItem(ctx context.Context, clients resources.ResourceClie
 		return nil
 	}
 
-	patchBytes, err := resources.GetReleasePatch(item)
-	if err != nil {
-		result.WithError(fmt.Errorf("build release patch for %s/%s: %w", item.Resource, item.Name, err))
-		progress.Record(ctx, result.Build())
-		if tooMany := progress.TooManyErrors(); tooMany != nil {
-			return tooMany
+	releaseCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	obj, err := res.Get(releaseCtx, item.Name, v1.GetOptions{})
+	if err == nil {
+		if stripped, ok := util.StripBOMFromInterface(obj.Object).(map[string]any); ok {
+			obj.Object = stripped
 		}
-		return nil
+		annotations := obj.GetAnnotations()
+		for _, key := range resources.ReleaseAnnotationKeys(item) {
+			delete(annotations, key)
+		}
+		obj.SetAnnotations(annotations)
+		_, err = res.Update(releaseCtx, obj, v1.UpdateOptions{})
 	}
-
-	patchCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-	_, err = res.Patch(patchCtx, item.Name, types.JSONPatchType, patchBytes, v1.PatchOptions{})
 	cancel()
 
 	if err != nil {

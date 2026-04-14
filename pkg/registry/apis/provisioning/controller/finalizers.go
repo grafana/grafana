@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -19,6 +18,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	metricutils "github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type finalizer struct {
@@ -243,16 +243,26 @@ func (f *finalizer) releaseResources(
 			"resource", item.Resource,
 		)
 
-		patchAnnotations, err := resources.GetReleasePatch(item)
+		obj, err := client.Get(ctx, item.Name, v1.GetOptions{})
 		if err != nil {
-			return fmt.Errorf("get patched annotations: %w", err)
+			return fmt.Errorf("get resource to release ownership: %w", err)
 		}
 
-		_, err = client.Patch(
-			ctx, item.Name, types.JSONPatchType, patchAnnotations, v1.PatchOptions{},
-		)
+		stripped, ok := util.StripBOMFromInterface(obj.Object).(map[string]any)
+		if !ok {
+			return fmt.Errorf("unexpected type after BOM stripping")
+		}
+		obj.Object = stripped
+
+		annotations := obj.GetAnnotations()
+		for _, key := range resources.ReleaseAnnotationKeys(item) {
+			delete(annotations, key)
+		}
+		obj.SetAnnotations(annotations)
+
+		_, err = client.Update(ctx, obj, v1.UpdateOptions{})
 		if err != nil {
-			return fmt.Errorf("patch resource to release ownership: %w", err)
+			return fmt.Errorf("update resource to release ownership: %w", err)
 		}
 		return nil
 	}

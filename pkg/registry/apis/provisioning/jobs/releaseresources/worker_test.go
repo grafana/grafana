@@ -25,15 +25,15 @@ import (
 var _ dynamic.ResourceInterface = (*fakeDynamicClient)(nil)
 
 type fakeDynamicClient struct {
-	patchCalls []string
-	patchErr   error
+	getCalls []string
+	getErr   error
 }
 
 func (f *fakeDynamicClient) Create(context.Context, *unstructured.Unstructured, metav1.CreateOptions, ...string) (*unstructured.Unstructured, error) {
 	panic("unexpected")
 }
-func (f *fakeDynamicClient) Update(context.Context, *unstructured.Unstructured, metav1.UpdateOptions, ...string) (*unstructured.Unstructured, error) {
-	panic("unexpected")
+func (f *fakeDynamicClient) Update(_ context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
+	return obj, nil
 }
 func (f *fakeDynamicClient) UpdateStatus(context.Context, *unstructured.Unstructured, metav1.UpdateOptions) (*unstructured.Unstructured, error) {
 	panic("unexpected")
@@ -44,8 +44,14 @@ func (f *fakeDynamicClient) Delete(context.Context, string, metav1.DeleteOptions
 func (f *fakeDynamicClient) DeleteCollection(context.Context, metav1.DeleteOptions, metav1.ListOptions) error {
 	panic("unexpected")
 }
-func (f *fakeDynamicClient) Get(context.Context, string, metav1.GetOptions, ...string) (*unstructured.Unstructured, error) {
-	panic("unexpected")
+func (f *fakeDynamicClient) Get(_ context.Context, name string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+	f.getCalls = append(f.getCalls, name)
+	if f.getErr != nil {
+		return nil, f.getErr
+	}
+	return &unstructured.Unstructured{Object: map[string]any{
+		"metadata": map[string]any{"name": name, "annotations": map[string]any{}},
+	}}, nil
 }
 func (f *fakeDynamicClient) List(context.Context, metav1.ListOptions) (*unstructured.UnstructuredList, error) {
 	panic("unexpected")
@@ -53,12 +59,8 @@ func (f *fakeDynamicClient) List(context.Context, metav1.ListOptions) (*unstruct
 func (f *fakeDynamicClient) Watch(context.Context, metav1.ListOptions) (watch.Interface, error) {
 	panic("unexpected")
 }
-func (f *fakeDynamicClient) Patch(_ context.Context, name string, _ types.PatchType, _ []byte, _ metav1.PatchOptions, _ ...string) (*unstructured.Unstructured, error) {
-	f.patchCalls = append(f.patchCalls, name)
-	if f.patchErr != nil {
-		return nil, f.patchErr
-	}
-	return &unstructured.Unstructured{}, nil
+func (f *fakeDynamicClient) Patch(context.Context, string, types.PatchType, []byte, metav1.PatchOptions, ...string) (*unstructured.Unstructured, error) {
+	panic("unexpected")
 }
 func (f *fakeDynamicClient) Apply(context.Context, string, *unstructured.Unstructured, metav1.ApplyOptions, ...string) (*unstructured.Unstructured, error) {
 	panic("unexpected")
@@ -128,7 +130,7 @@ func TestWorker_Process(t *testing.T) {
 
 	err := w.Process(ctx, nil, job, progress)
 	require.NoError(t, err)
-	require.Equal(t, []string{"dash-1", "dash-2"}, fakeClient.patchCalls)
+	require.Equal(t, []string{"dash-1", "dash-2"}, fakeClient.getCalls)
 }
 
 func TestWorker_Process_EmptyResourceList(t *testing.T) {
@@ -206,7 +208,7 @@ func TestWorker_Process_NotFoundResourceSkipped(t *testing.T) {
 	mockClients := resources.NewMockResourceClients(t)
 
 	notFoundErr := apierrors.NewNotFound(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, "dash-1")
-	fakeClient := &fakeDynamicClient{patchErr: notFoundErr}
+	fakeClient := &fakeDynamicClient{getErr: notFoundErr}
 
 	w := NewWorker(lister, clientFactory, 1)
 
