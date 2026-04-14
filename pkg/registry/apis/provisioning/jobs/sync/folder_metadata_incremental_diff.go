@@ -30,6 +30,7 @@ type folderMetadataIncrementalDiffBuilder struct {
 type replacedFolder struct {
 	Path   string
 	OldUID string
+	Reason string
 }
 
 // NewFolderMetadataIncrementalDiffBuilder wires the repository reader used to
@@ -133,7 +134,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 		})
 	}
 
-	replaced, newUID, err := d.replacementsForMetadataChange(index, folderPath, folder)
+	replaced, newUID, err := d.replacementsForMetadataChange(index, folderPath, folder, change.Action)
 	if err != nil {
 		return nil, err
 	}
@@ -364,6 +365,19 @@ func (d *folderMetadataIncrementalDiffBuilder) readMetadata(
 	return nil, nil, fmt.Errorf("read folder metadata for %s: %w", folderPath, err)
 }
 
+// reasonForMetadataAction maps a file action on a _folder.json entry to the
+// replacement reason recorded on the deleted old folder.
+func reasonForMetadataAction(action repository.FileAction) string {
+	switch action {
+	case repository.FileActionCreated, repository.FileActionRenamed:
+		return provisioning.ReasonFolderMetadataCreated
+	case repository.FileActionUpdated:
+		return provisioning.ReasonFolderMetadataUpdated
+	default:
+		return provisioning.ReasonFolderMetadataUpdated
+	}
+}
+
 // replacementsForMetadataChange determines which existing folder identities at
 // a path are superseded by the new metadata.
 //
@@ -375,6 +389,7 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementsForMetadataChange(
 	index managedResourceIndex,
 	folderPath string,
 	folder *folders.Folder,
+	action repository.FileAction,
 ) ([]replacedFolder, string, error) {
 	// Replacements are only scheduled for confirmed identity transitions. If the
 	// managed folder does not exist yet, or metadata could not be parsed into a
@@ -391,6 +406,7 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementsForMetadataChange(
 		return nil, newUID, nil
 	}
 
+	reason := reasonForMetadataAction(action)
 	var replaced []replacedFolder
 	for _, item := range items {
 		if newUID == item.Name {
@@ -399,6 +415,7 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementsForMetadataChange(
 		replaced = append(replaced, replacedFolder{
 			Path:   folderPath,
 			OldUID: item.Name,
+			Reason: reason,
 		})
 	}
 	return replaced, newUID, nil
@@ -439,6 +456,7 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementForDeletedMetadataItem
 		return &replacedFolder{
 			Path:   folderPath,
 			OldUID: existing.Name,
+			Reason: provisioning.ReasonFolderMetadataDeleted,
 		}
 	}
 
@@ -450,6 +468,7 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementForDeletedMetadataItem
 	return &replacedFolder{
 		Path:   folderPath,
 		OldUID: existing.Name,
+		Reason: provisioning.ReasonFolderMetadataDeleted,
 	}
 }
 
