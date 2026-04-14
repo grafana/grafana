@@ -9,7 +9,9 @@ import { ScaleDirection, ScaleOrientation } from '../../../schema';
 import { mockThemeContext } from '../../../themes/ThemeContext';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
-import { TooltipHoverMode, TooltipPlugin2 } from './TooltipPlugin2';
+import { TooltipHoverMode, TooltipPlugin2, TOOLTIP_OFFSET } from './TooltipPlugin2';
+
+type UPlotConfigHookName = 'init' | 'ready' | 'setCursor' | 'setLegend' | 'setSeries' | 'setSelect';
 
 describe('TooltipPlugin2', () => {
   let config: UPlotConfigBuilder;
@@ -40,22 +42,24 @@ describe('TooltipPlugin2', () => {
       />
     );
 
-    const initCallback = addHookSpy.mock.calls.find((call) => call[0] === 'init')?.[1] as (u: uPlot) => void;
-    const setSeriesCallback = addHookSpy.mock.calls.find((call) => call[0] === 'setSeries')?.[1] as (
-      u: uPlot,
-      seriesIdx: number | null
-    ) => void;
-    const readyCallback = addHookSpy.mock.calls.find((call) => call[0] === 'ready')?.[1] as () => void;
-    const setLegendCallback = addHookSpy.mock.calls.find((call) => call[0] === 'setLegend')?.[1] as (u: uPlot) => void;
+    const getHook = (hookName: UPlotConfigHookName) =>
+      addHookSpy.mock.calls.filter((call) => call[0] === hookName).at(-1)?.[1];
+
+    const initCallback = getHook('init') as (u: uPlot) => void;
+    const setSeriesCallback = getHook('setSeries') as (u: uPlot, seriesIdx: number | null) => void;
+    const readyCallback = getHook('ready') as () => void;
+    const setLegendCallback = getHook('setLegend') as (u: uPlot) => void;
     const { mockUPlot, setCursor } = createMockUPlot(uPlotOverrides);
 
-    return { view, mockUPlot, initCallback, setSeriesCallback, setCursor, readyCallback, setLegendCallback };
+    return { view, mockUPlot, initCallback, setSeriesCallback, setCursor, readyCallback, setLegendCallback, getHook };
   };
 
   const createMockUPlot = (overrides?: Partial<uPlot>) => {
     const root = document.createElement('div');
     const over = document.createElement('div');
     const setCursor = jest.fn();
+    const setSelect = jest.fn();
+    const setScale = jest.fn();
 
     const mockUPlot = {
       root,
@@ -70,12 +74,38 @@ describe('TooltipPlugin2', () => {
       },
       scales: { x: { ori: 0 } },
       setCursor,
+      setScale,
+      setSelect,
       select: { left: 0, top: 0, width: 0, height: 0 },
       ...overrides,
     } as unknown as uPlot;
 
     return { mockUPlot, setCursor };
   };
+
+  const renderFirstDataLinkTitle: React.ComponentProps<typeof TooltipPlugin2>['render'] = (
+    _u,
+    _dataIdxs,
+    _seriesIdx,
+    _isPinned,
+    _dismiss,
+    _timeRange,
+    _viaSync,
+    dataLinks
+  ) => <span>{dataLinks.length > 0 ? dataLinks[0].title : 'Tooltip content'}</span>;
+
+  const getTooltipWrapper = () => screen.getByText('Tooltip content').parentElement;
+
+  const expectedTooltipTransform = (u: uPlot) => {
+    const left = u.cursor.left ?? -10;
+    const top = u.cursor.top ?? -10;
+    const shiftX = u.rect.left + left + TOOLTIP_OFFSET;
+    const shiftY = u.rect.top + top + TOOLTIP_OFFSET;
+    return `translateX(${shiftX}px)  translateY(${shiftY}px) `;
+  };
+
+  /** DOM / React may normalize whitespace on `style.transform`. */
+  const normalizeCssTransform = (value: string | undefined) => value?.replace(/\s+/g, ' ').trim() ?? '';
 
   describe('on hover', () => {
     it('renders', async () => {
@@ -149,6 +179,44 @@ describe('TooltipPlugin2', () => {
     });
   });
 
+  describe('clientZoom', () => {
+    it('zooms y-axis without issuing query', async () => {
+      const posToVal = jest.fn((pos: number) => pos);
+      const queryZoom = jest.fn();
+
+      const { initCallback, mockUPlot, getHook } = setUp(
+        {
+          cursor: {
+            left: 50,
+            top: 50,
+            event: new MouseEvent('mousemove', { clientX: 100, clientY: 100 }),
+            idxs: [null, 5],
+            drag: { x: true, y: false, setScale: false },
+          },
+          select: { left: 0, top: 10, width: 0, height: 50 },
+          posToVal,
+          scales: { x: { ori: 0 }, y: {} },
+        },
+        { clientZoom: true, queryZoom }
+      );
+
+      const setSelectHook = getHook('setSelect') as (u: uPlot) => void;
+
+      await act(async () => {
+        initCallback(mockUPlot);
+        // y-only zoom uses outer `yDrag` set by shift+mousedown (see TooltipPlugin2 init + setSelect).
+        mockUPlot.over.dispatchEvent(
+          new MouseEvent('mousedown', { button: 0, shiftKey: true, clientX: 100, clientY: 100 })
+        );
+        setSelectHook(mockUPlot);
+      });
+
+      expect(mockUPlot.setScale).toHaveBeenCalledWith('y', { min: 60, max: 10 });
+      expect(queryZoom).not.toHaveBeenCalled();
+      expect(mockUPlot.setSelect).toHaveBeenCalledWith({ left: 0, width: 0, top: 0, height: 0 }, false);
+    });
+  });
+
   describe('dataLinks', () => {
     it('renders', async () => {
       const getDataLinks = jest.fn(() => [
@@ -162,9 +230,7 @@ describe('TooltipPlugin2', () => {
 
       const { setSeriesCallback, initCallback, mockUPlot, setLegendCallback } = setUp(undefined, {
         getDataLinks,
-        render: (_u, _dataIdxs, _seriesIdx, _isPinned, _dismiss, _timeRange, _viaSync, dataLinks) => (
-          <span>{dataLinks.length > 0 ? dataLinks[0].title : 'Tooltip content'}</span>
-        ),
+        render: renderFirstDataLinkTitle,
       });
 
       await act(async () => {
@@ -198,9 +264,7 @@ describe('TooltipPlugin2', () => {
 
       const { setSeriesCallback, initCallback, mockUPlot, setLegendCallback } = setUp(undefined, {
         getDataLinks,
-        render: (_u, _dataIdxs, _seriesIdx, _isPinned, _dismiss, _timeRange, _viaSync, dataLinks) => (
-          <span>{dataLinks.length > 0 ? dataLinks[0].title : 'Tooltip content'}</span>
-        ),
+        render: renderFirstDataLinkTitle,
       });
 
       await act(async () => {
@@ -218,6 +282,118 @@ describe('TooltipPlugin2', () => {
       expect(getDataLinks).toHaveBeenCalledWith(1, 5);
 
       windowOpen.mockRestore();
+    });
+  });
+
+  describe('setCursor', () => {
+    it('sets transform', async () => {
+      const { setSeriesCallback, initCallback, mockUPlot, setLegendCallback, getHook } = setUp();
+      const setCursorHook = getHook('setCursor') as (u: uPlot) => void;
+
+      await act(async () => {
+        initCallback(mockUPlot);
+        setLegendCallback(mockUPlot);
+        setSeriesCallback(mockUPlot, 1);
+      });
+
+      act(() => {
+        setCursorHook(mockUPlot);
+      });
+
+      expect(normalizeCssTransform(getTooltipWrapper()?.style.transform)).toBe(
+        normalizeCssTransform(expectedTooltipTransform(mockUPlot))
+      );
+    });
+
+    it('schedules render', async () => {
+      const { setSeriesCallback, initCallback, mockUPlot, setLegendCallback, getHook } = setUp();
+      const setCursorHook = getHook('setCursor') as (u: uPlot) => void;
+
+      await act(async () => {
+        initCallback(mockUPlot);
+        setLegendCallback(mockUPlot);
+        setSeriesCallback(mockUPlot, 1);
+        // Before the hover microtask runs and the portaled tooltip mounts, `domRef` is still null;
+        // setCursor then updates `_style` and calls `scheduleRender()` (TooltipPlugin2 setCursor hook).
+        setCursorHook(mockUPlot);
+      });
+
+      expect(normalizeCssTransform(getTooltipWrapper()?.style.transform)).toBe(
+        normalizeCssTransform(expectedTooltipTransform(mockUPlot))
+      );
+    });
+  });
+
+  describe('setSelect', () => {
+    it('xDrag', async () => {
+      const onSelectRange = jest.fn();
+      const queryZoom = jest.fn();
+      const posToVal = jest.fn((pos: number) => pos);
+
+      const { initCallback, mockUPlot, getHook } = setUp(
+        {
+          cursor: {
+            left: 50,
+            top: 50,
+            event: new MouseEvent('mousemove', { clientX: 100, clientY: 100 }),
+            idxs: [null, 5],
+            drag: { x: true, y: false, setScale: false },
+          },
+          select: { left: 10, width: 50, top: 0, height: 0 },
+          posToVal,
+        },
+        { queryZoom, onSelectRange }
+      );
+
+      const setSelectHook = getHook('setSelect') as (u: uPlot) => void;
+
+      await act(async () => {
+        initCallback(mockUPlot);
+        setSelectHook(mockUPlot);
+      });
+
+      expect(onSelectRange).toHaveBeenCalledWith([{ x: { from: 10, to: 60 } }]);
+      expect(queryZoom).not.toHaveBeenCalled();
+      expect(mockUPlot.setSelect).toHaveBeenCalledWith({ left: 0, width: 0, top: 0, height: 0 }, false);
+    });
+
+    it('yDrag', async () => {
+      config.addScale({
+        scaleKey: 'y',
+        orientation: ScaleOrientation.Vertical,
+        direction: ScaleDirection.Up,
+        isTime: false,
+      });
+
+      const onSelectRange = jest.fn();
+      const queryZoom = jest.fn();
+      const posToVal = jest.fn((pos: number) => pos);
+
+      const { initCallback, mockUPlot, getHook } = setUp(
+        {
+          cursor: {
+            left: 50,
+            top: 50,
+            event: new MouseEvent('mousemove', { clientX: 100, clientY: 100 }),
+            idxs: [null, 5],
+            drag: { x: false, y: true, setScale: false },
+          },
+          select: { left: 0, top: 10, width: 0, height: 50 },
+          posToVal,
+        },
+        { queryZoom, onSelectRange }
+      );
+
+      const setSelectHook = getHook('setSelect') as (u: uPlot) => void;
+
+      await act(async () => {
+        initCallback(mockUPlot);
+        setSelectHook(mockUPlot);
+      });
+
+      expect(onSelectRange).toHaveBeenCalledWith([{ y: { from: 60, to: 10 } }]);
+      expect(queryZoom).not.toHaveBeenCalled();
+      expect(mockUPlot.setSelect).toHaveBeenCalledWith({ left: 0, width: 0, top: 0, height: 0 }, false);
     });
   });
 
