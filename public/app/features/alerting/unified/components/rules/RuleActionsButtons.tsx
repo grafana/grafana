@@ -11,7 +11,7 @@ import { useRulesFilter } from 'app/features/alerting/unified/hooks/useFilteredR
 import { useDispatch } from 'app/types/store';
 import { type CombinedRule, type RuleIdentifier, type RulesSource } from 'app/types/unified-alerting';
 
-import { useRuleAdministrationAbility } from '../../hooks/abilities/ruleAbilities';
+import { useRuleAdministrationAbility } from '../../hooks/abilities/rulerRuleAbilities';
 import { fetchPromAndRulerRulesAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
 import { groupIdentifier } from '../../utils/groupIdentifier';

@@ -12,8 +12,8 @@ import { type AlertQuery, type PromRulesResponse } from 'app/types/unified-alert
 
 import { PanelAlertTabContent } from './PanelAlertTabContent';
 import * as apiRuler from './api/ruler';
-import * as alertingAbilities from './hooks/abilities/ruleAbilities';
-import { type RuleEditAbilityResult } from './hooks/abilities/ruleAbilities';
+import { type RuleEditAbilityResult } from './hooks/abilities/ruleAbilities.utils';
+import * as alertingAbilities from './hooks/abilities/rulerRuleAbilities';
 import { Granted } from './hooks/abilities/types';
 import { mockAlertRuleApi, setupMswServer } from './mockApi';
 import {

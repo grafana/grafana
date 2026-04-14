@@ -20,14 +20,16 @@ import { PromAlertingRuleState, type RulerRuleDTO } from 'app/types/unified-aler
 import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useEnrichmentAbility } from '../../hooks/abilities/otherAbilities';
 import {
-  skipToken,
   usePromRuleAdministrationAbility,
   usePromRuleExportAbility,
   usePromRuleSilenceAbility,
+} from '../../hooks/abilities/promRuleAbilities';
+import { skipToken } from '../../hooks/abilities/ruleAbilities.utils';
+import {
   useRuleAdministrationAbility,
   useRuleExportAbility,
   useRuleSilenceAbility,
-} from '../../hooks/abilities/ruleAbilities';
+} from '../../hooks/abilities/rulerRuleAbilities';
 import { EnrichmentAction } from '../../hooks/abilities/types';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';

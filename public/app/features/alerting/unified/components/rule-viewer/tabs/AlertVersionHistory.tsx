@@ -14,7 +14,7 @@ import {
   trackRuleVersionsRestoreSuccess,
 } from '../../../Analytics';
 import { alertRuleApi } from '../../../api/alertRuleApi';
-import { useRuleAdministrationAbility } from '../../../hooks/abilities/ruleAbilities';
+import { useRuleAdministrationAbility } from '../../../hooks/abilities/rulerRuleAbilities';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 

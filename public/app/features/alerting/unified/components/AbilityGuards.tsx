@@ -5,7 +5,7 @@ import {
   useAllExternalAlertmanagerAbilities,
 } from '../hooks/abilities/notificationAbilities';
 import { useEnrichmentAbilities, useFolderBulkActionAbilities } from '../hooks/abilities/otherAbilities';
-import { useExternalRuleAbilities, useRuleAbilities } from '../hooks/abilities/ruleAbilities';
+import { useExternalGlobalRuleAbilities, useGlobalRuleAbilities } from '../hooks/abilities/ruleAbilities';
 import { type Abilities, type Ability, type Action, NotSupported } from '../hooks/abilities/types';
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
@@ -28,8 +28,8 @@ function isRenderProp<T>(children: ChildrenOrRenderProp<T>): children is RenderP
 function useAbilitiesForActions(actions: Action[]): Abilities<Action> {
   const amStates = useAllAlertmanagerAbilities();
   const extAmStates = useAllExternalAlertmanagerAbilities();
-  const ruleStates = useRuleAbilities();
-  const extRuleStates = useExternalRuleAbilities();
+  const ruleStates = useGlobalRuleAbilities();
+  const extRuleStates = useExternalGlobalRuleAbilities();
   const folderBulkStates = useFolderBulkActionAbilities();
   const enrichmentStates = useEnrichmentAbilities();
 

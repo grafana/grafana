@@ -6,7 +6,7 @@ import { LinkButton, useStyles2 } from '@grafana/ui';
 import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { isGranted } from '../../hooks/abilities/abilityUtils';
-import { useRuleAbility } from '../../hooks/abilities/ruleAbilities';
+import { useGlobalRuleAbility } from '../../hooks/abilities/ruleAbilities';
 import { AlertmanagerAction, RuleAction } from '../../hooks/abilities/types';
 import { isGrafanaRulesSource } from '../../utils/datasource';
 import { makeAMLink, makeLabelBasedSilenceLink } from '../../utils/misc';
@@ -24,7 +24,7 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
   // For Grafana Managed alerts the Generator URL redirects to the alert rule edit page, so update permission is required
   // For external alert manager the Generator URL redirects to an external service which we don't control
   const isGrafanaSource = isGrafanaRulesSource(alertManagerSourceName);
-  const viewRuleAbility = useRuleAbility(RuleAction.View);
+  const viewRuleAbility = useGlobalRuleAbility(RuleAction.View);
   const isSeeSourceButtonEnabled = isGrafanaSource ? isGranted(viewRuleAbility) : true;
 
   return (

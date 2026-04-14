@@ -11,7 +11,7 @@ import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { NewRuleFromPanelButton } from './components/panel-alerts-tab/NewRuleFromPanelButton';
 import { RulesTable } from './components/rules/RulesTable';
 import { isGranted } from './hooks/abilities/abilityUtils';
-import { useRuleAbility } from './hooks/abilities/ruleAbilities';
+import { useGlobalRuleAbility } from './hooks/abilities/ruleAbilities';
 import { RuleAction } from './hooks/abilities/types';
 import { usePanelCombinedRules } from './hooks/usePanelCombinedRules';
 import { stringifyErrorLike } from './utils/misc';
@@ -29,7 +29,7 @@ export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
     poll: true,
   });
 
-  const createRuleAbility = useRuleAbility(RuleAction.Create);
+  const createRuleAbility = useGlobalRuleAbility(RuleAction.Create);
   const canCreateRules = config.unifiedAlertingEnabled && isGranted(createRuleAbility);
 
   const alert = errors.length ? (

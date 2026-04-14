@@ -20,11 +20,9 @@ import { type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { logWarning } from '../../Analytics';
 import { isGranted } from '../../hooks/abilities/abilityUtils';
-import {
-  skipToken,
-  usePromRuleAdministrationAbility,
-  useRuleAdministrationAbility,
-} from '../../hooks/abilities/ruleAbilities';
+import { usePromRuleAdministrationAbility } from '../../hooks/abilities/promRuleAbilities';
+import { skipToken } from '../../hooks/abilities/ruleAbilities.utils';
+import { useRuleAdministrationAbility } from '../../hooks/abilities/rulerRuleAbilities';
 import * as ruleId from '../../utils/rule-id';
 import {
   getRuleUID,

@@ -6,16 +6,17 @@ import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import { useEnrichmentAbility } from '../../hooks/abilities/otherAbilities';
 import {
-  type PromRuleAdministrationAbilityResult,
-  type RuleEditAbilityResult,
   usePromRuleAdministrationAbility,
   usePromRuleExportAbility,
   usePromRuleSilenceAbility,
+} from '../../hooks/abilities/promRuleAbilities';
+import { useRuleExploreAbility } from '../../hooks/abilities/ruleAbilities';
+import { type RuleEditAbilityResult } from '../../hooks/abilities/ruleAbilities.utils';
+import {
   useRuleAdministrationAbility,
-  useRuleExploreAbility,
   useRuleExportAbility,
   useRuleSilenceAbility,
-} from '../../hooks/abilities/ruleAbilities';
+} from '../../hooks/abilities/rulerRuleAbilities';
 import { type Ability, Granted, InsufficientPermissions, NotSupported } from '../../hooks/abilities/types';
 import { getCloudRule, getGrafanaRule } from '../../mocks';
 import { mimirDataSource } from '../../mocks/server/configure';
@@ -26,6 +27,8 @@ jest.mock('@grafana/assistant', () => ({
   useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
 }));
 
+jest.mock('../../hooks/abilities/promRuleAbilities');
+jest.mock('../../hooks/abilities/rulerRuleAbilities');
 jest.mock('../../hooks/abilities/ruleAbilities');
 jest.mock('../../hooks/abilities/otherAbilities');
 
@@ -58,8 +61,8 @@ function grantedEditAbility(): RuleEditAbilityResult {
   };
 }
 
-/** A fully-denied PromRuleAdministrationAbilityResult (prom path) */
-function deniedPromAdminAbility(): PromRuleAdministrationAbilityResult {
+/** A fully-denied RuleEditAbilityResult (prom path) */
+function deniedPromAdminAbility(): RuleEditAbilityResult {
   return {
     update: Denied,
     delete: Denied,
@@ -71,8 +74,8 @@ function deniedPromAdminAbility(): PromRuleAdministrationAbilityResult {
   };
 }
 
-/** A fully-granted PromRuleAdministrationAbilityResult (prom path) */
-function grantedPromAdminAbility(): PromRuleAdministrationAbilityResult {
+/** A fully-granted RuleEditAbilityResult (prom path) */
+function grantedPromAdminAbility(): RuleEditAbilityResult {
   return {
     update: Granted,
     delete: Granted,

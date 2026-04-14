@@ -9,7 +9,7 @@ import { type GrafanaRuleDefinition, type RulerGrafanaRuleDTO } from 'app/types/
 import { trackDeletedRuleRestoreFail, trackDeletedRuleRestoreSuccess } from '../../../Analytics';
 import { shouldAllowPermanentlyDeletingRules } from '../../../featureToggles';
 import { isAvailable, isGranted } from '../../../hooks/abilities/abilityUtils';
-import { useRuleAdministrationAbility } from '../../../hooks/abilities/ruleAbilities';
+import { useRuleAdministrationAbility } from '../../../hooks/abilities/rulerRuleAbilities';
 import { isInsufficientPermissions } from '../../../hooks/abilities/types';
 import { UpdatedByUser } from '../../rule-viewer/tabs/version-history/UpdatedBy';
 

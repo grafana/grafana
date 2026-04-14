@@ -11,14 +11,10 @@ import { groupIdentifier } from '../../utils/groupIdentifier';
 import * as misc from '../../utils/misc';
 
 import { isAvailable, isLoading, isNotSupported, isPluginManaged, isProvisioned } from './abilityUtils';
-import {
-  skipToken,
-  usePromRuleAdministrationAbility,
-  useRuleAdministrationAbility,
-  useRuleExploreAbility,
-  useRuleExportAbility,
-  useRuleSilenceAbility,
-} from './ruleAbilities';
+import { usePromRuleAdministrationAbility } from './promRuleAbilities';
+import { useRuleExploreAbility } from './ruleAbilities';
+import { skipToken } from './ruleAbilities.utils';
+import { useRuleAdministrationAbility, useRuleExportAbility, useRuleSilenceAbility } from './rulerRuleAbilities';
 import { isInsufficientPermissions } from './types';
 
 setupMswServer();
@@ -374,7 +370,7 @@ describe('useRuleExportAbility', () => {
   });
 });
 
-// ── usePromRuleAdministrationAbility ─────────────────────────────────────────
+// ── useRuleAdministrationAbility ─────────────────────────────────────────
 
 /** Build a minimal GrafanaPromRuleDTO for testing */
 function makePromRule(overrides?: Partial<GrafanaPromRuleDTO>): GrafanaPromRuleDTO {
