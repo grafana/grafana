@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/api-clients",
-  "version": "13.0.0-pre",
+  "version": "13.0.0",
   "description": "Grafana API client utilities",
   "keywords": [
     "grafana",
