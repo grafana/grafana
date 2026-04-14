@@ -84,6 +84,7 @@ export const Messages = {
     installClientAdvanced: 'More options…',
     installCommandCopied: 'Install command copied to clipboard',
     installCommandCopyFailed: 'Could not copy command to clipboard',
+    installTokenFailed: 'Could not create install token',
   },
   delete: 'Delete',
   edit: 'Edit',
