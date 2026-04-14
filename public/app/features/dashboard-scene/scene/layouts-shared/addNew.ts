@@ -98,12 +98,11 @@ export function pasteRowTo(layout: DashboardLayoutManager): void {
     throw new Error('Parent layout is not a LayoutParent');
   }
 
-  // Wrap current layout in rows layout, then paste the row
-  const rowsLayout = RowsLayoutManager.createFromLayout(layoutParent.getLayout());
-  layoutParent.switchLayout(rowsLayout);
-
+  // Create a rows layout with only the pasted row (don't wrap existing content into an extra row)
   const row = getRowFromClipboard(scene);
-  rowsLayout.addNewRow(row);
+  const rowsLayout = new RowsLayoutManager({ rows: [row] });
+  layoutParent.switchLayout(rowsLayout);
+  layout.publishEvent(new NewObjectAddedToCanvasEvent(row), true);
 }
 
 export function pasteTabTo(layout: DashboardLayoutManager): void {
@@ -119,11 +118,9 @@ export function pasteTabTo(layout: DashboardLayoutManager): void {
     throw new Error('Parent layout is not a LayoutParent');
   }
 
-  // Create new tabs layout and wrap the current layout in the first tab, then paste the new tab
-  const tabsLayout = TabsLayoutManager.createEmpty();
-  tabsLayout.state.tabs[0].setState({ layout: layout.clone() });
-  layoutParent.switchLayout(tabsLayout);
-
+  // Create a tabs layout with only the pasted tab (don't wrap existing content into an extra tab)
   const tab = getTabFromClipboard(scene);
-  tabsLayout.addNewTab(tab);
+  const tabsLayout = new TabsLayoutManager({ tabs: [tab] });
+  layoutParent.switchLayout(tabsLayout);
+  layout.publishEvent(new NewObjectAddedToCanvasEvent(tab), true);
 }
