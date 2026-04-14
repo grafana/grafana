@@ -337,10 +337,12 @@ const getStyles = (
 // TODO: This is a hacky solution to create an inline datasource picker.
 const getDatasourceSectionStyles = (theme: GrafanaTheme2) => ({
   dataSourcePickerWrapper: css({
+    // Target the Input component inside the picker
     input: {
       border: 'none',
       backgroundColor: theme.colors.background.secondary,
     },
+    // Remove borders from all nested divs
     '& > div, & div': {
       border: 'none',
     },
