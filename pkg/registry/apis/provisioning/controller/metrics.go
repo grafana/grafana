@@ -12,13 +12,14 @@ type finalizerMetrics struct {
 	registry                prometheus.Registerer
 	finalizerProcessedTotal *prometheus.CounterVec
 	finalizerDuration       *prometheus.HistogramVec
+	finalizerRetries        *prometheus.CounterVec
 }
 
 func registerFinalizerMetrics(registry prometheus.Registerer) finalizerMetrics {
 	finalizerProcessedTotal := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "grafana_provisioning_finalizers_processed_total",
-			Help: "Total number of finalizers processed",
+			Help: "Per-finalizer outcomes: success is recorded once all configured finalizers finish for a repository delete; error on terminal reconcile failure for that finalizer step",
 		},
 		[]string{"finalizer_type", "outcome"},
 	)
@@ -34,18 +35,81 @@ func registerFinalizerMetrics(registry prometheus.Registerer) finalizerMetrics {
 	)
 	registry.MustRegister(finalizerDuration)
 
+	finalizerRetries := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "grafana_provisioning_finalizers_retries_total",
+			Help: "Total number of finalizer retries",
+		},
+		[]string{"finalizer_type"},
+	)
+	registry.MustRegister(finalizerRetries)
+
 	return finalizerMetrics{
 		registry:                registry,
 		finalizerProcessedTotal: finalizerProcessedTotal,
 		finalizerDuration:       finalizerDuration,
+		finalizerRetries:        finalizerRetries,
 	}
 }
 
 func (m *finalizerMetrics) RecordFinalizer(finalizerType string, outcome string, resourceCountChanged int, duration float64) {
-	m.finalizerProcessedTotal.WithLabelValues(finalizerType, outcome).Inc()
 	if outcome == utils.SuccessOutcome {
 		m.finalizerDuration.WithLabelValues(finalizerType, utils.GetResourceCountBucket(resourceCountChanged)).Observe(duration)
 	}
+}
+
+func (m *finalizerMetrics) RecordRetry(finalizerType string) {
+	m.finalizerRetries.WithLabelValues(finalizerType).Inc()
+}
+
+func (m *finalizerMetrics) RecordFinalOutcome(finalizerType string, outcome string) {
+	m.finalizerProcessedTotal.WithLabelValues(finalizerType, outcome).Inc()
+}
+
+type repositoryDeletionMetrics struct {
+	total    *prometheus.CounterVec
+	duration *prometheus.HistogramVec
+}
+
+func registerRepositoryDeletionMetrics(registry prometheus.Registerer) *repositoryDeletionMetrics {
+	total := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "grafana_provisioning_repository_deletion_total",
+			Help: "Repository delete reconcile outcomes (from DeletionTimestamp until finalizers cleared or no-op delete path completes)",
+		},
+		[]string{"outcome"},
+	)
+	registry.MustRegister(total)
+
+	duration := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "grafana_provisioning_repository_deletion_duration_seconds",
+			Help:    "Wall time from metadata.deletionTimestamp until delete reconcile succeeds (finalizers removed or none present)",
+			Buckets: []float64{1, 5, 10, 30, 60, 120, 300, 600, 1800},
+		},
+		[]string{"repository_type"},
+	)
+	registry.MustRegister(duration)
+
+	return &repositoryDeletionMetrics{
+		total:    total,
+		duration: duration,
+	}
+}
+
+func (m *repositoryDeletionMetrics) RecordSuccess(repositoryType string, elapsedSeconds float64) {
+	if m == nil {
+		return
+	}
+	m.total.WithLabelValues(utils.SuccessOutcome).Inc()
+	m.duration.WithLabelValues(repositoryType).Observe(elapsedSeconds)
+}
+
+func (m *repositoryDeletionMetrics) RecordError() {
+	if m == nil {
+		return
+	}
+	m.total.WithLabelValues(utils.ErrorOutcome).Inc()
 }
 
 //go:generate mockery --name=HealthMetricsRecorder --structname=MockHealthMetricsRecorder --inpackage --filename metrics_mock.go --with-expecter

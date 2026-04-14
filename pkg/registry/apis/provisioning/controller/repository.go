@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -30,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	metricutils "github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -78,11 +80,12 @@ type RepositoryController struct {
 	minSyncInterval time.Duration
 	drainTimeout    time.Duration
 
-	registry              prometheus.Registerer
-	tracer                tracing.Tracer
-	quotaGetter           quotas.QuotaGetter
-	tokenMetrics          *repositoryTokenMetrics
-	folderMetadataEnabled bool
+	registry                  prometheus.Registerer
+	repositoryDeletionMetrics *repositoryDeletionMetrics
+	tracer                    tracing.Tracer
+	quotaGetter               quotas.QuotaGetter
+	tokenMetrics              *repositoryTokenMetrics
+	folderMetadataEnabled     bool
 }
 
 // NewRepositoryController creates new RepositoryController.
@@ -110,6 +113,7 @@ func NewRepositoryController(
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
+	deletionMetrics := registerRepositoryDeletionMetrics(registry)
 
 	rc := &RepositoryController{
 		client:     provisioningClient,
@@ -132,16 +136,17 @@ func NewRepositoryController(
 			metrics:       &finalizerMetrics,
 			maxWorkers:    parallelOperations,
 		},
-		jobs:                  jobs,
-		logger:                logging.DefaultLogger.With("logger", loggerName),
-		registry:              registry,
-		tracer:                tracer,
-		resyncInterval:        resyncInterval,
-		minSyncInterval:       minSyncInterval,
-		drainTimeout:          drainTimeout,
-		quotaGetter:           quotaGetter,
-		tokenMetrics:          repoTokenMetrics,
-		folderMetadataEnabled: folderMetadataEnabled,
+		jobs:                      jobs,
+		logger:                    logging.DefaultLogger.With("logger", loggerName),
+		registry:                  registry,
+		repositoryDeletionMetrics: deletionMetrics,
+		tracer:                    tracer,
+		resyncInterval:            resyncInterval,
+		minSyncInterval:           minSyncInterval,
+		drainTimeout:              drainTimeout,
+		quotaGetter:               quotaGetter,
+		tokenMetrics:              repoTokenMetrics,
+		folderMetadataEnabled:     folderMetadataEnabled,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -248,6 +253,7 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 
 	err := rc.processFn(item)
 	if err == nil {
+		rc.recordFinalOutcome(nil)
 		rc.queue.Forget(item)
 		return true
 	}
@@ -258,16 +264,19 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 
 	if item.attempts >= maxAttempts {
 		logger.Error("RepositoryController failed too many times")
+		rc.recordFinalOutcome(err)
 		rc.queue.Forget(item)
 		return true
 	}
 
 	if !apierrors.IsServiceUnavailable(err) {
 		logger.Info("RepositoryController will not retry")
+		rc.recordFinalOutcome(err)
 		rc.queue.Forget(item)
 		return true
 	} else {
 		logger.Info("RepositoryController will retry as service is unavailable")
+		rc.recordRetry(err)
 	}
 
 	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", item, err))
@@ -276,14 +285,80 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	return true
 }
 
+func (rc *RepositoryController) recordRetry(err error) {
+	var finalizerErr *FinalizerError
+	if errors.As(err, &finalizerErr) {
+		f, ok := rc.finalizer.(*finalizer)
+		if ok {
+			f.metrics.RecordRetry(finalizerErr.FinalizerType)
+		}
+	}
+}
+
+func (rc *RepositoryController) recordFinalOutcome(err error) {
+	var finalizerErr *FinalizerError
+	if errors.As(err, &finalizerErr) {
+		outcome := metricutils.SuccessOutcome
+		if err != nil {
+			outcome = metricutils.ErrorOutcome
+		}
+		f, ok := rc.finalizer.(*finalizer)
+		if ok {
+			f.metrics.RecordFinalOutcome(finalizerErr.FinalizerType, outcome)
+		}
+	}
+}
+
+func repositoryTypeMetricLabel(obj *provisioning.Repository) string {
+	t := string(obj.Spec.Type)
+	if t == "" {
+		return "unknown"
+	}
+	return t
+}
+
+func (rc *RepositoryController) recordRepositoryDeletionMetricsEnabled(obj *provisioning.Repository) bool {
+	return rc.repositoryDeletionMetrics != nil && obj != nil && obj.DeletionTimestamp != nil
+}
+
+func (rc *RepositoryController) recordRepositoryDeletionSucceeded(obj *provisioning.Repository, finalizersAtStart []string) {
+	if !rc.recordRepositoryDeletionMetricsEnabled(obj) {
+		return
+	}
+	elapsed := time.Since(obj.DeletionTimestamp.Time).Seconds()
+	rc.repositoryDeletionMetrics.RecordSuccess(repositoryTypeMetricLabel(obj), elapsed)
+	if len(finalizersAtStart) == 0 {
+		return
+	}
+	f, ok := rc.finalizer.(*finalizer)
+	if !ok {
+		return
+	}
+	for _, name := range orderedRepositoryFinalizers() {
+		if slices.Contains(finalizersAtStart, name) {
+			f.metrics.RecordFinalOutcome(name, metricutils.SuccessOutcome)
+		}
+	}
+}
+
+func (rc *RepositoryController) recordRepositoryDeletionFailed(obj *provisioning.Repository) {
+	if !rc.recordRepositoryDeletionMetricsEnabled(obj) {
+		return
+	}
+	rc.repositoryDeletionMetrics.RecordError()
+}
+
 func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provisioning.Repository) error {
 	logger := logging.FromContext(ctx)
 	logger.Info("handle repository delete")
+
+	finalizersAtStart := slices.Clone(obj.Finalizers)
 
 	// Process any finalizers
 	if len(obj.Finalizers) > 0 {
 		repo, err := rc.repoFactory.Build(ctx, obj)
 		if err != nil {
+			rc.recordRepositoryDeletionFailed(obj)
 			return fmt.Errorf("create repository from configuration: %w", err)
 		}
 
@@ -292,6 +367,7 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 			if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("remove finalizers: %w", err)); statusErr != nil {
 				logger.Error("failed to update repository status after finalizer removal error", "error", statusErr)
 			}
+			rc.recordRepositoryDeletionFailed(obj)
 			return fmt.Errorf("process finalizers: %w", err)
 		}
 
@@ -303,13 +379,14 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 				FieldManager: "provisioning-controller",
 			})
 		if err != nil {
+			rc.recordRepositoryDeletionFailed(obj)
 			return fmt.Errorf("remove finalizers: %w", err)
 		}
+		rc.recordRepositoryDeletionSucceeded(obj, finalizersAtStart)
 		return nil
-	} else {
-		logger.Info("no finalizers to process")
 	}
-
+	logger.Info("no finalizers to process")
+	rc.recordRepositoryDeletionSucceeded(obj, nil)
 	return nil
 }
 

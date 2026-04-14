@@ -18,6 +18,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	metricutils "github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -376,6 +379,127 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 			}
 		})
 	}
+}
+
+func histogramSampleCountForRepoType(t *testing.T, reg prometheus.Gatherer, repoType string) uint64 {
+	t.Helper()
+	mfs, err := reg.Gather()
+	require.NoError(t, err)
+	var total uint64
+	for _, mf := range mfs {
+		if mf.GetName() != "grafana_provisioning_repository_deletion_duration_seconds" {
+			continue
+		}
+		for _, m := range mf.GetMetric() {
+			var rt string
+			for _, lp := range m.GetLabel() {
+				if lp.GetName() == "repository_type" {
+					rt = lp.GetValue()
+				}
+			}
+			if rt == repoType && m.GetHistogram() != nil {
+				total += m.GetHistogram().GetSampleCount()
+			}
+		}
+	}
+	return total
+}
+
+func TestRepositoryController_handleDelete_recordsRepositoryDeletionMetrics(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	dm := registerRepositoryDeletionMetrics(reg)
+	dt := metav1.NewTime(time.Now().Add(-30 * time.Second))
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			DeletionTimestamp: &dt,
+			Finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
+	}
+	f := repository.NewMockFactory(t)
+	f.On("Build", context.Background(), mock.Anything).Return(nil, nil).Once()
+
+	fp := NewMockFinalizerProcessor(t)
+	fp.On("process", context.Background(), nil, []string{repository.RemoveOrphanResourcesFinalizer}).Return(nil).Once()
+
+	client := &mockProvisioningV0alpha1Interface{
+		repositoriesFunc: func(string) client.RepositoryInterface {
+			return &mockRepoInterface{
+				patchFunc: func(context.Context, string, types.PatchType, []byte, metav1.PatchOptions, ...string) (*provisioning.Repository, error) {
+					return &provisioning.Repository{}, nil
+				},
+			}
+		},
+	}
+
+	rc := &RepositoryController{
+		repoFactory:               f,
+		finalizer:                 fp,
+		client:                    client,
+		repositoryDeletionMetrics: dm,
+	}
+
+	require.NoError(t, rc.handleDelete(context.Background(), repo))
+	require.Equal(t, float64(1), testutil.ToFloat64(dm.total.WithLabelValues(metricutils.SuccessOutcome)))
+	require.Equal(t, uint64(1), histogramSampleCountForRepoType(t, reg, "github"))
+}
+
+func TestRepositoryController_recordRepositoryDeletionSucceeded_recordsPerFinalizerSuccess(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	fm := registerFinalizerMetrics(reg)
+	dm := registerRepositoryDeletionMetrics(reg)
+	dt := metav1.NewTime(time.Now().Add(-time.Minute))
+	obj := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			DeletionTimestamp: &dt,
+			Finalizers: []string{
+				repository.CleanFinalizer,
+				repository.RemoveOrphanResourcesFinalizer,
+			},
+		},
+		Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+	}
+	rc := &RepositoryController{
+		finalizer: &finalizer{
+			metrics:    &fm,
+			maxWorkers: 1,
+		},
+		repositoryDeletionMetrics: dm,
+	}
+	finalizersAtStart := []string{
+		repository.CleanFinalizer,
+		repository.RemoveOrphanResourcesFinalizer,
+	}
+	rc.recordRepositoryDeletionSucceeded(obj, finalizersAtStart)
+
+	require.Equal(t, float64(1), testutil.ToFloat64(dm.total.WithLabelValues(metricutils.SuccessOutcome)))
+	require.Equal(t, uint64(1), histogramSampleCountForRepoType(t, reg, "local"))
+	require.Equal(t, float64(1), testutil.ToFloat64(fm.finalizerProcessedTotal.WithLabelValues(repository.CleanFinalizer, metricutils.SuccessOutcome)))
+	require.Equal(t, float64(1), testutil.ToFloat64(fm.finalizerProcessedTotal.WithLabelValues(repository.RemoveOrphanResourcesFinalizer, metricutils.SuccessOutcome)))
+	require.Equal(t, float64(0), testutil.ToFloat64(fm.finalizerProcessedTotal.WithLabelValues(repository.ReleaseOrphanResourcesFinalizer, metricutils.SuccessOutcome)))
+}
+
+func TestRepositoryController_handleDelete_recordsDeletionErrorMetric(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	dm := registerRepositoryDeletionMetrics(reg)
+	dt := metav1.NewTime(time.Now().Add(-time.Second))
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			DeletionTimestamp: &dt,
+			Finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
+	}
+	f := repository.NewMockFactory(t)
+	f.On("Build", context.Background(), mock.Anything).Return(nil, assert.AnError).Once()
+
+	rc := &RepositoryController{
+		repoFactory:               f,
+		repositoryDeletionMetrics: dm,
+	}
+
+	require.Error(t, rc.handleDelete(context.Background(), repo))
+	require.Equal(t, float64(1), testutil.ToFloat64(dm.total.WithLabelValues(metricutils.ErrorOutcome)))
 }
 
 func TestShouldUseIncrementalSync(t *testing.T) {

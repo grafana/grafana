@@ -21,6 +21,29 @@ import (
 	metricutils "github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
+// FinalizerError wraps errors from finalizer processing
+type FinalizerError struct {
+	FinalizerType string
+	Err           error
+}
+
+func (e *FinalizerError) Error() string {
+	return fmt.Sprintf("finalizer %s failed: %v", e.FinalizerType, e.Err)
+}
+
+func (e *FinalizerError) Unwrap() error {
+	return e.Err
+}
+
+// orderedRepositoryFinalizers returns the order in which repository finalizers run.
+func orderedRepositoryFinalizers() []string {
+	return []string{
+		repository.CleanFinalizer,
+		repository.ReleaseOrphanResourcesFinalizer,
+		repository.RemoveOrphanResourcesFinalizer,
+	}
+}
+
 type finalizer struct {
 	lister        resources.ResourceLister
 	clientFactory resources.ClientFactory
@@ -35,12 +58,7 @@ func (f *finalizer) process(ctx context.Context,
 	logger := logging.FromContext(ctx)
 	logger.Info("process finalizers", "finalizers", finalizers)
 
-	orderedFinalizers := [3]string{
-		repository.CleanFinalizer,
-		repository.ReleaseOrphanResourcesFinalizer,
-		repository.RemoveOrphanResourcesFinalizer}
-
-	for _, finalizer := range orderedFinalizers {
+	for _, finalizer := range orderedRepositoryFinalizers() {
 		if !slices.Contains(finalizers, finalizer) {
 			continue
 		}
@@ -86,7 +104,10 @@ func (f *finalizer) process(ctx context.Context,
 		f.metrics.RecordFinalizer(finalizer, outcome, count, time.Since(start).Seconds())
 
 		if err != nil {
-			return err
+			return &FinalizerError{
+				FinalizerType: finalizer,
+				Err:           err,
+			}
 		}
 	}
 	return nil
