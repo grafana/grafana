@@ -97,7 +97,7 @@ describe('prepConfig', () => {
   it('returns null builder and warn when xySeries is empty', () => {
     const result = prepConfig([], theme);
     expect(result.builder).toBeNull();
-    expect(result.warn).toEqual("No data")
+    expect(result.warn).toEqual('No data');
   });
 
   it('returns non-null builder when series provided', () => {
@@ -184,8 +184,8 @@ describe('prepData', () => {
     // series2 val=100: pct=1, diam=√100=10
     const diams1 = data[1]![2] as number[];
     const diams2 = data[2]![2] as number[];
-    expect(diams1[0]).toEqual(2)
-    expect(diams2[1]).toEqual(10)
+    expect(diams1[0]).toEqual(2);
+    expect(diams2[1]).toEqual(10);
   });
 });
 

@@ -230,10 +230,10 @@ describe('XYChartTooltip', () => {
     ])(`${hideFromTooltip ? 'hides' : 'shows'} %s field`, (_slot, fieldName, overrides) => {
       const series = makeSeries(overrides);
       renderTooltip({ xySeries: [series] });
-      if(hideFromTooltip){
+      if (hideFromTooltip) {
         expect(screen.queryByText(fieldName)).toBeNull();
-      }else{
-        expect(screen.queryByText(fieldName)).toBeVisible()
+      } else {
+        expect(screen.queryByText(fieldName)).toBeVisible();
       }
     });
   });
