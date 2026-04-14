@@ -299,6 +299,7 @@ spec:
 		orgAHelper.CreateLocalRepo(t, common.TestRepo{
 			Name:       repoName,
 			SyncTarget: "folder",
+			Workflows:  []string{"write"},
 			Path:       repoPath,
 			SkipSync:   true,
 		})

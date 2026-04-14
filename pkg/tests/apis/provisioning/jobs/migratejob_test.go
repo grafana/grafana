@@ -128,6 +128,7 @@ func TestIntegrationProvisioning_MigrateTakeover(t *testing.T) {
 	testRepo := common.TestRepo{
 		Name:               repo,
 		SyncTarget:         "instance",
+		Workflows:          []string{"write"},
 		Copies:             map[string]string{},
 		ExpectedDashboards: 2,
 		ExpectedFolders:    0,
@@ -211,6 +212,7 @@ func TestIntegrationProvisioning_SecondMigrateOnlyExportsNewDashboards(t *testin
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:               repo1,
 		SyncTarget:         "folder",
+		Workflows:          []string{"write"},
 		LocalPath:          repo1Path,
 		Copies:             map[string]string{},
 		ExpectedDashboards: 2,
@@ -233,6 +235,7 @@ func TestIntegrationProvisioning_SecondMigrateOnlyExportsNewDashboards(t *testin
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo2,
 		SyncTarget:             "folder",
+		Workflows:              []string{"write"},
 		LocalPath:              repo2Path,
 		Copies:                 map[string]string{},
 		SkipResourceAssertions: true,

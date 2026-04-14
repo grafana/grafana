@@ -25,6 +25,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Name:       repo,
 			LocalPath:  repoPath,
 			SyncTarget: "folder",
+			Workflows:  []string{"write"},
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
@@ -84,6 +85,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Name:       repo,
 			LocalPath:  repoPath,
 			SyncTarget: "folder",
+			Workflows:  []string{"write"},
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
@@ -142,6 +144,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Name:       repo,
 			LocalPath:  repoPath,
 			SyncTarget: "folder",
+			Workflows:  []string{"write"},
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
@@ -198,6 +201,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			Name:       repo,
 			LocalPath:  repoPath,
 			SyncTarget: "folder",
+			Workflows:  []string{"write"},
 			Copies: map[string]string{
 				// Adding 2 dashboards + 1 folder = 3 resources, exceeding limit of 1
 				"../testdata/all-panels.json":   "dashboard1.json",

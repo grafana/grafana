@@ -32,6 +32,7 @@ func TestIntegrationProvisioning_FixFolderMetadata_MissingFile(t *testing.T) {
 		Name:       repoName,
 		LocalPath:  repoPath,
 		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			// A dashboard inside parent/child/ causes both folders to be
 			// created in Grafana during sync.
@@ -70,6 +71,7 @@ func TestIntegrationProvisioning_FixFolderMetadata_ValidFile(t *testing.T) {
 		Name:       repoName,
 		LocalPath:  repoPath,
 		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},
@@ -107,6 +109,7 @@ func TestIntegrationProvisioning_FixFolderMetadata_SkipsExistingMetadata(t *test
 		Name:       repoName,
 		LocalPath:  repoPath,
 		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},
@@ -142,6 +145,7 @@ func TestIntegrationProvisioning_FixFolderMetadata_SkipsMalformedMetadata(t *tes
 		Name:       repoName,
 		LocalPath:  repoPath,
 		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "parent/child/dashboard.json",
 		},

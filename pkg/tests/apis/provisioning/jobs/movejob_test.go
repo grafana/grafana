@@ -24,6 +24,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 	testRepo := common.TestRepo{
 		Name:       repo,
 		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			"../testdata/all-panels.json":    "dashboard1.json",
 			"../testdata/text-options.json":  "dashboard2.json",
@@ -241,6 +242,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   refRepo,
 			SyncTarget:             "folder",
+			Workflows:              []string{"write"},
 			SkipResourceAssertions: true, // HACK: I am not sure why sometimes it's 6 or 3 dashbaords.
 		})
 

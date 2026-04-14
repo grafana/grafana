@@ -23,7 +23,8 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 	const repo = "delete-job-test-repo"
 	testRepo := common.TestRepo{
-		Name: repo,
+		Name:      repo,
+		Workflows: []string{"write"},
 		Copies: map[string]string{
 			"../testdata/all-panels.json":    "dashboard1.json",
 			"../testdata/text-options.json":  "dashboard2.json",

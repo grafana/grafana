@@ -77,6 +77,7 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlagDisabled(t *testing
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
 			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -101,6 +102,7 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlagDisabled(t *testing
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
 			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})

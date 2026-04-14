@@ -19,7 +19,8 @@ func TestIntegrationProvisioning_MoveJobAuthorization(t *testing.T) {
 
 	const repo = "move-auth-test"
 	testRepo := common.TestRepo{
-		Name: repo,
+		Name:      repo,
+		Workflows: []string{"write"},
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "dashboard.json",
 		},

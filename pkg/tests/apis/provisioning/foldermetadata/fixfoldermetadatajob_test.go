@@ -20,6 +20,7 @@ func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 	testRepo := common.TestRepo{
 		Name:       repo,
 		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "dashboard1.json",
 		},

@@ -1160,6 +1160,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
 		SyncTarget:             "folder",
+		Workflows:              []string{"write"},
 		ExpectedDashboards:     0,
 		ExpectedFolders:        1, // folder sync creates a folder for the repo
 		SkipResourceAssertions: false,
@@ -1348,6 +1349,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	testRepo := common.TestRepo{
 		Name:               repo,
 		SyncTarget:         "folder",
+		Workflows:          []string{"write"},
 		Copies:             map[string]string{"../testdata/all-panels.json": "all-panels.json"},
 		ExpectedDashboards: 1,
 		ExpectedFolders:    1, // folder sync creates a folder
@@ -1578,6 +1580,7 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 	testRepo := common.TestRepo{
 		Name:               repo,
 		SyncTarget:         "folder",
+		Workflows:          []string{"write"},
 		Copies:             map[string]string{}, // No files needed for this test
 		ExpectedDashboards: 0,
 		ExpectedFolders:    1, // Repository creates a folder

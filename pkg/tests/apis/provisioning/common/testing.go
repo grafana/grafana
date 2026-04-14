@@ -848,13 +848,11 @@ func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
 		err := os.MkdirAll(localPath, 0o750)
 		require.NoError(t, err, "should be able to create repository path")
 	}
-	if repo.Path == "" {
-		repo.Path = localPath
-	}
-
 	tmpl := TestdataPath("local.json.tmpl")
 	if repo.Template != "" {
 		tmpl = repo.Template
+	} else if repo.Path == "" {
+		repo.Path = localPath
 	}
 	localTmp := h.RenderObject(t, tmpl, repo)
 

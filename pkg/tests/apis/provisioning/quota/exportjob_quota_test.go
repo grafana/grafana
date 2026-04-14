@@ -35,6 +35,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		testRepo := common.TestRepo{
 			Name:               repo,
 			SyncTarget:         "instance",
+			Workflows:          []string{"write"},
 			Copies:             map[string]string{},
 			ExpectedDashboards: 2,
 			ExpectedFolders:    0,
@@ -78,6 +79,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		testRepo := common.TestRepo{
 			Name:               repo,
 			SyncTarget:         "instance",
+			Workflows:          []string{"write"},
 			Copies:             map[string]string{},
 			ExpectedDashboards: 2,
 			ExpectedFolders:    0,
@@ -144,6 +146,7 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		testRepo := common.TestRepo{
 			Name:               repo,
 			SyncTarget:         "instance",
+			Workflows:          []string{"write"},
 			Copies:             map[string]string{},
 			ExpectedDashboards: 1,
 			ExpectedFolders:    2,

@@ -20,6 +20,7 @@ func TestIntegrationProvisioning_FixFolderMetadataJobFlagDisabled(t *testing.T) 
 	testRepo := common.TestRepo{
 		Name:               repo,
 		SyncTarget:         "folder",
+		Workflows:          []string{"write"},
 		Copies:             map[string]string{},
 		ExpectedDashboards: 0,
 		ExpectedFolders:    1,

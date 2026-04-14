@@ -79,6 +79,7 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
 			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -113,6 +114,7 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
 			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -155,6 +157,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
 			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -207,6 +210,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
 			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -244,6 +248,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
 			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
@@ -290,6 +295,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
 			SyncTarget:             "instance",
+			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
