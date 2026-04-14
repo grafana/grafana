@@ -756,6 +756,23 @@ func TestIdentityQueries(t *testing.T) {
 						Updated:          legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
 					}),
 				},
+				{
+					Name: "create_token_with_expires",
+					Data: func() sqltemplate.SQLTemplate {
+						exp := int64(1704110400) // 2024-01-01 12:00:00 UTC
+						return createServiceAccountToken(&CreateServiceAccountTokenCommand{
+							Name:             "my-token",
+							HashedKey:        "hashed123",
+							Role:             "Viewer",
+							OrgID:            1,
+							ServiceAccountID: 42,
+							Expires:          &exp,
+							IsRevoked:        false,
+							Created:          legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+							Updated:          legacysql.NewDBTime(time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)),
+						})
+					}(),
+				},
 			},
 			sqlDeleteServiceAccountTokenTemplate: {
 				{

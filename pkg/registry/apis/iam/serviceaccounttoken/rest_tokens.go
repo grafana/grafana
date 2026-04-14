@@ -3,6 +3,7 @@ package serviceaccounttoken
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -172,6 +173,10 @@ func (s *TokensREST) Connect(ctx context.Context, name string, options runtime.O
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// NOTE: We use the outer ctx (from Connect) for store operations because
+		// the k8s apiserver decorates it with namespace/auth info. r.Context()
+		// is only used to extract request-level info (Parts).
+
 		// Verify the ServiceAccount exists.
 		obj, err := s.saGetter.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
@@ -187,7 +192,7 @@ func (s *TokensREST) Connect(ctx context.Context, name string, options runtime.O
 		// Parts = ["serviceaccounts", "{saName}", "tokens"] or
 		//         ["serviceaccounts", "{saName}", "tokens", "{tokenName}"]
 		var tokenName string
-		if info, ok := k8srequest.RequestInfoFrom(r.Context()); ok && len(info.Parts) > 3 {
+		if info, ok := k8srequest.RequestInfoFrom(r.Context()); ok && len(info.Parts) > 3 && info.Parts[2] == "tokens" {
 			tokenName = info.Parts[3]
 		}
 
@@ -257,11 +262,9 @@ func (s *TokensREST) handleList(ctx context.Context, ns claims.NamespaceInfo, sa
 // handleCreate serves POST /serviceaccounts/{name}/tokens.
 func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, saName string, r *http.Request, responder rest.Responder) {
 	var req iamv0alpha1.CreateTokenRequestBody
-	if r.Body != nil && r.ContentLength > 0 {
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			responder.Error(fmt.Errorf("invalid request body: %w", err))
-			return
-		}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		responder.Error(apierrors.NewBadRequest(fmt.Sprintf("invalid request body: %v", err)))
+		return
 	}
 
 	if req.TokenName == "" {
@@ -292,6 +295,14 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 		cmd.Expires = &expires
 	}
 	if err := s.legacyStore.SaveServiceAccountTokenHash(ctx, ns, cmd); err != nil {
+		if errors.Is(err, legacy.ErrTokenAlreadyExists) {
+			responder.Error(apierrors.NewConflict(
+				schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounttokens"},
+				req.TokenName,
+				err,
+			))
+			return
+		}
 		responder.Error(fmt.Errorf("failed to store token (legacy): %w", err))
 		return
 	}
@@ -312,7 +323,7 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 // handleDelete serves DELETE /serviceaccounts/{name}/tokens/{tokenName}.
 func (s *TokensREST) handleDelete(ctx context.Context, ns claims.NamespaceInfo, saName string, tokenName string, responder rest.Responder) {
 	if tokenName == "" {
-		responder.Error(fmt.Errorf("tokenName is required for DELETE"))
+		responder.Error(apierrors.NewBadRequest("tokenName is required for DELETE"))
 		return
 	}
 
@@ -322,7 +333,7 @@ func (s *TokensREST) handleDelete(ctx context.Context, ns claims.NamespaceInfo, 
 		UID:   saName,
 	})
 	if err != nil {
-		responder.Error(fmt.Errorf("service account not found: %w", err))
+		responder.Error(apierrors.NewNotFound(schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounts"}, saName))
 		return
 	}
 

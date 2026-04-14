@@ -94,15 +94,16 @@ func createServiceAccount(t *testing.T, helper *apis.K8sTestHelper) string {
 	return name
 }
 
-func tokensPath(saName string) string {
-	return fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/serviceaccounts/%s/tokens", saName)
+func tokensPath(ns, saName string) string {
+	return fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/serviceaccounts/%s/tokens", ns, saName)
 }
 
-func tokenPath(saName, tokenName string) string {
-	return fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/serviceaccounts/%s/tokens/%s", saName, tokenName)
+func tokenPath(ns, saName, tokenName string) string {
+	return fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/serviceaccounts/%s/tokens/%s", ns, saName, tokenName)
 }
 
 func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
+	ns := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
 	saName := createServiceAccount(t, helper)
 
 	t.Run("should create a token and receive the plaintext key", func(t *testing.T) {
@@ -116,7 +117,7 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		rsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodPost,
-			Path:   tokensPath(saName),
+			Path:   tokensPath(ns, saName),
 			Body:   body,
 		}, &res)
 
@@ -131,7 +132,7 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		rsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodGet,
-			Path:   tokensPath(saName),
+			Path:   tokensPath(ns, saName),
 		}, &res)
 
 		require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
@@ -155,7 +156,7 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		rsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodGet,
-			Path:   tokenPath(saName, "test-token-1"),
+			Path:   tokenPath(ns, saName, "test-token-1"),
 		}, &res)
 
 		require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
@@ -170,10 +171,28 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		rsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodGet,
-			Path:   tokenPath(saName, "does-not-exist"),
+			Path:   tokenPath(ns, saName, "does-not-exist"),
 		}, &res)
 
 		require.Equal(t, http.StatusNotFound, rsp.Response.StatusCode)
+	})
+
+	t.Run("should return 409 when creating a token with duplicate name", func(t *testing.T) {
+		body, err := json.Marshal(createTokenRequest{
+			TokenName:        "test-token-1", // already created above
+			ExpiresInSeconds: 3600,
+		})
+		require.NoError(t, err)
+
+		var res createTokenResponse
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodPost,
+			Path:   tokensPath(ns, saName),
+			Body:   body,
+		}, &res)
+
+		require.Equal(t, http.StatusConflict, rsp.Response.StatusCode)
 	})
 
 	t.Run("should delete a token", func(t *testing.T) {
@@ -187,7 +206,7 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		createRsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodPost,
-			Path:   tokensPath(saName),
+			Path:   tokensPath(ns, saName),
 			Body:   body,
 		}, &created)
 		require.Equal(t, http.StatusCreated, createRsp.Response.StatusCode)
@@ -198,7 +217,7 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		delRsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodDelete,
-			Path:   tokenPath(saName, "token-to-delete"),
+			Path:   tokenPath(ns, saName, "token-to-delete"),
 		}, &delRes)
 		require.Equal(t, http.StatusOK, delRsp.Response.StatusCode)
 		require.Contains(t, delRes.Message, "token-to-delete")
@@ -208,7 +227,7 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		getRsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodGet,
-			Path:   tokenPath(saName, "token-to-delete"),
+			Path:   tokenPath(ns, saName, "token-to-delete"),
 		}, &getRes)
 		require.Equal(t, http.StatusNotFound, getRsp.Response.StatusCode)
 	})
@@ -218,7 +237,7 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		rsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodDelete,
-			Path:   tokenPath(saName, "does-not-exist"),
+			Path:   tokenPath(ns, saName, "does-not-exist"),
 		}, &res)
 
 		require.Equal(t, http.StatusNotFound, rsp.Response.StatusCode)
@@ -234,7 +253,7 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		rsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodPost,
-			Path:   tokensPath(saName),
+			Path:   tokensPath(ns, saName),
 			Body:   body,
 		}, &res)
 
@@ -252,7 +271,7 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 			rsp := apis.DoRequest(helper, apis.RequestParams{
 				User:   helper.Org1.Admin,
 				Method: http.MethodPost,
-				Path:   tokensPath(saName),
+				Path:   tokensPath(ns, saName),
 				Body:   body,
 			}, &res)
 			require.Equal(t, http.StatusCreated, rsp.Response.StatusCode)
@@ -262,7 +281,7 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		listRsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodGet,
-			Path:   tokensPath(saName),
+			Path:   tokensPath(ns, saName),
 		}, &listRes)
 
 		require.Equal(t, http.StatusOK, listRsp.Response.StatusCode)
@@ -280,7 +299,7 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		rsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Viewer,
 			Method: http.MethodPost,
-			Path:   tokensPath(saName),
+			Path:   tokensPath(ns, saName),
 			Body:   body,
 		}, &res)
 
@@ -292,7 +311,7 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		rsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Viewer,
 			Method: http.MethodDelete,
-			Path:   tokenPath(saName, "test-token-1"),
+			Path:   tokenPath(ns, saName, "test-token-1"),
 		}, &res)
 
 		require.Equal(t, http.StatusForbidden, rsp.Response.StatusCode)

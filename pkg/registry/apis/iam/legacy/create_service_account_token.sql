@@ -8,5 +8,5 @@ VALUES
    {{ .Arg .Command.ServiceAccountID }},
    {{ .Arg .Command.Created }},
    {{ .Arg .Command.Updated }},
-   {{ .Arg .Command.Expires }},
+   {{ if .Command.Expires }}{{ .Arg (.ExpiresVal) }}{{ else }}NULL{{ end }},
    {{ .Arg .Command.IsRevoked }})

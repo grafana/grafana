@@ -2,6 +2,7 @@ package legacy
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,6 +12,9 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
+
+// ErrTokenAlreadyExists is returned when attempting to create a token with a name that already exists.
+var ErrTokenAlreadyExists = errors.New("a token with this name already exists for the service account")
 
 // GetServiceAccountTokenQuery retrieves a single token by name within an org.
 type GetServiceAccountTokenQuery struct {
@@ -54,21 +58,19 @@ var sqlQueryServiceAccountTokenGetTemplate = mustTemplate("service_account_token
 
 type getServiceAccountTokenQuery struct {
 	sqltemplate.SQLTemplate
-	Query        *GetServiceAccountTokenQuery
-	UserTable    string
-	TokenTable   string
-	OrgUserTable string
+	Query      *GetServiceAccountTokenQuery
+	UserTable  string
+	TokenTable string
 }
 
 func (getServiceAccountTokenQuery) Validate() error { return nil }
 
 func newGetServiceAccountToken(sql *legacysql.LegacyDatabaseHelper, q *GetServiceAccountTokenQuery) getServiceAccountTokenQuery {
 	return getServiceAccountTokenQuery{
-		SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
-		UserTable:    sql.Table("user"),
-		OrgUserTable: sql.Table("org_user"),
-		TokenTable:   sql.Table("api_key"),
-		Query:        q,
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		UserTable:   sql.Table("user"),
+		TokenTable:  sql.Table("api_key"),
+		Query:       q,
 	}
 }
 
@@ -81,6 +83,15 @@ type createServiceAccountTokenQuery struct {
 }
 
 func (createServiceAccountTokenQuery) Validate() error { return nil }
+
+// ExpiresVal dereferences the Expires pointer for use in SQL templates.
+// Only call inside a {{ if .Command.Expires }} guard.
+func (q createServiceAccountTokenQuery) ExpiresVal() int64 {
+	if q.Command.Expires != nil {
+		return *q.Command.Expires
+	}
+	return 0
+}
 
 func newCreateServiceAccountToken(sql *legacysql.LegacyDatabaseHelper, cmd *CreateServiceAccountTokenCommand) createServiceAccountTokenQuery {
 	return createServiceAccountTokenQuery{
@@ -219,7 +230,7 @@ func (s *legacySQLStore) DeleteServiceAccountToken(ctx context.Context, ns claim
 }
 
 // SaveServiceAccountTokenHash stores a pre-generated hashed token in the legacy api_key table.
-// If a token with the same name already exists for the service account, it is replaced.
+// Returns ErrTokenAlreadyExists if a token with the same name already exists for the service account.
 // The caller generates the token via satokengen and passes the hash here.
 func (s *legacySQLStore) SaveServiceAccountTokenHash(
 	ctx context.Context,
@@ -245,6 +256,18 @@ func (s *legacySQLStore) SaveServiceAccountTokenHash(
 		return fmt.Errorf("service account not found: %w", err)
 	}
 
+	// Check if a token with the same name already exists.
+	existing, err := s.GetServiceAccountToken(ctx, ns, GetServiceAccountTokenQuery{
+		Name:              cmd.TokenName,
+		ServiceAccountUID: cmd.ServiceAccountUID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to check existing token: %w", err)
+	}
+	if existing != nil {
+		return ErrTokenAlreadyExists
+	}
+
 	now := time.Now().UTC()
 
 	createCmd := CreateServiceAccountTokenCommand{
@@ -265,22 +288,7 @@ func (s *legacySQLStore) SaveServiceAccountTokenHash(
 		return fmt.Errorf("execute create template: %w", err)
 	}
 
-	deleteCmd := DeleteServiceAccountTokenCommand{
-		Name:             cmd.TokenName,
-		OrgID:            ns.OrgID,
-		ServiceAccountID: saIDResult.ID,
-	}
-	deleteReq := newDeleteServiceAccountToken(sql, &deleteCmd)
-	deleteQuery, err := sqltemplate.Execute(sqlDeleteServiceAccountTokenTemplate, deleteReq)
-	if err != nil {
-		return fmt.Errorf("execute delete template: %w", err)
-	}
-
 	return sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
-		if _, txErr := st.Exec(ctx, deleteQuery, deleteReq.GetArgs()...); txErr != nil {
-			return fmt.Errorf("failed to delete old token: %w", txErr)
-		}
-
 		if _, txErr := st.ExecWithReturningId(ctx, createQuery, createReq.GetArgs()...); txErr != nil {
 			return fmt.Errorf("failed to create token: %w", txErr)
 		}

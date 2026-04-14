@@ -240,20 +240,18 @@ var sqlQueryServiceAccountTokensTemplate = mustTemplate("service_account_tokens_
 
 func newListServiceAccountTokens(sql *legacysql.LegacyDatabaseHelper, q *ListServiceAccountTokenQuery) listServiceAccountTokensQuery {
 	return listServiceAccountTokensQuery{
-		SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
-		UserTable:    sql.Table("user"),
-		OrgUserTable: sql.Table("org_user"),
-		TokenTable:   sql.Table("api_key"),
-		Query:        q,
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		UserTable:   sql.Table("user"),
+		TokenTable:  sql.Table("api_key"),
+		Query:       q,
 	}
 }
 
 type listServiceAccountTokensQuery struct {
 	sqltemplate.SQLTemplate
-	Query        *ListServiceAccountTokenQuery
-	UserTable    string
-	TokenTable   string
-	OrgUserTable string
+	Query      *ListServiceAccountTokenQuery
+	UserTable  string
+	TokenTable string
 }
 
 func (listServiceAccountTokensQuery) Validate() error {
