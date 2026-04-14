@@ -3585,11 +3585,13 @@
       },
       "instance-details-drawer": {
         "alert-instance-label": "",
+        "back": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Instanzdetails",
         "silence-button": "",
-        "silence-no-permission": ""
+        "silence-no-permission": "",
+        "silence-title-with-name": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "Sie haben für den ausgewählten Zeitbereich keine Warnungsinstanzen im Status Auslösen oder Ausstehend.",
@@ -12367,7 +12369,7 @@
         "description-no-value": "Was angezeigt wird, wenn kein Wert vorhanden ist",
         "description-value-mappings": "Ändern Sie den Anzeigetext je nach Eingabewert",
         "name-actions": "Aktionen",
-        "name-ad-hoc": "Ad-hoc filterbar",
+        "name-ad-hoc": "",
         "name-color-scheme": "Farbschema",
         "name-data-links": "Datenlinks",
         "name-decimals": "Dezimalstellen",
@@ -12826,6 +12828,7 @@
       "title-button-disabled": "Das Plugin ist noch nicht nutzbar. Die Fertigstellung der Installation kann einige Zeit dauern."
     },
     "install-controls": {
+      "contact-us": "",
       "install": "Installieren",
       "installing": "Wird installiert",
       "update": "Aktualisieren",
