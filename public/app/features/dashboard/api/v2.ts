@@ -33,7 +33,7 @@ import {
   type ListDashboardHistoryOptions,
   type ListDeletedDashboardsOptions,
 } from './types';
-import { isV0V1StoredVersion } from './utils';
+import { buildRestorePayload, isV0V1StoredVersion } from './utils';
 
 export function getK8sV2DashboardApiConfig() {
   return {
@@ -253,17 +253,6 @@ export class K8sDashboardV2API
   }
 
   restoreDashboard(dashboard: Resource<DashboardV2Spec>) {
-    // reset the resource version to create a new resource
-    return this.client.create({
-      metadata: {
-        ...dashboard.metadata,
-        resourceVersion: '',
-        annotations: {
-          ...dashboard.metadata.annotations,
-          [AnnoKeyGrantPermissions]: 'default',
-        },
-      },
-      spec: dashboard.spec,
-    });
+    return this.client.create(buildRestorePayload(dashboard));
   }
 }
