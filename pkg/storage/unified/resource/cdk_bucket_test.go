@@ -6,8 +6,8 @@ import (
 	"io"
 	"testing"
 
-	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
 	"gocloud.dev/blob"
 )
