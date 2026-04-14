@@ -806,6 +806,9 @@ func (s *Service) getUserTeams(ctx context.Context, ns types.NamespaceInfo, user
 }
 
 func (s *Service) getUserBasicRole(ctx context.Context, ns types.NamespaceInfo, userIdentifiers *store.UserIdentifiers) (store.BasicRole, error) {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		s.logger.Warn("getUserBasicRole: context already cancelled on entry", "err", ctxErr)
+	}
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getUserBasicRole")
 	defer span.End()
 

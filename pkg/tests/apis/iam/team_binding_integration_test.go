@@ -25,7 +25,6 @@ import (
 )
 
 func TestIntegrationTeamBindings(t *testing.T) {
-	t.Skip("flaky: context cancelled on basic roles fetch during Delete authz check — see https://github.com/grafana/grafana/pull/121625")
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// TODO: Add rest.Mode5 when it's supported
@@ -164,7 +163,9 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		require.Equal(t, createdUID, actual.Name)
 
 		// Delete the team binding
+		deleteStart := time.Now()
 		err = teamBindingClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
+		t.Logf("[diag] DELETE duration=%v err=%v", time.Since(deleteStart), err)
 		require.NoError(t, err)
 
 		// Verify the team binding is deleted
