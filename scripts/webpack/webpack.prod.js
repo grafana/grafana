@@ -28,7 +28,7 @@ const esbuildOptions = {
 const envConfig = getEnvConfig();
 
 module.exports = (env = {}) =>
-  merge(common, {
+  merge(common(env), {
     mode: 'production',
     devtool: process.env.NO_SOURCEMAP === '1' ? false : 'source-map',
 

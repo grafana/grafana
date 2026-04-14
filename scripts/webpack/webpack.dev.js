@@ -48,7 +48,7 @@ function scenesModule() {
 const envConfig = getEnvConfig();
 
 module.exports = (env = {}) => {
-  return merge(common, {
+  return merge(common(env), {
     devtool: 'source-map',
     mode: 'development',
 

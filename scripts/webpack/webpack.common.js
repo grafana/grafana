@@ -4,7 +4,7 @@ const webpack = require('webpack');
 
 const CorsWorkerPlugin = require('./plugins/CorsWorkerPlugin');
 
-module.exports = {
+module.exports = (env = {}) => ({
   target: 'web',
   entry: {
     app: './public/app/index.ts',
@@ -142,4 +142,4 @@ module.exports = {
       },
     },
   },
-};
+});
