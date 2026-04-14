@@ -97,9 +97,6 @@ export function isV2DashboardCommand(
   return isDashboardV2Spec(cmd.dashboard);
 }
 
-/**
- * Build a clean create payload from a deleted dashboard resource.
- */
 export function buildRestorePayload<T>(dashboard: Resource<T>): ResourceForCreate<T> {
   return {
     metadata: {
