@@ -1,21 +1,21 @@
 import { css } from '@emotion/css';
-import * as H from 'history';
+import type * as H from 'history';
 import { memo, useContext, useEffect, useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { ModalsContext, Modal, Button, useStyles2 } from '@grafana/ui';
 import { Prompt } from 'app/core/components/FormPrompt/Prompt';
 import { contextSrv } from 'app/core/services/context_srv';
-import { ObjectMeta } from 'app/features/apiserver/types';
+import { type ObjectMeta } from 'app/features/apiserver/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
-import { DashboardMeta } from 'app/types/dashboard';
+import { type DashboardMeta } from 'app/types/dashboard';
 
 import { SaveLibraryVizPanelModal } from '../panel-edit/SaveLibraryVizPanelModal';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { getLibraryPanelBehavior, hasActualSaveChanges, isLibraryPanel } from '../utils/utils';
 
 interface DashboardPromptProps {
@@ -138,7 +138,6 @@ export const UnsavedChangesModal = ({ onDiscard, onDismiss, onSaveDashboardClick
       isOpen={true}
       title={t('dashboard-scene.unsaved-changes-modal.title-unsaved-changes', 'Unsaved changes')}
       onDismiss={onDismiss}
-      icon="exclamation-triangle"
       className={styles.modal}
     >
       <h5>

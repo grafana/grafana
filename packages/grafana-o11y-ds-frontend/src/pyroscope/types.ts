@@ -1,6 +1,6 @@
-import { DataSourceJsonData } from '@grafana/data';
+import { type DataSourceJsonData } from '@grafana/data';
 
-import { GrafanaPyroscope, PyroscopeQueryType } from './dataquery.gen';
+import { type GrafanaPyroscope, type PyroscopeQueryType } from './dataquery.gen';
 
 export interface ProfileTypeMessage {
   id: string;

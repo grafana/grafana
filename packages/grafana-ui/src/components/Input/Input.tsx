@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { forwardRef, HTMLProps, ReactNode, useContext } from 'react';
+import { forwardRef, type HTMLProps, type ReactNode, useContext } from 'react';
 import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes/stylesFactory';
@@ -94,6 +94,7 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
         <input
           ref={ref}
           className={styles.input}
+          aria-invalid={!!invalid}
           {...restProps}
           onWheel={
             restProps.type === 'number'

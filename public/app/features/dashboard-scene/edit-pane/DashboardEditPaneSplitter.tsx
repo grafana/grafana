@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useMedia } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
-import { VizPanel, useSceneObjectState } from '@grafana/scenes';
-import { ElementSelectionContext, useSidebar, useStyles2, Sidebar } from '@grafana/ui';
+import { type VizPanel, useSceneObjectState } from '@grafana/scenes';
+import { ElementSelectionContext, useSidebar, useStyles2, useTheme2, Sidebar } from '@grafana/ui';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -18,13 +19,13 @@ import {
   usePopoverDismissOnClickOutside,
 } from '../assistant/DashboardAssistantViewMode';
 import { ViewModePanelPromptCard } from '../assistant/ViewModePanelPromptCard';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
-import { DashboardSidebarPaneName } from './DashboardEditPane';
+import { type DashboardSidebarPaneName } from './DashboardEditPane';
 import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
 
 interface Props {
@@ -132,6 +133,8 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     }
   }, [isEditing, editPane]);
 
+  const theme = useTheme2();
+  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
   const sidebarContext = useSidebar({
     hasOpenPane: Boolean(openPane),
     contentMargin: 1,
@@ -139,6 +142,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     persistanceKey: isEditing ? 'dashboard' : 'dashboard-view',
     defaultToDocked: isEditing ? true : false,
     onClosePane: () => editPane.closePane(),
+    defaultIsHidden: isEditing ? false : isMobile,
   });
 
   useEffect(() => {
@@ -347,7 +351,8 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
     controlsWrapperSticky: css({
       [theme.breakpoints.up('md')]: {
         position: 'sticky',
-        zIndex: theme.zIndex.activePanel,
+        // above docked dashboard edit Sidebar (zIndex navBarFixed); otherwise time picker popover stays under it.
+        zIndex: theme.zIndex.sidemenu,
         background: theme.colors.background.canvas,
         top: headerHeight,
       },

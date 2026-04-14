@@ -26,9 +26,10 @@ export {
   type GetObservablePluginLinks,
 } from '../services/pluginExtensions/getObservablePluginLinks';
 
-export { UserStorage } from '../utils/userStorage';
+export { UserStorage, useUserStorage } from '../utils/userStorage';
 
 export { initOpenFeature, getFeatureFlagClient } from '../internal/openFeature';
+export * from '../internal/openFeature/openfeature.gen';
 
 export { getAppPluginMeta, getAppPluginMetas, setAppPluginMetas } from '../services/pluginMeta/apps';
 export {
@@ -40,7 +41,7 @@ export {
   usePanelPluginMetasMap,
 } from '../services/pluginMeta/hooks';
 export type { AppPluginMetas, PanelPluginMetas } from '../services/pluginMeta/types';
-export { getCachedPromise, invalidateCache, setLogger } from '../utils/getCachedPromise';
+export { getCachedPromise, getCachedPromiseWithArgs, invalidateCache } from '../utils/getCachedPromise';
 export { defineFeatureEvents } from './analyticsFramework/main';
 export type { EventProperty, Event } from './analyticsFramework/types';
 export {
@@ -52,3 +53,5 @@ export {
   setPanelPluginMetas,
   refetchPanelPluginMetas,
 } from '../services/pluginMeta/panels';
+export { installPluginMeta, uninstallPluginMeta } from '../services/pluginMeta/plugins';
+export { logPluginMetaError } from '../services/pluginMeta/logging';

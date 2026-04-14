@@ -1,28 +1,28 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { advanceBy } from 'jest-date-mock';
-import { UnknownAction } from 'redux';
+import { type UnknownAction } from 'redux';
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import { store } from '@grafana/data';
-import { BackendSrv, config, locationService, setBackendSrv } from '@grafana/runtime';
+import { type BackendSrv, config, locationService, setBackendSrv } from '@grafana/runtime';
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { DashboardVersionError, type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
-  DashboardLoaderSrv,
-  DashboardLoaderSrvV2,
+  type DashboardLoaderSrv,
+  type DashboardLoaderSrvV2,
   setDashboardLoaderSrv,
 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/services/ReportRenderReadinessObserver';
 import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/SnapshotSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { DASHBOARD_FROM_LS_KEY, DashboardDataDTO, DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
+import { DASHBOARD_FROM_LS_KEY, type DashboardDataDTO, type DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { setupLoadDashboardMock, setupLoadDashboardMockReject } from '../utils/test-utils';
@@ -98,14 +98,6 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
       isPlaying: false,
     },
   },
-}));
-
-jest.mock('../utils/dashboardControls', () => ({
-  ...jest.requireActual('../utils/dashboardControls'),
-  loadDefaultControlsFromDatasources: jest.fn().mockResolvedValue({
-    defaultVariables: [],
-    defaultLinks: [],
-  }),
 }));
 
 const mockUserStorageGetItem = jest.fn();
@@ -552,6 +544,41 @@ describe('DashboardScenePageStateManager v1', () => {
         expect(loader.getSceneFromCache('fake-dash').state.title).toBe('Dashboard 2');
       });
 
+      it('public dashboard: should build scene from API and not reuse or keep stale scene cache', () => {
+        const loader = new DashboardScenePageStateManager({});
+        const accessToken = 'public-access-token';
+        const staleScene = new DashboardScene(
+          {
+            title: 'Stale cached title',
+            uid: 'underlying-dash-uid',
+            meta: { created: 'same-created' },
+            version: 2,
+          },
+          'v1'
+        );
+
+        loader.setSceneCache(accessToken, staleScene);
+
+        const rsp: DashboardDTO = {
+          meta: { created: 'same-created' },
+          dashboard: {
+            uid: 'underlying-dash-uid',
+            title: 'Fresh from API',
+            schemaVersion: 38,
+            version: 2,
+          } as DashboardDataDTO,
+        };
+
+        const scene = loader.transformResponseToScene(rsp, {
+          uid: accessToken,
+          route: DashboardRoutes.Public,
+        });
+
+        expect(rsp.dashboard?.title).toBe('Fresh from API');
+        expect(scene).not.toBe(staleScene);
+        expect(scene?.state.title).toBe('Fresh from API');
+      });
+
       it('should take scene from cache if it exists', async () => {
         setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', version: 10 }, meta: {} });
 
@@ -769,6 +796,45 @@ describe('DashboardScenePageStateManager v2', () => {
       // should use cache second time
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
       expect(getDashSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('public dashboard: should build scene from API and not reuse or keep stale scene cache', () => {
+      const loader = new DashboardScenePageStateManagerV2({});
+      const accessToken = 'public-access-token';
+      const generation = 4;
+      const staleScene = new DashboardScene(
+        {
+          title: 'Stale cached title',
+          uid: 'dash-uid',
+          meta: {},
+          version: generation,
+        },
+        'v2'
+      );
+
+      loader.setSceneCache(accessToken, staleScene);
+
+      const rsp: DashboardWithAccessInfo<DashboardV2Spec> = {
+        access: {},
+        apiVersion: 'v2beta1',
+        kind: 'DashboardWithAccessInfo',
+        metadata: {
+          name: 'dash',
+          creationTimestamp: '',
+          resourceVersion: '1',
+          generation,
+        },
+        spec: { ...defaultDashboardV2Spec(), title: 'Fresh from API' },
+      };
+
+      const scene = loader.transformResponseToScene(rsp, {
+        uid: accessToken,
+        route: DashboardRoutes.Public,
+      });
+
+      expect(rsp.spec?.title).toBe('Fresh from API');
+      expect(scene).not.toBe(staleScene);
+      expect(scene?.state.title).toBe('Fresh from API');
     });
 
     it('should register report render readiness observer for render-authenticated normal route', async () => {

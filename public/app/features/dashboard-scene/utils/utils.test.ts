@@ -1,6 +1,5 @@
-import { config } from '@grafana/runtime';
 import { VizPanel, SceneGridLayout } from '@grafana/scenes';
-import { Dashboard, Panel, RowPanel } from '@grafana/schema';
+import { type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
@@ -11,13 +10,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 
-import {
-  isDashboardSceneEnabled,
-  isPublicDashboardsSceneEnabled,
-  isValidLibraryPanelRef,
-  hasLibraryPanelsInV1Dashboard,
-  getLayoutForObject,
-} from './utils';
+import { isValidLibraryPanelRef, hasLibraryPanelsInV1Dashboard, getLayoutForObject } from './utils';
 
 describe('utils', () => {
   describe('isValidLibraryPanelRef', () => {
@@ -387,41 +380,6 @@ describe('utils', () => {
     });
   });
 
-  describe('isDashboardSceneEnabled', () => {
-    it.each([
-      { dashboardScene: true, dashboardNewLayouts: false, expected: true },
-      { dashboardScene: false, dashboardNewLayouts: true, expected: true },
-      { dashboardScene: true, dashboardNewLayouts: true, expected: true },
-      { dashboardScene: false, dashboardNewLayouts: false, expected: false },
-    ])(
-      'should return $expected when dashboardScene=$dashboardScene and dashboardNewLayouts=$dashboardNewLayouts',
-      ({ dashboardScene, dashboardNewLayouts, expected }) => {
-        config.featureToggles = {
-          dashboardScene,
-          dashboardNewLayouts,
-        };
-        expect(isDashboardSceneEnabled()).toBe(expected);
-      }
-    );
-  });
-
-  describe('isPublicDashboardsSceneEnabled', () => {
-    it.each([
-      { publicDashboardsScene: true, dashboardNewLayouts: false, expected: true },
-      { publicDashboardsScene: false, dashboardNewLayouts: true, expected: true },
-      { publicDashboardsScene: true, dashboardNewLayouts: true, expected: true },
-      { publicDashboardsScene: false, dashboardNewLayouts: false, expected: false },
-    ])(
-      'should return $expected when publicDashboardsScene=$publicDashboardsScene and dashboardNewLayouts=$dashboardNewLayouts',
-      ({ publicDashboardsScene, dashboardNewLayouts, expected }) => {
-        config.featureToggles = {
-          publicDashboardsScene,
-          dashboardNewLayouts,
-        };
-        expect(isPublicDashboardsSceneEnabled()).toBe(expected);
-      }
-    );
-  });
   describe('getLayoutForObject', () => {
     it('returns the DefaultGridLayoutManager when given the dashboard', () => {
       const { grid: defaultGrid } = getDefaultGrid();

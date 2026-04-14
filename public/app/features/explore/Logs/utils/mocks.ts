@@ -1,4 +1,4 @@
-import { DataFrame, DataFrameType, Field, FieldType } from '@grafana/data';
+import { type DataFrame, DataFrameType, type Field, FieldType } from '@grafana/data';
 
 export const getMockLokiFrame = (override?: Partial<DataFrame>) => {
   const testDataFrame: DataFrame = {
@@ -16,9 +16,9 @@ export const getMockLokiFrame = (override?: Partial<DataFrame>) => {
           frame: 'json.RawMessage',
         },
         values: [
-          { app: 'grafana', cluster: 'dev-us-central-0', container: 'hg-plugins' },
-          { app: 'grafana', cluster: 'dev-us-central-1', container: 'hg-plugins' },
-          { app: 'grafana', cluster: 'dev-us-central-2', container: 'hg-plugins' },
+          { app: 'grafana', cluster: 'dev-us-central-0', container: 'hg-plugins', detected_level: 'info' },
+          { app: 'grafana', cluster: 'dev-us-central-1', container: 'hg-plugins', detected_level: 'info' },
+          { app: 'grafana', cluster: 'dev-us-central-2', container: 'hg-plugins', detected_level: 'info' },
         ],
       } as Field,
       {
@@ -94,6 +94,12 @@ export const getMockLokiFrameDataPlane = (override?: Partial<DataFrame>, howMany
           'log message 5',
           'log message 6',
         ].slice(0, howManyValues),
+      },
+      {
+        config: {},
+        name: 'severity',
+        type: FieldType.string,
+        values: Array.from({ length: howManyValues }, () => 'info'),
       },
       {
         config: {},

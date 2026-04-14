@@ -23,15 +23,17 @@ const (
 	FolderResource      = "folders.folder.grafana.app"
 	DashboardResource   = "dashboards.dashboard.grafana.app"
 	ShortURLResource    = "shorturls.shorturl.grafana.app"
-	DataSourceResources = "datasources.*.datasource.grafana.app" // All datasources
+	StarsResource       = "stars.collections.grafana.app"
+	DataSourceResources = "datasources.datasource.grafana.app" // All datasources
 )
 
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
 var MigratedUnifiedResources = map[string]bool{
 	PlaylistResource:    true,  // Only Mode5!
-	FolderResource:      true,  // enabled by default
-	DashboardResource:   true,  // enabled by default
+	FolderResource:      true,  // Only Mode5!
+	DashboardResource:   true,  // Only Mode5!
 	ShortURLResource:    false, // Requires kubernetesShortURLs to be enabled by default
+	StarsResource:       false,
 	DataSourceResources: false,
 }
 
@@ -117,6 +119,11 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		}
 		// the resource name is the part after the first dot
 		resourceName := strings.SplitAfterN(sectionName, ".", 2)[1]
+
+		// The resource specific settings do not apply
+		if MigratedUnifiedResources[resourceName] {
+			cfg.Logger.Warn("Unified storage config has no effect for fully migrated resources", "resource", resourceName)
+		}
 
 		// parse dualWriter modes from the section
 		dualWriterMode := section.Key("dualWriterMode").MustInt(0)
@@ -218,6 +225,20 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")
+
+	// Index snapshot settings
+	cfg.IndexSnapshotEnabled = section.Key("index_snapshot_enabled").MustBool(false)
+	cfg.IndexSnapshotBucketURL = section.Key("index_snapshot_bucket_url").String()
+	cfg.IndexSnapshotThreshold = section.Key("index_snapshot_threshold").MustInt(5000)
+	if cfg.IndexSnapshotThreshold < cfg.IndexFileThreshold {
+		cfg.Logger.Warn("index_snapshot_threshold is smaller than index_file_threshold, overriding", "configured", cfg.IndexSnapshotThreshold, "index_file_threshold", cfg.IndexFileThreshold)
+		cfg.IndexSnapshotThreshold = cfg.IndexFileThreshold
+	}
+	cfg.IndexSnapshotMaxAge = section.Key("index_snapshot_max_age").MustDuration(7 * 24 * time.Hour)
+	if cfg.IndexSnapshotMaxAge < cfg.MaxFileIndexAge {
+		cfg.Logger.Warn("index_snapshot_max_age is smaller than max_file_index_age, overriding", "configured", cfg.IndexSnapshotMaxAge, "max_file_index_age", cfg.MaxFileIndexAge)
+		cfg.IndexSnapshotMaxAge = cfg.MaxFileIndexAge
+	}
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,

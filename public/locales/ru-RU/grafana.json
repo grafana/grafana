@@ -404,7 +404,9 @@
     },
     "alert-group": {
       "delivered-to": "Доставлено <2>{{name}} </2>",
-      "no-grouping": "Без группировки"
+      "delivered-to-disabled": "",
+      "no-grouping": "Без группировки",
+      "view-contact-point-no-permission": ""
     },
     "alert-group-alerts-table": {
       "columns": {
@@ -503,7 +505,7 @@
       }
     },
     "alert-rule": {
-      "term": "Правило оповещения"
+      "term": "Правило оповещений"
     },
     "alert-rule-drawer": {
       "error-title": "",
@@ -835,7 +837,7 @@
       }
     },
     "channel-sub-form": {
-      "badge-deprecated": "Не поддерживается",
+      "badge-deprecated": "Устарела",
       "delete": "Удалить",
       "duplicate": "Дублировать",
       "label-integration": "Интеграция",
@@ -1074,6 +1076,7 @@
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Инструмент Grafana Incident не установлен или настроен неправильно",
+      "content-you-do-not-have-permission-to-access-incident": "",
       "label-declare-incident": "Заявить об инциденте"
     },
     "delete-rule-modal": {
@@ -1346,7 +1349,7 @@
       "alert-options": {
         "label": {
           "firing": "Активно",
-          "resolved": "Устранено"
+          "resolved": "Решено"
         }
       },
       "review-alert-payload": " Просмотр данных оповещения для добавления в полезные данные:",
@@ -2264,7 +2267,9 @@
       "menu-analyze": "",
       "menu-copy-link": "",
       "menu-silence": "",
+      "menu-silence-no-permission": "",
       "menu-view-contact-point": "",
+      "menu-view-contact-point-no-permission": "",
       "menu-view-rule": "",
       "menu-view-rule-n": "",
       "more-details-heading": "",
@@ -2346,7 +2351,7 @@
     },
     "notification-route": {
       "no-labels": "Нет меток",
-      "notification-policy": "Политика уведомления"
+      "notification-policy": "Политика уведомлений"
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Развернуть маршрут политики",
@@ -2440,7 +2445,9 @@
       "recipient-notification-fires": "Выберите, кто должен получать уведомление при активации правила оповещения."
     },
     "open-drawer-icon-button": {
-      "details": ""
+      "details": "",
+      "instance-details": "",
+      "rule-details": ""
     },
     "option-customfield": {
       "label-custom-template": "Пользовательский шаблон",
@@ -2623,6 +2630,9 @@
       "reset-aria": "",
       "view-policies": "",
       "view-policies-aria": ""
+    },
+    "policyFilter": {
+      "label": ""
     },
     "preview-rule": {
       "body-preview-is-not-available": "Невозможно отобразить предварительный просмотр запроса. Некоторые источники данных, используемые в запросах, недоступны.",
@@ -2853,7 +2863,7 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "Показать все",
-      "button-show-all-instances": "Показать все экземпляры оповещения ({{totalItemsCount}})",
+      "button-show-all-instances": "Показать все экземпляры оповещений ({{totalItemsCount}})",
       "showing-count": "Показано экземпляров: {{visibleItemsCount}} из {{totalItemsCount}}",
       "showing-count-with-state": "Показано экземпляров ({{alertState}}): {{visibleItemsCount}} из {{totalItemsCount}}"
     },
@@ -3105,7 +3115,7 @@
         "alert-title": "Выполняется обновление"
       },
       "tab": {
-        "details": "Подробности",
+        "details": "Сведения",
         "query-conditions": "Запрос и условия"
       },
       "title-something-wrong-evaluating-alert": "Ошибка при оценке правила оповещения"
@@ -3129,13 +3139,13 @@
         "success": "Оценка правила возобновлена"
       },
       "state": {
-        "firing": "Активное",
+        "firing": "Активно",
         "normal": "Нормальное",
         "pending": "В ожидании",
         "recovering": "Восстановление"
       },
       "type": {
-        "alert": "Правило оповещения",
+        "alert": "Правило оповещений",
         "recording": "Правило записи"
       },
       "update-rule": {
@@ -3145,6 +3155,7 @@
     "rules-filter": {
       "clear-filters": "Очистить фильтры",
       "configured-alert-rules": "Источники данных, содержащие настроенные правила оповещений принадлежат к источникам Mimir или Loki, где правила оповещения хранятся и оцениваются в самом источнике данных.",
+      "contact-point-disabled-tooltip": "",
       "contact-point-tooltip": "Этот фильтр позволяет просматривать правила оповещений, которые направляются непосредственно в выбранную точку контакта. Правила, направленные в политики уведомлений, отображаться не будут.",
       "contact-point-tooltip-title": "Информация о фильтре по точкам контакта",
       "dashboard": "Дашборд",
@@ -3169,7 +3180,11 @@
       "placeholder-data-sources": "Выбрать источники данных",
       "placeholder-group-search": "Поиск группы",
       "placeholder-labels": "Выбрать метки",
+      "placeholder-policy": "",
       "plugin-rules": "Правила плагинов",
+      "policy-disabled-tooltip": "",
+      "policy-tooltip": "",
+      "policy-tooltip-title": "",
       "rule-source": {
         "datasource": "Управляется источником данных",
         "grafana": "Управляется Grafana"
@@ -3205,7 +3220,7 @@
       "error-load-description": "Не удалось загрузить сохраненные поисковые запросы. Попробуйте обновить страницу.",
       "error-load-title": "Не удалось загрузить сохраненные поисковые запросы",
       "error-name-duplicate": "Сохраненный поисковой запрос с таким именем уже существует",
-      "error-name-required": "Требуется указать имя",
+      "error-name-required": "Укажите имя",
       "error-rename-description": "Не удалось сохранить изменения. Повторите попытку.",
       "error-rename-title": "Не удалось переименовать",
       "error-save-description": "Не удалось сохранить изменения. Повторите попытку.",
@@ -3250,6 +3265,7 @@
       "title-group": "Группа",
       "title-health": "Работоспособность",
       "title-labels": "Метки",
+      "title-policy": "",
       "title-rule": "Правило",
       "title-state": "Состояние",
       "title-type": "Тип"
@@ -3589,6 +3605,7 @@
       }
     },
     "triage": {
+      "clear-filters": "",
       "collapse": "",
       "collapse-all": "",
       "collapse-sidebar": "",
@@ -3605,9 +3622,14 @@
         "no-label": ""
       },
       "instance-details-drawer": {
+        "alert-instance-label": "",
+        "back": "",
         "declare-incident": "",
+        "declare-incident-no-permission": "",
         "instance-details": "Сведения об экземпляре",
-        "silence-button": ""
+        "silence-button": "",
+        "silence-no-permission": "",
+        "silence-title-with-name": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "У вас нет экземпляров оповещений в состоянии отправки или ожидания для выбранного временного интервала.",
@@ -3631,6 +3653,7 @@
           "folder-only": ""
         }
       },
+      "severity-filter-title": "",
       "show-fewer-values": "",
       "state-filter-title": "",
       "state-firing": "",
@@ -4221,7 +4244,7 @@
     "display-mode-options": {
       "label-basic": "Базовый",
       "label-gradient": "Градиент",
-      "label-retro": "Ретро ЖКИ"
+      "label-retro": "Ретро ЖК"
     },
     "name-bar-size": "Размер столбцов",
     "name-display-mode": "Режим отображения",
@@ -4300,6 +4323,7 @@
       "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Необходимо указать имя папки.",
       "new-folder-owner-selector-checkbox": "Назначить владельца папки",
+      "rename-provisioned-folder": "",
       "selected-mix-resources-modal-text": "Вы выбрали как подготовленные, так и неподготовленные ресурсы. Совместная обработка невозможна. Выберите только подготовленные или неподготовленные ресурсы и повторите попытку.",
       "selected-mix-resources-modal-title": "Выбраны разные типы ресурсов"
     },
@@ -4363,6 +4387,9 @@
       "total_many": "{{count}} элементов",
       "total_other": "{{count}} элемента"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Этот элемент находится в другом репозитории."
@@ -4400,6 +4427,17 @@
       "pro-tip": "Добавьте/переместите дашборды в свою папку в разделе <2>Просмотр дашбордов</2>",
       "title": "Вы еще не создали ни одного дашборда",
       "title-folder": "В этой папке еще нет дашбордов"
+    },
+    "filters": {
+      "all-teams": "",
+      "owner-aria-label": "",
+      "owner-limit-warning": "",
+      "owner-limit-warning-icon": "",
+      "owner-load-error-icon": "",
+      "owner-load-error-prefix": "",
+      "owner-loading": "",
+      "owner-no-options": "",
+      "owner-placeholder": ""
     },
     "folder-actions-button": {
       "delete": "Удалить эту папку",
@@ -4474,6 +4512,20 @@
       "retry": "Повторить попытку",
       "title": "Последние просмотренные"
     },
+    "rename-folder": {
+      "read-only-message": ""
+    },
+    "rename-provisioned-folder-form": {
+      "button-cancel": "",
+      "button-rename": "",
+      "button-renaming": "",
+      "commit": "",
+      "error-saving": "",
+      "label-folder-name": "",
+      "missing-info": "",
+      "success-message": "",
+      "title-required": ""
+    },
     "restore": {
       "success-multiple": "",
       "success-single": "",
@@ -4530,7 +4582,7 @@
     },
     "name-additional-fields": "Дополнительные поля",
     "name-candle-style": "Вид свечей",
-    "name-close": "Закрытие",
+    "name-close": "Закрыть",
     "name-color-strategy": "Цветовая стратегия",
     "name-down-color": "Цвет снижения",
     "name-high": "Максимум",
@@ -4936,6 +4988,9 @@
       "light-theme": "Светлая",
       "scopes": "Области"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "Поиск с помощью Grafana Assistant",
       "message": "Результаты не найдены"
@@ -5011,24 +5066,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Подключайте данные к Grafana с помощью источников данных, интеграций и приложений",
-          "title": "Новое подключение"
+          "subtitle": "Подключайте данные к Grafana с помощью источников данных, интеграций и приложений"
         },
         "collector": {
-          "subtitle": "Управляйте конфигурацией Grafana Alloy, нашего дистрибутива OpenTelemetry Collector",
-          "title": "Система сбора данных"
+          "subtitle": "Управляйте конфигурацией Grafana Alloy, нашего дистрибутива OpenTelemetry Collector"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "Управляйте существующими подключениями к источникам данных",
-          "title": "Источники данных"
+          "subtitle": "Управляйте существующими подключениями к источникам данных"
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "Управляйте активными интеграциями",
-          "title": "Интеграции"
+          "subtitle": "Управляйте активными интеграциями"
         },
         "private-data-source-connections": {
-          "subtitle": "Управляйте подключениями к источникам данных из частных сетей",
-          "title": "Подключение частных источников данных"
+          "subtitle": "Управляйте подключениями к источникам данных из частных сетей"
         },
         "subtitle": "Подключите свои источники данных и приложения к Grafana Cloud. На этой странице можно управлять всеми параметрами — от поглощения данных до подключений к частным сетям и конвейеров телеметрии."
       }
@@ -5088,11 +5147,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Подключитесь к новому источнику данных",
-          "title": "Новое подключение"
+          "subtitle": "Подключитесь к новому источнику данных"
         },
         "data-sources": {
-          "subtitle": "Управляйте существующими подключениями к источникам данных",
           "title": "Просмотрите настроенные источники данных"
         },
         "subtitle": "На этой странице вы можете управлять существующими подключениями к источникам данных и добавлять новые."
@@ -5142,10 +5199,6 @@
       "view-json-diff": "Просмотреть JSON Diff, чтобы увидеть все изменения"
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "Добавить новую",
     "alert": {
@@ -5187,6 +5240,14 @@
       "back-button": "Назад",
       "next-button": "Далее",
       "save-button": "Сохранить"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "Выбранный целевой источник данных должен экспортировать редактор запросов.",
@@ -5253,11 +5314,6 @@
       "transform-required": "Выберите тип преобразования",
       "type-label": "Тип",
       "type-tooltip": "Тип преобразования, которое будет применено к исходным данным."
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "Выполнить запрос"
     }
   },
   "dashboard": {
@@ -5465,9 +5521,6 @@
         "title": {
           "proceed-to-external-site": "Перейти на внешний сайт?"
         }
-      },
-      "render-left-actions": {
-        "tooltip-view-as-scene": "Просмотр в виде сцены"
       }
     },
     "dashboard-links-menu": {
@@ -5637,6 +5690,7 @@
         "panels": "Панели",
         "row": "Строка",
         "rows": "Строки",
+        "section-variable": "",
         "tab": "Вкладка",
         "tabs": "Вкладки",
         "variable": "Тип переменной: {{type}}",
@@ -5654,7 +5708,13 @@
           "title": "Заголовок строки"
         }
       },
+      "section-variables": {
+        "add-tooltip": "",
+        "title": ""
+      },
       "variable": {
+        "change-type": "",
+        "change-type-aria-label": "",
         "custom-options": {
           "apply": "Применить",
           "change-value": "Изменить значение переменной",
@@ -5708,15 +5768,17 @@
       "add-visualization-body": "Выберите источник данных, а затем запрашивайте и визуализируйте свои данные с помощью диаграмм, статистики и таблиц или создавайте списки, разметки и другие виджеты.",
       "add-visualization-button": "Добавить визуализацию",
       "add-visualization-header": "Создание нового дашборда с добавлением визуализации",
+      "auto-grid": "",
+      "auto-grid-description": "",
+      "custom-grid": "",
+      "custom-grid-description": "",
       "description": "Добавьте панель для визуализации данных",
       "import-a-dashboard-body": "Импортируйте дашборды из файлов или с <1>grafana.com</1>.",
       "import-a-dashboard-header": "Импорт дашборда",
       "import-dashboard-button": "Импорт дашборда",
-      "show-less-dashboards": "Меньше",
-      "show-more-dashboards": "Больше",
-      "start-with-suggested-dashboards": "Начните с готового дашборда из источника данных",
-      "title": "Новый дашборд",
-      "use-template-button": "Использовать этот дашборд"
+      "layout-default-hint": "",
+      "select-layout-header": "",
+      "title": "Новый дашборд"
     },
     "errors": {
       "failed-to-load": "Не удалось загрузить дашборд"
@@ -5832,9 +5894,9 @@
     },
     "get-panel-filters": {
       "description": {
-        "annotation-following-panels": "Не отправлять данные аннотаций на следующие панели",
-        "annotation-panels-support-annotations": "Отправить данные аннотаций на все панели, поддерживающие их",
-        "annotations-explicitly-listed-panels": "Отправить аннотации только на указанные панели"
+        "annotation-following-panels": "Данные аннотаций не будут отправлены на следующие панели",
+        "annotation-panels-support-annotations": "Отправляйте данные аннотаций на все панели, которые их поддерживают",
+        "annotations-explicitly-listed-panels": "Отправляйте аннотации только на указанные панели"
       },
       "label": {
         "all-panels": "Все панели",
@@ -6005,12 +6067,20 @@
       "not-found": "Источник данных с UID «{{datasourceUid}}» не найден."
     },
     "new-panel": {
+      "aria-label": "",
       "configure-button": "Настроить",
       "configure-button-menu": "Переключить меню",
+      "configure-visualization": "",
       "empty-state-message": "Выполните запрос, чтобы запустить визуализацию здесь, или перейдите ко всем визуализациям, чтобы добавить другие типы панелей",
       "menu-open-panel-editor": "Настроить",
       "menu-use-library-panel": "Использовать панель библиотеки",
-      "missing-config": "Отсутствует конфигурация панели"
+      "menu-use-saved-query": "",
+      "missing-config": "Отсутствует конфигурация панели",
+      "no-visualization": "",
+      "saved-query-apply-error": "",
+      "saved-query-apply-error-detail": "",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": ""
     },
     "new-panel-title": "Новая панель",
     "on-create-new-row": {
@@ -6061,7 +6131,7 @@
         "hide-time-info-description": "Отключите показ временного интервала в заголовке панели",
         "time-from": "Временной интервал панели",
         "time-from-description": "Переопределяет временной интервал дашборда. Используйте одно из заданных значений или введите собственное, например 5m или 2h.",
-        "time-shift": "Сдвиг времени",
+        "time-shift": "Временной сдвиг",
         "time-shift-description": "Добавляет временной сдвиг относительно временного интервала дашборда или панели. Используйте одно из заданных значений или введите собственное, например 5m или 2h.",
         "time-window-compare": "Сравнение времени",
         "time-window-compare-description": "Сравнение данных двух временных интервалов",
@@ -6191,6 +6261,9 @@
           "fill-screen": "Заполнить экран",
           "hide-header": "Скрытие заголовка строки",
           "title": "Заголовок"
+        },
+        "section-variables": {
+          "title": ""
         },
         "title-not-unique": "Заголовок должен быть уникальным",
         "title-option": "Название"
@@ -6346,6 +6419,9 @@
             "title": "Повторение по переменной"
           }
         },
+        "section-variables": {
+          "title": ""
+        },
         "title-not-unique": "Заголовок должен быть уникальным",
         "title-option": "Название"
       },
@@ -6372,7 +6448,7 @@
         "tooltip": "Войти в режим редактирования"
       },
       "edit-button": {
-        "enter": "Изменить",
+        "enter": "Редактировать",
         "enter-tooltip": "Вход в режим редактирования",
         "exit": "Выйти из режима редактирования",
         "exit-tooltip": "Выход из режима редактирования"
@@ -6544,6 +6620,9 @@
       },
       "name": {
         "action": "Изменить имя переменной"
+      },
+      "type": {
+        "action": ""
       }
     },
     "version-history-comparison": {
@@ -6622,22 +6701,18 @@
     }
   },
   "dashboard-library": {
-    "browse-grafana-com": "Обзор Grafana.com",
-    "browse-plugins": "Обзор плагинов",
     "card": {
+      "community-badge": "",
       "customize-with-assistant-button": "",
       "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "Источник данных указан",
-      "details-tooltip": "Подробности",
+      "details-tooltip": "Сведения",
       "no-preview": "",
       "view-dashboard-button": "",
       "view-dashboard-button-label": "",
       "view-template-button": "",
       "view-template-button-label": ""
     },
-    "community-empty-title": "Дашборды сообщества не найдены",
-    "community-empty-title-with-datasource": "Дашборды сообщества ({{datasourceType}}) не найдены",
-    "community-error-description": "Не удалось загрузить дашборд сообщества.",
     "community-error-title": "Ошибка при загрузке дашборда сообщества",
     "community-mapping-form": {
       "back": "Назад к дашбордам",
@@ -6651,8 +6726,6 @@
       "auto-mapped_other": "Выполнена автоматическая конфигурация {{count}} источника данных:"
     },
     "community-mapping-select-datasource": "Выберите источник данных",
-    "community-search-placeholder": "Поиск дашбордов сообщества...",
-    "community-search-placeholder-with-datasource": "Поиск дашбордов сообщества ({{datasourceType}})...",
     "compatibility-auto-map-failed": "",
     "compatibility-badge": {
       "check": "",
@@ -6666,6 +6739,7 @@
       "tooltip-orange": "",
       "tooltip-red": ""
     },
+    "create-from-scratch": "",
     "dashboard-card": {
       "details": {
         "datasource": "Источник данных",
@@ -6674,34 +6748,27 @@
         "last-update": "Последнее обновление",
         "published-by": "Опубликовано",
         "view-on-grafana-com": "Просмотр на Grafana.com"
-      }
+      },
+      "no-description": ""
     },
+    "merged-description": "",
+    "merged-empty-no-dashboards": "",
+    "merged-empty-search": "",
+    "merged-empty-title": "",
+    "merged-empty-title-with-datasource": "",
+    "merged-search-placeholder": "",
+    "merged-search-placeholder-with-datasource": "",
     "modal": {
-      "description": "Просматривайте доступные варианты и выбирайте дашборды из источника данных или сообщества",
-      "tab-community": "Сообщество",
-      "tab-datasource": "Источник данных указан",
       "title": "Рекомендуемые дашборды",
       "title-mapping-with-name": "Настройте источники данных для дашборда {{dashboardName}}",
       "title-with-datasource": "Рекомендуемые дашборды для источника данных {{datasourceType}}"
     },
-    "multi-community-error": "",
-    "multi-community-error-title": "",
-    "no-community-dashboards-datasource": "Попробуйте изменить поисковый запрос или найти другие типы источников данных в дашбордах на Grafana.com.",
-    "no-community-dashboards-search": "Попробуйте изменить поисковый запрос или просмотрите больше дашбордов на Grafana.com.",
-    "no-provisioned-dashboards": "Подготовленные дашборды предоставлены плагинами источников данных. Больше плагинов можно найти на Grafana.com.",
-    "provisioned-empty-title": "Подготовленные дашборды не найдены",
-    "provisioned-empty-title-with-datasource": "Подготовленные дашборды ({{datasourceType}}) не найдены",
-    "retry": "Повторить попытку",
-    "suggested-dashboards-community-error-description": "",
-    "suggested-dashboards-community-error-title": "",
-    "suggested-dashboards-subtitle": "Просматривайте доступные варианты и выбирайте дашборды из источника данных или сообщества",
-    "suggested-dashboards-title": "Создайте дашборд на основе предложенных вариантов для выбранного источника данных",
-    "suggested-dashboards-title-with-datasource": "Создайте дашборд на основе предложенных вариантов для источника данных {{datasourceType}}",
+    "suggested-error-description": "",
+    "suggested-error-title": "",
     "template-dashboard-modal": {
       "description": "Попробуйте шаблоны Grafana на основе образцов данных. Подключите свои данные, чтобы добавить реальные метрики.",
       "title": "Создайте дашборд из шаблона"
-    },
-    "view-all": "Посмотреть все"
+    }
   },
   "dashboard-links": {
     "empty-state": {
@@ -6796,6 +6863,11 @@
         "change-annotation-panel-filter": ""
       }
     },
+    "annotation-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "annotation-list": {
       "create-drag-end-handler": {
         "description": {
@@ -6882,6 +6954,15 @@
       "constant-options": "Параметры констант",
       "label-value": "Значение",
       "placeholder-your-metric-prefix": "Префикс метрик"
+    },
+    "control-edit-actions": {
+      "aria-label-delete": "",
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "Правила отображения/скрытия не будут действовать",
@@ -7055,6 +7136,12 @@
       "sql-transformation-description": "Обрабатывайте данные с использованием синтаксиса MySQL"
     },
     "general-settings-edit-view": {
+      "default_grid_options": {
+        "label": {
+          "auto": "",
+          "custom": ""
+        }
+      },
       "editable_options": {
         "label": {
           "editable": "Редактируемый",
@@ -7101,9 +7188,9 @@
     },
     "get-panel-filters": {
       "description": {
-        "annotation-following-panels": "Не отправлять данные аннотаций на следующие панели",
-        "annotation-panels-support-annotations": "Отправить данные аннотаций на все панели, поддерживающие их",
-        "annotations-explicitly-listed-panels": "Отправить аннотации только на указанные панели"
+        "annotation-following-panels": "Данные аннотаций не будут отправлены на следующие панели",
+        "annotation-panels-support-annotations": "Отправляйте данные аннотаций на все панели, которые их поддерживают",
+        "annotations-explicitly-listed-panels": "Отправляйте аннотации только на указанные панели"
       },
       "label": {
         "all-panels": "Все панели",
@@ -7213,6 +7300,12 @@
       "add-link": "",
       "remove-link": "",
       "update-link": ""
+    },
+    "link-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": "",
+      "unnamed": ""
     },
     "link-list": {
       "create-drag-end-handler": {
@@ -7345,6 +7438,9 @@
           "metrics-drilldown": "Детализация метрик"
         }
       }
+    },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": ""
     },
     "panel-styles": {
       "threshold-badge-tooltip": "",
@@ -7535,8 +7631,13 @@
     "sharing": {
       "save-before-share": {
         "text": "На дашборде есть несохраненные изменения. Сохраните их, чтобы предоставить общий доступ к дашборду.",
+        "text-no-save": "",
         "title": "Несохраненные изменения"
       }
+    },
+    "suggested-dashboard-banner": {
+      "body": "",
+      "title": ""
     },
     "support-snapshot-service": {
       "description": {
@@ -7664,6 +7765,11 @@
         }
       }
     },
+    "variable-editable-element": {
+      "delete-confirm": "",
+      "delete-text": "",
+      "delete-title": ""
+    },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Форма редактора переменных",
       "back-to-list": "Назад к списку",
@@ -7680,6 +7786,7 @@
       "placeholder-descriptive-text": "Поясняющий текст",
       "placeholder-label-name": "Название метки",
       "placeholder-variable-name": "Название переменной",
+      "run-query": "",
       "text-running-query": "Выполняется запрос...",
       "title": {
         "delete-variable": "Удаление переменной"
@@ -7693,6 +7800,7 @@
     "variable-editor-list-row": {
       "body-delete-variable": "Вы действительно хотите удалить {{variable}}?",
       "confirmText-delete-variable": "Удалить переменную",
+      "drag-handle-label": "",
       "title-delete-variable": "Удаление переменной",
       "tooltip-duplicate-variable": "Дублировать переменную",
       "tooltip-remove-variable": "Удалить переменную"
@@ -7815,6 +7923,8 @@
     "general": {
       "auto-refresh-description": "Задайте интервалы автообновления, которые должны быть доступны в соответствующем списке. Используйте формат «5 с» для секунд, «1 м» для минут, «1 ч» для часов и «1 д» для дней (например, «5 с, 10 с, 30 с, 1 м, 5 м, 15 м, 30 м, 1 ч, 2 ч, 1 д»).",
       "auto-refresh-label": "Автообновление",
+      "default-grid-description": "",
+      "default-grid-label": "",
       "description-label": "Описание",
       "editable-description": "Чтобы отключить редактирование, установите значение «только для чтения». Чтобы изменения вступили в силу, перезагрузите дашборд.",
       "editable-label": "Редактируемый",
@@ -7928,7 +8038,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Чтобы узнать больше об этой ошибке, нажмите <2>здесь</2>.",
-    "success-more-details-links": "Затем вы можете начать визуализировать данные, <2>создав панель</2> или запросив данные в <5>представлении Explore</5>."
+    "success-more-details-links": "",
+    "success-more-details-links-no-suggestions": ""
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7944,7 +8055,8 @@
     },
     "alert-success-message": {
       "aria-label-create-a-dashboard": "Создать дашборд",
-      "aria-label-explore-data": "Просмотреть данные"
+      "aria-label-explore-data": "Просмотреть данные",
+      "aria-label-suggested-dashboards": ""
     },
     "alerting-enabled": {
       "text-alerting-not-supported": "Оповещения не поддерживаются",
@@ -7958,6 +8070,11 @@
       "basic-settings-name-placeholder-name": "Имя",
       "label-default": "По умолчанию",
       "label-name": "Имя"
+    },
+    "build-a-dashboard-button": {
+      "blank": "",
+      "build-a-dashboard": "",
+      "from-suggestions": ""
     },
     "build-categories": {
       "categories": {
@@ -8044,12 +8161,10 @@
       "aria-label-learn-more": "Подробнее о {{dataSourcePluginName}}."
     },
     "data-sources-list-card": {
-      "build-a-dashboard": "Создать дашборд",
       "explore": "Explore"
     },
     "edit-data-source-actions": {
       "add-favorite": "Добавить в избранное",
-      "build-a-dashboard": "Создать дашборд",
       "explore-data": "Просмотреть данные",
       "open-in-explore": "Открыть в режиме Explore",
       "remove-favorite": "Удалить из избранного"
@@ -8118,8 +8233,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Не поддерживается",
+      "badge-text-success": "",
       "badge-text-supported": "Поддерживается",
       "label": {
+        "advisor": "",
         "alerting": "Оповещение",
         "type": "Тип"
       }
@@ -8263,6 +8380,7 @@
       "label-preview": "Предварительный просмотр"
     },
     "value-mapping-edit-row": {
+      "drag-handle-label": "",
       "duplicate-value-mapping-aria-label-duplicate-value-mapping": "Сопоставление повторяющихся значений",
       "duplicate-value-mapping-tooltip-duplicate": "Дублировать",
       "placeholder-exact-value-to-match": "Точное значение для сопоставления",
@@ -8545,7 +8663,6 @@
       "give-feedback": "Отправить отзыв"
     },
     "logs-meta-row": {
-      "download": "Загрузить",
       "label": {
         "deduplication-count": "Количество дедупликаций",
         "showing-only-selected-fields": "Отображаются только выбранные поля"
@@ -8904,22 +9021,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "Показать результаты в визуализации журналов",
-        "show-results-in-table-visualisation": "Показать результаты в визуализации таблицы",
-        "show-results-newest-to-oldest": "Показать результаты от новых к старым",
-        "show-results-oldest-to-newest": "Показать результаты от старых к новым"
+        "show-results-in-table-visualisation": "Показать результаты в визуализации таблицы"
       },
       "label": {
         "logs": "Журналы",
-        "newest-first": "Сначала новые",
-        "oldest-first": "Сначала старые",
         "table": "Таблица"
       },
-      "label-deduplication": "Дедупликация",
-      "label-display-results": "Показать результаты",
-      "label-prettify-json": "Форматировать JSON",
-      "label-time": "Время",
-      "label-unique-labels": "Уникальные метки",
-      "label-wrap-lines": "Переносить строки",
       "title-feedback": "Обратная связь",
       "title-logs": "Журналы",
       "title-logs-volume": "Объем журналов"
@@ -9014,8 +9121,7 @@
       "tooltip-s-m-h": "10 с, 1 мин, 30 мин, 1 ч"
     },
     "sql-expr": {
-      "button-run-query": "Выполнить запрос",
-      "tooltip-experimental": "Интеграция LLM с SQL-выражениями является экспериментальной. При обнаружении проблем свяжитесь с командой Grafana."
+      "button-run-query": "Выполнить запрос"
     },
     "sql-schema": {
       "error-title": "Ошибка",
@@ -9330,7 +9436,7 @@
     "tooltip-options": {
       "description-details": "Показывать всплывающее окно при наведении",
       "description-none": "Показывать содержимое при нажатии, а не при наведении",
-      "label-details": "Подробности",
+      "label-details": "Сведения",
       "label-none": "Нет"
     },
     "utils": {
@@ -9789,7 +9895,7 @@
             "name-decibel": "Децибел",
             "name-hexadecimal": "Шестнадцатеричный",
             "name-hexadecimal-0x": "Шестнадцатеричный (0x)",
-            "name-humidity": "Влажность (%)",
+            "name-humidity": "Влажность (%H)",
             "name-locale": "Формат локали",
             "name-number": "Число",
             "name-percent-1": "Процент (0,0–1,0)",
@@ -9804,7 +9910,7 @@
         },
         "pressure": {
           "formats": {
-            "name-bars": "Бар",
+            "name-bars": "Столбцы",
             "name-hectopascals": "Гектопаскаль",
             "name-inches-mercury": "Дюймы ртутного столба",
             "name-kilobars": "Килобар",
@@ -10105,6 +10211,7 @@
     },
     "data-links-inline-editor": {
       "add-link": "Добавить ссылку",
+      "drag-handle-label": "",
       "edit-link": "Редактировать ссылку",
       "one-click": "Одно нажатие",
       "one-click-enabled": "Одно нажатие включено",
@@ -10406,6 +10513,8 @@
     "sidebar": {
       "close": "Закрыть",
       "dock": "Закрепить",
+      "hide": "",
+      "show": "",
       "undock": "Открепить"
     },
     "slider": {
@@ -11426,6 +11535,12 @@
       "show-search": "Результат поиска по журналам",
       "show-timestamps": "Показать метки времени",
       "show-unique-labels": "Показать уникальные метки",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "Скрыть метки времени",
         "label": "Метки времени журнала",
@@ -11452,9 +11567,6 @@
         "not-supported": ""
       },
       "wrap-lines": "Переносить строки"
-    },
-    "logs-navigation": {
-      "scroll-top": "Прокрутить вверх"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -11575,7 +11687,7 @@
       }
     },
     "validation-srv": {
-      "message-name-required": "Требуется ввести имя",
+      "message-name-required": "Укажите имя",
       "message-reserved-name": "Это имя зарезервировано, его нельзя использовать для папки.",
       "message-same-name": "Дашборд или папка с таким именем уже существует",
       "message-same-name-current-folder": "В текущей папке уже существует дашборд или папка с таким именем",
@@ -12248,7 +12360,7 @@
     },
     "quick-add": {
       "aria-label": "Новое",
-      "new-template-dashboard-button": "Дашборд из шаблона"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "Последние записи в блоге"
   },
@@ -12345,6 +12457,8 @@
       "description": "Полученные вами уведомления будут отображаться здесь.",
       "title": "Вы всё прочитали!"
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "Закрыть уведомления",
       "title-alert": "На этой странице отображаются предыдущие ошибки и предупреждения. После закрытия их невозможно восстановить"
@@ -12387,7 +12501,7 @@
         "description-no-value": "Что показывать, когда нет значения",
         "description-value-mappings": "Изменить отображаемый текст на основе введенного значения",
         "name-actions": "Действия",
-        "name-ad-hoc": "Для специальных фильтров",
+        "name-ad-hoc": "",
         "name-color-scheme": "Цветовая схема",
         "name-data-links": "Ссылки на данные",
         "name-decimals": "Кол-во знаков после запятой",
@@ -12669,7 +12783,7 @@
       "name-required": "Введите имя",
       "save": "Сохранить",
       "table-delete": "Удалить плейлист",
-      "table-drag": "Перетащить для изменения порядка",
+      "table-drag": "",
       "table-empty": "Плейлист пуст. Добавьте дашборды ниже.",
       "table-heading": "Дашборды"
     },
@@ -12846,6 +12960,7 @@
       "title-button-disabled": "Плагин еще не готов к использованию. Завершение установки может занять некоторое время"
     },
     "install-controls": {
+      "contact-us": "",
       "install": "Установить",
       "installing": "Установка",
       "update": "Обновить",
@@ -13064,12 +13179,14 @@
       "not-saved": "Остальные пользователи Grafana в вашей организации будут по-прежнему видеть текущую версию, сохраненную в заданной ветви по умолчанию, до тех пор, пока эта ветвь не будет объединена",
       "open-in-repo-button": "Открыть в {{repoType}}",
       "open-pull-request-in-repo": "Открыть запрос на включение изменений в {{repoType}}",
+      "update-from-branch": "",
       "view-in-repo-button": "Просмотрите его в {{repoType}}, чтобы увидеть последние изменения.",
       "view-pull-request-in-repo": "Просмотреть запрос на включение изменений в {{repoType}}"
     },
     "title-created-branch-in-repo": "В ветви в {{repoType}} создан новый ресурс.",
     "title-deleted-resource-in-branch": "",
-    "title-loaded-pull-request-in-repo": "Этот ресурс загружается из ветви, которую вы только что создали в {{repoType}}, и виден только вам"
+    "title-loaded-pull-request-in-repo": "Этот ресурс загружается из ветви, которую вы только что создали в {{repoType}}, и виден только вам",
+    "title-updated-resource-in-branch": ""
   },
   "provisioning": {
     "bitbucket": {
@@ -13121,6 +13238,10 @@
       "folders-count_few": "{{count}} папки",
       "folders-count_many": "{{count}} папок",
       "folders-count_other": "{{count}} папки"
+    },
+    "cloud-info-box": {
+      "body": "",
+      "title": ""
     },
     "code-block": {
       "aria-label-copy": "Копировать в буфер обмена"
@@ -13412,6 +13533,7 @@
       "token-label": "Токен доступа к проекту",
       "token-required": "Требуется токен GitLab",
       "url-description": "URL-адрес репозитория GitLab",
+      "url-pattern": "",
       "url-required": "Требуется указать URL-адрес репозитория"
     },
     "history-view": {
@@ -14205,25 +14327,13 @@
   },
   "query-operation": {
     "header": {
-      "app-dashboard": "Дашборд",
-      "app-explore": "Explore",
-      "app-label": "Приложение:",
-      "assistant-actionable-create": "Укажите, к какому ресурсу вы хотите обратиться и какие сведения ищете.",
-      "assistant-actionable-update": "Опишите, что вы хотите изменить или улучшить в запросе.",
-      "assistant-prompt-create": "Мне нужна помощь в создании нового запроса, чтобы получить ответы на вопросы и необходимые сведения.",
-      "assistant-prompt-update": "Мне нужна помощь с обновлением текущего запроса, чтобы получить ответы на вопросы и необходимые сведения.",
       "collapse-row": "Свернуть строку запроса",
-      "current-query": "Текущий запрос",
-      "current-query-label": "Текущий запрос:",
       "datasource-help": "Показать справку по источнику данных",
       "drag-and-drop": "Перетащить для изменения порядка",
       "duplicate-query": "Дублировать запрос",
       "expand-row": "Развернуть строку запроса",
       "hide-response": "Скрыть ответ",
-      "other-queries": "Другие запросы",
-      "query-with-assistant": "Запрос с помощью Assistant",
       "remove-query": "Удалить запрос",
-      "selected-datasource-label": "Выбранный источник данных:",
       "show-response": "Показать ответ"
     },
     "query-editor-not-exported": "Плагин источника данных не экспортирует компоненты редактора запросов"
@@ -14386,11 +14496,11 @@
       "view-as-list": "Просмотр в виде списка"
     },
     "dashboard-actions": {
-      "import": "Импорт",
+      "import": "",
       "new": "Новые элементы",
       "new-dashboard": "Новый дашборд",
       "new-folder": "Новая папка",
-      "new-template-dashboard": "Дашборд из шаблона"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Оценка"
@@ -14848,20 +14958,55 @@
   "sort-picker": {
     "select-aria-label": "Сортировать"
   },
+  "splash-screen": {
+    "aria-label": "",
+    "assistant": {
+      "badge": "",
+      "bullet-1": "",
+      "bullet-2": "",
+      "bullet-3": "",
+      "cta": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "badge": {
+      "new": ""
+    },
+    "close": "",
+    "dynamic-dashboards": {
+      "bullet-1": "",
+      "bullet-2": "",
+      "bullet-3": "",
+      "cta": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "git-sync": {
+      "bullet-1": "",
+      "bullet-2": "",
+      "bullet-3": "",
+      "cta": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "library-of-things": {
+      "bullet-1": "",
+      "bullet-2": "",
+      "bullet-3": "",
+      "cta": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "nav": {
+      "go-to": "",
+      "next": "",
+      "prev": ""
+    }
+  },
   "sql-expressions": {
-    "add-query-tooltip": "Чтобы сгенерировать рекомендации по SQL, добавьте хотя бы один запрос данных",
-    "ai-explain-title": "Объяснение SQL-выражений с поддержкой ИИ",
-    "ai-suggestions-title": "Рекомендации по SQL-выражениям с поддержкой ИИ",
-    "apply": "Применить",
-    "code-label": "{{ language }}",
-    "copy": "Копировать",
-    "explain-empty-query-tooltip": "Введите SQL-выражение, чтобы получить объяснение",
     "explain-query": "Объяснить запрос",
-    "explanation-modal-title": "Объяснение SQL-запроса",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "История рекомендаций по SQL",
-    "suggestions": "Рекомендации",
-    "view-explanation": "Просмотреть объяснение"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "Добавить в избранное",
@@ -15324,11 +15469,12 @@
     },
     "range-content": {
       "apply-button": "Применить временной диапазон",
-      "default-error": "Введите прошедшую дату или «{{now}}»",
+      "default-error": "",
       "fiscal-year": "Отчетный год: {{from}} – {{to}}",
       "from-input": "Время начала",
       "open-input-calendar": "Открыть календарь",
-      "range-error": "Время начала не может быть позже времени окончания",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Время окончания"
     },
     "range-picker": {
@@ -15476,8 +15622,7 @@
       "bar": "Гистограмма",
       "bar-stacked": "Гистограмма: с накоплением",
       "bar-stacked-percent": "Гистограмма: с накоплением по процентам",
-      "line": "Линейная диаграмма",
-      "line-smooth": "Линейная диаграмма: сглаженная"
+      "line": "Линейная диаграмма"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Добавить часовой пояс",
@@ -15659,6 +15804,7 @@
     },
     "enum-mapping-row": {
       "click-to-edit": "Нажмите, чтобы редактировать",
+      "drag-handle-label": "",
       "remove-enum-row-aria-label-delete-enum-row": "Удалить перечислимую строку",
       "remove-enum-row-tooltip-delete": "Удалить"
     },
@@ -16522,7 +16668,7 @@
     },
     "static-options": {
       "add-option-button-label": "Добавить новый параметр",
-      "drag-and-drop": "Изменить порядок путем перетаскивания",
+      "drag-and-drop": "Измените порядок путем перетаскивания",
       "label-header": "Отображаемый текст",
       "label-placeholder": "Значение по умолчанию",
       "remove-option-button-label": "Удалить параметр",
@@ -16572,6 +16718,7 @@
       "variable": "Переменная"
     },
     "variable-editor-list-row": {
+      "drag-handle-label": "",
       "tooltip-duplicate-variable": "Дублировать переменную",
       "tooltip-remove-variable": "Удалить переменную"
     },
@@ -16614,6 +16761,10 @@
   },
   "xychart": {
     "category-xychart": "График XY",
+    "errors": {
+      "nodata": "",
+      "unknown": ""
+    },
     "name-fill-opacity": "Прозрачность заливки",
     "name-line-style": "Стиль линии",
     "name-line-width": "Ширина линии",

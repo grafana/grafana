@@ -1,19 +1,19 @@
 import * as React from 'react';
 import type { JSX } from 'react';
-import { DeepMap, FieldError, FieldErrors, useFormContext } from 'react-hook-form';
+import { type DeepMap, type FieldError, type FieldErrors, useFormContext } from 'react-hook-form';
 
 import { Field } from '@grafana/ui';
 import {
-  NotificationChannelOption,
-  NotificationChannelSecureFields,
-  OptionMeta,
+  type NotificationChannelOption,
+  type NotificationChannelSecureFields,
+  type OptionMeta,
 } from 'app/features/alerting/unified/types/alerting';
 
 import {
-  ChannelValues,
-  CloudChannelValues,
-  GrafanaChannelValues,
-  ReceiverFormValues,
+  type ChannelValues,
+  type CloudChannelValues,
+  type GrafanaChannelValues,
+  type ReceiverFormValues,
 } from '../../../types/receiver-form';
 
 import { ConfiguredSecretInput, OptionField } from './fields/OptionField';

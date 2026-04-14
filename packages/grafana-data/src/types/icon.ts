@@ -169,6 +169,7 @@ export const availableIconsIndex = {
   'gf-traces': true,
   globe: true,
   grafana: true,
+  grid: true,
   'graph-bar': true,
   'hand-pointer': true,
   heart: true,
@@ -299,6 +300,7 @@ export const availableIconsIndex = {
   'tachometer-fast': true,
   'tachometer-empty': true,
   'cmab-logo': true,
+  'lightbulb-alt': true,
   vial: true,
 };
 

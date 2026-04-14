@@ -4,9 +4,7 @@ const DASHBOARD_UID = 'ZqZnVvFZz';
 
 test.use({
   featureToggles: {
-    scenes: true,
     sharingDashboardImage: true, // Enable the export image feature
-    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
     dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });

@@ -362,6 +362,7 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 				UID:                   pr.UID,
 				Name:                  pr.Name,
 				Type:                  pr.Type,
+				Version:               pr.Version,
 				DisableResolveMessage: pr.DisableResolveMessage,
 				Settings:              pr.Settings,
 				SecureFields:          secureFields,
