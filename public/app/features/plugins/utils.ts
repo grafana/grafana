@@ -12,7 +12,7 @@ export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
     result = await pluginImporter.importApp(info);
   }
   if (info.type === PluginType.datasource) {
-    result = await pluginImporter.importDataSource(pluginId);
+    result = await pluginImporter.importDataSource(info);
   }
   if (info.type === PluginType.panel) {
     const panelPlugin = await pluginImporter.importPanel(info as PanelPluginMeta);

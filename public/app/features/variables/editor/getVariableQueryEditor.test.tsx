@@ -45,7 +45,7 @@ describe('getVariableQueryEditor', () => {
 
         expect(result).toBe(editor);
         expect(importDataSourcePluginFunc).toHaveBeenCalledTimes(1);
-        expect(importDataSourcePluginFunc).toHaveBeenCalledWith(undefined);
+        expect(importDataSourcePluginFunc).toHaveBeenCalledWith({});
       });
     });
 
@@ -60,7 +60,7 @@ describe('getVariableQueryEditor', () => {
 
         expect(result).toBe(editor);
         expect(importDataSourcePluginFunc).toHaveBeenCalledTimes(1);
-        expect(importDataSourcePluginFunc).toHaveBeenCalledWith(undefined);
+        expect(importDataSourcePluginFunc).toHaveBeenCalledWith({});
       });
     });
   });
@@ -89,7 +89,7 @@ describe('getVariableQueryEditor', () => {
           new Error('Missing QueryEditor in plugin definition.')
         );
         expect(importDataSourcePluginFunc).toHaveBeenCalledTimes(1);
-        expect(importDataSourcePluginFunc).toHaveBeenCalledWith(undefined);
+        expect(importDataSourcePluginFunc).toHaveBeenCalledWith({});
       });
     });
 
@@ -103,7 +103,7 @@ describe('getVariableQueryEditor', () => {
 
         expect(result).toBe(LegacyVariableQueryEditor);
         expect(importDataSourcePluginFunc).toHaveBeenCalledTimes(1);
-        expect(importDataSourcePluginFunc).toHaveBeenCalledWith(undefined);
+        expect(importDataSourcePluginFunc).toHaveBeenCalledWith({});
       });
     });
   });

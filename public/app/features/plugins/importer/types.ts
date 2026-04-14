@@ -1,6 +1,7 @@
 import {
   type AppPlugin,
   type AppPluginMeta,
+  type DataSourcePluginMeta,
   type PanelPlugin,
   type PanelPluginMeta,
   type PluginLoadingStrategy,
@@ -17,10 +18,10 @@ export interface PluginImporter {
   importPanel: (meta: PanelPluginMeta) => Promise<PanelPlugin>;
   /**
    * Imports a datasource plugin from module.js
-   * @param pluginId - The datasource plugin type ID (e.g. 'prometheus')
+   * @param meta - The plugin meta
    * @returns a Promise<GenericDataSourcePlugin>
    */
-  importDataSource: (pluginId: string) => Promise<GenericDataSourcePlugin>;
+  importDataSource: (meta: DataSourcePluginMeta) => Promise<GenericDataSourcePlugin>;
   /**
    * Imports an app plugin from module.js
    * @param meta - The plugin meta
