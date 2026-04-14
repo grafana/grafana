@@ -53,6 +53,7 @@ export const sharedDependenciesMap = {
   '@grafana/data': grafanaData,
   '@grafana/data/unstable': () => import('@grafana/data/unstable'),
   '@grafana/runtime': grafanaRuntime,
+  '@grafana/runtime/internal': () => import('@grafana/runtime/internal'),
   '@grafana/runtime/unstable': () => import('@grafana/runtime/unstable'),
   '@grafana/slate-react': () => import('slate-react'),
   '@grafana/ui': grafanaUI,
