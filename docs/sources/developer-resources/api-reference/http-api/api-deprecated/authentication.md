@@ -14,13 +14,19 @@ labels:
     - enterprise
     - oss
 title: Authentication options for the HTTP API
-menuTitle: Authentication
+menuTitle: Authentication (deprecated)
 weight: 02
 aliases:
   - ../../../developers/http_api/authentication/ # /docs/grafana/next/developers/http_api/authentication/
 ---
 
-# Authentication
+{{< admonition type="caution" >}}
+
+This API is deprecated. To learn about authentication for Grafana APIs refer to [Authenticate HTTP API requests](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/#authenticate-http-api-requests).
+
+{{< /admonition >}}
+
+# Authentication (deprecated)
 
 ## Authentication options for the HTTP API for Grafana OSS
 
