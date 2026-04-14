@@ -270,7 +270,6 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         }
       }),
     });
-
   }
 
   // collapse all rows
