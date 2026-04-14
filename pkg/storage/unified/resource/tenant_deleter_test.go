@@ -80,7 +80,7 @@ func (f *failOnceBatchDeleteKV) Batch(ctx context.Context, section string, ops [
 func newTestTenantDeleter(t *testing.T, dryRun bool) (*TenantDeleter, *dataStore, *PendingDeleteStore) {
 	t.Helper()
 	kv := setupBadgerKV(t)
-	ds := newDataStore(kv)
+	ds := newDataStore(kv, nil)
 	pds := newPendingDeleteStore(kv)
 	cfg := TenantDeleterConfig{
 		DryRun:   dryRun,
@@ -348,7 +348,7 @@ func TestRunDeletionPass_IdempotentAfterPartialFailure(t *testing.T) {
 	realKV := setupBadgerKV(t)
 	faultyKV := &failOnceBatchDeleteKV{KV: realKV, failOnCall: 2}
 
-	ds := newDataStore(faultyKV)
+	ds := newDataStore(faultyKV, nil)
 	pds := newPendingDeleteStore(realKV)
 	cfg := TenantDeleterConfig{
 		DryRun:   false,
@@ -522,7 +522,7 @@ func TestRunDeletionPass_DeletesExpiredOrphanedRecord(t *testing.T) {
 // GCOM returns HTTP 200 with status "deleted".
 func TestRunDeletionPass_AllowsWhenGcomReturnsDeletedStatus(t *testing.T) {
 	kv := setupBadgerKV(t)
-	ds := newDataStore(kv)
+	ds := newDataStore(kv, nil)
 	pds := newPendingDeleteStore(kv)
 	td := NewTenantDeleter(ds, pds, TenantDeleterConfig{
 		DryRun:   false,
@@ -562,7 +562,7 @@ func TestRunDeletionPass_AllowsWhenGcomReturnsDeletedStatus(t *testing.T) {
 // not removed while GCOM still returns the stack instance.
 func TestRunDeletionPass_SkipsWhenGcomInstanceStillExists(t *testing.T) {
 	kv := setupBadgerKV(t)
-	ds := newDataStore(kv)
+	ds := newDataStore(kv, nil)
 	pds := newPendingDeleteStore(kv)
 	td := NewTenantDeleter(ds, pds, TenantDeleterConfig{
 		DryRun:   false,
@@ -601,7 +601,7 @@ func TestRunDeletionPass_SkipsWhenGcomInstanceStillExists(t *testing.T) {
 // does not delete local data (fail-safe on outage or permission errors).
 func TestRunDeletionPass_SkipsWhenGcomCheckFails(t *testing.T) {
 	kv := setupBadgerKV(t)
-	ds := newDataStore(kv)
+	ds := newDataStore(kv, nil)
 	pds := newPendingDeleteStore(kv)
 	td := NewTenantDeleter(ds, pds, TenantDeleterConfig{
 		DryRun:   false,
@@ -640,7 +640,7 @@ func TestRunDeletionPass_SkipsWhenGcomCheckFails(t *testing.T) {
 // do not call GCOM and do not delete local data.
 func TestRunDeletionPass_SkipsWhenNamespaceHasNoStackID(t *testing.T) {
 	kv := setupBadgerKV(t)
-	ds := newDataStore(kv)
+	ds := newDataStore(kv, nil)
 	pds := newPendingDeleteStore(kv)
 	called := false
 	td := NewTenantDeleter(ds, pds, TenantDeleterConfig{
