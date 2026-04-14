@@ -11,6 +11,20 @@ export enum InternalTimeZones {
   utc = 'utc',
 }
 
+/**
+ * @deprecated
+ */
+export const timeZoneFormatUserFriendly = (timeZone: TimeZone | undefined) => {
+  switch (getTimeZone({ timeZone })) {
+    case 'browser':
+      return 'Local browser time';
+    case 'utc':
+      return 'UTC';
+    default:
+      return timeZone;
+  }
+};
+
 export const getZone = (timeZone: string) => {
   return moment.tz.zone(timeZone);
 };
