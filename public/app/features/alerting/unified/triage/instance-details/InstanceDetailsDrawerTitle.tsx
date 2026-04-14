@@ -48,6 +48,7 @@ interface InstanceDetailsDrawerTitleProps {
   alertState?: GrafanaAlertState | null;
   rule?: GrafanaRuleDefinition;
   onOpenSilence?: () => void;
+  onOpenDeclareIncident?: (incidentURL: string) => void;
   titleText?: string;
   /** Overrides the muted label above the title (defaults to Alert Instance). */
   sectionLabel?: ReactNode;
@@ -62,6 +63,7 @@ export function InstanceDetailsDrawerTitle({
   alertState,
   rule,
   onOpenSilence,
+  onOpenDeclareIncident,
   titleText,
   sectionLabel,
   hideActions = false,
@@ -81,11 +83,14 @@ export function InstanceDetailsDrawerTitle({
     return `${baseLink}${separator}matcher=${encodeURIComponent(`${MATCHER_ALERT_RULE_UID}=${rule.uid}`)}`;
   }, [instanceLabels, rule]);
 
-  const shouldShowDeclareIncident = (!isOpenSourceEdition() || isLocalDevEnv()) && installed && settings;
+  const shouldForceDeclareIncidentVisible = isLocalDevEnv();
+  const shouldShowDeclareIncident =
+    shouldForceDeclareIncidentVisible || (!isOpenSourceEdition() && Boolean(installed) && Boolean(settings));
   const incidentURL = createBridgeURL(pluginId, '/incidents/declare', { title: rule?.title ?? '' });
-  const canAccessIncident = settings
-    ? canAccessPluginPage(settings, createBridgeURL(pluginId, '/incidents/declare'))
-    : false;
+  let canAccessIncident = shouldForceDeclareIncidentVisible;
+  if (!canAccessIncident && settings) {
+    canAccessIncident = canAccessPluginPage(settings, createBridgeURL(pluginId, '/incidents/declare'));
+  }
   const hasFolderSilencePermission = folder?.accessControl?.[AccessControlAction.AlertingSilenceCreate] ?? false;
   const canSilence = canCreateSilence || hasFolderSilencePermission;
 
@@ -156,16 +161,33 @@ export function InstanceDetailsDrawerTitle({
               {shouldShowDeclareIncident && (
                 <>
                   {canAccessIncident ? (
-                    <LinkButton
-                      href={incidentURL}
-                      icon="fire"
-                      variant="secondary"
-                      size="sm"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Trans i18nKey="alerting.triage.instance-details-drawer.declare-incident">Declare incident</Trans>
-                    </LinkButton>
+                    <>
+                      {onOpenDeclareIncident ? (
+                        <Button
+                          icon="fire"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => onOpenDeclareIncident(incidentURL)}
+                        >
+                          <Trans i18nKey="alerting.triage.instance-details-drawer.declare-incident">
+                            Declare incident
+                          </Trans>
+                        </Button>
+                      ) : (
+                        <LinkButton
+                          href={incidentURL}
+                          icon="fire"
+                          variant="secondary"
+                          size="sm"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Trans i18nKey="alerting.triage.instance-details-drawer.declare-incident">
+                            Declare incident
+                          </Trans>
+                        </LinkButton>
+                      )}
+                    </>
                   ) : (
                     <Tooltip
                       content={t(
