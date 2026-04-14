@@ -103,6 +103,23 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 		return nil, fmt.Errorf("oauth provider %q is not enabled", name)
 	}
 
+	// TokenExchangeTimeout is in seconds; default to 15s if not set (0 or negative).
+	timeout := time.Duration(info.TokenExchangeTimeout) * time.Second
+	if timeout <= 0 {
+		timeout = 15 * time.Second
+	}
+
+	// Scale dial and TLS handshake timeouts proportionally to avoid
+	// situations where sub-timeouts exceed the total timeout.
+	dialTimeout := timeout / 2
+	if dialTimeout < 5*time.Second {
+		dialTimeout = 5 * time.Second
+	}
+	tlsHandshakeTimeout := timeout / 2
+	if tlsHandshakeTimeout < 5*time.Second {
+		tlsHandshakeTimeout = 5 * time.Second
+	}
+
 	// handle call back
 	tr := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
@@ -110,10 +127,10 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 			InsecureSkipVerify: info.TlsSkipVerify,
 		},
 		DialContext: (&net.Dialer{
-			Timeout:   time.Second * 10,
+			Timeout:   dialTimeout,
 			KeepAlive: 30 * time.Second,
 		}).DialContext,
-		TLSHandshakeTimeout:   15 * time.Second,
+		TLSHandshakeTimeout:   tlsHandshakeTimeout,
 		ExpectContinueTimeout: 1 * time.Second,
 		MaxIdleConns:          100,
 		IdleConnTimeout:       90 * time.Second,
@@ -121,7 +138,7 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 
 	oauthClient := &http.Client{
 		Transport: tr,
-		Timeout:   time.Second * 15,
+		Timeout:   timeout,
 	}
 
 	if info.TlsClientCert != "" || info.TlsClientKey != "" {

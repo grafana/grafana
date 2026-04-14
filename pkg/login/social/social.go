@@ -96,6 +96,7 @@ type OAuthInfo struct {
 	TlsClientCert               string            `mapstructure:"tls_client_cert" toml:"tls_client_cert"`
 	TlsClientKey                string            `mapstructure:"tls_client_key" toml:"tls_client_key"`
 	TlsSkipVerify               bool              `mapstructure:"tls_skip_verify_insecure" toml:"tls_skip_verify_insecure"`
+	TokenExchangeTimeout        int               `mapstructure:"token_exchange_timeout" toml:"token_exchange_timeout"`
 	TokenUrl                    string            `mapstructure:"token_url" toml:"token_url"`
 	UsePKCE                     bool              `mapstructure:"use_pkce" toml:"use_pkce"`
 	UseRefreshToken             bool              `mapstructure:"use_refresh_token" toml:"use_refresh_token"`
