@@ -20,7 +20,13 @@ import { type DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
-import { type EditableVariableType, getNextAvailableId, getVariableScene, getVariableTypeSelectOptions } from './utils';
+import {
+  type EditableVariableType,
+  getNextAvailableId,
+  getVariableNamePrefix,
+  getVariableScene,
+  getVariableTypeSelectOptions,
+} from './utils';
 
 export function openAddVariablePane(dashboard: DashboardScene) {
   dashboard.state.editPane.openPane(new VariableAddPane({ sectionOwner: dashboard.getRef() }));
@@ -54,7 +60,7 @@ export function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableA
       }
 
       const sectionVars = variablesSet.state.variables ?? [];
-      const newVar = getVariableScene(type, { name: getNextAvailableId(type, sectionVars) });
+      const newVar = getVariableScene(type, { name: getNextAvailableId(getVariableNamePrefix(type), sectionVars) });
 
       dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
       dashboard.state.editPane.selectObject(newVar, { force: true, multi: false });
@@ -111,11 +117,13 @@ function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableT
       }
 
       const newVariable = getVariableScene(type, { name: variable.state.name, label: variable.state.label });
+
       dashboardEditActions.changeVariableType({
         source: variableSet,
         oldVariable: variable,
         newVariable,
       });
+
       DashboardInteractions.variableTypeChanged({ old: variable.state.type, new: newVariable.state.type });
     },
     [model]

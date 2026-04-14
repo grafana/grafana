@@ -256,7 +256,11 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     const id = obj.state.key!;
     const hasItem = this.state.selectionContext.selected.find((i) => i.id === id);
 
-    // Temp solution for EditLink and DashboardLinksSet which are not part of the scene graph
+    // Special logic for tabs only select tab of open pane is not already open or tab is already active
+    if (!force && !this.state.openPane && obj instanceof TabItem && !obj.isCurrentTab()) {
+      return;
+    }
+
     if (obj.getRoot() !== this.getRoot() || obj.parent === this) {
       this.setState({
         selectedDisconnectedObject: obj,
@@ -378,7 +382,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
   }
 
   private newObjectAddedToCanvas(obj: SceneObject) {
-    this.selectObject(obj);
+    this.selectObject(obj, { force: true });
     this.setState({ isNewElement: true });
   }
 

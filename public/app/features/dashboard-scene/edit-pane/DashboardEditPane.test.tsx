@@ -2,7 +2,6 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils } from '@grafana/runtime';
 import {
   ConstantVariable,
-  CustomVariable,
   type MultiValueVariable,
   SceneGridLayout,
   SceneTimeRange,
@@ -126,6 +125,30 @@ describe('DashboardEditPane', () => {
 
       // Should still be selected
       expect(editPane.getSelectedObject()).toBe(panel);
+    });
+
+    it('Selecting tab with closed edit pane should not select tab', () => {
+      const { editPane, tab1 } = setupWithTwoTabs();
+
+      // Selecting tab with closed edit pane should not select tab
+      editPane.selectObject(tab1);
+      expect(editPane.getSelectedObject()).toBeNull();
+    });
+
+    it('Selecting tab with open edit pane should select tab', () => {
+      const { editPane, tab1 } = setupWithTwoTabs();
+
+      // Selecting tab with closed edit pane should not select tab
+      editPane.openPane(new DashboardOutline({}));
+      editPane.selectObject(tab1);
+      expect(editPane.getSelectedObject()).toBe(tab1);
+    });
+
+    it('Force selecting tab should always select it', () => {
+      const { editPane, tab1 } = setupWithTwoTabs();
+
+      editPane.selectObject(tab1, { force: true });
+      expect(editPane.getSelectedObject()).toBe(tab1);
     });
   });
 
@@ -275,8 +298,9 @@ describe('DashboardEditPane', () => {
           }),
         ],
       });
-      const { editPane, variables } = buildTestSceneWithRepeat(layoutManager);
+      const { scene, editPane, variables } = buildTestSceneWithRepeat(layoutManager);
       editPane.enableSelection();
+      editPane.selectObject(scene);
 
       const [sourceRow] = layoutManager.state.rows;
       const [sourceTab] = (sourceRow.state.layout as TabsLayoutManager).state.tabs;
@@ -484,6 +508,7 @@ function buildTestSceneWithRepeat(layoutManager: DashboardLayoutManager) {
   return {
     variables,
     editPane: scene.state.editPane,
+    scene,
   };
 }
 

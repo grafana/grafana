@@ -457,19 +457,6 @@ export class TabsLayoutManager
     this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
   }
 
-  public forceSelectTab(tabKey: string) {
-    const tabIndex = this.getTabsIncludingRepeats().findIndex((tab) => tab.state.key === tabKey);
-    const tab = this.getTabsIncludingRepeats()[tabIndex];
-
-    if (!tab) {
-      return;
-    }
-
-    const editPane = getDashboardSceneFor(this).state.editPane;
-    editPane.selectObject(tab!, { force: true, multi: false });
-    this.setState({ currentTabSlug: tab.getSlug() });
-  }
-
   public static createEmpty(): TabsLayoutManager {
     const tab = new TabItem();
     return new TabsLayoutManager({ tabs: [tab] });

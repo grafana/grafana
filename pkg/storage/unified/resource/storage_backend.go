@@ -659,10 +659,22 @@ func (b *kvStorageBackend) garbageCollectionCutoffTimestamp(group, resourceName 
 		cutoffTimestamp = time.Now().Add(-b.garbageCollection.DashboardsMaxAge).UnixMicro()
 	}
 
-	if !isSnowflake(cutoffTimestamp) {
+	if !IsSnowflake(cutoffTimestamp) {
 		cutoffTimestamp = rvmanager.SnowflakeFromRV(cutoffTimestamp)
 	}
 	return cutoffTimestamp
+}
+
+// toSnowflakeRV converts a microsecond RV to snowflake format if needed.
+// This ensures the KV backend is compatible with both RV formats during the
+// backend transition period.
+//
+// TODO: remove when compatibility with SQL backend is no longer needed.
+func toSnowflakeRV(rv int64) int64 {
+	if rv > 0 && !IsSnowflake(rv) {
+		return rvmanager.SnowflakeFromRV(rv)
+	}
+	return rv
 }
 
 func conflictError(event WriteEvent, message string) error {
@@ -679,11 +691,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		return 0, apierrors.NewBadRequest(err.Error())
 	}
 
-	// If an RV was passed in the old (microsecond) format, convert it to snowflake.
-	// TODO: remove this once the KV backend has been deployed everywhere.
-	if event.PreviousRV > 0 && !isSnowflake(event.PreviousRV) {
-		event.PreviousRV = rvmanager.SnowflakeFromRV(event.PreviousRV)
-	}
+	event.PreviousRV = toSnowflakeRV(event.PreviousRV)
 
 	rv := k.snowflake.Generate().Int64()
 
@@ -921,6 +929,8 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "missing key"}}
 	}
 
+	req.ResourceVersion = toSnowflakeRV(req.ResourceVersion)
+
 	namespace := req.Key.Namespace
 
 	// If a specific resource version is requested, validate that it's not too high
@@ -997,6 +1007,8 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		return 0, fmt.Errorf("missing options or key in ListRequest")
 	}
 
+	req.ResourceVersion = toSnowflakeRV(req.ResourceVersion)
+
 	// Parse continue token if provided
 	listOptions := ListRequestOptions{
 		Key: ListRequestKey{
@@ -1021,7 +1033,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 			listOptions.ContinueNamespace = token.Namespace
 		}
 		listOptions.ContinueName = token.Name
-		listOptions.ResourceVersion = token.ResourceVersion
+		listOptions.ResourceVersion = toSnowflakeRV(token.ResourceVersion)
 	}
 
 	// We set the listRV to the last event resource version.
@@ -1266,6 +1278,8 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 		}
 	}
 
+	sinceRv = toSnowflakeRV(sinceRv)
+
 	latestEvent, err := k.eventStore.LastEventKey(ctx)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
@@ -1462,6 +1476,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 		return 0, err
 	}
 	key := req.Options.Key
+	req.ResourceVersion = toSnowflakeRV(req.ResourceVersion)
 	// Parse continue token if provided
 	lastSeenRV := int64(0)
 	if req.NextPageToken != "" {
@@ -1469,7 +1484,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 		if err != nil {
 			return 0, fmt.Errorf("invalid continue token: %w", err)
 		}
-		lastSeenRV = token.ResourceVersion
+		lastSeenRV = toSnowflakeRV(token.ResourceVersion)
 	}
 
 	// Generate a new resource version for the list
@@ -1936,12 +1951,14 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			}
 		}
 
-		summaries[NSGR(key)] = &resourcepb.BulkResponse_Summary{
+		summary := &resourcepb.BulkResponse_Summary{
 			Namespace:     key.Namespace,
 			Group:         key.Group,
 			Resource:      key.Resource,
 			PreviousCount: previousCount,
 		}
+		summaries[NSGR(key)] = summary
+		rsp.Summary = append(rsp.Summary, summary)
 	}
 
 	saved := make([]DataKey, 0)
@@ -1963,6 +1980,14 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			Group:     item.dataKey.Group,
 			Resource:  item.dataKey.Resource,
 		}] = true
+		nsgr := NSGR(&resourcepb.ResourceKey{
+			Namespace: item.dataKey.Namespace,
+			Group:     item.dataKey.Group,
+			Resource:  item.dataKey.Resource,
+		})
+		if summary, ok := summaries[nsgr]; ok {
+			summary.Count++
+		}
 	}
 
 	batchIter, ok := iter.(BulkRequestBatchIterator)
