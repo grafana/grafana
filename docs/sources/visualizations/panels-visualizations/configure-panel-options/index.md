@@ -63,9 +63,13 @@ Grafana sanitizes the rendered HTML to reduce security risk and strips out or re
 
 ## Configure repeating panels
 
-You can configure Grafana to dynamically add panels or rows to a dashboard. A dynamic panel is a panel that the system creates based on the value of a variable. Variables dynamically change your queries across all panels in a dashboard. For more information about repeating rows, refer to [Configure repeating rows](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#configure-repeat-options).
+You can configure Grafana to dynamically add panels to a dashboard.
+A dynamic panel is a panel that the system creates based on the value of a multi-value variable.
+Variables dynamically change your queries across all panels in a dashboard.
 
 To see an example of repeating panels, refer to [this dashboard with repeating panels](https://play.grafana.org/d/testdata-repeating/testdata-repeating-panels?orgId=1).
+
+For information about repeating rows and tabs, refer to [Configure repeat options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#configure-repeat-options).
 
 **Before you begin:**
 
@@ -73,18 +77,19 @@ To see an example of repeating panels, refer to [this dashboard with repeating p
 
 To configure repeating panels, follow these steps:
 
-1. Navigate to the panel you want to update.
-1. Hover over any part of the panel to display the menu on the top right corner.
-1. Click the menu and select **Edit**.
-1. Open the **Panel options** section of the panel editor pane.
-1. Under **Repeat options**, select a variable in the **Repeat by variable** drop-down list.
-1. Under **Repeat direction**, choose one of the following:
-   - **Horizontal** - Arrange panels side-by-side. Grafana adjusts the width of a repeated panel. You can't mix other panels on a row with a repeated panel.
-   - **Vertical** - Arrange panels in a column. The width of repeated panels is the same as the original, repeated panel.
+{{< docs/list >}}
 
-1. If you selected **Horizontal** in the previous step, select a value in the **Max per row** drop-down list to control the maximum number of panels that can be in a row.
-1. Click **Save dashboard**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Go to the dashboard you want to update and navigate to the panel you want to repeat.
+
+   If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
+
+1. Click **Edit**.
+1. Click the panel to open the sidebar.
+
+{{% shared-snippet path="/docs/grafana/latest/visualizations/dashboards/build-dashboards/create-dashboard/_index.md" id="configure-repeat" %}}
+
 1. To propagate changes to all panels, reload the dashboard.
+
+{{< /docs/list >}}
 
 You can stop a panel from repeating by selecting **Disable repeating** in the **Repeat by variable** drop-down list.

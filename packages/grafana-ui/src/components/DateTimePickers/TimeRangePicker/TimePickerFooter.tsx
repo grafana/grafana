@@ -123,13 +123,10 @@ export const TimePickerFooter = (props: Props) => {
                 <TimeZonePicker
                   includeInternal={true}
                   onChange={(timeZone) => {
-                    onToggleChangeTimeSettings();
-
                     if (typeof timeZone === 'string') {
                       onChangeTimeZone(timeZone);
                     }
                   }}
-                  onBlur={onToggleChangeTimeSettings}
                   menuShouldPortal={false}
                 />
               </section>
