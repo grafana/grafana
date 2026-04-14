@@ -8,7 +8,9 @@ import { getPanelProps } from '../test-utils';
 
 import { XYChartPanel2 } from './XYChartPanel';
 import { type Options, PointShape, SeriesMapping } from './panelcfg.gen';
+import { prepConfig } from './scatter';
 import { type XYSeries } from './types2';
+import { prepSeries } from './utils';
 
 const mockPrepData = jest.fn(() => [
   null,
@@ -32,6 +34,9 @@ jest.mock('./scatter', () => ({
 jest.mock('./utils', () => ({
   prepSeries: jest.fn(() => []),
 }));
+
+const prepConfigMock = prepConfig as jest.Mock;
+const prepSeriesMock = prepSeries as jest.Mock;
 
 /*
  * Why mock @grafana/ui components:
@@ -150,8 +155,7 @@ const defaultOptions: Options = {
 };
 
 function renderPanel(optionOverrides?: Partial<Options>, seriesOverride?: XYSeries[]) {
-  const { prepSeries } = require('./utils');
-  prepSeries.mockReturnValue(seriesOverride ?? [makeSeries()]);
+  prepSeriesMock.mockReturnValue(seriesOverride ?? [makeSeries()]);
 
   const props = getPanelProps<Options>({ ...defaultOptions, ...optionOverrides });
 
@@ -161,8 +165,7 @@ function renderPanel(optionOverrides?: Partial<Options>, seriesOverride?: XYSeri
 describe('XYChartPanel2', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    const { prepConfig } = require('./scatter');
-    prepConfig.mockReturnValue({
+    prepConfigMock.mockReturnValue({
       builder: mockBuilder,
       prepData: mockPrepData,
       warn: null,
@@ -170,8 +173,7 @@ describe('XYChartPanel2', () => {
   });
 
   it('renders error view when prepConfig returns warn', () => {
-    const { prepConfig } = require('./scatter');
-    prepConfig.mockReturnValue({ builder: null, prepData: () => [], warn: 'No data' });
+    prepConfigMock.mockReturnValue({ builder: null, prepData: () => [], warn: 'No data' });
 
     renderPanel();
     expect(screen.getByTestId('error-view')).toBeVisible();
@@ -179,8 +181,7 @@ describe('XYChartPanel2', () => {
   });
 
   it('renders error view when builder is null', () => {
-    const { prepConfig } = require('./scatter');
-    prepConfig.mockReturnValue({ builder: null, prepData: () => [null], warn: null });
+    prepConfigMock.mockReturnValue({ builder: null, prepData: () => [null], warn: null });
 
     renderPanel();
     expect(screen.getByTestId('error-view')).toBeVisible();
