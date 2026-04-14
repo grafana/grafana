@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../../http_api/admin/ # /docs/grafana/next/http_api/admin/
-  - ../../../developers/http_api/admin/ # /docs/grafana/next/developers/http_api/admin/
-  - ../../../developer-resources/api-reference/http_api/admin/ 
+  - ../../../http-api/admin/ # /docs/grafana/next/http_api/admin/
+  - ../../../developers/http-api/admin/ # /docs/grafana/next/developers/http_api/admin/
+  - ../../../../developer-resources/api-reference/http-api/admin/ 
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/admin/
 description: Grafana Admin HTTP API
 keywords:
