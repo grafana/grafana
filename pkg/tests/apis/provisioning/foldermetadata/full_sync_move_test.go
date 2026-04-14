@@ -688,9 +688,9 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_DuplicateUID(t 
 	writeToProvisioningPath(t, helper, "folderA/_folder.json", folderMetadataJSON("uid-a", "Folder A"))
 	writeToProvisioningPath(t, helper, "folderB/_folder.json", folderMetadataJSON("uid-b", "Folder B"))
 
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/all-panels.json":   "folderA/dashboard.json",
 			"../testdata/text-options.json": "folderB/dashboard.json",
