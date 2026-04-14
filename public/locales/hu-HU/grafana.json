@@ -3585,11 +3585,13 @@
       },
       "instance-details-drawer": {
         "alert-instance-label": "",
+        "back": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Példány részletei",
         "silence-button": "",
-        "silence-no-permission": ""
+        "silence-no-permission": "",
+        "silence-title-with-name": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "Nincsenek aktív vagy függő állapotú riasztáspéldányok a kiválasztott időtartományban.",
@@ -4330,6 +4332,9 @@
       "libraryPanel_other": "{{count}} könyvtárpanel",
       "total_one": "{{count}} tétel",
       "total_other": "{{count}} tétel"
+    },
+    "create-new": {
+      "dashboard-group": ""
     },
     "dashboards-tree": {
       "checkbox": {
@@ -8142,8 +8147,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Nem támogatott",
+      "badge-text-success": "",
       "badge-text-supported": "Támogatott",
       "label": {
+        "advisor": "",
         "alerting": "Riasztás",
         "type": "Típus"
       }
@@ -12362,7 +12369,7 @@
         "description-no-value": "Érték hiányában megjelenítendő",
         "description-value-mappings": "Megjelenített szöveg módosítása a bemeneti érték alapján",
         "name-actions": "Műveletek",
-        "name-ad-hoc": "Eseti alapon szűrhető",
+        "name-ad-hoc": "",
         "name-color-scheme": "Színséma",
         "name-data-links": "Adathivatkozások",
         "name-decimals": "Tizedesjegyek",
@@ -12821,6 +12828,7 @@
       "title-button-disabled": "A bővítmény még nem használható, és kis időt vehet igénybe a telepítés befejezése."
     },
     "install-controls": {
+      "contact-us": "",
       "install": "Telepítés",
       "installing": "Telepítés",
       "update": "Frissítés",
@@ -14316,11 +14324,11 @@
       "view-as-list": "Listanézet"
     },
     "dashboard-actions": {
-      "import": "Importálás",
+      "import": "",
       "new": "Új",
       "new-dashboard": "Új irányítópult",
       "new-folder": "Új mappa",
-      "new-template-dashboard": "Irányítópult sablonból"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Pontszám"
@@ -15285,11 +15293,12 @@
     },
     "range-content": {
       "apply-button": "Időtartomány alkalmazása",
-      "default-error": "Adjon meg egy múltbeli dátumot vagy a „{{now}}” értéket",
+      "default-error": "",
       "fiscal-year": "Pénzügyi év: {{from}} – {{to}}",
       "from-input": "Kezdet",
       "open-input-calendar": "Naptár megnyitása",
-      "range-error": "A „Kezdete” nem lehet a „Vége” után",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Vége"
     },
     "range-picker": {
