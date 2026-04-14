@@ -144,10 +144,7 @@ describe('prepData', () => {
     const data = prepData!([series]);
     const diams = data[1]![2] as number[];
 
-    // Math: min=0, max=100, minPx=2²=4, maxPx=10²=100, pxRange=96
-    // val=0:   pct=0,   area=4+0*96=4,     diam=√4=2
-    // val=50:  pct=0.5, area=4+0.5*96=52,  diam=√52≈7.211
-    // val=100: pct=1,   area=4+1*96=100,   diam=√100=10
+    // diam = √(minPx² + valPct * (maxPx² - minPx²))
     expect(diams[0]).toBeCloseTo(2, 5);
     expect(diams[1]).toBeCloseTo(Math.sqrt(52), 5);
     expect(diams[2]).toBeCloseTo(10, 5);
@@ -169,9 +166,7 @@ describe('prepData', () => {
     const { prepData } = prepConfig(allSeries, theme);
     const data = prepData!(allSeries);
 
-    // Global range: min=0, max=100 (across both series)
-    // series1 val=0: pct=0, diam=√4=2
-    // series2 val=100: pct=1, diam=√100=10
+    // global range min=0, max=100 spans both series
     const diams1 = data[1]![2] as number[];
     const diams2 = data[2]![2] as number[];
     expect(diams1[0]).toEqual(2);

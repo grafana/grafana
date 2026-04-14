@@ -63,10 +63,7 @@ describe('fmt', () => {
     const field = frame.fields[0];
     field.display = getDisplayProcessor({ field, theme });
 
-    const result = fmt(field, 42);
-    const expected = formattedValueToString(field.display(42));
-    expect(result).toBe(expected);
-    expect(result).not.toBe('42');
+    expect(fmt(field, 42)).toBe(formattedValueToString(field.display(42)));
   });
 
   it('falls back to string coercion when field.display is undefined', () => {
@@ -76,28 +73,21 @@ describe('fmt', () => {
       values: [42],
       config: {},
     };
-    // Ensure display is not set
-    delete (field as Partial<Field>).display;
-
-    const result = fmt(field, 42);
-    expect(result).toBe('42');
+    expect(fmt(field, 42)).toBe('42');
   });
 });
 
 describe('getCommonPrefixSuffix', () => {
   it('extracts common prefix and suffix tokens', () => {
-    const result = getCommonPrefixSuffix(['cpu idle A', 'cpu idle B']);
-    expect(result).toBe('cpu idle');
+    expect(getCommonPrefixSuffix(['cpu idle A', 'cpu idle B'])).toBe('cpu idle');
   });
 
   it('returns empty string when single-token names share the same token', () => {
-    const result = getCommonPrefixSuffix(['cpu', 'cpu']);
-    expect(result).toBe('');
+    expect(getCommonPrefixSuffix(['cpu', 'cpu'])).toBe('');
   });
 
   it('returns empty string when no common parts', () => {
-    const result = getCommonPrefixSuffix(['foo', 'bar']);
-    expect(result).toBe('');
+    expect(getCommonPrefixSuffix(['foo', 'bar'])).toBe('');
   });
 });
 
