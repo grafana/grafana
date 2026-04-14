@@ -835,7 +835,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		require.NoError(t, err)
 		require.Equal(t, map[string][]string{"dst/": {"moving-uid"}}, relocations,
 			"only the real move target should have a relocation bypass")
-		require.Contains(t, replacedFolders, replacedFolder{Path: "thief/", OldUID: "thief-old-uid"},
+		require.Contains(t, replacedFolders, replacedFolder{Path: "thief/", OldUID: "thief-old-uid", Reason: provisioning.ReasonFolderMetadataUpdated},
 			"thief's old UID should still be scheduled for replacement")
 	})
 
