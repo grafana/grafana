@@ -32,27 +32,17 @@ async function buildTestScene(variables?: SceneVariable[]) {
   return dashboard;
 }
 
-const Wrapper = ({ scene }: { scene: DashboardScene }) => {
-  const [repeat, setRepeat] = useState<string | undefined>(undefined);
-  return <RepeatRowSelect2 sceneContext={scene} repeat={repeat} onChange={(newRepeat) => setRepeat(newRepeat)} />;
-};
-
-const setup = async (variables?: SceneVariable[]) => {
-  const scene = await buildTestScene(variables);
-
-  return render(<Wrapper scene={scene} />);
-};
-
-const SectionScopeWrapper = ({ sceneContext }: { sceneContext: SceneObject }) => {
+const RepeatRowSelectWrapper = ({ sceneContext }: { sceneContext: SceneObject }) => {
   const [repeat, setRepeat] = useState<string | undefined>(undefined);
   return (
     <RepeatRowSelect2 sceneContext={sceneContext} repeat={repeat} onChange={(newRepeat) => setRepeat(newRepeat)} />
   );
 };
 
-const RowRepeatScopeWrapper = ({ row }: { row: SceneObject }) => {
-  const [repeat, setRepeat] = useState<string | undefined>(undefined);
-  return <RepeatRowSelect2 sceneContext={row} repeat={repeat} onChange={(newRepeat) => setRepeat(newRepeat)} />;
+const setup = async (variables?: SceneVariable[]) => {
+  const scene = await buildTestScene(variables);
+
+  return render(<RepeatRowSelectWrapper sceneContext={scene} />);
 };
 
 describe('RepeatRowSelect2', () => {
@@ -136,7 +126,7 @@ describe('RepeatRowSelect2', () => {
 
     await new Promise((r) => setTimeout(r, 1));
 
-    render(<SectionScopeWrapper sceneContext={gridItem} />);
+    render(<RepeatRowSelectWrapper sceneContext={gridItem} />);
 
     const input = screen.getByRole('combobox');
     expect(input).not.toBeDisabled();
@@ -177,7 +167,7 @@ describe('RepeatRowSelect2', () => {
 
     await new Promise((r) => setTimeout(r, 1));
 
-    render(<RowRepeatScopeWrapper row={row} />);
+    render(<RepeatRowSelectWrapper sceneContext={row} />);
 
     const input = screen.getByRole('combobox');
     expect(input).not.toBeDisabled();
