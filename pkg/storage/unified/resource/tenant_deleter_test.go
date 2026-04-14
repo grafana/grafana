@@ -486,9 +486,9 @@ func TestDeleteTenant_MultipleGroupResources(t *testing.T) {
 	assert.NotEmpty(t, record.DeletedAt, "DeletedAt should be set after successful deletion")
 }
 
-// TestRunDeletionPass_DeletesExpiredForceRecord verifies that the deleter can
-// delete tenant data and mark the pending-delete record with DeletedAt even when Force=true.
-func TestRunDeletionPass_DeletesExpiredForceRecord(t *testing.T) {
+// TestRunDeletionPass_DeletesExpiredOrphanedRecord verifies that the deleter
+// removes both tenant data and the pending-delete record for orphaned tenants.
+func TestRunDeletionPass_DeletesExpiredOrphanedRecord(t *testing.T) {
 	td, ds, pds := newTestTenantDeleter(t, false)
 
 	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
@@ -496,7 +496,7 @@ func TestRunDeletionPass_DeletesExpiredForceRecord(t *testing.T) {
 	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{
 		DeleteAfter:      pastTime(),
 		LabelingComplete: true,
-		Force:            true,
+		Orphaned:         true,
 	}))
 
 	td.runDeletionPass(t.Context())
@@ -511,11 +511,11 @@ func TestRunDeletionPass_DeletesExpiredForceRecord(t *testing.T) {
 		require.NoError(t, err)
 		count++
 	}
-	assert.Equal(t, 0, count, "force record resources should be deleted when expired")
+	assert.Equal(t, 0, count, "orphaned record resources should be deleted when expired")
 
-	record, err := pds.Get(t.Context(), testStacksNS1)
-	require.NoError(t, err)
-	assert.NotEmpty(t, record.DeletedAt, "DeletedAt should be set after successful deletion")
+	// Orphaned records are removed entirely after cleanup.
+	_, err := pds.Get(t.Context(), testStacksNS1)
+	assert.Error(t, err, "orphaned pending-delete record should be removed after cleanup")
 }
 
 // TestRunDeletionPass_AllowsWhenGcomReturnsDeletedStatus verifies local deletion when

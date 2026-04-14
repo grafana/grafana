@@ -230,12 +230,20 @@ func (td *TenantDeleter) deleteTenant(ctx context.Context, tenantName string, gr
 		return nil
 	}
 
-	// Mark the record as fully deleted rather than removing it, so we retain
-	// an audit trail of when deletion completed.
 	record, err := td.pendingDeleteStore.Get(ctx, tenantName)
 	if err != nil {
-		return fmt.Errorf("reading pending delete record for timestamp update: %w", err)
+		return fmt.Errorf("reading pending delete record: %w", err)
 	}
+
+	// Orphaned records are manually seeded and won't be recreated by the
+	// tenant watcher, so we can safely remove them after cleanup.
+	if record.Orphaned {
+		return td.pendingDeleteStore.Delete(ctx, tenantName)
+	}
+
+	// Non-orphaned records must be kept with a DeletedAt timestamp to prevent
+	// the tenant watcher from recreating them while the tenant API still has
+	// the tenant with a pending-delete label.
 	record.DeletedAt = time.Now().UTC().Format(time.RFC3339)
 	return td.pendingDeleteStore.Upsert(ctx, tenantName, record)
 }
