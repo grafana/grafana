@@ -141,7 +141,7 @@ func TestTenantClearPendingDelete(t *testing.T) {
 		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
 			DeleteAfter:      "2026-03-01T00:00:00Z",
 			LabelingComplete: true,
-			Orphaned:            true,
+			Orphaned:         true,
 		}))
 		tw.pendingDeleteStore.RefreshCache(t.Context())
 
@@ -547,7 +547,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
 			DeleteAfter:      "2026-03-01T00:00:00Z",
 			LabelingComplete: true,
-			Orphaned:            true,
+			Orphaned:         true,
 		}))
 		tw.pendingDeleteStore.RefreshCache(t.Context())
 
@@ -564,7 +564,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
 			DeleteAfter:      "2026-03-01T00:00:00Z",
 			LabelingComplete: false,
-			Orphaned:            true,
+			Orphaned:         true,
 		}))
 
 		tw.handleTenant(pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
