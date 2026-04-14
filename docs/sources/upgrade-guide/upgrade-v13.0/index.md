@@ -23,7 +23,7 @@ weight: 496
 
 ### React 19 related updates
 
-As part of our [migration in Grafana 13 to React 19](https://grafana.com/blog/react-19-is-coming-to-grafana-what-plugin-developers-need-to-know/#next-steps-and-how-to-learn-more) - we recommend you to follow this order of update flow to ensure that your plugins are working properly and you have no disruptions during Grafana 13 upgrade.
+As part of [the migration to React 19 in Grafana 13](https://grafana.com/blog/react-19-is-coming-to-grafana-what-plugin-developers-need-to-know/#next-steps-and-how-to-learn-more), make the following updates to ensure that your plugins are working properly and you don't experience any disruptions during the Grafana 13 upgrade.
 
 Follow this sequence for best results:
 
