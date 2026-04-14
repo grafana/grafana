@@ -9765,7 +9765,8 @@
             "name-kilometer": "kilometer (km)",
             "name-meter": "meter (m)",
             "name-mile": "mile (mi)",
-            "name-millimeter": "millimeter (mm)"
+            "name-millimeter": "millimeter (mm)",
+            "name-centimeter": "centimeter (cm)"
           },
           "name": "Length"
         },
