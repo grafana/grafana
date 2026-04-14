@@ -1148,11 +1148,6 @@
       "count": 2
     }
   },
-  "public/app/features/actions/ActionEditor.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 7
-    }
-  },
   "public/app/features/actions/ActionVariablesEditor.tsx": {
     "@grafana/no-locale-compare": {
       "count": 1
