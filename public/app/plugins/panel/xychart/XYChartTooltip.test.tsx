@@ -206,7 +206,7 @@ describe('XYChartTooltip', () => {
       });
       renderTooltip({ xySeries: [series] });
       // "cpu" appears in header (series name) and content (label preserved because name === label)
-      expect(screen.getAllByText('cpu').length).toBeGreaterThanOrEqual(2);
+      expect(screen.getAllByText('cpu')).toHaveLength(2);
     });
 
     it('preserves label when field name has no spaces', () => {
@@ -277,25 +277,30 @@ describe('XYChartTooltip', () => {
   });
 
   describe('footer', () => {
-    it('renders footer when isPinned', () => {
-      renderTooltip({ isPinned: true });
+    it.each<[string, Partial<Props>]>([
+      ['isPinned', { isPinned: true }],
+      [
+        'dataLink has oneClick',
+        { isPinned: false, dataLinks: [{ href: 'http://example.com', title: 'Link', oneClick: true } as LinkModel] },
+      ],
+    ])('renders footer when %s', (_label, overrides) => {
+      renderTooltip(overrides);
       const wrapper = screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper);
+      // header + content + footer
       expect(wrapper.children).toHaveLength(3);
-    });
-
-    it('renders footer when dataLink has oneClick', () => {
-      renderTooltip({
-        isPinned: false,
-        dataLinks: [{ href: 'http://example.com', title: 'Link', oneClick: true } as LinkModel],
-      });
-      const wrapper = screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper);
-      expect(wrapper.children).toHaveLength(3);
+      expect(screen.getByText('Series A')).toBeVisible();
+      expect(screen.getByText('x')).toBeVisible();
+      expect(screen.getByText('y')).toBeVisible();
     });
 
     it('does not render footer when not pinned and no oneClick links', () => {
       renderTooltip({ isPinned: false, dataLinks: [] });
       const wrapper = screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper);
+      // header + content only
       expect(wrapper.children).toHaveLength(2);
+      expect(screen.getByText('Series A')).toBeVisible();
+      expect(screen.getByText('x')).toBeVisible();
+      expect(screen.getByText('y')).toBeVisible();
     });
 
     it('calls getFieldActions when canExecuteActions is true and pinned', () => {
