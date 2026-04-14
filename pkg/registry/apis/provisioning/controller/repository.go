@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	metricutils "github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -248,6 +249,7 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 
 	err := rc.processFn(item)
 	if err == nil {
+		rc.recordFinalOutcome(nil)
 		rc.queue.Forget(item)
 		return true
 	}
@@ -258,22 +260,49 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 
 	if item.attempts >= maxAttempts {
 		logger.Error("RepositoryController failed too many times")
+		rc.recordFinalOutcome(err)
 		rc.queue.Forget(item)
 		return true
 	}
 
 	if !apierrors.IsServiceUnavailable(err) {
 		logger.Info("RepositoryController will not retry")
+		rc.recordFinalOutcome(err)
 		rc.queue.Forget(item)
 		return true
 	} else {
 		logger.Info("RepositoryController will retry as service is unavailable")
+		rc.recordRetry(err)
 	}
 
 	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", item, err))
 	rc.queue.AddRateLimited(item)
 
 	return true
+}
+
+func (rc *RepositoryController) recordRetry(err error) {
+	var finalizerErr *FinalizerError
+	if errors.As(err, &finalizerErr) {
+		f, ok := rc.finalizer.(*finalizer)
+		if ok {
+			f.metrics.RecordRetry(finalizerErr.FinalizerType)
+		}
+	}
+}
+
+func (rc *RepositoryController) recordFinalOutcome(err error) {
+	var finalizerErr *FinalizerError
+	if errors.As(err, &finalizerErr) {
+		outcome := metricutils.SuccessOutcome
+		if err != nil {
+			outcome = metricutils.ErrorOutcome
+		}
+		f, ok := rc.finalizer.(*finalizer)
+		if ok {
+			f.metrics.RecordFinalOutcome(finalizerErr.FinalizerType, outcome)
+		}
+	}
 }
 
 func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provisioning.Repository) error {
