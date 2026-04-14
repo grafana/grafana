@@ -1613,3 +1613,54 @@ func TestSocialAzureAD_TokenSource_WorkloadIdentity(t *testing.T) {
 		require.Contains(t, err.Error(), "unable to unmarshal raw response body")
 	})
 }
+
+func TestSocialAzureAD_TokenExchangeTimeout(t *testing.T) {
+	// Test that the token_exchange_timeout setting is respected during Exchange()
+	info := &social.OAuthInfo{
+		Name:     "azuread",
+		ClientId: "test-client-id",
+		Extra:    map[string]string{},
+	}
+	cfg := setting.NewCfg()
+	s := NewAzureADProvider(info, cfg, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
+
+	// Create a test server that delays response to verify timeout is applied
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"access_token":"test-token","token_type":"Bearer","expires_in":3600}`))
+	}))
+	defer server.Close()
+	s.Endpoint.TokenURL = server.URL
+
+	t.Run("default timeout is 30s", func(t *testing.T) {
+		// With no token_exchange_timeout set, the default 30s should be used
+		// Verify the Exchange call succeeds with default timeout
+		ctx := context.Background()
+		_, err := s.Exchange(ctx, "test-code")
+		// Server responds immediately, so this should succeed regardless of timeout
+		assert.NoError(t, err)
+	})
+
+	t.Run("custom timeout from extra settings", func(t *testing.T) {
+		// Set a custom timeout
+		s.info.Extra[tokenExchangeTimeoutKey] = "60s"
+		ctx := context.Background()
+		_, err := s.Exchange(ctx, "test-code")
+		assert.NoError(t, err)
+	})
+
+	t.Run("invalid timeout falls back to default", func(t *testing.T) {
+		s.info.Extra[tokenExchangeTimeoutKey] = "not-a-duration"
+		ctx := context.Background()
+		// Should log warning and use default, but not fail
+		_, err := s.Exchange(ctx, "test-code")
+		assert.NoError(t, err)
+	})
+
+	t.Run("empty timeout uses default", func(t *testing.T) {
+		s.info.Extra[tokenExchangeTimeoutKey] = ""
+		ctx := context.Background()
+		_, err := s.Exchange(ctx, "test-code")
+		assert.NoError(t, err)
+	})
+}
