@@ -720,6 +720,20 @@
     },
     {
       "metadata": {
+        "name": "alertingRulesAPIV2",
+        "resourceVersion": "1776190542259",
+        "creationTimestamp": "2026-04-14T18:15:42Z"
+      },
+      "spec": {
+        "description": "Enables the new Rules API v2 UI with evaluation chains and groupless rule creation",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingSaveStateCompressed",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-01-27T17:47:33Z"

@@ -957,4 +957,8 @@ const (
 	// FlagReportingAnyPageReporting
 	// Enables reporting for any page in Grafana
 	FlagReportingAnyPageReporting = "reporting.anyPageReporting"
+
+	// FlagAlertingRulesAPIV2
+	// Enables the new Rules API v2 UI with evaluation chains and groupless rule creation
+	FlagAlertingRulesAPIV2 = "alertingRulesAPIV2"
 )
