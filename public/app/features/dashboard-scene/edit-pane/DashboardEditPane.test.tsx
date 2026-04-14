@@ -132,7 +132,7 @@ describe('DashboardEditPane', () => {
 
       // Selecting tab with closed edit pane should not select tab
       editPane.selectObject(tab1);
-      expect(editPane.getSelectedObject()).toBeNull();
+      expect(editPane.getSelectedObject()).toBeUndefined();
     });
 
     it('Selecting tab with open edit pane should select tab', () => {
