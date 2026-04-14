@@ -116,8 +116,6 @@ func TestIntegrationPreferences(t *testing.T) {
 		}, &raw)
 		require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "create preference for user")
 
-		adminPrefsName := "user-" + clientAdmin.Args.User.Identity.GetIdentifier()
-
 		// Admin has access to all three (namespace, team, and user)
 		rsp, err = clientAdmin.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
@@ -128,10 +126,10 @@ func TestIntegrationPreferences(t *testing.T) {
 		require.Equal(t, []string{
 			"namespace",
 			fmt.Sprintf("team-%s", helper.Org1.Staff.UID),
-			adminPrefsName,
+			userName,
 		}, names)
 
-		obj, err := clientAdmin.Resource.Get(ctx, adminPrefsName, metav1.GetOptions{})
+		obj, err := clientAdmin.Resource.Get(ctx, userName, metav1.GetOptions{})
 		require.NoError(t, err)
 		jj, err := json.MarshalIndent(obj.Object["spec"], "", "  ")
 		require.NoError(t, err)

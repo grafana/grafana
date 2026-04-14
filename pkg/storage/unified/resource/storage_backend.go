@@ -19,6 +19,7 @@ import (
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -70,8 +71,9 @@ type kvStorageBackend struct {
 	garbageCollection       GarbageCollectionConfig
 	lastImportStore         *lastImportStore
 	lastImportTimeMaxAge    time.Duration
-	//tracer        trace.Tracer
-	//reg           prometheus.Registerer
+	//tracer  trace.Tracer
+	//reg     prometheus.Registerer
+	metrics *kvBackendMetrics
 
 	watchOpts WatchOptions
 
@@ -92,6 +94,27 @@ type kvStorageBackend struct {
 
 	// cancel stops all background goroutines owned by the backend.
 	cancel context.CancelFunc
+}
+
+type kvBackendMetrics struct {
+	ConflictErrors *prometheus.CounterVec
+}
+
+func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
+	return &kvBackendMetrics{
+		ConflictErrors: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Namespace: "storage_server",
+			Name:      "optimistic_lock_conflicts_total",
+			Help:      "Total number of optimistic lock conflict errors in the KV storage backend",
+		}, []string{"resource", "action"}),
+	}
+}
+
+func (m *kvBackendMetrics) recordConflict(event WriteEvent) {
+	if m == nil {
+		return
+	}
+	m.ConflictErrors.WithLabelValues(event.Key.Resource, event.Type.String()).Inc()
 }
 
 var _ KVBackend = &kvStorageBackend{}
@@ -187,10 +210,12 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		garbageCollection.BatchWait = defaultGarbageCollectionBatchWait
 	}
 
+	metrics := newKVBackendMetrics(opts.Reg)
+
 	backend := &kvStorageBackend{
 		kv:                      kv,
 		bulkLock:                NewBulkLock(),
-		dataStore:               newDataStore(kv),
+		dataStore:               newDataStore(kv, metrics),
 		eventStore:              eventStore,
 		notifier:                newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
 		watchOpts:               opts.WatchOptions.normalize(),
@@ -207,6 +232,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		disablePruner:           opts.DisablePruner,
 		dashboardVersionsToKeep: opts.DashboardVersionsToKeep,
 		cancel:                  cancel,
+		metrics:                 metrics,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
@@ -708,6 +734,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if err != nil {
 			if errors.Is(err, ErrNotFound) {
 				// Resource doesn't exist, but PreviousRV was provided
+				k.metrics.recordConflict(event)
 				return 0, conflictError(event, "resource not found")
 			}
 			return 0, fmt.Errorf("failed to fetch latest resource: %w", err)
@@ -715,6 +742,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 
 		// Verify the current RV matches the PreviousRV
 		if latestKey.ResourceVersion != event.PreviousRV {
+			k.metrics.recordConflict(event)
 			return 0, conflictError(event, "requested RV does not match current RV")
 		}
 	}
@@ -824,12 +852,14 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if latestKey.ResourceVersion != dataKey.ResourceVersion {
 			// Delete the data we just wrote since it's not the latest
 			_ = k.dataStore.Delete(ctx, dataKey)
+			k.metrics.recordConflict(event)
 			return 0, conflictError(event, "concurrent modification detected")
 		}
 
 		if !rvmanager.IsRvEqual(prevKey.ResourceVersion, event.PreviousRV) {
 			// Another concurrent write happened between our read and write
 			_ = k.dataStore.Delete(ctx, dataKey)
+			k.metrics.recordConflict(event)
 			return 0, conflictError(event, "resource was modified concurrently")
 		}
 	} else if event.Type == resourcepb.WatchEvent_ADDED {
@@ -850,6 +880,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if latestKey.ResourceVersion != dataKey.ResourceVersion {
 			// Delete the data we just wrote since it's not the latest
 			_ = k.dataStore.Delete(ctx, dataKey)
+			k.metrics.recordConflict(event)
 			return 0, conflictError(event, "concurrent create detected")
 		}
 
@@ -857,6 +888,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if prevKey.Action == DataActionCreated {
 			// Another concurrent create happened - delete our write and return error
 			_ = k.dataStore.Delete(ctx, dataKey)
+			k.metrics.recordConflict(event)
 			return 0, conflictError(event, "concurrent create attempts detected")
 		}
 	}
@@ -1793,7 +1825,7 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 				Value:           data,
 				ResourceVersion: event.ResourceVersion,
 				PreviousRV:      event.PreviousRV,
-				Timestamp:       event.ResourceVersion / time.Second.Nanoseconds(), // convert to seconds
+				Timestamp:       resourceVersionTime(event.ResourceVersion).Unix(),
 			}
 		}
 		close(events)
