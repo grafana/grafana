@@ -48,6 +48,8 @@ function makeField(opts: {
 }): Field {
   const { name, values, type = FieldType.number, config = {} } = opts;
 
+  const { custom, ...rest } = config;
+
   const field = createDataFrame({
     fields: [
       {
@@ -59,9 +61,9 @@ function makeField(opts: {
             pointSize: { fixed: 5, min: 1, max: 10 },
             axisLabel: '',
             axisPlacement: 'auto',
-            ...((config.custom as Record<string, unknown>) ?? {}),
+            ...(custom as Record<string, unknown>),
           },
-          ...Object.fromEntries(Object.entries(config).filter(([k]) => k !== 'custom')),
+          ...rest,
         },
       },
     ],
