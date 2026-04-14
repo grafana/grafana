@@ -377,9 +377,7 @@ export function QueryEditorContextWrapper({
       reorderTransformations: dataPane.reorderTransformations,
       // Bulk actions
       bulkDeleteQueries: dataPane.bulkDeleteQueries,
-      bulkToggleQueriesHide: (refIds: readonly string[], hide: boolean) => {
-        dataPane.bulkToggleQueriesHide(refIds, hide);
-      },
+      bulkToggleQueriesHide: dataPane.bulkToggleQueriesHide,
       bulkDeleteTransformations: (transformIds: readonly string[]) => {
         const indices = transformIds.map((id) => findTransformationIndex(id)).filter((i) => i !== -1);
         dataPane.bulkDeleteTransformations(indices);
