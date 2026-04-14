@@ -159,11 +159,6 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
-  * Allow setting folder metadata for provisioned folders
-  * @default true
-  */
-  provisioningFolderMetadata?: boolean;
-  /**
   * Enable export functionality for provisioned resources
   * @default false
   */
@@ -288,11 +283,6 @@ export interface FeatureToggles {
   * @default false
   */
   scanRowInvalidDashboardParseFallbackEnabled?: boolean;
-  /**
-  * Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
-  * @default false
-  */
-  datasourceQueryTypes?: boolean;
   /**
   * Register legacy datasource apis that use the numeric id
   * @default false
@@ -594,11 +584,6 @@ export interface FeatureToggles {
   */
   newDashboardWithFiltersAndGroupBy?: boolean;
   /**
-  * Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it
-  * @default false
-  */
-  dashboardAdHocAndGroupByWrapper?: boolean;
-  /**
   * Renders ad hoc filters and group by in a single unified control
   * @default false
   */
@@ -738,6 +723,11 @@ export interface FeatureToggles {
   * @default false
   */
   zanzanaNoLegacyClient?: boolean;
+  /**
+  * Search users permissions using Zanzana.
+  * @default false
+  */
+  zanzanaSearchUsersPermissions?: boolean;
   /**
   * Enables reload of dashboards on scopes, time range and variables changes
   * @default false
@@ -964,6 +954,11 @@ export interface FeatureToggles {
   * @default false
   */
   teamLBACApiReadFromAppPlatform?: boolean;
+  /**
+  * Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
+  * @default false
+  */
+  teamLBACApiWriteFromAppPlatform?: boolean;
   /**
   * Enables Advisor app
   * @default true
@@ -1631,11 +1626,6 @@ export interface FeatureToggles {
   * @default false
   */
   frontendServiceUseSettingsService?: boolean;
-  /**
-  * Whether to use the new SharedPreferences functional component
-  * @default false
-  */
-  functionalSharedPreferences?: boolean;
   /**
   * Enables managed plugins v2 (expanded rollout, community plugin coverage)
   * @default false
