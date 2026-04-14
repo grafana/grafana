@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import type uPlot from 'uplot';
 
@@ -256,11 +256,11 @@ describe('TooltipPlugin2', () => {
 
       await act(async () => {
         mockUPlot.over.dispatchEvent(new MouseEvent('click'));
-        // wait until next render
-        await new Promise((resolve) => setTimeout(resolve, 0));
       });
 
-      expect(screen.getByText('Data link label')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Data link label')).toBeInTheDocument();
+      });
       expect(getDataLinks).toHaveBeenCalledWith(1, 5);
     });
 
@@ -451,7 +451,8 @@ describe('TooltipPlugin2', () => {
       view.unmount();
     });
 
-    it('should clean up event listeners added when tooltip is pinned', async () => {
+    it('removes document outside-click listeners on unmount after tooltip is pinned', async () => {
+      const removeSpy = jest.spyOn(document, 'removeEventListener');
       const { view, mockUPlot, initCallback, setSeriesCallback, setLegendCallback } = setUp();
 
       await act(async () => {
@@ -461,8 +462,17 @@ describe('TooltipPlugin2', () => {
         mockUPlot.over.dispatchEvent(new MouseEvent('click'));
       });
 
-      expect(screen.getByText('Tooltip content')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
+      });
+
+      removeSpy.mockClear();
       view.unmount();
+
+      expect(removeSpy).toHaveBeenCalledWith('mousedown', expect.any(Function), true);
+      expect(removeSpy).toHaveBeenCalledWith('keydown', expect.any(Function), true);
+
+      removeSpy.mockRestore();
     });
 
     it('registers u.over event listeners on init', () => {
@@ -474,17 +484,6 @@ describe('TooltipPlugin2', () => {
       expect(addSpy).toHaveBeenCalledWith('click', expect.any(Function));
 
       addSpy.mockRestore();
-      view.unmount();
-    });
-
-    it('cleans up u.over event listeners after init when unmounted', async () => {
-      const { view, mockUPlot, initCallback } = setUp();
-
-      await act(async () => {
-        initCallback(mockUPlot);
-      });
-
-      expect(mockUPlot.over).toBeInstanceOf(HTMLElement);
       view.unmount();
     });
 

@@ -11,12 +11,14 @@ import { EventBusPlugin } from './EventBusPlugin';
 import SpyInstance = jest.SpyInstance;
 
 describe('EventBusPlugin', () => {
-  const config = new UPlotConfigBuilder();
-  const eventBus = new EventBusSrv();
+  let config: UPlotConfigBuilder;
+  let eventBus: EventBusSrv;
   let addHookSpy: SpyInstance;
   let getStreamSpy: SpyInstance;
 
   beforeEach(() => {
+    config = new UPlotConfigBuilder();
+    eventBus = new EventBusSrv();
     addHookSpy = jest.spyOn(config, 'addHook');
     getStreamSpy = jest.spyOn(eventBus, 'getStream');
   });
@@ -43,6 +45,7 @@ describe('EventBusPlugin', () => {
   });
 
   it('unsubscribes on unmount', () => {
+    // Prototype spy: restored before this test ends so other suites are unaffected.
     const unsubscribeSpy = jest.spyOn(Subscription.prototype, 'unsubscribe');
 
     const { unmount } = render(<EventBusPlugin config={config} eventBus={eventBus} />);
@@ -86,7 +89,7 @@ describe('EventBusPlugin', () => {
         cursor: { _lock: false },
         ...uPlotOverrides,
       } as unknown as uPlot;
-      const initCallback = addHookSpy.mock.calls.find((call) => call[0] === 'init')?.[1] as (u: uPlot) => void;
+      const initCallback = addHookSpy.mock.calls.filter((call) => call[0] === 'init').at(-1)?.[1] as (u: uPlot) => void;
       expect(initCallback).toBeDefined();
       initCallback(mockU);
     };
@@ -158,10 +161,10 @@ describe('EventBusPlugin', () => {
   });
 
   describe('legend config', () => {
-    const config = new UPlotConfigBuilder();
-    const eventBus = new EventBusSrv();
-    const publishSpy = jest.spyOn(eventBus, 'publish');
-    const addHookSpy = jest.spyOn(config, 'addHook');
+    let config: UPlotConfigBuilder;
+    let eventBus: EventBusSrv;
+    let publishSpy: jest.SpyInstance;
+    let addHookSpy: jest.SpyInstance;
     let initCallback: (u: uPlot) => void, setLegendCallback: () => void, clearPublishes: () => void;
 
     const mockU = {
@@ -182,19 +185,23 @@ describe('EventBusPlugin', () => {
 
     const renderHelper = () => {
       render(<EventBusPlugin config={config} eventBus={eventBus} />);
-      initCallback = addHookSpy.mock.calls.find((call) => call[0] === 'init')?.[1] as (u: uPlot) => void;
-      setLegendCallback = addHookSpy.mock.calls.find((call) => call[0] === 'setLegend')?.[1] as () => void;
+      initCallback = addHookSpy.mock.calls.filter((call) => call[0] === 'init').at(-1)?.[1] as (u: uPlot) => void;
+      setLegendCallback = addHookSpy.mock.calls.filter((call) => call[0] === 'setLegend').at(-1)?.[1] as () => void;
       clearPublishes = () =>
         publishSpy.mock.calls.filter((call) => call[0] instanceof DataHoverClearEvent && call[0].tags?.has('uplot'));
     };
 
     beforeEach(() => {
       jest.useFakeTimers();
-      publishSpy.mockClear();
-      addHookSpy.mockClear();
+      config = new UPlotConfigBuilder();
+      eventBus = new EventBusSrv();
+      publishSpy = jest.spyOn(eventBus, 'publish');
+      addHookSpy = jest.spyOn(config, 'addHook');
     });
 
     afterEach(() => {
+      publishSpy.mockRestore();
+      addHookSpy.mockRestore();
       jest.useRealTimers();
     });
 

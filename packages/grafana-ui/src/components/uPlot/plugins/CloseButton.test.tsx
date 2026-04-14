@@ -14,7 +14,7 @@ describe('CloseButton (uPlot)', () => {
     expect(screen.getByRole('button', { name: 'Dismiss tooltip' })).toBeVisible();
   });
 
-  it('invokes onClick when activated', async () => {
+  it('invokes onClick when activated with pointer', async () => {
     const user = userEvent.setup();
     const onClick = jest.fn();
     render(<CloseButton onClick={onClick} />);
@@ -24,12 +24,13 @@ describe('CloseButton (uPlot)', () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it('invokes onClick when activated', async () => {
+  it('invokes onClick when activated with keyboard', async () => {
     const user = userEvent.setup();
     const onClick = jest.fn();
     render(<CloseButton onClick={onClick} />);
 
-    await user.click(screen.getByRole('button', { name: 'Close' }));
+    await user.tab();
+    await user.keyboard('{Enter}');
 
     expect(onClick).toHaveBeenCalledTimes(1);
   });
