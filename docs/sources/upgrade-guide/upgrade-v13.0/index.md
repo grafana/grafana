@@ -33,7 +33,7 @@ To ensure that the changes required for the upgrade to React 19 are in place in 
 
 #### Update all of your plugins
 
-Update all of your installed plugins and check if they are still working properly. By using the latest version of a plugin you facilitate support to React 19. 
+Update all of your installed plugins and check if they are still working properly. By using the latest version of a plugin you facilitate support to React 19.
 
 #### Upgrade to Grafana 13
 
