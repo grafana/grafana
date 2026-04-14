@@ -37,6 +37,8 @@ jest.mock('./addNew', () => ({
   ...jest.requireActual('./addNew'),
   addNewRowTo: jest.fn(),
   addNewTabTo: jest.fn(),
+  pasteRowTo: jest.fn(),
+  pasteTabTo: jest.fn(),
 }));
 
 // mock useClipboardState
@@ -44,6 +46,8 @@ jest.mock('./useClipboardState', () => ({
   ...jest.requireActual('./useClipboardState'),
   useClipboardState: () => ({
     hasCopiedPanel: true,
+    hasCopiedRow: true,
+    hasCopiedTab: true,
   }),
 }));
 
@@ -131,6 +135,28 @@ describe('CanvasGridAddActions', () => {
 
       await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.pastePanel));
       expect(DashboardInteractions.trackPastePanelClick).toHaveBeenCalled();
+    });
+
+    it('should render the paste row button and call pasteRowTo when clicked', async () => {
+      const { pasteRowTo } = jest.requireMock('./addNew');
+      const scene = buildTestScene();
+      const layoutManager = scene.state.body;
+      const user = userEvent.setup();
+      render(<CanvasGridAddActions layoutManager={layoutManager} />);
+
+      await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.pasteRow));
+      expect(pasteRowTo).toHaveBeenCalledWith(layoutManager);
+    });
+
+    it('should render the paste tab button and call pasteTabTo when clicked', async () => {
+      const { pasteTabTo } = jest.requireMock('./addNew');
+      const scene = buildTestScene();
+      const layoutManager = scene.state.body;
+      const user = userEvent.setup();
+      render(<CanvasGridAddActions layoutManager={layoutManager} />);
+
+      await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.pasteTab));
+      expect(pasteTabTo).toHaveBeenCalledWith(layoutManager);
     });
   });
 
