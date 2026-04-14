@@ -99,7 +99,7 @@ module.exports = {
         },
         cleanCache: true,
         onEnd: (coverageResults) => {
-          const reportURL = `file://${path.resolve(outputDir)}/index.html`;
+          const reportURL = `file://${path.resolve(outputDir)}/html/index.html`;
           console.log(`📄 Coverage report saved to ${reportURL}`);
 
           if (process.env.SHOULD_OPEN_COVERAGE_REPORT === 'true') {

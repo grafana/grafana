@@ -3566,11 +3566,13 @@
       },
       "instance-details-drawer": {
         "alert-instance-label": "",
+        "back": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "인스턴스 세부 정보",
         "silence-button": "",
-        "silence-no-permission": ""
+        "silence-no-permission": "",
+        "silence-title-with-name": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "선택한 시간 범위에서 발생 또는 보류 중인 알림 인스턴스가 없습니다.",
@@ -12301,7 +12303,7 @@
         "description-no-value": "값이 없을 때 표시할 항목",
         "description-value-mappings": "입력 값에 따라 표시할 텍스트 수정",
         "name-actions": "작업",
-        "name-ad-hoc": "임시 필터링 가능",
+        "name-ad-hoc": "",
         "name-color-scheme": "색상 구성표",
         "name-data-links": "데이터 링크",
         "name-decimals": "소수(decimal)",
@@ -12760,6 +12762,7 @@
       "title-button-disabled": "이 플러그인을 아직 사용할 수 없으며 설치를 완료하는 데 시간이 걸릴 수 있습니다."
     },
     "install-controls": {
+      "contact-us": "",
       "install": "설치",
       "installing": "설치 중",
       "update": "업데이트",
