@@ -20,6 +20,7 @@ import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { contextSrv } from 'app/core/services/context_srv';
 import kbn from 'app/core/utils/kbn';
+import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { dispatch } from 'app/store/store';
 
 import { deletedDashboardsCache } from './deletedDashboardsCache';
@@ -366,7 +367,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
 
     if (query.deleted) {
-      uri = `${getAPIBaseURL(DASHBOARD_API_GROUP, 'v1beta1')}/dashboards/?labelSelector=grafana.app/get-trash=true`;
+      uri = `${getAPIBaseURL(DASHBOARD_API_GROUP, dashboardAPIVersionResolver.getV1())}/dashboards/?labelSelector=grafana.app/get-trash=true`;
     }
     return uri;
   }

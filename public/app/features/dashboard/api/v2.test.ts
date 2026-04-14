@@ -607,5 +607,28 @@ describe('v2 dashboard API', () => {
         expect.anything()
       );
     });
+
+    it('should correct apiVersion when input has stale version', async () => {
+      const dashboardToRestore = {
+        ...mockDashboardDto,
+        apiVersion: 'dashboard.grafana.app/v2beta1',
+        metadata: {
+          ...mockDashboardDto.metadata,
+          resourceVersion: '123456',
+        },
+      };
+
+      const api = new K8sDashboardV2API();
+      await api.restoreDashboard(dashboardToRestore);
+
+      expect(dashboardToRestore.apiVersion).toBe('dashboard.grafana.app/v2');
+      expect(mockPost).toHaveBeenCalledWith(
+        expect.stringContaining('/apis/dashboard.grafana.app/v2/'),
+        expect.objectContaining({
+          apiVersion: 'dashboard.grafana.app/v2',
+        }),
+        expect.anything()
+      );
+    });
   });
 });

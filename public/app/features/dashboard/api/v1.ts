@@ -313,6 +313,10 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       ...dashboard.metadata.annotations,
       [AnnoKeyGrantPermissions]: 'default',
     };
+    // Ensure apiVersion matches the endpoint version to prevent K8s API rejection
+    // when the stored resource has a stale version (e.g. v1beta1)
+    const { group, version } = getK8sV1DashboardApiConfig();
+    dashboard.apiVersion = `${group}/${version}`;
     return this.client.create(dashboard);
   }
 }

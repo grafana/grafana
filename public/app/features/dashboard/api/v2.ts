@@ -259,6 +259,10 @@ export class K8sDashboardV2API
       ...dashboard.metadata.annotations,
       [AnnoKeyGrantPermissions]: 'default',
     };
+    // Ensure apiVersion matches the endpoint version to prevent K8s API rejection
+    // when the stored resource has a stale version (e.g. v2beta1)
+    const { group, version } = getK8sV2DashboardApiConfig();
+    dashboard.apiVersion = `${group}/${version}`;
     return this.client.create(dashboard);
   }
 }

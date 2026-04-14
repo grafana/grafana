@@ -12,6 +12,7 @@ import {
 } from 'app/features/apiserver/types';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
+import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
 import { type DashboardWithAccessInfo } from './types';
 import { K8sDashboardAPI } from './v1';
 
@@ -126,6 +127,7 @@ jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
 describe('v1 dashboard API', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    dashboardAPIVersionResolver.set({ v1: 'v1', v2: 'v2' });
   });
 
   it('should provide folder annotations', async () => {
@@ -415,7 +417,7 @@ describe('v1 dashboard API', () => {
 
       expect(mockPut).toHaveBeenCalledTimes(1);
       expect(mockPut).toHaveBeenCalledWith(
-        '/apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/test-dash',
+        '/apis/dashboard.grafana.app/v1/namespaces/default/dashboards/test-dash',
         expect.objectContaining({
           metadata: expect.objectContaining({
             annotations: expect.objectContaining({
@@ -631,7 +633,7 @@ describe('v1 dashboard API', () => {
 
       expect(dashboardToRestore.metadata.resourceVersion).toBe('');
       expect(mockPost).toHaveBeenCalledWith(
-        expect.stringContaining('/apis/dashboard.grafana.app/v1beta1/'),
+        expect.stringContaining('/apis/dashboard.grafana.app/v1/'),
         expect.objectContaining({
           metadata: expect.objectContaining({
             resourceVersion: '',
@@ -674,13 +676,36 @@ describe('v1 dashboard API', () => {
       await api.restoreDashboard(dashboardToRestore);
 
       expect(mockPost).toHaveBeenCalledWith(
-        expect.stringContaining('/apis/dashboard.grafana.app/v1beta1/'),
+        expect.stringContaining('/apis/dashboard.grafana.app/v1/'),
         expect.objectContaining({
           metadata: expect.objectContaining({
             annotations: expect.objectContaining({
               [AnnoKeyFolder]: 'randomFolderUid',
             }),
           }),
+        }),
+        expect.anything()
+      );
+    });
+
+    it('should correct apiVersion when input has stale version', async () => {
+      const dashboardToRestore = {
+        ...mockDashboardDto,
+        apiVersion: 'dashboard.grafana.app/v1beta1',
+        metadata: {
+          ...mockDashboardDto.metadata,
+          resourceVersion: '123456',
+        },
+      };
+
+      const api = new K8sDashboardAPI();
+      await api.restoreDashboard(dashboardToRestore);
+
+      expect(dashboardToRestore.apiVersion).toBe('dashboard.grafana.app/v1');
+      expect(mockPost).toHaveBeenCalledWith(
+        expect.stringContaining('/apis/dashboard.grafana.app/v1/'),
+        expect.objectContaining({
+          apiVersion: 'dashboard.grafana.app/v1',
         }),
         expect.anything()
       );
