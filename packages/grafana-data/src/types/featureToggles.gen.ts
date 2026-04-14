@@ -1740,5 +1740,5 @@ export interface FeatureToggles {
   * Enables the new Rules API v2 UI with evaluation chains and groupless rule creation
   * @default false
   */
-  alertingRulesAPIV2?: boolean;
+  ['alerting.rulesAPIV2']?: boolean;
 }

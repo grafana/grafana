@@ -3046,7 +3046,7 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
-			Name:         "alertingRulesAPIV2",
+			Name:         "alerting.rulesAPIV2",
 			Description:  "Enables the new Rules API v2 UI with evaluation chains and groupless rule creation",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
