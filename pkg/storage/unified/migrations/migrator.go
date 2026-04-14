@@ -114,7 +114,7 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 	// TODO... the migrator must be able to dynamically define the groups
 	// The bulk processor will clean up any resources in these groups, and
 	// initialize authorization scoped to this set of resources
-	if len(opts.Resources) == 1 && opts.Resources[0].Group == "*.datasource.grafana.app" {
+	if len(opts.Resources) == 1 && opts.Resources[0].Group == "datasource.grafana.app" {
 		// This should be loaded from the DB, or the plugin scanning
 		plugins := []string{
 			"alertmanager", "azuremonitor", "cloud-monitoring", "cloudwatch", "dashboard", "elasticsearch",

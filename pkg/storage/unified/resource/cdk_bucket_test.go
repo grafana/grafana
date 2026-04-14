@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"io"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,6 +22,8 @@ type fakeCDKBucket struct {
 	listFunc       func(opts *blob.ListOptions) *blob.ListIterator
 	listPageFunc   func(ctx context.Context, pageToken []byte, pageSize int, opts *blob.ListOptions) ([]*blob.ListObject, []byte, error)
 	deleteFunc     func(ctx context.Context, key string) error
+	uploadFunc     func(ctx context.Context, key string, r io.Reader, opts *blob.WriterOptions) error
+	downloadFunc   func(ctx context.Context, key string, w io.Writer, opts *blob.ReaderOptions) error
 }
 
 func (f *fakeCDKBucket) Attributes(ctx context.Context, key string) (*blob.Attributes, error) {
@@ -68,6 +71,20 @@ func (f *fakeCDKBucket) ListPage(ctx context.Context, pageToken []byte, pageSize
 func (f *fakeCDKBucket) Delete(ctx context.Context, key string) error {
 	if f.deleteFunc != nil {
 		return f.deleteFunc(ctx, key)
+	}
+	return nil
+}
+
+func (f *fakeCDKBucket) Upload(ctx context.Context, key string, r io.Reader, opts *blob.WriterOptions) error {
+	if f.uploadFunc != nil {
+		return f.uploadFunc(ctx, key, r, opts)
+	}
+	return nil
+}
+
+func (f *fakeCDKBucket) Download(ctx context.Context, key string, w io.Writer, opts *blob.ReaderOptions) error {
+	if f.downloadFunc != nil {
+		return f.downloadFunc(ctx, key, w, opts)
 	}
 	return nil
 }
@@ -152,6 +169,42 @@ func TestInstrumentedBucket(t *testing.T) {
 			call: func(instrumentedBucket *InstrumentedBucket) error {
 				_, err := instrumentedBucket.ReadAll(context.Background(), "key")
 				return err
+			},
+		},
+		{
+			name:      "Upload",
+			operation: "Upload",
+			setup: func(fakeBucket *fakeCDKBucket, success bool) {
+				if success {
+					fakeBucket.uploadFunc = func(ctx context.Context, key string, r io.Reader, opts *blob.WriterOptions) error {
+						return nil
+					}
+				} else {
+					fakeBucket.uploadFunc = func(ctx context.Context, key string, r io.Reader, opts *blob.WriterOptions) error {
+						return fmt.Errorf("some error")
+					}
+				}
+			},
+			call: func(instrumentedBucket *InstrumentedBucket) error {
+				return instrumentedBucket.Upload(context.Background(), "key", nil, nil)
+			},
+		},
+		{
+			name:      "Download",
+			operation: "Download",
+			setup: func(fakeBucket *fakeCDKBucket, success bool) {
+				if success {
+					fakeBucket.downloadFunc = func(ctx context.Context, key string, w io.Writer, opts *blob.ReaderOptions) error {
+						return nil
+					}
+				} else {
+					fakeBucket.downloadFunc = func(ctx context.Context, key string, w io.Writer, opts *blob.ReaderOptions) error {
+						return fmt.Errorf("some error")
+					}
+				}
+			},
+			call: func(instrumentedBucket *InstrumentedBucket) error {
+				return instrumentedBucket.Download(context.Background(), "key", nil, nil)
 			},
 		},
 		{
