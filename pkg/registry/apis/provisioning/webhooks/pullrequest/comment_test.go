@@ -220,9 +220,14 @@ func TestGenerateComment(t *testing.T) {
 	}
 }
 
-func TestGenerateComment_NilParsedInTableTemplate(t *testing.T) {
+func TestGenerateComment_NilParsedDeletedInTableTemplate(t *testing.T) {
 	repo := NewMockPullRequestRepo(t)
-	repo.On("CommentPullRequest", context.Background(), 1, mock.Anything).Return(nil)
+
+	var capturedComment string
+	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
+		capturedComment = comment
+		return true
+	})).Return(nil)
 
 	info := changeInfo{
 		GrafanaBaseURL: "http://host/",
@@ -243,7 +248,6 @@ func TestGenerateComment_NilParsedInTableTemplate(t *testing.T) {
 					Action: repository.FileActionDeleted,
 					Path:   "deleted-file.json",
 				},
-				Error: "delete feedback not yet implemented",
 			},
 		},
 	}
@@ -251,11 +255,19 @@ func TestGenerateComment_NilParsedInTableTemplate(t *testing.T) {
 	commenter := NewCommenter(false)
 	err := commenter.Comment(context.Background(), repo, 1, info)
 	require.NoError(t, err)
+	require.Contains(t, capturedComment, "2 changes")
+	require.Contains(t, capturedComment, "deleted")
+	require.Contains(t, capturedComment, ".json")
 }
 
 func TestGenerateComment_SingleChangeNilParsed(t *testing.T) {
 	repo := NewMockPullRequestRepo(t)
-	repo.On("CommentPullRequest", context.Background(), 1, mock.Anything).Return(nil)
+
+	var capturedComment string
+	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
+		capturedComment = comment
+		return true
+	})).Return(nil)
 
 	info := changeInfo{
 		GrafanaBaseURL: "http://host/",
@@ -273,6 +285,51 @@ func TestGenerateComment_SingleChangeNilParsed(t *testing.T) {
 	commenter := NewCommenter(false)
 	err := commenter.Comment(context.Background(), repo, 1, info)
 	require.NoError(t, err)
+	require.Contains(t, capturedComment, "1 changes")
+	require.Contains(t, capturedComment, "created")
+}
+
+func TestGenerateComment_ParseFailureErrorSurfaced(t *testing.T) {
+	repo := NewMockPullRequestRepo(t)
+
+	var capturedComment string
+	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
+		capturedComment = comment
+		return true
+	})).Return(nil)
+
+	info := changeInfo{
+		GrafanaBaseURL: "http://host/",
+		Changes: []fileChangeInfo{
+			{
+				Parsed: &resources.ParsedResource{
+					Info: &repository.FileInfo{
+						Path: "valid.json",
+					},
+					Action: v0alpha1.ResourceActionCreate,
+					GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+				},
+				Title:      "Valid Dashboard",
+				PreviewURL: "http://grafana/admin/preview",
+			},
+			{
+				Change: repository.VersionedFileChange{
+					Action: repository.FileActionCreated,
+					Path:   "broken.json",
+				},
+				Error: "unable to parse resource",
+			},
+		},
+	}
+
+	commenter := NewCommenter(false)
+	err := commenter.Comment(context.Background(), repo, 1, info)
+	require.NoError(t, err)
+	require.Contains(t, capturedComment, "2 changes")
+	require.Contains(t, capturedComment, "1 with issues")
+	require.Contains(t, capturedComment, "Validation Issues")
+	require.Contains(t, capturedComment, "broken.json")
+	require.Contains(t, capturedComment, "unable to parse resource")
 }
 
 func TestCommenter_ShowImageRendererNote(t *testing.T) {
