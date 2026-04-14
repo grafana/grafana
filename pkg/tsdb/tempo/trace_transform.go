@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -234,17 +233,7 @@ func getAttributeVal(attr *commonv11.AnyValue) (any, error) {
 	case *commonv11.AnyValue_BoolValue:
 		return attr.GetBoolValue(), nil
 	case *commonv11.AnyValue_DoubleValue:
-		f := attr.GetDoubleValue()
-		switch {
-		case math.IsNaN(f):
-			return "NaN", nil
-		case math.IsInf(f, 1):
-			return "Inf", nil
-		case math.IsInf(f, -1):
-			return "-Inf", nil
-		default:
-			return f, nil
-		}
+		return attr.GetDoubleValue(), nil
 	case *commonv11.AnyValue_KvlistValue:
 		return kvListAsString(attr.GetKvlistValue())
 	case *commonv11.AnyValue_ArrayValue:
