@@ -1661,8 +1661,9 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				}
 
 				if s.storageMetrics != nil {
-					// record latency - resource version is a unix timestamp in microseconds so we convert to seconds
-					latencySeconds := float64(time.Now().UnixMicro()-event.ResourceVersion) / 1e6
+					// record latency - resource version can be either a unix microsecond timestamp (SQL backend)
+					// or a snowflake ID (KV backend), so we use resourceVersionTime to handle both formats.
+					latencySeconds := time.Since(resourceVersionTime(event.ResourceVersion)).Seconds()
 					if latencySeconds > 0 {
 						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
 					}
