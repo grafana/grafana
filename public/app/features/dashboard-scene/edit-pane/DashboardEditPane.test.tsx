@@ -2,6 +2,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils } from '@grafana/runtime';
 import {
   ConstantVariable,
+  CustomVariable,
   type MultiValueVariable,
   SceneGridLayout,
   SceneTimeRange,
@@ -27,6 +28,7 @@ import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManag
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { type DashboardEditPane } from './DashboardEditPane';
+import { DashboardOutline } from './DashboardOutline';
 import { dashboardEditActions } from './shared';
 
 jest.mock('@grafana/runtime', () => ({
@@ -107,6 +109,23 @@ describe('DashboardEditPane', () => {
 
       // Still only 1 item selected
       expect(editPane.state.selectionContext.selected).toHaveLength(1);
+    });
+
+    it('Selecting when none element pane is open should not toggle selection', () => {
+      const scene = buildTestScene();
+      const editPane = scene.state.editPane;
+
+      const panel = scene.onCreateNewPanel();
+
+      editPane.openPane(new DashboardOutline({}));
+
+      expect(editPane.getSelectedObject()).toBe(panel);
+
+      // Select panel again (when it is still selected)
+      editPane.state.selectionContext.onSelect({ id: panel.state.key! }, { force: false });
+
+      // Should still be selected
+      expect(editPane.getSelectedObject()).toBe(panel);
     });
   });
 

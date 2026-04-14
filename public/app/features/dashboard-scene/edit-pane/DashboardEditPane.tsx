@@ -266,6 +266,11 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       return;
     }
 
+    // If current open pane is not showing selected element, then we should maintain selection (force = true) which disables selection toggling
+    if (this.state.openPane?.getId() !== 'element') {
+      force = true;
+    }
+
     if (multi) {
       if (hasItem) {
         // Remove item unless force is true

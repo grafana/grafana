@@ -75,7 +75,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               title={t('dashboard.sidebar.add.title', 'Add')}
               tooltip={t('dashboard.sidebar.add.tooltip', 'Add new element')}
               data-testid={selectors.pages.Dashboard.Sidebar.addButton}
-              active={openPane?.getId() === 'add'}
+              active={openPane instanceof AddNewEditPane}
             />
 
             <Sidebar.Button
@@ -111,7 +111,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               title={t('dashboard.sidebar.edit-schema.title', 'Code')}
               icon="brackets-curly"
               onClick={() => editPane.openPane(new DashboardCodePane({}))}
-              active={openPane?.getId() === 'code'}
+              active={openPane instanceof DashboardCodePane}
             />
             {config.featureToggles.dashboardUndoRedo && (
               <>
@@ -130,7 +130,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             title={t('dashboard.sidebar.outline.title', 'Outline')}
             tooltip={t('dashboard.sidebar.outline.tooltip', 'Content outline')}
             data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
-            active={openPane?.getId() === 'outline'}
+            active={openPane instanceof DashboardOutline}
           />
           {config.featureToggles.dashboardNewLayouts &&
             (config.featureToggles.dashboardFiltersOverview ||
@@ -185,7 +185,7 @@ function FiltersOverviewButton({
       onClick={() => editPane.openPane(new DashboardFiltersOverviewPane({}))}
       title={t('dashboard.sidebar.filters', 'Filters')}
       tooltip={t('dashboard.sidebar.open', 'Filters overview')}
-      active={openPane?.getId() === 'filters'}
+      active={openPane instanceof DashboardFiltersOverviewPane}
     />
   );
 }

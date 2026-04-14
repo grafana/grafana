@@ -11,7 +11,7 @@ export interface EditPaneSelectionActions {
   clearSelection(noEvent?: boolean): void;
 }
 
-export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters' | 'add' | 'code' | 'variable-add';
+export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters' | 'add' | 'code' | 'variable-type-selection';
 
 export interface DashboardSidebarPane extends SceneObject {
   getId(): DashboardSidebarPaneName;

@@ -37,7 +37,7 @@ export interface VariableAddPaneState extends SceneObjectState {
 export class VariableAddPane extends SceneObjectBase<VariableAddPaneState> {
   public static Component = VariableAddPaneRenderer;
   public getId() {
-    return 'variable-add' as const;
+    return 'variable-type-selection' as const;
   }
 }
 
@@ -49,11 +49,7 @@ export function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableA
       const existing = sectionOwner.state.$variables;
       const variablesSet = existing instanceof SceneVariableSet ? existing : new SceneVariableSet({ variables: [] });
 
-      if (!(variablesSet instanceof SceneVariableSet)) {
-        return;
-      }
-
-      if (!(existing instanceof SceneVariableSet)) {
+      if (!existing) {
         sectionOwner.setState({ $variables: variablesSet });
       }
 
@@ -89,7 +85,7 @@ export interface VariableTypeChangePaneState extends SceneObjectState {
 export class VariableTypeChangePane extends SceneObjectBase<VariableTypeChangePaneState> {
   public static Component = VariableTypeChangePaneRenderer;
   public getId() {
-    return 'variable-add' as const;
+    return 'variable-type-selection' as const;
   }
 }
 
