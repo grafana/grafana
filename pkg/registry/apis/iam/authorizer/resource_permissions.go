@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/grafana/authlib/types"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -311,47 +312,47 @@ func (r *ResourcePermissionsAuthorizer) FilterWatch(ctx context.Context, w watch
 	}
 
 	// Filter events based on user's access to the target resource
-filterFunc := func(events []watch.Event) ([]bool, error) {                                                                                                            
-          results := make([]bool, len(events))
+	filterFunc := func(events []watch.Event) ([]bool, error) {
+		results := make([]bool, len(events))
 
-          // collect valid ResourcePermission objects and remember their positions                                                                                          
-          var batch []iamv0.ResourcePermission
-          var batchIndices []int                                                                                                                                            
-          for i, event := range events {
-              rp, ok := event.Object.(*iamv0.ResourcePermission)
-              if !ok {                                                                                                                                                      
-                  continue
-              }                                                                                                                                                             
-              batch = append(batch, *rp)
-              batchIndices = append(batchIndices, i)
-          }
+		// collect valid ResourcePermission objects and remember their positions
+		var batch []iamv0.ResourcePermission
+		var batchIndices []int
+		for i, event := range events {
+			rp, ok := event.Object.(*iamv0.ResourcePermission)
+			if !ok {
+				continue
+			}
+			batch = append(batch, *rp)
+			batchIndices = append(batchIndices, i)
+		}
 
-          if len(batch) == 0 {
-              return results, nil
-          }                                                                                                                                                                 
-  
-          // single BatchCheck RPC for the entire flush                                                                                                                     
-          allowed, err := CanViewTargets(r, ctx, authInfo, batch, func(i int) (string, string, string, string, bool) {
-              target := batch[i].Spec.Resource                                                                                                                              
-              return batch[i].Namespace, target.ApiGroup, target.Resource, target.Name, true
-          })                                                                                                                                                                
-          if err != nil {
-              return nil, err
-          }
-                                                                                                                                                                            
-          // map allowed items back to original event positions by name
-          allowedSet := make(map[string]struct{}, len(allowed))                                                                                                             
-          for _, rp := range allowed {
-              allowedSet[rp.Name] = struct{}{}
-          }
-          for j, origIdx := range batchIndices {
-              if _, ok := allowedSet[batch[j].Name]; ok {                                                                                                                   
-                  results[origIdx] = true
-              }                                                                                                                                                             
-          }       
+		if len(batch) == 0 {
+			return results, nil
+		}
 
-          return results, nil
-      }
+		// single BatchCheck RPC for the entire flush
+		allowed, err := CanViewTargets(r, ctx, authInfo, batch, func(i int) (string, string, string, string, bool) {
+			target := batch[i].Spec.Resource
+			return batch[i].Namespace, target.ApiGroup, target.Resource, target.Name, true
+		})
+		if err != nil {
+			return nil, err
+		}
 
-	return storewrapper.NewFilteredWatch(ctx, w, filterFunc), nil
+		// map allowed items back to original event positions by name
+		allowedSet := make(map[string]struct{}, len(allowed))
+		for _, rp := range allowed {
+			allowedSet[rp.Name] = struct{}{}
+		}
+		for j, origIdx := range batchIndices {
+			if _, ok := allowedSet[batch[j].Name]; ok {
+				results[origIdx] = true
+			}
+		}
+
+		return results, nil
+	}
+
+	return storewrapper.NewFilteredWatch(ctx, w, filterFunc, 50*time.Millisecond), nil
 }

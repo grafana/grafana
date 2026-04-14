@@ -3,6 +3,7 @@ package storewrapper
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -305,104 +306,104 @@ type filteredWatch struct {
 	stopChan   chan struct{}
 }
 
-// NewFilteredWatch wraps inner with a per-batch filter.                                                                                                                  
-  // filterFunc receives a slice of data events and returns a []bool of the same
-  // length — true means forward, false means drop. Bookmark and Error events
-  // always bypass the filter. flushInterval controls batching:                                                                                                             
-  //   - 0: flush after every event (zero extra latency, one call per event)
-  //   - >0: accumulate and call filterFunc once per tick (amortizes BatchCheck RPCs)                                                                                       
-  func NewFilteredWatch(
-      ctx context.Context,                                                                                                                                                  
-      inner watch.Interface,
-      filterFunc func([]watch.Event) ([]bool, error),                                                                                                                       
-      flushInterval time.Duration,
-  ) watch.Interface {
-      fw := &filteredWatch{
-          inner:      inner,
-          resultChan: make(chan watch.Event, 100),                                                                                                                          
-          stopChan:   make(chan struct{}),
-      }                                                                                                                                                                     
-                  
-      go func() {
-          defer close(fw.resultChan)
-          defer inner.Stop()
+// NewFilteredWatch wraps inner with a per-batch filter.
+// filterFunc receives a slice of data events and returns a []bool of the same
+// length — true means forward, false means drop. Bookmark and Error events
+// always bypass the filter. flushInterval controls batching:
+//   - 0: flush after every event (zero extra latency, one call per event)
+//   - >0: accumulate and call filterFunc once per tick (amortizes BatchCheck RPCs)
+func NewFilteredWatch(
+	ctx context.Context,
+	inner watch.Interface,
+	filterFunc func([]watch.Event) ([]bool, error),
+	flushInterval time.Duration,
+) watch.Interface {
+	fw := &filteredWatch{
+		inner:      inner,
+		resultChan: make(chan watch.Event, 100),
+		stopChan:   make(chan struct{}),
+	}
 
-          var pending []watch.Event                                                                                                                                         
-          var tickChan <-chan time.Time
-          if flushInterval > 0 {                                                                                                                                            
-              t := time.NewTicker(flushInterval)
-              defer t.Stop()
-              tickChan = t.C
-          }
-                                                                                                                                                                            
-          flush := func() {
-              if len(pending) == 0 {                                                                                                                                        
-                  return
-              }
-              allowed, err := filterFunc(pending)
-              if err != nil {
-                  select {
-                  case fw.resultChan <- watch.Event{
-                      Type:   watch.Error,
-                      Object: &metaV1.Status{Status: metaV1.StatusFailure, Message: err.Error()},                                                                           
-                  }:
-                  case <-ctx.Done():                                                                                                                                        
-                  case <-fw.stopChan:
-                  }                                                                                                                                                         
-                  pending = pending[:0]
-                  return                                                                                                                                                    
-              }   
-              for i, event := range pending {
-                  if i < len(allowed) && allowed[i] {
-                      select {
-                      case fw.resultChan <- event:
-                      case <-ctx.Done():
-                          pending = pending[:0]                                                                                                                             
-                          return
-                      case <-fw.stopChan:                                                                                                                                   
-                          pending = pending[:0]
-                          return
-                      }
-                  }
-              }
-              pending = pending[:0]
-          }
-                                                                                                                                                                            
-          for {
-              select {                                                                                                                                                      
-              case <-ctx.Done():
-                  return
-              case <-fw.stopChan:
-                  return
-              case <-tickChan:
-                  flush()
-              case event, ok := <-inner.ResultChan():
-                  if !ok {
-                      flush()                                                                                                                                               
-                      return
-                  }                                                                                                                                                         
-                  // Bookmark and Error protocol events bypass the filter
-                  if event.Type == watch.Bookmark || event.Type == watch.Error {
-                      flush() // drain pending first to preserve ordering
-                      select {
-                      case fw.resultChan <- event:                                                                                                                          
-                      case <-ctx.Done():
-                          return                                                                                                                                            
-                      case <-fw.stopChan:
-                          return
-                      }
-                      continue
-                  }
-                  pending = append(pending, event)
-                  if flushInterval == 0 || len(pending) >= 100 {                                                                                                            
-                      flush()
-                  }                                                                                                                                                         
-              }   
-          }
-      }()
+	go func() {
+		defer close(fw.resultChan)
+		defer inner.Stop()
 
-      return fw
-  }
+		var pending []watch.Event
+		var tickChan <-chan time.Time
+		if flushInterval > 0 {
+			t := time.NewTicker(flushInterval)
+			defer t.Stop()
+			tickChan = t.C
+		}
+
+		flush := func() {
+			if len(pending) == 0 {
+				return
+			}
+			allowed, err := filterFunc(pending)
+			if err != nil {
+				select {
+				case fw.resultChan <- watch.Event{
+					Type:   watch.Error,
+					Object: &metaV1.Status{Status: metaV1.StatusFailure, Message: err.Error()},
+				}:
+				case <-ctx.Done():
+				case <-fw.stopChan:
+				}
+				pending = pending[:0]
+				return
+			}
+			for i, event := range pending {
+				if i < len(allowed) && allowed[i] {
+					select {
+					case fw.resultChan <- event:
+					case <-ctx.Done():
+						pending = pending[:0]
+						return
+					case <-fw.stopChan:
+						pending = pending[:0]
+						return
+					}
+				}
+			}
+			pending = pending[:0]
+		}
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-fw.stopChan:
+				return
+			case <-tickChan:
+				flush()
+			case event, ok := <-inner.ResultChan():
+				if !ok {
+					flush()
+					return
+				}
+				// Bookmark and Error protocol events bypass the filter
+				if event.Type == watch.Bookmark || event.Type == watch.Error {
+					flush() // drain pending first to preserve ordering
+					select {
+					case fw.resultChan <- event:
+					case <-ctx.Done():
+						return
+					case <-fw.stopChan:
+						return
+					}
+					continue
+				}
+				pending = append(pending, event)
+				if flushInterval == 0 || len(pending) >= 100 {
+					flush()
+				}
+			}
+		}
+	}()
+
+	return fw
+}
 
 func (f *filteredWatch) Stop() {
 	close(f.stopChan)
