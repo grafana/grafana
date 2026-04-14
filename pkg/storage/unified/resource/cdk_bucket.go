@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"io"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -20,6 +21,8 @@ type CDKBucket interface {
 	ReadAll(context.Context, string) ([]byte, error)
 	Delete(context.Context, string) error
 	SignedURL(context.Context, string, *blob.SignedURLOptions) (string, error)
+	Upload(context.Context, string, io.Reader, *blob.WriterOptions) error
+	Download(context.Context, string, io.Writer, *blob.ReaderOptions) error
 }
 
 var _ CDKBucket = (*blob.Bucket)(nil)
@@ -166,6 +169,52 @@ func (b *InstrumentedBucket) Delete(ctx context.Context, key string) error {
 	end := time.Since(start).Seconds()
 	labels := prometheus.Labels{
 		cdkBucketOperationLabel: "Delete",
+	}
+	if err != nil {
+		labels[cdkBucketStatusLabel] = cdkBucketStatusError
+		b.requests.With(labels).Inc()
+		b.latency.With(labels).Observe(end)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+	labels[cdkBucketStatusLabel] = cdkBucketStatusSuccess
+	b.requests.With(labels).Inc()
+	b.latency.With(labels).Observe(end)
+	return nil
+}
+
+func (b *InstrumentedBucket) Upload(ctx context.Context, key string, r io.Reader, opts *blob.WriterOptions) error {
+	ctx, span := tracer.Start(ctx, "resource.InstrumentedBucket.Upload")
+	defer span.End()
+	start := time.Now()
+	err := b.bucket.Upload(ctx, key, r, opts)
+	end := time.Since(start).Seconds()
+	labels := prometheus.Labels{
+		cdkBucketOperationLabel: "Upload",
+	}
+	if err != nil {
+		labels[cdkBucketStatusLabel] = cdkBucketStatusError
+		b.requests.With(labels).Inc()
+		b.latency.With(labels).Observe(end)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+	labels[cdkBucketStatusLabel] = cdkBucketStatusSuccess
+	b.requests.With(labels).Inc()
+	b.latency.With(labels).Observe(end)
+	return nil
+}
+
+func (b *InstrumentedBucket) Download(ctx context.Context, key string, w io.Writer, opts *blob.ReaderOptions) error {
+	ctx, span := tracer.Start(ctx, "resource.InstrumentedBucket.Download")
+	defer span.End()
+	start := time.Now()
+	err := b.bucket.Download(ctx, key, w, opts)
+	end := time.Since(start).Seconds()
+	labels := prometheus.Labels{
+		cdkBucketOperationLabel: "Download",
 	}
 	if err != nil {
 		labels[cdkBucketStatusLabel] = cdkBucketStatusError
