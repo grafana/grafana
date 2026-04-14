@@ -45,12 +45,12 @@ func (c *commenter) Comment(ctx context.Context, prRepo PullRequestRepo, pr int,
 }
 
 func (c *commenter) generateComment(_ context.Context, info changeInfo) (string, error) {
-	// TODO: should we comment even if there are no changes?
 	var buf bytes.Buffer
 
+	// TODO: should we comment even if there are no changes?
 	if len(info.Changes) == 0 {
 		buf.WriteString("Grafana didn't find any changes in this pull request.")
-	} else if len(info.Changes) == 1 && info.Changes[0].Parsed.GVK.Kind == dashboardKind {
+	} else if len(info.Changes) == 1 && info.Changes[0].Parsed != nil && info.Changes[0].Parsed.GVK.Kind == dashboardKind {
 		if err := c.templateDashboard.Execute(&buf, &info.Changes[0]); err != nil {
 			return "", fmt.Errorf("unable to execute template: %w", err)
 		}
@@ -124,7 +124,7 @@ Grafana spotted {{.TotalChanges}} changes.
 | Action | Kind | Resource | Preview | Status |
 |--------|------|----------|---------|--------|
 {{- range .Changes}}
-| {{.Parsed.Action}} | {{.Kind}} | {{.ExistingLink}} | {{ if .PreviewURL}}[preview]({{.PreviewURL}}){{ end }} | {{.StatusIcon}} |
+| {{.Action}} | {{.Kind}} | {{.ExistingLink}} | {{ if .PreviewURL}}[preview]({{.PreviewURL}}){{ end }} | {{.StatusIcon}} |
 {{- end -}}
 {{- if .SkippedFiles}}
 
@@ -154,6 +154,13 @@ const commentTemplateFooter = `
 
 ---
 _Posted by [{{.GrafanaHost}}]({{.GrafanaBaseURL}}){{- if .RepositoryTitle}} · Repository: **{{.RepositoryTitle}}** (` + "`" + `{{.RepositoryName}}` + "`" + `){{- end}}_`
+
+func (f *fileChangeInfo) Action() string {
+	if f.Parsed != nil {
+		return string(f.Parsed.Action)
+	}
+	return string(f.Change.Action)
+}
 
 // TODO: does this have some value?
 func (f *fileChangeInfo) Kind() string {
