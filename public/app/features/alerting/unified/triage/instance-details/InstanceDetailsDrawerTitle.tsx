@@ -8,8 +8,9 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { GrafanaAlertState, type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { createBridgeURL } from '../../components/PluginBridge';
+import { isGranted } from '../../hooks/abilities/abilityUtils';
+import { useGrafanaSilenceCreateAbility } from '../../hooks/abilities/notificationAbilities';
 import { stringifyFolder, useFolder } from '../../hooks/useFolder';
-import { useCanCreateSilences } from '../../hooks/useNotificationAbilities';
 import { canAccessPluginPage, useIrmPlugin } from '../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../types/pluginBridges';
 import { MATCHER_ALERT_RULE_UID } from '../../utils/constants';
@@ -57,7 +58,7 @@ export function InstanceDetailsDrawerTitle({
 }: InstanceDetailsDrawerTitleProps) {
   const { folder } = useFolder(rule?.namespace_uid);
   const { pluginId, installed, settings } = useIrmPlugin(SupportedPlugin.Incident);
-  const canCreateSilence = useCanCreateSilences();
+  const canCreateSilence = isGranted(useGrafanaSilenceCreateAbility());
 
   const silenceLink = useMemo(() => {
     if (!rule) {

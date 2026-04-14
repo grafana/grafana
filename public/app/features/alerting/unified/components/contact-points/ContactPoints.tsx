@@ -18,10 +18,9 @@ import {
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
-import { isAvailable } from '../../hooks/abilities/abilityUtils';
-import { useAlertmanagerAbility } from '../../hooks/abilities/notificationAbilities';
+import { isAvailable, isGranted } from '../../hooks/abilities/abilityUtils';
+import { useAlertmanagerAbility, useGrafanaContactPointViewAbility } from '../../hooks/abilities/notificationAbilities';
 import { AlertmanagerAction } from '../../hooks/abilities/types';
-import { useCanViewContactPoints } from '../../hooks/useNotificationAbilities';
 import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useContactPointsNav } from '../../navigation/useNotificationConfigNav';
@@ -55,7 +54,7 @@ const ContactPointsTab = () => {
   // as we get metadata about this from the API
   const fetchPolicies = !shouldUseK8sApi(selectedAlertmanager!);
   // User may have access to list contact points, but not permission to fetch the status endpoint
-  const fetchStatuses = useCanViewContactPoints();
+  const fetchStatuses = isGranted(useGrafanaContactPointViewAbility());
 
   const { isLoading, error, contactPoints } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,

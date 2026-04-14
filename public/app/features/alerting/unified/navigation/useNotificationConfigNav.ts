@@ -6,12 +6,13 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useSelector } from 'app/types/store';
 
+import { isGranted } from '../hooks/abilities/abilityUtils';
 import {
-  useCanViewContactPoints,
-  useCanViewNotificationPolicies,
-  useCanViewTemplates,
-  useCanViewTimeIntervals,
-} from '../hooks/useNotificationAbilities';
+  useGrafanaContactPointViewAbility,
+  useGrafanaNotificationPolicyViewAbility,
+  useGrafanaTemplateViewAbility,
+  useGrafanaTimeIntervalViewAbility,
+} from '../hooks/abilities/notificationAbilities';
 import { ALERTING_PATHS, NAV_IDS } from '../utils/navigation';
 
 /**
@@ -61,10 +62,10 @@ export function useNotificationConfigNav() {
   // V2 Navigation: Get the notification config nav item
   const notificationConfigNav = navIndex[NAV_IDS.NOTIFICATION_CONFIG];
 
-  const canViewContactPoints = useCanViewContactPoints();
-  const canViewNotificationPolicies = useCanViewNotificationPolicies();
-  const canViewTemplates = useCanViewTemplates();
-  const canViewTimeIntervals = useCanViewTimeIntervals();
+  const canViewContactPoints = isGranted(useGrafanaContactPointViewAbility());
+  const canViewNotificationPolicies = isGranted(useGrafanaNotificationPolicyViewAbility());
+  const canViewTemplates = isGranted(useGrafanaTemplateViewAbility());
+  const canViewTimeIntervals = isGranted(useGrafanaTimeIntervalViewAbility());
 
   // Build tabs based on permissions - memoized to avoid recreating on every render
   const tabs = useMemo(() => {

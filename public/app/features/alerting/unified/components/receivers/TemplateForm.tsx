@@ -30,7 +30,8 @@ import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unif
 import { type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
-import { useCanTestTemplates } from '../../hooks/useNotificationAbilities';
+import { isGranted } from '../../hooks/abilities/abilityUtils';
+import { useGrafanaTemplateTestAbility } from '../../hooks/abilities/notificationAbilities';
 import { KnownProvenance } from '../../types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DOCS_URL_TEMPLATE_EXAMPLES, DOCS_URL_TEMPLATE_NOTIFICATIONS } from '../../utils/docs';
@@ -107,7 +108,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   const isGrafanaAlertManager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
 
   // Check if user has permission to test templates
-  const canTestTemplates = useCanTestTemplates();
+  const canTestTemplates = isGranted(useGrafanaTemplateTestAbility());
 
   // Only show preview and payload panels if both conditions are met:
   // 1. It's a Grafana Alertmanager

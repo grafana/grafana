@@ -5,14 +5,15 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { NewRuleFromPanelButton } from './components/panel-alerts-tab/NewRuleFromPanelButton';
 import { RulesTable } from './components/rules/RulesTable';
+import { isGranted } from './hooks/abilities/abilityUtils';
+import { useRuleAbility } from './hooks/abilities/ruleAbilities';
+import { RuleAction } from './hooks/abilities/types';
 import { usePanelCombinedRules } from './hooks/usePanelCombinedRules';
-import { getRulesPermissions } from './utils/access-control';
 import { stringifyErrorLike } from './utils/misc';
 
 interface Props {
@@ -28,8 +29,8 @@ export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
     poll: true,
   });
 
-  const permissions = getRulesPermissions('grafana');
-  const canCreateRules = config.unifiedAlertingEnabled && contextSrv.hasPermission(permissions.create);
+  const createRuleAbility = useRuleAbility(RuleAction.Create);
+  const canCreateRules = config.unifiedAlertingEnabled && isGranted(createRuleAbility);
 
   const alert = errors.length ? (
     <Alert

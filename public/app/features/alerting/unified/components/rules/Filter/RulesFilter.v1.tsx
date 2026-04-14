@@ -10,8 +10,9 @@ import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { LogMessages, logInfo, trackAlertRuleFilterEvent } from '../../../Analytics';
+import { isGranted } from '../../../hooks/abilities/abilityUtils';
+import { useGrafanaContactPointViewAbility } from '../../../hooks/abilities/notificationAbilities';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
-import { useCanViewContactPoints } from '../../../hooks/useNotificationAbilities';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
 import { type RulesFilterProps as RulesFilterV2Props } from '../../../rule-list/filter/RulesFilter.v2';
 type RulesFilterProps = RulesFilterV2Props & { onClear?: () => void };
@@ -44,7 +45,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
   const styles = useStyles2(getStyles);
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
-  const canRenderContactPointSelector = useCanViewContactPoints();
+  const canRenderContactPointSelector = isGranted(useGrafanaContactPointViewAbility());
 
   // This key is used to force a rerender on the inputs when the filters are cleared
   const [filterKey, setFilterKey] = useState<number>(Math.floor(Math.random() * 100));

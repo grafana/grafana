@@ -13,7 +13,12 @@ import {
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { getInstancesPermissions, getNotificationsPermissions } from '../../utils/access-control';
+import {
+  getInstancesPermissions,
+  getNotificationsPermissions,
+  instancesPermissions,
+  notificationsPermissions,
+} from '../../utils/access-control';
 import { isAdmin } from '../../utils/misc';
 
 import {
@@ -214,4 +219,71 @@ export function useAllExternalAlertmanagerAbilities(): Abilities<ExternalAlertma
 export function useExternalAlertmanagerAbility(action: ExternalAlertmanagerAction): Ability {
   const all = useAllExternalAlertmanagerAbilities();
   return useMemo(() => all[action], [all, action]);
+}
+
+// ── Context-free Grafana AM ability hooks ─────────────────────────────────────
+//
+// These hooks check Grafana-flavored alertmanager permissions directly from
+// contextSrv WITHOUT requiring an AlertmanagerProvider ancestor. Use them in
+// components that render outside the AM provider context (navigation, filter
+// sidebars, alert group lists, etc.).
+//
+// For actions that depend on the selected alertmanager (e.g. whether the
+// configuration API is available), use useAlertmanagerAbility() inside a provider.
+
+/** Returns the view ability for Grafana-managed contact points. */
+export function useGrafanaContactPointViewAbility(): Ability {
+  return makeAbility(true, [notificationsPermissions.read.grafana, ...PERMISSIONS_CONTACT_POINTS_READ]);
+}
+
+/** Returns the view ability for Grafana notification templates. */
+export function useGrafanaTemplateViewAbility(): Ability {
+  return makeAbility(true, [notificationsPermissions.read.grafana, AccessControlAction.AlertingTemplatesRead]);
+}
+
+/**
+ * Returns the test/preview ability for Grafana notification templates.
+ * Requires either the specific templates-test permission or the broader notifications write permission.
+ */
+export function useGrafanaTemplateTestAbility(): Ability {
+  return makeAbility(true, [
+    AccessControlAction.AlertingNotificationsTemplatesTest,
+    notificationsPermissions.update.grafana,
+  ]);
+}
+
+/** Returns the view ability for Grafana notification policies. */
+export function useGrafanaNotificationPolicyViewAbility(): Ability {
+  return makeAbility(true, [notificationsPermissions.read.grafana, ...PERMISSIONS_NOTIFICATION_POLICIES_READ]);
+}
+
+/** Returns the view ability for Grafana time intervals (mute timings). */
+export function useGrafanaTimeIntervalViewAbility(): Ability {
+  return makeAbility(true, [notificationsPermissions.read.grafana, ...PERMISSIONS_TIME_INTERVALS_READ]);
+}
+
+/**
+ * Returns the create ability for Grafana-managed silences.
+ * Checks the global AlertingInstanceCreate permission only.
+ * For folder-scoped silence creation, see useRuleSilenceAbility() in ruleAbilities.ts.
+ */
+export function useGrafanaSilenceCreateAbility(): Ability {
+  return makeAbility(true, [AccessControlAction.AlertingInstanceCreate]);
+}
+
+/** Returns the view ability for Grafana-managed silences. */
+export function useGrafanaSilenceViewAbility(): Ability {
+  return makeAbility(true, [instancesPermissions.read.grafana]);
+}
+
+/**
+ * Returns the silence-create ability for the given alertmanager source.
+ * Handles both Grafana-managed (AlertingInstanceCreate) and external alertmanagers
+ * (AlertingInstancesExternalWrite) based on the source name.
+ */
+export function useAlertmanagerSilenceCreateAbility(alertManagerSourceName: string): Ability {
+  return useMemo(() => {
+    const permissions = getInstancesPermissions(alertManagerSourceName);
+    return makeAbility(true, [permissions.create]);
+  }, [alertManagerSourceName]);
 }

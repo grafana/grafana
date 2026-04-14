@@ -1,7 +1,8 @@
 import { Trans, t } from '@grafana/i18n';
 import { CallToActionCard, EmptyState, LinkButton } from '@grafana/ui';
 
-import { useCanCreateSilencesForAM } from '../../hooks/useNotificationAbilities';
+import { isGranted } from '../../hooks/abilities/abilityUtils';
+import { useAlertmanagerSilenceCreateAbility } from '../../hooks/abilities/notificationAbilities';
 import { makeAMLink } from '../../utils/misc';
 
 type Props = {
@@ -9,7 +10,7 @@ type Props = {
 };
 
 export const NoSilencesSplash = ({ alertManagerSourceName }: Props) => {
-  const canCreateSilences = useCanCreateSilencesForAM(alertManagerSourceName);
+  const canCreateSilences = isGranted(useAlertmanagerSilenceCreateAbility(alertManagerSourceName));
 
   if (canCreateSilences) {
     return (

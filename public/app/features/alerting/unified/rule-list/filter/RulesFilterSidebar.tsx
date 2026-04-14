@@ -28,8 +28,9 @@ import {
   useLabelOptions,
   useNamespaceAndGroupOptions,
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
+import { isGranted } from '../../hooks/abilities/abilityUtils';
+import { useGrafanaContactPointViewAbility } from '../../hooks/abilities/notificationAbilities';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
-import { useCanViewContactPoints } from '../../hooks/useNotificationAbilities';
 import { RuleHealth, RuleSource, type RulesFilter } from '../../search/rulesSearchParser';
 
 import { type AdvancedFilters } from './types';
@@ -76,7 +77,7 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
 
   const { updateFilters } = useRulesFilter();
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
-  const canRenderContactPointSelector = useCanViewContactPoints();
+  const canRenderContactPointSelector = isGranted(useGrafanaContactPointViewAbility());
 
   // Create portal container for combobox dropdowns
   const portalContainer = usePortalContainer(theme.zIndex.portal + 100);

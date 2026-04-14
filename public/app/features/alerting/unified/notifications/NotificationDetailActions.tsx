@@ -7,7 +7,11 @@ import { appEvents } from 'app/core/app_events';
 
 import MoreButton from '../components/MoreButton';
 import { DeclareIncidentMenuItem } from '../components/bridges/DeclareIncidentButton';
-import { useCanCreateSilences, useCanViewContactPoints } from '../hooks/useNotificationAbilities';
+import { isGranted } from '../hooks/abilities/abilityUtils';
+import {
+  useGrafanaContactPointViewAbility,
+  useGrafanaSilenceCreateAbility,
+} from '../hooks/abilities/notificationAbilities';
 import { isLocalDevEnv, isOpenSourceEdition, makeLabelBasedSilenceLink } from '../utils/misc';
 import { createRelativeUrl } from '../utils/url';
 
@@ -19,8 +23,8 @@ interface NotificationActionsMenuProps {
 
 export function NotificationActionsMenu({ notification }: NotificationActionsMenuProps) {
   const { isAvailable: isAssistantAvailable, openAssistant } = useAssistant();
-  const canViewContactPoint = useCanViewContactPoints();
-  const canSilence = useCanCreateSilences();
+  const canViewContactPoint = isGranted(useGrafanaContactPointViewAbility());
+  const canSilence = isGranted(useGrafanaSilenceCreateAbility());
 
   const shouldShowDeclareIncident = !isOpenSourceEdition() || isLocalDevEnv();
 
