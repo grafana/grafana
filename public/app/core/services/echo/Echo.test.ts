@@ -37,8 +37,9 @@ describe('Echo.getMeta URL truncation', () => {
 
     const echo = new Echo();
     const meta = echo.getMeta();
+    const url = meta.url ?? '';
 
-    expect(meta.url.length).toBe(MAX_PAGE_URL_LENGTH);
-    expect(meta.url.endsWith(TRUNCATION_MARKER)).toBe(true);
+    expect(url.length).toBe(MAX_PAGE_URL_LENGTH);
+    expect(url.endsWith(TRUNCATION_MARKER)).toBe(true);
   });
 });
