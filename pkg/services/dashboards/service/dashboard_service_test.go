@@ -152,6 +152,7 @@ func setupK8sDashboardTests(service *DashboardServiceImpl) (context.Context, *cl
 func TestGetDashboard(t *testing.T) {
 	service := &DashboardServiceImpl{
 		cfg: setting.NewCfg(),
+		log: log.New("test.logger"),
 	}
 	query := &dashboards.GetDashboardQuery{
 		UID:   "test-uid",
