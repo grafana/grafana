@@ -180,7 +180,7 @@ To help plan your RBAC rollout strategy, refer to [Plan your RBAC rollout strate
 
 ## Deprecated permissions
 
-The following permission actions are deprecated and only retained for backward compatibility. They are granted exclusively to organization **Admins** through the hidden `fixed:alerting.legacy:writer` role. **Editor** and **Viewer** basic roles are not granted these actions.
+The following permission actions are deprecated and only retained for backward compatibility. They are granted exclusively to organization **Admins**. **Editor** and **Viewer** basic roles are not granted these actions.
 
 Use the recommended replacements listed below for custom roles and automation.
 
