@@ -220,17 +220,21 @@ describe('XYChartTooltip', () => {
     });
   });
 
-  describe('hideFrom.tooltip', () => {
+  describe.each([true, false])('hideFrom.tooltip: %s', (hideFromTooltip) => {
     it.each<[string, string, Partial<XYSeries>]>([
-      ['x', 'x', { x: { field: makeField({ name: 'x', values: [1], hideFromTooltip: true }) } }],
-      ['y', 'y', { y: { field: makeField({ name: 'y', values: [10], hideFromTooltip: true }) } }],
-      ['size', 'radius', { size: { field: makeField({ name: 'radius', values: [5], hideFromTooltip: true }) } }],
-      ['color', 'temp', { color: { field: makeField({ name: 'temp', values: [100], hideFromTooltip: true }) } }],
-      ['rest', 'extra', { _rest: [makeField({ name: 'extra', values: [99], hideFromTooltip: true })] }],
-    ])('hides %s field', (_slot, fieldName, overrides) => {
+      ['x', 'x', { x: { field: makeField({ name: 'x', values: [1], hideFromTooltip }) } }],
+      ['y', 'y', { y: { field: makeField({ name: 'y', values: [10], hideFromTooltip }) } }],
+      ['size', 'radius', { size: { field: makeField({ name: 'radius', values: [5], hideFromTooltip }) } }],
+      ['color', 'temp', { color: { field: makeField({ name: 'temp', values: [100], hideFromTooltip }) } }],
+      ['rest', 'extra', { _rest: [makeField({ name: 'extra', values: [99], hideFromTooltip })] }],
+    ])(`${hideFromTooltip ? 'hides' : 'shows'} %s field`, (_slot, fieldName, overrides) => {
       const series = makeSeries(overrides);
       renderTooltip({ xySeries: [series] });
-      expect(screen.queryByText(fieldName)).toBeNull();
+      if(hideFromTooltip){
+        expect(screen.queryByText(fieldName)).toBeNull();
+      }else{
+        expect(screen.queryByText(fieldName)).toBeVisible()
+      }
     });
   });
 
