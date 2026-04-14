@@ -7152,6 +7152,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@simple-git/args-pathspec@npm:^1.0.3":
+  version: 1.0.3
+  resolution: "@simple-git/args-pathspec@npm:1.0.3"
+  checksum: 10/74bcc00123cd0da800fc5a6417f83f2f4fce66eb38749efc2ca3b6e4c431c6edaabe80c5834714c155f6ba07582069b182420eda27a601353fb5a3b48917d7e0
+  languageName: node
+  linkType: hard
+
+"@simple-git/argv-parser@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "@simple-git/argv-parser@npm:1.1.0"
+  dependencies:
+    "@simple-git/args-pathspec": "npm:^1.0.3"
+  checksum: 10/f5889978beabe7ee795ad2c4c15bdcc1bdce4f8aa8a897084b68c3a18d737eaae93399309e63eed61dc7908cd8764c3e91887e9497a542d88fedd37426903815
+  languageName: node
+  linkType: hard
+
 "@sinclair/typebox@npm:^0.27.8":
   version: 0.27.8
   resolution: "@sinclair/typebox@npm:0.27.8"
@@ -28419,13 +28435,15 @@ __metadata:
   linkType: hard
 
 "simple-git@npm:^3.6.0":
-  version: 3.16.0
-  resolution: "simple-git@npm:3.16.0"
+  version: 3.36.0
+  resolution: "simple-git@npm:3.36.0"
   dependencies:
     "@kwsites/file-exists": "npm:^1.1.1"
     "@kwsites/promise-deferred": "npm:^1.1.1"
-    debug: "npm:^4.3.4"
-  checksum: 10/b1c4b187bff2964bab47fd1b683ece275a599e9a466f7e2689ee1fea0360f7d13228e934d66095c911e7e8b57ab5f2526e3deeeb6e4d0c03e4d5f12f7ef03cd9
+    "@simple-git/args-pathspec": "npm:^1.0.3"
+    "@simple-git/argv-parser": "npm:^1.1.0"
+    debug: "npm:^4.4.0"
+  checksum: 10/79a745464798bce17fc5c286ff4a44ba07d368a745d03d31f3c3cef51bd63b98dc29e72f55dda087b64e5db90e5e9f91a7429543ddf08d105d9a069c525e6818
   languageName: node
   linkType: hard
 
