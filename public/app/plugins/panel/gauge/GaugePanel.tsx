@@ -2,19 +2,19 @@ import { css } from '@emotion/css';
 import { useMemo, type JSX } from 'react';
 
 import {
-  DisplayValueAlignmentFactors,
-  FieldDisplay,
+  type DisplayValueAlignmentFactors,
+  type FieldDisplay,
   getDisplayProcessor,
   getDisplayValueAlignmentFactors,
   getFieldDisplayValues,
-  PanelProps,
+  type PanelProps,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { DataLinksContextMenu, Stack, useStyles2, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
-import { DataLinksContextMenuApi, RadialGauge } from '@grafana/ui/internal';
+import { DataLinksContextMenu, Stack, useStyles2, VizRepeater, type VizRepeaterRenderValueProps } from '@grafana/ui';
+import { type DataLinksContextMenuApi, RadialGauge } from '@grafana/ui/internal';
 
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 export function GaugePanel({
   id,

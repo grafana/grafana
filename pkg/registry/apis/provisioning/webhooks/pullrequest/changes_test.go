@@ -402,8 +402,10 @@ func TestCalculateChanges(t *testing.T) {
 						Path:   "path/to/file.json",
 						Ref:    "ref",
 					},
-					Error: "no client configured",
-					Title: "hello world",
+					Error:      "no client configured",
+					Title:      "hello world",
+					GrafanaURL: "http://host/d/the-uid/hello-world",
+					PreviewURL: "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
 					Parsed: &resources.ParsedResource{
 						Info: &repository.FileInfo{
 							Path: "path/to/file.json",
@@ -564,7 +566,72 @@ func TestCalculateChanges(t *testing.T) {
 			},
 		},
 		{
-			name: "deleted file",
+			name: "deleted file reads from previous ref",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				finfo := &repository.FileInfo{
+					Path: "path/to/file.json",
+					Ref:  "base-ref",
+					Data: []byte("xxxx"),
+				}
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": resources.DashboardResource.GroupVersion().String(),
+						"kind":       dashboardKind,
+						"metadata": map[string]interface{}{
+							"name": "the-uid",
+						},
+						"spec": map[string]interface{}{
+							"title": "hello world",
+						},
+					},
+				}
+				meta, _ := utils.MetaAccessor(obj)
+
+				reader.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+				})
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "base-ref").Return(finfo, nil)
+				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+					Info: finfo,
+					Repo: provisioning.ResourceRepositoryInfo{
+						Namespace: "x",
+						Name:      "y",
+					},
+					GVK: schema.GroupVersionKind{
+						Kind: dashboardKind,
+					},
+					Obj:      obj,
+					Existing: obj,
+					Meta:     meta,
+				}, nil)
+			},
+			changes: []repository.VersionedFileChange{{
+				Action:      repository.FileActionDeleted,
+				Path:        "path/to/file.json",
+				Ref:         "ref",
+				PreviousRef: "base-ref",
+			}},
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action:      repository.FileActionDeleted,
+						Path:        "path/to/file.json",
+						Ref:         "ref",
+						PreviousRef: "base-ref",
+					},
+					Title:      "hello world",
+					GrafanaURL: "http://host/d/the-uid/hello-world",
+				}},
+			},
+		},
+		{
+			name: "deleted file with read error degrades gracefully",
 			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -575,20 +642,53 @@ func TestCalculateChanges(t *testing.T) {
 				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
 				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "base-ref").Return(nil, fmt.Errorf("file not found"))
 			},
 			changes: []repository.VersionedFileChange{{
-				Action: repository.FileActionDeleted,
-				Path:   "path/to/file.json",
-				Ref:    "ref",
+				Action:      repository.FileActionDeleted,
+				Path:        "path/to/file.json",
+				Ref:         "ref",
+				PreviousRef: "base-ref",
 			}},
 			expectedInfo: changeInfo{
 				Changes: []fileChangeInfo{{
 					Change: repository.VersionedFileChange{
-						Action: repository.FileActionDeleted,
-						Path:   "path/to/file.json",
-						Ref:    "ref",
+						Action:      repository.FileActionDeleted,
+						Path:        "path/to/file.json",
+						Ref:         "ref",
+						PreviousRef: "base-ref",
 					},
-					Error: "delete feedback not yet implemented",
+				}},
+			},
+		},
+		{
+			name: "deleted file with empty previous ref degrades gracefully",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				reader.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+				})
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Return(nil, fmt.Errorf("ref not found"))
+			},
+			changes: []repository.VersionedFileChange{{
+				Action:      repository.FileActionDeleted,
+				Path:        "path/to/file.json",
+				Ref:         "ref",
+				PreviousRef: "",
+			}},
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action:      repository.FileActionDeleted,
+						Path:        "path/to/file.json",
+						Ref:         "ref",
+						PreviousRef: "",
+					},
 				}},
 			},
 		},

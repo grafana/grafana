@@ -1045,8 +1045,15 @@ type ListAlertRulesQuery struct {
 	OrgID         int64
 	RuleUIDs      []string
 	NamespaceUIDs []string
-	ExcludeOrgs   []int64
-	RuleGroups    []string
+	// ExcludeNamespaceUIDs excludes rules in these namespace (folder) UIDs.
+	ExcludeNamespaceUIDs []string
+	ExcludeOrgs          []int64
+	RuleGroups           []string
+	// ExcludeRuleGroups excludes rules belonging to these rule groups.
+	ExcludeRuleGroups []string
+	// RuleGroupExists filters rules by whether they have a non-empty rule group set.
+	// true: only rules with a non-empty rule_group; false: only rules with an empty rule_group.
+	RuleGroupExists *bool
 
 	// DashboardUID and PanelID are optional and allow filtering rules
 	// to return just those for a dashboard and panel.

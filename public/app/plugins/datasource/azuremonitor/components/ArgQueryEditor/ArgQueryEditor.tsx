@@ -1,16 +1,16 @@
 import { intersection } from 'lodash';
 import { useState, useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { Combobox } from '@grafana/ui';
 
 import { ARGScope } from '../../dataquery.gen';
-import Datasource from '../../datasource';
+import type Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorQuery } from '../../types/query';
-import { AzureMonitorErrorish, AzureMonitorOption } from '../../types/types';
+import { type AzureMonitorQuery } from '../../types/query';
+import { type AzureMonitorErrorish, type AzureMonitorOption } from '../../types/types';
 import { Field } from '../shared/Field';
 
 import QueryField from './QueryField';

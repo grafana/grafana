@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/alerting/notify/notifytest"
 	"github.com/grafana/alerting/receivers/line"
 	receiversTesting "github.com/grafana/alerting/receivers/testing"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	apicompat "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
@@ -30,7 +29,8 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 			postable := &definitions.PostableGrafanaReceiver{
 				UID:                   integrationConfig.UID,
 				Name:                  integrationConfig.Name,
-				Type:                  integrationConfig.Type,
+				Type:                  string(integrationConfig.Type),
+				Version:               string(integrationConfig.Version),
 				DisableResolveMessage: integrationConfig.DisableResolveMessage,
 				Settings:              definitions.RawMessage(integrationConfig.Settings),
 				SecureSettings:        integrationConfig.SecureSettings,
@@ -69,8 +69,8 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 			}
 
 			expected, err := notify.BuildReceiverConfiguration(context.Background(), recCfg, notify.DecodeSecretsFromBase64, func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
-				v, _ := receiversTesting.DecryptForTesting(sjd)(key, fallback)
-				return v
+				value, _ := receiversTesting.DecryptForTesting(sjd)(key, fallback)
+				return value
 			})
 			require.NoError(t, err)
 
@@ -81,8 +81,8 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 			require.NoError(t, err)
 
 			actual, err := notify.BuildReceiverConfiguration(context.Background(), &back, notify.DecodeSecretsFromBase64, func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
-				v, _ := receiversTesting.DecryptForTesting(sjd)(key, fallback)
-				return v
+				value, _ := receiversTesting.DecryptForTesting(sjd)(key, fallback)
+				return value
 			})
 			require.NoError(t, err)
 
@@ -98,8 +98,7 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 			}
 			if integrationType == line.Type {
 				for _, l := range actual.LineConfigs {
-					assert.Equal(t, "line", l.Type)
-					l.Type = string(line.Type)
+					l.Type = line.Type
 				}
 			}
 			pathFilter := cmp.FilterPath(func(path cmp.Path) bool {

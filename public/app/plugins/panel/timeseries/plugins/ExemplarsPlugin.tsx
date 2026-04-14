@@ -1,8 +1,14 @@
-import { ReactNode, useCallback, useLayoutEffect, useRef, useState } from 'react';
-import uPlot from 'uplot';
+import { type ReactNode, useCallback, useLayoutEffect, useRef, useState } from 'react';
+import type uPlot from 'uplot';
 
-import { DataFrame, Labels, TIME_SERIES_TIME_FIELD_NAME, TIME_SERIES_VALUE_FIELD_NAME, TimeZone } from '@grafana/data';
-import { FIXED_UNIT, EventsCanvas, UPlotConfigBuilder } from '@grafana/ui';
+import {
+  type DataFrame,
+  type Labels,
+  TIME_SERIES_TIME_FIELD_NAME,
+  TIME_SERIES_VALUE_FIELD_NAME,
+  type TimeZone,
+} from '@grafana/data';
+import { FIXED_UNIT, EventsCanvas, type UPlotConfigBuilder } from '@grafana/ui';
 
 import { ExemplarMarker } from './ExemplarMarker';
 

@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid';
-import { ReactElement, useState } from 'react';
+import { type ReactElement, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { sceneUtils, VizConfigBuilders } from '@grafana/scenes';
@@ -12,7 +12,7 @@ import {
 } from '@grafana/scenes-react';
 import { Page } from 'app/core/components/Page/Page';
 
-import { LogFilter, LogViewFilters } from './LogViewFilters';
+import { type LogFilter, LogViewFilters } from './LogViewFilters';
 import { ExtensionsLogDataSource } from './dataSource';
 import { createFilterTransformation } from './filterTransformation';
 import { log } from './log';

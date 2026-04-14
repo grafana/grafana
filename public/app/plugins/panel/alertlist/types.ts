@@ -1,5 +1,5 @@
-import { ThresholdsConfig, ThresholdsMode, ValueMapping } from '@grafana/data';
-import { BigValueColorMode } from '@grafana/ui';
+import { type ThresholdsConfig, ThresholdsMode, type ValueMapping } from '@grafana/data';
+import { type BigValueColorMode } from '@grafana/ui';
 
 export enum SortOrder {
   AlphaAsc = 1,

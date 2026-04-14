@@ -3,42 +3,42 @@ import { take } from 'rxjs/operators';
 
 import {
   AbstractLabelOperator,
-  AnnotationQueryRequest,
+  type AnnotationQueryRequest,
   CoreApp,
-  CustomVariableModel,
-  DataFrame,
+  type CustomVariableModel,
+  type DataFrame,
   dataFrameToJSON,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
   dateTime,
   FieldType,
-  QueryFixAction,
+  type QueryFixAction,
   SupplementaryQueryType,
   toDataFrame,
-  TimeRange,
-  ToggleFilterAction,
-  DataQueryRequest,
-  ScopedVars,
-  AdHocVariableFilter,
+  type TimeRange,
+  type ToggleFilterAction,
+  type DataQueryRequest,
+  type ScopedVars,
+  type AdHocVariableFilter,
 } from '@grafana/data';
 import {
-  BackendSrv,
-  BackendSrvRequest,
+  type BackendSrv,
+  type BackendSrvRequest,
   config,
-  FetchResponse,
+  type FetchResponse,
   getBackendSrv,
   reportInteraction,
   setBackendSrv,
-  TemplateSrv,
+  type TemplateSrv,
 } from '@grafana/runtime';
 
 import { LokiVariableSupport } from './LokiVariableSupport';
 import { LokiQueryType, SupportingQueryType } from './dataquery.gen';
-import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
+import { type LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
 import { createLokiDatasource } from './mocks/datasource';
 import { createMetadataRequest } from './mocks/metadataRequest';
 import { runSplitQuery } from './querySplitting';
-import { LokiOptions, LokiQuery, LokiVariableQueryType } from './types';
+import { type LokiOptions, type LokiQuery, LokiVariableQueryType } from './types';
 
 jest.mock('@grafana/runtime', () => {
   return {

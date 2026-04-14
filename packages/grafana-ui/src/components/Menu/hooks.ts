@@ -1,4 +1,4 @@
-import { RefObject, useEffect, useState } from 'react';
+import { type RefObject, useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 const modulo = (a: number, n: number) => ((a % n) + n) % n;
@@ -82,9 +82,15 @@ export const useMenuFocus = ({
         setFocusedItem(menuItemsCount - 1);
         break;
       case 'Enter':
+      case ' ':
         event.preventDefault();
         event.stopPropagation();
-        menuItems?.[focusedItem]?.click();
+        const focusedElement = menuItems?.[focusedItem];
+        const hasSubMenu = Boolean(focusedElement?.querySelector('[data-role="menuitem"]'));
+
+        if (!hasSubMenu) {
+          focusedElement?.click();
+        }
         break;
       case 'Escape':
         onClose?.();

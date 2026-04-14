@@ -4,9 +4,9 @@ import type { JSX } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { OrgRole } from '@grafana/data';
-import { ServiceAccountStateFilter, ServiceAccountDTO } from 'app/types/serviceaccount';
+import { ServiceAccountStateFilter, type ServiceAccountDTO } from 'app/types/serviceaccount';
 
-import { Props, ServiceAccountsListPageUnconnected } from './ServiceAccountsListPage';
+import { type Props, ServiceAccountsListPageUnconnected } from './ServiceAccountsListPage';
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {

@@ -2,67 +2,44 @@ import { css, keyframes } from '@emotion/css';
 import { useEffect } from 'react';
 
 import { useAssistant } from '@grafana/assistant';
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { SceneObject, VizPanel } from '@grafana/scenes';
+import { type SceneObject } from '@grafana/scenes';
+import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
-import { ElementSelection } from '../edit-pane/ElementSelection';
-import { EditPaneSelectionActions } from '../edit-pane/types';
-
-import { panelHasData, useAssistantPanelHints } from './PanelAssistantHint';
+import { useAssistantPanelHints } from './PanelAssistantHint';
 
 interface DashboardAssistantViewModeProps {
   dashboard: SceneObject;
-  editPane: EditPaneSelectionActions;
   isEditing: boolean | undefined;
-  selection: ElementSelection | undefined;
 }
 
 /**
- * Manages all assistant-related behavior in dashboard view mode:
+ * Manages assistant-related behavior in dashboard view mode:
  * - Checks assistant availability and feature toggle
- * - Enables panel selection in view mode
  * - Injects AI sparkle hint icons on panels with data
- * - Clears selection on non-data panels
- * - Renders the floating prompt card on panel selection
- * - Provides CSS class names for view mode selection styling
+ *
+ * The popover is now triggered exclusively via the sparkle button (AssistantPopoverContext),
+ * not through the element selection system. This prevents panel body clicks,
+ * table column resizes, and other interactions from opening the popover.
  */
-export function useDashboardAssistantViewMode({
-  dashboard,
-  editPane,
-  isEditing,
-  selection,
-}: DashboardAssistantViewModeProps) {
-  const { isAvailable: isAssistantAvailable } = useAssistant();
+export function useDashboardAssistantViewMode({ dashboard, isEditing }: DashboardAssistantViewModeProps) {
+  const { isAvailable: isAssistantAvailable, openAssistant } = useAssistant();
+  // Disable on small screens: the 380px floating card doesn't fit, and the
+  // auto-focused input inside AssistantPromptCard triggers the mobile keyboard.
+  const isLargeScreen = useMediaQueryMinWidth('md');
   const isEnabled =
-    !!config.featureToggles.dashboardAssistantPopover && config.bootData.user.isSignedIn && isAssistantAvailable;
+    !!config.featureToggles.dashboardAssistantPopover &&
+    config.bootData.user.isSignedIn &&
+    isAssistantAvailable &&
+    isLargeScreen;
 
   useAssistantPanelHints(dashboard, isEditing, isEnabled);
 
-  useEffect(() => {
-    if (!isEditing && isEnabled && selection && !hasSelectedVizPanelsWithData(selection)) {
-      editPane.clearSelection(true);
-    }
-  }, [isEditing, isEnabled, selection, editPane]);
-
-  const isViewModeWithPanelSelected = !isEditing && isEnabled && hasSelectedVizPanelsWithData(selection);
-
   return {
     isEnabled,
-    isViewModeWithPanelSelected,
+    openAssistant,
   };
-}
-
-function hasSelectedVizPanelsWithData(selection: ElementSelection | undefined): boolean {
-  if (!selection) {
-    return false;
-  }
-
-  const selected = selection.getSelection();
-  if (Array.isArray(selected)) {
-    return selected.length > 0 && selected.every((obj) => obj instanceof VizPanel && panelHasData(obj));
-  }
-  return selected instanceof VizPanel && panelHasData(selected);
 }
 
 // Register a custom CSS property so the browser can interpolate the angle natively,
@@ -85,35 +62,56 @@ const selectionBorderAnimation = keyframes({
   '100%': { '--border-angle': '360deg' },
 });
 
-export function getAssistantViewModeStyles(theme: GrafanaTheme2) {
+/**
+ * Returns a CSS class that applies an animated gradient border to the given element.
+ * Used by ViewModePanelPromptCard to highlight the active panel.
+ */
+export function getAnimatedBorderClass(theme: GrafanaTheme2) {
   const bg = theme.colors.background.canvas;
   const c1 = 'rgb(168, 85, 247)';
   const c2 = 'rgb(249, 115, 22)';
 
-  return {
-    viewModeHoverOverride: css({
-      '.dashboard-selectable-element:not(.dashboard-selected-element):hover': {
-        outline: 'none',
-        backgroundColor: theme.colors.background.primary,
-      },
-      '.dashboard-selected-element': {
-        outline: 'none',
-      },
-    }),
-    viewModeAnimatedBorder: css({
-      '.dashboard-selected-element': {
-        outline: 'none',
-        border: '1px solid transparent',
-        backgroundImage: `
-          linear-gradient(${bg}, ${bg}),
-          conic-gradient(from var(--border-angle), transparent 60%, ${c1} 80%, ${c2} 100%, transparent 15%)
-        `,
-        backgroundOrigin: 'border-box',
-        backgroundClip: 'padding-box, border-box',
-        [theme.transitions.handleMotion('no-preference')]: {
-          animation: `${selectionBorderAnimation} 2s linear infinite`,
-        },
-      },
-    }),
-  };
+  return css({
+    label: 'assistant-animated-border',
+    outline: 'none',
+    border: '1px solid transparent',
+    backgroundImage: `
+      linear-gradient(${bg}, ${bg}),
+      conic-gradient(from var(--border-angle), transparent 60%, ${c1} 80%, ${c2} 100%, transparent 15%)
+    `,
+    backgroundOrigin: 'border-box',
+    backgroundClip: 'padding-box, border-box',
+    [theme.transitions.handleMotion('no-preference')]: {
+      animation: `${selectionBorderAnimation} 2s linear infinite`,
+    },
+  });
+}
+
+/**
+ * Registers a global click-outside listener that calls `onDismiss` when the user
+ * clicks anywhere except the popover or the sparkle hint buttons.
+ */
+export function usePopoverDismissOnClickOutside(isActive: unknown, onDismiss: () => void) {
+  useEffect(() => {
+    if (!isActive) {
+      return;
+    }
+
+    const handler = (evt: PointerEvent) => {
+      if (!(evt.target instanceof Element)) {
+        return;
+      }
+      // Don't dismiss when clicking inside the popover or the sparkle hint
+      if (
+        evt.target.closest('[data-testid="view-mode-panel-prompt-card"]') ||
+        evt.target.closest('[data-testid="panel-assistant-hint"]')
+      ) {
+        return;
+      }
+      onDismiss();
+    };
+
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
+  }, [isActive, onDismiss]);
 }

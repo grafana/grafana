@@ -7,24 +7,29 @@ import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1'
 import { AppEvents, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
 import { appEvents } from 'app/core/app_events';
 import { buildNotificationButton } from 'app/core/components/AppNotifications/NotificationButton';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
-import { setStarred } from 'app/core/reducers/navBarTree';
+import { setStarred, updateDashboardName } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AnnoKeyFolder, Resource, ResourceList } from 'app/features/apiserver/types';
+import { AnnoKeyFolder, type Resource, type ResourceList } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
-import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
+import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { dispatch } from 'app/store/store';
-import { PermissionLevel } from 'app/types/acl';
-import { ImportDashboardResponseDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
-import { DescendantCount, DescendantCountDTO, FolderDTO, FolderListItemDTO } from 'app/types/folders';
+import { type PermissionLevel } from 'app/types/acl';
+import { type ImportDashboardResponseDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
+import {
+  type DescendantCount,
+  type DescendantCountDTO,
+  type FolderDTO,
+  type FolderListItemDTO,
+} from 'app/types/folders';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
@@ -81,9 +86,14 @@ export interface ListFolderQueryArgs {
   permission?: PermissionLevel;
 }
 
-// Don't invalidate individual getFolder tags — the resource no longer exists and refetching would 404
-const invalidateListOnSuccess = (result: unknown, error: unknown) =>
-  error ? [] : [{ type: 'getFolder' as const, id: 'LIST' }];
+const folderListTag = { type: 'getFolder' as const, id: 'LIST' };
+const invalidateFolderListOnSuccess = (_result: unknown, error: unknown) => (error ? [] : [folderListTag]);
+
+// TODO: Once backend returns alert rule counts, set this back to true
+// when this is merged https://github.com/grafana/grafana/pull/67259
+const deleteFolderParams = {
+  forceDeleteRules: false,
+} as const;
 
 export const browseDashboardsAPI = createApi({
   tagTypes: ['getFolder'],
@@ -93,11 +103,8 @@ export const browseDashboardsAPI = createApi({
     listFolders: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
       providesTags: (result) =>
         result && result.length > 0
-          ? [
-              { type: 'getFolder', id: 'LIST' },
-              ...result.map((folder) => ({ type: 'getFolder' as const, id: folder.uid })),
-            ]
-          : [{ type: 'getFolder', id: 'LIST' }],
+          ? [folderListTag, ...result.map((folder) => ({ type: 'getFolder' as const, id: folder.uid }))]
+          : [folderListTag],
       query: ({ parentUid, limit, page, permission }) => ({
         url: '/folders',
         params: { parentUid, limit, page, permission },
@@ -129,17 +136,20 @@ export const browseDashboardsAPI = createApi({
           parentUid,
         },
       }),
-      onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
-        queryFulfilled.then(async ({ data: folder }) => {
-          dispatch(
-            refetchChildren({
-              parentUID: parentUid,
-              pageSize: PAGE_SIZE,
-            })
-          );
-          // Refetch quota usage after mutations that change the total number of dashboards or folders
-          invalidateQuotaUsage(dispatch);
-        });
+      onQueryStarted: async ({ parentUid }, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+        } catch {
+          return; // Error handled by mutation caller
+        }
+        dispatch(
+          refetchChildren({
+            parentUID: parentUid,
+            pageSize: PAGE_SIZE,
+          })
+        );
+        // Refetch quota usage after mutations that change the total number of dashboards or folders
+        invalidateQuotaUsage(dispatch);
       },
     }),
 
@@ -192,26 +202,20 @@ export const browseDashboardsAPI = createApi({
 
     // delete an *individual* folder. used in the folder actions menu.
     deleteFolder: builder.mutation<void, FolderDTO>({
-      invalidatesTags: invalidateListOnSuccess,
+      invalidatesTags: invalidateFolderListOnSuccess,
       query: ({ uid }) => ({
         url: `/folders/${uid}`,
         method: 'DELETE',
-        params: {
-          // TODO: Once backend returns alert rule counts, set this back to true
-          // when this is merged https://github.com/grafana/grafana/pull/67259
-          forceDeleteRules: false,
-        },
+        params: deleteFolderParams,
       }),
-      onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
-        queryFulfilled.then(() => {
-          dispatch(
-            refetchChildren({
-              parentUID: parentUid,
-              pageSize: PAGE_SIZE,
-            })
-          );
+      onQueryStarted: async ({ uid, parentUid }, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+          dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
           invalidateQuotaUsage(dispatch);
-        });
+        } catch {
+          // Error handled by mutation caller
+        }
       },
     }),
 
@@ -333,25 +337,22 @@ export const browseDashboardsAPI = createApi({
 
     // delete *multiple* folders. used in the delete modal.
     deleteFolders: builder.mutation<void, DeleteFoldersArgs>({
-      invalidatesTags: invalidateListOnSuccess,
-      queryFn: async ({ folderUIDs }, _api, _extraOptions, baseQuery) => {
+      invalidatesTags: invalidateFolderListOnSuccess,
+      queryFn: async ({ folderUIDs }, api, _extraOptions, baseQuery) => {
         // Delete all the folders sequentially
         // TODO error handling here
         for (const folderUID of folderUIDs) {
-          // This also shows warning alert
-          if (await isProvisionedFolderCheck(dispatch, folderUID)) {
+          if (await isProvisionedFolderCheck(api.dispatch, folderUID)) {
             continue;
           }
+
           await baseQuery({
             url: `/folders/${folderUID}`,
             method: 'DELETE',
-            params: {
-              // TODO: Once backend returns alert rule counts, set this back to true
-              // when this is merged https://github.com/grafana/grafana/pull/67259
-              forceDeleteRules: false,
-            },
+            params: deleteFolderParams,
           });
         }
+
         return { data: undefined };
       },
       onQueryStarted: ({ folderUIDs }, { queryFulfilled, dispatch }) => {
@@ -366,7 +367,7 @@ export const browseDashboardsAPI = createApi({
 
     // delete *multiple* dashboards. used in the delete modal.
     deleteDashboards: builder.mutation<void, DeleteDashboardsArgs>({
-      invalidatesTags: invalidateListOnSuccess,
+      invalidatesTags: invalidateFolderListOnSuccess,
       queryFn: async ({ dashboardUIDs }) => {
         const pageStateManager = getDashboardScenePageStateManager();
         const restoreDashboardsEnabled = config.featureToggles.restoreDashboards;
@@ -471,10 +472,14 @@ export const browseDashboardsAPI = createApi({
         }
       },
 
-      onQueryStarted: ({ folderUid }, { queryFulfilled, dispatch }) => {
+      onQueryStarted: ({ folderUid, dashboard }, { queryFulfilled, dispatch }) => {
         dashboardWatcher.ignoreNextSave();
         queryFulfilled.then(async ({ data }) => {
-          await contextSrv.fetchUserPermissions();
+          try {
+            await contextSrv.fetchUserPermissions();
+          } catch (err) {
+            console.error('Failed to refresh user permissions after save', err);
+          }
           dispatch(
             refetchChildren({
               parentUID: folderUid,
@@ -484,6 +489,12 @@ export const browseDashboardsAPI = createApi({
           // version 1 means a newly created dashboard — only then does the resource count change
           if (data.version === 1) {
             invalidateQuotaUsage(dispatch);
+          }
+          // Update starred dashboard name in nav sidebar (no-ops if dashboard isn't starred)
+          const title = dashboard.title;
+          if (title && data.url) {
+            const url = locationUtil.stripBaseFromUrl(data.url);
+            dispatch(updateDashboardName({ id: data.uid, title, url }));
           }
         });
       },

@@ -102,7 +102,8 @@ func getOperationGroup(operation *authzextv1.MutateOperation) (OperationGroup, e
 		return OperationGroupFolder, nil
 	case *authzextv1.MutateOperation_CreatePermission, *authzextv1.MutateOperation_DeletePermission:
 		return OperationGroupPermission, nil
-	case *authzextv1.MutateOperation_UpdateUserOrgRole, *authzextv1.MutateOperation_DeleteUserOrgRole, *authzextv1.MutateOperation_AddUserOrgRole:
+	case *authzextv1.MutateOperation_UpdateUserOrgRole, *authzextv1.MutateOperation_DeleteUserOrgRole, *authzextv1.MutateOperation_AddUserOrgRole,
+		*authzextv1.MutateOperation_UpdateServiceAccountOrgRole, *authzextv1.MutateOperation_DeleteServiceAccountOrgRole, *authzextv1.MutateOperation_AddServiceAccountOrgRole:
 		return OperationGroupUserOrgRole, nil
 	case *authzextv1.MutateOperation_CreateRoleBinding, *authzextv1.MutateOperation_DeleteRoleBinding:
 		return OperationGroupRoleBinding, nil
@@ -157,6 +158,13 @@ func deduplicateTupleKeys(writeTuples []*openfgav1.TupleKey, deleteTuples []*ope
 // This is used internally by mutate operations and the reconciler.
 // Tuples are automatically deduplicated before writing.
 func (s *Server) WriteTuples(ctx context.Context, store *zanzana.StoreInfo, writeTuples []*openfgav1.TupleKey, deleteTuples []*openfgav1.TupleKeyWithoutCondition) error {
+	ctx, span := s.tracer.Start(ctx, "server.WriteTuples")
+	defer span.End()
+
+	defer func(t time.Time) {
+		s.metrics.requestDurationSeconds.WithLabelValues("WriteTuples").Observe(time.Since(t).Seconds())
+	}(time.Now())
+
 	return s.writeTuples(ctx, store, writeTuples, deleteTuples)
 }
 

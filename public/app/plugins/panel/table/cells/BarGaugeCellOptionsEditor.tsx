@@ -1,9 +1,9 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { BarGaugeDisplayMode, BarGaugeValueMode, TableBarGaugeCellOptions } from '@grafana/schema';
+import { BarGaugeDisplayMode, BarGaugeValueMode, type TableBarGaugeCellOptions } from '@grafana/schema';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
-import { TableCellEditorProps } from '../TableCellOptionEditor';
+import { type TableCellEditorProps } from '../TableCellOptionEditor';
 
 type Props = TableCellEditorProps<TableBarGaugeCellOptions>;
 
