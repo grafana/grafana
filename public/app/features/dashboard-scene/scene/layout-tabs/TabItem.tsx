@@ -17,7 +17,6 @@ import {
 import { type TabsLayoutTabKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
-import kbn from 'app/core/utils/kbn';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
@@ -122,7 +121,7 @@ export class TabItem
   }
 
   public getSlug(): string {
-    return kbn.slugifyForUrl(interpolateSectionTitle(this, this.state.title ?? 'Tab'));
+    return interpolateSectionTitle(this, this.state.title ?? 'Tab').replace(/ +/g, '-');
   }
 
   public isCurrentTab() {

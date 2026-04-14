@@ -17,7 +17,6 @@ import {
 import { type RowsLayoutRowKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_ROW_COPY_KEY } from 'app/core/constants';
-import kbn from 'app/core/utils/kbn';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
@@ -122,7 +121,7 @@ export class RowItem
   }
 
   public getSlug(): string {
-    return kbn.slugifyForUrl(interpolateSectionTitle(this, this.state.title ?? 'Row'));
+    return interpolateSectionTitle(this, this.state.title ?? 'Row').replace(/ +/g, '-');
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
