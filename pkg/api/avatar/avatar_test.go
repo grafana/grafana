@@ -21,8 +21,8 @@ import (
 )
 
 const (
-	defaultHash = "9e107d9d372bb6826bd81d3542a419d6"
-	customHash  = "d2a9116d4a63304733ca0f3471e57d16"
+	defaultHash = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	customHash  = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 )
 
 var nonsenseBody = []byte("Bogus API response")

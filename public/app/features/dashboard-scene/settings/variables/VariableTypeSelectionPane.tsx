@@ -30,6 +30,7 @@ import {
   type EditableVariableType,
   getEditableVariableDefinition,
   getNextAvailableId,
+  getVariableNamePrefix,
   getVariableScene,
   getVariableTypeSelectOptions,
 } from './utils';
@@ -226,7 +227,7 @@ export function VariableTypeSelection({ variableAdd }: { variableAdd: VariableAd
       const sectionVars = collectDescendantVariables(dashboard);
       const allVars = [...dashboardVars, ...sectionVars];
 
-      const newVar = getVariableScene(type, { name: getNextAvailableId(type, allVars) });
+      const newVar = getVariableScene(type, { name: getNextAvailableId(getVariableNamePrefix(type), allVars) });
       dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
       dashboard.state.editPane.selectObject(newVar, { force: true, multi: false });
       DashboardInteractions.variableTypeSelected({ type });
@@ -285,7 +286,7 @@ function SectionVariableTypeSelection({ sectionVariableAdd }: { sectionVariableA
       const allVars = [...dashboardVars, ...sectionVars];
 
       const newVar = getVariableScene(type, {
-        name: getNextAvailableId(type, allVars),
+        name: getNextAvailableId(getVariableNamePrefix(type), allVars),
       });
       dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
       dashboard.state.editPane.selectObject(newVar, { force: true, multi: false });

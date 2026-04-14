@@ -5,14 +5,13 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 	"testing"
+	"text/template"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -541,79 +540,76 @@ func writeToggleDocsTable(include func(FeatureFlag) bool, showEnableByDefault bo
 	return strings.ReplaceAll(v, "--|", "- |")
 }
 
-// Generates and returns an OpenFeature React SDK file content. It shells out to the OpenFeature CLI, writes
-// the SDK to a temp dir, and then reads and returns its content.
+// Generates and returns an OpenFeature React SDK file content by executing
+// the openfeature_react.tmpl template directly with the feature flags data.
 func generateOpenFeatureReact(t *testing.T) string {
-	manifestPath := generateOpenFeatureManifest(t, Generate{React: true})
-	openFeatureBin := getOpenFeatureCLIBin(t)
-
-	outputDir := t.TempDir()
-
-	//nolint:gosec
-	cmd := exec.Command(openFeatureBin, "generate", "react",
-		"--manifest", manifestPath,
-		"--output", outputDir,
-		"--template", "openfeature_react.tmpl",
-		"--no-input",
-	)
-	out, err := cmd.CombinedOutput()
-	require.NoError(t, err, "openfeature generate react failed: %s", string(out))
-
-	//nolint:gosec
-	content, err := os.ReadFile(filepath.Join(outputDir, "openfeature.ts"))
-	require.NoError(t, err)
-	return string(content)
-}
-
-func getOpenFeatureCLIBin(t *testing.T) string {
-	modfile := filepath.Join("..", "..", "..", ".citools", "src", "openfeature", "go.mod")
-	getPath := exec.Command("go", "tool", "-n", "-modfile="+modfile, "openfeature") //nolint:gosec
-	getPath.Env = append(os.Environ(), "GOWORK=off")
-	binOut, err := getPath.Output()
-	require.NoError(t, err, "failed to resolve openfeature CLI via go tool")
-	bin := strings.TrimSpace(string(binOut))
-	return bin
-}
-
-// Generates an OpenFeature flags manifest file for flags matching the given generation target
-// and returns the path to that manifest.
-func generateOpenFeatureManifest(t *testing.T, requested Generate) string {
 	t.Helper()
 
-	type flagDef struct {
-		FlagType     string `json:"flagType"`
-		DefaultValue bool   `json:"defaultValue"`
-		Description  string `json:"description,omitempty"`
+	type ofFlag struct {
+		Key          string
+		Description  string
+		Type         string
+		DefaultValue any
 	}
-	type manifest struct {
-		Schema string             `json:"$schema"`
-		Flags  map[string]flagDef `json:"flags"`
+	type ofFlagset struct {
+		Flags []ofFlag
 	}
-
-	m := manifest{
-		Schema: "https://raw.githubusercontent.com/open-feature/cli/refs/heads/main/schema/v0/flag-manifest.json",
-		Flags:  make(map[string]flagDef),
+	type templateData struct {
+		Flagset ofFlagset
 	}
 
+	flags := make([]ofFlag, 0, len(standardFeatureFlags))
 	for _, flag := range standardFeatureFlags {
-		shouldGenerate := (flag.Generate.Go && requested.Go) || (flag.Generate.React && requested.React)
-
-		if !shouldGenerate {
+		if !flag.Generate.React {
 			continue
 		}
-
-		m.Flags[flag.Name] = flagDef{
-			FlagType:     "boolean",
-			DefaultValue: flag.Expression == "true",
+		flags = append(flags, ofFlag{
+			Key:          flag.Name,
 			Description:  flag.Description,
-		}
+			Type:         "boolean",
+			DefaultValue: flag.Expression == "true",
+		})
 	}
 
-	manifestJSON, err := json.MarshalIndent(m, "", "  ")
-	require.NoError(t, err)
+	sort.Slice(flags, func(i, j int) bool {
+		return flags[i].Key < flags[j].Key
+	})
 
-	tmpDir := t.TempDir()
-	manifestPath := filepath.Join(tmpDir, "manifest.json")
-	require.NoError(t, os.WriteFile(manifestPath, append(manifestJSON, '\n'), 0600))
-	return manifestPath
+	funcMap := template.FuncMap{
+		"ToPascal": strcase.ToCamel,
+		"Quote": func(s string) string {
+			return `"` + s + `"`
+		},
+		"QuoteString": func(v any) string {
+			switch val := v.(type) {
+			case bool:
+				if val {
+					return "true"
+				}
+				return "false"
+			case string:
+				return `"` + val + `"`
+			default:
+				return fmt.Sprintf("%v", v)
+			}
+		},
+		"ToJSONString": func(v any) string {
+			b, _ := json.Marshal(v)
+			return string(b)
+		},
+	}
+
+	//nolint:gosec
+	tmplContent, err := os.ReadFile("openfeature_react.tmpl")
+	require.NoError(t, err, "failed to read openfeature_react.tmpl")
+
+	tmpl, err := template.New("openfeature").Funcs(funcMap).Parse(string(tmplContent))
+	require.NoError(t, err, "failed to parse openfeature_react.tmpl")
+
+	var buf bytes.Buffer
+	require.NoError(t, tmpl.Execute(&buf, templateData{
+		Flagset: ofFlagset{Flags: flags},
+	}), "failed to execute openfeature template")
+
+	return buf.String()
 }

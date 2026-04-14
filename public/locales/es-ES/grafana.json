@@ -3585,11 +3585,13 @@
       },
       "instance-details-drawer": {
         "alert-instance-label": "",
+        "back": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Detalles de la instancia",
         "silence-button": "",
-        "silence-no-permission": ""
+        "silence-no-permission": "",
+        "silence-title-with-name": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "No tienes instancias de alerta en estado de activación o pendientes para el intervalo de tiempo seleccionado.",
@@ -4330,6 +4332,9 @@
       "libraryPanel_other": "{{count}} paneles de librería",
       "total_one": "{{count}} elemento",
       "total_other": "{{count}} elementos"
+    },
+    "create-new": {
+      "dashboard-group": ""
     },
     "dashboards-tree": {
       "checkbox": {
@@ -8142,8 +8147,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "No admitida",
+      "badge-text-success": "",
       "badge-text-supported": "Consolidada",
       "label": {
+        "advisor": "",
         "alerting": "Alertas",
         "type": "Tipo"
       }
@@ -12362,7 +12369,7 @@
         "description-no-value": "Qué mostrar cuando no hay valor",
         "description-value-mappings": "Modificar el texto de visualización en función del valor introducido",
         "name-actions": "Acciones",
-        "name-ad-hoc": "Filtrable «ad hoc»",
+        "name-ad-hoc": "",
         "name-color-scheme": "Esquema de colores",
         "name-data-links": "Enlaces de datos",
         "name-decimals": "Decimales",
@@ -12821,6 +12828,7 @@
       "title-button-disabled": "El plugin aún no se puede utilizar. La instalación puede tardar un poco en completarse."
     },
     "install-controls": {
+      "contact-us": "",
       "install": "Instalar",
       "installing": "Instalando",
       "update": "Actualizar",
@@ -14316,11 +14324,11 @@
       "view-as-list": "Ver como lista"
     },
     "dashboard-actions": {
-      "import": "Importar",
+      "import": "",
       "new": "Nuevo",
       "new-dashboard": "Nuevo panel de control",
       "new-folder": "Nueva carpeta",
-      "new-template-dashboard": "Dashboard desde plantilla"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Puntuación"
@@ -15285,11 +15293,12 @@
     },
     "range-content": {
       "apply-button": "Aplicar intervalo de tiempo",
-      "default-error": "Introduce una fecha pasada o «{{now}}»",
+      "default-error": "",
       "fiscal-year": "Año fiscal: {{from}} - {{to}}",
       "from-input": "Desde",
       "open-input-calendar": "Abrir calendario",
-      "range-error": "«Desde» no puede ser posterior a «hasta»",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Hasta"
     },
     "range-picker": {

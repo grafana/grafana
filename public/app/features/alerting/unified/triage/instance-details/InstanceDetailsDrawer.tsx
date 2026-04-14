@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { orderBy } from 'lodash';
-import { Fragment, useMemo } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { type GrafanaTheme2, type Labels } from '@grafana/data';
@@ -10,6 +10,7 @@ import { TimeRangePicker, useTimeRange } from '@grafana/scenes-react';
 import {
   Alert,
   Box,
+  Button,
   Drawer,
   Icon,
   LoadingBar,
@@ -18,6 +19,7 @@ import {
   Text,
   TextLink,
   useStyles2,
+  useTheme2,
 } from '@grafana/ui';
 import { type AlertQuery, GrafanaAlertState, type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
@@ -35,6 +37,7 @@ import { useWorkbenchContext } from '../WorkbenchContext';
 
 import { DrawerTimeRangeInfoBanner } from './DrawerTimeRangeInfoBanner';
 import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
+import { InstanceSilenceForm } from './InstanceSilenceForm';
 import { InstanceStateInfoBanner } from './InstanceStateInfoBanner';
 import { InstanceTimelineSection } from './InstanceTimelineSection';
 import { QueryVisualization } from './QueryVisualization';
@@ -45,6 +48,17 @@ import { formatTimelineDate, noop } from './timelineUtils';
 
 const { useGetAlertRuleQuery } = alertRuleApi;
 const { useGetRuleHistoryQuery } = stateHistoryApi;
+
+function DrawerBackButton({ onClick }: { onClick: () => void }) {
+  const backLabel = t('alerting.triage.instance-details-drawer.back', 'Back');
+  return (
+    <Stack direction="row" alignItems="center">
+      <Button variant="secondary" size="sm" fill="text" icon="arrow-left" onClick={onClick} aria-label={backLabel}>
+        {backLabel}
+      </Button>
+    </Stack>
+  );
+}
 
 function calculateDrawerWidth(rightColumnWidth: number): number {
   const calculatedWidth = rightColumnWidth + 32;
@@ -58,12 +72,27 @@ interface InstanceDetailsDrawerProps {
   onClose: () => void;
 }
 
+/** Stacked drilldown views inside the instance drawer. Only `instance-details` and `silence` are wired today; to do: contact point list, notification details, declare incident. */
+type DrawerView =
+  | { type: 'instance-details' }
+  | { type: 'contact-point-list'; receiverName: string }
+  | { type: 'notification-history-details'; notificationUuid: string; timestampMs?: number }
+  | { type: 'silence' }
+  | { type: 'declare-incident' };
+
 export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, onClose }: InstanceDetailsDrawerProps) {
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
   const [timeRange] = useTimeRange();
+  const theme = useTheme2();
   const { rightColumnWidth } = useWorkbenchContext();
+  const [viewStack, setViewStack] = useState<DrawerView[]>([{ type: 'instance-details' }]);
+  const closeSilenceTimerRef = useRef<number | undefined>(undefined);
+  const [isClosingSilenceDrawer, setIsClosingSilenceDrawer] = useState(false);
 
   const drawerWidth = calculateDrawerWidth(rightColumnWidth);
+  const silenceDrawerCloseAnimationMs = Number(theme.transitions.duration.standard ?? 180);
+  const activeView = viewStack[viewStack.length - 1];
+  const canGoBack = viewStack.length > 1;
 
   const { data: rule, isLoading: loading, error } = useGetAlertRuleQuery({ uid: ruleUID });
 
@@ -106,55 +135,107 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     return isDrawerRangeShorterThanQuery(rule.grafana_alert, timeRange);
   }, [rule, timeRange]);
 
-  if (error) {
-    return (
-      <Drawer
-        title={
-          <InstanceDetailsDrawerTitle
-            instanceLabels={instanceLabels}
-            commonLabels={commonLabels}
-            alertState={instanceState}
-          />
-        }
-        onClose={onClose}
-        width={drawerWidth}
-      >
-        <ErrorContent error={error} />
-      </Drawer>
-    );
-  }
+  const getTopDrawerContentWrapper = useCallback(() => {
+    const wrappers = document.querySelectorAll<HTMLElement>('.main-view .rc-drawer-content-wrapper');
+    return wrappers.item(wrappers.length - 1) ?? null;
+  }, []);
 
-  if (loading || !rule) {
-    return (
-      <Drawer
-        title={
-          <InstanceDetailsDrawerTitle
-            instanceLabels={instanceLabels}
-            commonLabels={commonLabels}
-            alertState={instanceState}
-          />
-        }
-        onClose={onClose}
-        width={drawerWidth}
-      >
-        <LoadingPlaceholder text={t('alerting.common.loading', 'Loading...')} />
-      </Drawer>
-    );
-  }
+  const resetSilencePanelStyles = useCallback(() => {
+    const el = getTopDrawerContentWrapper();
+    if (el) {
+      el.style.removeProperty('transition');
+      el.style.removeProperty('transform');
+    }
+  }, [getTopDrawerContentWrapper]);
 
-  return (
-    <Drawer
-      title={
-        <InstanceDetailsDrawerTitle
-          instanceLabels={instanceLabels}
-          commonLabels={commonLabels}
-          alertState={instanceState}
-          rule={rule.grafana_alert}
-        />
+  const handleDrawerClose = () => {
+    if (closeSilenceTimerRef.current !== undefined) {
+      window.clearTimeout(closeSilenceTimerRef.current);
+      closeSilenceTimerRef.current = undefined;
+    }
+    resetSilencePanelStyles();
+    setIsClosingSilenceDrawer(false);
+    setViewStack([{ type: 'instance-details' }]);
+    onClose();
+  };
+
+  useEffect(() => {
+    return () => {
+      if (closeSilenceTimerRef.current !== undefined) {
+        window.clearTimeout(closeSilenceTimerRef.current);
       }
-      onClose={onClose}
-      width={drawerWidth}
-    >
+      resetSilencePanelStyles();
+    };
+  }, [resetSilencePanelStyles]);
+
+  const popTopView = () => {
+    setViewStack((current) => {
+      if (current.length <= 1) {
+        return current;
+      }
+      return current.slice(0, -1);
+    });
+  };
+
+  const animateCloseSilenceDrawer = useCallback(() => {
+    if (isClosingSilenceDrawer) {
+      return;
+    }
+
+    const el = getTopDrawerContentWrapper();
+    if (el) {
+      el.style.transition = `transform ${silenceDrawerCloseAnimationMs}ms ease-in`;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          el.style.transform = 'translateX(100%)';
+        });
+      });
+    }
+
+    setIsClosingSilenceDrawer(true);
+    closeSilenceTimerRef.current = window.setTimeout(() => {
+      resetSilencePanelStyles();
+      popTopView();
+      setIsClosingSilenceDrawer(false);
+      closeSilenceTimerRef.current = undefined;
+    }, silenceDrawerCloseAnimationMs);
+  }, [getTopDrawerContentWrapper, isClosingSilenceDrawer, silenceDrawerCloseAnimationMs, resetSilencePanelStyles]);
+
+  const handleBack = () => {
+    if (activeView.type === 'silence') {
+      animateCloseSilenceDrawer();
+      return;
+    }
+
+    popTopView();
+  };
+
+  const handleOpenSilence = useCallback(() => {
+    setViewStack((current) => [...current, { type: 'silence' }]);
+  }, []);
+
+  const sharedTitleProps = useMemo(
+    () => ({
+      instanceLabels,
+      commonLabels,
+      alertState: instanceState,
+      onOpenSilence: handleOpenSilence,
+    }),
+    [instanceLabels, commonLabels, instanceState, handleOpenSilence]
+  );
+
+  const getDrawerTitle = () => <InstanceDetailsDrawerTitle {...sharedTitleProps} rule={rule?.grafana_alert} />;
+
+  const getInstanceDetailsBody = () => {
+    if (error) {
+      return <ErrorContent error={error} />;
+    }
+
+    if (loading || !rule) {
+      return <LoadingPlaceholder text={t('alerting.common.loading', 'Loading...')} />;
+    }
+
+    return (
       <Stack direction="column" gap={3}>
         <Stack justifyContent="flex-end">
           <TimeRangePicker />
@@ -216,6 +297,61 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
           </Box>
         )}
       </Stack>
+    );
+  };
+
+  if (error || loading || !rule) {
+    return (
+      <Drawer title={getDrawerTitle()} onClose={handleDrawerClose} width={drawerWidth}>
+        {getInstanceDetailsBody()}
+      </Drawer>
+    );
+  }
+
+  if (activeView.type === 'silence' || isClosingSilenceDrawer) {
+    return (
+      <>
+        <Drawer
+          title={<InstanceDetailsDrawerTitle {...sharedTitleProps} rule={rule.grafana_alert} />}
+          onClose={handleDrawerClose}
+          width={drawerWidth}
+        >
+          {getInstanceDetailsBody()}
+        </Drawer>
+        <Drawer
+          title={
+            <InstanceDetailsDrawerTitle
+              {...sharedTitleProps}
+              rule={rule.grafana_alert}
+              titleText={t('alerting.triage.instance-details-drawer.silence-title-with-name', 'Silence {{name}}', {
+                name: rule.grafana_alert.title,
+              })}
+              hideActions
+              showAlertState={false}
+              titleSection={<DrawerBackButton onClick={handleBack} />}
+            />
+          }
+          onClose={handleDrawerClose}
+          width={drawerWidth}
+        >
+          <InstanceSilenceForm ruleUid={ruleUID} instanceLabels={instanceLabels} onClose={animateCloseSilenceDrawer} />
+        </Drawer>
+      </>
+    );
+  }
+
+  return (
+    <Drawer
+      title={
+        <Stack direction="column" gap={1}>
+          {canGoBack && <DrawerBackButton onClick={handleBack} />}
+          {getDrawerTitle()}
+        </Stack>
+      }
+      onClose={handleDrawerClose}
+      width={drawerWidth}
+    >
+      {getInstanceDetailsBody()}
     </Drawer>
   );
 }

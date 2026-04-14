@@ -1679,6 +1679,33 @@ describe('ScopesSelectorService', () => {
 
       expect(apiClient.fetchMultipleScopeNodes).not.toHaveBeenCalled();
     });
+
+    it('should backfill scopeNodeId into appliedScopes from defaultPath when initially absent', async () => {
+      apiClient.fetchMultipleScopes = jest.fn().mockResolvedValue([scopeWithDefaultPath]);
+      apiClient.fetchMultipleScopeNodes = jest
+        .fn()
+        .mockResolvedValue([regionNode, countryNode, cityNode, datacenterNode]);
+
+      // Call without scopeNodeId (simulates URL load without scope_node)
+      await service.changeScopes(['scope-sea-1']);
+
+      // scopeNodeId should be backfilled from defaultPath's last element
+      expect(service.state.appliedScopes[0].scopeNodeId).toBe('datacenter-sea-1');
+      expect(service.state.selectedScopes[0].scopeNodeId).toBe('datacenter-sea-1');
+    });
+
+    it('should not overwrite existing scopeNodeId when defaultPath is present', async () => {
+      apiClient.fetchMultipleScopes = jest.fn().mockResolvedValue([scopeWithDefaultPath]);
+      apiClient.fetchMultipleScopeNodes = jest
+        .fn()
+        .mockResolvedValue([regionNode, countryNode, cityNode, datacenterNode]);
+
+      // Call with an explicit scopeNodeId
+      await service.changeScopes(['scope-sea-1'], undefined, 'explicit-node');
+
+      // Should keep the explicit value, not overwrite from defaultPath
+      expect(service.state.appliedScopes[0].scopeNodeId).toBe('explicit-node');
+    });
   });
 
   describe('open selector with defaultPath expansion', () => {
