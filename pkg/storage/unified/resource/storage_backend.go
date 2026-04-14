@@ -20,6 +20,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -288,6 +289,9 @@ func (k *kvStorageBackend) runCleanups(ctx context.Context) {
 }
 
 func (k *kvStorageBackend) cleanupOldLastImportTimes(ctx context.Context) {
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.cleanupOldLastImportTimes")
+	defer span.End()
+
 	if k.lastImportTimeMaxAge <= 0 {
 		return
 	}
@@ -302,6 +306,9 @@ func (k *kvStorageBackend) cleanupOldLastImportTimes(ctx context.Context) {
 
 // cleanupOldEvents performs the actual cleanup of old events
 func (k *kvStorageBackend) cleanupOldEvents(ctx context.Context) {
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.cleanupOldEvents")
+	defer span.End()
+
 	cutoff := time.Now().Add(-k.eventRetentionPeriod)
 	deletedCount, err := k.eventStore.CleanupOldEvents(ctx, cutoff)
 	if err != nil {
@@ -315,6 +322,9 @@ func (k *kvStorageBackend) cleanupOldEvents(ctx context.Context) {
 }
 
 func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) error {
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.pruneEvents")
+	defer span.End()
+
 	if !key.Validate() {
 		return fmt.Errorf("invalid pruning key: group, resource, and name must be set: %+v", key)
 	}
@@ -690,6 +700,14 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 
 	event.PreviousRV = toSnowflakeRV(event.PreviousRV)
 
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.WriteEvent", trace.WithAttributes(
+		attribute.String("event_type", event.Type.String()),
+		attribute.String("group", event.Key.Group),
+		attribute.String("resource", event.Key.Resource),
+		attribute.String("namespace", event.Key.Namespace),
+	))
+	defer span.End()
+
 	rv := k.snowflake.Generate().Int64()
 
 	namespace := event.Key.Namespace
@@ -893,6 +911,14 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 // eventstore is used as a commit signal: an event is written only after the
 // optimistic locking checks, so its presence proves the write is committed.
 func (k *kvStorageBackend) confirmExistence(ctx context.Context, key DataKey) (bool, error) {
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.confirmExistence", trace.WithAttributes(
+		attribute.String("namespace", key.Namespace),
+		attribute.String("group", key.Group),
+		attribute.String("resource", key.Resource),
+		attribute.String("name", key.Name),
+	))
+	defer span.End()
+
 	const eventThreshold = 30 * time.Second
 
 	// Extract the timestamp from the snowflake-formatted RV.
@@ -927,6 +953,14 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	}
 
 	req.ResourceVersion = toSnowflakeRV(req.ResourceVersion)
+
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ReadResource", trace.WithAttributes(
+		attribute.String("namespace", req.Key.Namespace),
+		attribute.String("group", req.Key.Group),
+		attribute.String("resource", req.Key.Resource),
+		attribute.String("name", req.Key.Name),
+	))
+	defer span.End()
 
 	namespace := req.Key.Namespace
 
@@ -1005,6 +1039,13 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	}
 
 	req.ResourceVersion = toSnowflakeRV(req.ResourceVersion)
+
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ListIterator", trace.WithAttributes(
+		attribute.String("namespace", req.Options.Key.Namespace),
+		attribute.String("group", req.Options.Key.Group),
+		attribute.String("resource", req.Options.Key.Resource),
+	))
+	defer span.End()
 
 	// Parse continue token if provided
 	listOptions := ListRequestOptions{
@@ -1277,6 +1318,14 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 
 	sinceRv = toSnowflakeRV(sinceRv)
 
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ListModifiedSince", trace.WithAttributes(
+		attribute.String("namespace", key.Namespace),
+		attribute.String("group", key.Group),
+		attribute.String("resource", key.Resource),
+		attribute.Int64("sinceRv", sinceRv),
+	))
+	defer span.End()
+
 	latestEvent, err := k.eventStore.LastEventKey(ctx)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
@@ -1337,6 +1386,14 @@ func convertEventType(action kv.DataAction) resourcepb.WatchEvent_Type {
 }
 
 func (k *kvStorageBackend) getValueFromDataStore(ctx context.Context, dataKey DataKey) ([]byte, error) {
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.getValueFromDataStore", trace.WithAttributes(
+		attribute.String("namespace", dataKey.Namespace),
+		attribute.String("group", dataKey.Group),
+		attribute.String("resource", dataKey.Resource),
+		attribute.String("name", dataKey.Name),
+	))
+	defer span.End()
+
 	raw, err := k.dataStore.Get(ctx, dataKey)
 	if err != nil {
 		return []byte{}, err
@@ -1351,6 +1408,14 @@ func (k *kvStorageBackend) getValueFromDataStore(ctx context.Context, dataKey Da
 }
 
 func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.listModifiedSinceDataStore", trace.WithAttributes(
+		attribute.String("namespace", key.Namespace),
+		attribute.String("group", key.Group),
+		attribute.String("resource", key.Resource),
+		attribute.Int64("sinceRv", sinceRv),
+	))
+	defer span.End()
+
 	return func(yield func(*ModifiedResource, error) bool) {
 		var lastSeenResource *ModifiedResource
 		var lastSeenDataKey DataKey
@@ -1420,6 +1485,14 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 }
 
 func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.listModifiedSinceEventStore", trace.WithAttributes(
+		attribute.String("namespace", key.Namespace),
+		attribute.String("group", key.Group),
+		attribute.String("resource", key.Resource),
+		attribute.Int64("sinceRv", sinceRv),
+	))
+	defer span.End()
+
 	return func(yield func(*ModifiedResource, error) bool) {
 		// we only care about the latest revision of every resource in the list
 		seen := make(map[string]struct{})
@@ -1474,6 +1547,14 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 	}
 	key := req.Options.Key
 	req.ResourceVersion = toSnowflakeRV(req.ResourceVersion)
+
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ListHistory", trace.WithAttributes(
+		attribute.String("namespace", key.Namespace),
+		attribute.String("group", key.Group),
+		attribute.String("resource", key.Resource),
+	))
+	defer span.End()
+
 	// Parse continue token if provided
 	lastSeenRV := int64(0)
 	if req.NextPageToken != "" {
@@ -1557,6 +1638,9 @@ func (k *kvStorageBackend) processTrashEntries(
 	listRV int64,
 	lastSeenRV int64,
 ) (int64, error) {
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.processTrashEntries")
+	defer span.End()
+
 	reqKey := req.Options.Key
 
 	listKey := ListRequestKey{Group: reqKey.Group, Resource: reqKey.Resource, Namespace: reqKey.Namespace, Name: reqKey.Name}
@@ -1743,6 +1827,9 @@ func (i *kvHistoryIterator) Value() []byte {
 
 // WatchWriteEvents returns a channel that receives write events.
 func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
+	_, span := tracer.Start(ctx, "resource.kvStorageBackend.WatchWriteEvents")
+	defer span.End()
+
 	// Create a channel to receive events
 	events := make(chan *WrittenEvent, 10000) // TODO: make this configurable
 
@@ -1800,10 +1887,20 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 
 // GetResourceStats returns resource stats within the storage backend.
 func (k *kvStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.GetResourceStats", trace.WithAttributes(
+		attribute.String("namespace", nsr.Namespace),
+		attribute.String("group", nsr.Group),
+		attribute.String("resource", nsr.Resource),
+	))
+	defer span.End()
+
 	return k.dataStore.GetResourceStats(ctx, nsr, minCount)
 }
 
 func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.GetResourceLastImportTimes")
+	defer span.End()
+
 	return func(yield func(ResourceLastImportTime, error) bool) {
 		valid, _, err := k.lastImportStore.ListLastImportTimes(ctx, k.lastImportTimeMaxAge)
 		if err != nil {
@@ -1857,6 +1954,9 @@ func (s *singleBulkRequestBatchIterator) RollbackRequested() bool {
 
 //nolint:gocyclo
 func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ProcessBulk")
+	defer span.End()
+
 	// rvManagerDB is the database handle for rvManager and legacy compat operations.
 	// During SQLite migrations it's swapped to the migration's tx to avoid SQLITE_BUSY.
 	var rvManagerDB db.ContextExecer
