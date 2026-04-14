@@ -53,7 +53,7 @@ describe('PlaylistEditPage', () => {
       await getTestContext();
 
       expect(await screen.findByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /name/i })).toHaveValue('Test Playlist');
+      expect(await screen.findByRole('textbox', { name: /name/i })).toHaveValue('Test Playlist');
       expect(screen.getByRole('textbox', { name: /interval/i })).toHaveValue('5s');
       expect(screen.getAllByRole('row')).toHaveLength(1);
     });
