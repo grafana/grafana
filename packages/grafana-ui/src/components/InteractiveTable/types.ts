@@ -26,9 +26,21 @@ export interface Column<TableData extends object> {
    * */
   sortType?: DefaultSortTypes | SortByFn<TableData>;
   /**
-   * If `true` prevents the column from growing more than its content.
+   * If `true` prevents the column from growing more than its content. Ignored when `width` is set.
    */
   disableGrow?: boolean;
+  /**
+   * Fixed width for the column in pixels. Overrides flex-based sizing.
+   */
+  width?: number;
+  /**
+   * Minimum width for the column in pixels.
+   */
+  minWidth?: number;
+  /**
+   * Maximum width for the column in pixels.
+   */
+  maxWidth?: number;
   /**
    * If the provided function returns `false` the column will be hidden.
    */

@@ -2419,7 +2419,9 @@
       "recipient-notification-fires": "Sélectionnez qui doit recevoir une notification lorsqu’une règle d’alerte se déclenche."
     },
     "open-drawer-icon-button": {
-      "details": ""
+      "details": "",
+      "instance-details": "",
+      "rule-details": ""
     },
     "option-customfield": {
       "label-custom-template": "Personnaliser le modèle",
@@ -3565,6 +3567,7 @@
       }
     },
     "triage": {
+      "clear-filters": "",
       "collapse": "",
       "collapse-all": "",
       "collapse-sidebar": "",
@@ -3581,11 +3584,14 @@
         "no-label": ""
       },
       "instance-details-drawer": {
+        "alert-instance-label": "",
+        "back": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Détails de l’instance",
         "silence-button": "",
-        "silence-no-permission": ""
+        "silence-no-permission": "",
+        "silence-title-with-name": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "Vous n’avez aucune instance d’alerte déclenchée ou en attente pour la plage temporelle sélectionnée.",
@@ -3609,6 +3615,7 @@
           "folder-only": ""
         }
       },
+      "severity-filter-title": "",
       "show-fewer-values": "",
       "state-filter-title": "",
       "state-firing": "",
@@ -4326,6 +4333,9 @@
       "total_one": "{{count}} objet",
       "total_other": "{{count}} objets"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Cet élément ne fait pas partie du même référentiel que les éléments sélectionnés."
@@ -4918,6 +4928,9 @@
       "light-theme": "Clair",
       "scopes": "Portées"
     },
+    "badge": {
+      "provisioned": ""
+    },
     "empty-state": {
       "button-title": "Rechercher avec Grafana Assistant",
       "message": "Aucun résultat trouvé"
@@ -4993,24 +5006,28 @@
     "cloud": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Connectez vos données à Grafana via des sources de données, des intégrations et des applications",
-          "title": "Ajouter une nouvelle connexion"
+          "subtitle": "Connectez vos données à Grafana via des sources de données, des intégrations et des applications"
         },
         "collector": {
-          "subtitle": "Gérez la configuration de Grafana Alloy (notre distribution de l’OpenTelemetry Collector)",
-          "title": ""
+          "subtitle": "Gérez la configuration de Grafana Alloy (notre distribution de l’OpenTelemetry Collector)"
+        },
+        "collector-setup": {
+          "subtitle": ""
         },
         "data-sources": {
-          "subtitle": "Gérer vos connexions de sources de données existantes",
-          "title": "Sources de données"
+          "subtitle": "Gérer vos connexions de sources de données existantes"
+        },
+        "fleet-management": {
+          "subtitle": ""
+        },
+        "instrumentation-hub": {
+          "subtitle": ""
         },
         "integrations": {
-          "subtitle": "Gérez vos intégrations actives",
-          "title": "Intégrations"
+          "subtitle": "Gérez vos intégrations actives"
         },
         "private-data-source-connections": {
-          "subtitle": "Gérez vos connexions réseau privées pour les sources de données",
-          "title": "Connexion de source de données privée"
+          "subtitle": "Gérez vos connexions réseau privées pour les sources de données"
         },
         "subtitle": "Connectez votre infrastructure à Grafana Cloud via des sources de données, des intégrations et des applications. Utilisez cette page pour gérer l’ensemble : ingestion de données, connexions privées et pipelines de télémétrie."
       }
@@ -5070,11 +5087,9 @@
     "oss": {
       "connections-home-page": {
         "add-new-connection": {
-          "subtitle": "Se connecter à une nouvelle source de données",
-          "title": "Ajouter une nouvelle connexion"
+          "subtitle": "Se connecter à une nouvelle source de données"
         },
         "data-sources": {
-          "subtitle": "Gérer vos connexions de sources de données existantes",
           "title": "Afficher les sources de données configurées"
         },
         "subtitle": "Centralisez la gestion de vos connexions aux sources de données : ajoutez-en de nouvelles ou modifiez celles existantes."
@@ -5124,10 +5139,6 @@
       "view-json-diff": "Afficher JSON diff pour voir toutes les modifications"
     }
   },
-  "correlation": {
-    "edit-error": "",
-    "edit-success": ""
-  },
   "correlations": {
     "add-new": "Ajouter un nouveau",
     "alert": {
@@ -5169,6 +5180,14 @@
       "back-button": "Précédent",
       "next-button": "Suivant",
       "save-button": "Enregistrer"
+    },
+    "notify": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "edit-error": "",
+      "edit-success": ""
     },
     "query-editor": {
       "control-rules": "La source de données cible sélectionnée doit exporter un éditeur de requête.",
@@ -5235,11 +5254,6 @@
       "transform-required": "Sélectionnez un type de transformation",
       "type-label": "Type",
       "type-tooltip": "Le type de transformation qui sera appliqué aux données source."
-    }
-  },
-  "dashbaord-scene": {
-    "variable-editor-form": {
-      "run-query": "Exécuter la requête"
     }
   },
   "dashboard": {
@@ -6879,7 +6893,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "Les règles d’affichage et de masquage ne fonctionneront pas",
@@ -7689,6 +7708,7 @@
       "placeholder-descriptive-text": "Texte de description",
       "placeholder-label-name": "Nom de l’étiquette",
       "placeholder-variable-name": "Nom de la variable",
+      "run-query": "",
       "text-running-query": "Exécution de la requête...",
       "title": {
         "delete-variable": "Supprimer la variable"
@@ -8127,8 +8147,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Non pris en charge",
+      "badge-text-success": "",
       "badge-text-supported": "Pris en charge",
       "label": {
+        "advisor": "",
         "alerting": "Alerte",
         "type": "Type"
       }
@@ -8555,7 +8577,6 @@
       "give-feedback": "Publiez votre commentaire"
     },
     "logs-meta-row": {
-      "download": "Télécharger",
       "label": {
         "deduplication-count": "Nombre de déduplications",
         "showing-only-selected-fields": "Afficher seulement les champs sélectionnés"
@@ -8910,22 +8931,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "Afficher les résultats dans la visualisation des journaux",
-        "show-results-in-table-visualisation": "Afficher les résultats dans la visualisation du tableau",
-        "show-results-newest-to-oldest": "Afficher les résultats du plus récent au plus ancien",
-        "show-results-oldest-to-newest": "Afficher les résultats du plus ancien au plus récent"
+        "show-results-in-table-visualisation": "Afficher les résultats dans la visualisation du tableau"
       },
       "label": {
         "logs": "Journaux",
-        "newest-first": "Plus récent en premier",
-        "oldest-first": "Plus ancien en premier",
         "table": "Tableau"
       },
-      "label-deduplication": "Déduplication",
-      "label-display-results": "Afficher les résultats",
-      "label-prettify-json": "Rendre plus lisible le JSON",
-      "label-time": "Heure",
-      "label-unique-labels": "Étiquettes uniques",
-      "label-wrap-lines": "Enrouler les lignes",
       "title-feedback": "Commentaires",
       "title-logs": "Journaux",
       "title-logs-volume": "Volume des journaux"
@@ -9020,8 +9031,7 @@
       "tooltip-s-m-h": "10 s, 1 m, 30 m, 1 h"
     },
     "sql-expr": {
-      "button-run-query": "Exécuter la requête",
-      "tooltip-experimental": "L’intégration des expressions SQL avec les LLM est expérimentale. Merci de signaler tout problème à l’équipe Grafana."
+      "button-run-query": "Exécuter la requête"
     },
     "sql-schema": {
       "error-title": "Erreur",
@@ -11399,6 +11409,12 @@
       "show-search": "Rechercher dans les résultats de logs",
       "show-timestamps": "Afficher les horodatages",
       "show-unique-labels": "Afficher les étiquettes uniques",
+      "table-wrap-text": {
+        "disable": "",
+        "disabled": "",
+        "enable": "",
+        "enabled": ""
+      },
       "timestamp": {
         "hide": "Masquer les horodatages",
         "label": "Horodatages des journaux",
@@ -11425,9 +11441,6 @@
         "not-supported": ""
       },
       "wrap-lines": "Enrouler les lignes"
-    },
-    "logs-navigation": {
-      "scroll-top": "Retour en haut de page"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -12221,7 +12234,7 @@
     },
     "quick-add": {
       "aria-label": "Nouveau",
-      "new-template-dashboard-button": "Tableau de bord à partir d’un modèle"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "Dernières nouvelles sur le blog"
   },
@@ -12312,6 +12325,8 @@
       "description": "Les notifications que vous avez reçues apparaîtront ici",
       "title": "Vous avez tout compris !"
     },
+    "select-all": "",
+    "select-notification": "",
     "stored-notifications": {
       "dismiss-notifications": "Ignorer les notifications",
       "title-alert": "Cette page affiche les erreurs et avertissements passés. Une fois rejetés, ils ne peuvent pas être récupérés."
@@ -12354,7 +12369,7 @@
         "description-no-value": "Que faire lorsqu’aucune valeur n’est disponible ?",
         "description-value-mappings": "Adapter le texte affiché en fonction de la valeur d’entrée",
         "name-actions": "Actions",
-        "name-ad-hoc": "Filtrable dynamiquement",
+        "name-ad-hoc": "",
         "name-color-scheme": "Palette de couleurs",
         "name-data-links": "Liens de données",
         "name-decimals": "Décimales",
@@ -12813,6 +12828,7 @@
       "title-button-disabled": "Le plugin n’est pas encore utilisable, l’installation peut prendre un certain temps."
     },
     "install-controls": {
+      "contact-us": "",
       "install": "Installer",
       "installing": "Installation en cours",
       "update": "Mettre à jour",
@@ -13373,6 +13389,7 @@
       "token-label": "Token d’accès au projet",
       "token-required": "Le token GitLab est requis",
       "url-description": "L’URL du dépôt GitLab",
+      "url-pattern": "",
       "url-required": "L’URL du dépôt est requise"
     },
     "history-view": {
@@ -14307,11 +14324,11 @@
       "view-as-list": "Voir en tant que liste"
     },
     "dashboard-actions": {
-      "import": "Importer",
+      "import": "",
       "new": "Nouveau",
       "new-dashboard": "Nouveau tableau de bord",
       "new-folder": "Nouveau dossier",
-      "new-template-dashboard": "Tableau de bord à partir d’un modèle"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Note"
@@ -14813,19 +14830,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "Ajoutez au moins une requête de données pour générer des suggestions SQL",
-    "ai-explain-title": "Explication de l’expression SQL assistée par l’IA",
-    "ai-suggestions-title": "Suggestions d’expressions SQL assistées par l’IA",
-    "apply": "Appliquer",
-    "code-label": "{{ language }}",
-    "copy": "Copier",
-    "explain-empty-query-tooltip": "Saisissez une expression SQL pour obtenir une explication",
     "explain-query": "Expliquer la requête",
-    "explanation-modal-title": "Explication de la requête SQL",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "Historique des suggestions SQL",
-    "suggestions": "Suggestions",
-    "view-explanation": "Voir l’explication"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "Marquer comme favori",
@@ -15286,11 +15293,12 @@
     },
     "range-content": {
       "apply-button": "Appliquer la plage temporelle",
-      "default-error": "Veuillez saisir une date antérieure ou « {{now}} »",
+      "default-error": "",
       "fiscal-year": "Exercice fiscal : {{from}} - {{to}}",
       "from-input": "De",
       "open-input-calendar": "Ouvrir le calendrier",
-      "range-error": "« De » ne peut pas être ultérieur à « À »",
+      "range-error": "",
+      "required-error": "",
       "to-input": "À"
     },
     "range-picker": {

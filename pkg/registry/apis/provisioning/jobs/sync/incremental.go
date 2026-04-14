@@ -56,6 +56,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	}
 
 	var replaced []replacedFolder
+	var relocations map[string][]string
 	var invalidFolderMetadata []*resources.InvalidFolderMetadata
 	if folderMetadataEnabled {
 		readerRepo, ok := repo.(repository.Reader)
@@ -69,7 +70,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		}
 
 		folderMetadataIncrementalDiffBuilder := NewFolderMetadataIncrementalDiffBuilder(readerRepo)
-		diff, replaced, invalidFolderMetadata, err = folderMetadataIncrementalDiffBuilder.BuildIncrementalDiff(ctx, currentRef, diff, target)
+		diff, relocations, replaced, invalidFolderMetadata, err = folderMetadataIncrementalDiffBuilder.BuildIncrementalDiff(ctx, currentRef, diff, target)
 		if err != nil {
 			return tracing.Error(span, fmt.Errorf("build folder metadata incremental diff: %w", err))
 		}
@@ -84,18 +85,15 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		// Incremental sync normally starts with an empty folder tree, but folder
 		// metadata handling needs the current managed path->UID state before apply:
 		// - invalid `_folder.json` falls back to the existing folder at that path
-		// - valid metadata replacements remove old UIDs from that same tree before replay
+		// - folders cannot overtake existing UIDs
 		tree := resources.NewFolderTreeFromResourceList(target)
-		for _, replacedFolder := range replaced {
-			tree.Remove(replacedFolder.OldUID)
-		}
 		repositoryResources.SetTree(tree)
 	}
 
 	progress.SetTotal(ctx, len(diff))
 	progress.SetMessage(ctx, "replicating versioned changes")
 	applyStart := time.Now()
-	affectedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span, quotaTracker, folderMetadataEnabled)
+	affectedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span, quotaTracker, folderMetadataEnabled, relocations)
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseApply, time.Since(applyStart))
 	if err != nil {
 		return err
@@ -135,7 +133,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 }
 
 //nolint:gocyclo
-func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFileChange, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, span trace.Span, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) (affectedFolders map[string]string, err error) {
+func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFileChange, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, span trace.Span, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool, relocations map[string][]string) (affectedFolders map[string]string, err error) {
 	// this will keep track of any folders that had resources deleted from it
 	// with key-value as path:grafana uid.
 	// after cleaning up all resources, we will look to see if the foldrs are
@@ -211,7 +209,11 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			if change.Action == repository.FileActionUpdated {
 				folderResultBuilder := jobs.NewFolderResult(change.Path).WithAction(change.Action)
 				folderCtx, folderSpan := tracer.Start(ctx, "provisioning.sync.incremental.reparent_child_folder")
-				folder, fErr := repositoryResources.EnsureFolderPathExist(folderCtx, change.Path, change.Ref)
+				ensureOpts := []resources.EnsurePathOption{resources.WithForceWalk()}
+				if uids, ok := relocations[change.Path]; ok {
+					ensureOpts = append(ensureOpts, resources.WithRelocatingUIDs(uids...))
+				}
+				folder, fErr := repositoryResources.EnsureFolderPathExist(folderCtx, change.Path, change.Ref, ensureOpts...)
 				if fErr != nil {
 					folderSpan.RecordError(fErr)
 					folderResultBuilder.WithError(fmt.Errorf("re-parenting child folder at %s: %w", change.Path, fErr))
@@ -283,7 +285,13 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			resultBuilder.WithPreviousPath(change.PreviousPath)
 			if safepath.IsDir(change.Path) {
 				renameFolderCtx, renameFolderSpan := tracer.Start(ctx, "provisioning.sync.incremental.rename_folder_path")
-				oldFolderID, err := repositoryResources.RenameFolderPath(renameFolderCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref)
+				var folderRenameOpts []resources.EnsurePathOption
+				for dir := safepath.Dir(change.Path); dir != ""; dir = safepath.Dir(dir) {
+					if uids, ok := relocations[dir]; ok {
+						folderRenameOpts = append(folderRenameOpts, resources.WithRelocatingUIDs(uids...))
+					}
+				}
+				oldFolderID, err := repositoryResources.RenameFolderPath(renameFolderCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, folderRenameOpts...)
 				if err != nil {
 					renameFolderSpan.RecordError(err)
 					resultBuilder.WithError(fmt.Errorf("renaming folder from %s to %s: %w", change.PreviousPath, change.Path, err))
@@ -294,7 +302,13 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 				renameFolderSpan.End()
 			} else {
 				renameCtx, renameSpan := tracer.Start(ctx, "provisioning.sync.incremental.rename_resource_file")
-				name, oldFolderName, gvk, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref)
+				var renameOpts []resources.EnsurePathOption
+				for dir := safepath.EnsureTrailingSlash(safepath.Dir(change.Path)); dir != ""; dir = safepath.Dir(dir) {
+					if uids, ok := relocations[dir]; ok {
+						renameOpts = append(renameOpts, resources.WithRelocatingUIDs(uids...))
+					}
+				}
+				name, oldFolderName, gvk, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, renameOpts...)
 				if err != nil {
 					renameSpan.RecordError(err)
 					resultBuilder.WithError(fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err))

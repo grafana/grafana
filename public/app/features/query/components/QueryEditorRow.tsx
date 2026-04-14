@@ -544,7 +544,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     );
 
     return (
-      <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows} ref={this.editorRef}>
+      <div data-testid={selectors.components.QueryEditorRows.rows} ref={this.editorRef}>
         {queryLibraryRef && (
           <MaybeQueryLibraryEditingHeader
             query={query}

@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
 import {
   FieldMatcherID,
@@ -48,10 +49,7 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     onChange({ ...options, applyTo: { id: currentMatcher.id, options: matcherOption } });
   };
 
-  const matchers = fieldMatchersUI
-    .list()
-    .filter((o) => !o.excludeFromPicker)
-    .map<SelectableValue<string>>((i) => ({ label: i.name, value: i.id, description: i.description }));
+  const matchers = useMemo(() => fieldMatchersUI.selectOptions().options, []);
 
   return (
     <>

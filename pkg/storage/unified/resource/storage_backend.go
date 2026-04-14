@@ -21,6 +21,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -658,10 +659,28 @@ func (b *kvStorageBackend) garbageCollectionCutoffTimestamp(group, resourceName 
 		cutoffTimestamp = time.Now().Add(-b.garbageCollection.DashboardsMaxAge).UnixMicro()
 	}
 
-	if !isSnowflake(cutoffTimestamp) {
+	if !IsSnowflake(cutoffTimestamp) {
 		cutoffTimestamp = rvmanager.SnowflakeFromRV(cutoffTimestamp)
 	}
 	return cutoffTimestamp
+}
+
+// toSnowflakeRV converts a microsecond RV to snowflake format if needed.
+// This ensures the KV backend is compatible with both RV formats during the
+// backend transition period.
+//
+// TODO: remove when compatibility with SQL backend is no longer needed.
+func toSnowflakeRV(rv int64) int64 {
+	if rv > 0 && !IsSnowflake(rv) {
+		return rvmanager.SnowflakeFromRV(rv)
+	}
+	return rv
+}
+
+func conflictError(event WriteEvent, message string) error {
+	return NewConflictStatusError(
+		event.Key.Group, event.Key.Resource, event.Key.Name, message,
+	)
 }
 
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
@@ -669,8 +688,10 @@ func (b *kvStorageBackend) garbageCollectionCutoffTimestamp(group, resourceName 
 //nolint:gocyclo
 func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
 	if err := event.Validate(); err != nil {
-		return 0, fmt.Errorf("invalid event: %w", err)
+		return 0, apierrors.NewBadRequest(err.Error())
 	}
+
+	event.PreviousRV = toSnowflakeRV(event.PreviousRV)
 
 	rv := k.snowflake.Generate().Int64()
 
@@ -687,14 +708,14 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if err != nil {
 			if errors.Is(err, ErrNotFound) {
 				// Resource doesn't exist, but PreviousRV was provided
-				return 0, fmt.Errorf("optimistic locking failed: resource not found")
+				return 0, conflictError(event, "resource not found")
 			}
 			return 0, fmt.Errorf("failed to fetch latest resource: %w", err)
 		}
 
 		// Verify the current RV matches the PreviousRV
 		if latestKey.ResourceVersion != event.PreviousRV {
-			return 0, fmt.Errorf("optimistic locking failed: requested RV %d does not match saved RV %d", event.PreviousRV, latestKey.ResourceVersion)
+			return 0, conflictError(event, "requested RV does not match current RV")
 		}
 	}
 
@@ -803,13 +824,13 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if latestKey.ResourceVersion != dataKey.ResourceVersion {
 			// Delete the data we just wrote since it's not the latest
 			_ = k.dataStore.Delete(ctx, dataKey)
-			return 0, fmt.Errorf("optimistic locking failed: concurrent modification detected")
+			return 0, conflictError(event, "concurrent modification detected")
 		}
 
 		if !rvmanager.IsRvEqual(prevKey.ResourceVersion, event.PreviousRV) {
 			// Another concurrent write happened between our read and write
 			_ = k.dataStore.Delete(ctx, dataKey)
-			return 0, fmt.Errorf("optimistic locking failed: resource was modified concurrently (expected previous RV %d, found %d)", event.PreviousRV, prevKey.ResourceVersion)
+			return 0, conflictError(event, "resource was modified concurrently")
 		}
 	} else if event.Type == resourcepb.WatchEvent_ADDED {
 		// Create operations: verify our write is the latest version
@@ -829,14 +850,14 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		if latestKey.ResourceVersion != dataKey.ResourceVersion {
 			// Delete the data we just wrote since it's not the latest
 			_ = k.dataStore.Delete(ctx, dataKey)
-			return 0, fmt.Errorf("optimistic locking failed: concurrent create detected")
+			return 0, conflictError(event, "concurrent create detected")
 		}
 
 		// Verify that the immediate predecessor is not a create
 		if prevKey.Action == DataActionCreated {
 			// Another concurrent create happened - delete our write and return error
 			_ = k.dataStore.Delete(ctx, dataKey)
-			return 0, fmt.Errorf("optimistic locking failed: concurrent create detected")
+			return 0, conflictError(event, "concurrent create attempts detected")
 		}
 	}
 
@@ -908,6 +929,8 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "missing key"}}
 	}
 
+	req.ResourceVersion = toSnowflakeRV(req.ResourceVersion)
+
 	namespace := req.Key.Namespace
 
 	// If a specific resource version is requested, validate that it's not too high
@@ -950,7 +973,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		Name:      req.Key.Name,
 	}, req.ResourceVersion)
 	if errors.Is(err, ErrNotFound) {
-		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "not found"}}
+		return &BackendReadResponse{Error: NewNotFoundError(req.Key)}
 	} else if err != nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
 	}
@@ -984,6 +1007,8 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		return 0, fmt.Errorf("missing options or key in ListRequest")
 	}
 
+	req.ResourceVersion = toSnowflakeRV(req.ResourceVersion)
+
 	// Parse continue token if provided
 	listOptions := ListRequestOptions{
 		Key: ListRequestKey{
@@ -1008,7 +1033,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 			listOptions.ContinueNamespace = token.Namespace
 		}
 		listOptions.ContinueName = token.Name
-		listOptions.ResourceVersion = token.ResourceVersion
+		listOptions.ResourceVersion = toSnowflakeRV(token.ResourceVersion)
 	}
 
 	// We set the listRV to the last event resource version.
@@ -1253,6 +1278,8 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 		}
 	}
 
+	sinceRv = toSnowflakeRV(sinceRv)
+
 	latestEvent, err := k.eventStore.LastEventKey(ctx)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
@@ -1449,6 +1476,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 		return 0, err
 	}
 	key := req.Options.Key
+	req.ResourceVersion = toSnowflakeRV(req.ResourceVersion)
 	// Parse continue token if provided
 	lastSeenRV := int64(0)
 	if req.NextPageToken != "" {
@@ -1456,7 +1484,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 		if err != nil {
 			return 0, fmt.Errorf("invalid continue token: %w", err)
 		}
-		lastSeenRV = token.ResourceVersion
+		lastSeenRV = toSnowflakeRV(token.ResourceVersion)
 	}
 
 	// Generate a new resource version for the list
@@ -1923,12 +1951,14 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			}
 		}
 
-		summaries[NSGR(key)] = &resourcepb.BulkResponse_Summary{
+		summary := &resourcepb.BulkResponse_Summary{
 			Namespace:     key.Namespace,
 			Group:         key.Group,
 			Resource:      key.Resource,
 			PreviousCount: previousCount,
 		}
+		summaries[NSGR(key)] = summary
+		rsp.Summary = append(rsp.Summary, summary)
 	}
 
 	saved := make([]DataKey, 0)
@@ -1950,6 +1980,14 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			Group:     item.dataKey.Group,
 			Resource:  item.dataKey.Resource,
 		}] = true
+		nsgr := NSGR(&resourcepb.ResourceKey{
+			Namespace: item.dataKey.Namespace,
+			Group:     item.dataKey.Group,
+			Resource:  item.dataKey.Resource,
+		})
+		if summary, ok := summaries[nsgr]; ok {
+			summary.Count++
+		}
 	}
 
 	batchIter, ok := iter.(BulkRequestBatchIterator)

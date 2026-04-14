@@ -402,8 +402,10 @@ func TestCalculateChanges(t *testing.T) {
 						Path:   "path/to/file.json",
 						Ref:    "ref",
 					},
-					Error: "no client configured",
-					Title: "hello world",
+					Error:      "no client configured",
+					Title:      "hello world",
+					GrafanaURL: "http://host/d/the-uid/hello-world",
+					PreviewURL: "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
 					Parsed: &resources.ParsedResource{
 						Info: &repository.FileInfo{
 							Path: "path/to/file.json",

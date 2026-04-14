@@ -710,6 +710,10 @@ to data source settings to re-encode them.
 Set to `true` to disable the use of Gravatar for user profile images.
 Default is `false`.
 
+#### `gravatar_url`
+
+The base URL to use for fetching Gravatar profile images. Default is `https://secure.gravatar.com/avatar`.
+
 #### `data_source_proxy_whitelist`
 
 Define a allowlist of IP addresses or domains with ports, that can be used in data source URLs with the Grafana data source proxy.
@@ -3018,6 +3022,10 @@ Set the maximum length of a SQL query that can be used in a SQL expression. Defa
 
 The duration a SQL expression will run before being cancelled. The default is `10s`. A setting of `0s` means no limit.
 
+#### `math_expression_memory_limit`
+
+Set the maximum estimated memory in bytes that a single math expression binary operation can allocate. Default is `1073741824` (1 GiB). A setting of `0` means no limit.
+
 ### `[geomap]`
 
 This section controls the defaults settings for **Geomap Plugin**.
@@ -3044,6 +3052,18 @@ Set this to `false` to disable loading other custom base maps and hide them in t
 ### `[rbac]`
 
 Refer to [Role-based access control](../../administration/roles-and-permissions/access-control/) for more information.
+
+#### `plugin_cleanup`
+
+Comma-separated list of plugin IDs whose RBAC data (roles, permissions, and seed assignments) will be purged from the database at startup.
+Use this to clean up leftover data from plugins that have been uninstalled or renamed.
+
+The cleanup runs once at startup and is a no-op when the list is empty.
+
+```ini
+# Example
+plugin_cleanup = grafana-slo-app, grafana-irm-app
+```
 
 ### `[navigation.app_sections]`
 
