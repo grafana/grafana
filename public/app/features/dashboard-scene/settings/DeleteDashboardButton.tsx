@@ -84,7 +84,10 @@ export function DeleteDashboardModal({ dashboardTitle, onConfirm, onClose }: Del
             </>
           )}
           <Text element="p">
-            <Trans i18nKey="dashboard-settings.delete-modal-text">Do you want to delete this dashboard?</Trans>
+            <Trans i18nKey="dashboard-settings.delete-modal-text"
+            defaults="Do you want to delete this dashboard?"
+            values={{ count: 1 }}
+            />
           </Text>
           <Text element="p">{dashboardTitle}</Text>
           <Space v={2} />
