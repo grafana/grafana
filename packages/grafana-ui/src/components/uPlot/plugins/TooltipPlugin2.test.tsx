@@ -139,7 +139,6 @@ describe('TooltipPlugin2', () => {
         readyCallback();
         setLegendCallback(mockUPlot);
         setSeriesCallback(mockUPlot, 1);
-        await Promise.resolve();
       });
 
       expect(screen.getByText('Tooltip content')).toBeInTheDocument();
@@ -153,7 +152,36 @@ describe('TooltipPlugin2', () => {
   });
 
   describe('housekeeping', () => {
-    it.todo('should disconnect observables on unmount');
+    it('should disconnect observables on unmount', () => {
+      const disconnectSpy = jest.spyOn(ResizeObserver.prototype, 'disconnect');
+
+      const { view } = setUp();
+
+      expect(disconnectSpy).not.toHaveBeenCalled();
+
+      view.unmount();
+
+      expect(disconnectSpy).toHaveBeenCalled();
+
+      disconnectSpy.mockRestore();
+    });
+
+    it('should disconnect sizeRef observable on config change', async () => {
+      const disconnectSpy = jest.spyOn(ResizeObserver.prototype, 'disconnect');
+      const { view } = setUp();
+      expect(disconnectSpy).not.toHaveBeenCalled();
+
+      view.rerender(
+        <TooltipPlugin2
+          config={new UPlotConfigBuilder()}
+          hoverMode={TooltipHoverMode.xOne}
+          render={() => <span>Tooltip content</span>}
+        />
+      );
+
+      expect(disconnectSpy).toHaveBeenCalled();
+      disconnectSpy.mockRestore();
+    });
     it.todo('should clean up listeners on unmount');
     it.todo('should dismiss tooltip on window scroll');
   });
