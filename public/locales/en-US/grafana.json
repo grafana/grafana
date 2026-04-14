@@ -6512,6 +6512,10 @@
       "title-add-another-transformation": "Add another transformation",
       "view-all": "View all"
     },
+    "transformation-type-picker": {
+      "sql-cta-button": "Add SQL expression",
+      "sql-cta-description": "Prefer SQL? Add a SQL expression to your queries instead."
+    },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "By deleting all transformations, you will go back to the main selection screen."
     },
