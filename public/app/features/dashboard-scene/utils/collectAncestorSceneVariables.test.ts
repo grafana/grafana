@@ -8,6 +8,30 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 
 import { collectAncestorSceneVariables } from './collectAncestorSceneVariables';
 
+function buildRowFixture({
+  dashboardVariables,
+  sectionVariables,
+}: {
+  dashboardVariables: CustomVariable[];
+  sectionVariables: CustomVariable[];
+}) {
+  const panel = new VizPanel({ key: 'p1', pluginId: 'text' });
+  const gridItem = new DashboardGridItem({ body: panel });
+  const row = new RowItem({
+    title: 'R',
+    $variables: new SceneVariableSet({ variables: sectionVariables }),
+    layout: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({ children: [gridItem] }),
+    }),
+  });
+  new DashboardScene({
+    $variables: new SceneVariableSet({ variables: dashboardVariables }),
+    body: new RowsLayoutManager({ rows: [row] }),
+  });
+
+  return { gridItem, row };
+}
+
 describe('collectAncestorSceneVariables', () => {
   it('includes dashboard variables when sceneObject is the scene root (no parent)', () => {
     const dashVar = new CustomVariable({ name: 'dashVar', query: 'd', value: 'd', text: 'd' });
@@ -24,18 +48,9 @@ describe('collectAncestorSceneVariables', () => {
     const sectionDup = new CustomVariable({ name: 'dup', query: 's', value: 's', text: 's' });
     const sectionOnly = new CustomVariable({ name: 'sectionOnly', query: 'x', value: 'x', text: 'x' });
 
-    const panel = new VizPanel({ key: 'p1', pluginId: 'text' });
-    const gridItem = new DashboardGridItem({ body: panel });
-    const row = new RowItem({
-      title: 'R',
-      $variables: new SceneVariableSet({ variables: [sectionDup, sectionOnly] }),
-      layout: new DefaultGridLayoutManager({
-        grid: new SceneGridLayout({ children: [gridItem] }),
-      }),
-    });
-    new DashboardScene({
-      $variables: new SceneVariableSet({ variables: [dashVar] }),
-      body: new RowsLayoutManager({ rows: [row] }),
+    const { gridItem } = buildRowFixture({
+      dashboardVariables: [dashVar],
+      sectionVariables: [sectionDup, sectionOnly],
     });
 
     const merged = collectAncestorSceneVariables(gridItem);
@@ -51,18 +66,9 @@ describe('collectAncestorSceneVariables', () => {
     const dashVar = new CustomVariable({ name: 'dashVar', query: 'd', value: 'd', text: 'd' });
     const sectionVar = new CustomVariable({ name: 'sectionVar', query: 's', value: 's', text: 's' });
 
-    const panel = new VizPanel({ key: 'p1', pluginId: 'text' });
-    const gridItem = new DashboardGridItem({ body: panel });
-    const row = new RowItem({
-      title: 'R',
-      $variables: new SceneVariableSet({ variables: [sectionVar] }),
-      layout: new DefaultGridLayoutManager({
-        grid: new SceneGridLayout({ children: [gridItem] }),
-      }),
-    });
-    new DashboardScene({
-      $variables: new SceneVariableSet({ variables: [dashVar] }),
-      body: new RowsLayoutManager({ rows: [row] }),
+    const { row } = buildRowFixture({
+      dashboardVariables: [dashVar],
+      sectionVariables: [sectionVar],
     });
 
     const merged = collectAncestorSceneVariables(row);
