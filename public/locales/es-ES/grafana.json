@@ -3585,11 +3585,13 @@
       },
       "instance-details-drawer": {
         "alert-instance-label": "",
+        "back": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Detalles de la instancia",
         "silence-button": "",
-        "silence-no-permission": ""
+        "silence-no-permission": "",
+        "silence-title-with-name": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "No tienes instancias de alerta en estado de activación o pendientes para el intervalo de tiempo seleccionado.",
@@ -12367,7 +12369,7 @@
         "description-no-value": "Qué mostrar cuando no hay valor",
         "description-value-mappings": "Modificar el texto de visualización en función del valor introducido",
         "name-actions": "Acciones",
-        "name-ad-hoc": "Filtrable «ad hoc»",
+        "name-ad-hoc": "",
         "name-color-scheme": "Esquema de colores",
         "name-data-links": "Enlaces de datos",
         "name-decimals": "Decimales",
@@ -12826,6 +12828,7 @@
       "title-button-disabled": "El plugin aún no se puede utilizar. La instalación puede tardar un poco en completarse."
     },
     "install-controls": {
+      "contact-us": "",
       "install": "Instalar",
       "installing": "Instalando",
       "update": "Actualizar",

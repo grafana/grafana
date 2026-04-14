@@ -32,12 +32,12 @@
         }
       },
       "label-selector": {
-        "aria-label-filter-expression-for-label": "篩選標籤的表達式",
+        "aria-label-filter-expression-for-label": "篩選標籤的運算式",
         "description-select-labels": "一旦選取標籤值，只會顯示可能的標籤組合。",
         "select-labels-to-search-in": "2. 選取您要搜尋的標籤"
       },
       "metric-selector": {
-        "aria-label-filter-expression-for-metric": "篩選指標的表達式",
+        "aria-label-filter-expression-for-metric": "篩選指標的運算式",
         "aria-label-limit-results-from-series-endpoint": "限制序列端點的結果",
         "description-series-limit": "限制適用於所有指標、標籤和數值。將欄位留空以使用預設的限制。設定為 0 以停用限制並擷取所有內容，不過這可能會導致效能問題。",
         "label-select-metric": "一旦選取指標，只會顯示可能的標籤。標籤受以下序列限制。",
@@ -56,7 +56,7 @@
         "aria-label-prometheus-extra-field": "Prometheus 額外欄位",
         "aria-label-query-type-field": "查詢類型欄位",
         "aria-label-step-field": "步驟欄位",
-        "min-step": "最小步長",
+        "min-step": "最少步驟數",
         "query-type": "查詢類型",
         "tooltip-units-builtin-variables-example-interval-rateinterval": "此處可使用時間單位和內建變數，例如：{{example1}}、{{example2}}、{{example3}}、{{example4}}、{{example5}}、{{example6}}、{{example7}}（如未指定單位，則為預設值：{{default}}）"
       },
@@ -65,26 +65,26 @@
       },
       "prom-variable-query-editor": {
         "aria-label-classic-query": "經典查詢",
-        "aria-label-metric-regex": "指標正規表達式",
+        "aria-label-metric-regex": "指標正規運算式",
         "aria-label-metric-selector": "指標選擇器",
         "aria-label-prometheus-query": "Prometheus 查詢",
         "aria-label-query-type": "查詢類型",
         "aria-label-series-query": "序列查詢",
         "label-classic-query": "經典查詢",
         "label-label": "標籤",
-        "label-metric-regex": "指標正規表達式",
+        "label-metric-regex": "指標正規運算式",
         "label-query": "查詢",
         "label-query-type": "查詢類型",
         "label-series-query": "序列查詢",
         "placeholder-classic-query": "經典查詢",
-        "placeholder-metric-regex": "指標正規表達式",
+        "placeholder-metric-regex": "指標正規運算式",
         "placeholder-prometheus-query": "Prometheus 查詢",
         "placeholder-select-query-type": "選取查詢類型",
         "placeholder-series-query": "序列查詢",
-        "returns-metrics-matching-specified-metric-regex": "回傳與指定指標正規表達式相符的指標清單。",
+        "returns-metrics-matching-specified-metric-regex": "回傳與指定指標正規運算式相符的指標清單。",
         "tooltip-classic-query": "Prometheus 變數查詢編輯器的原始實作。輸入一個字串，其中包含如這些文件中所述正確的查詢類型和參數。例如：{{exampleQuery}}。",
         "tooltip-label": "除非有指定指標，否則會回傳所有指標中該標籤名稱的標籤值清單。",
-        "tooltip-metric-regex": "回傳標籤名稱清單，選擇性地依據指定指標正規表達式篩選。",
+        "tooltip-metric-regex": "回傳標籤名稱清單，選擇性地依據指定指標正規運算式篩選。",
         "tooltip-query": "回傳此查詢的 Prometheus 查詢結果清單。這可能包括 Prometheus 功能，即{{exampleQuery}}。",
         "tooltip-query-type": "Prometheus 資料來源外掛程式為範本變數提供以下查詢類型。",
         "tooltip-series-query": "輸入帶有標籤的指標、僅有指標或僅標籤，即 {{example1}}、{{example2}} 或 {{example3}}。回傳與輸入資料相關的時間序列清單。"
@@ -102,7 +102,7 @@
         "validate-selector": "驗證選擇器"
       },
       "value-selector": {
-        "aria-label-filter-expression-for-label-values": "篩選標籤數值的表達式",
+        "aria-label-filter-expression-for-label-values": "篩選標籤數值的運算式",
         "aria-label-values-for": "以下項目的值：{{labelKey}}",
         "description-search-field-values-across-selected-labels": "使用搜尋欄位在所選標籤中尋找數值。",
         "select-multiple-values-for-your-labels": "3. 為您的標籤選取（多個）值"
@@ -111,9 +111,9 @@
     "configuration": {
       "alerting-settings-overhaul": {
         "label-allow-as-recording-rules-target": "允許作為錄製規則目標",
-        "label-manage-alerts-via-alerting-ui": "透過警報 UI 管理警報",
+        "label-manage-alerts-via-alerting-ui": "透過警示 UI 管理警示",
         "title-alerting": "警報",
-        "tooltip-allow-as-recording-rules-target": "允許將此資料來源選為撰寫紀錄規則的目標。",
+        "tooltip-allow-as-recording-rules-target": "允許將此資料來源選為撰寫記錄規則的目標。",
         "tooltip-manage-alerts-via-alerting-ui": "管理此資料來源的警報規則。若要管理其他警報資源，請新增 Alertmanager 資料來源。"
       },
       "config-editor": {
@@ -150,7 +150,7 @@
       "exemplars-settings": {
         "add": "新增",
         "no-exemplars-configurations": "沒有範例設定",
-        "title-exemplars": "範例點"
+        "title-exemplars": "範例"
       },
       "prom-settings": {
         "aria-label-default-editor": "預設編輯器（程式碼或編輯器）",
@@ -187,13 +187,13 @@
         "tooltip-disable-metrics-lookup": "勾選此選項將停用查詢欄位自動完成中的指標選擇器和指標／標籤支援。如果您在較大的 Prometheus 實例上遇到效能問題，這會有所幫助。",
         "tooltip-disable-recording-rules-beta": "此功能將停用錄製規則。開啟此功能以改善儀表板效能",
         "tooltip-http-method": "您可以使用 POST 或 GET HTTP 方法，來查詢您的 Prometheus 資料來源。POST 是建議的方法，因為它可以處理更大規模的查詢。如果您的 Prometheus 版本早於 2.1，或您的網路中限制了 POST 請求，請將此更改為 GET。",
-        "tooltip-incremental-querying-beta": "此功能將變更相對時間查詢的預設行為，以便隨時從 Prometheus 實例要求新資料，而不會快取查詢結果，並且只會請求新紀錄。開啟此功能以減少資料庫和網路負載。",
-        "tooltip-prom-type-version": "如果您的{{promType}}實例未自動設定版本，請使用此功能進行設定。",
-        "tooltip-prometheus-type": "將此設定為 Prometheus 資料庫的類型，例如 Prometheus、Cortex、Mimir 或 Thanos。變更此欄位將儲存您目前的設定。特定類型的 Prometheus 支援或無法支援各種 API。例如，某些類型支援對標籤查詢使用正規表達式匹配，以提高效能。部分類型具有元資料的 API。若您設定錯誤，在查詢指標和標籤時可能會遇到異常行為。請檢查您的 Prometheus 文件，以確保您輸入正確的類型。",
+        "tooltip-incremental-querying-beta": "此功能將變更相對時間查詢的預設行為，以便隨時從 Prometheus 執行個體要求新資料，而不會快取查詢結果，並且只會請求新記錄。開啟此功能以減少資料庫和網路負載。",
+        "tooltip-prom-type-version": "如果您的{{promType}}執行個體未自動設定版本，請使用此功能進行設定。",
+        "tooltip-prometheus-type": "將此設定為 Prometheus 資料庫的類型，例如 Prometheus、Cortex、Mimir 或 Thanos。變更此欄位將儲存您目前的設定。特定類型的 Prometheus 支援或無法支援各種 API。例如，某些類型支援對標籤查詢使用正規運算式匹配，以提高效能。部分類型具有元資料的 API。若您設定錯誤，在查詢指標和標籤時可能會遇到異常行為。請檢查您的 Prometheus 文件，以確保您輸入正確的類型。",
         "tooltip-query-overlap-window": "設定持續時間，例如 {{example1}} 或 {{example2}} 或 {{example3}}。預設為{{default}}。將新增此持續時間至每個增量請求的持續時間。",
         "tooltip-query-timeout": "設定 Prometheus 查詢逾時。",
         "tooltip-scrape-interval": "此間隔是 Prometheus 抓取目標的頻率。將此設定為 Prometheus 設定檔案中設定的典型抓取和評估間隔。若您將此設定為大於 Prometheus 設定檔案間隔的數值，Grafana 將根據此間隔評估資料，您將看到較少的資料點。預設為{{default}}。",
-        "tooltip-series-limit": "限制適用於兩個端點（系列和標籤）的所有資源（指標、標籤和值）。將欄位留空以使用預設的限制 (40000)。設定為 0 以停用限制並擷取所有內容，不過這可能會導致效能問題。預設限制為 40000。",
+        "tooltip-series-limit": "限制適用於兩個端點（序列和標籤）的所有資源（指標、標籤和值）。將欄位留空以使用預設的限制 (40000)。設定為 0 以停用限制並擷取所有內容，不過這可能會導致效能問題。預設限制為 40000。",
         "tooltip-use-series-endpoint": "勾選此選項將優先使用具有 {{exampleParameter}} 參數的序列端點，而非具有 {{exampleParameter}} 參數的標籤值端點。雖然標籤值端點被視為擁有更佳效能，但有些使用者可能會更喜歡該序列，因為它具有 POST 方法，而標籤值端點僅具有 GET 方法。"
       }
     },
@@ -228,7 +228,7 @@
       },
       "getFunctions": {
         "documentation-abs": "傳回輸入向量，其中所有樣本值都轉換為其絕對值。",
-        "documentation-absent": "如果傳遞給它的向量有任何元素，則傳回空向量；如果傳遞給它的向量沒有元素，則傳回值為 1 的 1 元素向量。這對於在給定的指標名稱和標籤組合不存在時間序列時發出警報很有用。",
+        "documentation-absent": "如果傳遞給它的向量有任何元素，則傳回空向量；如果傳遞給它的向量沒有元素，則傳回值為 1 的 1 元素向量。這對於在給定的指標名稱和標籤組合不存在時間序列時發出警示很有用。",
         "documentation-absent-over-time": "如果傳遞給它的範圍向量有任何元素，則傳回空向量；如果傳遞給它的範圍向量沒有元素，則傳回值為 1 的 1 元素向量。",
         "documentation-avg-over-time": "指定間隔內所有點的平均值。",
         "documentation-ceil": "將「v」中所有元素的樣本值四捨五入為最接近的整數。",
@@ -263,7 +263,7 @@
         "documentation-info": "傳回一組指標的最新詳細資訊和中繼資料，例如其標籤和目前值，而無需進行任何計算",
         "documentation-irate": "計算範圍向量中時間序列的每秒瞬間增長率。這是以最後兩個資料點為基礎。單調性中斷（例如由於目標重新啟動而導致的計數器重置）會自動調整。",
         "documentation-label-join": "對於「v」中的每個時序，使用「separator」連接所有「src_labels」的所有值，並傳回包含連接值的標籤「dst_label」的時序。此函數中可以有任意數量的「src_labels」。",
-        "documentation-label-replace": "對於「v」中的每個時序，「label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)」將標籤「src_label」與規則運算式「regex」進行比對。如果匹配，則返回時序，並將標籤「dst_label」替換為「replacement」的擴展。「$1」被替換為第一個匹配的子群組，「$2」被替換為第二個匹配的子群組，依此類推。如果規則運算式不匹配，則返回不變的時序。",
+        "documentation-label-replace": "對於「v」中的每個時序，「label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)」將標籤「src_label」與正則表達式「regex」進行比對。如果匹配，則返回時序，並將標籤「dst_label」替換為「replacement」的擴展。「$1」被替換為第一個匹配的子群組，「$2」被替換為第二個匹配的子群組，依此類推。如果正則表達式不匹配，則返回不變的時序。",
         "documentation-last-over-time": "指定間隔內的最新點值。",
         "documentation-ln": "計算「v」中所有元素的自然對數。\n特殊情況為：\n * 'ln(+Inf) = +Inf'\n * 'ln(0) = -Inf'\n * 'ln(x < 0) = NaN'\n * 'ln(NaN) = NaN'",
         "documentation-log10": "計算「v」中所有元素的十進位對數。特殊案例等同於「ln」中的案例。",
@@ -419,13 +419,13 @@
         "aria-label-select-resolution": "選擇解決方案",
         "aria-label-type": "類型單選按鈕群組",
         "format-options": {
-          "label-heatmap": "熱度圖",
+          "label-heatmap": "熱圖",
           "label-table": "表格",
           "label-time-series": "時間序列"
         },
-        "label-exemplars": "範例點",
+        "label-exemplars": "範例",
         "label-format": "格式",
-        "label-min-step": "最小步長",
+        "label-min-step": "最少步驟數",
         "label-resolution": "解析度",
         "label-type": "類型",
         "placeholder-auto": "自動",

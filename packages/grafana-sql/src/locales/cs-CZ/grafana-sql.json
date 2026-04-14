@@ -38,7 +38,7 @@
       "make-render-column": {
         "render-column": {
           "aria-label-group-by": "Seřadit podle",
-          "title-remove-group-by-column": "Odebrat skupinu podle sloupce"
+          "title-remove-group-by-column": "Odebrat funkci Seřadit podle sloupce"
         }
       },
       "order-by-row": {
