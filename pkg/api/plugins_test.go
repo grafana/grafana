@@ -354,6 +354,50 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 }
 
+func Test_GetPluginAssetCacheHeaders(t *testing.T) {
+	pluginID := "test-plugin"
+	tmpDir := t.TempDir()
+
+	for _, name := range []string{"module.js", "module.js.map", "chunk.js"} {
+		err := os.WriteFile(filepath.Join(tmpDir, name), []byte("test content"), 0644)
+		require.NoError(t, err)
+	}
+
+	p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.ClassExternal, plugins.NewLocalFS(tmpDir))
+	pluginRegistry := &pluginfakes.FakePluginRegistry{
+		Store: map[string]*plugins.Plugin{
+			p.ID: p,
+		},
+	}
+
+	tests := []struct {
+		name          string
+		file          string
+		env           string
+		expectedCache string
+	}{
+		{"module.js gets no-cache in production", "module.js", setting.Prod, "no-cache"},
+		{"module.js.map gets no-cache in production", "module.js.map", setting.Prod, "no-cache"},
+		{"other assets get max-age=3600 in production", "chunk.js", setting.Prod, "public, max-age=3600"},
+		{"module.js gets dev cache headers in dev mode", "module.js", setting.Dev, "max-age=0, must-revalidate, no-cache"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.Env = tt.env
+			url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, tt.file)
+			pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*",
+				cfg, pluginRegistry, func(sc *scenarioContext) {
+					callGetPluginAsset(sc)
+
+					require.Equal(t, 200, sc.resp.Code)
+					require.Equal(t, tt.expectedCache, sc.resp.Header().Get("Cache-Control"))
+				})
+		})
+	}
+}
+
 func TestMakePluginResourceRequest(t *testing.T) {
 	hs := HTTPServer{
 		Cfg:          setting.NewCfg(),
