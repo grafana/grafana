@@ -20,7 +20,9 @@ title: 'Playlist HTTP API '
 
 # Playlist API
 
-To learn more about the API structure, refer to [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+{{< admonition type="note" >}}
+This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+{{< /admonition >}}
 
 ## List Playlists
 

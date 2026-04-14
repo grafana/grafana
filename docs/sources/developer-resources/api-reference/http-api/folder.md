@@ -31,11 +31,15 @@ refs:
 
 # New Folders APIs
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
+{{< admonition type="note" >}}
+This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+{{< /admonition >}}
 
-> To view more about the new api structure, refer to [API overview](ref:apis).
+## Requirements
 
-### Get all folders
+If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
+
+## Get all folders
 
 `GET /apis/folder.grafana.app/v1/namespaces/:namespace/folders`
 
@@ -151,7 +155,7 @@ Status Codes:
 - **401** – Unauthorized
 - **403** – Access Denied
 
-### Get folder by uid
+## Get folder by uid
 
 `GET /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid`
 
@@ -213,7 +217,7 @@ Status Codes:
 - **403** – Access Denied
 - **404** – Folder not found
 
-### Create folder
+## Create folder
 
 `POST /apis/folder.grafana.app/v1/namespaces/:namespace/folders`
 
@@ -299,7 +303,7 @@ Status Codes:
 - **403** – Access denied
 - **409** – Conflict (folder with the same uid already exists)
 
-### Update folder
+## Update folder
 
 `PUT /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid`
 
@@ -393,7 +397,7 @@ Content-Length: 97
 }
 ```
 
-### Delete folder
+## Delete folder
 
 `DELETE /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid`
 
