@@ -68,26 +68,37 @@ export const UserIcon = ({
   const isActive = hasActive && dateTime(lastActiveAt).diff(dateTime(), 'minutes', true) >= -15;
   const theme = useTheme2();
   const styles = useMemo(() => getStyles(theme, isActive), [theme, isActive]);
-  const content = (
+
+  const content = children ? (
+    <div className={cx(styles.content, styles.textContent)}>{children}</div>
+  ) : user.avatarUrl ? (
+    <img className={styles.content} src={user.avatarUrl} alt={`${user.name} avatar`} />
+  ) : (
+    <div className={cx(styles.content, styles.textContent)}>{getUserInitials(user.name)}</div>
+  );
+
+  const wrapper = onClick ? (
     <button
       type={'button'}
       onClick={onClick}
-      className={cx(styles.container, (showTooltip || onClick) && styles.hover, onClick && styles.pointer, className)}
+      className={cx(styles.container, styles.hover, styles.pointer, className)}
       aria-label={t('grafana-ui.user-icon.label', '{{name}} icon', { name: user.name })}
     >
-      {children ? (
-        <div className={cx(styles.content, styles.textContent)}>{children}</div>
-      ) : user.avatarUrl ? (
-        <img className={styles.content} src={user.avatarUrl} alt={`${user.name} avatar`} />
-      ) : (
-        <div className={cx(styles.content, styles.textContent)}>{getUserInitials(user.name)}</div>
-      )}
+      {content}
     </button>
+  ) : (
+    // a11y: don't render an interactive button if icon is not clickable
+    <div
+      aria-label={t('grafana-ui.user-icon.label', '{{name}} icon', { name: user.name })}
+      className={cx(styles.container, className)}
+    >
+      {content}
+    </div>
   );
 
   if (showTooltip) {
     const tooltip = (
-      <div className={styles.tooltipContainer}>
+      <div className={styles.tooltipContainer} data-testid="user-icon-tooltip">
         <div className={styles.tooltipName}>{user.name}</div>
         {hasActive && (
           <div className={styles.tooltipDate}>
@@ -106,9 +117,9 @@ export const UserIcon = ({
       </div>
     );
 
-    return <Tooltip content={tooltip}>{content}</Tooltip>;
+    return <Tooltip content={tooltip}>{wrapper}</Tooltip>;
   } else {
-    return content;
+    return wrapper;
   }
 };
 

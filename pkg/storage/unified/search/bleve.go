@@ -18,7 +18,6 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/blevesearch/bleve/v2"
-	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/blevesearch/bleve/v2/search"
@@ -767,6 +766,7 @@ type bleveIndex struct {
 	updaterCancel   context.CancelFunc // If not nil, the updater goroutine is running with context associated with this cancel function.
 	updaterWg       sync.WaitGroup
 
+	indexMetrics     *resource.BleveIndexMetrics
 	updateLatency    prometheus.Histogram
 	updatedDocuments prometheus.Summary
 
@@ -794,6 +794,7 @@ func (b *bleveBackend) newBleveIndex(
 		logger:            logger,
 		updaterFn:         updaterFn,
 		minUpdateInterval: b.opts.IndexMinUpdateInterval,
+		indexMetrics:      b.indexMetrics,
 	}
 	bi.updaterCond = sync.NewCond(&bi.updaterMu)
 	if b.indexMetrics != nil {
@@ -1296,18 +1297,31 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 			if len(queryFields) == 0 {
 				queryFields = []*resourcepb.ResourceSearchRequest_QueryField{
 					{
-						Name:  resource.SEARCH_FIELD_TITLE,
-						Type:  resourcepb.QueryFieldType_KEYWORD,
-						Boost: 10, // exact match -- includes ngrams! If they lived on their own field, we could score them differently
-					}, {
-						Name:  resource.SEARCH_FIELD_TITLE,
-						Type:  resourcepb.QueryFieldType_TEXT,
-						Boost: 2, // standard analyzer (with ngrams!)
-					}, {
 						Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
+						Type:  resourcepb.QueryFieldType_KEYWORD,
+						Boost: 10, // exact title match (case-insensitive via pre-lowered title_phrase)
+					}, {
+						Name:  resource.SEARCH_FIELD_TITLE,
 						Type:  resourcepb.QueryFieldType_TEXT,
-						Boost: 5, // standard analyzer
+						Boost: 2, // standard analyzer (word-level matching)
+					}, {
+						Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
+						Type:  resourcepb.QueryFieldType_TEXT,
+						Boost: 1, // ngram analyzer (partial/prefix matching)
 					},
+				}
+			} else if b.indexMetrics != nil && b.indexMetrics.SearchLegacyQueryFields != nil {
+				// Track requests from clients that don't yet include title_ngram in their query fields.
+				// When this counter stops incrementing, it is safe to remove the ngram mapping from the title field.
+				hasNgram := false
+				for _, f := range queryFields {
+					if f.Name == resource.SEARCH_FIELD_TITLE_NGRAM {
+						hasNgram = true
+						break
+					}
+				}
+				if !hasNgram {
+					b.indexMetrics.SearchLegacyQueryFields.Inc()
 				}
 			}
 
@@ -1322,10 +1336,9 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 					disjoin.AddQuery(q)
 
 				case resourcepb.QueryFieldType_KEYWORD:
-					q := bleve.NewMatchQuery(req.Query)
+					q := bleve.NewTermQuery(strings.ToLower(req.Query))
 					q.SetBoost(float64(field.Boost))
 					q.SetField(field.Name)
-					q.Analyzer = keyword.Name // don't analyze the query input - treat it as a single token
 					disjoin.AddQuery(q)
 
 				case resourcepb.QueryFieldType_PHRASE:
@@ -1405,7 +1418,7 @@ func removeSmallTerms(query string) string {
 	validWords := make([]string, 0, len(words))
 
 	for _, word := range words {
-		if len(word) >= EDGE_NGRAM_MIN_TOKEN {
+		if len(word) >= NGRAM_MIN_TOKEN {
 			validWords = append(validWords, word)
 		}
 	}
@@ -1634,7 +1647,20 @@ var exactTermFields = []string{
 func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, *resourcepb.ErrorResult) {
 	useExactTermQuery := slices.Contains(exactTermFields, req.Key) || strings.HasPrefix(req.Key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX)
 	switch selection.Operator(req.Operator) {
-	case selection.Equals, selection.DoubleEquals:
+	case selection.DoubleEquals:
+		// DoubleEquals does exact matching via TermQuery (single value only).
+		// For title, route to the pre-lowered title_phrase field.
+		if len(req.Values) == 1 {
+			key := req.Key
+			value := req.Values[0]
+			if key == resource.SEARCH_FIELD_TITLE {
+				key = resource.SEARCH_FIELD_TITLE_PHRASE
+				value = strings.ToLower(value)
+			}
+			return newExactTermsQuery(key, value, prefix), nil
+		}
+
+	case selection.Equals:
 		if len(req.Values) == 0 {
 			return query.NewMatchAllQuery(), nil
 		}

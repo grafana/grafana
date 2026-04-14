@@ -4,7 +4,9 @@ import React from 'react';
 
 import {
   type AbsoluteTimeRange,
+  CoreApp,
   type EventBus,
+  EventBusSrv,
   type FieldConfigSource,
   LogSortOrderChangeEvent,
   LogsSortOrder,
@@ -12,6 +14,7 @@ import {
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { defaultTableOptions } from '@grafana/schema';
+import { PanelContextProvider } from '@grafana/ui';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
@@ -55,40 +58,52 @@ jest.mock('@grafana/runtime', () => ({
   })),
 }));
 
-const setUp = (props?: Partial<React.ComponentProps<typeof LogsTable>>, options?: Partial<Options>) => {
+const setUp = (
+  props?: Partial<React.ComponentProps<typeof LogsTable>>,
+  options?: Partial<Options>,
+  app = CoreApp.Dashboard
+) => {
   return render(
-    <LogsTable
-      data={getPanelData()}
-      id={0}
-      timeZone={'UTC'}
-      options={{
-        ...defaultOptions,
-        ...defaultTableOptions,
-        showHeader: true,
-        frameIndex: 0,
-        ...options,
+    <PanelContextProvider
+      value={{
+        app,
+        eventsScope: 'test',
+        eventBus: new EventBusSrv(),
       }}
-      transparent={false}
-      width={800}
-      height={600}
-      fieldConfig={fieldConfig}
-      renderCounter={0}
-      title={''}
-      eventBus={mockEventBus}
-      onOptionsChange={function (options: Options): void {
-        throw new Error('Function not implemented.');
-      }}
-      onFieldConfigChange={function (config: FieldConfigSource): void {
-        throw new Error('Function not implemented.');
-      }}
-      replaceVariables={function (value: string, scopedVars?: ScopedVars, format?: string | Function): string {
-        throw new Error('Function not implemented.');
-      }}
-      onChangeTimeRange={function (timeRange: AbsoluteTimeRange): void {
-        throw new Error('Function not implemented.');
-      }}
-      {...props}
-    />
+    >
+      <LogsTable
+        data={getPanelData()}
+        id={0}
+        timeZone={'UTC'}
+        options={{
+          ...defaultOptions,
+          ...defaultTableOptions,
+          showHeader: true,
+          frameIndex: 0,
+          ...options,
+        }}
+        transparent={false}
+        width={800}
+        height={600}
+        fieldConfig={fieldConfig}
+        renderCounter={0}
+        title={''}
+        eventBus={mockEventBus}
+        onOptionsChange={function (options: Options): void {
+          throw new Error('Function not implemented.');
+        }}
+        onFieldConfigChange={function (config: FieldConfigSource): void {
+          throw new Error('Function not implemented.');
+        }}
+        replaceVariables={function (value: string, scopedVars?: ScopedVars, format?: string | Function): string {
+          throw new Error('Function not implemented.');
+        }}
+        onChangeTimeRange={function (timeRange: AbsoluteTimeRange): void {
+          throw new Error('Function not implemented.');
+        }}
+        {...props}
+      />
+    </PanelContextProvider>
   );
 };
 
@@ -160,6 +175,48 @@ describe('LogsTable', () => {
       expect(publishMockFn).toHaveBeenCalledWith(
         new LogSortOrderChangeEvent({
           order: LogsSortOrder.Ascending,
+        })
+      );
+    });
+  });
+
+  describe('Wrap text', () => {
+    it('not in Dashboards, with logs controls enabled, when wrap text is set via options only, toggling calls onOptionsChange but not onFieldConfigChange', async () => {
+      const onOptionsChange = jest.fn();
+      const onFieldConfigChange = jest.fn();
+      setUp({ onOptionsChange, onFieldConfigChange }, { showControls: true, wrapText: false }, CoreApp.Explore);
+      await waitFor(() => expect(screen.getByLabelText('Enable text wrapping')).toBeInTheDocument());
+      expect(onOptionsChange).not.toHaveBeenCalled();
+      expect(onFieldConfigChange).not.toHaveBeenCalled();
+
+      await userEvent.click(screen.getByLabelText('Enable text wrapping'));
+
+      expect(onOptionsChange).toHaveBeenCalledTimes(1);
+      expect(onOptionsChange).toHaveBeenCalledWith(expect.objectContaining({ wrapText: true }));
+      expect(onFieldConfigChange).not.toHaveBeenCalled();
+    });
+
+    it('in Dashboards, when wrap text is set via field config, toggling calls onFieldConfigChange but not onOptionsChange', async () => {
+      const onOptionsChange = jest.fn();
+      const onFieldConfigChange = jest.fn();
+      const fieldConfigWithWrapText: FieldConfigSource = {
+        defaults: { custom: { wrapText: false } },
+        overrides: [],
+      };
+      setUp({ onOptionsChange, onFieldConfigChange, fieldConfig: fieldConfigWithWrapText }, { showControls: true });
+      await waitFor(() => expect(screen.getByLabelText('Enable text wrapping')).toBeInTheDocument());
+      expect(onOptionsChange).not.toHaveBeenCalled();
+      expect(onFieldConfigChange).not.toHaveBeenCalled();
+
+      await userEvent.click(screen.getByLabelText('Enable text wrapping'));
+
+      expect(onOptionsChange).not.toHaveBeenCalled();
+      expect(onFieldConfigChange).toHaveBeenCalledTimes(1);
+      expect(onFieldConfigChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          defaults: expect.objectContaining({
+            custom: expect.objectContaining({ wrapText: true }),
+          }),
         })
       );
     });

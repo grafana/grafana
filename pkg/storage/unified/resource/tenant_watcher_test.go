@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -165,7 +166,7 @@ func TestTenantClearPendingDelete(t *testing.T) {
 
 func TestTenantResourceLabelling(t *testing.T) {
 	t.Run("adds pending-delete label to all tenant resources", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t))
+		ds := newDataStore(setupBadgerKV(t), nil)
 		collector := &writeEventCollector{}
 		tw := &TenantWatcher{
 			log:                log.NewNopLogger(),
@@ -200,7 +201,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 	})
 
 	t.Run("removes pending-delete label when tenant is restored", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t))
+		ds := newDataStore(setupBadgerKV(t), nil)
 		collector := &writeEventCollector{}
 		tw := &TenantWatcher{
 			log:                log.NewNopLogger(),
@@ -239,7 +240,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 	})
 
 	t.Run("record exists with LabelingComplete=false when labelling fails", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t))
+		ds := newDataStore(setupBadgerKV(t), nil)
 		failingWriter := func(_ context.Context, _ *WriteEvent) (int64, error) {
 			return 0, fmt.Errorf("simulated write failure")
 		}
@@ -262,7 +263,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 	})
 
 	t.Run("does not delete record if unlabelling fails", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t))
+		ds := newDataStore(setupBadgerKV(t), nil)
 		failingWriter := func(_ context.Context, _ *WriteEvent) (int64, error) {
 			return 0, fmt.Errorf("simulated write failure")
 		}
@@ -293,7 +294,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 	})
 
 	t.Run("skips resources that already have the correct label state", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t))
+		ds := newDataStore(setupBadgerKV(t), nil)
 		collector := &writeEventCollector{}
 		tw := &TenantWatcher{
 			log:                log.NewNopLogger(),
@@ -313,17 +314,14 @@ func TestTenantResourceLabelling(t *testing.T) {
 	})
 
 	t.Run("conflict error during labelling succeeds when latest version already has label", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t))
+		ds := newDataStore(setupBadgerKV(t), nil)
 
 		// Save the resource at RV 100 without the label (this is what the stale dataKey will read).
 		saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
 		// Save a newer version at RV 200 WITH the label (simulating another pod having already labelled it).
 		saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 200, map[string]string{labelPendingDelete: "true"})
 
-		callCount := 0
-		conflictOnce := func(_ context.Context, _ *WriteEvent) (int64, error) {
-			callCount++
-			// Return a conflict error (as produced by the backwards-compatible update path).
+		conflictWriter := func(_ context.Context, _ *WriteEvent) (int64, error) {
 			return 0, apierrors.NewConflict(schema.GroupResource{
 				Group: "apps", Resource: "dashboards",
 			}, "dash1", fmt.Errorf("resource version does not match current value"))
@@ -333,21 +331,21 @@ func TestTenantResourceLabelling(t *testing.T) {
 			log:                log.NewNopLogger(),
 			pendingDeleteStore: newPendingDeleteStore(ds.kv),
 			dataStore:          ds,
-			writeEvent:         conflictOnce,
+			writeEvent:         conflictWriter,
 			ctx:                t.Context(),
 			stopCh:             make(chan struct{}),
 		}
 
 		tw.handleTenant(pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
 
-		// The write failed with a conflict, but the latest version already has
-		// the label, so the operation should have succeeded overall.
+		// The latest version already has the label, so doEditResourceLabel
+		// detects the no-op and the operation succeeds without writing.
 		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		require.NoError(t, err, "pending delete record should be created despite conflict error")
 	})
 
 	t.Run("conflict error during labelling fails when latest version does not have label", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t))
+		ds := newDataStore(setupBadgerKV(t), nil)
 
 		// Save the resource at RV 100 without the label.
 		saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
@@ -367,19 +365,84 @@ func TestTenantResourceLabelling(t *testing.T) {
 			writeEvent:         conflictWriter,
 			ctx:                t.Context(),
 			stopCh:             make(chan struct{}),
+			retryMaxDelay:      time.Millisecond,
 		}
 
 		tw.handleTenant(pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
 
-		// The intent record is written before labelling, so it should exist
-		// but with LabelingComplete=false since the conflict could not be resolved.
+		// All retry attempts are exhausted (conflicts every time), so the
+		// intent record exists but with LabelingComplete=false.
 		record, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		require.NoError(t, err, "intent record should exist")
 		assert.False(t, record.LabelingComplete, "labeling should not be marked complete")
 	})
 
+	t.Run("retry succeeds after transient conflict", func(t *testing.T) {
+		ds := newDataStore(setupBadgerKV(t), nil)
+		saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
+
+		callCount := 0
+		conflictThenSucceed := func(_ context.Context, event *WriteEvent) (int64, error) {
+			callCount++
+			if callCount == 1 {
+				return 0, apierrors.NewConflict(schema.GroupResource{
+					Group: "apps", Resource: "dashboards",
+				}, "dash1", fmt.Errorf("resource version does not match current value"))
+			}
+			return 1, nil
+		}
+
+		tw := &TenantWatcher{
+			log:                log.NewNopLogger(),
+			pendingDeleteStore: newPendingDeleteStore(ds.kv),
+			dataStore:          ds,
+			writeEvent:         conflictThenSucceed,
+			ctx:                t.Context(),
+			stopCh:             make(chan struct{}),
+			retryMaxDelay:      time.Millisecond,
+		}
+
+		tw.handleTenant(pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
+
+		record, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
+		require.NoError(t, err)
+		assert.True(t, record.LabelingComplete, "labeling should succeed after retry")
+		assert.Equal(t, 2, callCount, "writeEvent should be called exactly twice")
+	})
+
+	t.Run("context cancellation stops retry on conflict", func(t *testing.T) {
+		ds := newDataStore(setupBadgerKV(t), nil)
+		saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
+
+		ctx, cancel := context.WithCancel(t.Context())
+		conflictAndCancel := func(_ context.Context, _ *WriteEvent) (int64, error) {
+			cancel()
+			return 0, apierrors.NewConflict(schema.GroupResource{
+				Group: "apps", Resource: "dashboards",
+			}, "dash1", fmt.Errorf("resource version does not match current value"))
+		}
+
+		tw := &TenantWatcher{
+			log:                log.NewNopLogger(),
+			pendingDeleteStore: newPendingDeleteStore(ds.kv),
+			dataStore:          ds,
+			writeEvent:         conflictAndCancel,
+			ctx:                ctx,
+			stopCh:             make(chan struct{}),
+			retryMaxDelay:      time.Millisecond,
+		}
+
+		dataKey := DataKey{
+			Group: "apps", Resource: "dashboards",
+			Namespace: "tenant-1", Name: "dash1",
+			ResourceVersion: 100, Action: DataActionCreated,
+		}
+		err := tw.editResourceLabel(dataKey, true)
+		assert.ErrorIs(t, err, context.Canceled)
+	})
+
 	t.Run("partial labelling failure followed by tenant unmark cleans up orphaned labels", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t))
+		ds := newDataStore(setupBadgerKV(t), nil)
 		collector := &writeEventCollector{}
 
 		// Two resources: the writer will fail on the second one.
@@ -431,7 +494,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 	})
 
 	t.Run("incomplete record is retried on next event", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t))
+		ds := newDataStore(setupBadgerKV(t), nil)
 
 		saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
 
@@ -467,7 +530,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 	})
 
 	t.Run("force record prevents unlabelling during clear", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t))
+		ds := newDataStore(setupBadgerKV(t), nil)
 		collector := &writeEventCollector{}
 		tw := &TenantWatcher{
 			log:                log.NewNopLogger(),
@@ -515,7 +578,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 
 func newTestTenantWatcher(t *testing.T) *TenantWatcher {
 	t.Helper()
-	ds := newDataStore(setupBadgerKV(t))
+	ds := newDataStore(setupBadgerKV(t), nil)
 	return &TenantWatcher{
 		log:                log.NewNopLogger(),
 		pendingDeleteStore: newPendingDeleteStore(ds.kv),

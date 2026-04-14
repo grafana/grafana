@@ -50,14 +50,15 @@ func canAccessAnnotation(ctx context.Context, accessClient authtypes.AccessClien
 			Name:      "organization",
 		}
 	} else {
-		// Dashboard annotation: use dashboard.grafana.app/annotations virtual resource,
+		// Dashboard annotation: use dashboards/annotations subresource,
 		// which maps to annotation actions scoped to dashboards:uid:<dashboardUID>.
 		checkReq = authtypes.CheckRequest{
-			Verb:      verb,
-			Group:     "dashboard.grafana.app",
-			Resource:  "annotations",
-			Namespace: namespace,
-			Name:      *anno.Spec.DashboardUID,
+			Verb:        verb,
+			Group:       "dashboard.grafana.app",
+			Resource:    "dashboards",
+			Subresource: "annotations",
+			Namespace:   namespace,
+			Name:        *anno.Spec.DashboardUID,
 		}
 	}
 
