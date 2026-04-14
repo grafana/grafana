@@ -472,13 +472,30 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "datasourceQueryTypes",
-			Description:     "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
+			Name:            "datasources.queryTypes",
+			Description:     "Load Query types from spec.{version}.query.{yaml|json}",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{Go: true},
+		},
+		{
+			Name:            "datasources.loadOpenAPI",
+			Description:     "Load the openapi spec from spec.{version}.openapi.{yaml|json}",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+			Expression:      "false",
+			Generate:        Generate{Go: true},
+		},
+		{
+			Name:        "datasources.chunkedQueryStreaming",
+			Description: "Allow requesting query results as chunked jsonl rather than single json blob",
+			Stage:       FeatureStageExperimental,
+			Expression:  "false",
+			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Generate:    Generate{Go: true},
 		},
 		{
 			Name:            "datasourceLegacyIdApi",
@@ -1219,6 +1236,15 @@ var (
 		{
 			Name:         "zanzanaNoLegacyClient",
 			Description:  "Use openFGA as main authorization engine and disable legacy RBAC clietn.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "zanzanaSearchUsersPermissions",
+			Description:  "Search users permissions using Zanzana.",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -2973,6 +2999,14 @@ var (
 		{
 			Name:        "querycaching.redirectToK8SApi",
 			Description: "Redirect caching service cache config reads from legacy storage to K8s API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
+			Name:        "querycaching.enableConnectionsClient",
+			Description: "Use connections client instead of storage to resolve datasource plugin ID in query caching",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",

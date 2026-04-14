@@ -155,7 +155,7 @@
       "aria-label-remove": "Odebrat"
     },
     "group-by-section": {
-      "aria-label-add-group-by": "Přidat skupinu podle",
+      "aria-label-add-group-by": "Přidat funkci Seřadit podle",
       "label-group-by": "Seřadit podle",
       "tooltip-group-by": "Uspořádejte výsledky do kategorií na základě zadaných sloupců. Funkci Seřadit podle lze použít nezávisle k výpisu jedinečných hodnot ve vybraných sloupcích nebo v kombinaci s agregovanými funkcemi k vytvoření souhrnných statistik pro každou skupinu. Při samostatném použití vrátí odlišné kombinace zadaných sloupců."
     },

@@ -1025,7 +1025,7 @@
         "evaluation-interval": "Interwał oceny",
         "labels": "Etykiety",
         "metric-name": "Nazwa wskaźnika",
-        "runbook-url": "Adres URL runbooka"
+        "runbook-url": "Adres URL elementu runbook"
       },
       "view-dashboard": "Wyświetl pulpit",
       "view-panel": "Wyświetl panel"
@@ -3623,11 +3623,13 @@
       },
       "instance-details-drawer": {
         "alert-instance-label": "",
+        "back": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Szczegóły instancji",
         "silence-button": "",
-        "silence-no-permission": ""
+        "silence-no-permission": "",
+        "silence-title-with-name": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "W wybranym zakresie czasu nie ma żadnych instancji alertów w stanie uruchomienia lub oczekiwania.",
@@ -4456,7 +4458,7 @@
       "non-folder-item": "Element {{itemKind}} {{itemUID}} poza folderem",
       "root-title": "Pulpity",
       "search-placeholder": "Przeszukaj foldery",
-      "shared-with-me": "Udostępnione dla mnie",
+      "shared-with-me": "Udostępnione mnie",
       "team-folders": "",
       "unknown-error": "Nieznany błąd"
     },
@@ -4903,7 +4905,7 @@
       "label-disable-one-click": "",
       "name-tooltip-mode": "Tryb podpowiedzi",
       "tooltip-mode-options": {
-        "label-disabled": "Wyłączony",
+        "label-disabled": "Wyłączono",
         "label-enabled": "Włączony"
       }
     },
@@ -5015,7 +5017,7 @@
     "apply": "Zastosuj",
     "cancel": "Anuluj",
     "collapse": "Zwiń",
-    "disabled": "Wyłączone",
+    "disabled": "Wyłączono",
     "discard": "Odrzuć",
     "edit": "Edytuj",
     "help": "Pomoc",
@@ -9908,7 +9910,7 @@
         },
         "pressure": {
           "formats": {
-            "name-bars": "bary",
+            "name-bars": "Słupki",
             "name-hectopascals": "hektopaskale",
             "name-inches-mercury": "cale słupa rtęci",
             "name-kilobars": "kilobary",
@@ -10552,7 +10554,7 @@
           "not-equals": ""
         },
         "remove-all": "Usuń wszystkie wyświetlane wartości z filtra",
-        "select-all": "Wybierz wszystko",
+        "select-all": "Zaznacz wszystkie",
         "selected": "Wybrano {{ numSelected }}",
         "selected-some-hidden": "Wybrano {{ numSelected }} (ukryte: {{ numHidden }})"
       },
@@ -10623,7 +10625,7 @@
             "description-center": "Pośrodku"
           },
           "draw-style": {
-            "label-bars": "Paski",
+            "label-bars": "Słupki",
             "label-lines": "Linie",
             "label-points": "Punkty"
           },
@@ -12499,7 +12501,7 @@
         "description-no-value": "Co pokazać, gdy nie ma wartości",
         "description-value-mappings": "Zmodyfikuj wyświetlany tekst na podstawie wartości wejściowej",
         "name-actions": "Działania",
-        "name-ad-hoc": "Możliwość filtrowania ad hoc",
+        "name-ad-hoc": "",
         "name-color-scheme": "Schemat kolorów",
         "name-data-links": "Połączenia danych",
         "name-decimals": "Miejsca dziesiętne",
@@ -12958,6 +12960,7 @@
       "title-button-disabled": "Wtyczka nie nadaje się jeszcze do użytku, ukończenie instalacji może zająć trochę czasu."
     },
     "install-controls": {
+      "contact-us": "",
       "install": "Zainstaluj",
       "installing": "Instalowanie",
       "update": "Aktualizuj",
@@ -16649,7 +16652,7 @@
           "alphabetical-caseinsensitive-asc": "Alfabetycznie (bez rozróżniania wielkości liter, rosnąco)",
           "alphabetical-caseinsensitive-desc": "Alfabetycznie (bez rozróżniania wielkości liter, malejąco)",
           "alphabetical-desc": "Alfabetycznie (malejąco)",
-          "disabled": "Wyłączone",
+          "disabled": "Wyłączono",
           "natural-asc": "Naturalnie (rosnąco)",
           "natural-desc": "Naturalnie (malejąco)",
           "numerical-asc": "Numerycznie (rosnąco)",
