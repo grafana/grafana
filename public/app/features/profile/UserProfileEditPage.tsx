@@ -69,7 +69,7 @@ export function UserProfileEditPage({
         <UserProfileEditTabs components={components}>
           <Stack direction="column" gap={2} data-testid="user-profile-edit-page">
             <UserProfileEditForm updateProfile={updateUserProfile} isSavingUser={isUpdating} user={user} />
-            <SharedPreferences resourceUri="user" preferenceType="user" />
+            <SharedPreferences resourceUri={`user-${user?.uid}`} preferenceType="user" />
             <Stack direction="column" gap={6}>
               <UserTeams isLoading={teamsAreLoading} teams={teams} />
               <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user} />

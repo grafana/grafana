@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
+  Alert,
   Box,
   Button,
   Combobox,
@@ -42,7 +43,7 @@ import {
 export const SharedPreferencesFunctional = memo((props: Props) => {
   const { preferenceType, resourceUri } = props;
 
-  const [updatePreferences, { preferences: prefs, isLoading, isSubmitting }] = useSharedPreferences(
+  const [updatePreferences, { preferences: prefs, isLoading, isError, isSubmitting }] = useSharedPreferences(
     preferenceType,
     resourceUri
   );
@@ -185,6 +186,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
 
   return (
     <form onSubmit={handleSubmitForm} className={styles.form}>
+      {isError && <Alert severity="error" title="Error loading preferences!!!" />}
       <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={props.disabled}>
         <Stack direction="column" gap={2}>
           <Field
