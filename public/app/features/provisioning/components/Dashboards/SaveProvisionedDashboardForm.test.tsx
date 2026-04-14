@@ -230,7 +230,8 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await user.type(titleInput, 'New Dashboard');
     await user.type(descriptionInput, 'New Description');
-    // Use a filename distinct from the default path to keep dirtyFields.path true
+
+    await user.clear(filenameInput);
     await user.type(filenameInput, 'custom-filename.json');
     await user.type(commentInput, 'Initial commit');
 
@@ -351,6 +352,8 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await user.type(titleInput, 'New Dashboard');
     await user.type(descriptionInput, 'New Description');
+
+    await user.clear(filenameInput);
     await user.type(filenameInput, 'error-dashboard.json');
     await user.type(commentInput, 'Error commit');
 
@@ -511,12 +514,22 @@ describe('SaveProvisionedDashboardForm', () => {
         },
       });
 
+      const titleInput = screen.getByRole('textbox', { name: /title/i });
       const filenameInput = screen.getByRole('textbox', { name: /filename/i });
+
+      // First verify auto-sync is working
+      await user.type(titleInput, 'First Title');
+      await waitFor(() => {
+        expect(filenameInput).toHaveValue('first-title.json');
+      });
+
+      // Manually edit the filename to stop auto-sync
       await user.clear(filenameInput);
       await user.type(filenameInput, 'custom-name.json');
 
-      const titleInput = screen.getByRole('textbox', { name: /title/i });
-      await user.type(titleInput, 'Some New Title');
+      // Change the title again — filename should NOT update
+      await user.clear(titleInput);
+      await user.type(titleInput, 'Second Title');
 
       await waitFor(() => {
         expect(filenameInput).toHaveValue('custom-name.json');
