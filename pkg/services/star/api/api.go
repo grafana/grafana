@@ -21,7 +21,7 @@ type API struct {
 func ProvideApi(
 	cfg *setting.Cfg, // for namespacer
 	features featuremgmt.FeatureToggles,
-	starService star.Service,
+	_ star.Service,
 	configProvider apiserver.DirectRestConfigProvider,
 ) *API {
 	return &API{

@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { uniqueId } from 'lodash';
-import { type HTMLAttributes, useCallback, useEffect, useRef } from 'react';
+import { type HTMLAttributes, useCallback, useEffect, useId, useRef } from 'react';
 
 import { type GrafanaTheme2, type SelectableValue, toIconName } from '@grafana/data';
 
@@ -66,7 +65,8 @@ export function RadioButtonGroup<T>({
     [onClick]
   );
 
-  const internalId = id ?? uniqueId('radiogroup-');
+  const generatedId = useId();
+  const internalId = id ?? generatedId;
   const groupName = useRef(internalId);
   const styles = useStyles2(getStyles);
 
@@ -81,6 +81,7 @@ export function RadioButtonGroup<T>({
     <div
       {...rest}
       role="radiogroup"
+      aria-invalid={!!invalid}
       aria-label={ariaLabel}
       className={cx(styles.radioGroup, fullWidth && styles.fullWidth, invalid && styles.invalid, className)}
     >
