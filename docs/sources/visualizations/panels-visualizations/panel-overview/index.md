@@ -102,12 +102,12 @@ By hovering over a panel with the mouse you can use some shortcuts that will tar
 
 You can configure the following settings to control the time range for a panel:
 
-| Option | Description |
-| --- | --- |
-| Panel time range | Overrides the dashboard time range. Use one of the preset values or enter a custom value like `5m` or `2h`. |
-| Time shift | Adds a time shift relative to the dashboard or panel time range. Use one of the preset values or enter a custom value like `5m` or `2h`. |
-| Time comparison | <p>Compare data between two time ranges.</p><p>To try out this feature, enable the `timeComparison` feature toggle.</p> |
-| Hide panel time range | Don't show the panel time range in the panel header. |
+| Option                | Description                                                                                                                              |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Panel time range      | Overrides the dashboard time range. Use one of the preset values or enter a custom value like `5m` or `2h`.                              |
+| Time shift            | Adds a time shift relative to the dashboard or panel time range. Use one of the preset values or enter a custom value like `5m` or `2h`. |
+| Time comparison       | <p>Compare data between two time ranges.</p><p>To try out this feature, enable the `timeComparison` feature toggle.</p>                  |
+| Hide panel time range | Don't show the panel time range in the panel header.                                                                                     |
 
 ## Pan and zoom panel time range
 
