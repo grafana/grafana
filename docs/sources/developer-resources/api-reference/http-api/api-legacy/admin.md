@@ -15,21 +15,24 @@ labels:
     - enterprise
     - oss
 title: 'Admin HTTP API '
+weight: 100
 ---
 
 # Admin API
 
 {{< admonition type="caution" >}}
-You can't authenticate to the Admin HTTP API with service account tokens.
-Service accounts are limited to an organization and an organization role.
-They can't be granted [Grafana server administrator permissions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators).
 
-To use these API endpoints you have to use Basic authentication and the Grafana user must have the Grafana server administrator permission.
+This is a legacy API.
 
-The `admin` user that Grafana is provisioned with by default has permissions to use these API endpoints.
 {{< /admonition >}}
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
+## Requirements
+
+**To use the Admin API endpoints you have to use Basic authentication, and the Grafana user must have the Grafana server administrator permission**. The `admin` user that Grafana is provisioned with by default has permissions to use these API endpoints.
+
+You can't authenticate to the Admin HTTP API with service account tokens. Service accounts are limited to an organization and an organization role, and can't be granted [Grafana server administrator permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators).
+
+If you're running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 ## Fetch settings
 

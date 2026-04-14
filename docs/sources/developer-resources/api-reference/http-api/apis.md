@@ -27,7 +27,7 @@ Available in Grafana 12 and later.
 
 Grafana is deprecating legacy APIs (`/api` )in favor of a new generation of improved APIs (`/apis`) which follow a standardized API structure alongside consistent API versioning.
 
-**Legacy APIs are not being disabled or removed for the moment**, and any impactful changes will be announced well in advance to avoid disruptions.
+**Legacy APIs are not being disabled or removed for the moment**, and any breaking changes will be announced well in advance to avoid disruptions.
 
 ## API structure
 
