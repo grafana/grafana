@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
+import { reportInteraction } from '@grafana/runtime';
 import {
   isAdvisorEnabled,
   useCreateDatasourceAdvisorChecks,
@@ -13,10 +14,15 @@ jest.mock('app/features/connections/hooks/useDatasourceAdvisorChecks', () => ({
   useCreateDatasourceAdvisorChecks: jest.fn(),
   useLatestDatasourceCheck: jest.fn(),
 }));
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
 const mockIsAdvisorEnabled = isAdvisorEnabled as jest.Mock;
 const mockUseCreateDatasourceAdvisorChecks = useCreateDatasourceAdvisorChecks as jest.Mock;
 const mockUseLatestDatasourceCheck = useLatestDatasourceCheck as jest.Mock;
+const mockReportInteraction = reportInteraction as jest.Mock;
 
 describe('RunAdvisorChecksButton', () => {
   beforeEach(() => {
@@ -95,6 +101,10 @@ describe('RunAdvisorChecksButton', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Enable Advisor checks' }));
 
     expect(createChecks).toHaveBeenCalledTimes(1);
+    expect(mockReportInteraction).toHaveBeenCalledWith('connections_datasource_list_advisor_run_checks_clicked', {
+      creator_team: 'grafana_plugins_catalog',
+      schema_version: '1.0.0',
+    });
   });
 
   it('disables the button while checks are running', () => {

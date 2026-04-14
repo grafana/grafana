@@ -2,6 +2,7 @@ import { type JSX, useCallback } from 'react';
 
 import { Pages } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 
 import {
@@ -16,6 +17,10 @@ export function RunAdvisorChecksButton(): JSX.Element | null {
   const advisorEnabled = isAdvisorEnabled();
 
   const onClick = useCallback(() => {
+    reportInteraction('connections_datasource_list_advisor_run_checks_clicked', {
+      creator_team: 'grafana_plugins_catalog',
+      schema_version: '1.0.0',
+    });
     createChecks();
   }, [createChecks]);
 

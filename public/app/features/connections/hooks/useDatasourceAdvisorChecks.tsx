@@ -78,8 +78,7 @@ export function AdvisorCheckProvider({ children }: { children: ReactNode }) {
     !isLoadingRetryChecks &&
     !isLoadingCreateChecks &&
     !!completedChecksFn &&
-    !!retryCheckFn &&
-    !!createChecksFn;
+    !!retryCheckFn;
 
   const contextValue = useMemo<AdvisorCheckContextValue>(() => {
     if (!enabled) {
