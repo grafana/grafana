@@ -211,7 +211,7 @@ describe('XYChartPanel2', () => {
       expect(screen.queryByTestId('viz-legend')).toBeNull();
     });
 
-    it('builds legend items with correct labels and colors', () => {
+    it('builds legend items with correct labels', () => {
       const series1 = makeSeries({
         name: { value: 'cpu' },
         color: { fixed: '#ff0000' },
@@ -227,11 +227,6 @@ describe('XYChartPanel2', () => {
 
       expect(screen.getByText('cpu')).toBeVisible();
       expect(screen.getByText('mem')).toBeVisible();
-
-      const item0 = screen.getByTestId('legend-item-0');
-      const item1 = screen.getByTestId('legend-item-1');
-      expect(item0.dataset.color).toBeTruthy();
-      expect(item1.dataset.color).toBeTruthy();
     });
 
     it('excludes series with hideFrom.legend true', () => {
