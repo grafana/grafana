@@ -188,22 +188,22 @@ Use the recommended replacements listed below for custom roles and automation.
 
 These broad actions have been replaced by granular per-resource actions for contact points, templates, time intervals, and notification policies.
 
-| Action                      | Applicable scope | Replacement                                                                                                                                                                                       |
-| --------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `alert.notifications:read`  | n/a              | Use `alert.notifications.receivers:read`, `alert.notifications.templates:read`, `alert.notifications.time-intervals:read`, and `notifications.alerting.grafana.app/routingtrees:get` instead.     |
+| Action                      | Applicable scope | Replacement                                                                                                                                                                                         |
+| --------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `alert.notifications:read`  | n/a              | Use `alert.notifications.receivers:read`, `alert.notifications.templates:read`, `alert.notifications.time-intervals:read`, and `notifications.alerting.grafana.app/routingtrees:get` instead.       |
 | `alert.notifications:write` | n/a              | Use `alert.notifications.receivers:write`, `alert.notifications.templates:write`, `alert.notifications.time-intervals:write`, and `notifications.alerting.grafana.app/routingtrees:update` instead. |
 
 ### Notification policies (deprecated)
 
 These unscoped actions have been replaced by resource-scoped actions on the `notifications.alerting.grafana.app/routingtrees` resource.
 
-| Action                             | Applicable scope | Replacement                                                                                                                                                           |
-| ---------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `alert.notifications.routes:read`  | n/a              | Use `notifications.alerting.grafana.app/routingtrees:get` with scope `notifications.alerting.grafana.app/routingtrees:*` instead.                                     |
+| Action                             | Applicable scope | Replacement                                                                                                                                                            |
+| ---------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `alert.notifications.routes:read`  | n/a              | Use `notifications.alerting.grafana.app/routingtrees:get` with scope `notifications.alerting.grafana.app/routingtrees:*` instead.                                      |
 | `alert.notifications.routes:write` | n/a              | Use `notifications.alerting.grafana.app/routingtrees:update` and `notifications.alerting.grafana.app/routingtrees:delete` with the appropriate resource scope instead. |
 
 ### Contact point testing (deprecated)
 
-| Action                               | Applicable scope | Replacement                                                                                                                            |
-| ------------------------------------ | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Action                               | Applicable scope | Replacement                                                                                                                          |
+| ------------------------------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `alert.notifications.receivers:test` | n/a              | Use `alert.notifications.receivers.test:create` with scope `receivers:uid:-` (new integrations) or `receivers:*` (existing) instead. |
