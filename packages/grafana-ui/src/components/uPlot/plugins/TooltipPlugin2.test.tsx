@@ -187,30 +187,73 @@ describe('TooltipPlugin2', () => {
       const windowRemoveSpy = jest.spyOn(window, 'removeEventListener');
       const windowAddSpy = jest.spyOn(window, 'addEventListener');
       const documentRemoveSpy = jest.spyOn(document, 'removeEventListener');
-      const documentAddSpy = jest.spyOn(document, 'addEventListener');
-      windowRemoveSpy.mockClear();
-      documentRemoveSpy.mockClear();
+      const documentAddListener = jest.spyOn(document, 'addEventListener');
 
       const { view } = setUp();
       expect(windowAddSpy).toHaveBeenCalledTimes(2);
-      expect(documentAddSpy).toHaveBeenCalled();
+      expect(documentAddListener).toHaveBeenCalled();
       view.unmount();
 
       expect(windowRemoveSpy).toHaveBeenCalledTimes(2);
       expect(windowRemoveSpy).toHaveBeenCalledWith('resize', expect.any(Function));
       expect(windowRemoveSpy).toHaveBeenCalledWith('scroll', expect.any(Function), true);
 
-      expect(documentAddSpy).toHaveBeenCalled();
       expect(documentRemoveSpy).toHaveBeenCalledTimes(2);
       expect(documentRemoveSpy).toHaveBeenCalledWith('mousedown', expect.any(Function), true);
       expect(documentRemoveSpy).toHaveBeenCalledWith('keydown', expect.any(Function), true);
 
-      windowRemoveSpy.mockRestore();
+      documentAddListener.mockRestore();
       documentRemoveSpy.mockRestore();
+      windowRemoveSpy.mockRestore();
+      windowAddSpy.mockRestore();
     });
 
-    it.todo('should clean up event listeners added when tooltip is pinned');
+    it('should clean up event listeners added when tooltip is pinned', async () => {
+      const documentAddSpy = jest.spyOn(document, 'addEventListener');
+      const documentRemoveSpy = jest.spyOn(document, 'removeEventListener');
+      const windowRemoveSpy = jest.spyOn(window, 'removeEventListener');
+      const windowAddSpy = jest.spyOn(window, 'addEventListener');
+
+      const { view, mockUPlot, initCallback, setSeriesCallback, setLegendCallback } = setUp();
+
+      const docListenerAddsBeforePin = documentAddSpy.mock.calls;
+      const windowListenerAddsBeforePin = windowAddSpy.mock.calls;
+
+      await act(async () => {
+        initCallback(mockUPlot);
+        setSeriesCallback(mockUPlot, 1);
+        setLegendCallback(mockUPlot);
+        mockUPlot.over.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        // wait until next render
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      const docListenerAddsAfterPin = documentAddSpy.mock.calls;
+      const windowListenerAddsAfterPin = windowAddSpy.mock.calls;
+      expect(docListenerAddsAfterPin.length).toBe(3);
+      expect(docListenerAddsBeforePin.length).toBe(3);
+
+      expect(windowListenerAddsAfterPin.length).toBe(2);
+      expect(windowListenerAddsBeforePin.length).toBe(2);
+      documentRemoveSpy.mockClear();
+
+      view.unmount();
+
+      const pinnedHandler = docListenerAddsAfterPin.find((c) => c[0] === 'mousedown')?.[1] as (e: Event) => void;
+      expect(documentRemoveSpy).toHaveBeenCalledWith('mousedown', pinnedHandler, true);
+      expect(documentRemoveSpy).toHaveBeenCalledWith('keydown', pinnedHandler, true);
+
+      expect(documentRemoveSpy).toHaveBeenCalledTimes(2);
+      expect(windowRemoveSpy).toHaveBeenCalledTimes(2);
+
+      documentAddSpy.mockRestore();
+      documentRemoveSpy.mockRestore();
+      windowRemoveSpy.mockRestore();
+      windowAddSpy.mockRestore();
+    });
+
     it.todo('should clean up u.over event listeners');
     it.todo('should dismiss tooltip on window scroll');
+    it.todo('should clean up mouseup listener (onUp)');
   });
 });
