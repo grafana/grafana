@@ -95,6 +95,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.config.title', 'Administration');
     case 'cfg/general':
       return t('nav.config-general.title', 'General');
+    case 'theme-editor':
+      return t('nav.theme-editor.title', 'Theme editor');
     case 'cfg/plugins':
       return t('nav.config-plugins.title', 'Plugins and data');
     case 'cfg/access':
@@ -292,6 +294,8 @@ export function getNavSubTitle(navId: string | undefined) {
       );
     case 'cfg/general':
       return t('nav.config-general.subtitle', 'Manage default preferences and settings across Grafana');
+    case 'theme-editor':
+      return t('nav.theme-editor.subtitle', 'Create and preview custom themes');
     case 'cfg/plugins':
       return t('nav.config-plugins.subtitle', 'Install plugins and define the relationships between data');
     case 'cfg/access':

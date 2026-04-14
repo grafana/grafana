@@ -62,6 +62,15 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/admin/provisioning",
 		})
 	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if s.features.IsEnabledGlobally(featuremgmt.FlagThemeEditor) {
+		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
+			Text:     "Theme editor",
+			Id:       "theme-editor",
+			SubTitle: "Create and preview custom themes",
+			Url:      s.cfg.AppSubURL + "/admin/general/theme-editor",
+		})
+	}
 
 	generalNode := &navtree.NavLink{
 		Text:     "General",
