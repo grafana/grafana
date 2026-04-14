@@ -272,8 +272,6 @@ describe('XYChartTooltip', () => {
       const series = makeSeries({ color: { field: colorField } });
       renderTooltip({ xySeries: [series] });
       const indicator = getHeaderColorIndicator();
-      // Can't assert exact rgba string — colorManipulator output format varies across environments
-      expect(indicator.style.backgroundColor).not.toBe('#ff0000');
       expect(indicator.style.backgroundColor).toContain('0.5');
     });
   });
