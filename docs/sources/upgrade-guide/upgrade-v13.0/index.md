@@ -122,7 +122,7 @@ Grafana automatically retries using the Parquet buffer, but if errors persist, i
 | `migration_cache_size_kb`  | SQLite page cache size during migration.                                                                 | `1000000` (~1 GB) |
 | `migration_parquet_buffer` | Stage data through a temporary Parquet file to separate read and write phases, avoiding lock contention. | `false`           |
 
-### Removal of grafana-cli and grafana-server commands
+### Removal of `grafana-cli` and `grafana-server` commands
 
 The `grafana-cli` and `grafana-server` commands, deprecated since Grafana v10.0, are removed in Grafana v13.0.
 Update any scripts, systemd units, Docker entrypoints, CI pipelines, or other automation to use `grafana cli` and `grafana server` instead.
