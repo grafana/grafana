@@ -3585,11 +3585,13 @@
       },
       "instance-details-drawer": {
         "alert-instance-label": "Alert Instance",
+        "back": "Back",
         "declare-incident": "Declare incident",
         "declare-incident-no-permission": "You do not have permission to access Incident",
         "instance-details": "Instance details",
         "silence-button": "Silence",
-        "silence-no-permission": "You do not have permission to create silences"
+        "silence-no-permission": "You do not have permission to create silences",
+        "silence-title-with-name": "Silence {{name}}"
       },
       "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
@@ -4330,6 +4332,9 @@
       "libraryPanel_other": "{{count}} library panel",
       "total_one": "{{count}} item",
       "total_other": "{{count}} item"
+    },
+    "create-new": {
+      "dashboard-group": "Dashboard"
     },
     "dashboards-tree": {
       "checkbox": {
@@ -12364,7 +12369,7 @@
         "description-no-value": "What to show when there is no value",
         "description-value-mappings": "Modify the display text based on input value",
         "name-actions": "Actions",
-        "name-ad-hoc": "Ad-hoc filterable",
+        "name-ad-hoc": "Filterable",
         "name-color-scheme": "Color scheme",
         "name-data-links": "Data links",
         "name-decimals": "Decimals",
@@ -12823,6 +12828,7 @@
       "title-button-disabled": "The plugin isn't usable yet, it may take some time to complete the installation."
     },
     "install-controls": {
+      "contact-us": "Contact us",
       "install": "Install",
       "installing": "Installing",
       "update": "Update",
@@ -14318,11 +14324,11 @@
       "view-as-list": "View as list"
     },
     "dashboard-actions": {
-      "import": "Import",
+      "import": "Import dashboard",
       "new": "New",
       "new-dashboard": "New dashboard",
       "new-folder": "New folder",
-      "new-template-dashboard": "Dashboard from template"
+      "new-template-dashboard": "Use template"
     },
     "generate-columns": {
       "score": "Score"

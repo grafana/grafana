@@ -139,12 +139,12 @@
       "label-format-as": "Formatar como"
     },
     "fuzzy-search": {
-      "aria-label-add-fuzzy-search": "Adicionar pesquisa difusa",
-      "aria-label-remove-fuzzy-search": "Remover pesquisa difusa",
+      "aria-label-add-fuzzy-search": "Adicionar busca difusa",
+      "aria-label-remove-fuzzy-search": "Remover busca difusa",
       "aria-label-select-column": "Selecionar a coluna",
       "label-fuzzy-search": "Pesquisa difusa",
-      "placeholder-search-team": "Digite o termo de pesquisa",
-      "tooltip-fuzzy-search": "Encontre correspondências de texto aproximadas com tolerância para variações ortográficas. Por padrão, a pesquisa difusa verifica todas as colunas (*) em toda a tabela, não apenas campos específicos."
+      "placeholder-search-team": "Digite o termo de busca",
+      "tooltip-fuzzy-search": "Encontre correspondências de texto aproximadas com tolerância para variações ortográficas. Por padrão, a busca difusa verifica todas as colunas (*) em toda a tabela, não apenas campos específicos."
     },
     "grafana-template-variable-fn-input": {
       "label-grafana-template-variable": "Função de variável de modelo do Grafana",
@@ -220,7 +220,7 @@
         "label-kql": "KQL"
       },
       "label-service": "Serviço",
-      "placeholder-service": "Serviço...",
+      "placeholder-service": "Serviço…",
       "title-switch-mode": "Deseja trocar para o modo de edição?"
     },
     "raw-query": {
@@ -260,7 +260,7 @@
     },
     "search": {
       "aria-label-resource-search": "Pesquisa de recursos",
-      "placeholder-resource-search": "Pesquisar um recurso"
+      "placeholder-resource-search": "Buscar um recurso"
     },
     "subscription-field": {
       "label-subscriptions": "Assinaturas",
