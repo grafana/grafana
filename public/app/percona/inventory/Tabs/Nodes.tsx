@@ -312,14 +312,14 @@ export const NodesTab = () => {
         const cmd = buildQuickInstallCommand(tech, res.token);
         try {
           await navigator.clipboard.writeText(cmd);
-          appEvents.emit(AppEvents.alertSuccess, [Messages.nodes.installCommandCopied]);
+          appEvents.emit(AppEvents.alertSuccess, [Messages.nodes.addNodeCommandCopied]);
         } catch (clipErr) {
           logger.error(clipErr);
-          appEvents.emit(AppEvents.alertError, [Messages.nodes.installCommandCopyFailed]);
+          appEvents.emit(AppEvents.alertError, [Messages.nodes.addNodeCommandCopyFailed]);
         }
       } catch (e) {
         logger.error(e);
-        appEvents.emit(AppEvents.alertError, [Messages.nodes.installTokenFailed]);
+        appEvents.emit(AppEvents.alertError, [Messages.nodes.addNodeTokenFailed]);
       } finally {
         setInstallTokenLoading(false);
       }
@@ -327,7 +327,7 @@ export const NodesTab = () => {
     []
   );
 
-  const installClientAdvancedHref =
+  const addNodeAdvancedHref =
     typeof window !== 'undefined' ? `${window.location.origin}/pmm-ui/install-client` : '/pmm-ui/install-client';
 
   return (
@@ -341,9 +341,9 @@ export const NodesTab = () => {
                   <Menu>
                     {(
                       [
-                        ['mysql', Messages.nodes.installMySQL],
-                        ['postgresql', Messages.nodes.installPostgreSQL],
-                        ['mongodb', Messages.nodes.installMongoDB],
+                        ['mysql', Messages.nodes.addNodeMySQL],
+                        ['mongodb', Messages.nodes.addNodeMongoDB],
+                        ['postgresql', Messages.nodes.addNodePostgreSQL],
                       ] as const
                     ).map(([tech, label]) => (
                       <Menu.Item
@@ -366,10 +366,10 @@ export const NodesTab = () => {
                   icon="angle-down"
                   disabled={installTokenLoading}
                 >
-                  {Messages.nodes.installClientButton}
+                  {Messages.nodes.addNodeButton}
                 </Button>
               </Dropdown>
-              <Link href={installClientAdvancedHref}>{Messages.nodes.installClientAdvanced}</Link>
+              <Link href={addNodeAdvancedHref}>{Messages.nodes.addNodeMoreOptions}</Link>
             </HorizontalGroup>
             <Button
               size="md"
