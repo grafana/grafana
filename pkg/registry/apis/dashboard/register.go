@@ -913,6 +913,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if b.features.IsEnabledGlobally(featuremgmt.FlagGlobalDashboardVariables) {
 		opts.StorageOptsRegister(dashv2.VariableResourceInfo.GroupResource(), apistore.StorageOptions{
 			EnableFolderSupport: true,
