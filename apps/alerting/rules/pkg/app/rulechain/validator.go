@@ -37,10 +37,19 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 				return fmt.Errorf("rulechain requires at least one recording rule")
 			}
 
-			// TODO: Validate folder annotation once EnableFolderSupport is
-			// available for unified-storage-only resources (no legacy storage).
-			// Currently the storage layer rejects the folder annotation for
-			// app-sdk resources that don't go through the dual-writer.
+			chainFolderUID := r.Annotations[model.FolderAnnotationKey]
+			if chainFolderUID == "" {
+				return fmt.Errorf("rulechain must be placed in a folder (set annotation %q)", model.FolderAnnotationKey)
+			}
+			if cfg.FolderValidator != nil {
+				ok, err := cfg.FolderValidator(ctx, chainFolderUID)
+				if err != nil {
+					return fmt.Errorf("failed to validate folder %q: %w", chainFolderUID, err)
+				}
+				if !ok {
+					return fmt.Errorf("folder %q does not exist or is not accessible", chainFolderUID)
+				}
+			}
 
 			seen := make(map[string]struct{}, len(r.Spec.RecordingRules)+len(r.Spec.AlertingRules))
 			allRefs := make([]model.RuleChainRuleRef, 0, len(r.Spec.RecordingRules)+len(r.Spec.AlertingRules))
@@ -75,15 +84,16 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 				seen[ruleUID] = struct{}{}
 
 				if cfg.ResolveRuleRef != nil {
-					_, found, err := cfg.ResolveRuleRef(ctx, ruleUID)
+					ruleRef, found, err := cfg.ResolveRuleRef(ctx, ruleUID)
 					if err != nil {
 						return fmt.Errorf("failed to resolve rule %q: %w", ruleUID, err)
 					}
 					if !found {
 						return fmt.Errorf("rule %q does not exist", ruleUID)
 					}
-					// TODO: Validate that referenced rules are in the same folder
-					// as the chain once folder support is enabled for RuleChain.
+					if ruleRef.FolderUID != chainFolderUID {
+						return fmt.Errorf("rule %q is in folder %q but rulechain is in folder %q: all rules must be in the same folder as the chain", ruleUID, ruleRef.FolderUID, chainFolderUID)
+					}
 				}
 
 				membership, hasBulkMembership := memberships[ruleUID]

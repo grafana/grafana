@@ -33,12 +33,14 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/setting"
+	apistore "github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
 var (
-	_ appsdkapiserver.AppInstaller       = (*AppInstaller)(nil)
-	_ appinstaller.AuthorizerProvider    = (*AppInstaller)(nil)
-	_ appinstaller.LegacyStorageProvider = (*AppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller        = (*AppInstaller)(nil)
+	_ appinstaller.AuthorizerProvider     = (*AppInstaller)(nil)
+	_ appinstaller.LegacyStorageProvider  = (*AppInstaller)(nil)
+	_ appinstaller.StorageOptionsProvider = (*AppInstaller)(nil)
 )
 
 type AppInstaller struct {
@@ -300,6 +302,15 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 			return authorizer.DecisionNoOpinion, "", nil
 		},
 	)
+}
+
+func (a *AppInstaller) GetStorageOptions(gr schema.GroupResource) *apistore.StorageOptions {
+	if gr == rulechain.ResourceInfo.GroupResource() {
+		return &apistore.StorageOptions{
+			EnableFolderSupport: true,
+		}
+	}
+	return nil
 }
 
 func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanarest.Storage {
