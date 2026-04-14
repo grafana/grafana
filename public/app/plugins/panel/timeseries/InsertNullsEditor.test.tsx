@@ -9,20 +9,17 @@ const mockContext: StandardEditorContext<unknown> = {
   data: [],
 };
 
-function makeItem(isTime?: boolean): StandardEditorsRegistryItem<boolean | number> {
-  return {
-    id: 'insertNulls',
-    name: 'Disconnect values',
-    editor: InsertNullsEditor,
-    settings: isTime !== undefined ? { isTime } : undefined,
-  };
-}
+const mockItem: StandardEditorsRegistryItem<boolean | number> = {
+  id: 'insertNulls',
+  name: 'Disconnect values',
+  editor: InsertNullsEditor,
+};
 
 describe('InsertNullsEditor', () => {
   describe('Disconnect option selection', () => {
     it('should render with Never selected when value is false', () => {
       const onChange = jest.fn();
-      render(<InsertNullsEditor value={false} onChange={onChange} context={mockContext} item={makeItem()} />);
+      render(<InsertNullsEditor value={false} onChange={onChange} context={mockContext} item={mockItem} />);
 
       const neverButton = screen.getByRole('radio', { name: /never/i });
       expect(neverButton).toBeChecked();
@@ -30,7 +27,7 @@ describe('InsertNullsEditor', () => {
 
     it('should render with Threshold selected when value is a number', () => {
       const onChange = jest.fn();
-      render(<InsertNullsEditor value={3600000} onChange={onChange} context={mockContext} item={makeItem()} />);
+      render(<InsertNullsEditor value={3600000} onChange={onChange} context={mockContext} item={mockItem} />);
 
       const thresholdButton = screen.getByRole('radio', { name: /threshold/i });
       expect(thresholdButton).toBeChecked();
@@ -38,7 +35,7 @@ describe('InsertNullsEditor', () => {
 
     it('should call onChange with false when Never is selected', async () => {
       const onChange = jest.fn();
-      render(<InsertNullsEditor value={3600000} onChange={onChange} context={mockContext} item={makeItem()} />);
+      render(<InsertNullsEditor value={3600000} onChange={onChange} context={mockContext} item={mockItem} />);
 
       const neverButton = screen.getByRole('radio', { name: /never/i });
       await userEvent.click(neverButton);
@@ -48,7 +45,7 @@ describe('InsertNullsEditor', () => {
 
     it('should call onChange with default 1h threshold when Threshold is selected', async () => {
       const onChange = jest.fn();
-      render(<InsertNullsEditor value={false} onChange={onChange} context={mockContext} item={makeItem()} />);
+      render(<InsertNullsEditor value={false} onChange={onChange} context={mockContext} item={mockItem} />);
 
       const thresholdButton = screen.getByRole('radio', { name: /threshold/i });
       await userEvent.click(thresholdButton);
@@ -59,7 +56,7 @@ describe('InsertNullsEditor', () => {
     it('should preserve custom threshold value in the Threshold option', () => {
       const onChange = jest.fn();
       const customMs = 7200000; // 2h
-      render(<InsertNullsEditor value={customMs} onChange={onChange} context={mockContext} item={makeItem()} />);
+      render(<InsertNullsEditor value={customMs} onChange={onChange} context={mockContext} item={mockItem} />);
 
       const thresholdButton = screen.getByRole('radio', { name: /threshold/i });
       expect(thresholdButton).toBeChecked();
@@ -69,39 +66,23 @@ describe('InsertNullsEditor', () => {
   describe('Threshold input visibility', () => {
     it('should not show threshold input when value is false', () => {
       const onChange = jest.fn();
-      render(<InsertNullsEditor value={false} onChange={onChange} context={mockContext} item={makeItem()} />);
+      render(<InsertNullsEditor value={false} onChange={onChange} context={mockContext} item={mockItem} />);
 
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     });
 
     it('should show threshold input when value is a number', () => {
       const onChange = jest.fn();
-      render(<InsertNullsEditor value={3600000} onChange={onChange} context={mockContext} item={makeItem()} />);
+      render(<InsertNullsEditor value={3600000} onChange={onChange} context={mockContext} item={mockItem} />);
 
       expect(screen.getByRole('textbox')).toBeInTheDocument();
     });
 
     it('should show ">" prefix in the threshold input', () => {
       const onChange = jest.fn();
-      render(<InsertNullsEditor value={3600000} onChange={onChange} context={mockContext} item={makeItem()} />);
+      render(<InsertNullsEditor value={3600000} onChange={onChange} context={mockContext} item={mockItem} />);
 
       expect(screen.getByText('>')).toBeInTheDocument();
-    });
-  });
-
-  describe('Threshold input behavior', () => {
-    it('should format value as duration when isTime is true', () => {
-      const onChange = jest.fn();
-      render(<InsertNullsEditor value={3600000} onChange={onChange} context={mockContext} item={makeItem(true)} />);
-
-      expect(screen.getByRole('textbox')).toHaveValue('1h');
-    });
-
-    it('should default to raw number when isTime is false', () => {
-      const onChange = jest.fn();
-      render(<InsertNullsEditor value={1000} onChange={onChange} context={mockContext} item={makeItem(false)} />);
-
-      expect(screen.getByRole('textbox')).toHaveValue('10');
     });
   });
 });
