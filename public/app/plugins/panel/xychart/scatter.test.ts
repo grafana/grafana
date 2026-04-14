@@ -182,8 +182,8 @@ describe('prepData', () => {
     // series2 val=100: pct=1, diam=√100=10
     const diams1 = data[1]![2] as number[];
     const diams2 = data[2]![2] as number[];
-    expect(diams1[0]).toBeCloseTo(2, 5);
-    expect(diams2[1]).toBeCloseTo(10, 5);
+    expect(diams1[0]).toEqual(2)
+    expect(diams2[1]).toEqual(10)
   });
 });
 
