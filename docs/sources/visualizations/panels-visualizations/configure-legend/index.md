@@ -128,7 +128,10 @@ If you set the legend placement to **Right**, the **Width** option becomes avail
 
 ### Limit
 
-Limit how many series items are shown by default. The rest become expandable using a Show all link.
+Limit how many series items are shown by default.
+When the series count exceeds the limit, click the **Show all** link to see the full list of series.
+
+Legend limits are supported for the following visualizations: time series, bar chart, bar gauge, candlestick, histogram, pie chart, state timeline, status history, trend, and XY chart.
 
 ### Values
 
