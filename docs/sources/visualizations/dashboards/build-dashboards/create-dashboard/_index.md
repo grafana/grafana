@@ -76,7 +76,7 @@ To create a dashboard, follow these steps:
 
 {{< docs/list >}}
 
-{{< docs/shared id="create-dashboard" >}}
+{{< shared id="create-dashboard" >}}
 
 1. Click **Dashboards** in the main menu.
 1. Click **New** and select **New Dashboard**.
@@ -84,7 +84,7 @@ To create a dashboard, follow these steps:
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.0.png" max-width="750px" alt="Empty dashboard with sidebar open" >}}
 
-{{ < /docs/shared >}}
+{{ < /shared >}}
 
 1. On the new panel, select one of the following options:
    - **Configure visualization**: Opens panel edit mode with the default data source for your instance preselected. Configure a query and set panel and visualization options.
