@@ -183,7 +183,7 @@ describe('color field compilation', () => {
       y: { field: makeField({ name: 'y', values: [10, 20, 30], config: { unit: 'y' } }) },
     });
   }
-  it('compiles absolute threshold color config without throwing', () => {
+  it('produces valid output with absolute threshold color config', () => {
     const series = makeColorSeries({
       color: { mode: FieldColorModeId.Thresholds },
       thresholds: {
@@ -209,7 +209,7 @@ describe('color field compilation', () => {
     ]);
   });
 
-  it('compiles value-to-text mapping that maps discrete values to colors', () => {
+  it('produces valid output with value-to-text color mapping', () => {
     const series = makeColorSeries({
       mappings: [
         {
@@ -236,7 +236,7 @@ describe('color field compilation', () => {
     ]);
   });
 
-  it('compiles range-to-text mapping that maps numeric ranges to colors', () => {
+  it('produces valid output with range-to-text color mapping', () => {
     const series = makeColorSeries({
       mappings: [
         {
@@ -266,7 +266,7 @@ describe('color field compilation', () => {
   it.each([
     ['NaN', SpecialValueMatch.NaN],
     ['Null', SpecialValueMatch.Null],
-  ])('compiles special value mapping that assigns a color to %s values', (_label, match) => {
+  ])('produces valid output with special value %s color mapping', (_label, match) => {
     const series = makeColorSeries({
       mappings: [{ type: MappingType.SpecialValue, options: { match, result: { text: 'special', color: 'gray' } } }],
     });
@@ -284,7 +284,7 @@ describe('color field compilation', () => {
     ]);
   });
 
-  it('compiles continuous gradient color mode into a 32-step palette', () => {
+  it('produces valid output with continuous gradient color mode', () => {
     const series = makeColorSeries({
       color: { mode: FieldColorModeId.ContinuousGrYlRd },
     });
