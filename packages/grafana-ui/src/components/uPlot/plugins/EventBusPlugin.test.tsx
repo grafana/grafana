@@ -162,16 +162,7 @@ describe('EventBusPlugin', () => {
     const eventBus = new EventBusSrv();
     const publishSpy = jest.spyOn(eventBus, 'publish');
     const addHookSpy = jest.spyOn(config, 'addHook');
-
-    render(<EventBusPlugin config={config} eventBus={eventBus} />);
-
-    const initCallback = addHookSpy.mock.calls.find((call) => call[0] === 'init')?.[1] as (u: uPlot) => void;
-    const setLegendCallback = addHookSpy.mock.calls.find((call) => call[0] === 'setLegend')?.[1] as () => void;
-    const clearPublishes = () =>
-      publishSpy.mock.calls.filter((call) => call[0] instanceof DataHoverClearEvent && call[0].tags?.has('uplot'));
-
-    expect(initCallback).toBeDefined();
-    expect(setLegendCallback).toBeDefined();
+    let initCallback: (u: uPlot) => void, setLegendCallback: () => void, clearPublishes: () => void;
 
     const mockU = {
       cursor: {
@@ -189,6 +180,14 @@ describe('EventBusPlugin', () => {
       setLegendCallback();
     };
 
+    const renderHelper = () => {
+      render(<EventBusPlugin config={config} eventBus={eventBus} />);
+      initCallback = addHookSpy.mock.calls.find((call) => call[0] === 'init')?.[1] as (u: uPlot) => void;
+      setLegendCallback = addHookSpy.mock.calls.find((call) => call[0] === 'setLegend')?.[1] as () => void;
+      clearPublishes = () =>
+        publishSpy.mock.calls.filter((call) => call[0] instanceof DataHoverClearEvent && call[0].tags?.has('uplot'));
+    };
+
     beforeEach(() => {
       jest.useFakeTimers();
       publishSpy.mockClear();
@@ -200,6 +199,7 @@ describe('EventBusPlugin', () => {
     });
 
     it('throttles hoverEvent', () => {
+      renderHelper();
       initCallback(mockU);
       emitLegendEvents();
       const hoverPublishes = () => publishSpy.mock.calls;
@@ -207,9 +207,8 @@ describe('EventBusPlugin', () => {
       jest.advanceTimersByTime(100);
       expect(hoverPublishes()).toHaveLength(2);
     });
-
     it('throttles clearEvent', () => {
-      render(<EventBusPlugin config={config} eventBus={eventBus} />);
+      renderHelper();
       const mockU = {
         cursor: {
           event: {},
