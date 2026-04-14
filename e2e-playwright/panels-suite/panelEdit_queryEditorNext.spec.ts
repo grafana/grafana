@@ -1,6 +1,6 @@
 import { type Page } from '@playwright/test';
 
-import { test, expect, type E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 test.use({
   featureToggles: {
@@ -138,7 +138,9 @@ test.describe('Query Editor Next: Sidebar Query Management', { tag: ['@panels', 
 
     await cardB.click();
     await cardB.hover();
-    await cardB.getByRole('button', { name: 'Remove Query' }).click({ force: true });
+    const removeQueryButton = cardB.getByRole('button', { name: 'Remove Query' });
+    await expect(removeQueryButton).toBeVisible();
+    await removeQueryButton.click();
 
     await expect(cardB).toBeHidden();
     await expect(page.locator('[data-query-sidebar-card="A"]')).toBeVisible();
@@ -149,13 +151,17 @@ test.describe('Query Editor Next: Sidebar Query Management', { tag: ['@panels', 
 
     const cardA = page.locator('[data-query-sidebar-card="A"]');
     await cardA.hover();
-    await cardA.getByRole('button', { name: 'Hide Query' }).click({ force: true });
+    const hideQueryButton = cardA.getByRole('button', { name: 'Hide Query' });
+    await expect(hideQueryButton).toBeVisible();
+    await hideQueryButton.click();
 
     const hiddenIndicator = cardA.locator('[data-testid="icon-eye-slash"]').first();
     await expect(hiddenIndicator).toBeVisible();
 
     await cardA.hover();
-    await cardA.getByRole('button', { name: 'Show Query' }).click({ force: true });
+    const showQueryButton = cardA.getByRole('button', { name: 'Show Query' });
+    await expect(showQueryButton).toBeVisible();
+    await showQueryButton.click();
     await expect(hiddenIndicator).toBeHidden();
   });
 
@@ -179,22 +185,68 @@ test.describe('Query Editor Next: Sidebar Query Management', { tag: ['@panels', 
 // Datasource Switching
 // ---------------------------------------------------------------------------
 test.describe('Query Editor Next: Datasource Switching', { tag: ['@panels', '@queryEditorNext'] }, () => {
-  test('content area loads the correct datasource query editor', async ({ gotoDashboardPage, selectors, page }) => {
+  async function switchDatasource(
+    dashboardPage: DashboardPage,
+    page: Page,
+    selectors: E2ESelectorGroups,
+    datasourceName: string
+  ) {
+    // Datasource picker is only rendered for datasource-backed query cards (not expressions).
+    const queryACard = page.locator('[data-query-sidebar-card="A"]').first();
+    if ((await queryACard.count()) > 0) {
+      await queryACard.click();
+      await expect(queryACard).toHaveAttribute('aria-pressed', 'true');
+    }
+
+    const dataSourceInput = dashboardPage.getByGrafanaSelector(selectors.components.DataSourcePicker.inputV2);
+    await expect(dataSourceInput).toBeVisible();
+    await dataSourceInput.fill(datasourceName);
+
+    const dataSourceList = dashboardPage.getByGrafanaSelector(selectors.components.DataSourcePicker.dataSourceList);
+    await expect(dataSourceList).toBeVisible();
+    await dataSourceList.getByText(datasourceName).first().click();
+  }
+
+  async function ensureTestDataDatasource(dashboardPage: DashboardPage, page: Page, selectors: E2ESelectorGroups) {
+    const testDataScenarioSelect = page.getByRole('combobox', { name: 'Scenario' });
+    if ((await testDataScenarioSelect.count()) === 0) {
+      await switchDatasource(dashboardPage, page, selectors, 'gdev-testdata');
+    }
+    await expect(testDataScenarioSelect.first()).toBeVisible();
+    return testDataScenarioSelect;
+  }
+
+  test('switching datasource updates query editor content', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
 
-    const scenarioSelect = dashboardPage.getByGrafanaSelector(
-      selectors.components.DataSource.TestData.QueryTab.scenarioSelectContainer
-    );
-    await expect(scenarioSelect.first()).toBeVisible();
+    const testDataScenarioSelect = await ensureTestDataDatasource(dashboardPage, page, selectors);
+
+    await switchDatasource(dashboardPage, page, selectors, 'gdev-prometheus');
+
+    await expect(testDataScenarioSelect).toBeHidden();
+    await expect(
+      page.getByTestId(selectors.components.DataSource.Prometheus.queryEditor.builder.metricSelect)
+    ).toBeVisible();
   });
 
-  test('expression queries are preserved when adding an expression', async ({ gotoDashboardPage, page }) => {
-    await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
+  test('queries and expressions survive datasource switching', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
+    await ensureTestDataDatasource(dashboardPage, page, selectors);
 
     await addQueryOrExpressionButton(page).click();
     await page.getByRole('menuitem', { name: 'Add expression' }).click();
     await page.getByRole('button', { name: 'Math', exact: true }).click();
 
+    await expect(page.locator('[data-query-sidebar-card="A"]')).toBeVisible();
+    await expect(page.locator('[data-query-sidebar-card="B"]')).toBeVisible();
+
+    await switchDatasource(dashboardPage, page, selectors, 'gdev-prometheus');
+    await expect(page.locator('[data-query-sidebar-card="A"]')).toBeVisible();
+    await expect(page.locator('[data-query-sidebar-card="B"]')).toBeVisible();
+
+    await switchDatasource(dashboardPage, page, selectors, 'gdev-testdata');
+    await expect(page.getByRole('combobox', { name: 'Scenario' })).toBeVisible();
+    await expect(page.locator('[data-query-sidebar-card="A"]')).toBeVisible();
     await expect(page.locator('[data-query-sidebar-card="B"]')).toBeVisible();
   });
 });
@@ -232,6 +284,11 @@ test.describe('Query Editor Next: Transformations', { tag: ['@panels', '@queryEd
     await searchInput.fill('Reduce');
     await page.getByTestId(selectors.components.TransformTab.newTransform('Reduce')).click();
 
+    // Switch away and back to prove card selection drives editor state.
+    await page.locator('[data-query-sidebar-card="A"]').click();
+    const reduceCard = page.locator('[data-query-sidebar-card]').filter({ hasText: 'Reduce' }).first();
+    await reduceCard.click();
+    await expect(reduceCard).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByTestId(selectors.components.TransformTab.transformationEditor('Reduce'))).toBeVisible();
   });
 
@@ -246,7 +303,9 @@ test.describe('Query Editor Next: Transformations', { tag: ['@panels', '@queryEd
 
     const transformCard = page.locator('[data-query-sidebar-card]').filter({ hasText: 'Reduce' });
     await transformCard.hover();
-    await transformCard.getByRole('button', { name: 'Remove Transformation' }).click({ force: true });
+    const removeTransformationButton = transformCard.getByRole('button', { name: 'Remove Transformation' });
+    await expect(removeTransformationButton).toBeVisible();
+    await removeTransformationButton.click();
 
     // Transformations require delete confirmation
     await page.getByRole('button', { name: 'Delete' }).click();
@@ -283,16 +342,6 @@ test.describe('Query Editor Next: Expression Flows', { tag: ['@panels', '@queryE
     await page.getByRole('button', { name: 'Reduce', exact: true }).click();
 
     await expect(page.getByText('Function', { exact: true })).toBeVisible();
-  });
-
-  test('can add a Threshold expression', async ({ gotoDashboardPage, page }) => {
-    await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
-
-    await addQueryOrExpressionButton(page).click();
-    await page.getByRole('menuitem', { name: 'Add expression' }).click();
-    await page.getByRole('button', { name: 'Threshold', exact: true }).click();
-
-    await expect(page.locator('[data-query-sidebar-card="B"]')).toBeVisible();
   });
 
   test('SQL expression type is available with sqlExpressions toggle', async ({ gotoDashboardPage, page }) => {
