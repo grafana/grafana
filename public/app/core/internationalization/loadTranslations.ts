@@ -1,6 +1,7 @@
 import { type BackendModule } from 'i18next';
 
 import { DEFAULT_LANGUAGE } from '@grafana/i18n';
+
 import { LANGUAGES } from './constants';
 
 const getLanguagePartFromCode = (code: string) => code.split('-')[0].toLowerCase();
