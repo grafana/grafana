@@ -63,15 +63,35 @@ There are settings common to all visualizations, which you set in the **Panel op
 
 Set the following options to provide basic information about a panel and define basic display elements:
 
-| Option                 | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Title                  | Text entered in this field appears at the top of your panel in the panel editor and in the dashboard. You can use [variables you have defined](ref:variables-you-have-defined) or [global variables](ref:global-variables).                                                                                                                                                                                                                                                                                               |
-| Description            | Text entered in this field appears in a tooltip in the upper-left corner of the panel. Add a description to a panel to share with users any important information about it, such as its purpose. You can use [variables you have defined](ref:variables-you-have-defined) or dashboard-scoped [global variables](ref:global-variables) (such as `$__from`, `$__to`, `$__dashboard`, `$__org`, and `$__user`). Query-scoped global variables (such as `$__interval` and `$__interval_ms`) are not available in this field. |
-| Transparent background | Toggle this switch on and off to control whether or not the panel has the same background color as the dashboard.                                                                                                                                                                                                                                                                                                                                                                                                         |
-| Panel links            | Add [links to the panel](ref:links-to-the-panel) to create shortcuts to other dashboards, panels, and external websites. Access panel links by clicking the icon next to the panel title.                                                                                                                                                                                                                                                                                                                                 |
-| Repeat options         | Set whether to repeat the panel for each value in the selected variable. For more information, refer to [Configure repeating panels](#configure-repeating-panels).                                                                                                                                                                                                                                                                                                                                                        |
+<!-- prettier-ignore-start -->
 
-You can use generative AI to populate the **Title** and **Description** fields with the [Grafana LLM plugin](ref:grafana-llm-plugin), which is currently in public preview. To enable this, refer to [Set up generative AI features for dashboards](ref:set-up-generative-ai-features-for-dashboards).
+| Option      | Description  |
+| -------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Title                                        | Text entered in this field appears at the top of your panel in the panel editor and in the dashboard. You can use [variables you have defined](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/) or [global variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#global-variables). |
+| [Description](#description-field-formatting) | Text entered in this field appears in a tooltip in the upper-left corner of the panel. Add a description to a panel to share with users any important information about it, such as its purpose. You can use [variables you have defined](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/) or dashboard-scoped [global variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#global-variables) (such as `$__from`, `$__to`, `$__dashboard`, `$__org`, and `$__user`). Query-scoped global variables (such as `$__interval` and `$__interval_ms`) are not available in this field. |
+| Transparent background                       | Toggle this switch on and off to control whether or not the panel has the same background color as the dashboard. | 
+| Panel links | Add [links to the panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/manage-dashboard-links/#panel-links) to create shortcuts to other dashboards, panels, and external websites. Access panel links by clicking the icon next to the panel title. |
+| Repeat options                               | Set whether to repeat the panel for each value in the selected variable. For more information, refer to [Configure repeating panels](#configure-repeating-panels).|
+
+<!-- prettier-ignore-end -->
+
+You can use generative AI to populate the **Title** and **Description** fields with the [Grafana LLM plugin](https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin/), which is currently in public preview.
+To enable this, refer to [Set up generative AI features for dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
+
+### Description field formatting
+
+Grafana renders the **Description** field as [GitHub Flavored Markdown](https://github.github.com/gfm/) (GFM). You can use common Markdown and GFM features, including:
+
+- **Emphasis:** `**bold**`, `_italic_`, and `~~strikethrough~~`
+- **Structure:** headings, paragraphs, blockquotes, horizontal rules, bulleted and numbered lists
+- **Code:** `` `inline code` `` and fenced code blocks
+- **Links and media:** `[link text](https://example.com)` and images `![alt](https://example.com/image.png)`
+- **Tables:** GFM-style pipe tables
+
+The description appears in a tooltip, so short copy and basic formatting work best.
+To break text into separate paragraphs, use an empty line between them, or use a list.
+
+Grafana sanitizes the rendered HTML to reduce security risk and strips out or restricts arbitrary HTML, scripts, and many embedded elements, similar to Markdown in the [Text](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/text/) visualization.
 
 ## Configure repeating panels
 
