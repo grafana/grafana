@@ -6,7 +6,7 @@
  * (preserving the original layout structure) rather than being flattened.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
@@ -27,6 +27,7 @@ export const addTabCommand: MutationCommand<AddTabPayload> = {
 
   payloadSchema: payloads.addTab,
   permission: requiresNewDashboardLayouts,
+  readOnly: false,
 
   handler: async (payload, context) => {
     const { scene } = context;
@@ -90,8 +91,8 @@ export const addTabCommand: MutationCommand<AddTabPayload> = {
 
       return {
         success: true,
-        data: { path: newPath },
-        changes: [{ path: newPath, previousValue: undefined, newValue: { title: tab.spec.title } }],
+        data: { path: newPath, tab: { kind: 'TabsLayoutTab', spec: tab.spec } },
+        changes: [{ path: newPath, previousValue: null, newValue: { title: tab.spec.title } }],
         warnings: warnings.length > 0 ? warnings : undefined,
       };
     } catch (error) {

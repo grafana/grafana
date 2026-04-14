@@ -7,20 +7,23 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	playlistregistry "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/setting"
@@ -105,7 +108,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	}
 
 	if c.IsPublicDashboardView() || hasAccess(ac.EvalAny(
-		ac.EvalPermission(dashboards.ActionFoldersRead), ac.EvalPermission(dashboards.ActionFoldersCreate),
+		ac.EvalPermission(folder.ActionFoldersRead), ac.EvalPermission(folder.ActionFoldersCreate),
 		ac.EvalPermission(dashboards.ActionDashboardsRead), ac.EvalPermission(dashboards.ActionDashboardsCreate)),
 	) {
 		dashboardChildLinks := s.buildDashboardNavLinks(c)
@@ -176,14 +179,9 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		return nil, err
 	}
 
-	// remove user access if empty. Happens if grafana-auth-app is not injected
-	if sec := treeRoot.FindById(navtree.NavIDCfgAccess); sec != nil && len(sec.Children) == 0 {
-		treeRoot.RemoveSectionByID(navtree.NavIDCfgAccess)
-	}
-	// double-check and remove admin menu if empty
-	if sec := treeRoot.FindById(navtree.NavIDCfg); sec != nil && len(sec.Children) == 0 {
-		treeRoot.RemoveSectionByID(navtree.NavIDCfg)
-	}
+	// NOTE: empty admin section cleanup is intentionally NOT done here.
+	// It happens in setIndexViewData (pkg/api/index.go) AFTER RunIndexDataHooks,
+	// so enterprise hooks have a chance to add items before empty sections are pruned.
 
 	if c.IsSignedIn {
 		treeRoot.AddSection(&navtree.NavLink{
@@ -341,7 +339,7 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 		}
 		starredDashboards, err := s.dashboardService.SearchDashboards(c.Req.Context(), &dashboards.FindPersistedDashboardsQuery{
 			DashboardUIDs: uids,
-			Type:          searchstore.TypeDashboard,
+			Type:          model.TypeDashboard,
 			OrgId:         c.GetOrgID(),
 			SignedInUser:  c.SignedInUser,
 		})
@@ -374,13 +372,18 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 	dashboardChildNavs := []*navtree.NavLink{}
 
 	if c.IsSignedIn {
-		if c.HasRole(org.RoleViewer) {
+		showPlaylist := c.HasRole(org.RoleViewer)
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPlaylistsRBAC) {
+			showPlaylist = hasAccess(ac.EvalPermission(playlistregistry.ActionPlaylistsRead))
+		}
+		if showPlaylist {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Playlists", SubTitle: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
 			})
 		}
 
-		if s.cfg.SnapshotEnabled && hasAccess(ac.EvalPermission(dashboards.ActionSnapshotsRead)) {
+		if s.cfg.SnapshotEnabled && hasAccess(ac.EvalPermission(dashboardsnapshots.ActionSnapshotsRead)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Snapshots",
 				SubTitle: "Interactive, publicly available, point-in-time representations of dashboards",
@@ -438,10 +441,29 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage) {
-		if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
-			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-				Text: "Alert activity", SubTitle: "Visualize active and pending alerts", Id: "alert-alerts", Url: s.cfg.AppSubURL + "/alerting/alerts", Icon: "bell", IsNew: true,
-			})
+		alertRulesAccess := hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead)))
+		instanceAccess := hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead)))
+
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
+			// V2 Navigation: Group Alert activity and Alert groups under single parent (tabs managed on frontend)
+			if alertRulesAccess || instanceAccess {
+				alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+					Text:     "Alert activity",
+					SubTitle: "View alerts and active notifications",
+					Id:       "alert-activity",
+					Url:      s.cfg.AppSubURL + "/alerting/alerts",
+					Icon:     "bell",
+					IsNew:    true,
+				})
+			}
+		} else {
+			// Legacy: Show Alert activity as standalone
+			if alertRulesAccess {
+				alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+					Text: "Alert activity", SubTitle: "Visualize active and pending alerts", Id: "alert-alerts", Url: s.cfg.AppSubURL + "/alerting/alerts", Icon: "bell", IsNew: true,
+				})
+			}
 		}
 	}
 
@@ -485,6 +507,8 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		ac.EvalPermission(ac.ActionAlertingRoutesWrite),
 		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsWrite),
+		ac.EvalPermission(ac.ActionAlertingManagedRoutesRead),
+		ac.EvalPermission(ac.ActionAlertingManagedRoutesWrite),
 	}
 
 	hasContactPointsAccess := hasAccess(ac.EvalAny(contactPointsPerms...))
@@ -525,32 +549,26 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	}
 
 	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead))) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Alert groups", SubTitle: "See grouped alerts with active notifications", Id: "groups", Url: s.cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
+		// In V2 navigation with triage enabled, Alert groups is shown as a tab under Alert activity
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		isV2WithTriage := s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage)
+		if !isV2WithTriage {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Alert groups", SubTitle: "See grouped alerts with active notifications", Id: "groups", Url: s.cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
+		}
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingCentralAlertHistory) {
 		if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead))) {
 			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-				Text:     "History",
-				SubTitle: "View a history of all alert events generated by your Grafana-managed alert rules. All alert events are displayed regardless of whether silences or mute timings are set.",
-				Id:       "alerts-history",
-				Url:      s.cfg.AppSubURL + "/alerting/history",
-				Icon:     "history",
+				Text: "History",
+				Id:   "alerts-history",
+				Url:  s.cfg.AppSubURL + "/alerting/history",
+				Icon: "history",
 			})
 		}
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNotificationHistoryGlobal) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text:     "Notifications",
-			SubTitle: "View a history of all notifications sent from your Grafana-managed alert rules",
-			Id:       "alerts-notifications",
-			Url:      s.cfg.AppSubURL + "/alerting/notifications-history",
-			Icon:     "bell",
-		})
-	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if c.GetOrgRole() == org.RoleAdmin && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertRuleRestore) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRuleRecoverDeleted) {
 		// Only show as standalone item in legacy navigation (V2 shows it as a tab under Alert rules)

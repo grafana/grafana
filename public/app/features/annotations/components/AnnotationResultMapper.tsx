@@ -2,21 +2,21 @@ import { css } from '@emotion/css';
 import { memo, useState, useEffect, useCallback } from 'react';
 
 import {
-  SelectableValue,
+  type SelectableValue,
   getFieldDisplayName,
-  AnnotationEvent,
-  AnnotationEventMappings,
-  AnnotationEventFieldMapping,
+  type AnnotationEvent,
+  type AnnotationEventMappings,
+  type AnnotationEventFieldMapping,
   formattedValueToString,
   AnnotationEventFieldSource,
   getValueFormat,
-  GrafanaTheme2,
+  type GrafanaTheme2,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Select, Tooltip, Icon, useStyles2 } from '@grafana/ui';
+import { Select, Tooltip, Icon, useStyles2, Label } from '@grafana/ui';
 
-import { getAnnotationEventNames, AnnotationFieldInfo } from '../standardAnnotationSupport';
-import { AnnotationQueryResponse } from '../types';
+import { getAnnotationEventNames, type AnnotationFieldInfo } from '../standardAnnotationSupport';
+import { type AnnotationQueryResponse } from '../types';
 
 interface Props {
   response?: AnnotationQueryResponse;
@@ -111,17 +111,20 @@ export const AnnotationFieldMapper = memo(({ response, mappings, change }: Props
       return (
         <tr key={row.key}>
           <td>
-            {row.label || row.key}{' '}
-            {row.help && (
-              <Tooltip content={row.help}>
-                <Icon name="info-circle" />
-              </Tooltip>
-            )}
+            <Label htmlFor={`select-${row.key}`}>
+              {row.label || row.key}{' '}
+              {row.help && (
+                <Tooltip content={row.help}>
+                  <Icon name="info-circle" />
+                </Tooltip>
+              )}
+            </Label>
           </td>
           <td>
             <Select
               value={currentValue}
               options={picker}
+              inputId={`select-${row.key}`}
               placeholder={row.placeholder || row.key}
               onChange={(v: SelectableValue<string>) => {
                 onFieldNameChange(row.key, v);

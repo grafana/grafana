@@ -3,9 +3,8 @@ import { useEffect, useState } from 'react';
 import { config, useScopes } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
-import { isDashboardSceneEnabled } from 'app/features/dashboard-scene/utils/utils';
 
-import { AppChromeState } from '../AppChromeService';
+import { type AppChromeState } from '../AppChromeService';
 import { useExtensionSidebarContext } from '../ExtensionSidebar/ExtensionSidebarProvider';
 
 /**
@@ -59,8 +58,7 @@ function getHeaderLevelsGivenState(
 
   // We have actions
   // If mega menu docked always use two levels
-  // If scenes disabled always use two levels (mainly because of the time range picker)
-  if (chromeState.megaMenuDocked || !isDashboardSceneEnabled()) {
+  if (chromeState.megaMenuDocked) {
     return 2;
   }
 

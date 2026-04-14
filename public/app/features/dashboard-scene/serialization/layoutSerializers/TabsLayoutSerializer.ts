@@ -1,9 +1,11 @@
-import { Spec as DashboardV2Spec, TabsLayoutTabKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV2Spec, type TabsLayoutTabKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
+import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
+import { deserializeSectionVariables, serializeSectionVariables } from './sectionVariables';
 import { getConditionalRendering } from './utils';
 
 export function serializeTabsLayout(layoutManager: TabsLayoutManager, isSnapshot?: boolean): DashboardV2Spec['layout'] {
@@ -33,6 +35,11 @@ export function serializeTab(tab: TabItem, isSnapshot?: boolean): TabsLayoutTabK
     },
   };
 
+  const sectionVariables = serializeSectionVariables(tab.state.$variables);
+  if (sectionVariables) {
+    tabKind.spec.variables = sectionVariables;
+  }
+
   const conditionalRenderingRootGroup = tab.state.conditionalRendering?.serialize();
   // Only serialize the conditional rendering if it has items
   if (conditionalRenderingRootGroup?.spec.items.length) {
@@ -46,7 +53,7 @@ export function deserializeTabsLayout(
   layout: DashboardV2Spec['layout'],
   elements: DashboardV2Spec['elements'],
   preload: boolean,
-  panelIdGenerator?: () => number
+  panelIdGenerator?: PanelIdGenerator
 ): TabsLayoutManager {
   if (layout.kind !== 'TabsLayout') {
     throw new Error('Invalid layout kind');
@@ -63,12 +70,13 @@ export function deserializeTab(
   tab: TabsLayoutTabKind,
   elements: DashboardV2Spec['elements'],
   preload: boolean,
-  panelIdGenerator?: () => number
+  panelIdGenerator?: PanelIdGenerator
 ): TabItem {
   const layout = tab.spec.layout;
 
   return new TabItem({
     title: tab.spec.title,
+    $variables: deserializeSectionVariables(tab.spec.variables),
     layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
     repeatByVariable: tab.spec.repeat?.value,
     conditionalRendering: getConditionalRendering(tab),

@@ -12,15 +12,33 @@ import tinycolor from 'tinycolor2';
 import { t } from '@grafana/i18n';
 
 import { getContrastRatio } from '../themes/colorManipulator';
-import { GrafanaTheme2 } from '../themes/types';
+import { type GrafanaTheme2 } from '../themes/types';
 import { reduceField } from '../transformations/fieldReducer';
-import { Field } from '../types/dataFrame';
+import { type Field } from '../types/dataFrame';
 import { FALLBACK_COLOR, FieldColorModeId } from '../types/fieldColor';
-import { Threshold } from '../types/thresholds';
-import { Registry, RegistryItem } from '../utils/Registry';
+import { type Threshold } from '../types/thresholds';
+import { Registry, type RegistryItem } from '../utils/Registry';
 
-import { getScaleCalculator, ColorScaleValue } from './scale';
+import { getScaleCalculator, type ColorScaleValue } from './scale';
 import { fallBackThreshold } from './thresholds';
+
+/**
+ * Color blind-safe palette based on Wong (2011) "Points of view: Color blindness"
+ * Nature Methods 8:441. All 8 colors are validated as mutually distinguishable
+ * under protanopia, deuteranopia, and tritanopia.
+ * Black and white are included for theme-adaptive contrast filtering.
+ */
+const COLORBLIND_SAFE_PALETTE: string[] = [
+  '#0072B2',
+  '#E69F00',
+  '#009E73',
+  '#CC79A7',
+  '#56B4E9',
+  '#D55E00',
+  '#F0E442',
+  '#000000',
+  '#FFFFFF',
+];
 
 /** @beta */
 export type FieldValueColorCalculator = (value: number, percent: number, Threshold?: Threshold) => string;
@@ -52,6 +70,13 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       name: 'Shades of a color',
       description: 'Select shades of a specific color',
       getCalculator: getShadedColor,
+    },
+    {
+      id: FieldColorModeId.Gradient,
+      name: 'Gradient',
+      description:
+        'Interpolate between two colors based on value order. The highest value gets the start color; the lowest gets the end color.',
+      getCalculator: getFixedColor,
     },
     {
       id: FieldColorModeId.Thresholds,
@@ -87,6 +112,20 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
             theme.colors.contrastThreshold
         );
       },
+    }),
+    new FieldColorSchemeMode({
+      id: FieldColorModeId.PaletteColorblind,
+      name: 'Color blind safe',
+      isContinuous: false,
+      isByValue: false,
+      getColors: (theme: GrafanaTheme2) => {
+        return COLORBLIND_SAFE_PALETTE.filter(
+          (color) =>
+            getContrastRatio(theme.visualization.getColorByName(color), theme.colors.background.primary) >=
+            theme.colors.contrastThreshold
+        );
+      },
+      group: accessibleGroup,
     }),
     new FieldColorSchemeMode({
       id: FieldColorModeId.ContinuousViridis,

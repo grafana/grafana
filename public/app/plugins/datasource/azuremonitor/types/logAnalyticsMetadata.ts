@@ -1,4 +1,4 @@
-import { TablePlan } from './types';
+import { type TablePlan } from './types';
 
 export interface AzureLogAnalyticsMetadata {
   functions: AzureLogAnalyticsMetadataFunction[];

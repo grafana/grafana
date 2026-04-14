@@ -1,4 +1,4 @@
-import { StoryFn, Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react';
 import { useId } from 'react';
 
 import { Field } from '../Forms/Field';

@@ -1,6 +1,6 @@
-import { HttpResponse, http } from 'msw';
+import { HttpResponse, http, type HttpResponseResolver } from 'msw';
 
-import { MOCK_TEAMS, mockTeamsMap } from '../../../fixtures/teams';
+import { type MOCK_TEAMS, mockTeamsMap } from '../../../fixtures/teams';
 
 const k8sTeamToLegacyTeam = (k8sTeam: (typeof MOCK_TEAMS)[number], addAccessControl?: boolean) => {
   return {
@@ -134,6 +134,39 @@ const searchTeamsHandler = () =>
     });
   });
 
+type SearchTeam = {
+  name: string;
+  email?: string;
+  id?: number;
+  uid: string;
+  orgId?: number;
+  externalUID?: string;
+  isProvisioned?: boolean;
+  avatarUrl?: string;
+  memberCount?: number;
+  permission?: number;
+  accessControl?: Record<string, boolean> | null;
+};
+
+export const getSearchTeamsHandler = (teams: SearchTeam[], totalCount = teams.length) =>
+  http.get('/api/teams/search', async ({ request }) => {
+    const url = new URL(request.url);
+    const page = url.searchParams.get('page') ?? '1';
+    const perPage = url.searchParams.get('perpage') ?? '1000';
+
+    return HttpResponse.json({
+      totalCount,
+      teams,
+      page,
+      perPage,
+    });
+  });
+
+export const getSearchTeamsErrorHandler = (message = 'Failed to load teams', status = 500) =>
+  http.get('/api/teams/search', async () => {
+    return HttpResponse.json({ message }, { status });
+  });
+
 const createTeamHandler = () =>
   http.post<never, { name: string; email: string }>('/api/teams', async ({ request }) => {
     const body = await request.json();
@@ -169,6 +202,8 @@ const updateTeamHandler = () =>
 
     return HttpResponse.json({ message: 'Team updated' });
   });
+
+export const customCreateTeamHandler = (resolver: HttpResponseResolver) => http.post('/api/teams', resolver);
 
 const handlers = [
   teamsPreferencesHandler(),

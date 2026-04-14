@@ -23,18 +23,18 @@ aliases:
 
 {{< admonition type="caution" >}}
 
-Git Sync is available in [public preview](https://grafana.com/docs/release-life-cycle/) for Grafana Cloud, and is an [experimental feature](https://grafana.com/docs/release-life-cycle/) in Grafana v12 for open source and Enterprise editions. Documentation and support is available **based on the different tiers** but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided.
+**Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
 
-**Git Sync is under development.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) for more information. [Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
+[Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
 
 {{< /admonition >}}
 
 To set up Git Sync and synchronize your Grafana dashboards and folders with a GitHub repository, follow these steps:
 
-1. Read [Before you begin](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/) carefully
+1. Read [Before you begin](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/) carefully.
 1. Set up Git Sync [using the UI](#set-up-git-sync-using-the-ui) or [as code](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-code/)
-1. After setup, [verify your dashboards](#verify-your-dashboards-in-grafana)
-1. Optionally, you can also [extend Git Sync with webhooks and image rendering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-extend/)
+1. After setup, [verify your dashboards](#verify-your-dashboards-in-grafana).
+1. Optionally, you can also [extend Git Sync with webhooks and image rendering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-extend/).
 
 ## Set up Git Sync using the UI
 
@@ -64,6 +64,7 @@ If you want to configure Git Sync for GitHub, you can connect using a **Personal
 
 If you want to configure Git Sync for GitHub and authenticate with a Personal Access Token, sign in to GitHub and [create a new fine-grained personal access token](https://github.com/settings/personal-access-tokens/new) with these permissions:
 
+- **Administration**: Read-only permission (enables validation of branch protection rules against the configured branch when users can push directly to it; may be used in the future to check other repository settings and make the setup process smoother)
 - **Contents**: Read and write permission
 - **Metadata**: Read-only permission
 - **Pull requests**: Read and write permission
@@ -104,6 +105,7 @@ If you want to configure Git Sync for GitHub and authenticate with GitHub App:
 
 Note that your GitHub App must have the following permissions:
 
+- **Administration**: Read-only permission (enables validation of branch protection rules against the configured branch when users can push directly to it; may be used in the future to check other repository settings and make the setup process smoother)
 - **Contents**: Read and write permission
 - **Metadata**: Read-only permission
 - **Pull requests**: Read and write permission
@@ -119,7 +121,9 @@ If you want to configure Git Sync for GitLab, you need a GitLab Personal Access 
 - **User**: Read only permission
 - **API**: Read and write permission
 
-Return to Grafana and fill in the following fields:
+If you're using a token from a **service account**, you need to add the service account to the GitLab project as a member to avoid authentication issues.
+
+After creating the token, return to Grafana and fill in the following fields:
 
 1. Paste the token into the **Project Access Token** text box.
 1. Paste the **Repository URL** for your GitLab repository into the text box.

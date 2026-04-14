@@ -6,12 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"maps"
 	"slices"
 	"strings"
 	"unsafe"
 
 	"github.com/prometheus/alertmanager/timeinterval"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -42,13 +42,14 @@ func NewMuteTimingService(
 	log log.Logger,
 	ns AlertRuleNotificationSettingsStore,
 	routeService timeIntervalRouteRefService,
+	validator validation.ProvenanceStatusTransitionValidator,
 ) *MuteTimingService {
 	return &MuteTimingService{
 		configStore:            config,
 		provenanceStore:        prov,
 		xact:                   xact,
 		log:                    log,
-		validator:              validation.ValidateProvenanceRelaxed,
+		validator:              validator,
 		ruleNotificationsStore: ns,
 		routeService:           routeService,
 		includeImported:        false,
@@ -170,6 +171,10 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, MakeErrTimeIntervalInvalid(err)
 	}
 
+	if err := svc.validator(ctx, models.ProvenanceNone, models.Provenance(mt.Provenance)); err != nil {
+		return definitions.MuteTimeInterval{}, err
+	}
+
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
@@ -229,7 +234,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 	}
 
 	// check that provenance is not changed in an invalid way
-	if err := svc.validator(models.Provenance(existing.Provenance), models.Provenance(mt.Provenance)); err != nil {
+	if err := svc.validator(ctx, models.Provenance(existing.Provenance), models.Provenance(mt.Provenance)); err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
 
@@ -293,14 +298,14 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 	existingInterval := existing.MuteTimeInterval
 	target := definitions.MuteTimeInterval{MuteTimeInterval: existingInterval, Provenance: provenance}
 
-	if err := svc.validator(models.Provenance(existing.Provenance), models.Provenance(provenance)); err != nil {
+	if err := svc.validator(ctx, models.Provenance(existing.Provenance), models.Provenance(provenance)); err != nil {
 		return err
 	}
 
 	if isTimeIntervalInUseInRoutes(existing.Name, revision.Config.AlertmanagerConfig.Route) {
 		ns, _ := svc.ruleNotificationsStore.ListContactPointRoutings(ctx, models.ListContactPointRoutingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
 		// ignore error here because it's not important
-		return MakeErrTimeIntervalInUse(true, maps.Keys(ns))
+		return MakeErrTimeIntervalInUse(true, slices.Collect(maps.Keys(ns)))
 	}
 
 	if err = svc.checkOptimisticConcurrency(existingInterval, models.Provenance(provenance), version, "delete"); err != nil {
@@ -314,7 +319,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 			return err
 		}
 		if len(keys) > 0 {
-			return MakeErrTimeIntervalInUse(false, maps.Keys(keys))
+			return MakeErrTimeIntervalInUse(false, slices.Collect(maps.Keys(keys)))
 		}
 
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {

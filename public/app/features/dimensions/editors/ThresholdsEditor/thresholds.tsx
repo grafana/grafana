@@ -1,6 +1,11 @@
 import { memo } from 'react';
 
-import { StandardEditorProps, ThresholdsConfig, ThresholdsMode, ThresholdsFieldConfigSettings } from '@grafana/data';
+import {
+  type StandardEditorProps,
+  type ThresholdsConfig,
+  ThresholdsMode,
+  type ThresholdsFieldConfigSettings,
+} from '@grafana/data';
 
 import { ThresholdsEditor } from './ThresholdsEditor';
 

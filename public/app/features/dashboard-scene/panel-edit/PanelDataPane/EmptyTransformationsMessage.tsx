@@ -2,16 +2,16 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import {
-  DataFrame,
+  type DataFrame,
   DataTransformerID,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   standardTransformersRegistry,
-  TransformerRegistryItem,
+  type TransformerRegistryItem,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 
@@ -44,10 +44,10 @@ export function LegacyEmptyTransformationsMessage({ onShowPicker }: { onShowPick
     <Box alignItems="center" padding={4}>
       <Stack direction="column" alignItems="center" gap={2}>
         <Text element="h3" textAlignment="center">
-          <Trans i18nKey="transformations.empty.add-transformation-header">Start transforming data</Trans>
+          <Trans i18nKey="transformations.legacy.empty.add-transformation-header">Start transforming data</Trans>
         </Text>
         <Text element="p" textAlignment="center" data-testid={selectors.components.Transforms.noTransformationsMessage}>
-          <Trans i18nKey="transformations.empty.add-transformation-body">
+          <Trans i18nKey="transformations.legacy.empty.add-transformation-body">
             Transformations allow data to be changed in various ways before your visualization is shown.
             <br />
             This includes joining data together, renaming fields, making calculations, formatting data for display, and
@@ -61,7 +61,9 @@ export function LegacyEmptyTransformationsMessage({ onShowPicker }: { onShowPick
           onClick={onShowPicker}
           data-testid={selectors.components.Transforms.addTransformationButton}
         >
-          <Trans i18nKey="dashboard-scene.empty-transformations-message.add-transformation">Add transformation</Trans>
+          <Trans i18nKey="dashboard-scene.legacy.empty-transformations-message.add-transformation">
+            Add transformation
+          </Trans>
         </Button>
       </Stack>
     </Box>
@@ -93,8 +95,9 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
 
   const handleTransformationClick = (transformationId: string) => {
     reportInteraction('grafana_panel_transformations_clicked', {
-      type: transformationId,
       context: 'empty_transformations_placeholder',
+      type: transformationId,
+      action: 'add',
     });
     props.onAddTransformation?.(transformationId);
   };

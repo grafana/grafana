@@ -12,11 +12,13 @@ type CancelModalHook = [
 interface UseCancelWizardModalOptions {
   redirectUrl?: string;
   isDirty?: boolean;
+  onCancel?: () => void;
 }
 
 export function useCancelWizardModal({
   redirectUrl = '/alerting/list',
   isDirty = false,
+  onCancel,
 }: UseCancelWizardModalOptions = {}): CancelModalHook {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -25,8 +27,9 @@ export function useCancelWizardModal({
   }, []);
 
   const navigateAway = useCallback(() => {
+    onCancel?.();
     locationService.push(redirectUrl);
-  }, [redirectUrl]);
+  }, [redirectUrl, onCancel]);
 
   const handleCancel = useCallback(() => {
     if (isDirty) {
@@ -52,7 +55,6 @@ export function useCancelWizardModal({
         )}
         confirmText={t('alerting.import-to-gma.wizard.cancel-confirm-yes', 'Discard changes')}
         dismissText={t('alerting.import-to-gma.wizard.cancel-confirm-no', 'Dismiss')}
-        icon="exclamation-triangle"
         onConfirm={handleConfirm}
         onDismiss={dismissModal}
       />

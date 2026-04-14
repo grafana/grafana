@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, Stack, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -46,6 +46,7 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
         variant="secondary"
       />
       <IconButton
+        aria-label={t('navigation.megamenu.close', 'Close menu')}
         tooltip={t('navigation.megamenu.close', 'Close menu')}
         name="times"
         onClick={onClose}

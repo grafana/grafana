@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -28,7 +27,7 @@ var alertRulesPermissions = map[string][]string{
 	accesscontrol.ActionAlertingRuleRead:   {"*"},
 	accesscontrol.ActionAlertingRuleCreate: {"*"},
 	accesscontrol.ActionAlertingRuleUpdate: {"*"},
-	dashboards.ActionFoldersRead:           {"*"},
+	folder.ActionFoldersRead:               {"*"},
 	datasources.ActionQuery:                {"*"},
 }
 
@@ -93,8 +92,12 @@ func TestGetContactPoints(t *testing.T) {
 			OrgID: 1,
 			Permissions: map[int64]map[string][]string{
 				1: {
-					accesscontrol.ActionAlertingNotificationsRead:    nil,
-					accesscontrol.ActionAlertingReceiversReadSecrets: {models.ScopeReceiversAll},
+					accesscontrol.ActionAlertingReceiversRead:         {models.ScopeReceiversAll},
+					accesscontrol.ActionAlertingReceiversReadSecrets:  {models.ScopeReceiversAll},
+					accesscontrol.ActionAlertingReceiversCreate:       nil,
+					accesscontrol.ActionAlertingReceiversUpdate:       {models.ScopeReceiversAll},
+					accesscontrol.ActionAlertingReceiversDelete:       {models.ScopeReceiversAll},
+					accesscontrol.ActionAlertingProvisioningSetStatus: nil,
 				},
 			},
 		}
@@ -138,7 +141,15 @@ func TestGetNotificationPolicies(t *testing.T) {
 
 		s := setUpServiceTest(t).(*Service)
 
-		user := &user.SignedInUser{OrgID: 1}
+		user := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+			1: {
+				accesscontrol.ActionAlertingReceiversRead:         {models.ScopeReceiversAll},
+				accesscontrol.ActionAlertingReceiversCreate:       nil,
+				accesscontrol.ActionAlertingReceiversUpdate:       {models.ScopeReceiversAll},
+				accesscontrol.ActionAlertingReceiversDelete:       {models.ScopeReceiversAll},
+				accesscontrol.ActionAlertingProvisioningSetStatus: nil,
+			},
+		}}
 
 		muteTiming := createMuteTiming(t, ctx, s, user)
 		require.NotEmpty(t, muteTiming.Name)
@@ -442,7 +453,7 @@ func createFolder(t *testing.T, ctx context.Context, service *Service, user *use
 		Title:        title,
 		SignedInUser: user,
 	})
-	if err != nil && !errors.Is(err, dashboards.ErrFolderWithSameUIDExists) {
+	if err != nil && !errors.Is(err, folder.ErrSameUIDExists) {
 		require.NoError(t, err)
 	}
 }

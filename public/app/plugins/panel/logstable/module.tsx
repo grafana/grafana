@@ -1,28 +1,16 @@
-import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { addTableCustomConfig } from 'app/features/panel/table/addTableCustomConfig';
 import { addTableCustomPanelOptions } from 'app/features/panel/table/addTableCustomPanelOptions';
 
-import { FieldConfig as TableFieldConfig, Options as TableOptions } from '../table/panelcfg.gen';
+import { type FieldConfig as TableFieldConfig, type Options as TableOptions } from '../table/panelcfg.gen';
 
 import { LogsTable } from './LogsTable';
-import { defaultOptions, Options } from './panelcfg.gen';
+import { logsTablePanelFieldConfig } from './logsTableFieldConfig';
+import { defaultOptions, type Options } from './panelcfg.gen';
+import { logstableSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(LogsTable)
-  .useFieldConfig({
-    standardOptions: {
-      [FieldConfigProperty.Actions]: {
-        hideFromDefaults: false,
-      },
-    },
-    useCustomConfig: (builder) => {
-      addTableCustomConfig(builder, {
-        filters: true,
-        wrapHeaderText: true,
-        hideFields: true,
-      });
-    },
-  })
+  .useFieldConfig(logsTablePanelFieldConfig)
   .setPanelOptions((builder) => {
     addTableCustomPanelOptions(builder);
     const logsTableCategory = [t('logstable.category-table', 'Logs Table')];
@@ -54,4 +42,5 @@ export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(
         description: t('logstable.description-show-controls', 'Display table controls'),
         defaultValue: defaultOptions.showControls ?? false,
       });
-  });
+  })
+  .setSuggestionsSupplier(logstableSuggestionsSupplier);

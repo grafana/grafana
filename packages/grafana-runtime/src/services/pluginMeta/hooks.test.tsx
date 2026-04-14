@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
+import type * as AppsModule from './apps';
 import {
   getAppPluginMeta,
   getAppPluginMetas,
@@ -13,14 +14,17 @@ import {
   useAppPluginInstalled,
   useAppPluginVersion,
   useListedPanelPluginIds,
+  useListedPanelPluginMetas,
   usePanelPluginMeta,
   usePanelPluginMetas,
   usePanelPluginInstalled,
   usePanelPluginVersion,
   usePanelPluginMetasMap,
 } from './hooks';
+import type * as PanelsModule from './panels';
 import {
   getListedPanelPluginIds,
+  getListedPanelPluginMetas,
   getPanelPluginMeta,
   getPanelPluginMetas,
   getPanelPluginMetasMap,
@@ -31,8 +35,8 @@ import {
 import { apps } from './test-fixtures/config.apps';
 import { panels } from './test-fixtures/config.panels';
 
-const actualApps = jest.requireActual<typeof import('./apps')>('./apps');
-const actualPanels = jest.requireActual<typeof import('./panels')>('./panels');
+const actualApps = jest.requireActual<typeof AppsModule>('./apps');
+const actualPanels = jest.requireActual<typeof PanelsModule>('./panels');
 jest.mock('./apps', () => ({
   ...jest.requireActual('./apps'),
   getAppPluginMetas: jest.fn(),
@@ -42,12 +46,13 @@ jest.mock('./apps', () => ({
 }));
 jest.mock('./panels', () => ({
   ...jest.requireActual('./panels'),
+  getListedPanelPluginIds: jest.fn(),
+  getListedPanelPluginMetas: jest.fn(),
   getPanelPluginMeta: jest.fn(),
   getPanelPluginMetas: jest.fn(),
   getPanelPluginMetasMap: jest.fn(),
   isPanelPluginInstalled: jest.fn(),
   getPanelPluginVersion: jest.fn(),
-  getListedPanelPluginIds: jest.fn(),
 }));
 const getAppPluginMetaMock = jest.mocked(getAppPluginMeta);
 const getAppPluginMetasMock = jest.mocked(getAppPluginMetas);
@@ -59,6 +64,7 @@ const getPanelPluginMetasMapMock = jest.mocked(getPanelPluginMetasMap);
 const isPanelPluginInstalledMock = jest.mocked(isPanelPluginInstalled);
 const getPanelPluginVersionMock = jest.mocked(getPanelPluginVersion);
 const getListedPanelPluginIdsMock = jest.mocked(getListedPanelPluginIds);
+const getListedPanelPluginMetasMock = jest.mocked(getListedPanelPluginMetas);
 
 describe('useAppPluginMeta', () => {
   beforeEach(() => {
@@ -340,6 +346,50 @@ describe('usePanelPluginMetas', () => {
   });
 });
 
+describe('useListedPanelPluginMetas', () => {
+  beforeEach(() => {
+    setPanelPluginMetas(panels);
+    jest.resetAllMocks();
+    getListedPanelPluginMetasMock.mockImplementation(actualPanels.getListedPanelPluginMetas);
+  });
+
+  it('should return correct default values', async () => {
+    const { result } = renderHook(() => useListedPanelPluginMetas());
+
+    expect(result.current.loading).toEqual(true);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toBeUndefined();
+
+    await waitFor(() => expect(result.current.loading).toEqual(true));
+  });
+
+  it('should return correct values after loading', async () => {
+    const { result } = renderHook(() => useListedPanelPluginMetas());
+
+    await waitFor(() => expect(result.current.loading).toEqual(false));
+
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toEqual(
+      Object.values(panels)
+        .filter((p) => p.hideFromList === false)
+        .sort((a, b) => a.sort - b.sort)
+    );
+  });
+
+  it('should return correct values if useListedPanelPluginMetas throws', async () => {
+    getListedPanelPluginMetasMock.mockRejectedValue(new Error('Some error'));
+
+    const { result } = renderHook(() => useListedPanelPluginMetas());
+
+    await waitFor(() => expect(result.current.loading).toEqual(false));
+
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toEqual(new Error('Some error'));
+    expect(result.current.value).toBeUndefined();
+  });
+});
+
 describe('usePanelPluginMetasMap', () => {
   beforeEach(() => {
     setPanelPluginMetas(panels);
@@ -416,6 +466,7 @@ describe('useListedPanelPluginIds', () => {
       'candlestick',
       'canvas',
       'dashlist',
+      'debug',
       'flamegraph',
       'gauge',
       'geomap',
