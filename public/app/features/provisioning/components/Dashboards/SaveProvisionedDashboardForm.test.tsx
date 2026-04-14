@@ -225,7 +225,6 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await user.clear(titleInput);
     await user.clear(descriptionInput);
-    await user.clear(filenameInput);
     await user.clear(commentInput);
 
     await user.type(titleInput, 'New Dashboard');
@@ -347,7 +346,6 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await user.clear(titleInput);
     await user.clear(descriptionInput);
-    await user.clear(filenameInput);
     await user.clear(commentInput);
 
     await user.type(titleInput, 'New Dashboard');
