@@ -36,86 +36,6 @@ const (
 	maxExpiresInSeconds = 157_680_000 // 5 years
 )
 
-// PostProcessOpenAPI patches the OpenAPI spec for the /tokens endpoints:
-//   - Adds request body and response schemas for POST /tokens
-//   - Renames {path} to {tokenName} on /tokens/{path}
-//   - Removes PUT and PATCH operations
-func PostProcessOpenAPI(oas *spec3.OpenAPI) {
-	if oas.Paths == nil || oas.Paths.Paths == nil {
-		return
-	}
-
-	// --- POST /tokens: add request body + response schemas ---
-	if p, ok := oas.Paths.Paths[tokensBasePath]; ok && p.Post != nil {
-		if oas.Components.Schemas[appSchemaBase+"CreateTokenRequestBody"] == nil {
-			oas.Components.Schemas[appSchemaBase+"CreateTokenRequestBody"] = &spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Type: []string{"object"},
-					Properties: map[string]spec.Schema{
-						"tokenName":        *spec.StringProperty(),
-						"expiresInSeconds": *spec.Int64Property(),
-					},
-				},
-			}
-		}
-		if oas.Components.Schemas[appSchemaBase+"CreateTokenBody"] == nil {
-			oas.Components.Schemas[appSchemaBase+"CreateTokenBody"] = &spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Type: []string{"object"},
-					Properties: map[string]spec.Schema{
-						"token":                   *spec.StringProperty(),
-						"serviceAccountTokenName": *spec.StringProperty(),
-						"expires":                 *spec.Int64Property(),
-					},
-					Required: []string{"token", "serviceAccountTokenName"},
-				},
-			}
-		}
-
-		p.Post.RequestBody = &spec3.RequestBody{
-			RequestBodyProps: spec3.RequestBodyProps{
-				Content: map[string]*spec3.MediaType{
-					"application/json": {
-						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: spec.RefSchema("#/components/schemas/" + appSchemaBase + "CreateTokenRequestBody"),
-						},
-					},
-				},
-			},
-		}
-		p.Post.Responses.StatusCodeResponses[201] = &spec3.Response{
-			ResponseProps: spec3.ResponseProps{
-				Description: "Token created",
-				Content: map[string]*spec3.MediaType{
-					"application/json": {
-						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: spec.RefSchema("#/components/schemas/" + appSchemaBase + "CreateTokenBody"),
-						},
-					},
-				},
-			},
-		}
-
-		p.Put = nil
-		p.Patch = nil
-	}
-
-	// --- /tokens/{path}: rename to /tokens/{tokenName}, remove PUT/PATCH ---
-	if p, ok := oas.Paths.Paths[tokensSubPath]; ok {
-		for _, v := range p.Parameters {
-			if v.Name == "path" {
-				v.Name = "tokenName"
-				v.Description = "name of the token to operate on"
-				break
-			}
-		}
-		p.Put = nil
-		p.Patch = nil
-		delete(oas.Paths.Paths, tokensSubPath)
-		oas.Paths.Paths[tokensBasePath+"/{tokenName}"] = p
-	}
-}
-
 var (
 	_ rest.Storage         = (*TokensREST)(nil)
 	_ rest.Scoper          = (*TokensREST)(nil)
@@ -344,7 +264,7 @@ func (s *TokensREST) handleDelete(ctx context.Context, ns claims.NamespaceInfo, 
 		OrgID: ns.OrgID,
 		UID:   saName,
 	})
-	if err != nil {
+	if err != nil || saIDResult == nil {
 		responder.Error(apierrors.NewNotFound(schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounts"}, saName))
 		return
 	}
@@ -386,4 +306,165 @@ func mapTokenItem(t legacy.ServiceAccountToken) iamv0alpha1.TokenItem {
 		item.LastUsed = t.LastUsed.Unix()
 	}
 	return item
+}
+
+// PostProcessOpenAPI patches the OpenAPI spec for the /tokens endpoints:
+//   - Registers component schemas for request/response bodies
+//   - Fixes 200 response schemas (k8s defaults to TypeMeta)
+//   - Adds request body and 201 response for POST /tokens
+//   - Renames {path} to {tokenName} on /tokens/{path}
+//   - Removes PUT and PATCH operations
+func PostProcessOpenAPI(oas *spec3.OpenAPI) {
+	if oas.Paths == nil || oas.Paths.Paths == nil {
+		return
+	}
+
+	ensureComponentSchemas(oas)
+
+	jsonResponse := func(schemaName string, description string) *spec3.Response {
+		return &spec3.Response{
+			ResponseProps: spec3.ResponseProps{
+				Description: description,
+				Content: map[string]*spec3.MediaType{
+					"application/json": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema: spec.RefSchema("#/components/schemas/" + appSchemaBase + schemaName),
+						},
+					},
+				},
+			},
+		}
+	}
+
+	// --- /tokens: fix GET/POST/DELETE response schemas ---
+	if p, ok := oas.Paths.Paths[tokensBasePath]; ok {
+		if p.Get != nil {
+			p.Get.Responses.StatusCodeResponses[200] = jsonResponse("ListTokensBody", "OK")
+		}
+
+		if p.Post != nil {
+			p.Post.RequestBody = &spec3.RequestBody{
+				RequestBodyProps: spec3.RequestBodyProps{
+					Content: map[string]*spec3.MediaType{
+						"application/json": {
+							MediaTypeProps: spec3.MediaTypeProps{
+								Schema: spec.RefSchema("#/components/schemas/" + appSchemaBase + "CreateTokenRequestBody"),
+							},
+						},
+					},
+				},
+			}
+			delete(p.Post.Responses.StatusCodeResponses, 200)
+			p.Post.Responses.StatusCodeResponses[201] = jsonResponse("CreateTokenBody", "Token created")
+		}
+
+		if p.Delete != nil {
+			p.Delete.Responses.StatusCodeResponses[200] = jsonResponse("DeleteTokenBody", "OK")
+		}
+
+		p.Put = nil
+		p.Patch = nil
+	}
+
+	// --- /tokens/{path}: fix response schemas, rename to {tokenName}, remove PUT/PATCH ---
+	if p, ok := oas.Paths.Paths[tokensSubPath]; ok {
+		for _, v := range p.Parameters {
+			if v.Name == "path" {
+				v.Name = "tokenName"
+				v.Description = "name of the token to operate on"
+				break
+			}
+		}
+
+		if p.Get != nil {
+			p.Get.Responses.StatusCodeResponses[200] = jsonResponse("TokenItem", "OK")
+		}
+		if p.Delete != nil {
+			p.Delete.Responses.StatusCodeResponses[200] = jsonResponse("DeleteTokenBody", "OK")
+		}
+
+		p.Post = nil
+		p.Put = nil
+		p.Patch = nil
+		delete(oas.Paths.Paths, tokensSubPath)
+		oas.Paths.Paths[tokensBasePath+"/{tokenName}"] = p
+	}
+}
+
+// ensureComponentSchemas registers all token-related schemas if not already present.
+func ensureComponentSchemas(oas *spec3.OpenAPI) {
+	schemas := map[string]*spec.Schema{
+		"CreateTokenRequestBody": {
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"tokenName":        *spec.StringProperty(),
+					"expiresInSeconds": *spec.Int64Property(),
+				},
+				Required: []string{"tokenName"},
+			},
+		},
+		"CreateTokenBody": {
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"token":                   *spec.StringProperty(),
+					"serviceAccountTokenName": *spec.StringProperty(),
+					"expires":                 *withDescription(spec.Int64Property(), "Unix timestamp in seconds when the token expires. 0 means the token never expires."),
+				},
+				Required: []string{"token", "serviceAccountTokenName"},
+			},
+		},
+		"TokenItem": {
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"title":    *spec.StringProperty(),
+					"revoked":  *spec.BooleanProperty(),
+					"expires":  *withDescription(spec.Int64Property(), "Unix timestamp in seconds when the token expires. 0 means the token never expires."),
+					"created":  *withDescription(spec.Int64Property(), "Unix timestamp in seconds when the token was created."),
+					"updated":  *withDescription(spec.Int64Property(), "Unix timestamp in seconds when the token was last updated."),
+					"lastUsed": *withDescription(spec.Int64Property(), "Unix timestamp in seconds when the token was last used. 0 means never used."),
+				},
+				Required: []string{"title"},
+			},
+		},
+		"ListTokensBody": {
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: spec.RefSchema("#/components/schemas/" + appSchemaBase + "TokenItem"),
+							},
+						},
+					},
+					"continue": *spec.StringProperty(),
+				},
+				Required: []string{"items"},
+			},
+		},
+		"DeleteTokenBody": {
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"message": *spec.StringProperty(),
+				},
+			},
+		},
+	}
+
+	for name, s := range schemas {
+		key := appSchemaBase + name
+		if oas.Components.Schemas[key] == nil {
+			oas.Components.Schemas[key] = s
+		}
+	}
+}
+
+func withDescription(s *spec.Schema, desc string) *spec.Schema {
+	s.Description = desc
+	return s
 }

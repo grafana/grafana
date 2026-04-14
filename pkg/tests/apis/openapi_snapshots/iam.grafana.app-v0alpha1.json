@@ -1963,9 +1963,9 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.TypeMeta"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ListTokensBody"
                 }
               }
             }
@@ -1994,16 +1994,6 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.TypeMeta"
-                }
-              }
-            }
-          },
           "201": {
             "description": "Token created",
             "content": {
@@ -2032,9 +2022,9 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.TypeMeta"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.DeleteTokenBody"
                 }
               }
             }
@@ -2081,34 +2071,9 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.TypeMeta"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "iam.grafana.app",
-          "version": "v0alpha1",
-          "kind": "ListSATokenResponse"
-        }
-      },
-      "post": {
-        "tags": [
-          "ServiceAccount"
-        ],
-        "description": "connect POST requests to tokens of ServiceAccount",
-        "operationId": "createServiceAccountTokensWithPath",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.TypeMeta"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TokenItem"
                 }
               }
             }
@@ -2131,9 +2096,9 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.TypeMeta"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.DeleteTokenBody"
                 }
               }
             }
@@ -4958,6 +4923,7 @@
         ],
         "properties": {
           "expires": {
+            "description": "Unix timestamp in seconds when the token expires. 0 means the token never expires.",
             "type": "integer",
             "format": "int64"
           },
@@ -4971,12 +4937,23 @@
       },
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.CreateTokenRequestBody": {
         "type": "object",
+        "required": [
+          "tokenName"
+        ],
         "properties": {
           "expiresInSeconds": {
             "type": "integer",
             "format": "int64"
           },
           "tokenName": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.DeleteTokenBody": {
+        "type": "object",
+        "properties": {
+          "message": {
             "type": "string"
           }
         }
@@ -5718,6 +5695,23 @@
             "description": "RBAC scope (e.g: \"dashboards:uid:dash1\")",
             "type": "string",
             "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.ListTokensBody": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "continue": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TokenItem"
+            }
           }
         }
       },
@@ -6529,6 +6523,40 @@
           "title": {
             "type": "string",
             "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.TokenItem": {
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "created": {
+            "description": "Unix timestamp in seconds when the token was created.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "expires": {
+            "description": "Unix timestamp in seconds when the token expires. 0 means the token never expires.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "lastUsed": {
+            "description": "Unix timestamp in seconds when the token was last used. 0 means never used.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "revoked": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updated": {
+            "description": "Unix timestamp in seconds when the token was last updated.",
+            "type": "integer",
+            "format": "int64"
           }
         }
       },

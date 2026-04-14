@@ -290,6 +290,11 @@ func (s *legacySQLStore) SaveServiceAccountTokenHash(
 
 	return sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
 		if _, txErr := st.ExecWithReturningId(ctx, createQuery, createReq.GetArgs()...); txErr != nil {
+			// Catch DB unique constraint violations as a fallback for the
+			// pre-check above (handles the race between check and insert).
+			if dialect := sql.DB.GetDialect(); dialect != nil && dialect.IsUniqueConstraintViolation(txErr) {
+				return ErrTokenAlreadyExists
+			}
 			return fmt.Errorf("failed to create token: %w", txErr)
 		}
 

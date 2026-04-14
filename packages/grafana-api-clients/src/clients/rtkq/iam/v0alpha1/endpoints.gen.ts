@@ -342,16 +342,6 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/serviceaccounts/${queryArg.name}/tokens/${queryArg.tokenName}` }),
         providesTags: ['ServiceAccount'],
       }),
-      createServiceAccountTokensWithPath: build.mutation<
-        CreateServiceAccountTokensWithPathApiResponse,
-        CreateServiceAccountTokensWithPathApiArg
-      >({
-        query: (queryArg) => ({
-          url: `/serviceaccounts/${queryArg.name}/tokens/${queryArg.tokenName}`,
-          method: 'POST',
-        }),
-        invalidatesTags: ['ServiceAccount'],
-      }),
       deleteServiceAccountTokensWithPath: build.mutation<
         DeleteServiceAccountTokensWithPathApiResponse,
         DeleteServiceAccountTokensWithPathApiArg
@@ -1163,39 +1153,30 @@ export type UpdateServiceAccountApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetServiceAccountTokensApiResponse = /** status 200 OK */ TypeMeta;
+export type GetServiceAccountTokensApiResponse = /** status 200 OK */ ListTokensBody;
 export type GetServiceAccountTokensApiArg = {
   /** name of the ListSATokenResponse */
   name: string;
 };
-export type CreateServiceAccountTokensApiResponse = /** status 200 OK */
-  | TypeMeta
-  | /** status 201 Token created */ CreateTokenBody;
+export type CreateServiceAccountTokensApiResponse = /** status 201 Token created */ CreateTokenBody;
 export type CreateServiceAccountTokensApiArg = {
   /** name of the ListSATokenResponse */
   name: string;
   createTokenRequestBody: CreateTokenRequestBody;
 };
-export type DeleteServiceAccountTokensApiResponse = /** status 200 OK */ TypeMeta;
+export type DeleteServiceAccountTokensApiResponse = /** status 200 OK */ DeleteTokenBody;
 export type DeleteServiceAccountTokensApiArg = {
   /** name of the ListSATokenResponse */
   name: string;
 };
-export type GetServiceAccountTokensWithPathApiResponse = /** status 200 OK */ TypeMeta;
+export type GetServiceAccountTokensWithPathApiResponse = /** status 200 OK */ TokenItem;
 export type GetServiceAccountTokensWithPathApiArg = {
   /** name of the ListSATokenResponse */
   name: string;
   /** name of the token to operate on */
   tokenName: string;
 };
-export type CreateServiceAccountTokensWithPathApiResponse = /** status 200 OK */ TypeMeta;
-export type CreateServiceAccountTokensWithPathApiArg = {
-  /** name of the ListSATokenResponse */
-  name: string;
-  /** name of the token to operate on */
-  tokenName: string;
-};
-export type DeleteServiceAccountTokensWithPathApiResponse = /** status 200 OK */ TypeMeta;
+export type DeleteServiceAccountTokensWithPathApiResponse = /** status 200 OK */ DeleteTokenBody;
 export type DeleteServiceAccountTokensWithPathApiArg = {
   /** name of the ListSATokenResponse */
   name: string;
@@ -2013,20 +1994,34 @@ export type ServiceAccountList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type TypeMeta = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
+export type TokenItem = {
+  /** Unix timestamp in seconds when the token was created. */
+  created?: number;
+  /** Unix timestamp in seconds when the token expires. 0 means the token never expires. */
+  expires?: number;
+  /** Unix timestamp in seconds when the token was last used. 0 means never used. */
+  lastUsed?: number;
+  revoked?: boolean;
+  title: string;
+  /** Unix timestamp in seconds when the token was last updated. */
+  updated?: number;
+};
+export type ListTokensBody = {
+  continue?: string;
+  items: TokenItem[];
 };
 export type CreateTokenBody = {
+  /** Unix timestamp in seconds when the token expires. 0 means the token never expires. */
   expires?: number;
   serviceAccountTokenName: string;
   token: string;
 };
 export type CreateTokenRequestBody = {
   expiresInSeconds?: number;
-  tokenName?: string;
+  tokenName: string;
+};
+export type DeleteTokenBody = {
+  message?: string;
 };
 export type TeamBindingspecSubject = {
   /** kind of the identity */
@@ -2217,7 +2212,6 @@ export const {
   useDeleteServiceAccountTokensMutation,
   useGetServiceAccountTokensWithPathQuery,
   useLazyGetServiceAccountTokensWithPathQuery,
-  useCreateServiceAccountTokensWithPathMutation,
   useDeleteServiceAccountTokensWithPathMutation,
   useListTeamBindingQuery,
   useLazyListTeamBindingQuery,

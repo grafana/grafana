@@ -433,5 +433,4 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, http.StatusOK, getRsp.Response.StatusCode)
 		require.Equal(t, "my-token_v2.prod (backup)", getRes.Title)
 	})
-
 }
