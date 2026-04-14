@@ -182,7 +182,35 @@ describe('TooltipPlugin2', () => {
       expect(disconnectSpy).toHaveBeenCalled();
       disconnectSpy.mockRestore();
     });
-    it.todo('should clean up listeners on unmount');
+
+    it('should clean up listeners on unmount', () => {
+      const windowRemoveSpy = jest.spyOn(window, 'removeEventListener');
+      const windowAddSpy = jest.spyOn(window, 'addEventListener');
+      const documentRemoveSpy = jest.spyOn(document, 'removeEventListener');
+      const documentAddSpy = jest.spyOn(document, 'addEventListener');
+      windowRemoveSpy.mockClear();
+      documentRemoveSpy.mockClear();
+
+      const { view } = setUp();
+      expect(windowAddSpy).toHaveBeenCalledTimes(2);
+      expect(documentAddSpy).toHaveBeenCalled();
+      view.unmount();
+
+      expect(windowRemoveSpy).toHaveBeenCalledTimes(2);
+      expect(windowRemoveSpy).toHaveBeenCalledWith('resize', expect.any(Function));
+      expect(windowRemoveSpy).toHaveBeenCalledWith('scroll', expect.any(Function), true);
+
+      expect(documentAddSpy).toHaveBeenCalled();
+      expect(documentRemoveSpy).toHaveBeenCalledTimes(2);
+      expect(documentRemoveSpy).toHaveBeenCalledWith('mousedown', expect.any(Function), true);
+      expect(documentRemoveSpy).toHaveBeenCalledWith('keydown', expect.any(Function), true);
+
+      windowRemoveSpy.mockRestore();
+      documentRemoveSpy.mockRestore();
+    });
+
+    it.todo('should clean up event listeners added when tooltip is pinned');
+    it.todo('should clean up u.over event listeners');
     it.todo('should dismiss tooltip on window scroll');
   });
 });
