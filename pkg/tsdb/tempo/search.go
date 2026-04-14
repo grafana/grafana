@@ -82,8 +82,8 @@ func (s *Service) Search(ctx context.Context, pCtx backend.PluginContext, query 
 	}
 
 	if resp.StatusCode != http.StatusOK {
+		err := fmt.Errorf("failed to execute search query Status: %s Body: %s", resp.Status, string(body))
 		ctxLogger.Error("Failed to execute search query", "error", err, "function", logEntrypoint())
-		err := fmt.Errorf("failed to execute search query status: %s", resp.Status)
 		if backend.ErrorSourceFromHTTPStatus(resp.StatusCode) == backend.ErrorSourceDownstream {
 			return nil, backend.DownstreamError(err)
 		}
