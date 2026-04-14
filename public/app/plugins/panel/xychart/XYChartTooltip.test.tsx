@@ -205,7 +205,6 @@ describe('XYChartTooltip', () => {
         y: { field: makeField({ name: 'y', values: [10], displayName: 'cpu' }) },
       });
       renderTooltip({ xySeries: [series] });
-      // "cpu" appears in header (series name) and content (label preserved because name === label)
       expect(screen.getAllByText('cpu')).toHaveLength(2);
     });
 
@@ -215,7 +214,6 @@ describe('XYChartTooltip', () => {
         y: { field: makeField({ name: 'y', values: [10], displayName: 'usage' }) },
       });
       renderTooltip({ xySeries: [series] });
-      // "usage" has no space and does not contain "cpu", so no stripping
       expect(screen.getByText('usage')).toBeVisible();
     });
   });
@@ -286,7 +284,6 @@ describe('XYChartTooltip', () => {
     ])('renders footer when %s', (_label, overrides) => {
       renderTooltip(overrides);
       const wrapper = screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper);
-      // header + content + footer
       expect(wrapper.children).toHaveLength(3);
       expect(screen.getByText('Series A')).toBeVisible();
       expect(screen.getByText('x')).toBeVisible();
@@ -296,7 +293,6 @@ describe('XYChartTooltip', () => {
     it('does not render footer when not pinned and no oneClick links', () => {
       renderTooltip({ isPinned: false, dataLinks: [] });
       const wrapper = screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper);
-      // header + content only
       expect(wrapper.children).toHaveLength(2);
       expect(screen.getByText('Series A')).toBeVisible();
       expect(screen.getByText('x')).toBeVisible();
