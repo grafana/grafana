@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -29,6 +30,7 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
+	"k8s.io/client-go/dynamic"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
@@ -95,6 +97,11 @@ type Storage struct {
 	snowflake      *snowflake.Node    // used to enforce internal ids
 	configProvider RestConfigProvider // used for provisioning
 
+	// Lazily initialized because GetRestConfig blocks until the API server is
+	// fully started (eventualRestConfigProvider), while NewStorage is called
+	// during API group installation — before the server is ready.
+	getDynClient func(ctx context.Context) (dynamic.Interface, error)
+
 	versioner storage.Versioner
 
 	// Resource options like large object support
@@ -142,6 +149,31 @@ func NewStorage(
 		versioner: &storage.APIObjectVersioner{},
 
 		opts: opts,
+	}
+
+	if opts.EnableFolderSupport && configProvider != nil {
+		var (
+			initOnce sync.Once
+			client   dynamic.Interface
+			initErr  error
+		)
+		s.getDynClient = func(ctx context.Context) (dynamic.Interface, error) {
+			initOnce.Do(func() {
+				cfg, err := configProvider.GetRestConfig(ctx)
+				if err != nil {
+					initErr = fmt.Errorf("failed to get REST config: %w", err)
+					return
+				}
+				client, initErr = dynamic.NewForConfig(cfg)
+				if initErr != nil {
+					initErr = fmt.Errorf("failed to create dynamic client: %w", initErr)
+				}
+			})
+			return client, initErr
+		}
+	} else if opts.EnableFolderSupport {
+		logging.DefaultLogger.Warn("configProvider is not configured; repo-manager folder consistency checks will be skipped",
+			"resource", config.GroupResource.String())
 	}
 
 	if opts.RequireDeprecatedInternalID {

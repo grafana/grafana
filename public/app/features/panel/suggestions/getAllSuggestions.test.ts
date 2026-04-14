@@ -1,23 +1,23 @@
 import {
   AppEvents,
-  DataFrame,
+  type DataFrame,
   FieldType,
   getDefaultTimeRange,
   getPanelDataSummary,
   LoadingState,
-  PanelData,
-  PanelPluginVisualizationSuggestion,
+  type PanelData,
+  type PanelPluginVisualizationSuggestion,
   PluginType,
   toDataFrame,
   VisualizationSuggestionScore,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { PanelPluginMetas, setPanelPluginMetas } from '@grafana/runtime/internal';
+import { getListedPanelPluginMetas, type PanelPluginMetas, setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   BarGaugeDisplayMode,
   BigValueColorMode,
-  GraphFieldConfig,
-  ReduceDataOptions,
+  type GraphFieldConfig,
+  type ReduceDataOptions,
   StackingMode,
   VizOrientation,
 } from '@grafana/schema';
@@ -34,6 +34,13 @@ jest.mock('app/core/app_events', () => ({
     publish: jest.fn(),
   },
 }));
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getListedPanelPluginMetas: jest.fn(),
+}));
+
+const getListedPanelPluginMetasMock = jest.mocked(getListedPanelPluginMetas);
 
 config.featureToggles.externalVizSuggestions = true;
 
@@ -73,14 +80,6 @@ function getPanelPlugins() {
   return plugins;
 }
 
-jest.mock('../state/util', () => {
-  const originalModule = jest.requireActual('../state/util');
-  return {
-    ...originalModule,
-    getAllPanelPluginMeta: jest.fn().mockImplementation(() => getPanelPlugins()),
-  };
-});
-
 const SCALAR_PLUGINS = ['gauge', 'stat', 'bargauge', 'piechart'];
 
 class ScenarioContext {
@@ -93,6 +92,7 @@ class ScenarioContext {
     beforeAll(async () => {
       const metas = getPanelPlugins().reduce((acc, curr) => ({ ...acc, [curr.id]: curr }), {} as PanelPluginMetas);
       setPanelPluginMetas(metas);
+      getListedPanelPluginMetasMock.mockResolvedValue(getPanelPlugins());
       await this.run();
     });
   }
@@ -159,7 +159,6 @@ scenario('Single frame with time and number field', (ctx) => {
   it('should return correct suggestions', () => {
     expect(ctx.suggestions).toEqual([
       expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart' }),
-      expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart - smooth' }),
       expect.objectContaining({ pluginId: 'timeseries', name: 'Area chart' }),
       expect.objectContaining({ pluginId: 'timeseries', name: 'Bar chart' }),
       expect.objectContaining({ pluginId: 'gauge' }),
@@ -216,7 +215,6 @@ scenario('Single frame with time 2 number fields', (ctx) => {
   it('should return correct suggestions', () => {
     expect(ctx.suggestions).toEqual([
       expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart' }),
-      expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart - smooth' }),
       expect.objectContaining({ pluginId: 'timeseries', name: 'Area chart - stacked' }),
       expect.objectContaining({ pluginId: 'timeseries', name: 'Area chart - stacked by percentage' }),
       expect.objectContaining({ pluginId: 'timeseries', name: 'Bar chart - stacked' }),

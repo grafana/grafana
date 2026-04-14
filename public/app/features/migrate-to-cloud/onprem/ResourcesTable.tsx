@@ -1,15 +1,15 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { MigrateDataResponseItemDto } from '@grafana/api-clients/rtkq/legacy/migrate-to-cloud';
-import { InteractiveTable, Pagination, Stack, Column, type FetchDataFunc } from '@grafana/ui';
+import { type MigrateDataResponseItemDto } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
+import { InteractiveTable, Pagination, Stack, type Column, type FetchDataFunc } from '@grafana/ui';
 
-import { LocalPlugin } from '../../plugins/admin/types';
+import { type LocalPlugin } from '../../plugins/admin/types';
 
 import { NameCell } from './NameCell';
 import { ResourceDetailsModal } from './ResourceDetailsModal';
 import { StatusCell } from './StatusCell';
 import { TypeCell } from './TypeCell';
-import { ResourceTableItem } from './types';
+import { type ResourceTableItem } from './types';
 
 export interface ResourcesTableProps {
   resources: MigrateDataResponseItemDto[];

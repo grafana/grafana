@@ -355,7 +355,7 @@ func TestResetPolicyTree(t *testing.T) {
 	}
 	currentRevision.Config.AlertmanagerConfig.Receivers = []*definitions.PostableApiReceiver{
 		{
-			Receiver: config.Receiver{Name: "receiver"},
+			Receiver: definitions.Receiver{Name: "receiver"},
 			PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
 				GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
 					{
@@ -593,7 +593,7 @@ func getDefaultConfigRevision() legacy_storage.ConfigRevision {
 				},
 				Receivers: []*definitions.PostableApiReceiver{
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "test-receiver",
 						},
 					},

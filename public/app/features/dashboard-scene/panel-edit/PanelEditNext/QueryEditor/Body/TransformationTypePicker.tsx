@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { ChangeEvent, useMemo, useState } from 'react';
+import { type ChangeEvent, useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EmptyState, FilterPill, Grid, IconButton, Input, Stack, Switch, useStyles2 } from '@grafana/ui';
@@ -9,6 +9,7 @@ import config from 'app/core/config';
 import { SqlExpressionsBanner } from 'app/features/dashboard/components/TransformationsEditor/SqlExpressions/SqlExpressionsBanner';
 import { TransformationCard } from 'app/features/dashboard/components/TransformationsEditor/TransformationCard';
 
+import { trackTransformationFilterChanged, trackTransformationSearch } from '../../tracking';
 import { useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 import { useTransformationSearchAndFilter } from './useTransformationSearchAndFilter';
@@ -62,7 +63,10 @@ export function TransformationTypePicker() {
             'dashboard.transformation-picker-ng.placeholder-search-for-transformation',
             'Search for transformation'
           )}
-          onChange={({ target: { value } }: ChangeEvent<HTMLInputElement>) => setSearch(value)}
+          onChange={({ target: { value } }: ChangeEvent<HTMLInputElement>) => {
+            setSearch(value);
+            trackTransformationSearch(value);
+          }}
           onKeyDown={onSearchKeyDown}
           suffix={searchBoxSuffix}
         />
@@ -78,14 +82,21 @@ export function TransformationTypePicker() {
         <FilterPill
           label={t('dashboard.transformation-picker-ng.view-all', 'View all')}
           selected={selectedFilter === null}
-          onClick={() => setSelectedFilter(null)}
+          onClick={() => {
+            setSelectedFilter(null);
+            trackTransformationFilterChanged(null);
+          }}
         />
         {categories.map(({ slug, label }) => (
           <FilterPill
             key={slug}
             label={label}
             selected={selectedFilter === slug}
-            onClick={() => setSelectedFilter(selectedFilter === slug ? null : slug)}
+            onClick={() => {
+              const next = selectedFilter === slug ? null : slug;
+              setSelectedFilter(next);
+              trackTransformationFilterChanged(next);
+            }}
           />
         ))}
       </Stack>

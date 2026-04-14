@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { InlineField, Input, Select } from '@grafana/ui';
 
-import { GraphiteQuery, GraphiteQueryType } from '../types';
+import { type GraphiteQuery, GraphiteQueryType } from '../types';
 
 import { convertToGraphiteQueryObject } from './helpers';
 

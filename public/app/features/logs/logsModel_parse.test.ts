@@ -1,4 +1,11 @@
-import { DataFrame, FieldType, dateTimeFormatISO, DateTimeInput, DateTimeOptions, DataFrameType } from '@grafana/data';
+import {
+  type DataFrame,
+  FieldType,
+  dateTimeFormatISO,
+  type DateTimeInput,
+  type DateTimeOptions,
+  DataFrameType,
+} from '@grafana/data';
 
 import { logSeriesToLogsModel } from './logsModel';
 

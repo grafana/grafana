@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -83,7 +83,7 @@ func ProvideDashboardPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, dashboardService dashboards.DashboardService, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
-	dashboardPermissionsRegistration dashboards.PermissionsRegistrationService, restConfigProvider apiserver.RestConfigProvider,
+	dashboardPermissionsRegistration dashboards.PermissionsRegistrationService, restConfigProvider apiserver.DirectRestConfigProvider,
 ) (*DashboardPermissionsService, error) {
 	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*dashboards.Dashboard, error) {
 		query := &dashboards.GetDashboardQuery{UID: resourceID, OrgID: orgID}

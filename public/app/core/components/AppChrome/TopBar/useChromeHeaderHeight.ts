@@ -5,7 +5,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { isDashboardSceneEnabled } from 'app/features/dashboard-scene/utils/utils';
 
-import { AppChromeState } from '../AppChromeService';
+import { type AppChromeState } from '../AppChromeService';
 import { useExtensionSidebarContext } from '../ExtensionSidebar/ExtensionSidebarProvider';
 
 /**

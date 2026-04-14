@@ -3,7 +3,7 @@ import { isString } from 'lodash';
 import { useCallback, useId, useState } from 'react';
 import * as React from 'react';
 
-import { getTimeZoneInfo, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { getTimeZoneInfo, type GrafanaTheme2, type TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
@@ -42,6 +42,7 @@ export const TimePickerFooter = (props: Props) => {
   const timeSettingsId = useId();
   const timeZoneSettingsId = useId();
   const fiscalYearSettingsId = useId();
+  const fiscalYearStartMonthId = useId();
 
   const onToggleChangeTimeSettings = useCallback(
     (event?: React.MouseEvent) => {
@@ -145,6 +146,7 @@ export const TimePickerFooter = (props: Props) => {
                   label={t('time-picker.footer.fiscal-year-start', 'Fiscal year start month')}
                 >
                   <Combobox
+                    id={fiscalYearStartMonthId}
                     value={fiscalYearStartMonth ?? null}
                     options={getMonthOptions()}
                     onChange={(value) => {

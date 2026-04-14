@@ -1,11 +1,11 @@
-import { Scope, ScopeNode, store as storeImpl } from '@grafana/data';
+import { type Scope, type ScopeNode, store as storeImpl } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { performanceUtils } from '@grafana/scenes';
+import { type performanceUtils } from '@grafana/scenes';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 
-import { ScopesApiClient } from '../ScopesApiClient';
+import { type ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
-import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
+import { type ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
 import { isCurrentPath } from '../dashboards/scopeNavgiationUtils';
 
 import {
@@ -18,7 +18,15 @@ import {
   modifyTreeNodeAtPath,
   treeNodeAtPath,
 } from './scopesTreeUtils';
-import { NodesMap, RecentScope, RecentScopeSchema, ScopeSchema, ScopesMap, SelectedScope, TreeNode } from './types';
+import {
+  type NodesMap,
+  type RecentScope,
+  RecentScopeSchema,
+  ScopeSchema,
+  type ScopesMap,
+  type SelectedScope,
+  type TreeNode,
+} from './types';
 
 export const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
 
@@ -51,6 +59,12 @@ export interface ScopesSelectorServiceState {
 }
 
 export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServiceState> {
+  private redirectEnabled = true;
+
+  public setRedirectEnabled(enabled: boolean) {
+    this.redirectEnabled = enabled;
+  }
+
   constructor(
     private apiClient: ScopesApiClient,
     private dashboardsService: ScopesDashboardsService,
@@ -486,8 +500,14 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
   // Redirect to the scope node's redirect URL if it exists, otherwise redirect to the first scope navigation.
   private redirectAfterApply = (scopeNode: ScopeNode | undefined) => {
+    if (!this.redirectEnabled) {
+      return;
+    }
+
     // Check if we are currently on an active scope navigation
-    const currentPath = locationService.getLocation().pathname;
+    const location = locationService.getLocation();
+    const currentPath = location.pathname;
+
     const activeScopeNavigation = this.dashboardsService.state.scopeNavigations.find((s) => {
       if (!('url' in s.spec)) {
         return false;

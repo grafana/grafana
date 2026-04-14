@@ -5,7 +5,7 @@ import { config } from '@grafana/runtime';
 
 import { getMockDataSources } from '../mocks/dataSourcesMocks';
 
-import { DataSourcesListView, ViewProps } from './DataSourcesList';
+import { DataSourcesListView, type ViewProps } from './DataSourcesList';
 
 // Mock the useFavoriteDatasources hook
 const mockIsFavoriteDatasource = jest.fn();
@@ -76,7 +76,7 @@ describe('<DataSourcesList>', () => {
     setup();
 
     expect(await screen.findAllByRole('listitem')).toHaveLength(3);
-    expect(await screen.findAllByRole('heading')).toHaveLength(3);
+    expect(await screen.findAllByRole('link', { name: /dataSource-/i })).toHaveLength(3);
     expect(await screen.findAllByRole('link', { name: /Build a dashboard/i })).toHaveLength(3);
     expect(await screen.findAllByRole('link', { name: 'Explore' })).toHaveLength(3);
   });
@@ -84,7 +84,6 @@ describe('<DataSourcesList>', () => {
   it('should render all elements in the list item', async () => {
     setup();
 
-    expect(await screen.findByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'dataSource-0' })).toBeInTheDocument();
   });
 
@@ -134,9 +133,9 @@ describe('<DataSourcesList>', () => {
       expect(listItems).toHaveLength(2);
 
       // Verify the correct datasources are shown
-      expect(screen.getByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
-      expect(screen.getByRole('heading', { name: 'dataSource-2' })).toBeInTheDocument();
-      expect(screen.queryByRole('heading', { name: 'dataSource-1' })).not.toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'dataSource-0' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'dataSource-2' })).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'dataSource-1' })).not.toBeInTheDocument();
     });
   });
 });

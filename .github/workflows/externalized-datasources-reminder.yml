@@ -4,10 +4,14 @@ on:
   pull_request:
     types: [opened]
     paths:
-      - "public/app/plugins/datasource/elasticsearch/**"
       - "public/app/plugins/datasource/cloudwatch/**"
-      - "pkg/tsdb/elasticsearch/**"
+      - "public/app/plugins/datasource/cloud-monitoring/**"
+      - "public/app/plugins/datasource/zipkin/**"
+      - "public/app/plugins/datasource/opentsdb/**"
       - "pkg/tsdb/cloudwatch/**"
+      - "pkg/tsdb/cloud-monitoring/**"
+      - "pkg/tsdb/zipkin/**"
+      - "pkg/tsdb/opentsdb/**"
 
 jobs:
   add-comment:

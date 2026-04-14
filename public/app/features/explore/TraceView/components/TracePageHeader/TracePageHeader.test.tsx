@@ -16,16 +16,16 @@ import { fireEvent, getByText, render, screen, waitFor } from '@testing-library/
 import userEvent from '@testing-library/user-event';
 
 import {
-  IconName,
+  type IconName,
   MutableDataFrame,
-  PluginExtensionLink,
+  type PluginExtensionLink,
   PluginExtensionPoints,
   PluginExtensionTypes,
 } from '@grafana/data';
 import { usePluginLinks, usePluginComponents, config } from '@grafana/runtime';
 import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
 
-import { TraceViewPluginExtensionContext } from '../types/trace';
+import { type TraceViewPluginExtensionContext } from '../types/trace';
 
 import { TracePageHeader } from './TracePageHeader';
 import { trace } from './mocks';

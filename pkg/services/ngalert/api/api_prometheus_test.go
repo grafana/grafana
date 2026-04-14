@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -527,20 +529,43 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 
 	t.Run("with a rule that has notification settings", func(t *testing.T) {
-		fakeStore, fakeAIM, api := setupAPI(t)
-		notificationSettings := ngmodels.ContactPointRouting{
-			Receiver: "test-receiver",
-			GroupBy:  []string{"job"},
+		for _, tc := range []struct {
+			name       string
+			inputNS    ngmodels.NotificationSettings
+			expectedNS apimodels.AlertRuleNotificationSettings
+		}{
+			{
+				name: "ContactPointRouting",
+				inputNS: ngmodels.NotificationSettingsFromContact(ngmodels.ContactPointRouting{
+					Receiver: "test-receiver",
+					GroupBy:  []string{"job"},
+				}),
+				expectedNS: apimodels.AlertRuleNotificationSettings{
+					Receiver: "test-receiver",
+					GroupBy:  []string{"job"},
+				},
+			},
+			{
+				name:    "PolicyRouting",
+				inputNS: ngmodels.NotificationSettingsFromPolicy("test-policy"),
+				expectedNS: apimodels.AlertRuleNotificationSettings{
+					Policy: util.Pointer("test-policy"),
+				},
+			},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				fakeStore, fakeAIM, api := setupAPI(t)
+				generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(), gen.WithNotificationSettings(tc.inputNS), gen.WithIsPaused(false))
+				r := api.RouteGetRuleStatuses(c)
+				require.Equal(t, http.StatusOK, r.Status())
+				var res apimodels.RuleResponse
+				require.NoError(t, json.Unmarshal(r.Body(), &res))
+				require.Len(t, res.Data.RuleGroups, 1)
+				require.Len(t, res.Data.RuleGroups[0].Rules, 1)
+				require.NotNil(t, res.Data.RuleGroups[0].Rules[0].NotificationSettings)
+				require.Equal(t, tc.expectedNS, *res.Data.RuleGroups[0].Rules[0].NotificationSettings)
+			})
 		}
-		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(), gen.WithContactPointRouting(notificationSettings), gen.WithIsPaused(false))
-		r := api.RouteGetRuleStatuses(c)
-		require.Equal(t, http.StatusOK, r.Status())
-		var res apimodels.RuleResponse
-		require.NoError(t, json.Unmarshal(r.Body(), &res))
-		require.Len(t, res.Data.RuleGroups, 1)
-		require.Len(t, res.Data.RuleGroups[0].Rules, 1)
-		require.NotNil(t, res.Data.RuleGroups[0].Rules[0].NotificationSettings)
-		require.Equal(t, notificationSettings.Receiver, res.Data.RuleGroups[0].Rules[0].NotificationSettings.Receiver)
 	})
 
 	t.Run("with the inclusion of internal Labels", func(t *testing.T) {
@@ -3306,6 +3331,90 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				}
 
 				require.ElementsMatch(t, tc.expectedUIDs, actualUIDs)
+			})
+		}
+	})
+
+	t.Run("feature flag should control sort by fullpath query option", func(t *testing.T) {
+		ruleStore := fakes.NewRuleStore(t)
+		fakeAIM := NewFakeAlertInstanceManager(t)
+
+		rule := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+			RuleGroup:    "rule-group-sort-check",
+			NamespaceUID: "folder-sort-check",
+			OrgID:        orgID,
+		})).GenerateRef()
+		ruleStore.PutRule(context.Background(), rule)
+
+		permissions := createPermissionsForRules([]*ngmodels.AlertRule{rule}, orgID)
+
+		testCases := []struct {
+			name          string
+			enabled       bool
+			expectedValue bool
+		}{
+			{
+				name:          "disabled",
+				enabled:       false,
+				expectedValue: false,
+			},
+			{
+				name:          "enabled",
+				enabled:       true,
+				expectedValue: true,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				variant := "disabled"
+				if tc.enabled {
+					variant = "enabled"
+				}
+				err := openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+					featuremgmt.FlagAlertingRuleGroupSortByFolderFullpath: {
+						Key:            featuremgmt.FlagAlertingRuleGroupSortByFolderFullpath,
+						DefaultVariant: variant,
+						Variants: map[string]any{
+							"enabled":  true,
+							"disabled": false,
+						},
+					},
+				}))
+				require.NoError(t, err)
+				t.Cleanup(func() {
+					_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+				})
+
+				captured := false
+				ruleStore.Hook = func(cmd any) error {
+					if q, ok := cmd.(ngmodels.ListAlertRulesExtendedQuery); ok {
+						captured = true
+						require.Equal(t, tc.expectedValue, q.SortByFullpath)
+					}
+					return nil
+				}
+
+				api := NewPrometheusSrv(
+					log.NewNopLogger(),
+					fakeAIM,
+					newFakeSchedulerReader(t).setupStates(fakeAIM),
+					ruleStore,
+					accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
+					fakes.NewFakeProvisioningStore(),
+				)
+
+				req, err := http.NewRequest("GET", "/api/v1/rules?group_limit=1", nil)
+				require.NoError(t, err)
+
+				ctx := &contextmodel.ReqContext{
+					Context:      &web.Context{Req: req},
+					SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: permissions},
+				}
+
+				resp := api.RouteGetRuleStatuses(ctx)
+				require.Equal(t, http.StatusOK, resp.Status())
+				require.True(t, captured, "expected ListAlertRulesByGroup query to be captured")
 			})
 		}
 	})

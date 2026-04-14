@@ -100,7 +100,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			Type:                 resource.Type(),
-			Relation:             subresourceRelation,
+			Relation:             common.SubresourcePermissionRelation(subresourceRelation),
 			User:                 subject,
 			Context:              resourceCtx,
 			ContextualTuples:     contextuals,
@@ -149,7 +149,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			Type:                 common.TypeFolder,
-			Relation:             folderRelation,
+			Relation:             common.SubresourcePermissionRelation(folderRelation),
 			User:                 subject,
 			Context:              resourceCtx,
 			ContextualTuples:     contextuals,
@@ -207,10 +207,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 }
 
 func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
-	fn := s.openFGAClient.ListObjects
-	if s.cfg.UseStreamedListObjects {
-		fn = s.streamedListObjects
-	}
+	fn := s.streamedListObjects
 
 	if s.cfg.CacheSettings.CheckQueryCacheEnabled {
 		return s.listObjectCached(ctx, req, fn)
@@ -253,6 +250,14 @@ func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObj
 	ctx, span := s.tracer.Start(ctx, "server.streamedListObjects")
 	defer span.End()
 
+	deadline := s.cfg.ListObjectsDeadline
+	if deadline <= 0 {
+		deadline = 3 * time.Second
+	}
+	var cancel context.CancelFunc
+	ctx, cancel = context.WithTimeout(ctx, deadline-time.Second)
+	defer cancel()
+
 	r := &openfgav1.StreamedListObjectsRequest{
 		StoreId:              req.GetStoreId(),
 		AuthorizationModelId: req.GetAuthorizationModelId(),
@@ -278,6 +283,10 @@ func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObj
 			return nil, err
 		}
 		objects = append(objects, res.GetObject())
+	}
+
+	if ctx.Err() != nil {
+		return nil, fmt.Errorf("streamed list objects interrupted: %w", ctx.Err())
 	}
 
 	return &openfgav1.ListObjectsResponse{

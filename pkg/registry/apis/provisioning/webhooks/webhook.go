@@ -117,8 +117,9 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		return nil, err
 	}
 
-	// Get the repository with the worker identity (since the request user is likely anonymous)
-	repo, err := s.core.GetRepository(ctx, name)
+	// Get the repository with the worker identity (since the request user is likely anonymous).
+	// Reject the request early if the repository is not healthy
+	repo, err := s.core.GetHealthyRepository(ctx, name)
 	if err != nil {
 		return nil, err
 	}

@@ -1,10 +1,13 @@
 package models
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"math/rand"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -16,12 +19,46 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
+
+func TestGroupCursorEncodeDecode(t *testing.T) {
+	t.Run("encodes and decodes fullpath cursor", func(t *testing.T) {
+		in := GroupCursor{
+			FolderFullpath: "parent/child",
+			NamespaceUID:   "namespace-1",
+			RuleGroup:      "group-a",
+		}
+
+		token := EncodeGroupCursor(in)
+		out, err := DecodeGroupCursor(token)
+		require.NoError(t, err)
+		require.Equal(t, in, out)
+	})
+
+	t.Run("decodes legacy cursor format without fullpath", func(t *testing.T) {
+		legacy := struct {
+			NamespaceUID string `json:"n"`
+			RuleGroup    string `json:"g"`
+		}{
+			NamespaceUID: "namespace-legacy",
+			RuleGroup:    "group-legacy",
+		}
+
+		payload, err := json.Marshal(legacy)
+		require.NoError(t, err)
+		token := base64.URLEncoding.EncodeToString(payload)
+
+		decoded, err := DecodeGroupCursor(token)
+		require.NoError(t, err)
+		require.Equal(t, "", decoded.FolderFullpath)
+		require.Equal(t, legacy.NamespaceUID, decoded.NamespaceUID)
+		require.Equal(t, legacy.RuleGroup, decoded.RuleGroup)
+	})
+}
 
 func TestSortAlertRulesByGroupKeyAndIndex(t *testing.T) {
 	tc := []struct {
@@ -1073,7 +1110,7 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 		}
 	}
 
-	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", maps.Keys(fields))
+	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", slices.Collect(maps.Keys(fields)))
 }
 
 func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
@@ -1116,7 +1153,7 @@ func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
 		}
 	}
 
-	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", maps.Keys(fields))
+	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", slices.Collect(maps.Keys(fields)))
 }
 
 func TestValidateAlertRule(t *testing.T) {

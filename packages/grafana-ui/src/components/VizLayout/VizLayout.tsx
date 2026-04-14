@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { FC, CSSProperties, ComponentType } from 'react';
+import { type FC, type CSSProperties, type ComponentType } from 'react';
 import * as React from 'react';
 import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { LegendPlacement } from '@grafana/schema';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { type LegendPlacement } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';

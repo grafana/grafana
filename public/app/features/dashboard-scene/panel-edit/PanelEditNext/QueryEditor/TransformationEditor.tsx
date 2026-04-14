@@ -1,9 +1,10 @@
 import { useCallback } from 'react';
 
-import { DataTransformerConfig, DataFrame } from '@grafana/data';
+import { DataTransformerID, type DataTransformerConfig, type DataFrame } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Transformation } from './types';
+import { NoOptionsIndicator } from './NoOptionsIndicator';
+import { type Transformation } from './types';
 
 interface TransformationEditorProps {
   transformation: Transformation;
@@ -22,6 +23,10 @@ export function TransformationEditor({ transformation, inputData, onUpdate }: Tr
     [transformConfig, onUpdate]
   );
 
+  const showNoOptions =
+    transformConfig.id === DataTransformerID.seriesToRows ||
+    (transformConfig.id === DataTransformerID.merge && inputData.length > 1);
+
   const Editor = registryItem!.editor!;
 
   return (
@@ -31,6 +36,7 @@ export function TransformationEditor({ transformation, inputData, onUpdate }: Tr
         onChange={handleChange}
         options={{ ...registryItem!.transformation.defaultOptions, ...transformConfig.options }}
       />
+      {showNoOptions && <NoOptionsIndicator name={registryItem?.name ?? ''} />}
     </div>
   );
 }
