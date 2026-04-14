@@ -14,12 +14,12 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
-
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	utilsOrig "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 )
 
@@ -315,6 +315,7 @@ func asPreferencesResource(ns string, p *preferenceModel) preferences.Preference
 		}
 	}
 
+	obj.UID = gapiutil.CalculateClusterWideUID(&obj)
 	return obj
 }
 
