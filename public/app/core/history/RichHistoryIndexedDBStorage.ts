@@ -111,10 +111,21 @@ function matchesSearchFilter(query: RichHistoryQuery, searchFilter: string): boo
   );
 }
 
-export default class RichHistoryIndexedDBStorage implements RichHistoryStorage {
+/** Exposed only for migration — not part of the RichHistoryStorage contract. */
+export interface IndexedDBMigrationAccess {
+  getDB(): Promise<IDBPDatabase<QueryHistoryDBSchema>>;
+  getMetadata(key: string): Promise<unknown>;
+  setMetadata(key: string, value: unknown): Promise<void>;
+  updateSettings(settings: RichHistorySettings): Promise<void>;
+}
+
+export default class RichHistoryIndexedDBStorage implements RichHistoryStorage, IndexedDBMigrationAccess {
+  private static readonly CLEANUP_INTERVAL_MS = 3_600_000; // 1 hour
+
   private dbPromise: Promise<IDBPDatabase<QueryHistoryDBSchema>>;
   private migrationPromise: Promise<void> | undefined;
   private cleanupInFlight = false;
+  private lastCleanupTime = 0;
 
   constructor() {
     this.dbPromise = this.initDB();
@@ -174,7 +185,10 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage {
   ): Promise<{ warning?: RichHistoryStorageWarningDetails; richHistoryQuery: RichHistoryQuery }> {
     const db = await this.dbPromise;
 
-    // Use a single readwrite transaction for both dedup check and write to avoid TOCTOU race
+    // Dedup check: only compares against the most recent entry to prevent
+    // consecutive duplicate submissions. This matches the localStorage
+    // implementation. Non-consecutive duplicates (A, B, A) are allowed.
+    // Uses a single readwrite transaction for both check and write to avoid TOCTOU race.
     const tx = db.transaction(QUERIES_STORE, 'readwrite');
     const store = tx.objectStore(QUERIES_STORE);
     const index = store.index('by-createdAt');
@@ -216,37 +230,41 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage {
     await this.ensureMigrated();
     const db = await this.dbPromise;
 
-    // Run retention cleanup first
-    await this.runRetentionCleanup(db);
+    await this.maybeRunRetentionCleanup(db);
 
-    // Read all entries
-    const allStored = await db.getAll(QUERIES_STORE);
-    let results = allStored.map(fromStoredQuery);
+    // 1. Index-based retrieval — narrow at the DB level
+    let storedResults: StoredQuery[];
 
-    // Filter by starred
-    if (filters.starred) {
-      results = results.filter((q) => q.starred);
+    if (filters.starred && filters.from !== undefined && filters.to !== undefined) {
+      // Starred tab: compound index [starred=1, createdAt] with time range
+      const index = db.transaction(QUERIES_STORE).objectStore(QUERIES_STORE).index('by-starred-createdAt');
+      const range = IDBKeyRange.bound([1, filters.from], [1, filters.to], true, true);
+      storedResults = await index.getAll(range);
+    } else if (filters.from !== undefined && filters.to !== undefined) {
+      // Queries tab: time range only, no starred filter
+      const index = db.transaction(QUERIES_STORE).objectStore(QUERIES_STORE).index('by-createdAt');
+      const range = IDBKeyRange.bound(filters.from, filters.to, true, true);
+      storedResults = await index.getAll(range);
+    } else {
+      // No time range (rare: query library fetchQueryHistory)
+      storedResults = await db.getAll(QUERIES_STORE);
     }
 
-    // Filter by time range (absolute timestamps)
-    if (filters.from !== undefined && filters.to !== undefined) {
-      results = results.filter((q) => q.createdAt > filters.from! && q.createdAt < filters.to!);
-    }
+    // 2. JS filters on the narrowed set (datasource name, text search)
+    let results = storedResults.map(fromStoredQuery);
 
-    // Filter by datasource name
     if (filters.datasourceFilters.length > 0) {
       results = results.filter((q) => filters.datasourceFilters.includes(q.datasourceName));
     }
 
-    // Filter by search text
     if (filters.search) {
       results = results.filter((q) => matchesSearchFilter(q, filters.search));
     }
 
-    // Sort
+    // 3. Sort
     results = this.sortQueries(results, filters.sortOrder);
 
-    // Fire-and-forget localStorage cleanup — never blocks reads
+    // 4. Fire-and-forget localStorage cleanup — never blocks reads
     this.maybeCleanupLocalStorage().catch((err) => {
       console.warn('localStorage cleanup failed:', err);
     });
@@ -329,6 +347,15 @@ export default class RichHistoryIndexedDBStorage implements RichHistoryStorage {
       db.put(SETTINGS_STORE, settings.activeDatasourcesOnly, 'activeDatasourcesOnly'),
       db.put(SETTINGS_STORE, settings.lastUsedDatasourceFilters ?? [], 'lastUsedDatasourceFilters'),
     ]);
+  }
+
+  private async maybeRunRetentionCleanup(db: IDBPDatabase<QueryHistoryDBSchema>): Promise<void> {
+    const now = Date.now();
+    if (now - this.lastCleanupTime < RichHistoryIndexedDBStorage.CLEANUP_INTERVAL_MS) {
+      return;
+    }
+    this.lastCleanupTime = now;
+    await this.runRetentionCleanup(db);
   }
 
   private async runRetentionCleanup(db: IDBPDatabase<QueryHistoryDBSchema>): Promise<void> {

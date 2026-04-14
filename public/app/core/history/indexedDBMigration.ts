@@ -3,7 +3,7 @@ import { lastValueFrom } from 'rxjs';
 import { type DataQuery, store } from '@grafana/data';
 import { config, getBackendSrv, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 
-import type RichHistoryIndexedDBStorage from './RichHistoryIndexedDBStorage';
+import type { IndexedDBMigrationAccess } from './RichHistoryIndexedDBStorage';
 import { RICH_HISTORY_KEY, type RichHistoryLocalStorageDTO } from './RichHistoryLocalStorage';
 import { RICH_HISTORY_SETTING_KEYS } from './richHistoryLocalStorageUtils';
 
@@ -57,7 +57,7 @@ const REMOTE_PAGE_LIMIT = 100;
  * Path B: Remote API data (when `config.queryHistoryEnabled` is true).
  * Path C: No data anywhere — mark migration complete immediately.
  */
-export async function migrateToIndexedDB(indexedDBStorage: RichHistoryIndexedDBStorage): Promise<void> {
+export async function migrateToIndexedDB(indexedDBStorage: IndexedDBMigrationAccess): Promise<void> {
   // 1. Check if migration is already complete
   const migrationComplete = await indexedDBStorage.getMetadata(METADATA_MIGRATION_COMPLETE);
   if (migrationComplete === true) {
@@ -118,7 +118,7 @@ export async function migrateToIndexedDB(indexedDBStorage: RichHistoryIndexedDBS
 }
 
 async function migrateFromLocalStorage(
-  indexedDBStorage: RichHistoryIndexedDBStorage,
+  indexedDBStorage: IndexedDBMigrationAccess,
   rawData: unknown[],
   attemptNumber: number
 ): Promise<void> {
@@ -193,7 +193,7 @@ async function migrateFromLocalStorage(
  * Paginates through all pages and deduplicates against entries already in IndexedDB.
  */
 async function migrateFromRemoteStorage(
-  indexedDBStorage: RichHistoryIndexedDBStorage,
+  indexedDBStorage: IndexedDBMigrationAccess,
   attemptNumber: number
 ): Promise<void> {
   const startTime = Date.now();
@@ -232,8 +232,13 @@ async function migrateFromRemoteStorage(
     for (const dto of allItems) {
       const createdAtMs = dto.createdAt * 1000;
 
-      // Dedup: check if an entry with similar createdAt and same datasource already exists
-      const range = IDBKeyRange.bound(createdAtMs - 1000, createdAtMs + 1000);
+      // Dedup window: ±5 seconds accounts for clock drift between localStorage
+      // timestamps and server-side createdAt. This is a one-time migration
+      // heuristic (max 3 attempts). False positives (dropping a legitimately
+      // different query to the same datasource within 5s) are unlikely and
+      // acceptable for migration.
+      const DEDUP_WINDOW_MS = 5000;
+      const range = IDBKeyRange.bound(createdAtMs - DEDUP_WINDOW_MS, createdAtMs + DEDUP_WINDOW_MS);
       const existing = await tx.store.index('by-createdAt').openCursor(range);
       if (existing && existing.value.datasourceUid === dto.datasourceUid) {
         duplicatesSkipped++;
@@ -290,7 +295,7 @@ async function fetchRemotePage(page: number): Promise<RemoteQueryHistoryResponse
   return response.data;
 }
 
-async function migrateSettings(indexedDBStorage: RichHistoryIndexedDBStorage): Promise<void> {
+async function migrateSettings(indexedDBStorage: IndexedDBMigrationAccess): Promise<void> {
   const rawRetention = store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7);
   const retentionPeriod = typeof rawRetention === 'number' ? rawRetention : 7;
   const starredTabAsFirstTab = store.getBool(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, false);
