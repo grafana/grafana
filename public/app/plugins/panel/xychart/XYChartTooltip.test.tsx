@@ -299,36 +299,38 @@ describe('XYChartTooltip', () => {
       expect(screen.getByText('y')).toBeVisible();
     });
 
-    it('calls getFieldActions when canExecuteActions is true and pinned', () => {
-      const mockGetFieldActions = getFieldActions as jest.Mock;
-      mockGetFieldActions.mockClear();
+    describe('getFieldActions', () => {
+      it('calls getFieldActions when canExecuteActions is true and pinned', () => {
+        const mockGetFieldActions = getFieldActions as jest.Mock;
+        mockGetFieldActions.mockClear();
 
-      const series = makeSeries();
-      const yField = series.y.field;
-      // Build a frame that holds the exact yField reference so .includes() matches
-      const frame = { fields: [yField], length: yField.values.length };
+        const series = makeSeries();
+        const yField = series.y.field;
+        // Build a frame that holds the exact yField reference so .includes() matches
+        const frame = { fields: [yField], length: yField.values.length };
 
-      renderTooltip({
-        isPinned: true,
-        canExecuteActions: true,
-        data: [frame] as DataFrame[],
-        xySeries: [series],
+        renderTooltip({
+          isPinned: true,
+          canExecuteActions: true,
+          data: [frame] as DataFrame[],
+          xySeries: [series],
+        });
+
+        expect(mockGetFieldActions).toHaveBeenCalledWith(
+          expect.objectContaining({ fields: expect.arrayContaining([yField]) }),
+          yField,
+          expect.any(Function),
+          0,
+          'xychart'
+        );
       });
 
-      expect(mockGetFieldActions).toHaveBeenCalledWith(
-        expect.objectContaining({ fields: expect.arrayContaining([yField]) }),
-        yField,
-        expect.any(Function),
-        0,
-        'xychart'
-      );
-    });
-
-    it('does not call getFieldActions when canExecuteActions is false', () => {
-      const mockGetFieldActions = getFieldActions as jest.Mock;
-      mockGetFieldActions.mockClear();
-      renderTooltip({ isPinned: true, canExecuteActions: false });
-      expect(mockGetFieldActions).not.toHaveBeenCalled();
+      it('does not call getFieldActions when canExecuteActions is false', () => {
+        const mockGetFieldActions = getFieldActions as jest.Mock;
+        mockGetFieldActions.mockClear();
+        renderTooltip({ isPinned: true, canExecuteActions: false });
+        expect(mockGetFieldActions).not.toHaveBeenCalled();
+      });
     });
   });
 });
