@@ -1,3 +1,4 @@
+import { type ElementTransformAndDimensions } from './types';
 import { getElementTransformAndDimensions } from './utils';
 
 describe('canvas utils - DOM operations', () => {
@@ -37,7 +38,7 @@ describe('canvas utils - DOM operations', () => {
 
       const result = getElementTransformAndDimensions(element);
 
-      expect(result).toEqual({
+      expect(result).toEqual<ElementTransformAndDimensions>({
         left: 0,
         top: 0,
         width: 100,

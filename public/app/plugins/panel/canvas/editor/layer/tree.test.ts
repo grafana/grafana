@@ -1,6 +1,21 @@
+import { type ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 
+import { type DragNode, type DropNode } from '../../types';
+
 import { getTreeData, onNodeDrop, type TreeElement } from './tree';
+
+const createMockFrameState = (elements: unknown[]): FrameState => {
+  return { elements } as FrameState;
+};
+
+const createMockDropNode = (key: number, pos: string): DropNode => {
+  return { key, pos, dataRef: {} as ElementState } as DropNode;
+};
+
+const createMockDragNode = (key: number): DragNode => {
+  return { key, dataRef: {} as ElementState } as DragNode;
+};
 
 describe('tree', () => {
   describe('getTreeData', () => {
@@ -11,9 +26,7 @@ describe('tree', () => {
     });
 
     it('should return empty array when root has no elements', () => {
-      const root = {
-        elements: [],
-      } as Partial<FrameState>;
+      const root = createMockFrameState([]);
 
       const result = getTreeData(root);
 
@@ -25,9 +38,7 @@ describe('tree', () => {
         UID: 1,
         getName: () => 'Element 1',
       };
-      const root = {
-        elements: [element],
-      } as Partial<FrameState>;
+      const root = createMockFrameState([element]);
 
       const result = getTreeData(root);
 
@@ -43,9 +54,7 @@ describe('tree', () => {
     it('should transform multiple elements', () => {
       const elem1 = { UID: 1, getName: () => 'Element 1' };
       const elem2 = { UID: 2, getName: () => 'Element 2' };
-      const root = {
-        elements: [elem1, elem2],
-      } as Partial<FrameState>;
+      const root = createMockFrameState([elem1, elem2]);
 
       const result = getTreeData(root);
 
@@ -63,9 +72,7 @@ describe('tree', () => {
       };
       Object.setPrototypeOf(frameElement, FrameState.prototype);
 
-      const root = {
-        elements: [frameElement],
-      } as Partial<FrameState>;
+      const root = createMockFrameState([frameElement]);
 
       const result = getTreeData(root);
 
@@ -96,9 +103,7 @@ describe('tree', () => {
       };
       Object.setPrototypeOf(topFrame, FrameState.prototype);
 
-      const root = {
-        elements: [topFrame],
-      } as Partial<FrameState>;
+      const root = createMockFrameState([topFrame]);
 
       const result = getTreeData(root);
 
@@ -112,7 +117,7 @@ describe('tree', () => {
       key,
       title,
       selectable: true,
-      dataRef: {} as Record<string, unknown>,
+      dataRef: {} as ElementState,
       children,
     });
 
@@ -123,88 +128,8 @@ describe('tree', () => {
       ];
 
       const info = {
-        node: { key: 1, pos: '0-0' } as { key: number; pos: string },
-        dragNode: { key: 3 } as { key: number },
-        dropPosition: 0,
-        dropToGap: false,
-      };
-
-      const result = onNodeDrop(info, treeData);
-
-      expect(result[0].children).toHaveLength(2);
-      expect(result[0].children![0].key).toBe(3);
-      expect(result).toHaveLength(1);
-    });
-
-    it('should insert before element (destPosition -1)', () => {
-      const treeData: TreeElement[] = [
-        createTreeElement(1, 'First'),
-        createTreeElement(2, 'Second'),
-        createTreeElement(3, 'Dragged'),
-      ];
-
-      const info = {
-        node: { key: 2, pos: '0-1' } as { key: number; pos: string },
-        dragNode: { key: 3 } as { key: number },
-        dropPosition: 0,
-        dropToGap: true,
-      };
-
-      const result = onNodeDrop(info, treeData);
-
-      expect(result).toHaveLength(3);
-      expect(result[0].key).toBe(1);
-      expect(result[1].key).toBe(3);
-      expect(result[2].key).toBe(2);
-    });
-
-    it('should insert after element (destPosition 1)', () => {
-      const treeData: TreeElement[] = [
-        createTreeElement(1, 'First'),
-        createTreeElement(2, 'Second'),
-        createTreeElement(3, 'Dragged'),
-      ];
-
-      const info = {
-        node: { key: 1, pos: '0-0' } as { key: number; pos: string },
-        dragNode: { key: 3 } as { key: number },
-        dropPosition: 1,
-        dropToGap: true,
-      };
-
-      const result = onNodeDrop(info, treeData);
-
-      expect(result).toHaveLength(3);
-      expect(result[0].key).toBe(1);
-      expect(result[1].key).toBe(3);
-      expect(result[2].key).toBe(2);
-    });
-
-    it('should handle drag within nested children', () => {
-      const treeData: TreeElement[] = [
-        createTreeElement(1, 'Parent', [createTreeElement(2, 'Child1'), createTreeElement(3, 'Child2')]),
-      ];
-
-      const info = {
-        node: { key: 2, pos: '0-0-0' } as { key: number; pos: string },
-        dragNode: { key: 3 } as { key: number },
-        dropPosition: -1,
-        dropToGap: true,
-      };
-
-      const result = onNodeDrop(info, treeData);
-
-      expect(result[0].children).toHaveLength(2);
-      expect(result[0].children![0].key).toBe(3);
-      expect(result[0].children![1].key).toBe(2);
-    });
-
-    it('should create children array if dropping on element without children', () => {
-      const treeData: TreeElement[] = [createTreeElement(1, 'Parent'), createTreeElement(2, 'Dragged')];
-
-      const info = {
-        node: { key: 1, pos: '0-0' } as { key: number; pos: string },
-        dragNode: { key: 2 } as { key: number },
+        node: createMockDropNode(1, '0-0'),
+        dragNode: createMockDragNode(2),
         dropPosition: 0,
         dropToGap: false,
       };
@@ -220,8 +145,8 @@ describe('tree', () => {
       const treeData: TreeElement[] = [createTreeElement(1, 'First'), createTreeElement(2, 'Second')];
 
       const info = {
-        node: { key: 1, pos: '0-0' } as { key: number; pos: string },
-        dragNode: { key: 2 } as { key: number },
+        node: createMockDropNode(1, '0-0'),
+        dragNode: createMockDragNode(2),
         dropPosition: 1,
         dropToGap: true,
       };

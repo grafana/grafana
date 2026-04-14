@@ -28,6 +28,10 @@ const mockTemplateReplacement = (replaceFn: (text: string) => string) => {
   } as any);
 };
 
+const createMockApiConfig = (config: Partial<APIEditorConfig>): APIEditorConfig => {
+  return config as APIEditorConfig;
+};
+
 describe('editor/element/utils', () => {
   beforeEach(() => {
     mockTemplateReplacement((text: string) => text);
@@ -60,7 +64,7 @@ describe('editor/element/utils', () => {
         method: HttpRequestMethod.GET,
       };
 
-      const result = getRequest(api);
+      const result = getRequest(createMockApiConfig(api));
 
       expect(result.url).toBe('https://api.example.com/data');
       expect(result.method).toBe(HttpRequestMethod.GET);
@@ -78,7 +82,7 @@ describe('editor/element/utils', () => {
         contentType: 'application/json',
       };
 
-      const result = getRequest(api);
+      const result = getRequest(createMockApiConfig(api));
 
       expect(result.method).toBe(HttpRequestMethod.POST);
       expect(result.data).toBe('{"key": "value"}');
@@ -94,7 +98,7 @@ describe('editor/element/utils', () => {
         method: HttpRequestMethod.GET,
       };
 
-      const result = getRequest(api);
+      const result = getRequest(createMockApiConfig(api));
 
       expect(result.url).toBe('https://example.com/api/data');
     });
@@ -109,7 +113,7 @@ describe('editor/element/utils', () => {
         ],
       };
 
-      const result = getRequest(api);
+      const result = getRequest(createMockApiConfig(api));
 
       expect(result.url).toContain('param1=value1');
       expect(result.url).toContain('param2=value2');
@@ -125,7 +129,7 @@ describe('editor/element/utils', () => {
         ],
       };
 
-      const result = getRequest(api);
+      const result = getRequest(createMockApiConfig(api));
 
       expect(result.headers).toMatchObject({
         Authorization: 'Bearer token',
@@ -142,7 +146,7 @@ describe('editor/element/utils', () => {
         method: HttpRequestMethod.GET,
       };
 
-      const result = getRequest(api);
+      const result = getRequest(createMockApiConfig(api));
 
       expect(result.url).toBe('https://example.com/api/data');
     });
@@ -156,7 +160,7 @@ describe('editor/element/utils', () => {
         queryParams: [['status', '${filter}']],
       };
 
-      const result = getRequest(api);
+      const result = getRequest(createMockApiConfig(api));
 
       expect(result.url).toContain('status=active');
     });
@@ -170,7 +174,7 @@ describe('editor/element/utils', () => {
         headerParams: [['Authorization', 'Bearer ${token}']],
       };
 
-      const result = getRequest(api);
+      const result = getRequest(createMockApiConfig(api));
 
       expect(result.headers?.Authorization).toBe('Bearer secret123');
     });
@@ -182,7 +186,7 @@ describe('editor/element/utils', () => {
         contentType: 'application/json',
       };
 
-      const result = getRequest(api);
+      const result = getRequest(createMockApiConfig(api));
 
       expect(result.data).toBe('{}');
     });
@@ -197,7 +201,7 @@ describe('editor/element/utils', () => {
         contentType: 'application/json',
       };
 
-      const result = getRequest(api);
+      const result = getRequest(createMockApiConfig(api));
 
       expect(result.data).toBe('{"user": "john"}');
     });
@@ -209,7 +213,7 @@ describe('editor/element/utils', () => {
         queryParams: [],
       };
 
-      const result = getRequest(api);
+      const result = getRequest(createMockApiConfig(api));
 
       expect(result.url).toBe('https://api.example.com/data');
     });
@@ -221,7 +225,7 @@ describe('editor/element/utils', () => {
         headerParams: [],
       };
 
-      const result = getRequest(api);
+      const result = getRequest(createMockApiConfig(api));
 
       expect(result.headers).toMatchObject({
         'X-Grafana-Action': '1',
