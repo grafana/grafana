@@ -5399,6 +5399,22 @@
     },
     {
       "metadata": {
+        "name": "themeEditor",
+        "resourceVersion": "1776117563689",
+        "creationTimestamp": "2026-04-13T21:53:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-13 21:59:23.689696 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the visual theme editor in Administration \u003e General for creating and previewing custom themes",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "timeComparison",
         "resourceVersion": "1774893613588",
         "creationTimestamp": "2025-07-24T20:07:28Z",

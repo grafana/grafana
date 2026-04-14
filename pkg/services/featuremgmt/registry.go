@@ -3047,6 +3047,14 @@ var (
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",
 		},
+		{
+			Name:        "themeEditor",
+			Description: "Enables the visual theme editor in Administration > General for creating and previewing custom themes",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatavizSquad,
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Expression:  "false",
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle
