@@ -54,16 +54,18 @@ type dataStore struct {
 	kv            KV
 	cache         *gocache.Cache
 	legacyDialect sqltemplate.Dialect // TODO: remove when backwards compatibility is no longer needed.
+	metrics       *kvBackendMetrics
 }
 
 type dataImportBatchWriter interface {
 	InsertDataImportBatch(ctx context.Context, rows []kvpkg.DataImportRow) error
 }
 
-func newDataStore(kv KV) *dataStore {
+func newDataStore(kv KV, metrics *kvBackendMetrics) *dataStore {
 	ds := &dataStore{
-		kv:    kv,
-		cache: gocache.New(time.Hour, 10*time.Minute), // 1 hour expiration, 10 minute cleanup
+		kv:      kv,
+		cache:   gocache.New(time.Hour, 10*time.Minute), // 1 hour expiration, 10 minute cleanup
+		metrics: metrics,
 	}
 
 	if sqlkv, ok := kv.(*kvpkg.SqlKV); ok {
@@ -898,6 +900,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 				// This can only happen if a concurrent write was attempted: the validation in
 				// WriteEvent guarantees that we return early when the resource already exists
 				// before entering the transaction.
+				d.metrics.recordConflict(event)
 				return conflictError(event, "concurrent create attempts detected")
 			}
 			return fmt.Errorf("compatibility layer: failed to insert to resource: %w", err)
@@ -918,7 +921,10 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		if err != nil {
 			return fmt.Errorf("compatibility layer: failed to update resource: %w", err)
 		}
-		if err := checkLegacyCASConflict(res, event, key); err != nil {
+		if isConflict, err := checkLegacyCASConflict(res, event, key); err != nil {
+			if isConflict {
+				d.metrics.recordConflict(event)
+			}
 			return err
 		}
 	case DataActionDeleted:
@@ -934,7 +940,10 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		if err != nil {
 			return fmt.Errorf("compatibility layer: failed to delete from resource: %w", err)
 		}
-		if err := checkLegacyCASConflict(res, event, key); err != nil {
+		if isConflict, err := checkLegacyCASConflict(res, event, key); err != nil {
+			if isConflict {
+				d.metrics.recordConflict(event)
+			}
 			return err
 		}
 	}
@@ -942,19 +951,19 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 	return nil
 }
 
-func checkLegacyCASConflict(res db.Result, event WriteEvent, key DataKey) error {
+func checkLegacyCASConflict(res db.Result, event WriteEvent, key DataKey) (bool, error) {
 	rows, err := res.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("compatibility layer: failed to verify optimistic lock result: %w", err)
+		return false, fmt.Errorf("compatibility layer: failed to verify optimistic lock result: %w", err)
 	}
 	if rows == 1 {
-		return nil
+		return false, nil
 	}
 	if rows > 1 {
-		return fmt.Errorf("compatibility layer: unexpected rows affected: %d", rows)
+		return false, fmt.Errorf("compatibility layer: unexpected rows affected: %d", rows)
 	}
 
-	return conflictError(event, "requested RV does not match current RV")
+	return true, conflictError(event, "requested RV does not match current RV")
 }
 
 func isRowAlreadyExistsError(err error) bool {
