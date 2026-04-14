@@ -4,6 +4,7 @@ import {
   FieldType,
   getDisplayProcessor,
   MappingType,
+  SpecialValueMatch,
   ThresholdsMode,
   type Field,
 } from '@grafana/data';
@@ -179,27 +180,25 @@ describe('prepData', () => {
 });
 
 describe('color field compilation', () => {
-  it('compiles absolute threshold color config without throwing', () => {
-    const colorField = makeField({
-      name: 'temp',
-      values: [10, 50, 90],
-      config: {
-        color: { mode: FieldColorModeId.Thresholds },
-        thresholds: {
-          mode: ThresholdsMode.Absolute,
-          steps: [
-            { value: -Infinity, color: 'green' },
-            { value: 30, color: 'yellow' },
-            { value: 70, color: 'red' },
-          ],
-        },
-      },
-    });
-
-    const series = makeSeries({
+  function makeColorSeries(colorFieldConfig: Record<string, unknown>) {
+    const colorField = makeField({ name: 'clr', values: [10, 50, 90], config: colorFieldConfig });
+    return makeSeries({
       color: { field: colorField, fixed: '#ff0000' },
       x: { field: makeField({ name: 'x', values: [1, 2, 3] }) },
       y: { field: makeField({ name: 'y', values: [10, 20, 30], config: { unit: 'y' } }) },
+    });
+  }
+  it('compiles absolute threshold color config without throwing', () => {
+    const series = makeColorSeries({
+      color: { mode: FieldColorModeId.Thresholds },
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 30, color: 'yellow' },
+          { value: 70, color: 'red' },
+        ],
+      },
     });
 
     const { prepData } = prepConfig([series], theme);
@@ -215,28 +214,18 @@ describe('color field compilation', () => {
     ]);
   });
 
-  it('compiles value-to-text mapping color config without throwing', () => {
-    const colorField = makeField({
-      name: 'status',
-      values: [1, 2, 3],
-      config: {
-        mappings: [
-          {
-            type: MappingType.ValueToText,
-            options: {
-              '1': { text: 'low', color: 'green' },
-              '2': { text: 'med', color: 'yellow' },
-              '3': { text: 'high', color: 'red' },
-            },
+  it('compiles value-to-text mapping that maps discrete values to colors', () => {
+    const series = makeColorSeries({
+      mappings: [
+        {
+          type: MappingType.ValueToText,
+          options: {
+            '1': { text: 'low', color: 'green' },
+            '2': { text: 'med', color: 'yellow' },
+            '3': { text: 'high', color: 'red' },
           },
-        ],
-      },
-    });
-
-    const series = makeSeries({
-      color: { field: colorField, fixed: '#ff0000' },
-      x: { field: makeField({ name: 'x', values: [1, 2, 3] }) },
-      y: { field: makeField({ name: 'y', values: [10, 20, 30], config: { unit: 'y' } }) },
+        },
+      ],
     });
 
     const { prepData } = prepConfig([series], theme);
@@ -250,5 +239,50 @@ describe('color field compilation', () => {
         ['#ff0000', '#ff0000', '#ff0000'],
       ],
     ]);
+  });
+
+  it('compiles range-to-text mapping that maps numeric ranges to colors', () => {
+    const series = makeColorSeries({
+      mappings: [
+        {
+          type: MappingType.RangeToText,
+          options: { from: 0, to: 50, result: { text: 'low', color: 'blue' } },
+        },
+        {
+          type: MappingType.RangeToText,
+          options: { from: 51, to: 100, result: { text: 'high', color: 'red' } },
+        },
+      ],
+    });
+
+    const { prepData } = prepConfig([series], theme);
+    const data = prepData!([series]);
+    expect(data).toHaveLength(2);
+    expect(data[1]).toHaveLength(4);
+  });
+
+  it.each([
+    ['NaN', SpecialValueMatch.NaN],
+    ['Null', SpecialValueMatch.Null],
+  ])('compiles special value mapping that assigns a color to %s values', (_label, match) => {
+    const series = makeColorSeries({
+      mappings: [{ type: MappingType.SpecialValue, options: { match, result: { text: 'special', color: 'gray' } } }],
+    });
+
+    const { prepData } = prepConfig([series], theme);
+    const data = prepData!([series]);
+    expect(data).toHaveLength(2);
+    expect(data[1]).toHaveLength(4);
+  });
+
+  it('compiles continuous gradient color mode into a 32-step palette', () => {
+    const series = makeColorSeries({
+      color: { mode: FieldColorModeId.ContinuousGrYlRd },
+    });
+
+    const { prepData } = prepConfig([series], theme);
+    const data = prepData!([series]);
+    expect(data).toHaveLength(2);
+    expect(data[1]).toHaveLength(4);
   });
 });
