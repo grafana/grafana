@@ -12,6 +12,7 @@ type finalizerMetrics struct {
 	registry                prometheus.Registerer
 	finalizerProcessedTotal *prometheus.CounterVec
 	finalizerDuration       *prometheus.HistogramVec
+	finalizerRetries        *prometheus.CounterVec
 }
 
 func registerFinalizerMetrics(registry prometheus.Registerer) finalizerMetrics {
@@ -34,18 +35,35 @@ func registerFinalizerMetrics(registry prometheus.Registerer) finalizerMetrics {
 	)
 	registry.MustRegister(finalizerDuration)
 
+	finalizerRetries := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "grafana_provisioning_finalizers_retries_total",
+			Help: "Total number of finalizer retries",
+		},
+		[]string{"finalizer_type"},
+	)
+	registry.MustRegister(finalizerRetries)
+
 	return finalizerMetrics{
 		registry:                registry,
 		finalizerProcessedTotal: finalizerProcessedTotal,
 		finalizerDuration:       finalizerDuration,
+		finalizerRetries:        finalizerRetries,
 	}
 }
 
 func (m *finalizerMetrics) RecordFinalizer(finalizerType string, outcome string, resourceCountChanged int, duration float64) {
-	m.finalizerProcessedTotal.WithLabelValues(finalizerType, outcome).Inc()
 	if outcome == utils.SuccessOutcome {
 		m.finalizerDuration.WithLabelValues(finalizerType, utils.GetResourceCountBucket(resourceCountChanged)).Observe(duration)
 	}
+}
+
+func (m *finalizerMetrics) RecordRetry(finalizerType string) {
+	m.finalizerRetries.WithLabelValues(finalizerType).Inc()
+}
+
+func (m *finalizerMetrics) RecordFinalOutcome(finalizerType string, outcome string) {
+	m.finalizerProcessedTotal.WithLabelValues(finalizerType, outcome).Inc()
 }
 
 //go:generate mockery --name=HealthMetricsRecorder --structname=MockHealthMetricsRecorder --inpackage --filename metrics_mock.go --with-expecter

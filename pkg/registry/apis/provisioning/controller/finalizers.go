@@ -21,6 +21,20 @@ import (
 	metricutils "github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
+// FinalizerError wraps errors from finalizer processing
+type FinalizerError struct {
+	FinalizerType string
+	Err           error
+}
+
+func (e *FinalizerError) Error() string {
+	return fmt.Sprintf("finalizer %s failed: %v", e.FinalizerType, e.Err)
+}
+
+func (e *FinalizerError) Unwrap() error {
+	return e.Err
+}
+
 type finalizer struct {
 	lister        resources.ResourceLister
 	clientFactory resources.ClientFactory
@@ -86,7 +100,10 @@ func (f *finalizer) process(ctx context.Context,
 		f.metrics.RecordFinalizer(finalizer, outcome, count, time.Since(start).Seconds())
 
 		if err != nil {
-			return err
+			return &FinalizerError{
+				FinalizerType: finalizer,
+				Err:           err,
+			}
 		}
 	}
 	return nil
