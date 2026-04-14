@@ -100,13 +100,9 @@ describe('prepConfig', () => {
     expect(result.warn).toEqual('No data');
   });
 
-  it('returns non-null builder when series provided', () => {
+  it('returns non-null builder and null warn when series provided', () => {
     const result = prepConfig([makeSeries()], theme);
     expect(result.builder).not.toBeNull();
-  });
-
-  it('returns null warn when series provided', () => {
-    const result = prepConfig([makeSeries()], theme);
     expect(result.warn).toBeNull();
   });
 });
