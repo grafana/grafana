@@ -1,6 +1,10 @@
 import { useCallback } from 'react';
 
-import { useGetPreferencesQuery, useUpdatePreferencesMutation } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import {
+  useGetPreferencesQuery,
+  useUpdatePreferencesMutation,
+  type PreferencesSpec,
+} from '@grafana/api-clients/rtkq/preferences/v1alpha1';
 
 // import {
 //   useGetOrgPreferencesQuery,
@@ -41,13 +45,17 @@ export const useSharedPreferences = (
   const [updatePreferences, { data: updateData, isLoading: isUpdating, isError: isUpdateError }] =
     useUpdatePreferencesMutation();
 
-  // const updatePreferences = useCallback((prefsData: any) => {
-  //   console.log('Updating preferences with data:', prefsData);
-  //   // TODO - implement update preferences mutation
-  // }, []);
+  const updatePreferencesWrapped = useCallback(
+    (prefsData: Partial<PreferencesSpec>) => {
+      console.log('Updating preferences with data:', prefsData);
+      return updatePreferences({ patch: { spec: prefsData }, name: preferencesName }).unwrap();
+      // TODO - implement update preferences mutation
+    },
+    [preferencesName, updatePreferences]
+  );
 
   return [
-    updatePreferences,
+    updatePreferencesWrapped,
     { preferences: data?.spec, isLoading, isError, isSubmitting: isUpdating, isUpdateError },
   ] as const;
 

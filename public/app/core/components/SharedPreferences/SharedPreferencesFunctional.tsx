@@ -112,10 +112,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
     }
 
     const prefsData = state;
-    await updatePreferences({
-      name: resourceUri,
-      patch: prefsData, // [TODO] - patch? that seems untyped??
-    });
+    await updatePreferences(prefsData);
 
     // window.location.reload();
   };
