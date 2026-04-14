@@ -31,6 +31,9 @@ const (
 	appSchemaBase  = "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1."
 
 	ServiceID = "sa"
+
+	maxTokenNameLength  = 190
+	maxExpiresInSeconds = 157_680_000 // 5 years
 )
 
 // PostProcessOpenAPI patches the OpenAPI spec for the /tokens endpoints:
@@ -123,7 +126,6 @@ var (
 // NewTokensREST creates the /tokens subresource handler on ServiceAccount.
 //   - saGetter: the registered storage for ServiceAccount (DualWriter or UniStore).
 //   - legacyStore: reads/writes tokens in the legacy api_key table.
-//   - customStore: writes to the dedicated token DB (Mode5/MT). May be nil.
 func NewTokensREST(saGetter rest.Getter, legacyStore legacy.LegacyIdentityStore) *TokensREST {
 	return &TokensREST{saGetter: saGetter, legacyStore: legacyStore}
 }
@@ -131,7 +133,6 @@ func NewTokensREST(saGetter rest.Getter, legacyStore legacy.LegacyIdentityStore)
 type TokensREST struct {
 	saGetter    rest.Getter                // reads ServiceAccount from DualWriter / UniStore
 	legacyStore legacy.LegacyIdentityStore // reads/writes tokens in legacy api_key
-	// customStore tokenstore.TokenSecretStore // writes hash to custom DB; nil in ST/Mode0-1
 }
 
 func (s *TokensREST) New() runtime.Object {
@@ -271,6 +272,18 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 		responder.Error(apierrors.NewBadRequest("tokenName is required"))
 		return
 	}
+	if len(req.TokenName) > maxTokenNameLength {
+		responder.Error(apierrors.NewBadRequest(fmt.Sprintf("tokenName must be at most %d characters", maxTokenNameLength)))
+		return
+	}
+	if req.ExpiresInSeconds < 0 {
+		responder.Error(apierrors.NewBadRequest("expiresInSeconds must not be negative"))
+		return
+	}
+	if req.ExpiresInSeconds > maxExpiresInSeconds {
+		responder.Error(apierrors.NewBadRequest(fmt.Sprintf("expiresInSeconds must not exceed %d (5 years)", maxExpiresInSeconds)))
+		return
+	}
 
 	// 0 means "never expires" — only compute an absolute timestamp when positive.
 	var expires int64
@@ -307,8 +320,7 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 		return
 	}
 
-	// --- Write to custom DB (Mode5 / MT) ---
-	// Write also to the custom store if configured in Mode1 and Mode5.
+	// TODO: Write to custom token store when configured (Mode5 / MT).
 
 	resp := &iamv0alpha1.CreateSATokenResponse{
 		CreateTokenBody: iamv0alpha1.CreateTokenBody{
@@ -350,9 +362,7 @@ func (s *TokensREST) handleDelete(ctx context.Context, ns claims.NamespaceInfo, 
 		return
 	}
 
-	// --- Delete from custom DB (Mode5 / MT) ---
-	// Delete from the custom store if configured in Mode1 and Mode5.
-	// In Mode1 this is best effort since the token may not exist in the custom DB.
+	// TODO: Delete from custom token store when configured (Mode5 / MT).
 
 	resp := &iamv0alpha1.DeleteSATokenResponse{
 		DeleteTokenBody: iamv0alpha1.DeleteTokenBody{

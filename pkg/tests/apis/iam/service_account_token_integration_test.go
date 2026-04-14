@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -316,4 +317,121 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 		require.Equal(t, http.StatusForbidden, rsp.Response.StatusCode)
 	})
+
+	t.Run("should paginate token list with continue", func(t *testing.T) {
+		// List with limit=2 to force pagination.
+		var page1 listTokensResponse
+		rsp1 := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   tokensPath(ns, saName) + "?limit=2",
+		}, &page1)
+
+		require.Equal(t, http.StatusOK, rsp1.Response.StatusCode)
+		require.Len(t, page1.Items, 2)
+		require.NotEmpty(t, page1.Continue, "should have continue token for next page")
+
+		// Fetch page 2.
+		var page2 listTokensResponse
+		rsp2 := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   fmt.Sprintf("%s?limit=2&continue=%s", tokensPath(ns, saName), page1.Continue),
+		}, &page2)
+
+		require.Equal(t, http.StatusOK, rsp2.Response.StatusCode)
+		require.GreaterOrEqual(t, len(page2.Items), 1, "page 2 should have at least one token")
+
+		// Ensure no overlap between pages.
+		page1Titles := map[string]bool{}
+		for _, item := range page1.Items {
+			page1Titles[item.Title] = true
+		}
+		for _, item := range page2.Items {
+			require.False(t, page1Titles[item.Title], "token %q appeared on both pages", item.Title)
+		}
+	})
+
+	t.Run("should reject negative expiresInSeconds", func(t *testing.T) {
+		body, err := json.Marshal(createTokenRequest{
+			TokenName:        "negative-expiry",
+			ExpiresInSeconds: -100,
+		})
+		require.NoError(t, err)
+
+		var res createTokenResponse
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodPost,
+			Path:   tokensPath(ns, saName),
+			Body:   body,
+		}, &res)
+
+		require.Equal(t, http.StatusBadRequest, rsp.Response.StatusCode)
+	})
+
+	t.Run("should reject expiresInSeconds exceeding 5 years", func(t *testing.T) {
+		body, err := json.Marshal(createTokenRequest{
+			TokenName:        "overflow-expiry",
+			ExpiresInSeconds: 200_000_000, // ~6.3 years
+		})
+		require.NoError(t, err)
+
+		var res createTokenResponse
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodPost,
+			Path:   tokensPath(ns, saName),
+			Body:   body,
+		}, &res)
+
+		require.Equal(t, http.StatusBadRequest, rsp.Response.StatusCode)
+	})
+
+	t.Run("should reject token name exceeding max length", func(t *testing.T) {
+		body, err := json.Marshal(createTokenRequest{
+			TokenName: strings.Repeat("a", 200),
+		})
+		require.NoError(t, err)
+
+		var res createTokenResponse
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodPost,
+			Path:   tokensPath(ns, saName),
+			Body:   body,
+		}, &res)
+
+		require.Equal(t, http.StatusBadRequest, rsp.Response.StatusCode)
+	})
+
+	t.Run("should allow token names with special characters", func(t *testing.T) {
+		body, err := json.Marshal(createTokenRequest{
+			TokenName: "my-token_v2.prod (backup)",
+		})
+		require.NoError(t, err)
+
+		var res createTokenResponse
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodPost,
+			Path:   tokensPath(ns, saName),
+			Body:   body,
+		}, &res)
+
+		require.Equal(t, http.StatusCreated, rsp.Response.StatusCode)
+		require.Equal(t, "my-token_v2.prod (backup)", res.ServiceAccountTokenName)
+
+		// Verify we can get it back.
+		var getRes tokenItem
+		getRsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   tokenPath(ns, saName, "my-token_v2.prod (backup)"),
+		}, &getRes)
+
+		require.Equal(t, http.StatusOK, getRsp.Response.StatusCode)
+		require.Equal(t, "my-token_v2.prod (backup)", getRes.Title)
+	})
+
 }
