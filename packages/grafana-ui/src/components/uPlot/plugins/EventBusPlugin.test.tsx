@@ -157,7 +157,7 @@ describe('EventBusPlugin', () => {
     });
   });
 
-  describe('setLegend', () => {
+  describe('legend config', () => {
     const config = new UPlotConfigBuilder();
     const eventBus = new EventBusSrv();
     const publishSpy = jest.spyOn(eventBus, 'publish');
