@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { v4 as uuidv4 } from 'uuid';
+
 import { store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { logWarning } from '@grafana/runtime';
@@ -49,6 +51,8 @@ import { TabItems } from './TabItems';
 import { TabsLayoutManager } from './TabsLayoutManager';
 
 export interface TabItemState extends SceneObjectState {
+  /** Stable identifier persisted in the dashboard spec; used to disambiguate slug collisions across reloads. */
+  uid: string;
   layout: DashboardLayoutManager;
   title?: string;
   isDropTarget?: boolean;
@@ -61,8 +65,7 @@ export interface TabItemState extends SceneObjectState {
 
 export class TabItem
   extends SceneObjectBase<TabItemState>
-  implements LayoutParent, BulkActionElement, EditableDashboardElement, DashboardDropTarget
-{
+  implements LayoutParent, BulkActionElement, EditableDashboardElement, DashboardDropTarget {
   public static Component = TabItemRenderer;
 
   protected _variableDependency = new VariableDependencyConfig(this, {
@@ -77,6 +80,7 @@ export class TabItem
   constructor(state?: Partial<TabItemState>) {
     super({
       ...state,
+      uid: state?.uid ?? uuidv4(),
       title: state?.title ?? t('dashboard.tabs-layout.tab.new', 'New tab'),
       layout: state?.layout ?? AutoGridLayoutManager.createEmpty(),
       conditionalRendering: state?.conditionalRendering ?? ConditionalRenderingGroup.createEmpty(),
@@ -121,29 +125,37 @@ export class TabItem
     return this.state.layout;
   }
 
-  public getSlug(): string {
+  // siblings can be passed explicitly when the tab is not yet attached to a layout
+  // (e.g. during addNewTab / removeTab undo before setState fires).
+  public getSlug(siblings?: TabItem[]): string {
     const baseSlug = kbn.slugifyForUrl(interpolateSectionTitle(this, this.state.title ?? 'Tab'));
 
-    //check for slug collisions among sibling tabs. When two different tabs produce
-    // the same base slug
-    let parent: TabsLayoutManager | undefined;
-    try {
-      parent = this.getParentLayout();
-    } catch {
-      // tab is not yet attached to a layout so no collision check is possible
-      return baseSlug;
+    // Check for slug collisions among sibling tabs. When two different tabs
+    // produce the same base slug, append a uid-derived suffix for disambiguation.
+    let siblingsToCheck: TabItem[];
+    if (siblings !== undefined) {
+      siblingsToCheck = siblings;
+    } else {
+      let parent: TabsLayoutManager | undefined;
+      try {
+        parent = this.getParentLayout();
+      } catch {
+        // Tab is not yet attached to a layout so no collision check is possible.
+        return baseSlug;
+      }
+      siblingsToCheck = parent.getTabsIncludingRepeats();
     }
 
-    const siblings = parent.getTabsIncludingRepeats();
-    const slugCollision = siblings.some(
+    const slugCollision = siblingsToCheck.some(
       (sibling) =>
         sibling !== this &&
         kbn.slugifyForUrl(interpolateSectionTitle(sibling, sibling.state.title ?? 'Tab')) === baseSlug
     );
 
     if (slugCollision) {
-      // apend a short suffix derived from the tab's unique scene key hence each colliding tab gets a distinct slug
-      return `${baseSlug}-${this.state.key}`;
+      // Append a short suffix derived from the tab's persisted uid so the slug
+      // remains stable across reloads and shared URLs don't break.
+      return `${baseSlug}-${this.state.uid.slice(0, 8)}`;
     }
 
     return baseSlug;
