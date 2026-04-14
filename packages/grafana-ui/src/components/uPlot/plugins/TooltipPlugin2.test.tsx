@@ -175,6 +175,7 @@ describe('TooltipPlugin2', () => {
 
       await act(async () => {
         mockUPlot.over.dispatchEvent(new MouseEvent('click'));
+        // wait until next render
         await new Promise((resolve) => setTimeout(resolve, 0));
       });
 
@@ -182,7 +183,42 @@ describe('TooltipPlugin2', () => {
       expect(getDataLinks).toHaveBeenCalledWith(1, 5);
     });
 
-    it.todo('oneClick');
+    it('oneClick', async () => {
+      const windowOpen = jest.spyOn(window, 'open').mockImplementation(() => null);
+
+      const getDataLinks = jest.fn(() => [
+        {
+          href: 'https://example.com/oneclick',
+          title: 'One-click link',
+          target: '_blank' as const,
+          origin: {},
+          oneClick: true,
+        },
+      ]);
+
+      const { setSeriesCallback, initCallback, mockUPlot, setLegendCallback } = setUp(undefined, {
+        getDataLinks,
+        render: (_u, _dataIdxs, _seriesIdx, _isPinned, _dismiss, _timeRange, _viaSync, dataLinks) => (
+          <span>{dataLinks.length > 0 ? dataLinks[0].title : 'Tooltip content'}</span>
+        ),
+      });
+
+      await act(async () => {
+        initCallback(mockUPlot);
+        setLegendCallback(mockUPlot);
+        setSeriesCallback(mockUPlot, 1);
+      });
+
+      await act(async () => {
+        mockUPlot.over.dispatchEvent(new MouseEvent('click'));
+      });
+
+      expect(windowOpen).toHaveBeenCalledWith('https://example.com/oneclick', '_blank');
+      expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+      expect(getDataLinks).toHaveBeenCalledWith(1, 5);
+
+      windowOpen.mockRestore();
+    });
   });
 
   describe('housekeeping', () => {
@@ -244,7 +280,6 @@ describe('TooltipPlugin2', () => {
         setSeriesCallback(mockUPlot, 1);
         setLegendCallback(mockUPlot);
         mockUPlot.over.dispatchEvent(new MouseEvent('click'));
-        await new Promise((resolve) => setTimeout(resolve, 0));
       });
 
       expect(screen.getByText('Tooltip content')).toBeInTheDocument();
