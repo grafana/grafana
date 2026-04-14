@@ -82,6 +82,7 @@ func TestIntegrationProvisioning_FixFolderMetadataJob_RemovesKeepFiles(t *testin
 	testRepo := common.TestRepo{
 		Name:                   repo,
 		SyncTarget:             "folder",
+		Workflows:              []string{"write"},
 		SkipResourceAssertions: true,
 	}
 	helper.CreateLocalRepo(t, testRepo)
