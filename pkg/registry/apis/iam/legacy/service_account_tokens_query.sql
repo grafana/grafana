@@ -12,9 +12,7 @@ SELECT
   INNER JOIN {{ .Ident .UserTable }} as u ON t.service_account_id = u.id
 WHERE t.org_id = {{ .Arg .Query.OrgID }}
    AND u.is_service_account
-{{ if .Query.UID }}
    AND u.uid = {{ .Arg .Query.UID }}
-{{ end }}
 {{ if .Query.Pagination.Continue }}
    AND t.id >= {{ .Arg .Query.Pagination.Continue }}
 {{ end }}

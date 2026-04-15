@@ -10,6 +10,8 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -21,6 +23,7 @@ import (
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/satokengen"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -37,9 +40,13 @@ const (
 	maxExpiresInSeconds = 157_680_000 // 5 years
 )
 
-// validTokenName allows alphanumerics, hyphens, underscores, and dots.
-// Slashes are forbidden to prevent path-traversal in URL segments.
-var validTokenName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
+var (
+	// validTokenName allows alphanumerics, hyphens, underscores, and dots.
+	// Slashes are forbidden to prevent path-traversal in URL segments.
+	validTokenName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
+
+	saTokenGroupResource = schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounttokens"}
+)
 
 var (
 	_ rest.Storage         = (*TokensREST)(nil)
@@ -51,11 +58,18 @@ var (
 // NewTokensREST creates the /tokens subresource handler on ServiceAccount.
 //   - saGetter: the registered storage for ServiceAccount (DualWriter or UniStore).
 //   - legacyStore: reads/writes tokens in the legacy api_key table.
-func NewTokensREST(saGetter rest.Getter, legacyStore legacy.LegacyIdentityStore) *TokensREST {
-	return &TokensREST{saGetter: saGetter, legacyStore: legacyStore}
+func NewTokensREST(saGetter rest.Getter, legacyStore legacy.LegacyIdentityStore, tracer trace.Tracer) *TokensREST {
+	return &TokensREST{
+		saGetter:    saGetter,
+		legacyStore: legacyStore,
+		logger:      log.New("grafana-apiserver.serviceaccounttokens.api"),
+		tracer:      tracer,
+	}
 }
 
 type TokensREST struct {
+	logger      log.Logger
+	tracer      trace.Tracer
 	saGetter    rest.Getter                // reads ServiceAccount from DualWriter / UniStore
 	legacyStore legacy.LegacyIdentityStore // reads/writes tokens in legacy api_key
 }
@@ -141,16 +155,23 @@ func (s *TokensREST) Connect(ctx context.Context, name string, options runtime.O
 
 // handleGet serves GET /serviceaccounts/{name}/tokens/{tokenName}.
 func (s *TokensREST) handleGet(ctx context.Context, ns claims.NamespaceInfo, saName string, tokenName string, responder rest.Responder) {
+	ctx, span := s.tracer.Start(ctx, "serviceaccounttoken.api.get")
+	defer span.End()
+	ctxLogger := s.logger.FromContext(ctx)
+
 	token, err := s.legacyStore.GetServiceAccountToken(ctx, ns, legacy.GetServiceAccountTokenQuery{
 		Name:              tokenName,
 		ServiceAccountUID: saName,
 	})
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to get token")
+		ctxLogger.Error("failed to get service account token", "error", err, "tokenName", tokenName, "serviceAccount", saName)
 		responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to get token: %w", err)))
 		return
 	}
 	if token == nil {
-		responder.Error(apierrors.NewNotFound(schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounttokens"}, tokenName))
+		responder.Error(apierrors.NewNotFound(saTokenGroupResource, tokenName))
 		return
 	}
 
@@ -162,11 +183,18 @@ func (s *TokensREST) handleGet(ctx context.Context, ns claims.NamespaceInfo, saN
 
 // handleList serves GET /serviceaccounts/{name}/tokens.
 func (s *TokensREST) handleList(ctx context.Context, ns claims.NamespaceInfo, saName string, r *http.Request, responder rest.Responder) {
+	ctx, span := s.tracer.Start(ctx, "serviceaccounttoken.api.list")
+	defer span.End()
+	ctxLogger := s.logger.FromContext(ctx)
+
 	res, err := s.legacyStore.ListServiceAccountTokens(ctx, ns, legacy.ListServiceAccountTokenQuery{
 		UID:        saName,
 		Pagination: common.PaginationFromListQuery(r.URL.Query()),
 	})
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to list tokens")
+		ctxLogger.Error("failed to list service account tokens", "error", err, "serviceAccount", saName)
 		responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to list tokens: %w", err)))
 		return
 	}
@@ -187,6 +215,10 @@ func (s *TokensREST) handleList(ctx context.Context, ns claims.NamespaceInfo, sa
 
 // handleCreate serves POST /serviceaccounts/{name}/tokens.
 func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, saName string, r *http.Request, responder rest.Responder) {
+	ctx, span := s.tracer.Start(ctx, "serviceaccounttoken.api.create")
+	defer span.End()
+	ctxLogger := s.logger.FromContext(ctx)
+
 	var req iamv0alpha1.CreateTokenRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		responder.Error(apierrors.NewBadRequest(fmt.Sprintf("invalid request body: %v", err)))
@@ -223,6 +255,9 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 	// Generate the token ONCE — the same hash goes to both stores.
 	keyResult, err := satokengen.New(ServiceID)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to generate token")
+		ctxLogger.Error("failed to generate service account token", "error", err, "serviceAccount", saName)
 		responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to generate token: %w", err)))
 		return
 	}
@@ -239,12 +274,15 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 	if err := s.legacyStore.CreateServiceAccountTokenWithHash(ctx, ns, cmd); err != nil {
 		if errors.Is(err, legacy.ErrTokenAlreadyExists) {
 			responder.Error(apierrors.NewConflict(
-				schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounttokens"},
+				saTokenGroupResource,
 				req.TokenName,
 				err,
 			))
 			return
 		}
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to store token")
+		ctxLogger.Error("failed to store service account token", "error", err, "tokenName", req.TokenName, "serviceAccount", saName)
 		responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to store token (legacy): %w", err)))
 		return
 	}
@@ -263,6 +301,10 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 
 // handleDelete serves DELETE /serviceaccounts/{name}/tokens/{tokenName}.
 func (s *TokensREST) handleDelete(ctx context.Context, ns claims.NamespaceInfo, saName string, tokenName string, responder rest.Responder) {
+	ctx, span := s.tracer.Start(ctx, "serviceaccounttoken.api.delete")
+	defer span.End()
+	ctxLogger := s.logger.FromContext(ctx)
+
 	if tokenName == "" {
 		responder.Error(apierrors.NewBadRequest("tokenName is required for DELETE"))
 		return
@@ -273,7 +315,15 @@ func (s *TokensREST) handleDelete(ctx context.Context, ns claims.NamespaceInfo, 
 		OrgID: ns.OrgID,
 		UID:   saName,
 	})
-	if err != nil || saIDResult == nil {
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to resolve service account ID")
+		ctxLogger.Error("failed to get service account internal ID", "error", err, "serviceAccount", saName)
+		responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to get service account internal ID: %w", err)))
+		return
+	}
+
+	if saIDResult == nil {
 		responder.Error(apierrors.NewNotFound(schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounts"}, saName))
 		return
 	}
@@ -283,11 +333,14 @@ func (s *TokensREST) handleDelete(ctx context.Context, ns claims.NamespaceInfo, 
 		ServiceAccountID: saIDResult.ID,
 	})
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to delete token")
+		ctxLogger.Error("failed to delete service account token", "error", err, "tokenName", tokenName, "serviceAccount", saName)
 		responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to delete token: %w", err)))
 		return
 	}
 	if rowsAffected == 0 {
-		responder.Error(apierrors.NewNotFound(schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounttokens"}, tokenName))
+		responder.Error(apierrors.NewNotFound(saTokenGroupResource, tokenName))
 		return
 	}
 

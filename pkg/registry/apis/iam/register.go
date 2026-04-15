@@ -640,7 +640,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts 
 	}
 
 	if enableServiceAccountTokensApi {
-		storage[saResource.StoragePath("tokens")] = serviceaccounttoken.NewTokensREST(saStore, b.store)
+		storage[saResource.StoragePath("tokens")] = serviceaccounttoken.NewTokensREST(saStore, b.store, b.tracing)
 	}
 
 	return nil

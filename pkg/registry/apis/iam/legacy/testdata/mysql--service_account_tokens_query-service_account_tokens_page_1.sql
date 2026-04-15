@@ -12,5 +12,6 @@ SELECT
   INNER JOIN `grafana`.`user` as u ON t.service_account_id = u.id
 WHERE t.org_id = 1
    AND u.is_service_account
+   AND u.uid = 'sa-1'
  ORDER BY t.id asc
  LIMIT 5

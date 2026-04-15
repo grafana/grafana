@@ -481,6 +481,7 @@ func TestIdentityQueries(t *testing.T) {
 				{
 					Name: "service_account_tokens_page_1",
 					Data: listServiceAccountTokens(&ListServiceAccountTokenQuery{
+						UID:        "sa-1",
 						OrgID:      1,
 						Pagination: common.Pagination{Limit: 5},
 					}),
@@ -488,6 +489,7 @@ func TestIdentityQueries(t *testing.T) {
 				{
 					Name: "service_accounts_tokens_page_2",
 					Data: listServiceAccountTokens(&ListServiceAccountTokenQuery{
+						UID:   "sa-1",
 						OrgID: 1,
 						Pagination: common.Pagination{
 							Limit:    1,

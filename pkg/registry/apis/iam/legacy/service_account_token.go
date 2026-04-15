@@ -8,6 +8,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -15,6 +16,31 @@ import (
 
 // ErrTokenAlreadyExists is returned when attempting to create a token with a name that already exists.
 var ErrTokenAlreadyExists = errors.New("a token with this name already exists for the service account")
+
+type ServiceAccountToken struct {
+	ID                int64
+	Name              string
+	Revoked           bool
+	Expires           *int64
+	LastUsed          *time.Time
+	Created           time.Time
+	Updated           time.Time
+	ServiceAccountUID string // populated by get query (joins user table)
+	ServiceAccountID  int64  // populated by get query (api_key.service_account_id)
+}
+
+type ListServiceAccountTokenQuery struct {
+	// UID is the service account uid.
+	UID        string
+	OrgID      int64
+	Pagination common.Pagination
+}
+
+type ListServiceAccountTokenResult struct {
+	Items    []ServiceAccountToken
+	Continue int64
+	RV       int64
+}
 
 // GetServiceAccountTokenQuery retrieves a single token by name within an org.
 type GetServiceAccountTokenQuery struct {
@@ -87,7 +113,21 @@ type createServiceAccountTokenQuery struct {
 	Command    *CreateServiceAccountTokenCommand
 }
 
-func (createServiceAccountTokenQuery) Validate() error { return nil }
+func (q createServiceAccountTokenQuery) Validate() error {
+	if q.Command.Name == "" {
+		return fmt.Errorf("expected non empty token name")
+	}
+	if q.Command.HashedKey == "" {
+		return fmt.Errorf("expected non empty hashed key")
+	}
+	if q.Command.OrgID == 0 {
+		return fmt.Errorf("expected non zero org id")
+	}
+	if q.Command.ServiceAccountID == 0 {
+		return fmt.Errorf("expected non zero service account id")
+	}
+	return nil
+}
 
 // ExpiresVal dereferences the Expires pointer for use in SQL templates.
 // Only call inside a {{ if .Command.Expires }} guard.
@@ -114,7 +154,18 @@ type deleteServiceAccountTokenQuery struct {
 	Command    *DeleteServiceAccountTokenCommand
 }
 
-func (deleteServiceAccountTokenQuery) Validate() error { return nil }
+func (q deleteServiceAccountTokenQuery) Validate() error {
+	if q.Command.Name == "" {
+		return fmt.Errorf("expected non empty token name")
+	}
+	if q.Command.OrgID == 0 {
+		return fmt.Errorf("expected non zero org id")
+	}
+	if q.Command.ServiceAccountID == 0 {
+		return fmt.Errorf("expected non zero service account id")
+	}
+	return nil
+}
 
 func newDeleteServiceAccountToken(sql *legacysql.LegacyDatabaseHelper, cmd *DeleteServiceAccountTokenCommand) deleteServiceAccountTokenQuery {
 	return deleteServiceAccountTokenQuery{
@@ -251,4 +302,86 @@ func (s *legacySQLStore) CreateServiceAccountTokenWithHash(
 
 		return nil
 	})
+}
+
+var sqlQueryServiceAccountTokensTemplate = mustTemplate("service_account_tokens_query.sql")
+
+func newListServiceAccountTokens(sql *legacysql.LegacyDatabaseHelper, q *ListServiceAccountTokenQuery) listServiceAccountTokensQuery {
+	return listServiceAccountTokensQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		UserTable:   sql.Table("user"),
+		TokenTable:  sql.Table("api_key"),
+		Query:       q,
+	}
+}
+
+type listServiceAccountTokensQuery struct {
+	sqltemplate.SQLTemplate
+	Query      *ListServiceAccountTokenQuery
+	UserTable  string
+	TokenTable string
+}
+
+func (q listServiceAccountTokensQuery) Validate() error {
+	if q.Query.UID == "" {
+		return fmt.Errorf("expected non empty service account uid")
+	}
+	if q.Query.OrgID == 0 {
+		return fmt.Errorf("expected non zero org id")
+	}
+	return nil
+}
+
+func (s *legacySQLStore) ListServiceAccountTokens(ctx context.Context, ns claims.NamespaceInfo, query ListServiceAccountTokenQuery) (*ListServiceAccountTokenResult, error) {
+	if query.Pagination.Limit < 1 {
+		query.Pagination.Limit = common.DefaultListLimit
+	}
+	// for continue
+	query.Pagination.Limit += 1
+	query.OrgID = ns.OrgID
+	if ns.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero orgID")
+	}
+
+	sql, err := s.getDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newListServiceAccountTokens(sql, &query)
+	q, err := sqltemplate.Execute(sqlQueryServiceAccountTokensTemplate, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryServiceAccountTokensTemplate.Name(), err)
+	}
+
+	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+
+	res := &ListServiceAccountTokenResult{}
+	if err != nil {
+		return nil, err
+	}
+
+	var lastID int64
+	for rows.Next() {
+		var t ServiceAccountToken
+		err := rows.Scan(&t.ID, &t.Name, &t.Revoked, &t.LastUsed, &t.Expires, &t.Created, &t.Updated, &t.ServiceAccountUID, &t.ServiceAccountID)
+		if err != nil {
+			return res, err
+		}
+
+		lastID = t.ID
+		res.Items = append(res.Items, t)
+		if len(res.Items) > int(query.Pagination.Limit)-1 {
+			res.Items = res.Items[0 : len(res.Items)-1]
+			res.Continue = lastID
+			break
+		}
+	}
+
+	return res, err
 }
