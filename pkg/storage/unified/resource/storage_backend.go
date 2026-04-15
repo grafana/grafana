@@ -1440,14 +1440,6 @@ func (k *kvStorageBackend) getValueFromDataStore(ctx context.Context, dataKey Da
 }
 
 func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
-	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.listModifiedSinceDataStore", trace.WithAttributes(
-		attribute.String("namespace", key.Namespace),
-		attribute.String("group", key.Group),
-		attribute.String("resource", key.Resource),
-		attribute.Int64("sinceRv", sinceRv),
-	))
-	defer span.End()
-
 	return func(yield func(*ModifiedResource, error) bool) {
 		var lastSeenResource *ModifiedResource
 		var lastSeenDataKey DataKey
@@ -1517,14 +1509,6 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 }
 
 func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
-	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.listModifiedSinceEventStore", trace.WithAttributes(
-		attribute.String("namespace", key.Namespace),
-		attribute.String("group", key.Group),
-		attribute.String("resource", key.Resource),
-		attribute.Int64("sinceRv", sinceRv),
-	))
-	defer span.End()
-
 	return func(yield func(*ModifiedResource, error) bool) {
 		// we only care about the latest revision of every resource in the list
 		seen := make(map[string]struct{})
