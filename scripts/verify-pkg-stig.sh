@@ -1,42 +1,89 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Verify RPM or DEB file permissions satisfy DISA-STIG requirements using
-# OpenSCAP OVAL evaluation on a Linux system with oscap installed.
+# Verify RPM or DEB file permissions satisfy DISA-STIG requirements
+# by running OpenSCAP inside a container with the package installed.
 #
-# Uses oscap oval eval (not xccdf eval) so no RHEL9 platform check is
-# required — works on any Linux distro that has oscap and rpm/dpkg tools.
+# For RPM: runs oscap in a UBI9 container (correct RHEL9 CPE) against the RHEL9 STIG.
+# For DEB: runs oscap in an Ubuntu 22.04 container against the Ubuntu 22.04 STIG.
+#
+# STIG rules evaluated:
+#   file_permissions_binary_dirs              /usr/sbin ≤ 0755, no g+w/o+w
+#   file_permissions_library_dirs             /usr/lib  ≤ 0755, no g+w/o+w
+#   file_ownership_binary_dirs                /usr/sbin owned by root
+#   file_ownership_library_dirs               /usr/lib  owned by root
+#   file_groupownership_system_commands_dirs  /usr/sbin group root
 #
 # Usage: verify-pkg-stig.sh <path-to.rpm|path-to.deb>
 
-if [[ "$(uname -s)" != "Linux" ]]; then
-  echo "error: this script must be run on Linux" >&2
+if ! command -v docker &>/dev/null; then
+  echo "error: docker is required" >&2
   exit 1
 fi
 
 PKG_PATH="${1:?Usage: verify-pkg-stig.sh <path-to.rpm|path-to.deb>}"
+PKG_ABS=$(realpath "$PKG_PATH")
+PKG_DIR=$(dirname "$PKG_ABS")
+PKG_FILE=$(basename "$PKG_ABS")
 
-SSG_VERSION="0.1.80"
-SSG_SHA512="bab6f8eb6feece70ec6d39778a20a4d9386e4a449984c0a4d5a72fdb2d1fbc2dcdb3c35f178d4f745c35df1c31a4e15920ff2c19fc2f77263844ae4910de0f3a"
-SSG_URL="https://github.com/ComplianceAsCode/content/releases/download/v${SSG_VERSION}/scap-security-guide-${SSG_VERSION}.tar.gz"
-SSG_DS="${SSG_DS:-/tmp/ssg-rhel9-ds.xml}"
+TMPWORK=$(mktemp -d)
+trap 'rm -rf "${TMPWORK}"' EXIT
 
-if [[ ! -f "$SSG_DS" ]]; then
-  echo "Downloading RHEL9 SCAP datastream (scap-security-guide ${SSG_VERSION})..."
-  TMPDIR="$(mktemp -d)"
-  trap 'rm -rf "$TMPDIR"' EXIT
-  TARBALL="${TMPDIR}/ssg.tar.gz"
-  curl -fsSL "$SSG_URL" -o "$TARBALL"
-  echo "${SSG_SHA512}  ${TARBALL}" | sha512sum -c -
-  tar -xzOf "$TARBALL" "scap-security-guide-${SSG_VERSION}/ssg-rhel9-ds.xml" > "$SSG_DS"
-fi
+RULE_FLAGS=(
+  --rule xccdf_org.ssgproject.content_rule_file_permissions_binary_dirs
+  --rule xccdf_org.ssgproject.content_rule_file_permissions_library_dirs
+  --rule xccdf_org.ssgproject.content_rule_file_ownership_binary_dirs
+  --rule xccdf_org.ssgproject.content_rule_file_ownership_library_dirs
+  --rule xccdf_org.ssgproject.content_rule_file_groupownership_system_commands_dirs
+)
+
+# Fetch the RHEL9 SSG datastream from a Rocky Linux 9 image (where scap-security-guide
+# is available in the default repos). UBI9 lacks this package but has the correct RHEL9
+# CPE required for the STIG platform check to pass, so we mount the file in at runtime.
+SSG_DS="${TMPWORK}/ssg-rhel9-ds.xml"
+echo "Fetching RHEL9 SSG datastream..."
+docker run --rm --platform linux/amd64 \
+  --entrypoint bash \
+  rockylinux:9 -c \
+  'dnf install -y --quiet scap-security-guide >/dev/null 2>&1
+   cat /usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml' \
+  > "${SSG_DS}"
 
 case "$PKG_PATH" in
   *.rpm)
-    rpm --upgrade --nodeps --force --ignorearch "$PKG_PATH"
+    cat > "${TMPWORK}/check.sh" <<EOF
+set -euo pipefail
+dnf install -y --quiet openscap-scanner >/dev/null 2>&1
+rpm -i --nodeps /pkgs/${PKG_FILE}
+oscap xccdf eval \\
+  --profile xccdf_org.ssgproject.content_profile_stig \\
+  $(printf ' %q' "${RULE_FLAGS[@]}") \\
+  /ssg-rhel9-ds.xml
+EOF
+    docker run --rm --platform linux/amd64 \
+      -v "${PKG_DIR}:/pkgs:ro" \
+      -v "${SSG_DS}:/ssg-rhel9-ds.xml:ro" \
+      -v "${TMPWORK}/check.sh:/check.sh:ro" \
+      registry.access.redhat.com/ubi9/ubi bash /check.sh
     ;;
   *.deb)
-    dpkg --install --force-architecture --force-depends "$PKG_PATH"
+    cat > "${TMPWORK}/check.sh" <<'EOF'
+set -euo pipefail
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -qq >/dev/null 2>&1
+apt-get install -y --no-install-recommends openscap-scanner ssg-debuntu >/dev/null 2>&1
+EOF
+    cat >> "${TMPWORK}/check.sh" <<EOF
+dpkg-deb -x /pkgs/${PKG_FILE} /
+oscap xccdf eval \\
+  --profile xccdf_org.ssgproject.content_profile_stig \\
+  $(printf ' %q' "${RULE_FLAGS[@]}") \\
+  /usr/share/xml/scap/ssg/content/ssg-ubuntu2204-ds.xml
+EOF
+    docker run --rm --platform linux/amd64 \
+      -v "${PKG_DIR}:/pkgs:ro" \
+      -v "${TMPWORK}/check.sh:/check.sh:ro" \
+      ubuntu:22.04 bash /check.sh
     ;;
   *)
     echo "error: unsupported package format: $PKG_PATH" >&2
@@ -44,32 +91,4 @@ case "$PKG_PATH" in
     ;;
 esac
 
-# Datastream and OVAL component IDs within ssg-rhel9-ds.xml.
-DS_ID="scap_org.open-scap_datastream_from_xccdf_ssg-rhel9-xccdf.xml"
-OVAL_ID="scap_org.open-scap_cref_ssg-rhel9-oval.xml"
-
-# Evaluate each OVAL definition directly, bypassing the XCCDF platform check.
-# oscap oval eval always exits 0; detect failures by grepping output for ': false'.
-FAILED=0
-for DEF_ID in \
-  oval:ssg-file_permissions_binary_dirs:def:1 \
-  oval:ssg-file_permissions_library_dirs:def:1 \
-  oval:ssg-file_ownership_binary_dirs:def:1 \
-  oval:ssg-file_ownership_library_dirs:def:1 \
-  oval:ssg-file_groupownership_system_commands_dirs:def:1; do
-  echo "--- $DEF_ID"
-  OUT="$(oscap oval eval \
-    --datastream-id "$DS_ID" \
-    --oval-id "$OVAL_ID" \
-    --id "$DEF_ID" \
-    "$SSG_DS" 2>&1)"
-  echo "$OUT"
-  if echo "$OUT" | grep -q ": false$"; then
-    FAILED=1
-  fi
-done
-
-if [[ "$FAILED" -ne 0 ]]; then
-  echo "error: one or more STIG OVAL checks failed" >&2
-  exit 1
-fi
+echo "ok: all STIG checks passed"

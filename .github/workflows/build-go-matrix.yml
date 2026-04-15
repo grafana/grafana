@@ -144,10 +144,10 @@ jobs:
           GOARM: ${{ matrix.goarm }}
         run: make build-go
 
-  verify-pkg-stig:
+  verify-rpm-stig:
     needs: detect-changes
     if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && needs.detect-changes.outputs.rpm-packaging == 'true')
-    name: verify pkg stig (linux/amd64)
+    name: verify rpm stig (linux/amd64)
     runs-on: ubuntu-x64-large
     permissions:
       contents: read
@@ -157,20 +157,11 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-go
       - uses: ./.github/actions/setup-fpm
-      - name: Install STIG check tools
-        run: |
-          sudo add-apt-repository -y universe
-          sudo apt-get update -qq
-          # openscap-scanner (Ubuntu 24.04+) replaces libopenscap8 (Ubuntu 22.04)
-          sudo apt-get install -y --no-install-recommends openscap-scanner rpm || \
-            sudo apt-get install -y --no-install-recommends libopenscap8 rpm
       - name: Create stub artifacts
         run: |
           mkdir -p bin/linux/amd64 public/build data/plugins-bundled
-          # Stub binary — only the packaging scripts and their installed permissions matter here.
           printf '#!/bin/sh\nexec true\n' > bin/linux/amd64/grafana
           chmod 0755 bin/linux/amd64/grafana
-          # Satisfy the Makefile stamp so build-targz skips plugin bundling.
           touch data/plugins-bundled/.platform-linux-amd64.stamp
       - name: Build tar.gz
         env:
@@ -186,6 +177,35 @@ jobs:
           BUILD_VERSION: '0.0.0'
           BUILD_NUMBER: stig-test
         run: make build-rpm BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+      - name: Verify RPM permissions (DISA-STIG)
+        run: bash scripts/verify-pkg-stig.sh dist/grafana_0.0.0_stig-test_linux_amd64.rpm
+
+  verify-deb-stig:
+    needs: detect-changes
+    if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && needs.detect-changes.outputs.rpm-packaging == 'true')
+    name: verify deb stig (linux/amd64)
+    runs-on: ubuntu-x64-large
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-go
+      - uses: ./.github/actions/setup-fpm
+      - name: Create stub artifacts
+        run: |
+          mkdir -p bin/linux/amd64 public/build data/plugins-bundled
+          printf '#!/bin/sh\nexec true\n' > bin/linux/amd64/grafana
+          chmod 0755 bin/linux/amd64/grafana
+          touch data/plugins-bundled/.platform-linux-amd64.stamp
+      - name: Build tar.gz
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          BUILD_VERSION: '0.0.0'
+          BUILD_NUMBER: stig-test
+        run: make build-targz BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
       - name: Build DEB
         env:
           GOOS: linux
@@ -193,15 +213,8 @@ jobs:
           BUILD_VERSION: '0.0.0'
           BUILD_NUMBER: stig-test
         run: make build-deb BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
-      - name: Cache SCAP datastream
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # zizmor: ignore[cache-poisoning] -- v5.0.4; key is pinned and content is SHA512-verified
-        with:
-          path: /tmp/ssg-rhel9-ds.xml
-          key: ssg-rhel9-ds-0.1.80
-      - name: Verify RPM permissions (DISA-STIG)
-        run: sudo bash scripts/verify-pkg-stig.sh dist/grafana_0.0.0_stig-test_linux_amd64.rpm
       - name: Verify DEB permissions (DISA-STIG)
-        run: sudo bash scripts/verify-pkg-stig.sh dist/grafana_0.0.0_stig-test_linux_amd64.deb
+        run: bash scripts/verify-pkg-stig.sh dist/grafana_0.0.0_stig-test_linux_amd64.deb
 
   # Job required by branch rules: runs even when detect-changes or build jobs were skipped,
   # and fails if any build-go or build-go-enterprise matrix job failed.
@@ -210,7 +223,8 @@ jobs:
       - detect-changes
       - build-go
       - build-go-enterprise
-      - verify-pkg-stig
+      - verify-rpm-stig
+      - verify-deb-stig
     if: always()
     name: All steps completed
     runs-on: ubuntu-latest

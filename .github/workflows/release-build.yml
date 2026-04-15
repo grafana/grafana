@@ -412,8 +412,8 @@ jobs:
           path: upload/artifacts-deb-rpm-${{ matrix.name }}
           retention-days: 1
 
-  verify-pkg-stig:
-    name: verify pkg stig (linux-amd64)
+  verify-rpm-stig:
+    name: verify rpm stig (linux-amd64)
     runs-on: ubuntu-x64-large
     needs:
       - build-deb-rpm
@@ -427,26 +427,30 @@ jobs:
         with:
           name: artifacts-deb-rpm-linux-amd64
           path: dist
-      - name: Install STIG check tools
-        run: |
-          sudo add-apt-repository -y universe
-          sudo apt-get update -qq
-          # openscap-scanner (Ubuntu 24.04+) replaces libopenscap8 (Ubuntu 22.04)
-          sudo apt-get install -y --no-install-recommends openscap-scanner rpm || \
-            sudo apt-get install -y --no-install-recommends libopenscap8 rpm
-      - name: Cache SCAP datastream
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # zizmor: ignore[cache-poisoning] -- v5.0.4; key is pinned and content is SHA512-verified
-        with:
-          path: /tmp/ssg-rhel9-ds.xml
-          key: ssg-rhel9-ds-0.1.80
       - name: Verify RPM permissions (DISA-STIG)
         run: |
           for PKG in dist/*.rpm; do break; done
-          sudo bash scripts/verify-pkg-stig.sh "$PKG"
+          bash scripts/verify-pkg-stig.sh "$PKG"
+
+  verify-deb-stig:
+    name: verify deb stig (linux-amd64)
+    runs-on: ubuntu-x64-large
+    needs:
+      - build-deb-rpm
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: artifacts-deb-rpm-linux-amd64
+          path: dist
       - name: Verify DEB permissions (DISA-STIG)
         run: |
           for PKG in dist/*.deb; do break; done
-          sudo bash scripts/verify-pkg-stig.sh "$PKG"
+          bash scripts/verify-pkg-stig.sh "$PKG"
 
   build-docker-alpine:
     name: docker (alpine) / ${{ matrix.name }}
