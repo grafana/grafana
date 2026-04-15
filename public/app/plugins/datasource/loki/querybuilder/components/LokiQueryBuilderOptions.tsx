@@ -181,8 +181,8 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
             label="Step"
             tooltip={
               isLogQuery
-                ? 'For log queries, step controls the interval used by the Logs Volume histogram. If not filled, Grafana\'s calculated interval will be used. Example valid values: 1s, 5m, 10h, 1d.'
-                : 'Use the step parameter when making queries to Loki. If not filled, Grafana\'s calculated interval will be used. Example valid values: 1s, 5m, 10h, 1d.'
+                ? "For log queries, step controls the interval used by the Logs Volume histogram. If not filled, Grafana's calculated interval will be used. Example valid values: 1s, 5m, 10h, 1d."
+                : "Use the step parameter when making queries to Loki. If not filled, Grafana's calculated interval will be used. Example valid values: 1s, 5m, 10h, 1d."
             }
             invalid={!isValidStep}
             error={'Invalid step. Example valid values: 1s, 5m, 10h, 1d.'}
