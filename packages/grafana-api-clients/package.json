@@ -37,11 +37,17 @@
     "./internal/rtkq/legacy/migrate-to-cloud": {
       "@grafana-app/source": "./src/clients/rtkq/migrate-to-cloud/index.ts"
     },
-    "./internal/rtkq/legacy/preferences": {
+    "./internal/rtkq/legacy/preferences/user": {
       "@grafana-app/source": "./src/clients/rtkq/preferences/user/index.ts"
     },
     "./internal/rtkq/legacy/user": {
       "@grafana-app/source": "./src/clients/rtkq/user/index.ts"
+    },
+    "./internal/rtkq/legacy/preferences/org": {
+      "@grafana-app/source": "./src/clients/rtkq/preferences/org/index.ts"
+    },
+    "./internal/rtkq/legacy/preferences/team": {
+      "@grafana-app/source": "./src/clients/rtkq/preferences/team/index.ts"
     },
     "./rtkq/advisor/v0alpha1": {
       "@grafana-app/source": "./src/clients/rtkq/advisor/v0alpha1/index.ts",
@@ -170,7 +176,7 @@
     "openapi-types": "^12.1.3",
     "plop": "^4.0.1",
     "rollup": "^4.22.4",
-    "typescript": "5.9.2"
+    "typescript": "6.0.2"
   },
   "peerDependencies": {
     "@grafana/runtime": ">=11.6 <= 12.x",

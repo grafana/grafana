@@ -119,7 +119,7 @@ To navigate in the reverse direction, from a metric to its associated trace, con
 
 ## Troubleshooting
 
-If trace to metrics links aren't appearing or return no data, refer to [Trace to logs/metrics/profiles issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/troubleshoot/#trace-to-logsmetricsprofiles-issues) in the troubleshooting guide.
+If trace to metrics links aren't appearing or return no data, refer to [Trace to logs/metrics/profiles issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/troubleshooting/#trace-to-logsmetricsprofiles-issues) in the troubleshooting guide.
 
 If the configuration fields are greyed out, your data source is provisioned. Refer to the [Provisioning](#provisioning) section for how to update the configuration via YAML.
 

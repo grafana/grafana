@@ -22,7 +22,7 @@
       "inherited": "繼承自資料夾",
       "locked-aria-label": "鎖定的權限指示器",
       "remove-aria-label": "移除{{identifier}}的權限",
-      "tooltip-inherited-permission": "繼承權限",
+      "tooltip-inherited-permission": "繼承的權限",
       "tooltip-provisioned-permission": "佈建權限"
     },
     "permissions": {
@@ -46,7 +46,7 @@
     "action-editor": {
       "button": {
         "style": {
-          "background-color": "顏色"
+          "background-color": "色彩"
         }
       },
       "label-headers": "標頭",
@@ -368,7 +368,7 @@
     "alert": {
       "alert-state": "警報狀態",
       "annotations": "註釋",
-      "description-missing-series-evaluations": "在警報實例過期前，維度必須缺少連續評估間隔的數量，接著才會自動解決和移除。若為空白，則預設為 2。",
+      "description-missing-series-evaluations": "某個維度必須連續缺失的評估間隔數量，達到此數量後警示執行個體將變為失效狀態，隨後會自動解除並移除。若為空白，則預設為 2。",
       "evaluation": "評價",
       "evaluation-paused": "警報評估目前已暫停",
       "evaluation-paused-description": "在規則取消暫停之前，不會觸發此規則的通知，也不會建立警報執行個體。",
@@ -411,7 +411,7 @@
     "alert-group-alerts-table": {
       "columns": {
         "label": {
-          "instance-labels": "實例標籤",
+          "instance-labels": "執行個體標籤",
           "notification-state": "通知狀態"
         }
       },
@@ -481,11 +481,11 @@
     },
     "alert-missing-evaluations-to-stale": {
       "help-info": {
-        "link-text": "閱讀更多關於過期警報實例的資訊",
-        "text1": "如果警報規則查詢傳回資料，但該警報實例的特定維度（或序列）在幾個連續的評估間隔中缺失，則警報實例會視作已過期。",
-        "text2": "解決過期的警報實例，然後移除。",
-        "text3": "此設定定義在警報實例被認定為已過期前，必須經過多少個連續且沒有資料的評估間隔。若為空白，則預設為 2。",
-        "title": "過期的警報實例"
+        "link-text": "閱讀更多關於過期警示執行個體的資訊",
+        "text1": "如果警示規則查詢傳回資料，但該警示執行個體的特定維度（或序列）在幾個連續的評估間隔中缺失，則警示執行個體會視作已過期。",
+        "text2": "解決過期的警示執行個體，然後移除。",
+        "text3": "此設定定義在警示執行個體被認定為已過期前，必須經過多少個連續且沒有資料的評估間隔。若為空白，則預設為 2。",
+        "title": "過期的警示執行個體"
       }
     },
     "alert-recording-rule-form": {
@@ -496,7 +496,7 @@
       }
     },
     "alert-rule": {
-      "term": "警報規則"
+      "term": "警示規則"
     },
     "alert-rule-drawer": {
       "error-title": "",
@@ -549,7 +549,7 @@
       "unprocessed-the-alert-is-received": "未處理：已收到警報，但其通知尚未處理。"
     },
     "alert-state-tag": {
-      "content-alert-evaluation-is-currently-paused": "警報評估目前已暫停",
+      "content-alert-evaluation-is-currently-paused": "警示評估目前已暫停",
       "paused": "已暫停"
     },
     "alert-warning": {
@@ -996,11 +996,11 @@
     },
     "copy-to-clipboard": "將「{{label}}」複製到剪貼簿",
     "create-alert-from-panel": {
-      "description": "要在目前分頁或新分頁中開啟警報建立表單嗎？",
-      "no-queries": "此面板中未找到具有警報功能的查詢項目。",
+      "description": "要在目前分頁或新分頁中開啟警示建立表單嗎？",
+      "no-queries": "此面板中未找到具有警示功能的查詢項目。",
       "open": "開啟",
       "open-in-new-tab": "在新分頁中開啟",
-      "title": "建立警報規則"
+      "title": "建立警示規則"
     },
     "create-metadata": {
       "label": {
@@ -1040,7 +1040,7 @@
       "fallback-dashboards-string": "儀表板",
       "panel-row": {
         "content-panel-valid-identifier": "此面板沒有有效的識別碼。",
-        "tooltip-alert-tab-support": "僅在圖表和時間序列面板上支援警報分頁和警報註解。"
+        "tooltip-alert-tab-support": "僅在圖表和時間序列面板上支援警示分頁和警示註解。"
       },
       "placeholder-search-dashboard": "搜尋儀表板",
       "placeholder-search-panel": "搜尋面板",
@@ -1136,7 +1136,7 @@
       }
     },
     "editor": {
-      "edit-alert-rule": "編輯警報規則",
+      "edit-alert-rule": "編輯警示規則",
       "edit-recording-rule": "編輯錄製規則",
       "new-alert-rule": "新的警報規則",
       "new-recording-rule": "新的錄製規則"
@@ -1253,7 +1253,7 @@
           "enable-alerting-grafana-config": "若要啟用通知，請在 Grafana 設定中啟用"
         },
         "text": {
-          "alerting-is-not-enabled": "尚未啟用警報功能"
+          "alerting-is-not-enabled": "尚未啟用警示功能"
         }
       }
     },
@@ -1290,7 +1290,7 @@
       "delete-modal-confirmation-text": "刪除",
       "delete-modal-delete-button": "刪除",
       "delete-modal-deleting": "正在刪除…",
-      "delete-modal-text": "此動作將刪除<1>{{folderName}}</1>資料夾中的所有警報規則。巢狀資料夾不會受到影響。",
+      "delete-modal-text": "此動作將刪除<1>{{folderName}}</1>資料夾中的所有警示規則。巢狀資料夾不會受到影響。",
       "delete-modal-title": "刪除",
       "error": "無法對資料夾執行動作：{{error}}",
       "pause": {
@@ -1342,15 +1342,15 @@
     },
     "get-alert-suggestions": {
       "documentation": {
-        "annotations-attached-alert": "一組附加到警報的註解。",
-        "fingerprint-identify-alert": "可用於識別警報的指紋。",
+        "annotations-attached-alert": "一組附加到警示的註解。",
+        "fingerprint-identify-alert": "可用於識別警示的指紋。",
         "grafana-external-alertmanager": "返回 Grafana 或外部 Alertmanager 的連結。",
-        "organization-alert": "擁有警報的組織 ID。",
-        "time-the-alert-started-firing": "警報開始觸發的時間。"
+        "organization-alert": "擁有警示的組織 ID。",
+        "time-the-alert-started-firing": "警示開始觸發的時間。"
       },
       "value": {
-        "labels-attached-alert": "一組附加到警報的標籤。",
-        "status-alert-firing-resolved": "警報狀態。狀態可能為「觸發」或「已解決」"
+        "labels-attached-alert": "一組附加到警示的標籤。",
+        "status-alert-firing-resolved": "警示狀態。狀態可能為「觸發」或「已解決」"
       }
     },
     "get-cloud-scenes": {
@@ -1360,7 +1360,7 @@
     },
     "get-global-suggestions": {
       "value": {
-        "an-array-containing-all-alerts": "包含所有警報的陣列"
+        "an-array-containing-all-alerts": "包含所有警示的陣列"
       }
     },
     "get-grafana-alertmanager-scenes": {
@@ -1380,12 +1380,12 @@
         }
       },
       "title": {
-        "mimirmanaged-alert-rules-per-rule-group": "每個規則群組由 Mimir 管理的警報規則"
+        "mimirmanaged-alert-rules-per-rule-group": "每個規則群組由 Mimir 管理的警示規則"
       }
     },
     "get-mimir-managed-rules-scenes": {
       "title": {
-        "mimirmanaged-alert-rules": "Mimir 管理的警報規則"
+        "mimirmanaged-alert-rules": "Mimir 管理的警示規則"
       }
     },
     "get-preview-results": {
@@ -1393,7 +1393,7 @@
     },
     "get-state-display-model": {
       "text": {
-        "alerting": "警報",
+        "alerting": "警示",
         "error": "錯誤",
         "firing": "觸發",
         "inactive": "未啟用",
@@ -1545,7 +1545,7 @@
       "namespace": "命名空間",
       "new": "新",
       "title": {
-        "back": "返回警報"
+        "back": "返回警示"
       }
     },
     "group-edit": {
@@ -1595,7 +1595,7 @@
       }
     },
     "home": {
-      "irm-card-description": "使用 Grafana Cloud IRM 統一隨叫隨到、警報和事件回應。",
+      "irm-card-description": "使用 Grafana Cloud IRM 統一隨叫隨到、警示和事件回應。",
       "irm-card-item-1": "使用行事曆或 Terraform 管理隨叫隨到排程。",
       "irm-card-item-2": "透過網頁、應用程式、Slack 或其他管道回應事件。",
       "irm-card-item-3": "使用 AI 支援的 Grafana SIFT 找出根本原因。",
@@ -1607,7 +1607,7 @@
       "synthetic-monitoring-card-item-1": "透過瀏覽器檢查模擬端到端使用者歷程。",
       "synthetic-monitoring-card-item-2": "在每個網路層執行 ping、DNS、HTTP/S 和 TCP 檢查。",
       "synthetic-monitoring-card-item-3": "在防火牆後使用 20 多個全球探測器或私人探測器。",
-      "synthetic-monitoring-card-item-4": "使用內建的 Prometheus 風格警報追蹤 SLO - 直接從使用者介面操作。",
+      "synthetic-monitoring-card-item-4": "使用內建的 Prometheus 風格警示追蹤 SLO - 直接從使用者介面操作。",
       "synthetic-monitoring-card-title": "綜合監控"
     },
     "import-to-gma": {
@@ -1664,7 +1664,7 @@
         "description": "輸入以搜尋現有的命名空間",
         "label": "命名空間"
       },
-      "pageTitle": "匯入警報規則",
+      "pageTitle": "匯入警示規則",
       "pause": {
         "label": "暫停匯入的警報規則"
       },
@@ -1831,7 +1831,7 @@
       "pageTitle": ""
     },
     "inhibition-rules": {
-      "body": "此 Alertmanager 已設定抑制規則。觸發相符的警報時，可能會抑制某些警報。",
+      "body": "此 Alertmanager 已設定抑制規則。觸發相符的警示時，可能會抑制某些警示。",
       "learn-more": "進一步了解抑制規則",
       "title": "抑制規則已生效"
     },
@@ -1860,8 +1860,8 @@
         "description": "",
         "title": ""
       },
-      "history-error": "無法載入狀態歷史紀錄",
-      "history-error-desc": "無法擷取此執行個體的狀態轉換歷史紀錄。",
+      "history-error": "無法載入狀態歷史記錄",
+      "history-error-desc": "無法擷取此執行個體的狀態轉換歷史記錄。",
       "instance-history-heading": "",
       "no-history": "沒有最近的狀態變更",
       "notifications-error": "",
@@ -1958,7 +1958,7 @@
       "empty": {
         "ds-no-rules": "尚未替此資料來源設定規則",
         "new-alert-rule": "新的警報規則",
-        "new-ds-managed-alerting-rule": "新的資料來源管理警報規則",
+        "new-ds-managed-alerting-rule": "新的資料來源管理警示規則",
         "new-ds-managed-recording-rule": "新的資料來源管理錄製規則",
         "new-grafana-alerting-rule": "新的警報規則",
         "new-grafana-recording-rule": "新的錄製規則",
@@ -1999,7 +1999,7 @@
       "label": {
         "firing": "觸發",
         "mixed": "混合",
-        "no-data": "暫無資料",
+        "no-data": "無資料",
         "normal": "一般",
         "pending": "待處理",
         "recovering": "正在還原"
@@ -2027,7 +2027,7 @@
       "start-state": "",
       "timeline-hidden": "",
       "title-error-fetching-the-state-history": "擷取狀態歷史紀錄時發生錯誤",
-      "tooltip-common-labels": "通用標籤是附加到所有警報執行個體的標籤"
+      "tooltip-common-labels": "通用標籤是附加到所有警示執行個體的標籤"
     },
     "manage-permissions": {
       "button": "管理權限",
@@ -2038,7 +2038,7 @@
         "label": {
           "contact-point": "",
           "notification-policy": "",
-          "select-contact-point": "選取聯絡點",
+          "select-contact-point": "選擇聯絡點",
           "use-notification-policy": "使用通知政策"
         }
       }
@@ -2102,7 +2102,7 @@
       "get-data-source-options": {
         "grouped-options": {
           "label": {
-            "data-sources-with-configured-alert-rules": "具有已設定警報規則的資料來源",
+            "data-sources-with-configured-alert-rules": "具有已設定警示規則的資料來源",
             "other-data-sources": "其他資料來源"
           }
         }
@@ -2123,7 +2123,7 @@
       "title-delete-mute-timing": "刪除靜音時間"
     },
     "mute-timing-fields": {
-      "am-active-timing-select-description-active-timings": "選擇時間間隔以定義何時傳送此警報規則的通知",
+      "am-active-timing-select-description-active-timings": "選擇時間間隔以定義何時傳送此警示規則的通知",
       "am-mute-timing-select-description-mute-timings": "選擇靜音時間以定義何時不要傳送此警報規則的通知",
       "am-mute-timing-select-label-mute-timings": "靜音時間"
     },
@@ -2165,7 +2165,7 @@
     },
     "navigation": {
       "active-notifications": "",
-      "alert-rules": "警報規則",
+      "alert-rules": "警示規則",
       "alerts": "",
       "contact-points": "",
       "notification-policies": "",
@@ -2201,7 +2201,7 @@
     "new-silence-page": {
       "page-nav": {
         "subTitle": {
-          "configure-silences-notifications-particular-alert": "設定靜音以停止來自特定警報規則的通知"
+          "configure-silences-notifications-particular-alert": "設定靜音以停止來自特定警示規則的通知"
         },
         "text": {
           "silence-alert-rule": "靜音警報規則"
@@ -2421,7 +2421,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "查看目前的警報，並探索歷史資料以調查目前或過去的問題。"
+        "subtitle": "查看目前的警示，並探索歷史資料以調查目前或過去的問題。"
       }
     },
     "panel-alert-tab-content": {
@@ -2525,7 +2525,7 @@
         "error-code": "錯誤訊息：「{{error}}」",
         "routes": {
           "conflictingMatchers": "無法新增或更新路由：如果我們合併了比對器「{{-matchers}}」，比對器會與外部路由樹衝突。這將使路由無法到達。",
-          "unknownMatchers": "<未知匹配條件>"
+          "unknownMatchers": "<未知相符項>"
         },
         "suffix": "請重新整理此頁面並再試一次。",
         "title": "無法新增或更新通知政策"
@@ -2617,7 +2617,7 @@
     "provisioning": {
       "badge-tooltip-provenance": "此資源已透過 {{provenance}} 設定，無法透過使用者介面編輯",
       "badge-tooltip-standard": "此資源已設定，無法透過使用者介面編輯",
-      "body-imported": "此{{resource}}包含從外部 Alertmanager 匯入的整合項目，且目前為唯讀。移轉流程完成後，將可編輯整合項目。",
+      "body-imported": "此 {{resource}} 包含從外部 Alertmanager 匯入的整合，目前為唯讀。移轉流程完成後，整合將變為可編輯。",
       "body-imported-time-interval": "此時間間隔是從外部 Alertmanager 匯入，且目前為唯讀。移轉流程完成後，時間間隔將可編輯。",
       "body-provisioned": "此{{resource}}已佈建，這表示其是透過設定所建立。請聯絡您的伺服器管理員以更新此{{resource}}。",
       "title-imported": "此{{resource}}已匯入，無法透過使用者介面編輯",
@@ -2637,7 +2637,7 @@
       "expressions": "表達式",
       "manipulate-returned-queries-other-operations": "使用數學和其他運算來處理查詢返回的資料。",
       "message": {
-        "a-valid-expression-is-required": "必須輸入有效的表達式"
+        "a-valid-expression-is-required": "必須輸入有效的運算式"
       },
       "no-compatible-sources": "您似乎沒有相容的資料來源",
       "title-deactivate-advanced-options": "停用進階選項",
@@ -2761,7 +2761,7 @@
     },
     "routing-settings": {
       "aria-label-group-by": "分組依據",
-      "description-group-by": "警報一律會依 grafana_folder 和 alertname，以及您選擇的任何其他標籤進行分組。選擇「停用 (...)」即可將每個警報作為單獨的通知傳送。",
+      "description-group-by": "警示一律會依 grafana_folder 和 alertname，以及您選擇的任何其他標籤進行分組。選擇「停用 (...)」即可將每個警示作為單獨的通知傳送。",
       "group-by-hint": "除非您選擇「停用 (...)」，否則 grafana_folder 和 alertname 會隨時包含在內。",
       "group-interval": "群組間隔：<strong>{{groupIntervalValue}}</strong>",
       "group-wait": "群組等待：<strong>{{groupWaitValue}}</strong>",
@@ -2805,7 +2805,7 @@
       "label-data-source": "資料來源"
     },
     "rule-details-drawer": {
-      "go-to-detail-view": "查看警報規則"
+      "go-to-detail-view": "查看警示規則"
     },
     "rule-details-expression": {
       "label-expression": "表達式"
@@ -2815,7 +2815,7 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "顯示全部",
-      "button-show-all-instances": "顯示所有 {{totalItemsCount}} 個警報執行個體",
+      "button-show-all-instances": "顯示所有 {{totalItemsCount}} 個警示執行個體",
       "showing-count": "顯示 {{visibleItemsCount}} 個執行個體，共 {{totalItemsCount}} 個",
       "showing-count-with-state": "顯示 {{visibleItemsCount}} 個{{alertState}}執行個體，共 {{totalItemsCount}} 個"
     },
@@ -2902,14 +2902,14 @@
       },
       "threshold": {
         "recovery": {
-          "stop-alerting-above": "高於以下值時停止警報（或待處理狀態）",
-          "stop-alerting-bellow": "低於以下值時停止警報（或待處理狀態）",
-          "stop-alerting-equal": "等於以下值時停止警報（或待處理狀態）",
-          "stop-alerting-inside-range": "在範圍內時停止警報（或待處理狀態）",
-          "stop-alerting-less": "少於以下值時停止警報（或待處理狀態）",
-          "stop-alerting-more": "多於以下值時停止警報（或待處理狀態）",
-          "stop-alerting-not-equal": "不等於以下值時停止警報（或待處理狀態）",
-          "stop-alerting-outside-range": "在範圍外時停止警報（或待處理狀態）",
+          "stop-alerting-above": "高於以下值時停止警示（或待處理狀態）",
+          "stop-alerting-bellow": "低於以下值時停止警示（或待處理狀態）",
+          "stop-alerting-equal": "等於以下值時停止警示（或待處理狀態）",
+          "stop-alerting-inside-range": "在範圍內時停止警示（或待處理狀態）",
+          "stop-alerting-less": "小於以下值時停止警示（或待處理狀態）",
+          "stop-alerting-more": "超過以下值時停止警示（或待處理狀態）",
+          "stop-alerting-not-equal": "不等於以下值時停止警示（或待處理狀態）",
+          "stop-alerting-outside-range": "在範圍外時停止警示（或待處理狀態）",
           "title": "自訂恢復閾值"
         }
       }
@@ -2973,9 +2973,9 @@
       "new-alert-rule": "新的警報規則",
       "new-datasource-recording-rule": "新的資料來源錄製規則",
       "new-grafana-recording-rule": "新的 Grafana 錄製規則",
-      "new-rule-for-export": "用於匯出的新警報規則",
+      "new-rule-for-export": "用於匯出的新警示規則",
       "pagination": {
-        "next-page": "顯示更多內容…"
+        "next-page": "顯示更多…"
       },
       "recording-rules": "錄製規則",
       "return-button": {
@@ -3003,7 +3003,7 @@
       "expand-all": "展開全部"
     },
     "rule-list-v2": {
-      "import-to-gma": "匯入警報規則",
+      "import-to-gma": "匯入警示規則",
       "import-to-gma-tool": ""
     },
     "rule-modify-export": {
@@ -3083,12 +3083,12 @@
       },
       "state": {
         "firing": "觸發",
-        "normal": "一般",
+        "normal": "標準",
         "pending": "待處理",
         "recovering": "正在還原"
       },
       "type": {
-        "alert": "警報規則",
+        "alert": "警示規則",
         "recording": "錄製規則"
       },
       "update-rule": {
@@ -3099,7 +3099,7 @@
       "clear-filters": "清除篩選",
       "configured-alert-rules": "包含已設定警報規則的資料來源是 Mimir 或 Loki 資料來源，其中警報規則儲存在資料來源本身並進行評估。",
       "contact-point-disabled-tooltip": "",
-      "contact-point-tooltip": "篩選直接導向所選聯絡點的警報規則。導向通知政策的警報規則不會顯示。",
+      "contact-point-tooltip": "篩選直接導向所選聯絡點的警示規則。導向通知政策的警示規則不會顯示。",
       "contact-point-tooltip-title": "聯絡點篩選器說明",
       "dashboard": "儀表板",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "按資料來源搜尋說明",
@@ -3218,7 +3218,7 @@
     },
     "settings": {
       "tabs": {
-        "alert-managers": "警報管理員"
+        "alert-managers": "警示管理員"
       }
     },
     "settings-content": {
@@ -3462,7 +3462,7 @@
       "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "設定錯誤",
       "misconfigured-warning": "此範本設定錯誤。",
-      "misconfigured-warning-details": "必須在警報管理設定的<2></2>和<5></5>兩個區段中定義範本。"
+      "misconfigured-warning-details": "必須在警示管理設定的<2></2>和<5></5>兩個區段中定義範本。"
     },
     "templates-page": {
       "add-template": "",
@@ -3484,7 +3484,7 @@
     "test-contact-point-modal": {
       "custom-notification-message": "您將傳送使用以下定義註解的測試通知。如果使用自訂範本和訊息，這是一個很好的選擇。",
       "notification-message": "通知訊息",
-      "predefined-notification-message": "您將傳送使用預定義警報的測試通知。若您已定義自訂範本或訊息，為了取得更佳的結果，請從上方切換至<strong>自訂</strong>通知訊息。",
+      "predefined-notification-message": "您將傳送使用預定義警示的測試通知。若您已定義自訂範本或訊息，為了取得更佳的結果，請從上方切換至<strong>自訂</strong>通知訊息。",
       "send-test-notification": "傳送測試通知",
       "test-failed": "測試通知失敗",
       "test-successful": "測試通知已成功傳送",
@@ -3537,7 +3537,7 @@
     },
     "titles": {
       "group-view": {
-        "subtitle": "管理警報規則、記錄規則和評估間隔"
+        "subtitle": "管理警示規則、記錄規則和評估間隔"
       }
     },
     "to-gma": {
@@ -3566,17 +3566,19 @@
       },
       "instance-details-drawer": {
         "alert-instance-label": "",
+        "back": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "執行個體詳細資料",
         "silence-button": "",
-        "silence-no-permission": ""
+        "silence-no-permission": "",
+        "silence-title-with-name": ""
       },
       "labels-column-title": "",
-      "no-firing-or-pending-instances": "您在所選時間範圍內，沒有處於觸發或待處理狀態的警報執行個體。",
-      "no-instances-found": "找不到規則的警報執行個體：{{ruleUID}}",
+      "no-firing-or-pending-instances": "您在所選時間範圍內，沒有處於觸發或待處理狀態的警示執行個體。",
+      "no-instances-found": "找不到規則的警示執行個體：{{ruleUID}}",
       "no-labels": "沒有標籤",
-      "no-matching-instances-with-filters": "沒有警報執行個體符合您所選時間範圍的目前篩選條件。",
+      "no-matching-instances-with-filters": "沒有警示執行個體符合您所選時間範圍的目前篩選條件。",
       "open-in-sidebar": "在側邊欄中開啟",
       "open-rule-details": "開啟規則詳細資料",
       "rule-details": {
@@ -3626,8 +3628,8 @@
     "use-columns": {
       "columns": {
         "label": {
-          "alert-rule-targeted": "警報規則已指定",
-          "alerts-silenced": "警報已靜音",
+          "alert-rule-targeted": "警示規則已指定",
+          "alerts-silenced": "警示已靜音",
           "health": "使用情況",
           "matching-labels": "匹配標籤",
           "name": "名稱（名字）",
@@ -3653,7 +3655,7 @@
     "use-combined-labels": {
       "grouped-options": {
         "label": {
-          "from-alerts": "來自警報",
+          "from-alerts": "來自警示",
           "from-system": "來自系統"
         }
       }
@@ -3700,7 +3702,7 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "enrichment": "警報增強功能",
+          "enrichment": "警示增強功能",
           "history": "歷史紀錄",
           "instances": "執行個體",
           "notifications": "",
@@ -3718,12 +3720,12 @@
       "table": "表格"
     },
     "welcome-header": {
-      "description-alert-activity": "查看目前的警報，並探索歷史資料以調查目前或過去的問題。",
+      "description-alert-activity": "查看目前的警示，並探索歷史資料以調查目前或過去的問題。",
       "description-alert-rules": "定義警報規則觸發前必須滿足的條件",
       "description-configure-firing-alert-instances-routed-contact": "設定如何將觸發的警報執行個體傳送至聯絡點",
       "description-configure-receives-notifications": "設定接收通知的對象以及傳送方式",
-      "href-text-alert-activity": "檢視警報活動",
-      "title-alert-activity": "警報活動",
+      "href-text-alert-activity": "檢視警示活動",
+      "title-alert-activity": "警示活動",
       "title-alert-rules": "警報規則",
       "title-contact-points": "聯絡點",
       "title-notification-policies": "通知政策"
@@ -3737,20 +3739,20 @@
     }
   },
   "alertlist": {
-    "category-alert-state-filter": "警報狀態篩選條件",
+    "category-alert-state-filter": "警示狀態篩選條件",
     "category-filter": "篩選",
     "category-options": "選項",
     "category-stat-styles": "",
-    "descriptino-alerts-linked-to-dashboard": "僅顯示連結至此儀表板的警報",
-    "description-alert-instance-label": "使用標籤查詢篩選警報執行個體，例如：{severity=\"critical\", instance=~\"cluster-us-.+\"}",
-    "description-alert-name": "篩選包含此文字的警報",
-    "description-datasource": "從警報來源篩選",
-    "description-folder": "篩選所選資料夾中的警報（僅適用於 Grafana 管理的警報規則）",
-    "description-group-by": "使用標籤查詢篩選警報",
-    "description-group-mode": "警報執行個體應如何分組",
-    "description-max-items": "可顯示的最大警報數",
-    "description-show-inactive-alerts": "包含具有 0（零）個執行個體的警報規則。由於這些規則沒有執行個體，因此如果設定了警報執行個體標籤篩選器，它們將保持隱藏。",
-    "description-sort-order": "警報和警報執行個體的排序順序",
+    "descriptino-alerts-linked-to-dashboard": "僅顯示連結至此儀表板的警示",
+    "description-alert-instance-label": "使用標籤查詢篩選警示執行個體，例如：{severity=\"critical\", instance=~\"cluster-us-.+\"}",
+    "description-alert-name": "篩選包含此文字的警示",
+    "description-datasource": "從警示來源篩選",
+    "description-folder": "篩選所選資料夾中的警示（僅適用於 Grafana 管理的警示規則）",
+    "description-group-by": "使用標籤查詢篩選警示",
+    "description-group-mode": "警示執行個體應如何分組",
+    "description-max-items": "可顯示的最大警示數",
+    "description-show-inactive-alerts": "包含具有 0（零）個執行個體的警示規則。由於這些規則沒有執行個體，因此如果設定了警示執行個體標籤篩選器，它們將保持隱藏。",
+    "description-sort-order": "警示和警示執行個體的排序順序",
     "description-stat-color-mode": "",
     "description-stat-thresholds": "",
     "description-stat-value-mappings": "",
@@ -3763,21 +3765,21 @@
       "label-custom-grouping": "自訂分組",
       "label-default-grouping": "預設分組"
     },
-    "name-alert-instance-label": "警報執行個體標籤",
-    "name-alert-name": "警報名稱",
-    "name-alerts-linked-to-dashboard": "連結至此儀表板的警報",
+    "name-alert-instance-label": "警示執行個體標籤",
+    "name-alert-name": "警示名稱",
+    "name-alerts-linked-to-dashboard": "連結至此儀表板的警示",
     "name-datasource": "資料來源",
     "name-error": "錯誤",
-    "name-firing": "警報/觸發",
+    "name-firing": "警示/觸發",
     "name-folder": "資料夾",
     "name-group-by": "分組依據",
     "name-group-mode": "群組模式",
     "name-max-items": "最大項目數",
     "name-no-data": "無資料",
-    "name-normal": "一般",
+    "name-normal": "標準",
     "name-pending": "待處理",
     "name-recovering": "正在還原",
-    "name-show-inactive-alerts": "顯示具有 0 個執行個體的警報",
+    "name-show-inactive-alerts": "顯示具有 0 個執行個體的警示",
     "name-sort-order": "排序順序",
     "name-stat-color-mode": "",
     "name-stat-thresholds": "",
@@ -3798,15 +3800,15 @@
     },
     "ungrouped-mode-view": {
       "active-for": "針對 <1>{{duration}} </1>",
-      "aria-label-view-alert-rule": "查看警報規則",
-      "view-alert-rule": "查看警報規則"
+      "aria-label-view-alert-rule": "查看警示規則",
+      "view-alert-rule": "查看警示規則"
     },
     "unified-alert-list": {
       "clear": "清除",
       "text-loading": "正在載入…"
     },
     "unified-alert-list-panel": {
-      "body-permission-required": "抱歉，您沒有讀取警報規則的權限。",
+      "body-permission-required": "抱歉，您沒有讀取警示規則的權限。",
       "title-permission-required": "需要權限"
     },
     "view-mode-options": {
@@ -3954,13 +3956,13 @@
       "domain-hint-valid-domain": "此欄位必須為有效的網域。",
       "email-attribute-name-description": "設定用來在 OAuth2 ID 權杖的屬性對應中查找使用者電子郵件的金鑰名稱。",
       "email-attribute-name-label": "電子郵件屬性名稱",
-      "email-attribute-path-description": "用來從使用者資訊中查找使用者電子郵件的 JMESPath 表達式。",
+      "email-attribute-path-description": "用來從使用者資訊中查找使用者電子郵件的 JMESPath 運算式。",
       "email-attribute-path-label": "電子郵件屬性路徑",
       "federated-credential-audience-description": "OAuth2 應用程式中聯合身分憑證的受眾。",
       "federated-credential-audience-label": "FIC 受眾",
       "force-use-graph-api-description": "若啟用，Grafana 將使用 Microsoft Graph API 來擷取使用者群組。",
       "force-use-graph-api-label": "強制使用 Graph API",
-      "groups-attribute-path-description": "用於使用者群組查找的 JMESPath 表達式。若您設定了「{{ allowedGroupsLabel }}」，\n則必須同時設定「{{ groupsAttributePathLabel }}」。",
+      "groups-attribute-path-description": "用於使用者群組查找的 JMESPath 運算式。若您設定了「{{ allowedGroupsLabel }}」，\n則必須同時設定「{{ groupsAttributePathLabel }}」。",
       "groups-attribute-path-label": "群組屬性路徑",
       "hosted-domain-description": "Grafana 所託管且可存取的網域名稱。",
       "hosted-domain-label": "託管網域",
@@ -3970,7 +3972,7 @@
       "jwk-set-url-invalid": "",
       "jwk-set-url-label": "",
       "jwk-set-url-required": "",
-      "login-attribute-path-description": "用於從使用者 ID 權杖中查找使用者登入的 JMESPath 表達式。",
+      "login-attribute-path-description": "用於從使用者 ID 權杖中查找使用者登入的 JMESPath 運算式。",
       "login-attribute-path-label": "登入屬性路徑",
       "login-prompt-consent": "同意",
       "login-prompt-description": "表示使用者使用 IdP 登入時的使用者互動類型。",
@@ -3980,19 +3982,19 @@
       "login-prompt-select-account": "選擇帳戶",
       "managed-identity-client-id-description": "OAuth2 應用程式中聯合身分憑證的受控身分用戶端 ID。",
       "managed-identity-client-id-label": "FIC 受控身分用戶端 ID",
-      "name-attribute-path-description": "用於從使用者 ID 權杖中查找使用者名稱的 JMESPath 表達式。\n此名稱將用作使用者的顯示名稱。",
+      "name-attribute-path-description": "用於從使用者 ID 權杖中查找使用者名稱的 JMESPath 運算式。\n此名稱將用作使用者的顯示名稱。",
       "name-attribute-path-label": "名稱屬性路徑",
       "org-mapping-description-azuread": "「<GroupID>:<OrgIdOrName>:<Role>」對應清單。",
       "org-mapping-description-generic": "「<ExternalName>:<OrgIdOrName>:<Role>」對應清單。",
       "org-mapping-description-github": "「<GitHubTeamName>:<OrgIdOrName>:<Role>」對應清單。",
       "org-mapping-description-gitlab": "「<GitlabGroupName>:<OrgIdOrName>:<Role>」對應清單。",
       "org-mapping-description-google": "「<GoogleGroupName>:<OrgIdOrName>:<Role>」對應清單。",
-      "organization-attribute-path-description": "用於組織查找的 JMESPath 表達式。若您設定了「{{ orgMappingLabel }}」，則必須同時設定「{{ orgAttributePathLabel }}」。",
+      "organization-attribute-path-description": "用於組織查找的 JMESPath 運算式。若您設定了「{{ orgMappingLabel }}」，則必須同時設定「{{ orgAttributePathLabel }}」。",
       "organization-attribute-path-label": "組織屬性路徑",
       "organization-mapping-label": "組織對應",
       "organization-mapping-placeholder": "輸入對應 (my-team:1:Viewer...)，然後按 Enter 新增",
       "required": "此為必填欄位",
-      "role-attribute-path-description": "用於 Grafana 角色查找的 {{ jmesPathLabel }} 表達式。",
+      "role-attribute-path-description": "用於 Grafana 角色查找的 {{ jmesPathLabel }} 運算式。",
       "role-attribute-path-label": "角色屬性路徑",
       "role-attribute-strict-description": "若啟用，則無法使用角色屬性路徑擷取 Grafana 角色時，將拒絕使用者登入。",
       "role-attribute-strict-label": "角色屬性嚴格模式",
@@ -4005,7 +4007,7 @@
       "signout-redirect-url-label": "登出重新導向網址",
       "skip-org-role-sync-description": "防止從您的 IdP 同步使用者的組織角色。",
       "skip-org-role-sync-label": "跳過組織角色同步",
-      "team-ids-attribute-path-description": "在「{{ teamsURLLabel }}」端點傳回的結果中，用於 Grafana 團隊 ID 查找的 JMESPath 表達式。",
+      "team-ids-attribute-path-description": "在「{{ teamsURLLabel }}」端點傳回的結果中，用於 Grafana 團隊 ID 查找的 JMESPath 運算式。",
       "team-ids-attribute-path-label": "團隊 ID 屬性路徑",
       "team-ids-attribute-path-required": "若已設定「{{ teamIDsLabel }}」，則必須設定此欄位。",
       "team-ids-description": "如果設定，使用者必須是其中一個指定團隊的成員才能登入。",
@@ -4089,13 +4091,13 @@
   },
   "bar-chart": {
     "warn": {
-      "missing-numeric": "找不到數值欄位",
+      "missing-numeric": "未找到數值欄位",
       "missing-series": "長條圖需要字串或時間欄位"
     }
   },
   "barchart": {
     "config": {
-      "category-thresholds": "閾值",
+      "category-thresholds": "臨界值",
       "description-color-by-field": "使用同層欄位的色彩值為每個長條值著色。",
       "description-x-label-max-length": "X 軸標籤將被截斷為提供的長度",
       "name-bar-radius": "長條半徑",
@@ -4108,7 +4110,7 @@
       "name-line-width": "線寬",
       "name-orientation": "方向",
       "name-rotate-x-labels": "旋轉 x 軸刻度標籤",
-      "name-show-thresholds": "顯示閾值",
+      "name-show-thresholds": "顯示臨界值",
       "name-show-values": "顯示值",
       "name-stacking": "堆疊",
       "name-transform": "轉變",
@@ -4187,7 +4189,7 @@
     "name-placement-options": {
       "label-auto": "自動",
       "label-hidden": "隱藏",
-      "label-left": "左側",
+      "label-left": "靠左",
       "label-top": "頂端"
     },
     "name-show-unfilled-area": "顯示未填充區域",
@@ -4234,7 +4236,7 @@
       "delete-button": "刪除",
       "delete-modal-invalid-text": "一個或多個資料夾包含資料庫面板或警報規則。請先刪除這些資料，然後再繼續。",
       "delete-modal-invalid-title": "無法刪除資料夾",
-      "delete-modal-restore-dashboards-common": "已刪除的儀表板將在歷史紀錄中保留最多 12 個月。具有刪除權限的使用者可以還原他們刪除的儀表板，而管理員可以還原任何使用者刪除的儀表板。歷史紀錄限制為 1000 個儀表板，若達到上限，則可能會更早移除較舊的儀表板。",
+      "delete-modal-restore-dashboards-common": "已刪除的儀表板將在歷史記錄中保留最多 12 個月。具有刪除權限的使用者可以還原他們刪除的儀表板，而管理員可以還原任何使用者刪除的儀表板。歷史記錄限制為 1000 個儀表板，若達到上限，則可能會更早移除較舊的儀表板。",
       "delete-modal-restore-dashboards-prefix-folder": "此動作將立即刪除所選資料夾。",
       "delete-modal-restore-dashboards-suffix-folder": "資料夾無法還原。",
       "delete-modal-text": "此動作將刪除以下內容：",
@@ -4303,6 +4305,9 @@
       "folder_other": "{{count}} 個資料夾",
       "libraryPanel_other": "{{count}} 個資料庫面板",
       "total_other": "{{count}} 個項目"
+    },
+    "create-new": {
+      "dashboard-group": ""
     },
     "dashboards-tree": {
       "checkbox": {
@@ -4421,9 +4426,9 @@
       "resource-detail-folders": ""
     },
     "recently-viewed": {
-      "clear": "清除歷史紀錄",
+      "clear": "清除歷史記錄",
       "error": "無法載入最近瀏覽的儀表板。",
-      "retry": "再試一次",
+      "retry": "重試",
       "title": "最近瀏覽"
     },
     "rename-folder": {
@@ -4728,9 +4733,9 @@
     "placement-editor": {
       "horizontal-options": {
         "label-center": "置中",
-        "label-left": "左側",
+        "label-left": "靠左",
         "label-left-and-right": "左與右",
-        "label-right": "右側",
+        "label-right": "靠右",
         "label-scale": "縮放"
       },
       "label-constraints": "限制條件",
@@ -5028,8 +5033,8 @@
       "header": "使用情況深入解析可提供有關資料來源使用情況的詳細資訊，例如使用者的檢視次數、查詢和遇到的錯誤數。您可以使用此功能來改善使用者體驗，並對問題進行疑難排解。",
       "item-1": "透過追蹤使用者參與度，展現並提升可觀察性服務的價值",
       "item-2": "透過識別並修復緩慢、容易出錯的資料來源，保持 Grafana 的效能",
-      "item-3": "透過尋找並移除未使用的資料來源，來清理您的執行個體",
-      "item-4": "在使用者介面中快速查看個別資料來源使用情況深入解析，依據使用情況和錯誤排序搜尋結果，或深入了解詳細使用情況紀錄",
+      "item-3": "透過尋找並移除未使用的資料來源來清理您的執行個體",
+      "item-4": "在使用者介面中快速查看個別資料來源使用情況深入解析，依據使用情況和錯誤排序搜尋結果，或深入了解詳細使用情況記錄",
       "title": "使用 Grafana Cloud 了解資料來源的使用情況"
     },
     "new-data-source-page": {
@@ -5062,7 +5067,7 @@
     },
     "permissions-feature-highlight-page": {
       "header": "透過資料來源權限，您可以將此資料來源的存取權限授予限制為特定使用者、團隊和角色，藉此保護敏感資料。",
-      "item-1": "保護敏感資料，例如安全歷史紀錄、生產資料庫和個人身分識別資訊",
+      "item-1": "保護敏感資料，例如安全歷史記錄、生產資料庫和個人身分資訊",
       "item-2": "隱藏使用者不需使用的資料來源，讓使用者體驗保持整潔有序",
       "item-3": "更自由地分享 Grafana 存取權限，因為您知道使用者不會在不知情的情況下看到敏感資料",
       "title": "在 Grafana Cloud 中使用資料來源權限安全存取資料"
@@ -5375,7 +5380,7 @@
         },
         "variable": {
           "error": {
-            "invalid-regex": "無效的正則表達式"
+            "invalid-regex": "無效的正則運算式"
           },
           "info": "根據變數值動態顯示或隱藏{{type}}。",
           "label": "範本變數",
@@ -5436,6 +5441,9 @@
       "cancel-loading-dashboard": "取消載入儀表板"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "",
+      "provisioning-message": "",
+      "provisioning-title": "",
       "text": {
         "not-found": "無結果"
       }
@@ -5629,7 +5637,7 @@
         },
         "datasource-options": {
           "name-filter": "名稱篩選",
-          "name-filter-description": "用 Regex 篩選欲納入的資料來源實例。全部留空。",
+          "name-filter-description": "用 Regex 篩選欲納入的資料來源執行個體。全部留空。",
           "name-filter-placeholder": "範例：/^prod/",
           "type": "類型",
           "type-placeholder": "選擇資料來源類型"
@@ -5792,7 +5800,7 @@
     },
     "get-panel-editor-tabs": {
       "text": {
-        "alert": "警報",
+        "alert": "警示",
         "query": "查詢",
         "transform-data": "轉換資料"
       }
@@ -6473,6 +6481,10 @@
       "title-add-another-transformation": "新增另一個轉換",
       "view-all": "檢視全部"
     },
+    "transformation-type-picker": {
+      "sql-cta-button": "",
+      "sql-cta-description": ""
+    },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "刪除所有轉換後，您將返回主選擇畫面。"
     },
@@ -6856,7 +6868,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "顯示／隱藏規則將無法運作",
@@ -7263,7 +7280,7 @@
       "tooltip-remove-option": ""
     },
     "panel-data-alerting-tab": {
-      "tab-label": "警報"
+      "tab-label": "警示"
     },
     "panel-data-alerting-tab-rendered": {
       "alert": {
@@ -7363,9 +7380,9 @@
     "query-variable-editor-form": {
       "description-examples": "已命名的擷取群組可用於分隔顯示文字與數值（<1>請參閱範例</1>）。",
       "description-optional": "若想擷取系列名稱或指標節點區段的一部分，則為可選。",
-      "description-regex-apply-to": "選擇是否將正則表達式模式套用至變數值或顯示文字",
+      "description-regex-apply-to": "選擇是否將正則運算式模式套用至變數值或顯示文字",
       "label-data-source": "資料來源",
-      "label-regex-apply-to": "將正則表達式套用至",
+      "label-regex-apply-to": "將正則運算式套用至",
       "label-static-options-sort": "靜態選項排序",
       "label-target-data-source": "目標資料來源",
       "label-use-static-options": "使用靜態選項",
@@ -7653,7 +7670,7 @@
       "description-optional-display-name": "可選的顯示名稱",
       "description-template-variable-characters": "範本變數的名稱。（最多 50 個字元）",
       "general": "一般",
-      "name-description": "說明",
+      "name-description": "描述",
       "name-label": "標籤",
       "name-name": "名稱",
       "placeholder-descriptive-text": "描述性文字",
@@ -7944,7 +7961,7 @@
           "distributed-tracing": "分散式追蹤",
           "enterprise-plugins": "企業外掛程式",
           "industrial-io-t": "工業與物聯網",
-          "logging-document-databases": "日誌紀錄與文件型資料庫",
+          "logging-document-databases": "記錄與文件型資料庫",
           "others": "其他",
           "profiling": "效能分析",
           "sql": "SQL",
@@ -8094,8 +8111,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "不支援",
+      "badge-text-success": "",
       "badge-text-supported": "支援",
       "label": {
+        "advisor": "",
         "alerting": "警報",
         "type": "類型"
       }
@@ -8224,8 +8243,8 @@
       "description-percentage-means-thresholds-relative": "百分比表示相對於最小值和最大值的閾值",
       "modes": {
         "description": {
-          "threshold-based-percent-between-minmax": "根據最小/最大值之間的百分比選擇閾值",
-          "thresholds-based-absolute-values": "根據絕對值選擇閾值"
+          "threshold-based-percent-between-minmax": "根據最小/最大值之間的百分比選擇臨界值",
+          "thresholds-based-absolute-values": "根據絕對值選擇臨界值"
         },
         "label": {
           "absolute": "絕對值",
@@ -8281,7 +8300,7 @@
       "mapping-types": {
         "description": {
           "match-a-numerical-range-of-values": "匹配數值範圍",
-          "match-a-regular-expression-with-replacement": "使用替換匹配正規表達式",
+          "match-a-regular-expression-with-replacement": "使用替換匹配正則表達式",
           "match-a-specific-text-value": "匹配特定文字值",
           "match-boolean-empty-values": "匹配空值、NaN、布林值和空值"
         },
@@ -8522,7 +8541,6 @@
       "give-feedback": "提供意見回饋"
     },
     "logs-meta-row": {
-      "download": "下載",
       "label": {
         "deduplication-count": "去除重複項目計數",
         "showing-only-selected-fields": "僅顯示選取的欄位"
@@ -8544,7 +8562,7 @@
         "copy-link": "將連結複製到日誌行",
         "copy-to-clipboard": "複製到剪貼簿",
         "inspect-value": "檢查值",
-        "view-log-line": "檢視紀錄行"
+        "view-log-line": "檢視記錄行"
       }
     },
     "logs-table-empty-fields": {
@@ -8566,7 +8584,7 @@
       "partial-data-tips": "請嘗試縮小時間範圍，或在您的查詢中新增更多標籤。"
     },
     "logs-volume-panel-list": {
-      "aria-label-reload-log-volume": "重新載入紀錄容量",
+      "aria-label-reload-log-volume": "重新載入記錄容量",
       "label-reload-log-volume": "重新載入紀錄容量",
       "loading": "正在載入…",
       "message-showing-partial-data-max-bytes": "查詢將讀取太多位元組，且無法完成部分碎片化要求。",
@@ -8575,7 +8593,7 @@
       "title-no-logs-volume-available": "沒有可用的紀錄容量",
       "title-showing-partial-data": "顯示部分資料",
       "title-unable-to-show-log-volume": "無法顯示紀錄容量",
-      "visible-range-description": "顯示範圍從最舊到最新的紀錄"
+      "visible-range-description": "顯示範圍從最舊到最新的記錄"
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "目前的查詢和時間範圍沒有可用的容量資訊。"
@@ -8751,6 +8769,9 @@
     "span-bar": {
       "tooltip-critical-path": "整體追蹤/請求/工作流程的<1>關鍵路徑</1>上的區段。"
     },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": ""
+    },
     "span-bar-section": {
       "description-link": "在追蹤檢視中範圍列上的服務和操作旁新增其他資訊。",
       "title-span-bar": "範圍調整列"
@@ -8875,22 +8896,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "在日誌視覺化中顯示結果",
-        "show-results-in-table-visualisation": "在表格視覺化中顯示結果",
-        "show-results-newest-to-oldest": "顯示結果（最新至最舊）",
-        "show-results-oldest-to-newest": "顯示結果（最舊至最新）"
+        "show-results-in-table-visualisation": "在表格視覺化中顯示結果"
       },
       "label": {
         "logs": "紀錄",
-        "newest-first": "最新排前",
-        "oldest-first": "最舊排前",
         "table": "表格"
       },
-      "label-deduplication": "重複資料",
-      "label-display-results": "顯示結果",
-      "label-prettify-json": "美化 JSON",
-      "label-time": "時間",
-      "label-unique-labels": "唯一標籤",
-      "label-wrap-lines": "換行",
       "title-feedback": "意見回饋",
       "title-logs": "紀錄",
       "title-logs-volume": "紀錄容量"
@@ -8985,8 +8996,7 @@
       "tooltip-s-m-h": "10 秒、1 分鐘、30 分鐘、1 小時"
     },
     "sql-expr": {
-      "button-run-query": "執行查詢",
-      "tooltip-experimental": "SQL 運算式 LLM 整合為實驗性功能。如有任何問題，請向 Grafana 團隊回報。"
+      "button-run-query": "執行查詢"
     },
     "sql-schema": {
       "error-title": "錯誤",
@@ -9085,8 +9095,8 @@
       "text-mode-value": "值",
       "text-mode-value-and-name": "",
       "threshold-labels": "顯示標籤",
-      "threshold-labels-description": "顯示閾值和中性值",
-      "threshold-markers": "顯示閾值"
+      "threshold-labels-description": "顯示臨界值和中性值",
+      "threshold-markers": "顯示臨界值"
     },
     "data-links-actions-menu": "",
     "description-min-height": "最小列高（橫向）",
@@ -9192,7 +9202,7 @@
     "description-variable-name": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
-        "label-layer": "層次"
+        "label-layer": "圖層"
       },
       "label-data": "資料",
       "last-only-editor-fragment": {
@@ -9263,17 +9273,17 @@
     "style-editor": {
       "horizontal-align-options": {
         "label-center": "置中",
-        "label-left": "左側",
-        "label-right": "右側"
+        "label-left": "靠左",
+        "label-right": "靠右"
       },
       "label-align": "對齊",
       "label-baseline": "基準線",
       "label-color": "顏色",
       "label-fill-opacity": "填充不透明度",
-      "label-font-size": "字體大小",
+      "label-font-size": "字型大小",
       "label-opacity": "不透明度",
       "label-rotation-angle": "旋轉角度",
-      "label-size": "尺寸",
+      "label-size": "大小",
       "label-symbol": "符號",
       "label-symbol-horizontal-align": "符號水平對齊",
       "label-symbol-vertical-align": "符號垂直對齊",
@@ -9360,11 +9370,11 @@
     "use-get-essentials-configuration": {
       "essential-content": {
         "description": {
-          "configure-grafana-alerting": "設定 Grafana 警報",
-          "create-integration-alerting-contact-point": "為警報聯絡點建立 IRM 整合。",
+          "configure-grafana-alerting": "設定 Grafana 警示",
+          "create-integration-alerting-contact-point": "為警示聯絡點建立 IRM 整合。",
           "initialize-incident-plugin-declare-manage-incidents": "初始化事件外掛程式以宣告和管理事件。",
           "practice-solving-an-incident": "練習解決事件",
-          "receive-alerts-oncall-notifications-within-environment": "在您的聊天環境中接收警報和待命通知。",
+          "receive-alerts-oncall-notifications-within-environment": "在您的聊天環境中接收警示和待命通知。",
           "select-chat-ops-channels-to-route-notifications": "選取 ChatOps 頻道以傳送通知"
         },
         "label": {
@@ -9376,7 +9386,7 @@
         },
         "title": {
           "add-slack-notifications-to-irm-integrations": "將 Slack 通知新增至 IRM 整合",
-          "connect-alerting-to-irm": "將警報連接至 IRM",
+          "connect-alerting-to-irm": "將警示連接至 IRM",
           "connect-irm-to-your-slack-workspace": "將 IRM 連接至您的 Slack 工作區",
           "connect-your-messaging-workspace-to-incident": "將您的訊息工作區連接至事件",
           "connect-your-messaging-workspace-to-on-call": "將您的訊息工作區連接至 OnCall",
@@ -9390,8 +9400,8 @@
       },
       "get-grafana-alerting-config-steps": {
         "description": {
-          "create-alert-monitor-system": "建立警報規則以監控您的系統。",
-          "create-on-call-integration-alerting-contact-point": "為警報聯絡點建立 OnCall 整合。",
+          "create-alert-monitor-system": "建立警示規則以監控您的系統。",
+          "create-on-call-integration-alerting-contact-point": "為警示聯絡點建立 OnCall 整合。",
           "create-slos-to-monitor-your-service": "建立 SLOs 以監控您的服務。"
         },
         "label": {
@@ -9408,10 +9418,10 @@
           }
         },
         "title": {
-          "connect-alerting-to-on-call": "將警報連接至 OnCall",
-          "create-alert-rule": "建立警報規則",
+          "connect-alerting-to-on-call": "將警示連接至 OnCall",
+          "create-alert-rule": "建立警示規則",
           "create-slo": "建立 SLO",
-          "enable-slo-alerting": "啟用 SLO 警報"
+          "enable-slo-alerting": "啟用 SLO 警示"
         }
       }
     }
@@ -9487,7 +9497,7 @@
             "name-square-meters": "平方公尺 (m²)",
             "name-square-miles": "平方英里 (mi²)"
           },
-          "name": "區域"
+          "name": "面積"
         },
         "boolean": {
           "formats": {
@@ -9913,7 +9923,7 @@
         "category-axis": "軸",
         "color-label": "色彩",
         "color-options": {
-          "label-series": "系列",
+          "label-series": "序列",
           "label-text": "文字"
         },
         "grid-line-options": {
@@ -9958,7 +9968,7 @@
         "name-width": "寬度",
         "placement-options": {
           "label-bottom": "底部",
-          "label-right": "右側"
+          "label-right": "靠右"
         }
       },
       "stacking": {
@@ -10241,7 +10251,7 @@
       }
     },
     "matchers-ui": {
-      "description-field-name-by-regex-matcher": "為名稱符合正則表達式的欄位設定屬性",
+      "description-field-name-by-regex-matcher": "為名稱符合正則運算式的欄位設定屬性",
       "description-fields-by-query": "為來自特定查詢的欄位設定屬性",
       "description-fields-with-name": "為特定欄位設定屬性",
       "description-fields-with-type": "為特定類型（數字、字串、布爾值）的欄位設定屬性",
@@ -10263,7 +10273,7 @@
         "label": "查詢：{{refId}}",
         "label-missing-ref-id": "查詢：（缺少 refId）"
       },
-      "name-field-name-by-regex-matcher": "名稱與正則表達式相符的欄位",
+      "name-field-name-by-regex-matcher": "名稱與正則運算式相符的欄位",
       "name-fields-by-query": "查詢傳回的欄位",
       "name-fields-with-name": "具有名稱的欄位",
       "name-fields-with-type": "具有類型的欄位",
@@ -10389,7 +10399,7 @@
           "not-equals": ""
         },
         "remove-all": "從篩選條件中移除所有顯示的值",
-        "select-all": "選擇全部",
+        "select-all": "全選",
         "selected": "已選取 {{ numSelected }} 個",
         "selected-some-hidden": "已選取 {{ numSelected }} 個（隱藏 {{ numHidden }} 個）"
       },
@@ -10451,8 +10461,8 @@
             "description-auto": "第一個欄位在左側，其他欄位在右側",
             "label-auto": "自動",
             "label-hidden": "隱藏",
-            "label-left": "左側",
-            "label-right": "右側"
+            "label-left": "靠左",
+            "label-right": "靠右"
           },
           "bar-alignment": {
             "description-after": "之後",
@@ -10487,7 +10497,7 @@
           },
           "stacking": {
             "label-100": "100%",
-            "label-normal": "一般",
+            "label-normal": "標準",
             "label-off": "關閉"
           },
           "thresholds-display-mode": {
@@ -10616,8 +10626,8 @@
     "placeholder-value-name": "值",
     "placement-options": {
       "label-hidden": "隱藏",
-      "label-left": "左側",
-      "label-right": "右側"
+      "label-left": "靠左",
+      "label-right": "靠右"
     },
     "scale-options": {
       "label-exponential": "指數",
@@ -10642,7 +10652,7 @@
       "scale-options": {
         "label-auto": "自動",
         "label-linear": "線性",
-        "label-log": "紀錄",
+        "label-log": "記錄",
         "label-symlog": "半對數"
       }
     }
@@ -10675,7 +10685,7 @@
       "make-time-range-permanent": "將時間範圍設為絕對／永久",
       "move-time-range-back": "將時間範圍向後移動",
       "move-time-range-forward": "將時間範圍向前移動",
-      "open-alerting": "前往警報",
+      "open-alerting": "前往警示",
       "open-assistant": "開啟助理",
       "open-search": "開啟搜尋",
       "open-share-embed-drawer": "分享面板嵌入",
@@ -11085,7 +11095,7 @@
     }
   },
   "logs": {
-    "category-logs": "紀錄",
+    "category-logs": "記錄",
     "deduplication-options": {
       "label-exact": "完全符合",
       "label-none": "無",
@@ -11093,12 +11103,12 @@
       "label-signature": "簽名"
     },
     "description-enable-field-selector": "",
-    "description-enable-infinite-scrolling": "實驗性。捲動至紀錄清單底部，以請求更多結果。",
+    "description-enable-infinite-scrolling": "實驗性。捲動至記錄清單底部，以請求更多結果。",
     "description-enable-logs-highlighting": "",
     "description-order": "",
     "description-prettify-json": "",
     "description-show-controls": "",
-    "description-show-log-attributes": "實驗性。顯示 OTel 紀錄時，請新增一個附有標籤和中繼資料相關鍵值對的額外顯示欄位。",
+    "description-show-log-attributes": "實驗性。顯示 OTel 記錄時，請新增一個附有標籤和中繼資料相關鍵值對的額外顯示欄位。",
     "description-unwrapped-columns": "",
     "description-wrap-lines": "",
     "field-selector": {
@@ -11106,7 +11116,7 @@
       "clear-button": "清除",
       "collapse": "收起側邊欄",
       "expand": "展開側邊欄",
-      "label-title": "「{{fieldName}}」出現在 {{percentage}}% 的紀錄行中",
+      "label-title": "「{{fieldName}}」出現在 {{percentage}}% 的記錄行中",
       "log-level": "",
       "placeholder-search-fields-by-name": "按名稱搜尋欄位",
       "title-drag-and-drop-to-reorder": "拖曳以重新排序"
@@ -11168,15 +11178,15 @@
     "log-line-context": {
       "center-matched-line": "居中對齊行",
       "newer-logs": "較新",
-      "no-more-logs-available": "沒有其他可用的紀錄。",
+      "no-more-logs-available": "沒有其他可用的記錄。",
       "older-logs": "較舊",
       "open-in-split-view": "在分割檢視中開啟",
-      "show-original-log": "顯示原始紀錄",
-      "show-original-log-tooltip": "清除顯示的欄位並顯示原始紀錄行訊息",
+      "show-original-log": "顯示原始記錄",
+      "show-original-log-tooltip": "清除顯示的欄位並顯示原始記錄行訊息",
       "time-window-label": "內容時間視窗",
-      "time-window-tooltip": "參考紀錄之前和之後的時間量",
-      "title-log-context": "紀錄內容",
-      "title-log-line": "參考紀錄行"
+      "time-window-tooltip": "參考記錄之前和之後的時間量",
+      "title-log-context": "記錄內容",
+      "title-log-line": "參考記錄行"
     },
     "log-line-details": {
       "clear-search": "清除",
@@ -11196,27 +11206,27 @@
         }
       },
       "fields-section": "欄位",
-      "hide-log-line": "隱藏紀錄行",
+      "hide-log-line": "隱藏記錄行",
       "inline-mode": "顯示內嵌",
       "link-value-tooltip": "連結值",
       "links-section": "連結",
-      "log-attributes-field": "紀錄屬性",
-      "log-line-field": "紀錄行",
-      "log-line-section": "紀錄行",
+      "log-attributes-field": "記錄屬性",
+      "log-line-field": "記錄行",
+      "log-line-section": "記錄行",
       "move-displayed-field-down": "下移",
       "move-displayed-field-up": "上移",
       "no-details": "沒有要顯示的欄位。",
       "open-assistant": "",
-      "pin-line": "固定紀錄",
+      "pin-line": "固定記錄",
       "remove-displayed-field": "移除欄位",
-      "remove-log": "移除紀錄",
-      "scroll-to-logline": "捲動到紀錄行",
+      "remove-log": "移除記錄",
+      "scroll-to-logline": "捲動到記錄行",
       "search": {
         "no-results": "沒有要顯示的結果。"
       },
       "search-placeholder": "搜尋欄位名稱和值",
       "show-context": "顯示前後文",
-      "show-log-line": "顯示紀錄行",
+      "show-log-line": "顯示記錄行",
       "sidebar-mode": "錨定到右側",
       "trace": {
         "error-message": "",
@@ -11224,26 +11234,26 @@
         "loading-message": ""
       },
       "trace-section": "",
-      "unpin-line": "取消固定紀錄"
+      "unpin-line": "取消固定記錄"
     },
     "log-line-menu": {
       "copy-link": "將連結複製到日誌行",
       "copy-log": "複製日誌行",
-      "hide-details": "顯示紀錄詳細資料",
+      "hide-details": "顯示記錄詳細資料",
       "icon-label": "日誌功能表",
-      "log-line": "紀錄行",
+      "log-line": "記錄行",
       "log-line-explainer": "",
       "open-assistant": "",
       "pin-to-outline": "釘選日誌",
       "show-context": "顯示內容",
-      "show-details": "隱藏紀錄詳細資料",
+      "show-details": "隱藏記錄詳細資料",
       "unpin-from-outline": "取消釘選日誌"
     },
     "log-list-search": {
       "close": "關閉搜尋",
-      "filter": "篩選相符的紀錄",
-      "info": "在顯示的紀錄中進行用戶端字串搜尋。不要與查詢篩選條件混淆。使用此元件在紀錄結果中搜尋特定字串。",
-      "input-placeholder": "在紀錄中搜尋",
+      "filter": "篩選相符的記錄",
+      "info": "在顯示的記錄中進行用戶端字串搜尋。不要與查詢篩選條件混淆。使用此元件在記錄結果中搜尋特定字串。",
+      "input-placeholder": "在記錄中搜尋",
       "next": "下一個結果",
       "prev": "上一個結果"
     },
@@ -11291,7 +11301,7 @@
       }
     },
     "logs-controls": {
-      "collapse": "收起",
+      "collapse": "收合",
       "deduplication": "重複資料",
       "disable-prettify-json": "收闔 JSON 紀錄",
       "display-level-all": "所有層級",
@@ -11320,9 +11330,9 @@
         "font-large": "大字型",
         "font-small": "小字型",
         "hide-search": "關閉搜尋",
-        "newest-first": "將最新的紀錄排序往前",
-        "oldest-first": "將最舊的紀錄排序往前",
-        "show-search": "搜尋紀錄"
+        "newest-first": "將最新的記錄排序往前",
+        "oldest-first": "將最舊的記錄排序往前",
+        "show-search": "搜尋記錄"
       },
       "line-wrapping": {
         "enable": "啟用換行",
@@ -11335,15 +11345,15 @@
         },
         "tooltip": "設定換行"
       },
-      "newest-first": "按最新紀錄排序 - 按一下以顯示最舊紀錄",
-      "oldest-first": "按最舊紀錄排序 - 按一下以顯示最新紀錄",
+      "newest-first": "按最新記錄排序 - 按一下以顯示最舊記錄",
+      "oldest-first": "按最舊記錄排序 - 按一下以顯示最新記錄",
       "prettify-json": "展開 JSON 紀錄",
       "remove-escaping": "移除轉義",
       "resolution-ms": "ms",
       "resolution-ns": "ns",
       "scroll-bottom": "滾動到底部",
       "scroll-top": "捲動回頂部",
-      "show-search": "在紀錄結果中搜尋",
+      "show-search": "在記錄結果中搜尋",
       "show-timestamps": "顯示時間戳記",
       "show-unique-labels": "顯示唯一標籤",
       "table-wrap-text": {
@@ -11366,7 +11376,7 @@
         "disable-highlighting": "停用醒目提示",
         "download": "下載",
         "enable-highlighting": "啟用醒目提示",
-        "filter-level": "按層級篩選紀錄結果"
+        "filter-level": "按層級篩選記錄結果"
       },
       "unwrap-lines": "取消換行",
       "unwrapped-columns": {
@@ -11378,9 +11388,6 @@
         "not-supported": ""
       },
       "wrap-lines": "換行"
-    },
-    "logs-navigation": {
-      "scroll-top": "捲動回頂部"
     },
     "logs-panel": {
       "render-common-labels": {
@@ -11396,8 +11403,8 @@
     },
     "name-enable-field-selector": "",
     "name-enable-infinite-scrolling": "啟用無限捲動",
-    "name-enable-log-details": "啟用紀錄詳細資訊",
-    "name-enable-logs-highlighting": "啟用紀錄醒目提示",
+    "name-enable-log-details": "啟用記錄詳細資訊",
+    "name-enable-logs-highlighting": "啟用記錄醒目提示",
     "name-font-size": "字型大小",
     "name-order": "順序",
     "name-prettify-json": "美化 JSON",
@@ -11421,12 +11428,12 @@
       "line-contains-not": "新增為不包含篩選條件的行",
       "search-text": "在結果中搜尋"
     },
-    "show-log-attributes": "顯示 OTel 紀錄的紀錄屬性",
+    "show-log-attributes": "顯示 OTel 記錄的記錄屬性",
     "timestamp-format": "時間戳記解決方案",
     "un-themed-log-details": {
       "aria-label-data-links": "資料連結",
       "aria-label-fields": "欄位",
-      "aria-label-line": "紀錄行",
+      "aria-label-line": "記錄行",
       "aria-label-log-level": "紀錄層級",
       "aria-label-no-details": "無詳細資料"
     },
@@ -11673,8 +11680,8 @@
     "resource-details": {
       "dismiss-button": "確定",
       "error-messages": {
-        "alert-rules-group-quota-reached": "已達到警報規則群組的最大數量：請刪除部分警報規則群組，或升級您的方案，然後再試一次。",
-        "alert-rules-quota-reached": "已達到警報規則的最大數量：請刪除部分警報規則，或升級您的方案，然後再試一次。",
+        "alert-rules-group-quota-reached": "已達到警示規則群組的最大數量：請刪除部分警示規則群組，或升級您的方案，然後再試一次。",
+        "alert-rules-quota-reached": "已達到警示規則的最大數量：請刪除部分警示規則，或升級您的方案，然後再試一次。",
         "dashboard-already-managed": "儀表板已由 Grafana 在雲端執行個體中佈建和管理。我們建議您將來使用已設定的儀表板。若您仍然希望將儀表板複製至雲端執行個體，請變更儀表板 JSON 中的儀表板 ID，儲存新的快照並重新上傳。",
         "datasource-already-managed": "資料來源已由 Grafana 在雲端執行個體中佈建和管理。如果這是不同的資源，請設定另一個 UID 並再試一次。",
         "datasource-invalid-url": "有一個資料來源的網址無效。請提供有效的網址，然後再試一次。",
@@ -12041,7 +12048,7 @@
       "title": "個人資料"
     },
     "recently-deleted": {
-      "subtitle": "已刪除的儀表板最多可保留 12 個月，或直到達到 1000 個儀表板的歷史紀錄限制。",
+      "subtitle": "已刪除的儀表板最多可保留 12 個月，或直到達到 1000 個儀表板的歷史記錄限制。",
       "title": "最近刪除"
     },
     "recorded-queries": {
@@ -12174,7 +12181,7 @@
     },
     "quick-add": {
       "aria-label": "新",
-      "new-template-dashboard-button": "來自範本的儀表板"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "部落格的最新消息"
   },
@@ -12184,7 +12191,7 @@
     "description-url": "支援 RSS 和 Atom 資訊來源",
     "link-title": "前往 Grafana labs 部落格",
     "name-show-image": "顯示圖片",
-    "name-url": "URL",
+    "name-url": "網址",
     "news-panel": {
       "body-error-loading-rss-feed": "請確認動態消息網址輸入正確，且已在伺服器上正確設定 CORS。請參閱<2>新聞面板文件。</2>",
       "loading": "正在載入…",
@@ -12297,7 +12304,7 @@
       },
       "standard-field-configs": {
         "category": "標準選項",
-        "category-thresholds": "閾值",
+        "category-thresholds": "臨界值",
         "category-value-mappings": "值對應",
         "description-display-name": "變更欄位或序列名稱",
         "description-field-min-max": "計算每個欄位的最小值和最大值",
@@ -12306,7 +12313,7 @@
         "description-no-value": "沒有數值時顯示的內容",
         "description-value-mappings": "根據輸入值修改顯示文字",
         "name-actions": "動作",
-        "name-ad-hoc": "臨時可篩選",
+        "name-ad-hoc": "",
         "name-color-scheme": "配色方案",
         "name-data-links": "資料連結",
         "name-decimals": "小數位數",
@@ -12315,7 +12322,7 @@
         "name-max": "最大",
         "name-min": "最小",
         "name-no-value": "無值",
-        "name-thresholds": "閾值",
+        "name-thresholds": "臨界值",
         "name-unit": "單位",
         "name-value-mappings": "值對應",
         "placeholder-decimals": "自動",
@@ -12402,7 +12409,7 @@
       "text": {
         "data": "資料",
         "field": "欄位",
-        "series": "系列",
+        "series": "序列",
         "value": "數值"
       }
     },
@@ -12450,7 +12457,7 @@
         "unknown": "無法視覺化資料"
       },
       "no-value": {
-        "default": "沒有資料"
+        "default": "無資料"
       },
       "open-visualization-suggestions": "開啟可視化建議",
       "switch-to-table": "切換到表格"
@@ -12765,6 +12772,7 @@
       "title-button-disabled": "外掛程式尚無法使用，完成安裝可能需要一些時間。"
     },
     "install-controls": {
+      "contact-us": "",
       "install": "安裝",
       "installing": "安裝中",
       "update": "更新",
@@ -13112,7 +13120,7 @@
       "description-title": "此連線的人類可讀名稱",
       "error-delete-connection": "無法刪除連線",
       "error-required": "此為必填欄位",
-      "error-save-connection": "無法儲存連線",
+      "error-save-connection": "無法儲存連接",
       "error-submit": "",
       "grafana-repositories": "使用此連線的儲存庫",
       "label-app-id": "GitHub 應用程式 ID",
@@ -13210,7 +13218,7 @@
     },
     "file-history-page": {
       "back-to-repositories": "返回至儲存庫",
-      "history-not-supported": "此儲存庫不支援檔案歷史紀錄",
+      "history-not-supported": "此儲存庫不支援檔案歷史記錄",
       "repository-config-exists-configuration": "請確認儲存庫設定存在於設定檔案中。",
       "repository-not-found": "找不到儲存庫"
     },
@@ -13319,6 +13327,7 @@
       "token-label": "專案存取權杖",
       "token-required": "GitLab 權杖為必填",
       "url-description": "GitLab 儲存庫網址",
+      "url-pattern": "",
       "url-required": "儲存庫網址為必填"
     },
     "history-view": {
@@ -13345,7 +13354,7 @@
       "resource-not-found": ""
     },
     "instance-sync-deprecation": {
-      "message": "目前尚未完全支援執行個體同步，並會中斷資料庫面板和警報。若要使用資料庫面板和警報，請中斷連線儲存庫，並改用資料夾同步重新連線。",
+      "message": "目前尚未完全支援執行個體同步，並會中斷資料庫面板和警示。若要使用資料庫面板和警示，請中斷連線儲存庫，並改用資料夾同步重新連線。",
       "title": "不完全支援執行個體同步"
     },
     "job-status": {
@@ -13373,7 +13382,7 @@
     "managed-by-repository-tooltip": "",
     "managed-by-repository-tooltip-with-title": "",
     "message": {
-      "show-less": "顯示較少",
+      "show-less": "顯示更少",
       "show-more": "顯示更多",
       "truncated": "訊息已截斷"
     },
@@ -13668,10 +13677,10 @@
       "alert-point-3": "此流程的持續時間取決於所涉及的資源數量。",
       "alert-point-4": "企業執行個體管理員可以顯示公告橫幅，通知使用者移轉正在進行中。請參閱<2>本指南</2>，了解逐步說明。",
       "alert-point-folder-cleanup": "移轉後，您可能需要手動移除或管理原始資料夾。",
-      "alert-point-folder-structure": "移轉現有儀表板時，資料夾結構將在儲存庫中複製。原始資料夾將清空儀表板，但可能仍包含警報或資料庫面板。",
-      "alert-point-instance-alerts": "現有的警報和資料庫面板將會遺失，移轉後將無法使用。",
+      "alert-point-folder-structure": "移轉現有儀表板時，資料夾結構將在儲存庫中複製。原始資料夾將清空儀表板，但可能仍包含警示或資料庫面板。",
+      "alert-point-instance-alerts": "現有的警示和資料庫面板將會遺失，移轉後將無法使用。",
       "alert-point-permissions": "不支援微調權限。套用預設權限：管理員、編輯者和檢視者角色將保留其標準存取權限等級。",
-      "alert-point-unsupported": "佈建的資料夾不支援警報和資料庫面板。",
+      "alert-point-unsupported": "佈建的資料夾不支援警示和資料庫面板。",
       "alert-title": "重要提示：在繼續之前，請先檢閱 Git 同步限制",
       "auth-type-description": "",
       "auth-type-github-app-description": "使用 GitHub 應用程式以增強安全性和團隊協作。建議用於生產環境。",
@@ -14024,7 +14033,7 @@
     },
     "labels": {
       "alert": "",
-      "expression": "表達式",
+      "expression": "運算式",
       "query": "查詢",
       "transformation": "轉換"
     },
@@ -14093,7 +14102,7 @@
     },
     "page": {
       "no-deleted-dashboards": "您最近沒有刪除任何儀表板。",
-      "no-deleted-dashboards-text": "刪除儀表板後，儀表板會在歷史紀錄中保留最多 12 個月，之後才會被永久刪除。具有刪除權限的使用者可還原已刪除的儀表板，管理員則可還原任何使用者刪除的儀表板。",
+      "no-deleted-dashboards-text": "刪除儀表板後，儀表板會在歷史記錄中保留最多 12 個月，之後才會被永久刪除。具有刪除權限的使用者可還原已刪除的儀表板，管理員則可還原任何使用者刪除的儀表板。",
       "no-search-result": "未找到您的查詢結果"
     },
     "restore-modal": {
@@ -14239,11 +14248,11 @@
       "view-as-list": "以清單形式檢視"
     },
     "dashboard-actions": {
-      "import": "匯入",
+      "import": "",
       "new": "新",
       "new-dashboard": "新儀表板",
       "new-folder": "新資料夾",
-      "new-template-dashboard": "來自範本的儀表板"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "分數"
@@ -14744,19 +14753,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "新增至少一個資料查詢以產生 SQL 建議",
-    "ai-explain-title": "AI 驅動的 SQL 運算式解釋",
-    "ai-suggestions-title": "AI 驅動的 SQL 運算式建議",
-    "apply": "套用",
-    "code-label": "{{ language }}",
-    "copy": "複製",
-    "explain-empty-query-tooltip": "輸入 SQL 運算式以取得解釋",
     "explain-query": "解釋查詢",
-    "explanation-modal-title": "SQL 查詢解釋",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "SQL 建議歷史紀錄",
-    "suggestions": "建議",
-    "view-explanation": "檢視解釋"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "標記為「我的最愛」",
@@ -14779,7 +14778,7 @@
       "description-calculation": "選擇一個歸約函數/計算方式",
       "description-fields": "選擇應包含在面板中的欄位",
       "description-limit": "可顯示的最大列數",
-      "description-show": "計算每欄或系列的單一值，或顯示每列",
+      "description-show": "計算每欄或序列的單一值，或顯示每列",
       "fields-options": {
         "label-all-fields": "所有欄位",
         "label-numeric-fields": "數值欄位"
@@ -14804,7 +14803,7 @@
     "description-text-mode": "控制是否顯示名稱和數值，還是僅顯示名稱",
     "graph-mode": {
       "options": {
-        "label-area": "區域",
+        "label-area": "面積",
         "label-none": "無"
       }
     },
@@ -14867,7 +14866,7 @@
     "align-values-options": {
       "label-center": "置中",
       "label-left": "靠左",
-      "label-right": "右側"
+      "label-right": "靠右"
     },
     "category-state-timeline": "狀態時間軸",
     "name-align-values": "對齊值",
@@ -14886,7 +14885,7 @@
     }
   },
   "status-history": {
-    "category-status-history": "狀態歷史紀錄",
+    "category-status-history": "狀態歷史記錄",
     "name-column-width": "欄寬",
     "name-fill-opacity": "填充不透明度",
     "name-line-width": "線寬",
@@ -14946,7 +14945,7 @@
       "color-text": "文字顏色",
       "data-links": "資料連結",
       "gauge": "儀表",
-      "image": "圖片",
+      "image": "影像",
       "json": "JSON 檢視",
       "markdown": "Markdown + HTML",
       "pill": "圓角標籤",
@@ -14961,7 +14960,7 @@
       "label-auto": "自動",
       "label-center": "置中",
       "label-left": "靠左",
-      "label-right": "右側"
+      "label-right": "靠右"
     },
     "container": {
       "content": "在單個表格中顯示太多欄位可能會影響效能，並使資料難以讀取。請考慮縮小您的查詢範圍。",
@@ -15135,7 +15134,7 @@
       }
     },
     "team-settings": {
-      "description-email": "這是可選項目，主要用於設定團隊個人資料頭像（透過 Gravatar 服務）",
+      "description-email": "這是可選項目，主要用於設定團隊設定檔頭像（透過 Gravatar 服務）",
       "label-email": "電子郵件",
       "label-name": "名稱",
       "label-numerical-identifier": "數字識別碼",
@@ -15216,11 +15215,12 @@
     },
     "range-content": {
       "apply-button": "套用時間範圍",
-      "default-error": "請輸入過去的日期或「{{now}}」",
+      "default-error": "",
       "fiscal-year": "會計年度：{{from}} - {{to}}",
       "from-input": "自",
       "open-input-calendar": "開啟行事曆",
-      "range-error": "「自」不能晚於「至」",
+      "range-error": "",
+      "required-error": "",
       "to-input": "至"
     },
     "range-picker": {
@@ -15283,7 +15283,7 @@
         "aria-label-line-width": "線寬",
         "aria-label-point-size": "點大小",
         "category-graph-styles": "圖表樣式",
-        "category-thresholds": "閾值",
+        "category-thresholds": "臨界值",
         "name-bar-alignment": "長條對齊",
         "name-bar-width-factor": "長條寬度係數",
         "name-connect-nulls": "連接空值",
@@ -15296,7 +15296,7 @@
         "name-line-width": "線寬",
         "name-point-size": "點大小",
         "name-show-points": "顯示點",
-        "name-show-thresholds": "顯示閾值",
+        "name-show-thresholds": "顯示臨界值",
         "name-show-values": "顯示值",
         "name-style": "樣式",
         "name-transform": "轉變",
@@ -15311,7 +15311,7 @@
     "insert-nulls-editor": {
       "disconnect-options": {
         "label-never": "從不",
-        "label-threshold": "閾值"
+        "label-threshold": "臨界值"
       }
     },
     "legend": {
@@ -15358,7 +15358,7 @@
       "gaps-options": {
         "label-always": "總是",
         "label-never": "從不",
-        "label-threshold": "閾值"
+        "label-threshold": "臨界值"
       }
     },
     "suggestions": {
@@ -15604,7 +15604,7 @@
     },
     "filter-by-name-transformer-editor": {
       "description": {
-        "remove-part-query-results-regex-pattern": "使用正則表達式模式移除部分查詢結果。"
+        "remove-part-query-results-regex-pattern": "使用正則運算式模式移除部分查詢結果。"
       },
       "label-from-variable": "從變數",
       "label-identifier": "標識符",
@@ -15871,7 +15871,7 @@
     },
     "labels-to-fields-transformer-editor": {
       "description": {
-        "groups-series-time-return-labels-tags-fields": "依時間分組系列，並將標籤或標籤作為欄位返回。"
+        "groups-series-time-return-labels-tags-fields": "依時間分組序列，並將標籤或標籤作為欄位返回。"
       },
       "name": {
         "labels-to-fields": "欄位標籤"
@@ -15899,7 +15899,7 @@
       },
       "merge-effect-applied-single-frame": "套用到單個框架時，合併不起作用。",
       "name": {
-        "merge": "合併系列／表格"
+        "merge": "合併序列/表格"
       }
     },
     "multi-info": {
@@ -16015,7 +16015,7 @@
     },
     "regex-matcher-editor": {
       "placeholder-value-or-variable": "值或變數",
-      "variable-regex-documentation": "將多值變數格式化為正則表達式字串"
+      "variable-regex-documentation": "將多值變數格式化為正則運算式字串"
     },
     "regression": {
       "description": {
@@ -16060,7 +16060,7 @@
         "rename-parts-using-regex": "使用正則表達式和替換模式重新命名部分查詢結果。"
       },
       "name": {
-        "rename-fields-by-regex": "依據正則表達式重新命名欄位"
+        "rename-fields-by-regex": "依據正則運算式重新命名欄位"
       }
     },
     "rename-by-regex-transformer-editor": {
@@ -16469,7 +16469,7 @@
       "tooltip-remove-variable": "移除變數"
     },
     "variable-editor-un-connected": {
-      "name-description": "說明"
+      "name-description": "描述"
     },
     "variable-options": {
       "aria-label-toggle-all-values": "切換所有值"

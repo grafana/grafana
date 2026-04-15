@@ -360,7 +360,7 @@
         "alert-rule-button": "AI 경고 규칙 버튼을 로드하지 못했습니다",
         "feedback-button": "AI 피드백 버튼을 로드하지 못했습니다",
         "improve-annotations-button": "AI 주석 개선 버튼을 로드하지 못했습니다",
-        "improve-labels-button": "AI 레이블 개선 버튼을 로드하지 못했습니다",
+        "improve-labels-button": "AI 라벨 개선 버튼을 로드하지 못했습니다",
         "template-button": "AI 템플릿 버튼을 로드하지 못했습니다",
         "triage-button": "AI 분류 버튼을 로드하지 못했습니다"
       }
@@ -411,7 +411,7 @@
     "alert-group-alerts-table": {
       "columns": {
         "label": {
-          "instance-labels": "인스턴스 레이블",
+          "instance-labels": "인스턴스 라벨",
           "notification-state": "알림 상태"
         }
       },
@@ -453,7 +453,7 @@
     },
     "alert-instances-table": {
       "created": "생성됨",
-      "labels": "레이블",
+      "labels": "라벨",
       "state": "상태"
     },
     "alert-label": {
@@ -467,7 +467,7 @@
       "title-muting-grouping-and-timings": "알림 비활성화, 그룹화 및 타이밍"
     },
     "alert-manager-picker": {
-      "external-alertmanagers-group": "외부 경보 관리자",
+      "external-alertmanagers-group": "외부 경고 관리자",
       "noOptionsMessage-no-datasources-found": "데이터 소스를 찾을 수 없습니다"
     },
     "alert-menu": {
@@ -475,17 +475,17 @@
       "copy-link": "링크 복사",
       "duplicate": "복제",
       "export": "내보내기",
-      "manage-enrichments": "강화 기능 관리",
+      "manage-enrichments": "보강 기능 관리",
       "silence-notifications": "알림 끄기에 대한 알림",
       "with-modifications": "수정 사항 포함"
     },
     "alert-missing-evaluations-to-stale": {
       "help-info": {
-        "link-text": "오래된 경보 인스턴스에 대해 자세히 알아보기",
-        "text1": "경보 규칙 쿼리가 데이터를 반환하지만 해당 경보 인스턴스의 특정 차원(또는 계열)이 여러 평가 간격 동안 연속으로 누락된 경우, 경보 인스턴스가 오래된 것으로 간주됩니다.",
-        "text2": "오래된 경보 인스턴스는 해결된 후 제거됩니다.",
-        "text3": "이 설정은 데이터가 없는 평가 간격이 몇 번 연속 발생해야 경보 인스턴스가 오래된 것으로 간주되는지를 정합니다. 비어 있는 경우 기본값은 2입니다.",
-        "title": "오래된 경보 인스턴스"
+        "link-text": "오래된 경고 인스턴스에 대해 자세히 알아보기",
+        "text1": "경고 규칙 쿼리가 데이터를 반환하지만 해당 경고 인스턴스의 특정 차원(또는 계열)이 여러 평가 간격 동안 연속으로 누락된 경우, 경고 인스턴스가 오래된 것으로 간주됩니다.",
+        "text2": "오래된 경고 인스턴스는 해결된 후 제거됩니다.",
+        "text3": "이 설정은 데이터가 없는 평가 간격이 몇 번 연속 발생해야 경고 인스턴스가 오래된 것으로 간주되는지를 정합니다. 비어 있는 경우 기본값은 2입니다.",
+        "title": "오래된 경고 인스턴스"
       }
     },
     "alert-recording-rule-form": {
@@ -681,7 +681,7 @@
       "label-name": "",
       "label-timing-options": "타이밍 옵션",
       "message": {
-        "required": "필수 사항입니다. "
+        "required": "필수 사항입니다."
       },
       "validate-name-duplicate": ""
     },
@@ -705,7 +705,7 @@
       "label-value": "값",
       "matching-labels": "일치하는 라벨",
       "message": {
-        "required": "필수 사항입니다. "
+        "required": "필수 사항입니다."
       },
       "placeholder-label": "라벨",
       "placeholder-value": "값",
@@ -714,7 +714,7 @@
     },
     "annotation-header-field": {
       "message": {
-        "required": "필수 사항입니다. "
+        "required": "필수 사항입니다."
       }
     },
     "annotations": {
@@ -812,7 +812,7 @@
       "scene": {
         "labels-filter-variable": {
           "label": {
-            "labels": "레이블: "
+            "labels": "라벨: "
           }
         },
         "transitions-from-filter-variable": {
@@ -1144,7 +1144,7 @@
     "enrichment": {
       "error-boundary": {
         "enrichment-drawer-extension": "Enrichment Drawer 확장 프로그램을 불러오지 못했습니다",
-        "rule-viewer-section-extension": "규칙 뷰어 강화 기능 섹션을 불러오지 못했습니다"
+        "rule-viewer-section-extension": "규칙 뷰어 보강 기능 섹션을 불러오지 못했습니다"
       }
     },
     "error-modal": {
@@ -1159,7 +1159,7 @@
     },
     "evaluate-every-validation-options": {
       "message": {
-        "required": "필수 사항입니다. "
+        "required": "필수 사항입니다."
       }
     },
     "evaluation-behavior-summary": {
@@ -1180,7 +1180,7 @@
       "description-group-name": "그룹은 동일한 평가 간격으로 모든 규칙을 평가합니다.",
       "description-often-rules-group-evaluated": "그룹의 모든 규칙을 평가하는 빈도입니다.",
       "message": {
-        "required": "필수 사항입니다. "
+        "required": "필수 사항입니다."
       },
       "placeholder-enter-a-name": "이름을 입력하세요",
       "title-new-evaluation-group": "새 평가 그룹"
@@ -1250,10 +1250,10 @@
     "feature-toggle-page": {
       "nav-model": {
         "subTitle": {
-          "enable-alerting-grafana-config": "경보를 활성화하려면, Grafana 구성에서 활성화합니다."
+          "enable-alerting-grafana-config": "경고를 활성화하려면, Grafana 구성에서 활성화합니다."
         },
         "text": {
-          "alerting-is-not-enabled": "경보가 활성화되지 않았습니다."
+          "alerting-is-not-enabled": "경고가 활성화되지 않았습니다."
         }
       }
     },
@@ -1325,7 +1325,7 @@
     },
     "for-validation-options": {
       "message": {
-        "required": "필수 사항입니다. "
+        "required": "필수 사항입니다."
       }
     },
     "generate-alert-data-modal": {
@@ -1342,30 +1342,30 @@
     },
     "get-alert-suggestions": {
       "documentation": {
-        "annotations-attached-alert": "경보에 첨부된 주석 집합입니다.",
-        "fingerprint-identify-alert": "경보를 식별하는 데 사용할 수 있는 지문입니다.",
-        "grafana-external-alertmanager": "Grafana 또는 외부 경보 관리자로 연결되는 백링크.",
-        "organization-alert": "경보를 소유한 조직의 ID입니다.",
-        "time-the-alert-started-firing": "경보가 발생하기 시작한 시간입니다."
+        "annotations-attached-alert": "경고에 첨부된 주석 집합입니다.",
+        "fingerprint-identify-alert": "경고를 식별하는 데 사용할 수 있는 지문입니다.",
+        "grafana-external-alertmanager": "Grafana 또는 외부 경고 관리자로 연결되는 백링크.",
+        "organization-alert": "경고를 소유한 조직의 ID입니다.",
+        "time-the-alert-started-firing": "경고가 발생하기 시작한 시간입니다."
       },
       "value": {
-        "labels-attached-alert": "경보에 첨부된 레이블 집합입니다.",
-        "status-alert-firing-resolved": "경보의 상태입니다. '생성 중' 또는 '해결됨'일 수 있습니다."
+        "labels-attached-alert": "경고에 첨부된 라벨 집합입니다.",
+        "status-alert-firing-resolved": "경고의 상태입니다. '발생 중' 또는 '해결됨'일 수 있습니다."
       }
     },
     "get-cloud-scenes": {
       "title": {
-        "mimir-alertmanager": "Mimir 경보 관리자"
+        "mimir-alertmanager": "Mimir Alertmanager"
       }
     },
     "get-global-suggestions": {
       "value": {
-        "an-array-containing-all-alerts": "모든 경보가 포함된 배열"
+        "an-array-containing-all-alerts": "모든 경고가 포함된 배열"
       }
     },
     "get-grafana-alertmanager-scenes": {
       "title": {
-        "grafana-alertmanager": "Grafana 경보 관리자"
+        "grafana-alertmanager": "Grafana Alertmanager"
       }
     },
     "get-grafana-managed-scenes": {
@@ -1380,12 +1380,12 @@
         }
       },
       "title": {
-        "mimirmanaged-alert-rules-per-rule-group": "Mimir가 관리하는 경보 규칙 - 규칙 그룹별"
+        "mimirmanaged-alert-rules-per-rule-group": "Mimir가 관리하는 경고 규칙 - 규칙 그룹별"
       }
     },
     "get-mimir-managed-rules-scenes": {
       "title": {
-        "mimirmanaged-alert-rules": "Mimir가 관리하는 경보 규칙"
+        "mimirmanaged-alert-rules": "Mimir가 관리하는 경고 규칙"
       }
     },
     "get-preview-results": {
@@ -1393,7 +1393,7 @@
     },
     "get-state-display-model": {
       "text": {
-        "alerting": "경보 중",
+        "alerting": "경고 중",
         "error": "오류",
         "firing": "발생 중",
         "inactive": "비활성",
@@ -1525,7 +1525,7 @@
     "group-and-namespace-fields": {
       "group-picker-label-group": "그룹",
       "message": {
-        "required": "필수 사항입니다. "
+        "required": "필수 사항입니다."
       },
       "namespace-picker-label-namespace": "네임스페이스"
     },
@@ -1545,7 +1545,7 @@
       "namespace": "네임스페이스",
       "new": "신규",
       "title": {
-        "back": "경보로 돌아가기"
+        "back": "경고로 돌아가기"
       }
     },
     "group-edit": {
@@ -1595,7 +1595,7 @@
       }
     },
     "home": {
-      "irm-card-description": "Grafana Cloud IRM으로 대기, 경보, 인시던트 대응을 통합합니다.",
+      "irm-card-description": "Grafana Cloud IRM으로 대기, 경고, 인시던트 대응을 통합합니다.",
       "irm-card-item-1": "캘린더나 Terraform으로 대기 일정을 관리합니다.",
       "irm-card-item-2": "웹, 앱, Slack 또는 기타 채널을 통해 인시던트에 대응합니다.",
       "irm-card-item-3": "AI 기반 Grafana SIFT로 근본 원인을 정확히 파악합니다.",
@@ -1607,7 +1607,7 @@
       "synthetic-monitoring-card-item-1": "브라우저 검사를 통해 엔드투엔드 사용자 여정을 시뮬레이션합니다.",
       "synthetic-monitoring-card-item-2": "모든 네트워크 계층에서 ping, DNS, HTTP/S, TCP 검사를 실행합니다.",
       "synthetic-monitoring-card-item-3": "이용하시는 방화벽 뒤에서 20개 이상의 글로벌 프로브 또는 비공개 프로브를 사용합니다.",
-      "synthetic-monitoring-card-item-4": "UI에서 바로 Prometheus 유형의 기본 제공 경보로 SLO를 추적합니다.",
+      "synthetic-monitoring-card-item-4": "UI에서 바로 Prometheus 유형의 기본 제공 경고로 SLO를 추적합니다.",
       "synthetic-monitoring-card-title": "종합 모니터링"
     },
     "import-to-gma": {
@@ -1664,7 +1664,7 @@
         "description": "기존 네임스페이스를 검색하려면 입력하세요",
         "label": "네임스페이스"
       },
-      "pageTitle": "경보 규칙 가져오기",
+      "pageTitle": "경고 규칙 가져오기",
       "pause": {
         "label": "가져온 경고 규칙 일시 중지"
       },
@@ -1831,7 +1831,7 @@
       "pageTitle": ""
     },
     "inhibition-rules": {
-      "body": "이 알림 관리자(Alertmanager)에는 금지 규칙이 설정되어 있습니다. 일치하는 알림 발동 시 일부 알림이 표시되지 않을 수 있습니다.",
+      "body": "이 경고 관리자(Alertmanager)에는 금지 규칙이 설정되어 있습니다. 일치하는 알림 발동 시 일부 알림이 표시되지 않을 수 있습니다.",
       "learn-more": "억제 규칙에 대해 더 알아보기",
       "title": "억제 규칙이 적용됩니다"
     },
@@ -1893,7 +1893,7 @@
       "timeline-n-uniqueReceivers_other": ""
     },
     "instance-match": {
-      "non-matching-labels": "일치하지 않는 레이블",
+      "non-matching-labels": "일치하지 않는 라벨",
       "notification-policy": "경로 보기"
     },
     "irm-integration": {
@@ -1945,7 +1945,7 @@
     },
     "labels-without-suggestions": {
       "message": {
-        "required": "필수 사항입니다. "
+        "required": "필수 사항입니다."
       },
       "placeholder-key": "키",
       "placeholder-value": "값"
@@ -2045,7 +2045,7 @@
     },
     "match-details": {
       "matched": "일치",
-      "no-matchers-matched": "정책이 모든 레이블과 일치합니다"
+      "no-matchers-matched": "정책이 모든 라벨과 일치합니다"
     },
     "matcher-filter": {
       "filter-alerts-using-label-querying-without-braces": "중괄호 없이 라벨 쿼리를 사용하여 경고를 필터링합니다. 예:",
@@ -2065,7 +2065,7 @@
       "label-refine-affected-alerts": "영향을 받는 경고 수정",
       "label-value": "값",
       "message": {
-        "required": "필수 사항입니다. "
+        "required": "필수 사항입니다."
       },
       "placeholder-label": "라벨",
       "placeholder-value": "값",
@@ -2102,7 +2102,7 @@
       "get-data-source-options": {
         "grouped-options": {
           "label": {
-            "data-sources-with-configured-alert-rules": "구성된 경보 규칙이 있는 데이터 소스",
+            "data-sources-with-configured-alert-rules": "구성된 경고 규칙이 있는 데이터 소스",
             "other-data-sources": "기타 데이터 소스"
           }
         }
@@ -2123,7 +2123,7 @@
       "title-delete-mute-timing": "알림 비활성화 타이밍 삭제"
     },
     "mute-timing-fields": {
-      "am-active-timing-select-description-active-timings": "시간 간격을 선택하여 이 경보 규칙에 대한 알림을 보낼 시간을 지정하세요.",
+      "am-active-timing-select-description-active-timings": "시간 간격을 선택하여 이 경고 규칙에 대한 알림을 보낼 시간을 지정하세요.",
       "am-mute-timing-select-description-mute-timings": "이 경고 규칙에 대한 알림을 보내지 않을 시점을 정의하려면 알림 비활성화 타이밍을 선택하세요",
       "am-mute-timing-select-label-mute-timings": "알림 비활성화 타이밍"
     },
@@ -2165,7 +2165,7 @@
     },
     "navigation": {
       "active-notifications": "",
-      "alert-rules": "알림 규칙",
+      "alert-rules": "경고 규칙",
       "alerts": "",
       "contact-points": "",
       "notification-policies": "",
@@ -2201,7 +2201,7 @@
     "new-silence-page": {
       "page-nav": {
         "subTitle": {
-          "configure-silences-notifications-particular-alert": "특정 경보 규칙에서 알림을 중지하도록 알림 끄기 구성"
+          "configure-silences-notifications-particular-alert": "특정 경고 규칙에서 알림을 중지하도록 알림 끄기 구성"
         },
         "text": {
           "silence-alert-rule": "경고 규칙 끄기"
@@ -2312,7 +2312,7 @@
     },
     "notification-route": {
       "no-labels": "라벨 없음",
-      "notification-policy": "공지 정책"
+      "notification-policy": "알림 정책"
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "정책 라우트 펼치기",
@@ -2805,7 +2805,7 @@
       "label-data-source": "데이터 소스"
     },
     "rule-details-drawer": {
-      "go-to-detail-view": "알림 규칙 보기"
+      "go-to-detail-view": "경고 규칙 보기"
     },
     "rule-details-expression": {
       "label-expression": "표현식"
@@ -3003,7 +3003,7 @@
       "expand-all": "모두 펼치기"
     },
     "rule-list-v2": {
-      "import-to-gma": "경보 규칙 가져오기",
+      "import-to-gma": "경고 규칙 가져오기",
       "import-to-gma-tool": ""
     },
     "rule-modify-export": {
@@ -3083,8 +3083,8 @@
       },
       "state": {
         "firing": "발생 중",
-        "normal": "정상",
-        "pending": "보류 중",
+        "normal": "일반",
+        "pending": "대기 중",
         "recovering": "복구 중"
       },
       "type": {
@@ -3099,7 +3099,7 @@
       "clear-filters": "필터 초기화",
       "configured-alert-rules": "구성된 경고 규칙을 포함하는 데이터 소스는 경고 규칙이 데이터 소스 자체에 저장되고 평가되는 Mimir 또는 Loki 데이터 소스입니다.",
       "contact-point-disabled-tooltip": "",
-      "contact-point-tooltip": "선택한 연락처로 직접 전송되는 경보 규칙을 필터링합니다. 알림 정책으로 전송된 경보 규칙은 표시되지 않습니다.",
+      "contact-point-tooltip": "선택한 연락처로 직접 전송되는 경고 규칙을 필터링합니다. 알림 정책으로 전송된 경고 규칙은 표시되지 않습니다.",
       "contact-point-tooltip-title": "연락처 필터 도움말",
       "dashboard": "대시보드",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "데이터 소스로 검색 도움말",
@@ -3122,7 +3122,7 @@
       "placeholder-contact-point": "연락처 선택",
       "placeholder-data-sources": "데이터 소스 선택",
       "placeholder-group-search": "그룹 검색",
-      "placeholder-labels": "레이블 선택",
+      "placeholder-labels": "라벨 선택",
       "placeholder-policy": "",
       "plugin-rules": "플러그인 규칙",
       "policy-disabled-tooltip": "",
@@ -3284,7 +3284,7 @@
       "label-created-by": "생성자",
       "label-duration": "지속 시간",
       "message": {
-        "required": "필수 사항입니다. "
+        "required": "필수 사항입니다."
       },
       "placeholder-whos-creating-the-silence": "알림 끄기 생성자",
       "save-silence": "알림 끄기 저장",
@@ -3413,7 +3413,7 @@
       "label-template-group": "템플릿 그룹",
       "label-template-group-name": "템플릿 그룹 이름",
       "message": {
-        "required": "필수 사항입니다. "
+        "required": "필수 사항입니다."
       },
       "new-template-name-placeholder-give-your-template-group-a-name": "템플릿 그룹의 이름을 지정하세요",
       "title-error-saving-template": "템플릿 저장 중에 오류 발생",
@@ -3462,7 +3462,7 @@
       "legacy-badge-tooltip": "",
       "misconfigured-badge-text": "잘못 구성됨",
       "misconfigured-warning": "이 템플릿은 잘못 구성되었습니다.",
-      "misconfigured-warning-details": "템플릿은 alertmanager 구성의 <2></2> 및 <5></5> 섹션 모두에서 정의되어야 합니다."
+      "misconfigured-warning-details": "템플릿은 경고 관리자 구성의 <2></2> 및 <5></5> 섹션 모두에서 정의되어야 합니다."
     },
     "templates-page": {
       "add-template": "",
@@ -3566,16 +3566,18 @@
       },
       "instance-details-drawer": {
         "alert-instance-label": "",
+        "back": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "인스턴스 세부 정보",
         "silence-button": "",
-        "silence-no-permission": ""
+        "silence-no-permission": "",
+        "silence-title-with-name": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "선택한 시간 범위에서 발생 또는 보류 중인 알림 인스턴스가 없습니다.",
       "no-instances-found": "규칙에 대한 알림 인스턴스를 찾을 수 없음: {{ruleUID}}",
-      "no-labels": "레이블 없음",
+      "no-labels": "라벨 없음",
       "no-matching-instances-with-filters": "선택한 시간 범위의 필터 설정과 일치되는 알림 인스턴스가 없습니다.",
       "open-in-sidebar": "사이드바에서 열기",
       "open-rule-details": "규칙 세부 정보 열기",
@@ -3626,8 +3628,8 @@
     "use-columns": {
       "columns": {
         "label": {
-          "alert-rule-targeted": "경보 규칙 대상",
-          "alerts-silenced": "경보 알림 꺼짐",
+          "alert-rule-targeted": "경고 규칙 대상",
+          "alerts-silenced": "경고 알림 꺼짐",
           "health": "상태",
           "matching-labels": "일치하는 라벨",
           "name": "이름",
@@ -3653,7 +3655,7 @@
     "use-combined-labels": {
       "grouped-options": {
         "label": {
-          "from-alerts": "경보에서",
+          "from-alerts": "경고에서",
           "from-system": "시스템에서"
         }
       }
@@ -3700,7 +3702,7 @@
     "use-page-nav": {
       "page-nav": {
         "text": {
-          "enrichment": "알림 강화 기능",
+          "enrichment": "알림 보강 기능",
           "history": "이력",
           "instances": "인스턴스",
           "notifications": "",
@@ -3722,8 +3724,8 @@
       "description-alert-rules": "경고 규칙이 발동되기 전에 충족되어야 하는 조건을 정의합니다",
       "description-configure-firing-alert-instances-routed-contact": "경고 발생 인스턴스가 연락처로 라우팅되는 방식을 구성합니다",
       "description-configure-receives-notifications": "알림을 받는 사람과 전송 방식을 구성합니다",
-      "href-text-alert-activity": "활동 보기",
-      "title-alert-activity": "알림 활동",
+      "href-text-alert-activity": "경고 활동 보기",
+      "title-alert-activity": "경고 활동",
       "title-alert-rules": "경고 규칙",
       "title-contact-points": "연락처",
       "title-notification-policies": "알림 정책"
@@ -3737,47 +3739,47 @@
     }
   },
   "alertlist": {
-    "category-alert-state-filter": "경보 상태 필터",
+    "category-alert-state-filter": "경고 상태 필터",
     "category-filter": "필터",
     "category-options": "옵션",
     "category-stat-styles": "",
-    "descriptino-alerts-linked-to-dashboard": "이 대시보드에 연결된 경보만 표시",
-    "description-alert-instance-label": "레이블 쿼리를 사용하여 경보 인스턴스를 필터링합니다. 예: {severity=\"critical\", instance=~\"cluster-us-.+\"}",
-    "description-alert-name": "이 텍스트가 포함된 경보를 필터링하기",
-    "description-datasource": "경보 소스에서 필터링하기",
-    "description-folder": "선택한 폴더의 경보(Grafana 관리 경보 규칙에만 해당)를 필터링하기",
-    "description-group-by": "레이블 쿼리를 사용하여 경보 필터링하기",
-    "description-group-mode": "경보 인스턴스를 그룹화하는 방법",
-    "description-max-items": "표시할 경보 최대 한도",
-    "description-show-inactive-alerts": "인스턴스가 0(영)인 경보 규칙을 포함합니다. 이러한 규칙에는 인스턴스가 없으므로, 경보 인스턴스 레이블 필터가 구성된 경우 숨겨진 상태로 유지됩니다.",
-    "description-sort-order": "경보 및 경보 인스턴스 순서 정렬하기",
+    "descriptino-alerts-linked-to-dashboard": "이 대시보드에 연결된 경고만 표시",
+    "description-alert-instance-label": "라벨 쿼리를 사용하여 경고 인스턴스를 필터링합니다. 예: {severity=\"critical\", instance=~\"cluster-us-.+\"}",
+    "description-alert-name": "이 텍스트가 포함된 경고를 필터링하기",
+    "description-datasource": "경고 소스에서 필터링하기",
+    "description-folder": "선택한 폴더의 경고(Grafana 관리 경고 규칙에만 해당)를 필터링하기",
+    "description-group-by": "라벨 쿼리를 사용하여 경고 필터링하기",
+    "description-group-mode": "경고 인스턴스를 그룹화하는 방법",
+    "description-max-items": "표시할 경고 최대 한도",
+    "description-show-inactive-alerts": "인스턴스가 0(영)인 경고 규칙을 포함합니다. 이러한 규칙에는 인스턴스가 없으므로, 경고 인스턴스 라벨 필터가 구성된 경우 숨겨진 상태로 유지됩니다.",
+    "description-sort-order": "경고 및 경고 인스턴스 순서 정렬하기",
     "description-stat-color-mode": "",
     "description-stat-thresholds": "",
     "description-stat-value-mappings": "",
     "description-view-mode": "목록 보기와 통계 보기 간 전환",
     "group-by": {
-      "aria-label-group-by-label-keys": "레이블 키별로 그룹화",
+      "aria-label-group-by-label-keys": "라벨 키별로 그룹화",
       "placeholder-group-by": "그룹화 기준"
     },
     "group-mode-options": {
       "label-custom-grouping": "맞춤 그룹화",
       "label-default-grouping": "기본 그룹화"
     },
-    "name-alert-instance-label": "경보 인스턴스 레이블",
-    "name-alert-name": "경보 이름",
-    "name-alerts-linked-to-dashboard": "이 대시보드에 연결된 경보",
+    "name-alert-instance-label": "경고 인스턴스 라벨",
+    "name-alert-name": "경고 이름",
+    "name-alerts-linked-to-dashboard": "이 대시보드에 연결된 경고",
     "name-datasource": "데이터 소스",
     "name-error": "오류",
-    "name-firing": "경보/발동 중",
+    "name-firing": "경고 중/발생 중",
     "name-folder": "폴더",
     "name-group-by": "그룹화 기준",
     "name-group-mode": "그룹 모드",
     "name-max-items": "항목 최대 한도",
     "name-no-data": "데이터 없음",
-    "name-normal": "정상",
-    "name-pending": "보류 중",
+    "name-normal": "일반",
+    "name-pending": "대기 중",
     "name-recovering": "복구 중",
-    "name-show-inactive-alerts": "인스턴스가 0개인 경보 표시",
+    "name-show-inactive-alerts": "인스턴스가 0개인 경고 표시",
     "name-sort-order": "정렬 순서",
     "name-stat-color-mode": "",
     "name-stat-thresholds": "",
@@ -3798,15 +3800,15 @@
     },
     "ungrouped-mode-view": {
       "active-for": "<1>{{duration}}</1> 동안 지속",
-      "aria-label-view-alert-rule": "경보 규칙 보기",
-      "view-alert-rule": "경보 규칙 보기"
+      "aria-label-view-alert-rule": "경고 규칙 보기",
+      "view-alert-rule": "경고 규칙 보기"
     },
     "unified-alert-list": {
       "clear": "초기화",
       "text-loading": "로딩 중..."
     },
     "unified-alert-list-panel": {
-      "body-permission-required": "죄송하지만, 경보 규칙을 읽는 데 필요한 권한이 없습니다.",
+      "body-permission-required": "죄송하지만, 경고 규칙을 읽는 데 필요한 권한이 없습니다.",
       "title-permission-required": "권한이 필요합니다."
     },
     "view-mode-options": {
@@ -4097,7 +4099,7 @@
     "config": {
       "category-thresholds": "임계값",
       "description-color-by-field": "형제 필드의 색상 값을 사용하여 각 막대 값에 색상을 지정합니다.",
-      "description-x-label-max-length": "X축 레이블은 입력된 길이로 잘립니다",
+      "description-x-label-max-length": "X축 라벨은 입력된 길이로 잘립니다",
       "name-bar-radius": "막대 반경",
       "name-bar-width": "막대 너비",
       "name-color-by-field": "필드별 색상",
@@ -4107,14 +4109,14 @@
       "name-group-width": "그룹 너비",
       "name-line-width": "선 너비",
       "name-orientation": "방향",
-      "name-rotate-x-labels": "x축 눈금 레이블 회전",
+      "name-rotate-x-labels": "x축 눈금 라벨 회전",
       "name-show-thresholds": "임계값 표시",
       "name-show-values": "값 표시",
       "name-stacking": "스태킹",
       "name-transform": "변환",
       "name-x-axis": "X축",
-      "name-x-label-max-length": "X축 눈금 레이블 최대 길이",
-      "name-x-label-min-spacing": "X축 레이블 최소 간격",
+      "name-x-label-max-length": "X축 눈금 라벨 최대 길이",
+      "name-x-label-min-spacing": "X축 라벨 최소 간격",
       "orientation-options": {
         "label-auto": "자동",
         "label-horizontal": "가로",
@@ -4303,6 +4305,9 @@
       "folder_other": "폴더 {{count}}개",
       "libraryPanel_other": "라이브러리 패널 {{count}}개",
       "total_other": "항목 {{count}}개"
+    },
+    "create-new": {
+      "dashboard-group": ""
     },
     "dashboards-tree": {
       "checkbox": {
@@ -5019,7 +5024,7 @@
       }
     },
     "feature-highlight-page": {
-      "foot-note": "계정 생성 후 마이그레이션 어시스턴트를 통해 이 인스턴스를 <2>Grafana Cloud로 쉽게 마이그레이션</2>할 수 있습니다.",
+      "foot-note": "계정 생성 후 Migration Assistant를 통해 이 인스턴스를 <2>Grafana Cloud로 쉽게 마이그레이션</2>할 수 있습니다.",
       "footer": "데이터 소스 권한을 사용하려면 Grafana Cloud Free 계정을 만드세요. 해당 기능은 Grafana Enterprise 라이선스에서도 사용할 수 있습니다.",
       "footer-link": "Enterprise에 대해 알아보기",
       "link-button-label": "계정 생성"
@@ -5436,6 +5441,9 @@
       "cancel-loading-dashboard": "대시보드 로딩 취소"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "",
+      "provisioning-message": "",
+      "provisioning-title": "",
       "text": {
         "not-found": "찾을 수 없음"
       }
@@ -5792,7 +5800,7 @@
     },
     "get-panel-editor-tabs": {
       "text": {
-        "alert": "경보",
+        "alert": "경고",
         "query": "쿼리",
         "transform-data": "데이터 변환"
       }
@@ -6473,6 +6481,10 @@
       "title-add-another-transformation": "다른 변환 추가",
       "view-all": "모두 보기"
     },
+    "transformation-type-picker": {
+      "sql-cta-button": "",
+      "sql-cta-description": ""
+    },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "모든 변환을 삭제하면 기본 선택 화면으로 돌아갑니다."
     },
@@ -6518,7 +6530,7 @@
         "action": "변수 숨기기 옵션 변경"
       },
       "label": {
-        "action": "변수 레이블 변경"
+        "action": "변수 라벨 변경"
       },
       "name": {
         "action": "변수 이름 변경"
@@ -6856,7 +6868,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "규칙 표시/숨기기가 작동하지 않습니다",
@@ -7263,7 +7280,7 @@
       "tooltip-remove-option": ""
     },
     "panel-data-alerting-tab": {
-      "tab-label": "경보"
+      "tab-label": "경고"
     },
     "panel-data-alerting-tab-rendered": {
       "alert": {
@@ -7619,7 +7636,7 @@
       "add-variable": "변수 추가"
     },
     "variable-display-select": {
-      "label": "표시",
+      "label": "디스플레이",
       "options": {
         "above-dashboard": {
           "label": "대시보드 위"
@@ -7634,7 +7651,7 @@
         },
         "hidden-label": {
           "description": "대시보드 위에 있지만 변수 이름은 표시하지 않음",
-          "label": "대시보드 위, 레이블 숨김"
+          "label": "대시보드 위, 라벨 숨김"
         }
       }
     },
@@ -7654,7 +7671,7 @@
       "description-template-variable-characters": "템플릿 변수의 이름입니다. (최대 50자)",
       "general": "일반",
       "name-description": "설명",
-      "name-label": "레이블",
+      "name-label": "라벨",
       "name-name": "이름",
       "placeholder-descriptive-text": "설명 텍스트",
       "placeholder-label-name": "라벨 이름",
@@ -7681,7 +7698,7 @@
     "variable-hide-select": {
       "hide_options": {
         "label": {
-          "label": "레이블",
+          "label": "라벨",
           "nothing": "아무것도 없음",
           "variable": "변수"
         }
@@ -8094,8 +8111,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "지원되지 않음",
+      "badge-text-success": "",
       "badge-text-supported": "지원됨",
       "label": {
+        "advisor": "",
         "alerting": "경고",
         "type": "유형"
       }
@@ -8522,7 +8541,6 @@
       "give-feedback": "피드백 제출하기"
     },
     "logs-meta-row": {
-      "download": "다운로드",
       "label": {
         "deduplication-count": "중복 제거 횟수",
         "showing-only-selected-fields": "선택한 필드만 표시 중"
@@ -8563,7 +8581,7 @@
     },
     "logs-volume-panel": {
       "content-streaming": "스트리밍",
-      "partial-data-tips": "시간 범위를 줄이거나 쿼리에 레이블을 추가하세요."
+      "partial-data-tips": "시간 범위를 줄이거나 쿼리에 라벨을 추가하세요."
     },
     "logs-volume-panel-list": {
       "aria-label-reload-log-volume": "로그 볼륨 다시 로딩",
@@ -8751,6 +8769,9 @@
     "span-bar": {
       "tooltip-critical-path": "전체 트레이스 / 요청 / 워크플로의 <1>중요 경로</1>에 있는 세그먼트입니다."
     },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": ""
+    },
     "span-bar-section": {
       "description-link": "트레이스 보기의 스팬 바 행에서 서비스 및 작업 옆에 추가 정보를 추가합니다.",
       "title-span-bar": "스팬 바"
@@ -8875,22 +8896,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "로그 시각화에 결과 표시",
-        "show-results-in-table-visualisation": "테이블 시각화에 결과 표시",
-        "show-results-newest-to-oldest": "최신순으로 결과 표시",
-        "show-results-oldest-to-newest": "오래된 순으로 결과 표시"
+        "show-results-in-table-visualisation": "테이블 시각화에 결과 표시"
       },
       "label": {
         "logs": "로그",
-        "newest-first": "최신순",
-        "oldest-first": "오래된 순",
         "table": "표"
       },
-      "label-deduplication": "중복 제거",
-      "label-display-results": "결과 표시",
-      "label-prettify-json": "JSON을 보기 좋게 정리",
-      "label-time": "시간",
-      "label-unique-labels": "고유 라벨",
-      "label-wrap-lines": "줄 바꿈",
       "title-feedback": "피드백",
       "title-logs": "로그",
       "title-logs-volume": "로그 볼륨"
@@ -8985,8 +8996,7 @@
       "tooltip-s-m-h": "10초, 1분, 30분, 1시간"
     },
     "sql-expr": {
-      "button-run-query": "쿼리 실행",
-      "tooltip-experimental": "SQL 표현식 LLM 통합 기능은 실험 단계입니다. 문제가 발생하면 Grafana 팀에 보고해 주세요."
+      "button-run-query": "쿼리 실행"
     },
     "sql-schema": {
       "error-title": "오류",
@@ -9084,7 +9094,7 @@
       "text-mode-none": "없음",
       "text-mode-value": "값",
       "text-mode-value-and-name": "",
-      "threshold-labels": "레이블 표시",
+      "threshold-labels": "라벨 표시",
       "threshold-labels-description": "임계값 및 중립 값 표시",
       "threshold-markers": "임계값 표시"
     },
@@ -9277,11 +9287,11 @@
       "label-symbol": "기호",
       "label-symbol-horizontal-align": "기호 가로 정렬",
       "label-symbol-vertical-align": "기호 세로 정렬",
-      "label-text-label": "텍스트 레이블",
+      "label-text-label": "텍스트 라벨",
       "label-x-offset": "X축 상쇄",
       "label-y-offset": "Y축 상쇄",
       "placeholderText-select-symbol": "기호 선택",
-      "placeholderText-select-symbol-or-add-text": "기호를 선택하거나 텍스트 레이블을 추가하세요",
+      "placeholderText-select-symbol-or-add-text": "기호를 선택하거나 텍스트 라벨을 추가하세요",
       "vertical-align-options": {
         "label-bottom": "하단",
         "label-center": "중앙",
@@ -9360,11 +9370,11 @@
     "use-get-essentials-configuration": {
       "essential-content": {
         "description": {
-          "configure-grafana-alerting": "Grafana 경보 구성",
-          "create-integration-alerting-contact-point": "경보 연락처에 대한 IRM 통합을 생성합니다.",
+          "configure-grafana-alerting": "Grafana Alerting 구성",
+          "create-integration-alerting-contact-point": "경고 연락처에 대한 IRM 통합을 생성합니다.",
           "initialize-incident-plugin-declare-manage-incidents": "인시던트 플러그인을 초기화하여 인시던트를 선언하고 관리합니다.",
           "practice-solving-an-incident": "인시던트 해결 연습",
-          "receive-alerts-oncall-notifications-within-environment": "채팅 환경 내에서 경보 및 OnCall 알림을 받습니다.",
+          "receive-alerts-oncall-notifications-within-environment": "채팅 환경 내에서 경고 및 OnCall 알림을 받습니다.",
           "select-chat-ops-channels-to-route-notifications": "알림을 라우팅할 ChatOps 채널을 선택합니다."
         },
         "label": {
@@ -9376,7 +9386,7 @@
         },
         "title": {
           "add-slack-notifications-to-irm-integrations": "IRM 통합에 Slack 알림을 추가합니다.",
-          "connect-alerting-to-irm": "IRM에 경보를 연결합니다.",
+          "connect-alerting-to-irm": "IRM에 경고를 연결합니다.",
           "connect-irm-to-your-slack-workspace": "IRM을 Slack 워크스페이스에 연결합니다.",
           "connect-your-messaging-workspace-to-incident": "메시징 워크스페이스를 인시던트에 연결합니다.",
           "connect-your-messaging-workspace-to-on-call": "메시징 워크스페이스를 OnCall에 연결합니다.",
@@ -9390,8 +9400,8 @@
       },
       "get-grafana-alerting-config-steps": {
         "description": {
-          "create-alert-monitor-system": "시스템을 모니터링할 경보 규칙을 생성합니다.",
-          "create-on-call-integration-alerting-contact-point": "경보 연락처에 대한 OnCall 통합을 생성합니다.",
+          "create-alert-monitor-system": "시스템을 모니터링할 경고 규칙을 생성합니다.",
+          "create-on-call-integration-alerting-contact-point": "경고 연락처에 대한 OnCall 통합을 생성합니다.",
           "create-slos-to-monitor-your-service": "서비스를 모니터링할 SLO를 생성합니다."
         },
         "label": {
@@ -9408,10 +9418,10 @@
           }
         },
         "title": {
-          "connect-alerting-to-on-call": "OnCall에 경보를 연결합니다.",
-          "create-alert-rule": "경보 규칙을 생성합니다.",
+          "connect-alerting-to-on-call": "OnCall에 경고를 연결합니다.",
+          "create-alert-rule": "경고 규칙을 생성합니다.",
           "create-slo": "SLO를 생성합니다.",
-          "enable-slo-alerting": "SLO 경보를 활성화합니다."
+          "enable-slo-alerting": "SLO 경고를 활성화합니다."
         }
       }
     }
@@ -9745,7 +9755,7 @@
         },
         "pressure": {
           "formats": {
-            "name-bars": "바(압력 단위)",
+            "name-bars": "막대",
             "name-hectopascals": "헥토파스칼",
             "name-inches-mercury": "수은주 인치",
             "name-kilobars": "킬로바",
@@ -9923,7 +9933,7 @@
         },
         "name-centered-zero": "중앙 정렬된 0",
         "name-grid-lines": "눈금선 표시",
-        "name-label": "레이블",
+        "name-label": "라벨",
         "name-placement": "배치",
         "name-scale": "스케일",
         "name-show-border": "테두리 표시",
@@ -10487,7 +10497,7 @@
           },
           "stacking": {
             "label-100": "100%",
-            "label-normal": "정상",
+            "label-normal": "일반",
             "label-off": "끄기"
           },
           "thresholds-display-mode": {
@@ -10574,7 +10584,7 @@
       "label-opacity": "투명도",
       "label-scheme": "체계"
     },
-    "name-axis-label": "축 레이블",
+    "name-axis-label": "축 라벨",
     "name-axis-width": "축 너비",
     "name-calculate-from-data": "데이터에서 계산",
     "name-cell-gap": "셀 간격",
@@ -10676,7 +10686,7 @@
       "move-time-range-back": "과거 시간 범위로 변경",
       "move-time-range-forward": "미래 시간 범위로 변경",
       "open-alerting": "알림 설정으로 이동",
-      "open-assistant": "어시스턴트 열기",
+      "open-assistant": "Assistant 열기",
       "open-search": "검색 열기",
       "open-share-embed-drawer": "패널 임베드 공유",
       "open-share-link-drawer": "패널 링크 공유",
@@ -10772,7 +10782,7 @@
       "sign-up": "회원 가입"
     }
   },
-  "label-dropdown-info": "레이블을 찾을 수 없나요? 수동으로 입력하세요.",
+  "label-dropdown-info": "라벨을 찾을 수 없나요? 수동으로 입력하세요.",
   "layers": {
     "layer-drag-drop-list": {
       "draggable-aria-label": "드래그 앤 드롭으로 순서 변경",
@@ -11098,7 +11108,7 @@
     "description-order": "",
     "description-prettify-json": "",
     "description-show-controls": "",
-    "description-show-log-attributes": "실험적. OTel 로그가 표시되면, 레이블 및 메타데이터의 관련 키-값 쌍을 추가로 표시 필드로 추가합니다.",
+    "description-show-log-attributes": "실험적. OTel 로그가 표시되면, 라벨 및 메타데이터의 관련 키-값 쌍을 추가로 표시 필드로 추가합니다.",
     "description-unwrapped-columns": "",
     "description-wrap-lines": "",
     "field-selector": {
@@ -11379,15 +11389,12 @@
       },
       "wrap-lines": "줄 바꿈"
     },
-    "logs-navigation": {
-      "scroll-top": "맨 위로 스크롤"
-    },
     "logs-panel": {
       "render-common-labels": {
-        "common-labels": "일반 레이블:"
+        "common-labels": "일반 라벨:"
       }
     },
-    "name-common-labels": "일반 레이블",
+    "name-common-labels": "일반 라벨",
     "name-deduplication": "중복 제거",
     "name-details-mode": "로그 세부 정보 패널 모드",
     "name-details-options": {
@@ -11404,7 +11411,7 @@
     "name-show-controls": "컨트롤 표시",
     "name-show-level": "",
     "name-time": "타임스탬프 표시",
-    "name-unique-labels": "고유 레이블",
+    "name-unique-labels": "고유 라벨",
     "name-unwrapped-columns": "",
     "name-wrap-lines": "줄 바꿈",
     "order-options": {
@@ -12174,7 +12181,7 @@
     },
     "quick-add": {
       "aria-label": "신규",
-      "new-template-dashboard-button": "템플릿 기반 대시보드"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "블로그 최근 글"
   },
@@ -12306,7 +12313,7 @@
         "description-no-value": "값이 없을 때 표시할 항목",
         "description-value-mappings": "입력 값에 따라 표시할 텍스트 수정",
         "name-actions": "작업",
-        "name-ad-hoc": "임시 필터링 가능",
+        "name-ad-hoc": "",
         "name-color-scheme": "색상 구성표",
         "name-data-links": "데이터 링크",
         "name-decimals": "소수(decimal)",
@@ -12512,7 +12519,7 @@
   "piechart": {
     "category-legend": "범례",
     "category-pie-chart": "원형 차트",
-    "description-labels": "원형 차트에 표시할 레이블을 선택합니다",
+    "description-labels": "원형 차트에 표시할 라벨을 선택합니다",
     "description-pie-chart-type": "원형 차트 렌더링 방식",
     "labels-options": {
       "label-name": "이름",
@@ -12523,7 +12530,7 @@
       "label-percent": "백분율",
       "label-value": "값"
     },
-    "name-labels": "레이블",
+    "name-labels": "라벨",
     "name-legend-values": "범례 값",
     "name-pie-chart-type": "원형 차트 유형",
     "pie-chart-type-options": {
@@ -12765,6 +12772,7 @@
       "title-button-disabled": "이 플러그인을 아직 사용할 수 없으며 설치를 완료하는 데 시간이 걸릴 수 있습니다."
     },
     "install-controls": {
+      "contact-us": "",
       "install": "설치",
       "installing": "설치 중",
       "update": "업데이트",
@@ -13148,7 +13156,7 @@
       "search-placeholder": "연결 검색",
       "status-connected": "연결됨",
       "status-disconnected": "연결 해제됨",
-      "status-pending": "보류 중",
+      "status-pending": "대기 중",
       "status-unknown": "알 수 없음",
       "view": "보기"
     },
@@ -13319,6 +13327,7 @@
       "token-label": "프로젝트 액세스 토큰",
       "token-required": "GitLab 토큰은 필수 항목입니다",
       "url-description": "GitLab 리포지토리 URL",
+      "url-pattern": "",
       "url-required": "리포지토리 URL은 필수 항목입니다"
     },
     "history-view": {
@@ -14239,11 +14248,11 @@
       "view-as-list": "리스트로 보기"
     },
     "dashboard-actions": {
-      "import": "가져오기",
+      "import": "",
       "new": "신규",
       "new-dashboard": "새 대시보드",
       "new-folder": "새 폴더",
-      "new-template-dashboard": "템플릿 기반 대시보드"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "점수"
@@ -14744,19 +14753,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "SQL 제안을 생성하려면, 최소 하나 이상의 데이터 쿼리를 추가하세요.",
-    "ai-explain-title": "AI 기반 SQL 표현식 설명",
-    "ai-suggestions-title": "AI 기반 SQL 표현식 제안",
-    "apply": "적용",
-    "code-label": "{{ language }}",
-    "copy": "복사",
-    "explain-empty-query-tooltip": "설명을 확인하려면 SQL 표현식을 입력하세요.",
     "explain-query": "쿼리 설명",
-    "explanation-modal-title": "SQL 쿼리 설명",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "SQL 제안 내역",
-    "suggestions": "제안",
-    "view-explanation": "설명 보기"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "즐겨찾기로 표시",
@@ -15216,11 +15215,12 @@
     },
     "range-content": {
       "apply-button": "시간 범위 적용",
-      "default-error": "과거 날짜 또는 '{{now}}'을(를) 입력하세요",
+      "default-error": "",
       "fiscal-year": "회계 연도: {{from}} - {{to}}",
       "from-input": "최저",
       "open-input-calendar": "캘린더 열기",
-      "range-error": "'시작 시간'은 '종료 시간' 이후일 수 없습니다.",
+      "range-error": "",
+      "required-error": "",
       "to-input": "종료 시간"
     },
     "range-picker": {
@@ -15476,7 +15476,7 @@
         "label": {
           "copy-frame-name-to-field": "프레임 이름을 필드 이름에 복사",
           "ignore-the-frame-name": "프레임 이름 무시",
-          "label-frame": "프레임 이름을 레이블로 추가"
+          "label-frame": "프레임 이름을 라벨로 추가"
         }
       },
       "placeholder-frame": "프레임"
@@ -15556,7 +15556,7 @@
     },
     "extract-fields-transformer-editor": {
       "description": {
-        "parse-fields-from-content": "콘텐츠(JSON, 레이블 등)의 필드를 파싱합니다."
+        "parse-fields-from-content": "콘텐츠(JSON, 라벨 등)의 필드를 파싱합니다."
       },
       "field-name-picker-settings": {
         "placeholderText": {
@@ -15716,10 +15716,10 @@
     },
     "get-join-by-labels-transformer": {
       "description": {
-        "flatten-labeled-results-table-joined-labels": "레이블이 지정된 결과의 중첩 구조를 해소하고, 이를 레이블을 기준으로 하나의 테이블로 결합합니다."
+        "flatten-labeled-results-table-joined-labels": "라벨이 지정된 결과의 중첩 구조를 해소하고, 이를 라벨을 기준으로 하나의 테이블로 결합합니다."
       },
       "name": {
-        "join-by-labels": "레이블을 기준으로 조인"
+        "join-by-labels": "라벨을 기준으로 조인"
       }
     },
     "get-partition-by-values-transformer": {
@@ -15871,10 +15871,10 @@
     },
     "labels-to-fields-transformer-editor": {
       "description": {
-        "groups-series-time-return-labels-tags-fields": "계열을 시간 기준으로 그룹화하고 레이블 또는 태그를 필드로 반환합니다."
+        "groups-series-time-return-labels-tags-fields": "계열을 시간 기준으로 그룹화하고 라벨 또는 태그를 필드로 반환합니다."
       },
       "name": {
-        "labels-to-fields": "레이블을 필드로"
+        "labels-to-fields": "라벨을 필드로"
       }
     },
     "limit-transformer-editor": {
@@ -16451,7 +16451,7 @@
       "description-optional-display-name": "표시 이름(선택 사항)",
       "description-template-variable-characters": "템플릿 변수의 이름입니다. (최대 50자)",
       "general": "일반",
-      "name-label": "레이블",
+      "name-label": "라벨",
       "name-name": "이름",
       "placeholder-descriptive-text": "설명 텍스트",
       "placeholder-label-name": "라벨 이름",

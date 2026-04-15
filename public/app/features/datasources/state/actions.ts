@@ -162,7 +162,7 @@ export const testDataSource = (
 
         trackDataSourceTested({
           grafana_version: config.buildInfo.version,
-          plugin_id: dsApi.type,
+          plugin_id: dsApi.meta.id,
           plugin_version: getPluginVersion(dsApi),
           datasource_uid: dsApi.uid,
           success: true,
@@ -175,7 +175,7 @@ export const testDataSource = (
         dispatch(testDataSourceFailed({ ...formattedError }));
         trackDataSourceTested({
           grafana_version: config.buildInfo.version,
-          plugin_id: dsApi.type,
+          plugin_id: dsApi.meta.id,
           plugin_version: getPluginVersion(dsApi),
           datasource_uid: dsApi.uid,
           success: false,

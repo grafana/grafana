@@ -3123,7 +3123,7 @@
       "dashboard": "Painel de controle",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Ajuda para pesquisar por fontes de dados",
       "filter-options": {
-        "placeholder-namespace": "Selecionar espaço de nome",
+        "placeholder-namespace": "Selecionar nomenclatura",
         "placeholder-search-input": "Pesquise por nome ou insira uma consulta de filtro…"
       },
       "grafana-folder": "Pasta do Grafana",
@@ -3536,7 +3536,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Intervalos de tempo",
-      "placeholder-select-time-intervals": "Selecionar intervalos de tempo..."
+      "placeholder-select-time-intervals": "Selecionar intervalos de tempo…"
     },
     "time-intervals-table": {
       "text-havent-created-time-intervals": "Você ainda não criou nenhum intervalo de tempo",
@@ -3585,11 +3585,13 @@
       },
       "instance-details-drawer": {
         "alert-instance-label": "",
+        "back": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Detalhes da instância",
         "silence-button": "",
-        "silence-no-permission": ""
+        "silence-no-permission": "",
+        "silence-title-with-name": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "Você não tem instâncias de alerta em estado pendente ou sendo disparadas no intervalo de tempo selecionado.",
@@ -3953,7 +3955,7 @@
       "allowed-groups-object-ids": "{{ allowedGroupsLabel }} deve ser {{ objectIDsField }}.",
       "allowed-organizations-description": "Lista de organizações separadas por vírgulas ou espaços. O usuário deve ser membro \nde pelo menos uma organização para fazer login.",
       "allowed-organizations-label": "Organizações permitidas",
-      "allowed-organizations-placeholder": "Insira as organizações (minha-equipe, minhaequipe...) e pressione Enter para adicioná-las",
+      "allowed-organizations-placeholder": "Insira as organizações (minha-equipe, minhaequipe…) e pressione Enter para adicioná-las",
       "api-url-description": "O endpoint de informações do usuário do seu provedor OAuth2. As informações que retornaram com este endpoint devem ser compatíveis com <2>OpenID UserInfo</2>.",
       "api-url-required": "Este campo deve ser uma URL válida, se definido.",
       "auth-style-description": "Ele determina como \"{{ clientIDLabel }}\" e \"{{ clientSecretLabel }}\" são enviados para o provedor Oauth2. O padrão é AutoDetect.",
@@ -3969,7 +3971,7 @@
       "client-secret-description": "O {{ clientSecretLabel }} do seu aplicativo OAuth2.",
       "define-allowed-groups-label": "Definir grupos permitidos",
       "define-allowed-teams-ids-label": "Definir IDs das equipes permitidas",
-      "display-name-description": "Será exibido na página de login como \"Entrar com...\". É uma opção conveniente caso você use mais de um provedor de identidade ou protocolos SSO.",
+      "display-name-description": "Será exibido na página de login como \"Entrar com…\". É uma opção conveniente caso você use mais de um provedor de identidade ou protocolos SSO.",
       "display-name-label": "Nome de exibição",
       "domain-hint-description": "Parâmetro para indicar o âmbito do usuário no locatário do Entra ID e agilizar o processo de login.",
       "domain-hint-label": "Dica de domínio",
@@ -4012,7 +4014,7 @@
       "organization-attribute-path-description": "Expressão JMESPath a ser usada para a consulta de organização. Se você configurar \"{{ orgMappingLabel }}\", também será necessário configurar \"{{ orgAttributePathLabel }}\".",
       "organization-attribute-path-label": "Caminho do atributo de organização",
       "organization-mapping-label": "Mapeamento de organização",
-      "organization-mapping-placeholder": "Insira os mapeamentos (minha-equipe:1:Visualizador...) e pressione Enter para adicioná-los",
+      "organization-mapping-placeholder": "Insira os mapeamentos (minha-equipe:1:Visualizador…) e pressione Enter para adicioná-los",
       "required": "Este campo é obrigatório",
       "role-attribute-path-description": "Expressão {{ jmesPathLabel }} a ser usada para a consulta de função da Grafana.",
       "role-attribute-path-label": "Caminho do atributo de função",
@@ -4084,7 +4086,7 @@
       },
       "confirmText-reset": "Redefinir",
       "disable": "Desativar",
-      "disabling": "Desabilitando...",
+      "disabling": "Desabilitando…",
       "discard": "Descartar",
       "enabled-label-enabled": "Ativado",
       "label-enabled": "Ativado",
@@ -4331,6 +4333,9 @@
       "total_one": "{{count}} item",
       "total_other": "{{count}} itens"
     },
+    "create-new": {
+      "dashboard-group": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Este item não está no mesmo repositório que os itens selecionados."
@@ -4397,7 +4402,7 @@
       "empty-message": "Nenhuma pasta encontrada",
       "error-title": "Erro ao carregar pastas",
       "non-folder-item": "{{itemKind}} {{itemUID}} não é uma pasta",
-      "root-title": "Painéis de controle",
+      "root-title": "Painéis",
       "search-placeholder": "Buscar pastas",
       "shared-with-me": "Compartilhado comigo",
       "team-folders": "",
@@ -4520,8 +4525,8 @@
     "name-close": "Fechar",
     "name-color-strategy": "Estratégia de cores",
     "name-down-color": "Cor de baixa",
-    "name-high": "Alto",
-    "name-low": "Baixo",
+    "name-high": "Alta",
+    "name-low": "Baixa",
     "name-mode": "Modo",
     "name-open": "Abrir",
     "name-up-color": "Cor de alta",
@@ -5059,7 +5064,7 @@
       "item-1": "Justifique e aprimore o valor do seu serviço de observabilidade por meio do monitoramento do engajamento dos usuários",
       "item-2": "Mantenha o bom desempenho da Grafana ao identificar e corrigir fontes de dados lentas e propensas a erros",
       "item-3": "Limpe sua instância encontrando e removendo fontes de dados não utilizadas",
-      "item-4": "Analise rapidamente os insights de uso de fontes de dados individuais na interface do usuário, classifique os resultados de busca por uso e erros, ou analise logs de uso detalhados",
+      "item-4": "Analise rapidamente os insights de uso de fontes de dados individuais na interface do usuário, classifique os resultados de busca por uso e erros ou analise os logs de uso detalhados",
       "title": "Compreenda o uso das suas fontes de dados com o Grafana Cloud"
     },
     "new-data-source-page": {
@@ -5466,6 +5471,9 @@
       "cancel-loading-dashboard": "Cancelar carregamento do painel"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "",
+      "provisioning-message": "",
+      "provisioning-title": "",
       "text": {
         "not-found": "Não encontrado"
       }
@@ -6504,6 +6512,10 @@
       "title-add-another-transformation": "Adicionar outra transformação",
       "view-all": "Ver tudo"
     },
+    "transformation-type-picker": {
+      "sql-cta-button": "",
+      "sql-cta-description": ""
+    },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "Ao excluir todas as transformações, você voltará para a tela de seleção principal."
     },
@@ -6888,7 +6900,12 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "",
-      "aria-label-edit": ""
+      "aria-label-edit": "",
+      "delete": {
+        "confirm": "",
+        "text": "",
+        "title": ""
+      }
     },
     "conversion-warning-banner": {
       "detail-conditional": "As regras de exibição/ocultação não funcionarão",
@@ -6937,7 +6954,7 @@
       "label-with-tags": "Com tags",
       "link-type-options": {
         "label": {
-          "dashboards": "Painéis de controle",
+          "dashboards": "Painéis",
           "link": "Link"
         }
       },
@@ -8137,8 +8154,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Não suportado",
+      "badge-text-success": "",
       "badge-text-supported": "Compatível",
       "label": {
+        "advisor": "",
         "alerting": "Alertas",
         "type": "Tipo"
       }
@@ -8565,7 +8584,6 @@
       "give-feedback": "Dar feedback"
     },
     "logs-meta-row": {
-      "download": "Baixar",
       "label": {
         "deduplication-count": "Contagem de desduplicação",
         "showing-only-selected-fields": "Exibindo apenas os campos selecionados"
@@ -8796,6 +8814,9 @@
     "span-bar": {
       "tooltip-critical-path": "Um segmento no <1>caminho crítico</1> do rastro/solicitação/fluxo de trabalho geral."
     },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": ""
+    },
     "span-bar-section": {
       "description-link": "Adicione informações adicionais ao lado do serviço e da operação em uma linha da barra de intervalo na visualização de rastros.",
       "title-span-bar": "Barra de intervalo"
@@ -8920,22 +8941,12 @@
     "unthemed-logs": {
       "description": {
         "show-results-in-logs-visualisation": "Exibir resultados na visualização de logs",
-        "show-results-in-table-visualisation": "Exibir resultados na visualização da tabela",
-        "show-results-newest-to-oldest": "Exibir resultados do mais recente ao mais antigo",
-        "show-results-oldest-to-newest": "Exibir resultados do mais antigo ao mais recente"
+        "show-results-in-table-visualisation": "Exibir resultados na visualização da tabela"
       },
       "label": {
         "logs": "Logs",
-        "newest-first": "Mais recentes primeiro",
-        "oldest-first": "Mais antigos primeiro",
         "table": "Tabela"
       },
-      "label-deduplication": "Desduplicação",
-      "label-display-results": "Exibir resultados",
-      "label-prettify-json": "Embelezar JSON",
-      "label-time": "Tempo",
-      "label-unique-labels": "Rótulos exclusivos",
-      "label-wrap-lines": "Aplicar quebra de linha",
       "title-feedback": "Feedback",
       "title-logs": "Logs",
       "title-logs-volume": "Volume de logs"
@@ -9030,8 +9041,7 @@
       "tooltip-s-m-h": "10s, 1m, 30m, 1h"
     },
     "sql-expr": {
-      "button-run-query": "Executar consulta",
-      "tooltip-experimental": "A integração do LLM de expressões SQL está em fase de testes. Informe à equipe do Grafana se surgir algum problema."
+      "button-run-query": "Executar consulta"
     },
     "sql-schema": {
       "error-title": "Erro",
@@ -9405,7 +9415,7 @@
     "use-get-essentials-configuration": {
       "essential-content": {
         "description": {
-          "configure-grafana-alerting": "Configurar alertas da Grafana",
+          "configure-grafana-alerting": "Configurar Grafana Alerting",
           "create-integration-alerting-contact-point": "Crie uma integração de IRM para um ponto de contato de alerta.",
           "initialize-incident-plugin-declare-manage-incidents": "Inicialize o plug-in de incidentes para declarar e gerenciar incidentes.",
           "practice-solving-an-incident": "Pratique a resolução de um incidente",
@@ -10311,7 +10321,7 @@
         "label-other": "Outro",
         "label-string": "String",
         "label-time": "Tempo",
-        "label-traces": "Traços"
+        "label-traces": "Rastros"
       },
       "get-list-of-query-ref-ids": {
         "description": "Quadros ({{framesCount}}): {{framesNames}}",
@@ -11442,9 +11452,6 @@
       },
       "wrap-lines": "Aplicar quebra de linha"
     },
-    "logs-navigation": {
-      "scroll-top": "Rolar para cima"
-    },
     "logs-panel": {
       "render-common-labels": {
         "common-labels": "Rótulos comuns:"
@@ -12197,8 +12204,8 @@
     "help": {
       "aria-label": "Ajuda",
       "interactive-learning": {
-        "close-tooltip": "Fechar aprendizado interativo, ajuda e documentação",
-        "open-tooltip": "Abrir aprendizado interativo, ajuda e documentação"
+        "close-tooltip": "Fechar aprendizagem interativa, ajuda e documentação",
+        "open-tooltip": "Abrir aprendizagem interativa, ajuda e documentação"
       },
       "tooltip": "Obtenha ajuda e links úteis"
     },
@@ -12237,7 +12244,7 @@
     },
     "quick-add": {
       "aria-label": "Novo",
-      "new-template-dashboard-button": "Painel do modelo"
+      "new-template-dashboard-button": ""
     },
     "rss-button": "Mais recentes do blog"
   },
@@ -12372,7 +12379,7 @@
         "description-no-value": "O que mostrar quando não há valor",
         "description-value-mappings": "Modificar o texto de exibição com base no valor de entrada",
         "name-actions": "Ações",
-        "name-ad-hoc": "Com filtragem ad-hoc",
+        "name-ad-hoc": "",
         "name-color-scheme": "Esquema de cores",
         "name-data-links": "Links de dados",
         "name-decimals": "Decimais",
@@ -12831,6 +12838,7 @@
       "title-button-disabled": "O plug-in ainda não está disponível. Pode levar algum tempo para concluir a instalação."
     },
     "install-controls": {
+      "contact-us": "",
       "install": "Instalar",
       "installing": "Instalando",
       "update": "Atualizar",
@@ -13027,24 +13035,24 @@
       "description-folder-path": "Caminho da pasta dentro do repositório",
       "description-inside-repository": "",
       "info-branch-disabled": "",
-      "label-branch": "Branch",
+      "label-branch": "Ramificação",
       "label-comment": "Comentário",
       "label-filename": "",
       "label-folder": "",
       "label-path": "Caminho",
-      "placeholder-branch": "Selecione ou insira o nome da branch",
+      "placeholder-branch": "Selecione ou insira o nome da ramificação",
       "placeholder-folder": "",
       "suffix-configured-branch": "",
-      "suffix-last-used": "Última branch",
+      "suffix-last-used": "Última ramificação",
       "suffix-new-branch": "",
-      "suffix-pr-branch": "Branch da solicitação de extração",
+      "suffix-pr-branch": "Ramificação da solicitação de extração",
       "suffix-read-only-branch": ""
     }
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "Este recurso está atrás da ramificação em {{repoType}}.",
-      "branch-text": "branch:",
+      "branch-text": "ramificação:",
       "delete-from-branch": "",
       "not-saved": "O restante dos usuários do Grafana na sua organização ainda verá a versão atual salva na ramificação padrão configurada até que esta ramificação seja mesclada",
       "open-in-repo-button": "Abrir em {{repoType}}",
@@ -13120,7 +13128,7 @@
       "description-read-only": "Os recursos não podem ser modificados por meio da Grafana.",
       "description-title": "Um nome de fácil compreensão para a configuração",
       "error-connection-required": "Requer conexão",
-      "error-fetch-branches": "Falha ao buscar branches",
+      "error-fetch-branches": "Falha ao buscar ramificações",
       "error-required": "Este campo é obrigatório.",
       "error-save-failed": "",
       "error-save-repository": "Falha ao salvar as configurações do repositório",
@@ -13214,8 +13222,8 @@
       "delete-title": "Excluir conexão",
       "error-loading": "Falha ao carregar conexões",
       "no-connections": "Nenhuma conexão configurada",
-      "no-results": "Nenhum resultado corresponde à sua consulta",
-      "search-placeholder": "Pesquisar conexões",
+      "no-results": "Nenhum resultado corresponde a sua consulta",
+      "search-placeholder": "Buscar conexões",
       "status-connected": "Conectado",
       "status-disconnected": "Desconectado",
       "status-pending": "Pendente",
@@ -13391,6 +13399,7 @@
       "token-label": "Token de acesso ao projeto",
       "token-required": "O token do GitLab é obrigatório",
       "url-description": "O URL do repositório do GitLab",
+      "url-pattern": "",
       "url-required": "O URL do repositório é obrigatório"
     },
     "history-view": {
@@ -13555,9 +13564,9 @@
     },
     "repository-link": {
       "delete-or-move-job": {
-        "compare-branch": "Comparar branch",
+        "compare-branch": "Comparar ramificação",
         "open-pull-request": "Abrir solicitação de extração",
-        "view-branch": "Visualizar branch",
+        "view-branch": "Visualizar ramificação",
         "view-repository": "Visualizar repositório"
       },
       "grafana-repository-synced": "Seus recursos estão agora no seu armazenamento externo e foram provisionados na sua instância. A partir de agora, sua instância e o armazenamento externo serão sincronizados.",
@@ -14325,11 +14334,11 @@
       "view-as-list": "Visualizar como lista"
     },
     "dashboard-actions": {
-      "import": "Importar",
+      "import": "",
       "new": "Novo",
       "new-dashboard": "Novo painel de controle",
       "new-folder": "Nova pasta",
-      "new-template-dashboard": "Painel do modelo"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Pontuação"
@@ -14831,19 +14840,9 @@
     }
   },
   "sql-expressions": {
-    "add-query-tooltip": "Adicione pelo menos uma consulta de dados para gerar sugestões de SQL",
-    "ai-explain-title": "Explicação da expressão SQL com tecnologia de IA",
-    "ai-suggestions-title": "Sugestões de expressões SQL com tecnologia de IA",
-    "apply": "Aplicar",
-    "code-label": "{{ language }}",
-    "copy": "Copiar",
-    "explain-empty-query-tooltip": "Insira uma expressão SQL para obter uma explicação",
     "explain-query": "Explicar consulta",
-    "explanation-modal-title": "Explicação da consulta SQL",
-    "sql-ai-interaction": "{{text}}",
-    "sql-suggestion-history": "Histórico de sugestões de SQL",
-    "suggestions": "Sugestões",
-    "view-explanation": "Ver explicação"
+    "generate-suggestion": "",
+    "improve-query": ""
   },
   "stars": {
     "mark-as-starred": "Marcar como favorito",
@@ -14880,7 +14879,7 @@
         "label-calculate": "Calcular"
       }
     },
-    "category-stat-styles": "Estilos de estatística",
+    "category-stat-styles": "Estilos de estatísticas",
     "color-mode-options": {
       "label-background-gradient": "Fundo em gradiente",
       "label-background-solid": "Fundo em uma única cor",
@@ -15304,11 +15303,12 @@
     },
     "range-content": {
       "apply-button": "Aplicar intervalo de tempo",
-      "default-error": "Insira uma data que já passou ou \"{{now}}\"",
+      "default-error": "",
       "fiscal-year": "Exercício fiscal: de {{from}} a {{to}}",
       "from-input": "De",
       "open-input-calendar": "Abrir calendário",
-      "range-error": "\"De\" não pode ser após \"Para\"",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Até"
     },
     "range-picker": {

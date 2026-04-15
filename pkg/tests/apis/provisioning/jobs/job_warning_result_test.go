@@ -18,15 +18,15 @@ func TestIntegrationProvisioning_JobWarningResult(t *testing.T) {
 	// Create a test repository with a malformed dashboard file
 	const repo = "job-warning-test-repo"
 	testRepo := common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/invalid.json": "dashboard1.json",
 		},
 		SkipSync:               true, // Skip initial sync so we can add the malformed file first
 		SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Execute a pull job - this should process the malformed dashboard and result in warnings
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
@@ -73,15 +73,15 @@ func TestIntegrationProvisioning_JobWarningResult_MissingName(t *testing.T) {
 	// Create a test repository with a dashboard file missing the name field
 	const repo = "job-warning-missing-name-repo"
 	testRepo := common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/dashboard-missing-name.json": "dashboard-no-name.json",
 		},
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Execute a pull job - this should process the dashboard and result in a warning
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
@@ -119,15 +119,15 @@ func TestIntegrationProvisioning_JobWarningResult_DashboardRefreshInterval(t *te
 	// Create a test repository with a dashboard file with refresh interval too low
 	const repo = "job-warning-refresh-interval-repo"
 	testRepo := common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/dashboard-refresh-too-low.json": "dashboard-refresh-low.json",
 		},
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Execute a pull job - this should process the dashboard and result in a warning
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
@@ -166,8 +166,8 @@ func TestIntegrationProvisioning_JobWarningResult_DuplicateName(t *testing.T) {
 	// The second file processed should trigger a "duplicate resource name" validation warning.
 	const repo = "job-warning-duplicate-name-repo"
 	testRepo := common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"../testdata/dashboard-duplicate-name.json":      "dashboard-dup1.json",
 			"../testdata/dashboard-duplicate-name-copy.json": "dashboard-dup2.json",
@@ -175,7 +175,7 @@ func TestIntegrationProvisioning_JobWarningResult_DuplicateName(t *testing.T) {
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Execute a pull job - this should detect the duplicate name and produce a warning
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{

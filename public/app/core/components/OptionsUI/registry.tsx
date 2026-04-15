@@ -456,7 +456,7 @@ export const getAllStandardFieldConfigs = () => {
   const filterable: FieldConfigPropertyItem<FieldConfig, boolean | undefined, {}> = {
     id: 'filterable',
     path: 'filterable',
-    name: t('options-ui.registry.standard-field-configs.name-ad-hoc', 'Ad-hoc filterable'),
+    name: t('options-ui.registry.standard-field-configs.name-ad-hoc', 'Filterable'),
     hideFromDefaults: true,
     editor: standardEditorsRegistry.get('boolean').editor,
     override: standardEditorsRegistry.get('boolean').editor,
