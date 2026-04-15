@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import selectEvent from 'react-select-event';
 
 import { type StandardEditorContext, type StandardEditorsRegistryItem } from '@grafana/data';
 import { type OptionsWithTimezones } from '@grafana/schema';
@@ -80,6 +81,28 @@ describe('TimezonesEditor', () => {
       await userEvent.click(removeButtons[0]);
 
       expect(onChange).toHaveBeenCalledWith(['America/New_York', 'Europe/London']);
+    });
+  });
+
+  describe('Set timezone', () => {
+    it('should call onChange with updated array when a timezone is changed', async () => {
+      const onChange = jest.fn();
+      render(<TimezonesEditor value={['utc']} onChange={onChange} context={mockContext} item={mockItem} />);
+
+      const picker = screen.getByRole('combobox');
+      await selectEvent.select(picker, 'Browser Time', { container: document.body });
+
+      expect(onChange).toHaveBeenCalledWith(['browser']);
+    });
+
+    it('should call onChange with undefined when the only timezone is cleared', async () => {
+      const onChange = jest.fn();
+      render(<TimezonesEditor value={['utc']} onChange={onChange} context={mockContext} item={mockItem} />);
+
+      const picker = screen.getByRole('combobox');
+      await selectEvent.select(picker, 'Default', { container: document.body });
+
+      expect(onChange).toHaveBeenCalledWith(undefined);
     });
   });
 });
