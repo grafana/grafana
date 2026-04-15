@@ -8,7 +8,13 @@
       "datasource": { "type": "grafana-testdata-datasource" },
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyUSD"
+          "unit": "currencyUSD",
+          "links": [
+            {
+              "title": "Example Data Link",
+              "url": "https://example.com"
+            }
+          ]
         },
         "overrides": []
       },

@@ -117,6 +117,26 @@ test.describe('Panels test: Candlestick', { tag: ['@panels', '@candlestick'] }, 
       )
     ).toBeVisible();
   });
+
+  test('data links', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '1' }),
+    });
+
+    const candlestickUplot = page.locator('.uplot').first();
+    await expect(candlestickUplot, 'uplot is rendered').toBeVisible();
+
+    const tooltip = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Tooltip.Wrapper);
+
+    // click on chart to pin tooltip at a data point
+    await candlestickUplot.hover({ position: { x: 200, y: 100 }, force: true });
+    await candlestickUplot.click({ position: { x: 200, y: 100 }, force: true });
+    await expect(tooltip, 'tooltip pinned on click').toBeVisible();
+
+    // verify data link appears in tooltip
+    await expect(tooltip.getByText('Example Data Link'), 'data link visible in tooltip').toBeVisible();
+  });
 });
 
 test.use({
