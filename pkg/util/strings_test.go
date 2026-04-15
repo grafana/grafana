@@ -353,3 +353,164 @@ func TestStripBOMFromInterface(t *testing.T) {
 		})
 	}
 }
+
+func TestStripBOMFromStruct(t *testing.T) {
+	type SimpleStruct struct {
+		Title       string
+		Description string
+	}
+
+	type NestedStruct struct {
+		Name  string
+		Inner SimpleStruct
+	}
+
+	type ComplexStruct struct {
+		Title       string
+		Description *string
+		Tags        []string
+		Metadata    map[string]string
+		Nested      *NestedStruct
+	}
+
+	tests := []struct {
+		name  string
+		input any
+		check func(t *testing.T, input any)
+	}{
+		{
+			name: "simple struct with BOMs",
+			input: &SimpleStruct{
+				Title:       "\ufeffHello",
+				Description: "World\ufeff",
+			},
+			check: func(t *testing.T, input any) {
+				s := input.(*SimpleStruct)
+				assert.Equal(t, "Hello", s.Title)
+				assert.Equal(t, "World", s.Description)
+			},
+		},
+		{
+			name: "struct with pointer string fields",
+			input: &ComplexStruct{
+				Title:       "\ufeffTitle",
+				Description: stringPtr("Description\ufeff"),
+			},
+			check: func(t *testing.T, input any) {
+				s := input.(*ComplexStruct)
+				assert.Equal(t, "Title", s.Title)
+				assert.NotNil(t, s.Description)
+				assert.Equal(t, "Description", *s.Description)
+			},
+		},
+		{
+			name: "struct with nil pointer string",
+			input: &ComplexStruct{
+				Title:       "\ufeffTitle",
+				Description: nil,
+			},
+			check: func(t *testing.T, input any) {
+				s := input.(*ComplexStruct)
+				assert.Equal(t, "Title", s.Title)
+				assert.Nil(t, s.Description)
+			},
+		},
+		{
+			name: "struct with string slice",
+			input: &ComplexStruct{
+				Title: "\ufeffTitle",
+				Tags:  []string{"\ufefftag1", "tag2\ufeff", "\ufefftag3\ufeff"},
+			},
+			check: func(t *testing.T, input any) {
+				s := input.(*ComplexStruct)
+				assert.Equal(t, "Title", s.Title)
+				assert.Equal(t, []string{"tag1", "tag2", "tag3"}, s.Tags)
+			},
+		},
+		{
+			name: "struct with map",
+			input: &ComplexStruct{
+				Title: "\ufeffTitle",
+				Metadata: map[string]string{
+					"key1": "\ufeffvalue1",
+					"key2": "value2\ufeff",
+				},
+			},
+			check: func(t *testing.T, input any) {
+				s := input.(*ComplexStruct)
+				assert.Equal(t, "Title", s.Title)
+				assert.Equal(t, "value1", s.Metadata["key1"])
+				assert.Equal(t, "value2", s.Metadata["key2"])
+			},
+		},
+		{
+			name: "nested struct",
+			input: &NestedStruct{
+				Name: "\ufeffOuter",
+				Inner: SimpleStruct{
+					Title:       "\ufeffInner Title",
+					Description: "Inner Description\ufeff",
+				},
+			},
+			check: func(t *testing.T, input any) {
+				s := input.(*NestedStruct)
+				assert.Equal(t, "Outer", s.Name)
+				assert.Equal(t, "Inner Title", s.Inner.Title)
+				assert.Equal(t, "Inner Description", s.Inner.Description)
+			},
+		},
+		{
+			name: "complex nested structure",
+			input: &ComplexStruct{
+				Title:       "\ufeffMain Title",
+				Description: stringPtr("Main Description\ufeff"),
+				Tags:        []string{"\ufefftag1", "tag2\ufeff"},
+				Metadata: map[string]string{
+					"author": "\ufeffJohn Doe",
+				},
+				Nested: &NestedStruct{
+					Name: "\ufeffNested",
+					Inner: SimpleStruct{
+						Title:       "\ufeffNested Inner",
+						Description: "Description\ufeff",
+					},
+				},
+			},
+			check: func(t *testing.T, input any) {
+				s := input.(*ComplexStruct)
+				assert.Equal(t, "Main Title", s.Title)
+				assert.Equal(t, "Main Description", *s.Description)
+				assert.Equal(t, []string{"tag1", "tag2"}, s.Tags)
+				assert.Equal(t, "John Doe", s.Metadata["author"])
+				assert.NotNil(t, s.Nested)
+				assert.Equal(t, "Nested", s.Nested.Name)
+				assert.Equal(t, "Nested Inner", s.Nested.Inner.Title)
+				assert.Equal(t, "Description", s.Nested.Inner.Description)
+			},
+		},
+		{
+			name: "struct without BOMs",
+			input: &SimpleStruct{
+				Title:       "Clean Title",
+				Description: "Clean Description",
+			},
+			check: func(t *testing.T, input any) {
+				s := input.(*SimpleStruct)
+				assert.Equal(t, "Clean Title", s.Title)
+				assert.Equal(t, "Clean Description", s.Description)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			StripBOMFromStruct(tt.input)
+			tt.check(t, tt.input)
+		})
+	}
+}
+
+// Helper function for tests
+func stringPtr(s string) *string {
+	return &s
+}

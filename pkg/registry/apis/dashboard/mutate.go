@@ -92,9 +92,8 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				Spec: dashboardV2alpha1.DashboardGridLayoutSpec{},
 			}
 		}
-		// Strip BOMs from all string fields recursively
-		if err := stripBOMFromV2Spec(&v.Spec); err != nil {
-			return fmt.Errorf("failed to strip BOMs from v2alpha1 dashboard: %w", err)
+		if err := b.stripBOMIfEnabled(&v.Spec, "v2alpha1"); err != nil {
+			return err
 		}
 		resourceInfo = dashboardV2alpha1.DashboardResourceInfo
 
@@ -107,9 +106,8 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				Spec: dashboardV2beta1.DashboardGridLayoutSpec{},
 			}
 		}
-		// Strip BOMs from all string fields recursively
-		if err := stripBOMFromV2Spec(&v.Spec); err != nil {
-			return fmt.Errorf("failed to strip BOMs from v2beta1 dashboard: %w", err)
+		if err := b.stripBOMIfEnabled(&v.Spec, "v2beta1"); err != nil {
+			return err
 		}
 		resourceInfo = dashboardV2beta1.DashboardResourceInfo
 
@@ -120,9 +118,8 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				Spec: dashboardV2.DashboardGridLayoutSpec{},
 			}
 		}
-		// Strip BOMs from all string fields recursively
-		if err := stripBOMFromV2Spec(&v.Spec); err != nil {
-			return fmt.Errorf("failed to strip BOMs from v2 dashboard: %w", err)
+		if err := b.stripBOMIfEnabled(&v.Spec, "v2"); err != nil {
+			return err
 		}
 		resourceInfo = dashboardV2.DashboardResourceInfo
 
@@ -184,9 +181,27 @@ func stripBOMFromPointerString(s *string) {
 	}
 }
 
+// stripBOMIfEnabled conditionally strips BOMs from v2 dashboard specs based on skipBOMStripping flag.
+func (b *DashboardsAPIBuilder) stripBOMIfEnabled(spec interface{}, version string) error {
+	if !b.skipBOMStripping {
+		if err := stripBOMFromV2Spec(spec); err != nil {
+			return fmt.Errorf("failed to strip BOMs from %s dashboard: %w", version, err)
+		}
+	}
+	return nil
+}
+
 // stripBOMFromV2Spec strips BOMs from all string fields in a v2 dashboard spec
-// by converting to unstructured, cleaning, and converting back.
+// using reflection to avoid JSON marshal/unmarshal overhead.
 func stripBOMFromV2Spec(spec interface{}) error {
+	util.StripBOMFromStruct(spec)
+	return nil
+}
+
+// stripBOMFromV2SpecJSON is the old JSON-based implementation kept for comparison/benchmarking.
+// It strips BOMs from all string fields in a v2 dashboard spec
+// by converting to unstructured, cleaning, and converting back.
+func stripBOMFromV2SpecJSON(spec interface{}) error {
 	// Convert spec to unstructured (map[string]any) via JSON
 	specBytes, err := json.Marshal(spec)
 	if err != nil {
