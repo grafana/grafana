@@ -12,7 +12,7 @@ test.describe('Panels test: Candlestick', { tag: ['@panels', '@candlestick'] }, 
     const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
 
     const uplotElements = page.locator('.uplot');
-    await expect(uplotElements, 'panels are rendered').toHaveCount(4);
+    await expect(uplotElements, 'panels are rendered').toHaveCount(5);
 
     const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
     await expect(errorInfo, 'no errors in the panels').toBeHidden();
@@ -121,7 +121,7 @@ test.describe('Panels test: Candlestick', { tag: ['@panels', '@candlestick'] }, 
   test('data links', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '1' }),
+      queryParams: new URLSearchParams({ editPanel: '5' }),
     });
 
     const candlestickUplot = page.locator('.uplot').first();
