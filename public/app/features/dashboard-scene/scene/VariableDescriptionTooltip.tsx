@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { type JSX } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { sanitizeUrl } from '@grafana/data/internal';
