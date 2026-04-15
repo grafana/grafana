@@ -1,13 +1,19 @@
 import Feature from 'ol/Feature';
-import { LineString, Point } from 'ol/geom';
+import { createEmpty, extend, isEmpty } from 'ol/extent';
+import { LineString, Point, type Geometry } from 'ol/geom';
 import LayerGroup from 'ol/layer/Group';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
-import { createEmpty, extend, isEmpty } from 'ol/extent';
 
 import { type MapLayerState } from '../types';
 
 import { getLayerGroupExtent, getLayersExtent } from './getLayersExtent';
+
+type TestVectorLayer = VectorLayer<VectorSource<Feature<Geometry>>>;
+
+function asVectorLayer(state: MapLayerState): TestVectorLayer {
+  return state.layer as TestVectorLayer;
+}
 
 function vectorLayerState(name: string, coordinates: number[][]): MapLayerState {
   const source = new VectorSource();
@@ -20,6 +26,7 @@ function vectorLayerState(name: string, coordinates: number[][]): MapLayerState 
     handler: {} as MapLayerState['handler'],
     onChange: jest.fn(),
     mouseEvents: {} as MapLayerState['mouseEvents'],
+    getName: () => name,
   };
 }
 
@@ -33,21 +40,32 @@ describe('getLayersExtent', () => {
     const extent = getLayersExtent(layers, true, false, undefined);
     expect(isEmpty(extent)).toBe(false);
     const merged = createEmpty();
-    extend(merged, layers[0].layer.getSource()!.getExtent());
-    extend(merged, layers[1].layer.getSource()!.getExtent());
+    extend(merged, asVectorLayer(layers[0]).getSource()!.getExtent());
+    extend(merged, asVectorLayer(layers[1]).getSource()!.getExtent());
     expect(extent).toEqual(merged);
   });
 
   it('should return the source extent for the named layer when allLayers is false', () => {
-    const layers = [vectorLayerState('markers', [[5, 5], [6, 7]])];
+    const layers = [
+      vectorLayerState('markers', [
+        [5, 5],
+        [6, 7],
+      ]),
+    ];
     const extent = getLayersExtent(layers, false, false, 'markers');
-    expect(extent).toEqual(layers[0].layer.getSource()!.getExtent());
+    expect(extent).toEqual(asVectorLayer(layers[0]).getSource()!.getExtent());
   });
 
   it('should use only the last feature extent when lastOnly is true', () => {
-    const layers = [vectorLayerState('route', [[0, 0], [10, 10], [20, 20]])];
+    const layers = [
+      vectorLayerState('route', [
+        [0, 0],
+        [10, 10],
+        [20, 20],
+      ]),
+    ];
     const extent = getLayersExtent(layers, false, true, 'route');
-    const feats = layers[0].layer.getSource()!.getFeatures();
+    const feats = asVectorLayer(layers[0]).getSource()!.getFeatures();
     const lastGeom = feats[feats.length - 1].getGeometry()!;
     expect(extent).toEqual(lastGeom.getExtent());
   });
