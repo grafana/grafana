@@ -24,7 +24,7 @@ labels:
 title: Datasource Permissions HTTP API
 ---
 
-# Data Source Permissions API
+# Data source Permissions API
 
 {{< admonition type="caution" >}}
 

@@ -20,7 +20,7 @@ labels:
 title: Datasource LBAC rules HTTP API
 ---
 
-# Data Source LBAC rules API
+# Data source LBAC rules API
 
 {{< admonition type="caution" >}}
 
