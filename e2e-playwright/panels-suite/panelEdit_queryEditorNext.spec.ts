@@ -22,11 +22,11 @@ function editPanelUrl() {
 }
 
 function addQueryOrExpressionButton(page: Page) {
-  return page.locator('button[aria-label="Add query or expression"]');
+  return page.getByLabel('Add query or expression');
 }
 
 function addTransformationButton(page: Page) {
-  return page.locator('button[aria-label="Add transformation"]');
+  return page.getByLabel('Add transformation');
 }
 
 // ---------------------------------------------------------------------------
@@ -254,10 +254,6 @@ test.describe('Query Editor Next: Datasource Switching', { tag: ['@panels', '@qu
 test.describe('Query Editor Next: Transformations', { tag: ['@panels', '@queryEditorNext'] }, () => {
   async function openTransformationPicker(page: Page, selectors: E2ESelectorGroups) {
     await addTransformationButton(page).click();
-
-    // When no transformations exist, the empty state shows first — click through to the full picker
-    const showPickerButton = page.getByTestId(selectors.components.Transforms.addTransformationButton);
-    await showPickerButton.click();
 
     const searchInput = page.getByTestId(selectors.components.Transforms.searchInput);
     await expect(searchInput).toBeVisible();
