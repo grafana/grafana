@@ -205,6 +205,10 @@ type SearchLibraryElementsQuery struct {
 	// Deprecated: use FolderFilterUIDs instead
 	FolderFilter     string
 	FolderFilterUIDs string
+	// SkipFolderTreeForAdmin skips fetching the folder tree when the caller is admin.
+	// Admin can see all folders, so we avoid listing them.
+	// When set, Meta.FolderName will be empty in the results.
+	SkipFolderTreeForAdmin bool
 }
 
 // LibraryElementResponse is a response struct for LibraryElementDTO.

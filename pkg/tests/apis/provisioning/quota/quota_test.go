@@ -19,15 +19,15 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 
 		const repo = "quota-unlimited-repo"
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
 			SkipSync:               true, // Prevent controller auto-sync racing with file copy
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 		helper.RequireRepoDashboardCount(t, repo, 1)
 
@@ -77,8 +77,8 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 
 		const repo = "quota-exceeded-repo"
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				// Adding 2 dashboards + 1 root folder will exceed the limit of 2
 				"../testdata/all-panels.json":   "dashboard1.json",
@@ -87,7 +87,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			SkipSync:               true, // Prevent controller auto-sync racing with file copy
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 		helper.RequireRepoDashboardCount(t, repo, 2)
 
@@ -142,8 +142,8 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 
 		const repo = "quota-within-repo"
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				// Adding 1 dashboard, well under the limit of 10
 				"../testdata/all-panels.json": "dashboard1.json",
@@ -151,7 +151,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			SkipSync:               true, // Prevent controller auto-sync racing with file copy
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 		helper.RequireRepoDashboardCount(t, repo, 1)
 
@@ -234,15 +234,15 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 
 		const repo = "quota-status-configured-repo"
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
 			SkipSync:               true, // Prevent controller auto-sync racing with file copy
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 		helper.RequireRepoDashboardCount(t, repo, 1)
 
@@ -291,15 +291,15 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 
 		const repo = "quota-status-unlimited-repo"
 		testRepo := common.TestRepo{
-			Name:   repo,
-			Target: "folder",
+			Name:       repo,
+			SyncTarget: "folder",
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
 			SkipSync:               true, // Prevent controller auto-sync racing with file copy
 			SkipResourceAssertions: true,
 		}
-		helper.CreateRepo(t, testRepo)
+		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
 		helper.RequireRepoDashboardCount(t, repo, 1)
 

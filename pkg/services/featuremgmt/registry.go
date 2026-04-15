@@ -1904,7 +1904,7 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
+			Expression:  "false",
 		},
 		{
 			Name:        "alertRuleUseFiredAtForStartsAt",
