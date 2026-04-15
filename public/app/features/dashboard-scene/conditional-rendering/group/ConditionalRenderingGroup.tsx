@@ -120,7 +120,7 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
         return ConditionalRenderingTimeRangeSize.createEmpty();
 
       case 'variable':
-        return ConditionalRenderingVariable.createEmpty(getUserDefinedVariables(this)[0].state.name);
+        return ConditionalRenderingVariable.createEmpty(getUserDefinedVariables(this.parent || this)[0].state.name);
     }
   }
 
@@ -204,7 +204,7 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
 
 function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<ConditionalRenderingGroup>) {
   const { condition, visibility, conditions } = model.useState();
-  const variables = useUserDefinedVariables(model);
+  const variables = useUserDefinedVariables(model.parent || model);
 
   const objectType = useMemo(() => extractObjectType(model.parent), [model]);
 
