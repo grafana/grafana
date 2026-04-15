@@ -37,6 +37,10 @@ preferencesV1alpha1: {
 
 			// Navigation preferences
 			navbar?: #NavbarPreference
+
+			// Bitwise flags that will hide help modals in the UI
+			// NOTE: this property is only valid on user preferences 
+			helpFlags1?: int
 		}
 
 		#QueryHistoryPreference: {

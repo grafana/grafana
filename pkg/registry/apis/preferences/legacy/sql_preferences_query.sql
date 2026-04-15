@@ -6,6 +6,7 @@ SELECT p.id, p.org_id,
   p.home_dashboard_uid,
   u.uid as user_uid,
   t.uid as team_uid,
+  u.help_flags1,
   p.created, p.updated
  FROM {{ .Ident .PreferencesTable }} as p 
  LEFT JOIN {{ .Ident .UserTable }} as u ON p.user_id = u.id

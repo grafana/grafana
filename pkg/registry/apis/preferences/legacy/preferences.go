@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	requestK8s "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
@@ -135,6 +136,12 @@ func (s *preferenceStorage) save(ctx context.Context, obj runtime.Object) (runti
 	owner, ok := utils.ParseOwnerFromName(p.Name)
 	if !ok {
 		return nil, fmt.Errorf("invalid name")
+	}
+
+	// Update the users table
+	if owner.Owner == utils.UserResourceOwner {
+		helpFlag := ptr.Deref(p.Spec.HelpFlags1, 0)
+		s.sql.updateHelpFlags(ctx, user.GetOrgID(), owner.Identifier, helpFlag)
 	}
 
 	cmd := &pref.SavePreferenceCommand{
@@ -313,6 +320,11 @@ func asPreferencesResource(ns string, p *preferenceModel) preferences.Preference
 				BookmarkUrls: p.JSONData.Navbar.BookmarkUrls,
 			}
 		}
+	}
+
+	// When help flags are configured, attach them to the user model
+	if owner.Owner == utils.UserResourceOwner && p.HelpFlags1.Int64 > 0 {
+		obj.Spec.HelpFlags1 = ptr.To(p.HelpFlags1.Int64)
 	}
 
 	obj.UID = gapiutil.CalculateClusterWideUID(&obj)

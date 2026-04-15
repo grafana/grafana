@@ -141,12 +141,21 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return apierrors.NewBadRequest(fmt.Sprintf("expected Preferences object, got %T", obj))
 	}
 
+	owner, ok := utils.ParseOwnerFromName(p.Name)
+	if !ok {
+		return apierrors.NewBadRequest("invalid name, but be user-{uid}, team-{uid}, or namespace")
+	}
+
 	if p.Spec.Timezone != nil && !pref.IsValidTimezone(*p.Spec.Timezone) {
 		return apierrors.NewBadRequest("invalid timezone: must be a valid IANA timezone (e.g., America/New_York), 'utc', 'browser', or empty string")
 	}
 
 	if p.Spec.Theme != nil && *p.Spec.Theme != "" && !pref.IsValidThemeID(*p.Spec.Theme) {
 		return apierrors.NewBadRequest("invalid theme")
+	}
+
+	if p.Spec.HelpFlags1 != nil && owner.Owner != utils.UserResourceOwner {
+		return apierrors.NewBadRequest("the help flag property is only valid on user preferences")
 	}
 
 	return nil

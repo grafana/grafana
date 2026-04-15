@@ -54,6 +54,9 @@ type PreferencesSpec struct {
 	QueryHistory *PreferencesQueryHistoryPreference `json:"queryHistory,omitempty"`
 	// Navigation preferences
 	Navbar *PreferencesNavbarPreference `json:"navbar,omitempty"`
+	// Bitwise flags that will hide help modals in the UI
+	// NOTE: this property is only valid on user preferences
+	HelpFlags1 *int64 `json:"helpFlags1,omitempty"`
 }
 
 // NewPreferencesSpec creates a new PreferencesSpec object.
