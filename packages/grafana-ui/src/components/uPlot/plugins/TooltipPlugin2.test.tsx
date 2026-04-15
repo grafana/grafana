@@ -54,6 +54,15 @@ describe('TooltipPlugin2', () => {
     return { view, mockUPlot, initCallback, setSeriesCallback, setCursor, readyCallback, setLegendCallback, getHook };
   };
 
+  /** Fresh object each call — init may mutate `cursor.drag` (e.g. clientZoom shift+mousedown). */
+  const createDefaultMockCursor = (): uPlot.Cursor => ({
+    left: 50,
+    top: 50,
+    event: new MouseEvent('mousemove', { clientX: 100, clientY: 100 }),
+    idxs: [null, 5],
+    drag: { x: true, y: false, setScale: false },
+  });
+
   const createMockUPlot = (overrides?: Partial<uPlot>) => {
     const root = document.createElement('div');
     const over = document.createElement('div');
@@ -65,20 +74,14 @@ describe('TooltipPlugin2', () => {
       root,
       over,
       rect: { left: 0, top: 0, width: 800, height: 400, bottom: 400, right: 800 },
-      cursor: {
-        left: 50,
-        top: 50,
-        event: new MouseEvent('mousemove', { clientX: 100, clientY: 100 }),
-        idxs: [null, 5],
-        drag: { x: true, y: false, setScale: false },
-      },
+      cursor: createDefaultMockCursor(),
       scales: { x: { ori: 0 } },
       setCursor,
       setScale,
       setSelect,
       select: { left: 0, top: 0, width: 0, height: 0 },
       ...overrides,
-    } as unknown as uPlot;
+    } as uPlot;
 
     return { mockUPlot, setCursor };
   };
@@ -109,24 +112,11 @@ describe('TooltipPlugin2', () => {
 
   const identityPosToVal = () => jest.fn((pos: number) => pos);
 
-  const expectUPlotSelectCleared = (mockUPlot: unknown) => {
-    expect((mockUPlot as { setSelect: jest.Mock }).setSelect).toHaveBeenCalledWith(
-      { left: 0, width: 0, top: 0, height: 0 },
-      false
-    );
+  const expectUPlotSelectCleared = (mockUPlot: uPlot) => {
+    expect(mockUPlot.setSelect).toHaveBeenCalledWith({ left: 0, width: 0, top: 0, height: 0 }, false);
   };
 
-  /** Fresh object each call — init may mutate `cursor.drag` (e.g. clientZoom shift+mousedown). */
-  const createDefaultMockCursor = () => ({
-    left: 50,
-    top: 50,
-    event: new MouseEvent('mousemove', { clientX: 100, clientY: 100 }),
-    idxs: [null, 5],
-    drag: { x: true, y: false, setScale: false },
-  });
-
-  const getSetSelectHook = (getHook: (name: UPlotConfigHookName) => unknown) =>
-    getHook('setSelect') as (u: uPlot) => void;
+  const getSetSelectHook = (getHook: (name: UPlotConfigHookName) => (u: uPlot) => void) => getHook('setSelect');
 
   describe('on hover', () => {
     it('renders', async () => {
@@ -142,13 +132,7 @@ describe('TooltipPlugin2', () => {
 
     it('touch screen dispatches mousemove event on hover', async () => {
       const { setSeriesCallback, initCallback, mockUPlot } = setUp({
-        cursor: {
-          left: 50,
-          top: 50,
-          event: new MouseEvent('pointermove', { clientX: 100, clientY: 100 }),
-          idxs: [null, 5],
-          drag: { x: true, y: false, setScale: false },
-        },
+        cursor: createDefaultMockCursor(),
       });
       const dispatchEventSpy = jest.spyOn(mockUPlot.over, 'dispatchEvent');
 
@@ -421,7 +405,7 @@ describe('TooltipPlugin2', () => {
 
       const resizeRegistration = addSpy.mock.calls.find((call) => call[0] === 'resize');
       expect(resizeRegistration).toBeDefined();
-      const updateWinSize = resizeRegistration![1] as EventListener;
+      const updateWinSize = resizeRegistration![1];
 
       addSpy.mockRestore();
 
