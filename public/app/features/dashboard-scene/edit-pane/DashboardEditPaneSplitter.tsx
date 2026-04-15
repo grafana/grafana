@@ -230,27 +230,18 @@ function useSidebarPaneMinWidth(openPane: DashboardSidebarPane | undefined, side
   const previousPaneRef = useRef<DashboardSidebarPane | undefined>(undefined);
 
   useEffect(() => {
-    const openPaneMinWidth = openPane?.minWidth;
-
     previousPaneRef.current = openPane;
 
-    if (openPaneMinWidth && sidebarContext.paneWidth < openPaneMinWidth) {
+    if (openPane?.minWidth && sidebarContext.paneWidth < openPane.minWidth) {
       originalPaneWidthRef.current = sidebarContext.paneWidth;
-      const diff = openPaneMinWidth - sidebarContext.paneWidth;
-      console.log('Resizing sidebar to meet min width requirement', {
-        openPaneMinWidth,
-        currentWidth: sidebarContext.paneWidth,
-        diff,
-      });
+      const diff = openPane.minWidth - sidebarContext.paneWidth;
       sidebarContext.onResize(diff);
-    } else if (!openPaneMinWidth && originalPaneWidthRef.current !== null) {
+    }
+
+    // If we are switching to a different openPane without minWidth
+    if (openPane && !openPane.minWidth && originalPaneWidthRef.current !== null) {
       const diff = originalPaneWidthRef.current - sidebarContext.paneWidth;
       sidebarContext.onResize(diff);
-      console.log('Restoring original sidebar width', {
-        originalWidth: originalPaneWidthRef.current,
-        currentWidth: sidebarContext.paneWidth,
-        diff,
-      });
       originalPaneWidthRef.current = null;
     }
   }, [openPane, sidebarContext]);
