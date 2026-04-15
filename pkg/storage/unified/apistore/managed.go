@@ -68,9 +68,9 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 	// Remove the old manager first, then add the new one.
 	//
 	// Exception: For Terraform managers, only the kind matters. The identity
-	// changes based on provider version (e.g., "Terraform/crossTF000" or
-	// "terraform-provider-grafana/crossplane" to version-specific IDs), so we
-	// allow identity transitions as long as both old and new are Terraform.
+	// is derived from the HTTP User-Agent and changes with provider versions
+	// (e.g., "Terraform/crossTF000 (+https://www.terraform.io) terraform-provider-grafana/crossplane"),
+	// so we allow identity transitions as long as both old and new are Terraform.
 	if hasOld && managerNew.Kind != managerOld.Kind {
 		return &apierrors.StatusError{ErrStatus: metav1.Status{
 			Status:  metav1.StatusFailure,

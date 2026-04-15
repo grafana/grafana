@@ -189,14 +189,14 @@ func TestManagedAuthorizer(t *testing.T) {
 			},
 		},
 		{
-			name: "terraform manager identity can change (provider version updates)",
+			name: "terraform manager identity can change (user-agent based ID)",
 			auth: user,
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
 					Generation: 2,
 					Annotations: map[string]string{
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
-						utils.AnnoKeyManagerIdentity: "terraform-provider-grafana/v3.0.0",
+						utils.AnnoKeyManagerIdentity: "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0",
 					},
 				},
 			},
@@ -205,20 +205,20 @@ func TestManagedAuthorizer(t *testing.T) {
 					Generation: 1,
 					Annotations: map[string]string{
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
-						utils.AnnoKeyManagerIdentity: "Terraform/crossTF000",
+						utils.AnnoKeyManagerIdentity: "Terraform/crossTF000 (+https://www.terraform.io) terraform-provider-grafana/crossplane",
 					},
 				},
 			},
 		},
 		{
-			name: "terraform manager identity change from legacy crossplane ID",
+			name: "terraform manager identity transitions work across any versions",
 			auth: user,
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
 					Generation: 2,
 					Annotations: map[string]string{
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
-						utils.AnnoKeyManagerIdentity: "terraform-provider-grafana/v4.0.0",
+						utils.AnnoKeyManagerIdentity: "Terraform/1.6.0 (+https://www.terraform.io) terraform-provider-grafana/v4.1.0",
 					},
 				},
 			},
@@ -227,7 +227,7 @@ func TestManagedAuthorizer(t *testing.T) {
 					Generation: 1,
 					Annotations: map[string]string{
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
-						utils.AnnoKeyManagerIdentity: "terraform-provider-grafana/crossplane",
+						utils.AnnoKeyManagerIdentity: "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0",
 					},
 				},
 			},
