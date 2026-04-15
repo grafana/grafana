@@ -230,7 +230,8 @@ describe('XAxisInteractionAreaPlugin', () => {
 
         removeSpy.mockRestore();
         docRemoveSpy.mockRestore();
-        addHookSpy.mockRestore();
+        docAddSpy.mockRestore();
+        docRemoveSpy.mockRestore();
       };
 
       runUnmountCleanupAssertions({ midDrag: false });
