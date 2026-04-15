@@ -10,10 +10,24 @@ import { Drawer } from '../Drawer/Drawer';
 import { Modal } from '../Modal/Modal';
 
 import { SelectBase } from './SelectBase';
+import { type SelectCommonProps } from './types';
 
 // Used to select an option or options from a Select in unit tests
 const selectOptionInTest = async (input: HTMLElement, optionOrOptions: string | RegExp | Array<string | RegExp>) =>
   await waitFor(() => select(input, optionOrOptions, { container: document.body }));
+
+// Compile-time regression guard for issue #121194. Never runs — it exists so
+// tsc fails if filterOption's declared shape drifts back to a bare
+// SelectableValue<T>, which does not match the wrapped shape react-select
+// actually passes at runtime. Under the wrapped shape, SelectableValue fields
+// like `description` live on `option.data`, not at the top level, so the line
+// below is a type error and @ts-expect-error swallows it. If the type reverts,
+// `option.description` becomes valid again and the directive fails tsc.
+const _filterOptionShapeGuard: NonNullable<SelectCommonProps<number>['filterOption']> = (option) => {
+  // @ts-expect-error - description must be read via option.data.description
+  return option.description === 'sentinel';
+};
+void _filterOptionShapeGuard;
 
 describe('SelectBase', () => {
   const onChangeHandler = jest.fn();
@@ -225,6 +239,40 @@ describe('SelectBase', () => {
       await userEvent.click(screen.getByText(/option 2/i));
       const menuOptions = screen.getAllByTestId(selectors.components.Select.option);
       expect(menuOptions).toHaveLength(2);
+    });
+
+    it('filterOption callback receives label, value, and full option data', async () => {
+      const filterSpy = jest.fn().mockReturnValue(true);
+      const describedOptions: Array<SelectableValue<number>> = [
+        { label: 'Alpha', value: 1, description: 'first letter' },
+        { label: 'Beta', value: 2, description: 'second letter' },
+      ];
+
+      render(
+        <SelectBase
+          onChange={onChangeHandler}
+          options={describedOptions}
+          aria-label="Filter target"
+          filterOption={filterSpy}
+        />
+      );
+
+      const selectEl = screen.getByLabelText('Filter target');
+      await userEvent.click(selectEl);
+      await userEvent.type(selectEl, 'a');
+
+      // react-select hands the callback the wrapped shape, not a bare SelectableValue.
+      // `data` holds the full original option so callers can read any field on it,
+      // while `label` and `value` are the resolved getOptionLabel / getOptionValue results.
+      expect(filterSpy).toHaveBeenCalled();
+      expect(filterSpy.mock.calls[0][1]).toBe('a');
+      expect(filterSpy.mock.calls[0][0]).toEqual(
+        expect.objectContaining({
+          label: 'Alpha',
+          value: 1,
+          data: expect.objectContaining({ label: 'Alpha', value: 1, description: 'first letter' }),
+        })
+      );
     });
   });
 

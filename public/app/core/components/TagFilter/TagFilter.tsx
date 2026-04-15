@@ -29,7 +29,10 @@ export interface Props {
   disabled?: boolean;
 }
 
-const filterOption = (option: SelectableValue<string>, searchQuery: string) => {
+const filterOption = (
+  option: { label?: string; value?: string; data: SelectableValue<string> },
+  searchQuery: string
+) => {
   const regex = RegExp(escapeStringForRegex(searchQuery), 'i');
   return Boolean(option.value && regex.test(option.value));
 };

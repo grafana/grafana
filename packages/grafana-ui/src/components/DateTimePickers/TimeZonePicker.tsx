@@ -159,7 +159,7 @@ const isInternal = (timeZone: TimeZone): boolean => {
 };
 
 const useFilterBySearchIndex = () => {
-  return useCallback((option: SelectableValue, searchQuery: string) => {
+  return useCallback((option: { data: SelectableValue }, searchQuery: string) => {
     if (!searchQuery || !option.data || !option.data.searchIndex) {
       return true;
     }

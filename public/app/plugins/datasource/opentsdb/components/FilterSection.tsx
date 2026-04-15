@@ -109,12 +109,15 @@ export function FilterSection({
 
   // We are matching words split with space
   const splitSeparator = ' ';
-  const customFilterOption = useCallback((option: SelectableValue<string>, searchQuery: string) => {
-    const label = option.value ?? '';
+  const customFilterOption = useCallback(
+    (option: { label?: string; value?: string; data: SelectableValue<string> }, searchQuery: string) => {
+      const label = option.value ?? '';
 
-    const searchWords = searchQuery.split(splitSeparator);
-    return searchWords.reduce((acc, cur) => acc && label.toLowerCase().includes(cur.toLowerCase()), true);
-  }, []);
+      const searchWords = searchQuery.split(splitSeparator);
+      return searchWords.reduce((acc, cur) => acc && label.toLowerCase().includes(cur.toLowerCase()), true);
+    },
+    []
+  );
 
   const tagValueSearch = debounce((query: string) => suggestTagValues(query), 350);
 
