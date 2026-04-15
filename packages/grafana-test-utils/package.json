@@ -56,7 +56,7 @@
     "@openfeature/react-sdk": "^1.2.0",
     "chance": "^1.1.13",
     "jest-matcher-utils": "29.7.0",
-    "lodash": "^4.17.23",
+    "lodash": "^4.18.1",
     "msw": "2.10.4",
     "rxjs": "7.8.2"
   },
