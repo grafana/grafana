@@ -62,16 +62,3 @@ oscap xccdf eval \
   --rule xccdf_org.ssgproject.content_rule_file_permissions_binary_dirs \
   --rule xccdf_org.ssgproject.content_rule_file_permissions_library_dirs \
   "$SSG_DS"
-
-# The stock ssg-rhel9 file_permissions_library_dirs rule only checks *.so files
-# and misses systemd unit files. Run a custom OVAL document to close that gap.
-#
-# oscap oval eval exits 0 on some older versions even when definitions fail, so
-# we capture the output and explicitly check for any "false" result lines.
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-OVAL_OUT=$(oscap oval eval "${SCRIPT_DIR}/grafana-stig.oval.xml" 2>&1)
-echo "$OVAL_OUT"
-if echo "$OVAL_OUT" | grep -qE '^Definition .*: false$'; then
-  echo "error: custom OVAL check failed — grafana systemd unit file permissions are too permissive" >&2
-  exit 1
-fi

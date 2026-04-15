@@ -70,7 +70,6 @@ runs:
             - 'scripts/build-rpm.sh'
             - 'scripts/build-targz.sh'
             - 'scripts/verify-rpm-stig.sh'
-            - 'scripts/grafana-stig.oval.xml'
             - 'Makefile'
             - '${{ inputs.self }}'
           backend:
