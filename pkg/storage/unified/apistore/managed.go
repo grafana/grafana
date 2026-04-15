@@ -94,12 +94,8 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 		return nil
 	}
 
-	// Changing the owner (kind or identity) is not allowed.
-	// Remove the old manager first, then add the new one.
-	//
-	// HACK: Terraform gets special treatment - see isTerraformUserAgentID() for details.
-	// We allow one-way migration from User-Agent based IDs to stable custom IDs.
-	// This fixes the original mistake of using HTTP User-Agent as a manager identifier.
+	// Changing the manager kind is not allowed.
+	// Remove the old manager first, then add a new one with a different kind.
 	if hasOld && managerNew.Kind != managerOld.Kind {
 		return &apierrors.StatusError{ErrStatus: metav1.Status{
 			Status:  metav1.StatusFailure,
@@ -109,7 +105,8 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 		}}
 	}
 
-	// For non-Terraform managers, identity changes are also blocked
+	// For non-Terraform managers, identity changes are also blocked.
+	// Remove the old manager first, then add a new one with a different identity.
 	if hasOld && managerNew.Kind != utils.ManagerKindTerraform && managerNew.Identity != managerOld.Identity {
 		return &apierrors.StatusError{ErrStatus: metav1.Status{
 			Status:  metav1.StatusFailure,
@@ -119,7 +116,12 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 		}}
 	}
 
-	// For Terraform managers, prevent reverting from custom IDs back to User-Agent based IDs
+	// HACK: Terraform managers get special treatment for identity changes.
+	// See isTerraformUserAgentID() for full explanation of why this exists.
+	//
+	// We allow one-way migration from deprecated User-Agent based IDs to stable custom IDs,
+	// but prevent reverting back to User-Agent format. This fixes the original design mistake
+	// of using HTTP User-Agent as a manager identifier.
 	if hasOld && managerNew.Kind == utils.ManagerKindTerraform && managerNew.Identity != managerOld.Identity {
 		oldIsUserAgent := isTerraformUserAgentID(managerOld.Identity)
 		newIsUserAgent := isTerraformUserAgentID(managerNew.Identity)
