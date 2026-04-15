@@ -14,12 +14,12 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
-
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	utilsOrig "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 )
 
@@ -78,8 +78,8 @@ func (s *preferenceStorage) List(ctx context.Context, options *internalversion.L
 		return nil, err
 	}
 	ns := requestK8s.NamespaceValue(ctx)
-	if user.GetIdentityType() == authlib.TypeAccessPolicy {
-		user = nil // nill user can see everything
+	if user.GetIdentityType() != authlib.TypeUser {
+		return nil, fmt.Errorf("only users may list preferences")
 	}
 	return s.sql.ListPreferences(ctx, ns, user, true)
 }
@@ -108,8 +108,6 @@ func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav
 		default:
 			return false, fmt.Errorf("unsupported name")
 		}
-	}, func(p *preferenceModel) bool {
-		return true
 	})
 	if err != nil {
 		return nil, err
@@ -315,6 +313,7 @@ func asPreferencesResource(ns string, p *preferenceModel) preferences.Preference
 		}
 	}
 
+	obj.UID = gapiutil.CalculateClusterWideUID(&obj)
 	return obj
 }
 

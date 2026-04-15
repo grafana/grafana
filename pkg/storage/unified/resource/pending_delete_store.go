@@ -19,13 +19,17 @@ const (
 // that has been marked as pending deletion. The record is created before
 // labelling begins so that cleanup can proceed even after partial failures.
 //
-// When Force is true, the record cannot be removed by the tenant watcher.
+// When Orphaned is true, the record cannot be removed by the tenant watcher.
 // This is used for manually-seeded records that clean up orphaned tenants
 // which the tenant API considers active but are actually deleted in GCOM.
 type PendingDeleteRecord struct {
 	DeleteAfter      string `json:"deleteAfter"`
 	LabelingComplete bool   `json:"labelingComplete"`
-	Force            bool   `json:"force,omitempty"`
+	Orphaned         bool   `json:"orphaned,omitempty"`
+	// DeletedAt is set to an RFC3339 timestamp after all tenant data has been
+	// successfully deleted. Records with this field set are skipped by the
+	// tenant deleter.
+	DeletedAt string `json:"deletedAt,omitempty"`
 }
 
 // PendingDeleteStore manages pending-delete records in the KV store and keeps

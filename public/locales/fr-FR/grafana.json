@@ -5471,6 +5471,9 @@
       "cancel-loading-dashboard": "Annuler le chargement du tableau de bord"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "",
+      "provisioning-message": "",
+      "provisioning-title": "",
       "text": {
         "not-found": "Introuvable"
       }
@@ -6508,6 +6511,10 @@
       "sql-expressions-title": "Expressions SQL",
       "title-add-another-transformation": "Ajouter une autre transformation",
       "view-all": "Tout afficher"
+    },
+    "transformation-type-picker": {
+      "sql-cta-button": "",
+      "sql-cta-description": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "En supprimant toutes les transformations, vous serez redirigé vers l’écran principal de sélection."
@@ -8806,6 +8813,9 @@
     "show-all-spans": "Afficher toutes les traces",
     "span-bar": {
       "tooltip-critical-path": "Un segment sur le <1>chemin critique</1> de la trace/demande/flux de travail global."
+    },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": ""
     },
     "span-bar-section": {
       "description-link": "Ajoutez des informations supplémentaires à côté du service et de l’opération sur une ligne de la barre d’espace dans la vue de la trace.",

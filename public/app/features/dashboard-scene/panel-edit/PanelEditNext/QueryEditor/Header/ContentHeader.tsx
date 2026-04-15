@@ -6,6 +6,7 @@ import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/da
 import { Trans } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 import { Button, Icon, Text, useStyles2, useTheme2 } from '@grafana/ui';
+import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { type ExpressionQuery } from 'app/features/expressions/types';
 
@@ -22,6 +23,11 @@ import { getEditorBorderColor } from '../utils';
 import { EditableQueryName } from './EditableQueryName';
 import { HeaderActions } from './HeaderActions';
 
+interface DatasourceSectionProps {
+  selectedQuery: DataQuery;
+  onChange: (ds: DataSourceInstanceSettings) => void;
+}
+
 function DatasourceSection({ selectedQuery, onChange }: DatasourceSectionProps) {
   const styles = useStyles2(getDatasourceSectionStyles);
 
@@ -31,12 +37,6 @@ function DatasourceSection({ selectedQuery, onChange }: DatasourceSectionProps) 
     </div>
   );
 }
-
-const Separator = () => (
-  <Text variant="h4" color="secondary">
-    /
-  </Text>
-);
 
 interface PendingPickerHeaderProps {
   editorType: QueryEditorType;
@@ -184,7 +184,7 @@ export function ContentHeader({
             <Text weight="light" variant="body" color="primary">
               <Trans i18nKey="query-editor-next.header.alert">Alert</Trans>
             </Text>
-            <Separator />
+            <NavToolbarSeparator />
             <Text weight="light" variant="code" color="primary">
               {selectedAlert.rule.name}
             </Text>
@@ -197,7 +197,7 @@ export function ContentHeader({
               selectedQuery={selectedQuery}
               onChange={(ds) => onChangeDataSource(ds, selectedQuery.refId)}
             />
-            <Separator />
+            <NavToolbarSeparator />
           </>
         )}
 
@@ -206,7 +206,7 @@ export function ContentHeader({
             <Text weight="light" variant="body" color="primary">
               {upperFirst(selectedQuery.type)} <Trans i18nKey="query-editor-next.header.expression">Expression</Trans>
             </Text>
-            <Separator />
+            <NavToolbarSeparator />
           </>
         )}
 
@@ -215,7 +215,7 @@ export function ContentHeader({
             <Text weight="light" variant="body" color="primary">
               <Trans i18nKey="query-editor-next.header.transformation">Transformation</Trans>
             </Text>
-            <Separator />
+            <NavToolbarSeparator />
             <Text weight="light" variant="code" color="primary">
               {selectedTransformation.registryItem?.name || selectedTransformation.transformConfig.id}
             </Text>
@@ -286,11 +286,6 @@ export function ContentHeaderSceneWrapper({
       typeConfig={typeConfig}
     />
   );
-}
-
-interface DatasourceSectionProps {
-  selectedQuery: DataQuery;
-  onChange: (ds: DataSourceInstanceSettings) => void;
 }
 
 const getStyles = (
