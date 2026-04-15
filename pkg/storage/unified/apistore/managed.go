@@ -30,9 +30,25 @@ var errResourceIsManagedInRepository = fmt.Errorf("this resource is managed by a
 // isLegacyTerraformID checks if a Terraform manager identity uses the legacy User-Agent
 // based format (e.g., "Terraform/crossTF000 (+https://www.terraform.io) terraform-provider-grafana/crossplane").
 // New format uses simple IDs like "grafana-terraform-provider" or "my-terraform-provider".
+//
+// HACK: This is a workaround to allow migration from User-Agent based manager IDs to stable custom IDs.
+// The Terraform provider historically used the HTTP User-Agent header as the manager identity, which:
+//   - Changes with every Terraform/provider version update
+//   - Was never intended to be a stable identifier
+//   - Cannot be customized by users
+//
+// This function enables one-way migration to user-defined stable IDs by detecting the User-Agent
+// format and blocking reversion back to it. This special-casing for Terraform violates the general
+// principle that manager identities should be immutable, but is necessary to fix the original
+// design mistake of using User-Agent as an identifier.
+//
+// Reference: https://github.com/grafana/terraform-provider-grafana/blob/main/pkg/provider/framework_provider.go#L307
+// Format: "Terraform/{version} (+https://www.terraform.io) terraform-provider-{name}/{version}"
 func isLegacyTerraformID(identity string) bool {
-	// Legacy IDs are User-Agent strings containing "Terraform/" and the terraform.io URL
-	return strings.Contains(identity, "Terraform/") && strings.Contains(identity, "+https://www.terraform.io")
+	// Detect User-Agent strings from Terraform providers
+	return strings.Contains(identity, "Terraform/") &&
+		strings.Contains(identity, "+https://www.terraform.io") &&
+		strings.Contains(identity, "terraform-provider-")
 }
 
 func checkManagerPropertiesOnDelete(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
@@ -76,10 +92,9 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 	// Changing the owner (kind or identity) is not allowed.
 	// Remove the old manager first, then add the new one.
 	//
-	// Exception: For Terraform managers, we allow one-way migration from legacy
-	// User-Agent based IDs (e.g., "Terraform/... terraform-provider-grafana/...")
-	// to simple custom IDs (e.g., "grafana-terraform-provider"). Once migrated,
-	// reverting back to User-Agent format is blocked.
+	// HACK: Terraform gets special treatment - see isLegacyTerraformID() for details.
+	// We allow one-way migration from User-Agent based IDs to simple custom IDs.
+	// This fixes the original mistake of using HTTP User-Agent as a manager identifier.
 	if hasOld && managerNew.Kind != managerOld.Kind {
 		return &apierrors.StatusError{ErrStatus: metav1.Status{
 			Status:  metav1.StatusFailure,
