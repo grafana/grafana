@@ -91,7 +91,7 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				Spec: dashboardV2alpha1.DashboardGridLayoutSpec{},
 			}
 		}
-		if err := b.stripBOMIfEnabled(&v.Spec, "v2alpha1"); err != nil {
+		if err := b.stripBOMIfEnabled(&v.Spec); err != nil {
 			return err
 		}
 		resourceInfo = dashboardV2alpha1.DashboardResourceInfo
@@ -105,7 +105,7 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				Spec: dashboardV2beta1.DashboardGridLayoutSpec{},
 			}
 		}
-		if err := b.stripBOMIfEnabled(&v.Spec, "v2beta1"); err != nil {
+		if err := b.stripBOMIfEnabled(&v.Spec); err != nil {
 			return err
 		}
 		resourceInfo = dashboardV2beta1.DashboardResourceInfo
@@ -117,7 +117,7 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				Spec: dashboardV2.DashboardGridLayoutSpec{},
 			}
 		}
-		if err := b.stripBOMIfEnabled(&v.Spec, "v2"); err != nil {
+		if err := b.stripBOMIfEnabled(&v.Spec); err != nil {
 			return err
 		}
 		resourceInfo = dashboardV2.DashboardResourceInfo
@@ -185,8 +185,9 @@ func getFieldValidationMode(a admission.Attributes) string {
 	return validation
 }
 
-// stripBOMIfEnabled conditionally strips BOMs from v2 dashboard specs based on skipBOMStripping flag.
-func (b *DashboardsAPIBuilder) stripBOMIfEnabled(spec interface{}, version string) error {
+// stripBOMIfEnabled conditionally strips BOMs from the given dashboard spec based on skipBOMStripping flag.
+// The skipBOMStripping flag is used for benchmarking to measure baseline performance without BOM stripping overhead.
+func (b *DashboardsAPIBuilder) stripBOMIfEnabled(spec interface{}) error {
 	if !b.skipBOMStripping {
 		util.StripBOMFromStruct(spec)
 	}

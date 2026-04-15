@@ -270,12 +270,12 @@ func stripBOMReflect(v reflect.Value) {
 			val := iter.Value()
 			// For maps, we need to handle the key-value pair
 			if val.Kind() == reflect.String && val.CanInterface() {
-				// Create new cleaned value
+				// Map string values must be replaced (not addressable)
 				cleanedVal := reflect.ValueOf(StripBOM(val.String()))
 				v.SetMapIndex(iter.Key(), cleanedVal)
 			} else {
-				// For non-string values or nested structures, we need to be careful
-				// because map values aren't directly settable via reflection
+				// For nested structures (structs, slices in map values),
+				// recurse to update their string fields in place
 				stripBOMReflect(val)
 			}
 		}
