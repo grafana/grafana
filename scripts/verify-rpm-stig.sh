@@ -31,14 +31,14 @@ if [[ ! -f "$SSG_DS" ]]; then
   tar -xzOf "$TARBALL" "scap-security-guide-${SSG_VERSION}/ssg-rhel9-ds.xml" > "$SSG_DS"
 fi
 
-rpm --upgrade --nodeps --force "$RPM_PATH"
+rpm --upgrade --nodeps --force --ignorearch "$RPM_PATH"
 
 # Datastream and OVAL component IDs within ssg-rhel9-ds.xml.
 DS_ID="scap_org.open-scap_datastream_from_xccdf_ssg-rhel9-xccdf.xml"
-OVAL_ID="scap_org.open-scap_comp_ssg-rhel9-oval.xml"
+OVAL_ID="scap_org.open-scap_cref_ssg-rhel9-oval.xml"
 
 # Evaluate each OVAL definition directly, bypassing the XCCDF platform check.
-# oscap oval eval exits non-zero when a definition evaluates to false (fail).
+# oscap oval eval always exits 0; detect failures by grepping output for ': false'.
 FAILED=0
 for DEF_ID in \
   oval:ssg-file_permissions_binary_dirs:def:1 \
@@ -47,11 +47,15 @@ for DEF_ID in \
   oval:ssg-file_ownership_library_dirs:def:1 \
   oval:ssg-file_groupownership_system_commands_dirs:def:1; do
   echo "--- $DEF_ID"
-  oscap oval eval \
+  OUT="$(oscap oval eval \
     --datastream-id "$DS_ID" \
     --oval-id "$OVAL_ID" \
     --id "$DEF_ID" \
-    "$SSG_DS" || FAILED=1
+    "$SSG_DS" 2>&1)"
+  echo "$OUT"
+  if echo "$OUT" | grep -q ": false$"; then
+    FAILED=1
+  fi
 done
 
 if [[ "$FAILED" -ne 0 ]]; then
