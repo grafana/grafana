@@ -29,12 +29,8 @@ var (
 // Implementations are called from a single goroutine and need not be concurrency-safe.
 type WatchEventFilter func(events []watch.Event) ([]bool, error)
 
-// RejectAllWatchFilter is a WatchEventFilter that silently drops every event.
-// Use it as a safe placeholder in WatchFilter implementations that are not yet
-// complete. Individual teams are expected to replace it with proper authorization logic.
-var RejectAllWatchFilter WatchEventFilter = func(events []watch.Event) ([]bool, error) {
-	return make([]bool, len(events)), nil
-}
+// RejectAllWatchFilter is a nil WatchEventFilter that will make watch return an error.
+var RejectAllWatchFilter WatchEventFilter = nil
 
 // AllowAllWatchFilter is a WatchEventFilter that forwards every event unconditionally.
 // Use this only for resources that impose no per-event read restrictions.
@@ -267,11 +263,6 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 }
 
 func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
-	watcher, ok := w.inner.(k8srest.Watcher)
-	if !ok {
-		return nil, fmt.Errorf("watch is not supported on the underlying storage")
-	}
-
 	// Build the filter once, before starting the watch, so callers get an immediate
 	// error if authorization state cannot be resolved (e.g. auth backend unavailable).
 	filter, err := w.authorizer.WatchFilter(ctx)
@@ -281,9 +272,16 @@ func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOption
 	// Fail-closed: a nil filter is treated as RejectAllWatchFilter.
 	// Implementors should return AllowAllWatchFilter explicitly for unrestricted resources.
 	if filter == nil {
-		return nil, fmt.Errorf("watch requires a filter")
+		return nil, errors.NewUnauthorized("watch filter not implemented")
 	}
 
+	// Check if the underlying storage supports Watch
+	watcher, ok := w.inner.(k8srest.Watcher)
+	if !ok {
+		return nil, fmt.Errorf("watch is not supported on the underlying storage")
+	}
+
+	// Call the underlying storage's Watch method
 	inner, err := watcher.Watch(w.storeCtx(ctx), options)
 	if err != nil {
 		return nil, err
