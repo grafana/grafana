@@ -102,7 +102,7 @@ func (v *RolePermissionValidator) ValidateUserCanDelegateRole(ctx context.Contex
 }
 
 // ValidateUserCanDelegatePermissions returns an error if the current user does not have every permission
-// in the list (used for Role, CoreRole, and GlobalRole refs in role bindings).
+// in the list (used for Role and GlobalRole refs in role bindings).
 func (v *RolePermissionValidator) ValidateUserCanDelegatePermissions(ctx context.Context, perms []iamv0.RolespecPermission) error {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -203,14 +203,8 @@ func (v *RolePermissionValidator) parsePermission(act, sc string) (*permission, 
 		return &perm, nil
 	}
 
-	scopeResource, attribute, name := accesscontrol.SplitScope(sc)
+	scopeResource, _, name := accesscontrol.SplitScope(sc)
 	perm.scope.name = name
-
-	// k8s roles should only use UID-based scopes for teams, users, and service accounts
-	// reject ID-based scopes (attribute == "id") for these resources
-	if attribute == "id" {
-		return nil, fmt.Errorf("roles no longer support ID-based scopes for %s. Use uid-based scopes instead", scopeResource)
-	}
 
 	if scopeResource == "folders" || scopeResource == "folder.grafana.app" {
 		perm.scope.folder = true
@@ -393,14 +387,14 @@ func getResourceVerb(action string) (string, string, error) {
 	return parts[0], parts[1], nil
 }
 
-// RoleRefResolver returns the permissions for a role ref (Role, CoreRole, or GlobalRole) by kind and name.
+// RoleRefResolver returns the permissions for a role ref (Role or GlobalRole) by kind and name.
 // Used to validate that the user can delegate every permission when creating a role binding.
 type RoleRefResolver interface {
 	GetPermissionsForRef(ctx context.Context, kind, name string) ([]iamv0.RolespecPermission, error)
 }
 
 // RoleRefResolverFromConfigProvider returns a RoleRefResolver that uses the given config provider
-// to fetch Role, CoreRole, or GlobalRole via the dynamic client.
+// to fetch Role or GlobalRole via the dynamic client.
 func RoleRefResolverFromConfigProvider(configProvider ConfigProvider) RoleRefResolver {
 	return &roleRefResolver{configProvider: configProvider}
 }
@@ -409,7 +403,7 @@ type roleRefResolver struct {
 	configProvider ConfigProvider
 }
 
-// GetPermissionsForRef returns the effective permissions for a role ref (Role, CoreRole, or GlobalRole).
+// GetPermissionsForRef returns the effective permissions for a role ref (Role or GlobalRole).
 // Only Role may have a single roleRef (to a GlobalRole); that ref is resolved with one direct fetch (no recursion).
 func (r *roleRefResolver) GetPermissionsForRef(ctx context.Context, kind, name string) ([]iamv0.RolespecPermission, error) {
 	spec, err := r.fetchRoleSpec(ctx, kind, name)
@@ -475,9 +469,6 @@ func (r *roleRefResolver) fetchRoleSpec(ctx context.Context, kind, name string) 
 	switch kind {
 	case string(iamv0.RoleBindingSpecRoleRefKindRole):
 		gvr = iamv0.RoleInfo.GroupVersionResource()
-		namespace = getRequestNamespace(ctx)
-	case string(iamv0.RoleBindingSpecRoleRefKindCoreRole):
-		gvr = iamv0.CoreRoleInfo.GroupVersionResource()
 		namespace = getRequestNamespace(ctx)
 	case string(iamv0.RoleBindingSpecRoleRefKindGlobalRole):
 		gvr = iamv0.GlobalRoleInfo.GroupVersionResource()

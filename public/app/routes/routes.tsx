@@ -21,9 +21,8 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
-import { RouteDescriptor } from '../core/navigation/types';
+import { type RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
-import { isDashboardSceneEnabled } from '../features/dashboard-scene/utils/utils';
 import { getProvisioningRoutes } from '../features/provisioning/utils/routes';
 
 const isDevEnv = config.buildInfo.env === 'development';
@@ -76,7 +75,9 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/NewDashboardWithDS')
       ),
     },
-    (config.featureToggles.suggestedDashboards || config.featureToggles.dashboardLibrary) && {
+    (config.featureToggles.suggestedDashboards ||
+      config.featureToggles.dashboardLibrary ||
+      config.featureToggles.dashboardTemplates) && {
       path: DASHBOARD_LIBRARY_ROUTES.Template,
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
       pageClass: 'page-dashboard',
@@ -108,10 +109,8 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/d-solo/:uid/:slug?',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
-      component: SafeDynamicImport(() =>
-        isDashboardSceneEnabled()
-          ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
-          : import(/* webpackChunkName: "SoloPanelPageOld" */ '../features/dashboard/containers/SoloPanelPage')
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
       ),
     },
     // This route handles embedding of snapshot/scripted dashboard panels
@@ -119,10 +118,8 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/dashboard-solo/:type/:slug',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
-      component: SafeDynamicImport(() =>
-        isDashboardSceneEnabled()
-          ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
-          : import(/* webpackChunkName: "SoloPanelPageOld" */ '../features/dashboard/containers/SoloPanelPage')
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
       ),
     },
     {
@@ -306,7 +303,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/org/teams/new',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.ActionTeamsCreate]),
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "CreateTeam" */ 'app/features/teams/CreateTeam')),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "CreateTeam" */ '../features/teams/create-team/CreateTeam')
+      ),
     },
     {
       path: '/org/teams/edit/:uid/:page?',
@@ -459,6 +458,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/playlists',
+      roles: config.featureToggles.playlistsRBAC
+        ? () => contextSrv.evaluatePermission([AccessControlAction.PlaylistsRead])
+        : undefined,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "PlaylistPage"*/ 'app/features/playlist/PlaylistPage')
       ),

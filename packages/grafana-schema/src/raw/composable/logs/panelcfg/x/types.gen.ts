@@ -12,7 +12,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "13.0.0-pre";
+export const pluginVersion = "13.1.0-pre";
 
 export interface Options {
   controlsStorageKey?: string;
@@ -22,6 +22,7 @@ export interface Options {
   enableInfiniteScrolling?: boolean;
   enableLogDetails: boolean;
   fontSize?: ('default' | 'small');
+  grammar?: unknown;
   isFilterLabelActive?: unknown;
   logLineMenuCustomItems?: unknown;
   logRowMenuIconsAfter?: unknown;

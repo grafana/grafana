@@ -2,23 +2,23 @@ import { countBy, isEqual } from 'lodash';
 import { useMemo, useRef } from 'react';
 
 import {
-  AlertGroupTotals,
+  type AlertGroupTotals,
   AlertInstanceTotalState,
-  AlertInstanceTotals,
-  AlertingRule,
-  CombinedRule,
-  CombinedRuleGroup,
-  CombinedRuleNamespace,
-  Rule,
-  RuleGroup,
-  RuleNamespace,
-  RulesSource,
+  type AlertInstanceTotals,
+  type AlertingRule,
+  type CombinedRule,
+  type CombinedRuleGroup,
+  type CombinedRuleNamespace,
+  type Rule,
+  type RuleGroup,
+  type RuleNamespace,
+  type RulesSource,
 } from 'app/types/unified-alerting';
 import {
   PromAlertingRuleState,
-  RulerRuleDTO,
-  RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
+  type RulerRuleDTO,
+  type RulerRuleGroupDTO,
+  type RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';

@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, useStyles2 } from '@grafana/ui';
 
-import { getQueryEditorColors, SidebarSize } from '../../constants';
+import { SidebarSize } from '../../constants';
 import { trackSidebarSizeToggle } from '../../tracking';
 
 interface SidebarHeaderActionsProps {
@@ -38,10 +38,9 @@ export function SidebarHeaderActions({ sidebarSize, setSidebarSize, children }: 
 }
 
 function getStyles(theme: GrafanaTheme2) {
-  const themeColors = getQueryEditorColors(theme);
   return {
     header: css({
-      background: themeColors.sidebarHeaderBackground,
+      background: theme.colors.background.secondary,
       padding: theme.spacing(0.5, 1.5),
       minHeight: theme.spacing(5),
       display: 'flex',

@@ -45,6 +45,7 @@ export const availableIconsIndex = {
   ai: true,
   backward: true,
   bars: true,
+  'bars-clock': true,
   bell: true,
   'bell-slash': true,
   bolt: true,
@@ -168,6 +169,7 @@ export const availableIconsIndex = {
   'gf-traces': true,
   globe: true,
   grafana: true,
+  grid: true,
   'graph-bar': true,
   'hand-pointer': true,
   heart: true,
@@ -298,6 +300,8 @@ export const availableIconsIndex = {
   'tachometer-fast': true,
   'tachometer-empty': true,
   'cmab-logo': true,
+  'lightbulb-alt': true,
+  vial: true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;

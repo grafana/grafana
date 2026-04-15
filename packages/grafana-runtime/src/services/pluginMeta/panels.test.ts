@@ -1,6 +1,7 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
-import { BackendSrv, setBackendSrv } from '../backendSrv';
+import { type BackendSrv, setBackendSrv } from '../backendSrv';
+import { getLogger, setLogger } from '../logging/registry';
 
 import {
   getListedPanelPluginIds,
@@ -8,13 +9,14 @@ import {
   getPanelPluginMeta,
   getPanelPluginMetas,
   getPanelPluginMetasMap,
+  getPanelPluginMetasMapSync,
   getPanelPluginVersion,
   isPanelPluginInstalled,
   refetchPanelPluginMetas,
   setPanelPluginMetas,
 } from './panels';
 import { initPluginMetas, refetchPluginMetas } from './plugins';
-import { panel, panels } from './test-fixtures/config.panels';
+import { panel, panels as testPanels } from './test-fixtures/config.panels';
 import { v0alpha1Response } from './test-fixtures/v0alpha1Response';
 
 jest.mock('./plugins', () => ({
@@ -39,56 +41,140 @@ describe('when useMTPlugins flag is enabled', () => {
     beforeEach(() => {
       setPanelPluginMetas({});
       jest.resetAllMocks();
-      initPluginMetasMock.mockResolvedValue({ items: [] });
+      initPluginMetasMock.mockResolvedValue({ items: [v0alpha1Response.items[0]] });
     });
 
     it('getPanelPluginMetas should call initPluginMetas and return correct result', async () => {
       const panels = await getPanelPluginMetas();
 
-      expect(panels).toEqual([]);
+      expect(panels).toMatchObject([testPanels.alertlist]);
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
     });
 
     it('getListedPanelPluginMetas should call initPluginMetas and return correct result', async () => {
       const panels = await getListedPanelPluginMetas();
 
-      expect(panels).toEqual([]);
+      expect(panels).toMatchObject([testPanels.alertlist]);
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
     });
 
     it('getPanelPluginMetasMap should call initPluginMetas and return correct result', async () => {
       const panels = await getPanelPluginMetasMap();
 
-      expect(panels).toEqual({});
+      expect(panels).toMatchObject({ alertlist: testPanels.alertlist });
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('getPanelPluginMetasMapSync should return empty map', () => {
+      const panels = getPanelPluginMetasMapSync();
+
+      expect(panels).toEqual({});
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
+
+    describe('when process is under development', () => {
+      let originalNodeEnv = process.env.NODE_ENV;
+      beforeEach(() => {
+        process.env.NODE_ENV = 'development';
+      });
+
+      afterEach(() => {
+        process.env.NODE_ENV = originalNodeEnv;
+      });
+
+      it('getPanelPluginMetasMapSync should throw', () => {
+        expect(() => getPanelPluginMetasMapSync()).toThrow(
+          new Error('getPanelPluginMetasMapSync() was called before panel plugins map was initialized!')
+        );
+        expect(initPluginMetasMock).not.toHaveBeenCalled();
+      });
     });
 
     it('getPanelPluginMeta should call initPluginMetas and return correct result', async () => {
-      const result = await getPanelPluginMeta('grafana-test-panel');
+      const result = await getPanelPluginMeta('alertlist');
 
-      expect(result).toEqual(null);
+      expect(result).toMatchObject(testPanels.alertlist);
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
     });
 
-    it('isPanelPluginInstalled should call initPluginMetas and return false', async () => {
+    it('isPanelPluginInstalled should call initPluginMetas and return true if the panel exists', async () => {
+      const installed = await isPanelPluginInstalled('alertlist');
+
+      expect(installed).toEqual(true);
+      expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('isPanelPluginInstalled should call initPluginMetas and return false if the panel does not exist', async () => {
       const installed = await isPanelPluginInstalled('grafana-test-panel');
 
       expect(installed).toEqual(false);
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
     });
 
-    it('getPanelPluginVersion should call initPluginMetas and return null', async () => {
+    it('getPanelPluginVersion should call initPluginMetas and return correct verstion if the panel exists', async () => {
+      const result = await getPanelPluginVersion('alertlist');
+
+      expect(result).toEqual('');
+      expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('getPanelPluginVersion should call initPluginMetas and return null if the panel does not exist', async () => {
       const result = await getPanelPluginVersion('grafana-test-panel');
 
       expect(result).toEqual(null);
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
     });
 
-    it('getListedPanelPluginIds should call initPluginMetas and return an empty array', async () => {
+    it('getListedPanelPluginIds should call initPluginMetas and return a correct array', async () => {
       const installed = await getListedPanelPluginIds();
 
-      expect(installed).toEqual([]);
+      expect(installed).toEqual(['alertlist']);
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+    });
+
+    describe('and initPluginMetas or refetchPanelPluginMetas returns an empty result', () => {
+      beforeEach(() => {
+        jest.resetAllMocks();
+        // can't use mockLogger here because that would cause a circular dependency between @grafana/runtime and @grafana/test-utils
+        setLogger('grafana/runtime.plugins.meta', {
+          logDebug: jest.fn(),
+          logError: jest.fn(),
+          logInfo: jest.fn(),
+          logMeasurement: jest.fn(),
+          logWarning: jest.fn(),
+        });
+        initPluginMetasMock.mockResolvedValue({ items: [] });
+        refetchPluginMetasMock.mockResolvedValue({ items: [] });
+      });
+
+      it.each([
+        { func: getPanelPluginMetas },
+        { func: getListedPanelPluginMetas },
+        { func: getPanelPluginMetasMap },
+        { func: getListedPanelPluginIds },
+        { func: refetchPanelPluginMetas },
+      ])(`when func:$func is called then a warning should be logged`, async ({ func }) => {
+        await func();
+
+        expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
+        expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
+          'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata',
+          { type: 'panel' }
+        );
+      });
+
+      it.each([{ func: getPanelPluginMeta }, { func: isPanelPluginInstalled }, { func: getPanelPluginVersion }])(
+        `when func:$func is called then a warning should be logged`,
+        async ({ func }) => {
+          await func('');
+
+          expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
+          expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
+            'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata',
+            { type: 'panel' }
+          );
+        }
+      );
     });
   });
 
@@ -122,6 +208,31 @@ describe('when useMTPlugins flag is enabled', () => {
 
       expect(panels).toEqual({ 'grafana-test-panel': panel });
       expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
+
+    it('getPanelPluginMetasMapSync should return correct result', () => {
+      const panels = getPanelPluginMetasMapSync();
+
+      expect(panels).toEqual({ 'grafana-test-panel': panel });
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
+
+    describe('when process is under development', () => {
+      let originalNodeEnv = process.env.NODE_ENV;
+      beforeEach(() => {
+        process.env.NODE_ENV = 'development';
+      });
+
+      afterEach(() => {
+        process.env.NODE_ENV = originalNodeEnv;
+      });
+
+      it('getPanelPluginMetasMapSync should not throw', () => {
+        const panels = getPanelPluginMetasMapSync();
+
+        expect(panels).toEqual({ 'grafana-test-panel': panel });
+        expect(initPluginMetasMock).not.toHaveBeenCalled();
+      });
     });
 
     it('getPanelPluginMeta should not call initPluginMetas and return correct result', async () => {
@@ -214,7 +325,7 @@ describe('when useMTPlugins flag is enabled', () => {
         patch: jest.fn(),
         post: jest.fn(),
         put: jest.fn(),
-        get: jest.fn().mockResolvedValue({ panels }),
+        get: jest.fn().mockResolvedValue({ panels: testPanels }),
         request: jest.fn(),
         datasourceRequest: jest.fn(),
       };
@@ -234,9 +345,9 @@ describe('when useMTPlugins flag is enabled', () => {
       const actual = await getPanelPluginMetas();
 
       const actualIds = actual.map((a) => a.id).sort();
-      const expectedIds = Object.keys(panels).sort();
+      const expectedIds = Object.keys(testPanels).sort();
 
-      expect(actual).toHaveLength(Object.keys(panels).length);
+      expect(actual).toHaveLength(Object.keys(testPanels).length);
       expect(actualIds).toStrictEqual(expectedIds);
     });
 
@@ -417,7 +528,7 @@ describe('when useMTPlugins flag is disabled', () => {
         patch: jest.fn(),
         post: jest.fn(),
         put: jest.fn(),
-        get: jest.fn().mockResolvedValue({ panels }),
+        get: jest.fn().mockResolvedValue({ panels: testPanels }),
         request: jest.fn(),
         datasourceRequest: jest.fn(),
       };
@@ -438,17 +549,17 @@ describe('when useMTPlugins flag is disabled', () => {
       const actual = await getPanelPluginMetas();
 
       const actualIds = actual.map((a) => a.id).sort();
-      const expectedIds = Object.keys(panels).sort();
+      const expectedIds = Object.keys(testPanels).sort();
 
-      expect(actual).toHaveLength(Object.keys(panels).length);
+      expect(actual).toHaveLength(Object.keys(testPanels).length);
       expect(actualIds).toStrictEqual(expectedIds);
     });
 
     it('should return the last result for concurrent calls', async () => {
       backendSrv.get = jest
         .fn()
-        .mockResolvedValueOnce({ panels })
-        .mockResolvedValue({ panels: { alertlist: panels.alertlist } });
+        .mockResolvedValueOnce({ panels: testPanels })
+        .mockResolvedValue({ panels: { alertlist: testPanels.alertlist } });
 
       const promise1 = refetchPanelPluginMetas();
       const promise2 = refetchPanelPluginMetas();
@@ -513,6 +624,31 @@ describe('immutability', () => {
     expect(mutatedPanels['grafana-test-panel'].info.links[0]).toEqual({ name: '', url: '' });
 
     const panels = await getPanelPluginMetasMap();
+
+    // assert that we have not mutated the source
+    expect(panels).toEqual({ 'grafana-test-panel': panel });
+    expect(panels['grafana-test-panel'].info.author.name).toEqual('Grafana');
+    expect(panels['grafana-test-panel'].info.links).toHaveLength(0);
+  });
+
+  it('getPanelPluginMetasMapSync should return a deep clone', () => {
+    const mutatedPanels = getPanelPluginMetasMapSync();
+
+    // assert we have correct props
+    expect(mutatedPanels).toEqual({ 'grafana-test-panel': panel });
+    expect(mutatedPanels['grafana-test-panel'].info.author.name).toEqual('Grafana');
+    expect(mutatedPanels['grafana-test-panel'].info.links).toHaveLength(0);
+
+    // mutate deep props
+    mutatedPanels['grafana-test-panel'].info.author.name = '';
+    mutatedPanels['grafana-test-panel'].info.links.push({ name: '', url: '' });
+
+    // assert we have mutated props
+    expect(mutatedPanels['grafana-test-panel'].info.author.name).toEqual('');
+    expect(mutatedPanels['grafana-test-panel'].info.links).toHaveLength(1);
+    expect(mutatedPanels['grafana-test-panel'].info.links[0]).toEqual({ name: '', url: '' });
+
+    const panels = getPanelPluginMetasMapSync();
 
     // assert that we have not mutated the source
     expect(panels).toEqual({ 'grafana-test-panel': panel });

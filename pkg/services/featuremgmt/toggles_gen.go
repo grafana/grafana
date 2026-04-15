@@ -47,10 +47,6 @@ const (
 	// Registers a live apiserver
 	FlagLiveAPIServer = "liveAPIServer"
 
-	// FlagKubernetesStars
-	// Routes stars requests from /api to the /apis endpoint
-	FlagKubernetesStars = "kubernetesStars"
-
 	// FlagInfluxqlStreamingParser
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
 	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
@@ -75,10 +71,6 @@ const (
 	// Refactor time range variables flow to reduce number of API calls made when query variables are chained
 	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
 
-	// FlagEnableDatagridEditing
-	// Enables the edit functionality in the datagrid panel
-	FlagEnableDatagridEditing = "enableDatagridEditing"
-
 	// FlagAwsDatasourcesTempCredentials
 	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
 	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
@@ -96,7 +88,7 @@ const (
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
 
 	// FlagProvisioning
-	// Next generation provisioning... and git
+	// Enables Git Sync and as-code provisioning for Grafana resources
 	FlagProvisioning = "provisioning"
 
 	// FlagProvisioningFolderMetadata
@@ -115,10 +107,6 @@ const (
 	// Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
 
-	// FlagQueryCacheRequestDeduplication
-	// Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight
-	FlagQueryCacheRequestDeduplication = "queryCacheRequestDeduplication"
-
 	// FlagConfigurableSchedulerTick
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
@@ -130,6 +118,10 @@ const (
 	// FlagSseGroupByDatasource
 	// Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
 	FlagSseGroupByDatasource = "sseGroupByDatasource"
+
+	// FlagSseExpressionErrorIsolation
+	// Isolate expression build errors to the broken expression's refID instead of failing the entire pipeline
+	FlagSseExpressionErrorIsolation = "sseExpressionErrorIsolation"
 
 	// FlagLokiRunQueriesInParallel
 	// Enables running Loki queries in parallel
@@ -147,17 +139,9 @@ const (
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
 
-	// FlagKubernetesDashboards
-	// Use the kubernetes API in the frontend for dashboards
-	FlagKubernetesDashboards = "kubernetesDashboards"
-
 	// FlagKubernetesShortURLs
 	// Enables k8s short url api and uses it under the hood when handling legacy /api
 	FlagKubernetesShortURLs = "kubernetesShortURLs"
-
-	// FlagKubernetesAlertingRules
-	// Adds support for Kubernetes alerting and recording rules
-	FlagKubernetesAlertingRules = "kubernetesAlertingRules"
 
 	// FlagKubernetesCorrelations
 	// Adds support for Kubernetes correlations
@@ -191,13 +175,21 @@ const (
 	// Enable fallback parsing behavior when scan row encounters invalid dashboard JSON
 	FlagScanRowInvalidDashboardParseFallbackEnabled = "scanRowInvalidDashboardParseFallbackEnabled"
 
-	// FlagDatasourceQueryTypes
-	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
-	FlagDatasourceQueryTypes = "datasourceQueryTypes"
+	// FlagDatasourcesQueryTypes
+	// Load Query types from spec.{version}.query.{yaml|json}
+	FlagDatasourcesQueryTypes = "datasources.queryTypes"
 
-	// FlagDatasourceDisableIdApi
-	// Does not register datasource apis that use the numeric id
-	FlagDatasourceDisableIdApi = "datasourceDisableIdApi"
+	// FlagDatasourcesLoadOpenAPI
+	// Load the openapi spec from spec.{version}.openapi.{yaml|json}
+	FlagDatasourcesLoadOpenAPI = "datasources.loadOpenAPI"
+
+	// FlagDatasourcesChunkedQueryStreaming
+	// Allow requesting query results as chunked jsonl rather than single json blob
+	FlagDatasourcesChunkedQueryStreaming = "datasources.chunkedQueryStreaming"
+
+	// FlagDatasourceLegacyIdApi
+	// Register legacy datasource apis that use the numeric id
+	FlagDatasourceLegacyIdApi = "datasourceLegacyIdApi"
 
 	// FlagQueryService
 	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
@@ -219,9 +211,13 @@ const (
 	// Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
 	FlagDatasourcesApiServerEnableResourceEndpoint = "datasourcesApiServerEnableResourceEndpoint"
 
-	// FlagDatasourcesApiServerEnableResourceEndpointFrontend
-	// Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.
-	FlagDatasourcesApiServerEnableResourceEndpointFrontend = "datasourcesApiServerEnableResourceEndpointFrontend"
+	// FlagDatasourcesApiserverEnableResourceEndpointRedirect
+	// redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.
+	FlagDatasourcesApiserverEnableResourceEndpointRedirect = "datasourcesApiserverEnableResourceEndpointRedirect"
+
+	// FlagDatasourcesQuerierRawOutput
+	// use raw output mode for the data source querier
+	FlagDatasourcesQuerierRawOutput = "datasourcesQuerierRawOutput"
 
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
@@ -258,6 +254,10 @@ const (
 	// FlagDashboardNewLayouts
 	// Enables new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
+
+	// FlagSceneCsvExport
+	// Enables CSV export using scenes dashboard architecture
+	FlagSceneCsvExport = "sceneCsvExport"
 
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
@@ -308,11 +308,11 @@ const (
 	FlagSqlExpressions = "sqlExpressions"
 
 	// FlagKubernetesAggregator
-	// Enable grafana&#39;s embedded kube-aggregator
+	// Enable grafana's embedded kube-aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
 
 	// FlagKubernetesAggregatorCapTokenAuth
-	// Enable CAP token based authentication in grafana&#39;s embedded kube-aggregator
+	// Enable CAP token based authentication in grafana's embedded kube-aggregator
 	FlagKubernetesAggregatorCapTokenAuth = "kubernetesAggregatorCapTokenAuth"
 
 	// FlagGroupByVariable
@@ -335,10 +335,6 @@ const (
 	// Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
 	FlagNewDashboardWithFiltersAndGroupBy = "newDashboardWithFiltersAndGroupBy"
 
-	// FlagDashboardAdHocAndGroupByWrapper
-	// Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it
-	FlagDashboardAdHocAndGroupByWrapper = "dashboardAdHocAndGroupByWrapper"
-
 	// FlagCloudWatchNewLabelParsing
 	// Updates CloudWatch label parsing to be more accurate
 	FlagCloudWatchNewLabelParsing = "cloudWatchNewLabelParsing"
@@ -354,6 +350,10 @@ const (
 	// FlagQueryLibrary
 	// Enables Saved queries (query library) feature
 	FlagQueryLibrary = "queryLibrary"
+
+	// FlagPlaylistsRBAC
+	// Enables RBAC for playlists
+	FlagPlaylistsRBAC = "playlistsRBAC"
 
 	// FlagSavedQueriesRBAC
 	// Enables Saved queries (query library) RBAC permissions
@@ -411,6 +411,10 @@ const (
 	// Use openFGA as main authorization engine and disable legacy RBAC clietn.
 	FlagZanzanaNoLegacyClient = "zanzanaNoLegacyClient"
 
+	// FlagZanzanaSearchUsersPermissions
+	// Search users permissions using Zanzana.
+	FlagZanzanaSearchUsersPermissions = "zanzanaSearchUsersPermissions"
+
 	// FlagReloadDashboardsOnParamsChange
 	// Enables reload of dashboards on scopes, time range and variables changes
 	FlagReloadDashboardsOnParamsChange = "reloadDashboardsOnParamsChange"
@@ -427,21 +431,21 @@ const (
 	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
 
-	// FlagAlertingFilterV2
-	// Enable the new alerting search experience
-	FlagAlertingFilterV2 = "alertingFilterV2"
-
 	// FlagDataplaneAggregator
 	// Enable grafana dataplane aggregator
 	FlagDataplaneAggregator = "dataplaneAggregator"
 
 	// FlagAppPlatformGrpcClientAuth
-	// Enables the gRPC client to authenticate with the App Platform by using ID &amp; access tokens
+	// Enables the gRPC client to authenticate with the App Platform by using ID & access tokens
 	FlagAppPlatformGrpcClientAuth = "appPlatformGrpcClientAuth"
 
 	// FlagGroupAttributeSync
 	// Enable the groupsync extension for managing Group Attribute Sync feature
 	FlagGroupAttributeSync = "groupAttributeSync"
+
+	// FlagGroupToNestedTableV2
+	// Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation
+	FlagGroupToNestedTableV2 = "groupToNestedTableV2"
 
 	// FlagImprovedExternalSessionHandling
 	// Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
@@ -478,10 +482,6 @@ const (
 	// FlagPlaylistsReconciler
 	// Enables experimental reconciler for playlists
 	FlagPlaylistsReconciler = "playlistsReconciler"
-
-	// FlagPasswordlessMagicLinkAuthentication
-	// Enable passwordless login via magic link authentication
-	FlagPasswordlessMagicLinkAuthentication = "passwordlessMagicLinkAuthentication"
 
 	// FlagEnableExtensionsAdminPage
 	// Enables the extension admin page regardless of development mode
@@ -535,10 +535,6 @@ const (
 	// Defaults to using the Loki `/labels` API instead of `/series`
 	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"
 
-	// FlagK8SFolderCounts
-	// Enable folder&#39;s api server counts
-	FlagK8SFolderCounts = "k8SFolderCounts"
-
 	// FlagImprovedExternalSessionHandlingSAML
 	// Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
 	FlagImprovedExternalSessionHandlingSAML = "improvedExternalSessionHandlingSAML"
@@ -550,6 +546,14 @@ const (
 	// FlagTeamHttpHeadersFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
 	FlagTeamHttpHeadersFromAppPlatform = "teamHttpHeadersFromAppPlatform"
+
+	// FlagTeamLBACApiReadFromAppPlatform
+	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
+	FlagTeamLBACApiReadFromAppPlatform = "teamLBACApiReadFromAppPlatform"
+
+	// FlagTeamLBACApiWriteFromAppPlatform
+	// Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
+	FlagTeamLBACApiWriteFromAppPlatform = "teamLBACApiWriteFromAppPlatform"
 
 	// FlagGrafanaAdvisor
 	// Enables Advisor app
@@ -622,25 +626,9 @@ const (
 	// Use FiredAt for StartsAt when sending alerts to Alertmaanger
 	FlagAlertRuleUseFiredAtForStartsAt = "alertRuleUseFiredAtForStartsAt"
 
-	// FlagKubernetesAuthzApis
-	// Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead
-	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
-
-	// FlagKubernetesAuthZHandlerRedirect
-	// Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead
-	FlagKubernetesAuthZHandlerRedirect = "kubernetesAuthZHandlerRedirect"
-
 	// FlagKubernetesAuthZResourcePermissionsRedirect
 	// Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints
 	FlagKubernetesAuthZResourcePermissionsRedirect = "kubernetesAuthZResourcePermissionsRedirect"
-
-	// FlagKubernetesAuthZRolesRedirect
-	// Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
-	FlagKubernetesAuthZRolesRedirect = "kubernetesAuthZRolesRedirect"
-
-	// FlagKubernetesAuthZRoleBindingsRedirect
-	// Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints
-	FlagKubernetesAuthZRoleBindingsRedirect = "kubernetesAuthZRoleBindingsRedirect"
 
 	// FlagKubernetesAuthzResourcePermissionApis
 	// Registers AuthZ resource permission /apis endpoints
@@ -649,10 +637,6 @@ const (
 	// FlagKubernetesAuthzZanzanaSync
 	// Enable sync of Zanzana authorization store on AuthZ CRD mutations
 	FlagKubernetesAuthzZanzanaSync = "kubernetesAuthzZanzanaSync"
-
-	// FlagKubernetesAuthzCoreRolesApi
-	// Registers AuthZ Core Roles /apis endpoint
-	FlagKubernetesAuthzCoreRolesApi = "kubernetesAuthzCoreRolesApi"
 
 	// FlagKubernetesAuthzGlobalRolesApi
 	// Registers AuthZ Global Roles /apis endpoint
@@ -670,9 +654,13 @@ const (
 	// Registers AuthZ Role Bindings /apis endpoint
 	FlagKubernetesAuthzRoleBindingsApi = "kubernetesAuthzRoleBindingsApi"
 
-	// FlagKubernetesAuthnMutation
-	// Enables create, delete, and update mutations for resources owned by IAM identity
-	FlagKubernetesAuthnMutation = "kubernetesAuthnMutation"
+	// FlagKubernetesAuthzRolesAndRoleBindingsRedirect
+	// Redirects the traffic from the legacy roles and role bindings endpoints to the new K8s AuthZ endpoints
+	FlagKubernetesAuthzRolesAndRoleBindingsRedirect = "kubernetesAuthzRolesAndRoleBindingsRedirect"
+
+	// FlagKubernetesAuthzDatasourceResourcePermissions
+	// Enables datasource resource permissions via the K8s IAM resource permission APIs
+	FlagKubernetesAuthzDatasourceResourcePermissions = "kubernetesAuthzDatasourceResourcePermissions"
 
 	// FlagRestoreDashboards
 	// Enables restore deleted dashboards feature
@@ -690,13 +678,13 @@ const (
 	// Enable conditional alert enrichment steps.
 	FlagAlertEnrichmentConditional = "alertEnrichmentConditional"
 
+	// FlagAlertEnrichmentPreview
+	// Enable alert enrichment preview (notification-history-based) in view and edit drawers.
+	FlagAlertEnrichmentPreview = "alertEnrichmentPreview"
+
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
-
-	// FlagAlertingImportAlertmanagerUI
-	// Enables the UI to see imported Alertmanager configuration
-	FlagAlertingImportAlertmanagerUI = "alertingImportAlertmanagerUI"
 
 	// FlagAlertingDisableDMAinUI
 	// Disables the DMA feature in the UI
@@ -763,7 +751,7 @@ const (
 	FlagPluginInstallAPISync = "pluginInstallAPISync"
 
 	// FlagJaegerEnableGrpcEndpoint
-	// Enable querying trace data through Jaeger&#39;s gRPC endpoint (HTTP)
+	// Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
 	FlagJaegerEnableGrpcEndpoint = "jaegerEnableGrpcEndpoint"
 
 	// FlagPluginStoreServiceLoading
@@ -785,6 +773,10 @@ const (
 	// FlagElasticsearchRawDSLQuery
 	// Enables the raw DSL query editor in the Elasticsearch data source
 	FlagElasticsearchRawDSLQuery = "elasticsearchRawDSLQuery"
+
+	// FlagElasticsearchESQLQuery
+	// Enables the ES|QL query editor in the Elasticsearch data source
+	FlagElasticsearchESQLQuery = "elasticsearchESQLQuery"
 
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources
@@ -818,9 +810,9 @@ const (
 	// Enables team APIs in the app platform
 	FlagKubernetesTeamsApi = "kubernetesTeamsApi"
 
-	// FlagKubernetesTeamsHandlerRedirect
+	// FlagKubernetesTeamsRedirect
 	// Redirects the request of the team endpoints to the app platform APIs
-	FlagKubernetesTeamsHandlerRedirect = "kubernetesTeamsHandlerRedirect"
+	FlagKubernetesTeamsRedirect = "kubernetesTeamsRedirect"
 
 	// FlagKubernetesUsersApi
 	// Enables user APIs in the app platform
@@ -834,6 +826,10 @@ const (
 	// Enables service account token APIs in the app platform
 	FlagKubernetesServiceAccountTokensApi = "kubernetesServiceAccountTokensApi"
 
+	// FlagKubernetesSsoSettingsApi
+	// Enables SSO settings APIs in the app platform
+	FlagKubernetesSsoSettingsApi = "kubernetesSsoSettingsApi"
+
 	// FlagKubernetesExternalGroupMappingsApi
 	// Enables external group mapping APIs in the app platform
 	FlagKubernetesExternalGroupMappingsApi = "kubernetesExternalGroupMappingsApi"
@@ -846,6 +842,10 @@ const (
 	// Use the new APIs for syncing users to teams
 	FlagKubernetesTeamSync = "kubernetesTeamSync"
 
+	// FlagKubernetesUsersRedirect
+	// Redirects the requests of the user service to the app platform APIs
+	FlagKubernetesUsersRedirect = "kubernetesUsersRedirect"
+
 	// FlagAlertingMultiplePolicies
 	// Enables the ability to create multiple alerting policies
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
@@ -855,7 +855,7 @@ const (
 	FlagAppPluginAPIServer = "appPluginAPIServer"
 
 	// FlagAlertingIgnorePendingForNoDataAndError
-	// Makes NoData and Error alerts fire immediately, without &#39;pending&#39; stage
+	// Makes NoData and Error alerts fire immediately, without 'pending' stage
 	FlagAlertingIgnorePendingForNoDataAndError = "alertingIgnorePendingForNoDataAndError"
 
 	// FlagAlertingNotificationHistoryRuleViewer
@@ -869,6 +869,10 @@ const (
 	// FlagAlertingNotificationHistoryTriage
 	// Enables the notification history timeline in the triage instance details drawer
 	FlagAlertingNotificationHistoryTriage = "alertingNotificationHistoryTriage"
+
+	// FlagAlertingNotificationHistoryDetail
+	// Enables the notification history detail page
+	FlagAlertingNotificationHistoryDetail = "alertingNotificationHistoryDetail"
 
 	// FlagReact19
 	// Whether to use the new React 19 runtime
@@ -894,11 +898,63 @@ const (
 	// Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
 	FlagDatasourcesApiServerEnableHealthEndpoint = "datasourcesApiServerEnableHealthEndpoint"
 
-	// FlagAnalyticsFramework
-	// Enables new analytics framework
-	FlagAnalyticsFramework = "analyticsFramework"
+	// FlagDatasourcesApiServerEnableHealthEndpointRedirect
+	// Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.
+	FlagDatasourcesApiServerEnableHealthEndpointRedirect = "datasourcesApiServerEnableHealthEndpointRedirect"
 
-	// FlagInlineLogDetailsNoScrolls
-	// Enables an inline version of Log Details that creates no new scrolls
-	FlagInlineLogDetailsNoScrolls = "inlineLogDetailsNoScrolls"
+	// FlagAdvisorDatasourceIntegration
+	// Enables the advisor report integration with datasource pages
+	FlagAdvisorDatasourceIntegration = "advisorDatasourceIntegration"
+
+	// FlagColorblindThemes
+	// Enables the new colorblind-friendly themes
+	FlagColorblindThemes = "colorblindThemes"
+
+	// FlagLogsTablePanelNG
+	// Enables the logs tableNG panel to replace existing tableRT
+	FlagLogsTablePanelNG = "logsTablePanelNG"
+
+	// FlagFrontendServiceSSOAutoLogin
+	// Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
+	FlagFrontendServiceSSOAutoLogin = "frontendServiceSSOAutoLogin"
+
+	// FlagStreamingForwardTeamHeadersTempo
+	// Enables forwarding team headers from tempo for streaming requests with LBAC rules
+	FlagStreamingForwardTeamHeadersTempo = "streamingForwardTeamHeadersTempo"
+
+	// FlagLokiAlignedQuerySplitting
+	// Aligns query splitting chunks with UTC midnight
+	FlagLokiAlignedQuerySplitting = "lokiAlignedQuerySplitting"
+
+	// FlagQueryFetchConfigFromSettingsService
+	// Enables the query service to fetch the configuration from the settings service
+	FlagQueryFetchConfigFromSettingsService = "queryFetchConfigFromSettingsService"
+
+	// FlagQueryServiceQueryCaching
+	// Enables the query service to do query caching
+	FlagQueryServiceQueryCaching = "queryServiceQueryCaching"
+
+	// FlagCacheConfigUnifiedStorageMigration
+	// Enables cache configs data migration to unified storage
+	FlagCacheConfigUnifiedStorageMigration = "cacheConfigUnifiedStorageMigration"
+
+	// FlagQuerycachingRedirectToK8SApi
+	// Redirect caching service cache config reads from legacy storage to K8s API
+	FlagQuerycachingRedirectToK8SApi = "querycaching.redirectToK8SApi"
+
+	// FlagQuerycachingEnableConnectionsClient
+	// Use connections client instead of storage to resolve datasource plugin ID in query caching
+	FlagQuerycachingEnableConnectionsClient = "querycaching.enableConnectionsClient"
+
+	// FlagCompiledBootScript
+	// Boots the frontend using the boot.js script built from TS instead of the embedded boot script
+	FlagCompiledBootScript = "compiledBootScript"
+
+	// FlagInfluxDBConfigValidation
+	// Enables validation on the InfluxDB data source configuration page
+	FlagInfluxDBConfigValidation = "influxDBConfigValidation"
+
+	// FlagClickHouseConfigValidation
+	// Enables validation on the ClickHouse data source configuration page
+	FlagClickHouseConfigValidation = "clickHouseConfigValidation"
 )

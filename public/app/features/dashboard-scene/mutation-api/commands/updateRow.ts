@@ -4,7 +4,7 @@
  * Update a row's metadata (title, collapse, hideHeader, fillScreen) by path.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { RowItem } from '../../scene/layout-rows/RowItem';
 
@@ -22,6 +22,7 @@ export const updateRowCommand: MutationCommand<UpdateRowPayload> = {
 
   payloadSchema: payloads.updateRow,
   permission: requiresNewDashboardLayouts,
+  readOnly: false,
 
   handler: async (payload, context) => {
     const { scene } = context;
@@ -63,9 +64,17 @@ export const updateRowCommand: MutationCommand<UpdateRowPayload> = {
         row.onChangeRepeat(spec.repeat?.value || undefined);
       }
 
+      const currentSpec = {
+        title: row.state.title,
+        collapse: row.state.collapse,
+        hideHeader: row.state.hideHeader,
+        fillScreen: row.state.fillScreen,
+      };
+
       return {
         success: true,
-        changes: [{ path, previousValue, newValue: updates }],
+        data: { path, row: { kind: 'RowsLayoutRow', spec: currentSpec } },
+        changes: [{ path, previousValue, newValue: currentSpec }],
       };
     } catch (error) {
       return {

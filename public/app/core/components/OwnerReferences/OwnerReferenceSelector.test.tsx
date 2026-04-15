@@ -1,7 +1,8 @@
 import { HttpResponse, http } from 'msw';
 import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
-import { render, screen, waitFor, within } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 
+import { type FeatureToggles } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 
@@ -13,7 +14,14 @@ setBackendSrv(backendSrv);
 const server = setupMockServer();
 comboboxTestSetup();
 
-describe('OwnerReferenceSelector', () => {
+const toggle: Array<keyof FeatureToggles> = ['kubernetesTeamsApi'];
+
+describe.each([
+  { name: 'IAM path', toggles: { enable: toggle } },
+  { name: 'legacy path', toggles: { disable: toggle } },
+])('OwnerReferenceSelector ($name)', ({ toggles }) => {
+  testWithFeatureToggles(toggles);
+
   it('shows load error but keeps selector interactive', async () => {
     const { getByRole, findByText } = render(
       <OwnerReferenceSelector onChange={jest.fn()} defaultTeamUid="team-non-existent" />
@@ -37,7 +45,6 @@ describe('OwnerReferenceSelector', () => {
       expect.objectContaining({
         apiVersion: 'iam.grafana.app/v0alpha1',
         kind: 'Team',
-        // Name == uid, we don't send label here
         name: expect.any(String),
         uid: expect.any(String),
       })
@@ -62,6 +69,9 @@ describe('OwnerReferenceSelector', () => {
     server.use(
       http.get('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/searchTeams', () => {
         return HttpResponse.json({ totalHits: 0, hits: [] });
+      }),
+      http.get('/api/teams/search', () => {
+        return HttpResponse.json({ totalCount: 0, teams: [], page: 1, perPage: 1000 });
       })
     );
 
@@ -79,12 +89,14 @@ describe('OwnerReferenceSelector', () => {
   it('searches teams by typed query string', async () => {
     const queries: string[] = [];
 
-    // This just checks if we call the api with the right param and then passes it to the regular handler
+    const captureQuery = ({ request }: { request: Request }) => {
+      const query = new URL(request.url).searchParams.get('query') ?? '';
+      queries.push(query);
+    };
+
     server.use(
-      http.get('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/searchTeams', ({ request }) => {
-        const query = new URL(request.url).searchParams.get('query') ?? '';
-        queries.push(query);
-      })
+      http.get('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/searchTeams', captureQuery),
+      http.get('/api/teams/search', captureQuery)
     );
 
     const { user } = render(<OwnerReferenceSelector onChange={jest.fn()} />);

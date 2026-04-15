@@ -21,8 +21,7 @@ on:
   schedule:
     - cron: '0 4 * * 6'
 
-permissions:
-  security-events: write
+permissions: {}
 
 jobs:
   detect-changes:
@@ -51,6 +50,10 @@ jobs:
     runs-on: ubuntu-x64-large-io
     continue-on-error: true # doesn't block PRs from being merged if this fails
     if: github.repository == 'grafana/grafana'
+    permissions:
+      contents: read
+      # Upload SARIF to code scanning results
+      security-events: write
 
     strategy:
       fail-fast: false

@@ -1,7 +1,7 @@
 import { getCenter } from 'ol/extent';
-import { Geometry, Point } from 'ol/geom';
+import { type Geometry, Point } from 'ol/geom';
 
-import { DataFrame, Field, FieldType, KeyValue, toDataFrame } from '@grafana/data';
+import { type DataFrame, type Field, FieldType, type KeyValue, toDataFrame } from '@grafana/data';
 
 import { frameFromGeoJSON } from '../format/geojson';
 import { pointFieldFromLonLat, pointFieldFromGeohash } from '../format/utils';
@@ -180,7 +180,29 @@ export function frameAsGazetter(frame: DataFrame, opts: { path: string; keys?: s
 
 const registry: KeyValue<Gazetteer> = {};
 
-export const COUNTRIES_GAZETTEER_PATH = `${window.__grafana_public_path__}build/gazetteer/countries.json`;
+export const GAZETTEER_OPTIONS = {
+  countries: {
+    label: 'Countries',
+    description: 'Lookup countries by name, two letter code, or three letter code',
+    get path() {
+      return `${window.__grafana_public_path__}build/gazetteer/countries.json`;
+    },
+  },
+  usaStates: {
+    label: 'USA States',
+    description: 'Lookup states by name or 2-letter code',
+    get path() {
+      return `${window.__grafana_public_path__}build/gazetteer/usa-states.json`;
+    },
+  },
+  airports: {
+    label: 'Airports',
+    description: 'Lookup airports by id or code',
+    get path() {
+      return `${window.__grafana_public_path__}build/gazetteer/airports.geojson`;
+    },
+  },
+};
 
 /**
  * Given a path to a file return a cached lookup function
@@ -188,7 +210,13 @@ export const COUNTRIES_GAZETTEER_PATH = `${window.__grafana_public_path__}build/
 export async function getGazetteer(path?: string): Promise<Gazetteer> {
   // When not specified, use the default path
   if (!path) {
-    path = COUNTRIES_GAZETTEER_PATH;
+    path = GAZETTEER_OPTIONS.countries.path;
+  }
+
+  // Rewrite legacy relative paths (e.g. "public/gazetteer/usa-states.json") saved by older
+  // dashboards to the correct absolute build URL, matching how geojsonLayer resolves URLs.
+  if (!path.startsWith('http') && path.startsWith('public/gazetteer/')) {
+    path = `${window.__grafana_public_path__}build/gazetteer/${path.slice('public/gazetteer/'.length)}`;
   }
 
   let lookup = registry[path];

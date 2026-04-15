@@ -1,5 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/parsing.ts
-import { SyntaxNode } from '@lezer/common';
+import { type SyntaxNode } from '@lezer/common';
 import {
   AggregateExpr,
   AggregateModifier,
@@ -41,8 +41,8 @@ import {
   replaceVariables,
   returnBuiltInVariable,
 } from './parsingUtils';
-import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
-import { PromVisualQuery, PromVisualQueryBinary } from './types';
+import { type QueryBuilderLabelFilter, type QueryBuilderOperation } from './shared/types';
+import { type PromVisualQuery, type PromVisualQueryBinary } from './types';
 
 /**
  * Parses a PromQL query into a visual query model.

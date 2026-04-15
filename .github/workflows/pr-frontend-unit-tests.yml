@@ -82,7 +82,7 @@ jobs:
       with:
         persist-credentials: false
     - name: Download golden files
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: golden-files
         path: apps/dashboard/pkg/migration
@@ -121,7 +121,7 @@ jobs:
       with:
         github-app-name: 'grafana-ci-bot'
     - name: Download golden files
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: golden-files
         path: apps/dashboard/pkg/migration
@@ -141,6 +141,8 @@ jobs:
     if: needs.detect-changes.outputs.changed == 'true'
     runs-on: ubuntu-x64-large
     name: "Decoupled plugin tests"
+    permissions:
+      contents: read
     steps:
     - uses: actions/checkout@v5
       with:
@@ -157,6 +159,8 @@ jobs:
     if: needs.detect-changes.outputs.changed == 'true'
     runs-on: ubuntu-x64-large
     name: "Packages unit tests"
+    permissions:
+      contents: read
     steps:
     - uses: actions/checkout@v5
       with:
@@ -185,6 +189,8 @@ jobs:
 
     name: All frontend unit tests complete
     runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v5
         with:
@@ -202,6 +208,8 @@ jobs:
     if: needs.detect-changes.outputs.devenv-changed == 'true'
     runs-on: ubuntu-x64-large
     name: "Devenv frontend-service build"
+    permissions:
+      contents: read
     steps:
     - uses: actions/checkout@v5
       with:

@@ -1,7 +1,6 @@
 package operators
 
 import (
-	"github.com/grafana/grafana/pkg/operators/iam"
 	"github.com/grafana/grafana/pkg/operators/provisioning"
 	"github.com/grafana/grafana/pkg/server"
 )

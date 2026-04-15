@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "",
       "aria-label-client-id": "클라이언트 ID",
       "aria-label-client-secret": "클라이언트 시크릿",
+      "aria-label-private-key": "",
+      "aria-label-private-key-password": "",
       "aria-label-symbol-client-secret": "클라이언트 시크릿",
       "aria-label-tenant-id": "테넌트 ID",
+      "description-certificate-format": "",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "",
+      "label-client-certificate": "",
       "label-client-id": "애플리케이션(클라이언트) ID",
       "label-client-secret": "클라이언트 시크릿",
+      "label-private-key": "",
       "label-symbol-client-secret": "클라이언트 시크릿",
+      "label-symbol-private-key-password": "",
       "label-tenant-id": "디렉터리(테넌트) ID",
       "placeholder-symbol-client-secret": "구성됨",
       "reset-symbol-client-secret": "재설정"
@@ -63,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Azure 서비스에 대한 인증 유형을 선택하세요",
-      "label-authentication": "인증",
+      "label-authentication": "",
       "title-authentication": "인증"
     },
     "basic-logs-toggle": {

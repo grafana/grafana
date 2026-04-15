@@ -14,8 +14,8 @@ import {
 import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
-import { CombinedRule, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
-import { GrafanaPromRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { type CombinedRule, type RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import { type GrafanaPromRuleDTO, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useGetPluginSettingsQuery } from '../api/pluginsApi';
@@ -196,6 +196,26 @@ export const useAlertingAbility = (action: AlertingAction): Ability => {
   const allAbilities = useAlertingAbilities();
   return allAbilities[action];
 };
+
+/**
+ * UI-only permission helper for places that need contact point visibility checks
+ * without requiring AlertmanagerContext.
+ */
+export function useCanViewContactPoints(): boolean {
+  return useMemo(
+    () =>
+      ctx.hasPermission(AccessControlAction.AlertingNotificationsRead) ||
+      ctx.hasPermission(AccessControlAction.AlertingReceiversRead),
+    []
+  );
+}
+
+/**
+ * UI-only permission helper for actions that create silences.
+ */
+export function useCanCreateSilences(): boolean {
+  return useMemo(() => ctx.hasPermission(AccessControlAction.AlertingInstanceCreate), []);
+}
 
 /**
  * This one will check for enrichment abilities

@@ -6,12 +6,12 @@ import { memo, createRef, useState, useEffect, type JSX } from 'react';
 
 import {
   rangeUtil,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   dateTimeFormat,
   timeZoneFormatUserFriendly,
-  TimeOption,
-  TimeRange,
-  TimeZone,
+  type TimeOption,
+  type TimeRange,
+  type TimeZone,
   dateMath,
   getTimeZoneInfo,
 } from '@grafana/data';
@@ -28,7 +28,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { TimeZoneDescription } from './TimeZonePicker/TimeZoneDescription';
-import { WeekStart } from './WeekStartPicker';
+import { type WeekStart } from './WeekStartPicker';
 import { getQuickOptions } from './options';
 import { useTimeSync } from './utils/useTimeSync';
 
@@ -349,16 +349,13 @@ const getLabelStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'baseline',
       whiteSpace: 'nowrap',
-      columnGap: theme.spacing(0.5),
+      columnGap: theme.spacing(0.75),
     }),
     utc: css({
-      color: theme.v1.palette.orange,
-      fontSize: theme.typography.size.sm,
-      paddingLeft: '6px',
-      lineHeight: '28px',
-      verticalAlign: 'bottom',
+      color: theme.colors.warning.text,
+      fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
     }),
   };

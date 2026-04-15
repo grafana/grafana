@@ -1,20 +1,20 @@
 import { useEffect, useState } from 'react';
 
-import { PanelData, TimeRange } from '@grafana/data';
+import { type PanelData, type TimeRange } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { config, getTemplateSrv } from '@grafana/runtime';
 import { Alert, LinkButton, Space, Text, TextLink } from '@grafana/ui';
 
 import { LogsEditorMode, ResultFormat } from '../../dataquery.gen';
-import Datasource from '../../datasource';
+import type Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { AzureLogAnalyticsMetadataTable } from '../../types/logAnalyticsMetadata';
-import { AzureMonitorQuery } from '../../types/query';
-import { AzureMonitorErrorish, AzureMonitorOption, EngineSchema } from '../../types/types';
+import { type AzureLogAnalyticsMetadataTable } from '../../types/logAnalyticsMetadata';
+import { type AzureMonitorQuery } from '../../types/query';
+import { type AzureMonitorErrorish, type AzureMonitorOption, type EngineSchema } from '../../types/types';
 import { LogsQueryBuilder } from '../LogsQueryBuilder/LogsQueryBuilder';
 import ResourceField from '../ResourceField/ResourceField';
-import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
+import { type ResourceRow, type ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 import FormatAsField from '../shared/FormatAsField';
 

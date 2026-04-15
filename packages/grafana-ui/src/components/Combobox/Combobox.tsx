@@ -1,21 +1,21 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import React, { ComponentProps, useCallback, useId, useMemo } from 'react';
+import React, { type ComponentProps, useCallback, useId, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
-import { Input, Props as InputProps } from '../Input/Input';
+import { Input, type Props as InputProps } from '../Input/Input';
 import { Portal } from '../Portal/Portal';
 
 import { ComboboxList } from './ComboboxList';
 import { SuffixIcon } from './SuffixIcon';
 import { itemToString } from './filter';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
-import { ComboboxOption } from './types';
+import { type ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useOptions } from './useOptions';
 import { isNewGroup } from './utils';
@@ -70,6 +70,11 @@ interface ComboboxStaticProps<T extends string | number>
    * Icon to display at the start of the ComboBox input
    */
   prefixIcon?: ComponentProps<typeof Icon>['name'];
+
+  /**
+   * Message to display when there are no options found. Defaults to "No options found."
+   */
+  noOptionsMessage?: string;
 }
 
 interface ClearableProps<T extends string | number> {
@@ -151,6 +156,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     portalContainer,
     invalid,
     prefixIcon,
+    noOptionsMessage,
   } = props;
 
   // Value can be an actual scalar Value (string or number), or an Option (value + label), so
@@ -242,6 +248,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       }
       return itemHeight;
     },
+    getItemKey: (index: number) => filteredOptions[index]?.value ?? index,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
     rangeExtractor,
   });
@@ -408,6 +415,13 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
           placeholder,
           'data-testid': dataTestId,
+          onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
+            // Stop Escape from propagating to parent overlays (e.g. Modals, Drawers)
+            // so that only the dropdown menu closes, not the parent.
+            if (event.key === 'Escape' && isOpen) {
+              event.stopPropagation();
+            }
+          },
         })}
       />
       <Portal root={portalContainer}>
@@ -431,6 +445,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
               scrollRef={scrollRef}
               getItemProps={getItemProps}
               error={asyncError}
+              noOptionsMessage={noOptionsMessage}
             />
           )}
         </div>
