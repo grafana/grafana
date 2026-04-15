@@ -58,169 +58,167 @@ describe('hasVariableDependencies', () => {
     jest.clearAllMocks();
   });
 
-  it('should return true when object contains existing template variables', () => {
-    const availableVariables = [{ name: 'variable' }];
-    const mockTemplateSrv = {
-      containsTemplate: jest.fn().mockImplementation((str) => {
-        return availableVariables.some((v) => str.includes(`$${v.name}`));
-      }),
-      getVariables: jest.fn().mockReturnValue(availableVariables),
-    };
-    (getTemplateSrv as jest.Mock).mockReturnValue(mockTemplateSrv);
-
-    const obj = { key: '$variable' };
-    expect(hasVariableDependencies(obj)).toBe(true);
-    expect(mockTemplateSrv.containsTemplate).toHaveBeenCalledWith(JSON.stringify(obj));
-  });
-
-  it('should return false when object contains non-existent template variables', () => {
-    const availableVariables = [{ name: 'variable' }];
-    const mockTemplateSrv = {
-      containsTemplate: jest.fn().mockImplementation((str) => {
-        return availableVariables.some((v) => str.includes(`$${v.name}`));
-      }),
-      getVariables: jest.fn().mockReturnValue(availableVariables),
-    };
-    (getTemplateSrv as jest.Mock).mockReturnValue(mockTemplateSrv);
-
-    const obj = { key: '$nonexistent' };
-    expect(hasVariableDependencies(obj)).toBe(false);
-    expect(mockTemplateSrv.containsTemplate).toHaveBeenCalledWith(JSON.stringify(obj));
-  });
-
-  it('should return false when object does not contain template variables', () => {
-    const mockTemplateSrv = {
-      containsTemplate: jest.fn().mockReturnValue(false),
-      getVariables: jest.fn().mockReturnValue([]),
-    };
-    (getTemplateSrv as jest.Mock).mockReturnValue(mockTemplateSrv);
-
-    const obj = { key: 'static value' };
-    expect(hasVariableDependencies(obj)).toBe(false);
-    expect(mockTemplateSrv.containsTemplate).toHaveBeenCalledWith(JSON.stringify(obj));
-  });
-
-  it('should handle nested objects with existing template variables', () => {
-    const availableVariables = [{ name: 'variable' }];
-    const mockTemplateSrv = {
-      containsTemplate: jest.fn().mockImplementation((str) => {
-        return availableVariables.some((v) => str.includes(`$${v.name}`));
-      }),
-      getVariables: jest.fn().mockReturnValue(availableVariables),
-    };
-    (getTemplateSrv as jest.Mock).mockReturnValue(mockTemplateSrv);
-
-    const obj = {
-      key: 'static value',
-      nested: {
-        anotherKey: '$variable',
+  it.each([
+    {
+      name: 'object contains an existing template variable',
+      variables: [{ name: 'variable' }],
+      obj: { key: '$variable' },
+      expected: true,
+    },
+    {
+      name: 'object references a template variable that does not exist',
+      variables: [{ name: 'variable' }],
+      obj: { key: '$nonexistent' },
+      expected: false,
+    },
+    {
+      name: 'object has no template variable syntax',
+      variables: [] as Array<{ name: string }>,
+      obj: { key: 'static value' },
+      expected: false,
+    },
+    {
+      name: 'nested object contains an existing template variable',
+      variables: [{ name: 'variable' }],
+      obj: {
+        key: 'static value',
+        nested: { anotherKey: '$variable' },
       },
+      expected: true,
+    },
+  ])('$name', ({ variables, obj, expected }) => {
+    const mockTemplateSrv = {
+      containsTemplate: jest.fn().mockImplementation((str: string) =>
+        variables.some((v) => str.includes(`$${v.name}`))
+      ),
+      getVariables: jest.fn().mockReturnValue(variables),
     };
-    expect(hasVariableDependencies(obj)).toBe(true);
+    (getTemplateSrv as jest.Mock).mockReturnValue(mockTemplateSrv);
+
+    expect(hasVariableDependencies(obj)).toBe(expected);
     expect(mockTemplateSrv.containsTemplate).toHaveBeenCalledWith(JSON.stringify(obj));
   });
 });
 
 describe('hasLayerData', () => {
-  it('should return false for empty vector layer', () => {
-    const layer = new VectorLayer({
-      source: createTestVectorSource(),
-    });
-    expect(hasLayerData(layer)).toBe(false);
-  });
-
-  it('should return true for vector layer with features', () => {
-    const layer = new VectorLayer({
-      source: createTestVectorSource(true),
-    });
-    expect(hasLayerData(layer)).toBe(true);
-  });
-
-  it('should return true for layer group with data', () => {
-    const vectorLayer = new VectorLayer({
-      source: createTestVectorSource(true),
-    });
-    const group = new LayerGroup({
-      layers: [vectorLayer],
-    });
-    expect(hasLayerData(group)).toBe(true);
-  });
-
-  it('should return false for empty layer group', () => {
-    const group = new LayerGroup({
-      layers: [],
-    });
-    expect(hasLayerData(group)).toBe(false);
-  });
-
-  it('should return true for tile layer with source', () => {
-    const layer = new TileLayer({
-      source: new TileSource({}),
-    });
-    expect(hasLayerData(layer)).toBe(true);
-  });
-
-  it('should return false for tile layer without source', () => {
-    const layer = new TileLayer({});
-    expect(hasLayerData(layer)).toBe(false);
-  });
-
-  it('should return true for WebGLPointsLayer with features', () => {
-    const layer = new WebGLPointsLayer({
-      source: createTestVectorSource(true),
-      style: createTestWebGLStyle(),
-    });
-    expect(hasLayerData(layer)).toBe(true);
-  });
-
-  it('should return false for empty WebGLPointsLayer', () => {
-    const layer = new WebGLPointsLayer({
-      source: createTestVectorSource(),
-      style: createTestWebGLStyle(),
-    });
-    expect(hasLayerData(layer)).toBe(false);
-  });
-
-  it('should return true for layer group with WebGLPointsLayer containing data', () => {
-    const webglLayer = new WebGLPointsLayer({
-      source: createTestVectorSource(true),
-      style: createTestWebGLStyle(),
-    });
-    const group = new LayerGroup({
-      layers: [webglLayer],
-    });
-    expect(hasLayerData(group)).toBe(true);
+  it.each([
+    {
+      name: 'empty vector layer',
+      expected: false,
+      createLayer: () =>
+        new VectorLayer({
+          source: createTestVectorSource(),
+        }),
+    },
+    {
+      name: 'vector layer with features',
+      expected: true,
+      createLayer: () =>
+        new VectorLayer({
+          source: createTestVectorSource(true),
+        }),
+    },
+    {
+      name: 'layer group with vector layer that has data',
+      expected: true,
+      createLayer: () =>
+        new LayerGroup({
+          layers: [
+            new VectorLayer({
+              source: createTestVectorSource(true),
+            }),
+          ],
+        }),
+    },
+    {
+      name: 'empty layer group',
+      expected: false,
+      createLayer: () =>
+        new LayerGroup({
+          layers: [],
+        }),
+    },
+    {
+      name: 'tile layer with source',
+      expected: true,
+      createLayer: () =>
+        new TileLayer({
+          source: new TileSource({}),
+        }),
+    },
+    {
+      name: 'tile layer without source',
+      expected: false,
+      createLayer: () => new TileLayer({}),
+    },
+    {
+      name: 'WebGLPointsLayer with features',
+      expected: true,
+      createLayer: () =>
+        new WebGLPointsLayer({
+          source: createTestVectorSource(true),
+          style: createTestWebGLStyle(),
+        }),
+    },
+    {
+      name: 'empty WebGLPointsLayer',
+      expected: false,
+      createLayer: () =>
+        new WebGLPointsLayer({
+          source: createTestVectorSource(),
+          style: createTestWebGLStyle(),
+        }),
+    },
+    {
+      name: 'layer group with WebGLPointsLayer that has data',
+      expected: true,
+      createLayer: () =>
+        new LayerGroup({
+          layers: [
+            new WebGLPointsLayer({
+              source: createTestVectorSource(true),
+              style: createTestWebGLStyle(),
+            }),
+          ],
+        }),
+    },
+  ])('$name', ({ createLayer, expected }) => {
+    expect(hasLayerData(createLayer())).toBe(expected);
   });
 });
 
 describe('isUrl', () => {
-  it('should return true for http and https URLs', () => {
-    expect(isUrl('https://example.com/path')).toBe(true);
-    expect(isUrl('http://localhost:3000')).toBe(true);
-  });
-
-  it('should return false for non-http schemes or invalid URLs', () => {
-    expect(isUrl('ftp://files.example.com')).toBe(false);
-    expect(isUrl('not a url')).toBe(false);
+  it.each([
+    { url: 'https://example.com/path', expected: true },
+    { url: 'http://localhost:3000', expected: true },
+    { url: 'ftp://files.example.com', expected: false },
+    { url: 'not a url', expected: false },
+  ])('isUrl($url) returns $expected', ({ url, expected }) => {
+    expect(isUrl(url)).toBe(expected);
   });
 });
 
 describe('isSegmentVisible', () => {
-  it('should return true when segment spans more pixels than tolerance', () => {
-    const map = {
-      getPixelFromCoordinate: (coord: number[]) => coord,
-    } as unknown as OpenLayersMap;
+  const map = {
+    getPixelFromCoordinate: (coord: number[]) => coord,
+  } as unknown as OpenLayersMap;
 
-    const pixelTolerance = 1;
-    expect(isSegmentVisible(map, pixelTolerance, [0, 0], [10, 0])).toBe(true);
-  });
-
-  it('should return false when segment is within pixel tolerance', () => {
-    const map = {
-      getPixelFromCoordinate: (coord: number[]) => coord,
-    } as unknown as OpenLayersMap;
-
-    const pixelTolerance = 5;
-    expect(isSegmentVisible(map, pixelTolerance, [0, 0], [1, 1])).toBe(false);
+  it.each([
+    {
+      name: 'segment spans more pixels than tolerance',
+      pixelTolerance: 1,
+      start: [0, 0],
+      end: [10, 0],
+      expected: true,
+    },
+    {
+      name: 'segment is within pixel tolerance',
+      pixelTolerance: 5,
+      start: [0, 0],
+      end: [1, 1],
+      expected: false,
+    },
+  ])('$name', ({ pixelTolerance, start, end, expected }) => {
+    expect(isSegmentVisible(map, pixelTolerance, start, end)).toBe(expected);
   });
 });

@@ -1,15 +1,19 @@
 import { defaultMapViewConfig, defaultOptions, MapCenterID, TooltipMode } from './panelcfg.gen';
 
 describe('geomap panel configuration defaults', () => {
-  it('should define tooltip modes for map controls (none vs details)', () => {
-    expect(TooltipMode.None).toBe('none');
-    expect(TooltipMode.Details).toBe('details');
+  it.each([
+    { label: 'TooltipMode.None', value: TooltipMode.None, id: 'none' },
+    { label: 'TooltipMode.Details', value: TooltipMode.Details, id: 'details' },
+  ])('$label matches CUE string $id', ({ value, id }) => {
+    expect(value).toBe(id);
   });
 
-  it('should define map center preset ids matching the CUE schema', () => {
-    expect(MapCenterID.Zero).toBe('zero');
-    expect(MapCenterID.Coords).toBe('coords');
-    expect(MapCenterID.Fit).toBe('fit');
+  it.each([
+    { label: 'MapCenterID.Zero', value: MapCenterID.Zero, id: 'zero' },
+    { label: 'MapCenterID.Coords', value: MapCenterID.Coords, id: 'coords' },
+    { label: 'MapCenterID.Fit', value: MapCenterID.Fit, id: 'fit' },
+  ])('$label matches CUE string $id', ({ value, id }) => {
+    expect(value).toBe(id);
   });
 
   it('should start with no overlay data layers in generated default options', () => {
