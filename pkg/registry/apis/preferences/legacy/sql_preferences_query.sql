@@ -22,5 +22,7 @@ WHERE p.org_id = {{ .Arg .OrgID }}
    OR (p.user_id = 0 AND p.team_id = 0)
   {{ end }}
   )
+{{ else if not .All }}
+  invalid query -- specify All to list all permissions in query
 {{ end }}
 ORDER BY p.user_id asc, p.team_id asc, p.org_id asc

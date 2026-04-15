@@ -78,8 +78,8 @@ func (s *preferenceStorage) List(ctx context.Context, options *internalversion.L
 		return nil, err
 	}
 	ns := requestK8s.NamespaceValue(ctx)
-	if user.GetIdentityType() == authlib.TypeAccessPolicy {
-		user = nil // nill user can see everything
+	if user.GetIdentityType() != authlib.TypeUser {
+		return nil, fmt.Errorf("only users may list preferences")
 	}
 	return s.sql.ListPreferences(ctx, ns, user, true)
 }
@@ -108,8 +108,6 @@ func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav
 		default:
 			return false, fmt.Errorf("unsupported name")
 		}
-	}, func(p *preferenceModel) bool {
-		return true
 	})
 	if err != nil {
 		return nil, err
