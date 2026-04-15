@@ -17,7 +17,8 @@ keywords:
 labels:
   products:
     - cloud
-title: Datasource LBAC rules HTTP API
+title: Data source LBAC rules HTTP API
+menuTitle: Data source LBAC rules HTTP API
 ---
 
 # Data source LBAC rules API

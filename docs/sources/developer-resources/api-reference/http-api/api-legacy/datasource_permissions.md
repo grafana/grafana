@@ -21,7 +21,8 @@ labels:
     - enterprise
     - oss
     - cloud
-title: Datasource Permissions HTTP API
+title: Data source permissions HTTP API
+menuTitle: Data source permissions HTTP API
 ---
 
 # Data source Permissions API
