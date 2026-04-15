@@ -179,19 +179,25 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
   useEffect(() => {
     const newAggregation = aggregation || metricMetadata.primaryAggType;
     const newTimeGrain = timeGrain || 'auto';
+    const newAllowedTimeGrainsMs = metricMetadata.timeGrains
+      .filter((timeGrain) => timeGrain.value !== 'auto')
+      .map((timeGrain) =>
+        rangeUtil.intervalToMs(TimegrainConverter.createKbnUnitFromISO8601Duration(timeGrain.value))
+      );
 
-    if (newAggregation !== aggregation || newTimeGrain !== timeGrain) {
+    const currentAllowedTimeGrainsMs = query.azureMonitor?.allowedTimeGrainsMs ?? [];
+    const allowedTimeGrainsChanged =
+      newAllowedTimeGrainsMs.length !== currentAllowedTimeGrainsMs.length ||
+      newAllowedTimeGrainsMs.some((v, i) => v !== currentAllowedTimeGrainsMs[i]);
+
+    if (newAggregation !== aggregation || newTimeGrain !== timeGrain || allowedTimeGrainsChanged) {
       onChange({
         ...query,
         azureMonitor: {
           ...query.azureMonitor,
           aggregation: newAggregation,
           timeGrain: newTimeGrain,
-          allowedTimeGrainsMs: metricMetadata.timeGrains
-            .filter((timeGrain) => timeGrain.value !== 'auto')
-            .map((timeGrain) =>
-              rangeUtil.intervalToMs(TimegrainConverter.createKbnUnitFromISO8601Duration(timeGrain.value))
-            ),
+          allowedTimeGrainsMs: newAllowedTimeGrainsMs,
         },
       });
     }
