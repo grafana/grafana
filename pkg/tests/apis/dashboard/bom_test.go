@@ -17,19 +17,19 @@ import (
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testutil"
 )
 
 // TestIntegrationDashboard_BOMs tests that BOMs in dashboards are handled correctly
 // during CREATE, UPDATE, and PATCH operations via the admission mutation hook.
 func TestIntegrationDashboard_BOMs(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: true,
 		DisableAnonymous:  true,
 	})
+	t.Cleanup(helper.Shutdown)
 
 	t.Run("v0alpha1 dashboard with BOMs in spec - CREATE", func(t *testing.T) {
 		ctx := context.Background()
@@ -95,7 +95,7 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 		require.NotContains(t, panel2Title, "\ufeff", "panel 2 title should not contain BOMs")
 	})
 
-	t.Run("v0alpha1 dashboard - PATCH removes BOMs", func(t *testing.T) {
+	t.Run("v0alpha1 dashboard - UPDATE and PATCH with BOMs", func(t *testing.T) {
 		ctx := context.Background()
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: helper.Org1.Admin,
