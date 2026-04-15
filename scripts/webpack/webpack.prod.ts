@@ -40,12 +40,6 @@ export default (env: Env = {}) => {
             priority: 20,
             enforce: true,
           },
-          angular: {
-            test: /[\\/]node_modules[\\/]angular[\\/].*[jt]sx?$/,
-            chunks: 'initial',
-            priority: 50,
-            enforce: true,
-          },
           defaultVendors: {
             test: /[\\/]node_modules[\\/].*[jt]sx?$/,
             chunks: 'initial',
