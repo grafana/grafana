@@ -26,7 +26,7 @@ describe('TimezonesEditor', () => {
       expect(screen.getAllByRole('combobox')).toHaveLength(1);
     });
 
-    it('should render a timezone picker for each entry', () => {
+    it('should render a picker per entry with add and remove buttons', () => {
       const onChange = jest.fn();
       render(
         <TimezonesEditor
@@ -38,19 +38,6 @@ describe('TimezonesEditor', () => {
       );
 
       expect(screen.getAllByRole('combobox')).toHaveLength(2);
-    });
-
-    it('should show add button on the last item and remove buttons on others', () => {
-      const onChange = jest.fn();
-      render(
-        <TimezonesEditor
-          value={['utc', 'America/New_York']}
-          onChange={onChange}
-          context={mockContext}
-          item={mockItem}
-        />
-      );
-
       expect(screen.getByRole('button', { name: /remove timezone/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /add timezone/i })).toBeInTheDocument();
     });

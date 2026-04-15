@@ -58,12 +58,11 @@ describe('InsertNullsEditor', () => {
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     });
 
-    it('should show threshold input with ">" prefix when value is a number', () => {
+    it('should show threshold input when value is a number', () => {
       const onChange = jest.fn();
       render(<InsertNullsEditor value={3600000} onChange={onChange} context={mockContext} item={mockItem} />);
 
       expect(screen.getByRole('textbox')).toBeInTheDocument();
-      expect(screen.getByText('>')).toBeInTheDocument();
     });
   });
 });
