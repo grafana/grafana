@@ -1,0 +1,26 @@
+SELECT
+    {{ .Ident "name" | .Into .Response.Name }},
+    {{ .Ident "subresource" | .Into .Response.Subresource }},
+    {{ .Ident "content" | .Into .Response.Content }},
+    {{ .Ident "embedding" }} <=> {{ .Arg .QueryEmbedding }} AS {{ .Ident "score" | .Into .Response.Score }},
+    {{ .Ident "folder" | .Into .Response.Folder }},
+    {{ .Ident "metadata" | .Into .Response.Metadata }}
+    FROM {{ .Ident "resource_embeddings" }}
+    WHERE {{ .Ident "namespace" }} = {{ .Arg .Namespace }}
+    AND {{ .Ident "group" }}       = {{ .Arg .Group }}
+    AND {{ .Ident "resource" }}    = {{ .Arg .Resource }}
+    {{ if .NameFilter }}
+    AND {{ .Ident "name" }} IN ({{ .ArgList .NameFilterSlice }})
+    {{ end }}
+    {{ if .FolderFilter }}
+    AND {{ .Ident "folder" }} IN ({{ .ArgList .FolderFilterSlice }})
+    {{ end }}
+    {{ if .DatasourceFilter }}
+    AND {{ .Ident "metadata" }} @> {{ .Arg .DatasourceFilterJSON }}
+    {{ end }}
+    {{ if .LanguageFilter }}
+    AND {{ .Ident "metadata" }} @> {{ .Arg .LanguageFilterJSON }}
+    {{ end }}
+    ORDER BY {{ .Ident "embedding" }} <=> {{ .Arg .QueryEmbedding }}
+    LIMIT {{ .Arg .Limit }}
+;
