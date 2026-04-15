@@ -285,7 +285,7 @@
       "tooltip-time-range": "<0>Anger tidsintervallet som används för att fråga. Alternativet <1>Fråga</1> använder endast de tidsintervall som anges i frågan. <3>Instrumentpanelen</3> kommer endast att använda Grafanas tidsintervall.</0>"
     },
     "top-field": {
-      "label-top": "Topp"
+      "label-top": "Överst"
     },
     "trace-type-field": {
       "label-event-type": "Händelsetyp",

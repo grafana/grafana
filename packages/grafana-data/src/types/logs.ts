@@ -23,6 +23,7 @@ export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
  */
 export enum LogLevel {
   emerg = 'critical',
+  emergency = 'critical',
   fatal = 'critical',
   alert = 'critical',
   crit = 'critical',
