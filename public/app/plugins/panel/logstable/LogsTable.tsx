@@ -23,8 +23,10 @@ import {
   type LogsFrame,
   parseLogsFrame,
 } from 'app/features/logs/logsFrame';
+import { dataFrameToLogsModel } from 'app/features/logs/logsModel';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
+import { LogDetailsContextProvider } from './LogDetailsContext';
 import { TableNGWrap } from './TableNGWrap';
 import { LogsTableFields } from './fieldSelector/LogsTableFields';
 import { detectLevelField } from './fields/logs';
@@ -240,6 +242,17 @@ export const LogsTable = ({
     [options, timeFieldName, wrapText]
   );
 
+  const logRows = useMemo(() => {
+    const logs = dataFrameToLogsModel(
+      panelData.series,
+      panelData.request?.intervalMs,
+      undefined,
+      panelData.request?.targets,
+      false
+    );
+    return logs?.rows || [];
+  }, [panelData.request?.intervalMs, panelData.request?.targets, panelData.series]);
+
   const noSeries = data.series.length === 0;
   const noValues = data.series[frameIndex]?.fields?.[0]?.values?.length === 0;
 
@@ -257,7 +270,7 @@ export const LogsTable = ({
   return (
     <div className={styles.wrapper} ref={containerRef}>
       {renderTable && containerElement && (
-        <>
+        <LogDetailsContextProvider enableLogDetails logs={logRows}>
           <LogsTableFields
             tableWidth={width}
             fieldSelectorWidth={options.fieldSelectorWidth}
@@ -295,7 +308,7 @@ export const LogsTable = ({
             onWrapTextClick={handleWrapTextClick}
             logOptionsStorageKey={SETTING_KEY_ROOT}
           />
-        </>
+        </LogDetailsContextProvider>
       )}
     </div>
   );
