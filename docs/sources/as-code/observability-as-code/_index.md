@@ -20,11 +20,11 @@ cards:
     - title: Grafana CLI
       height: 24
       href: ./grafana-cli/
-      description: Grafana CLI (`grafanactl`) is a command-line tool designed to simplify interaction with Grafana instances using the new REST APIs. You can authenticate, manage multiple environments, and perform administrative tasks from the terminal. It's suitable for CI/CD pipelines, local development, or free-form tasks.
+      description: Grafana CLI (`gcx`) is a command-line tool designed to simplify interaction with Grafana instances using the new REST APIs. You can authenticate, manage multiple environments, and perform administrative tasks from the terminal. It's suitable for CI/CD pipelines, local development, or free-form tasks.
     - title: Foundation SDK
       height: 24
       href: ./foundation-sdk/
-      description: The Grafana Foundation SDK is a set of tools, types, and libraries that let you define Grafana dashboards and resources using familiar programming languages like Go, TypeScript, Python, Java, and PHP. Use it in conjunction with `grafanactl` to push your programmatically generated resources.
+      description: The Grafana Foundation SDK is a set of tools, types, and libraries that let you define Grafana dashboards and resources using familiar programming languages like Go, TypeScript, Python, Java, and PHP. Use it in conjunction with `gcx` to push your programmatically generated resources.
     - title: Git Sync
       height: 24
       href: ./git-sync/intro-git-sync/
@@ -63,7 +63,7 @@ Grafana provides a suite of tools for **Observability as code** to help you mana
 Historically, managing Grafana as code involved various community and Grafana Labs tools, but lacked a single, cohesive story. Grafana 12 introduces foundational improvements, including new versioned APIs and official tooling, to provide a clearer path forward:
 
 - This approach requires handling HTTP requests and responses but provides complete control over resource management.
-- `grafanactl`, Git Sync, and the Foundation SDK are all built on top of these APIs.
+- `gcx`, Git Sync, and the Foundation SDK are all built on top of these APIs.
 - To understand Dashboard Schemas accepted by the APIs, refer to the [JSON models documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/index.md).
 
 ## Explore

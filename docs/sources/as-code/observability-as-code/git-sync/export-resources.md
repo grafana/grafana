@@ -53,15 +53,15 @@ To do so, follow these steps:
 
 ## Add a dashboard with Grafana CLI
 
-You can also export an existing dashboard with the [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/). Use the CLI to download the resources you want to sync from Grafana, and then commit and push those files to your provisioned Git repository. Git Sync will then detect the commit, and synchronize with Grafana.
+You can also export an existing dashboard with `gcx`, the [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/). Use `gcx` to download the resources you want to sync from Grafana, and then commit and push those files to your provisioned Git repository. Git Sync will then detect the commit, and synchronize with Grafana.
 
 To do so, follow these steps:
 
-1. Set up the `grafanactl` context to point to your instance as documented in [Defining contexts](https://grafana.github.io/grafanactl/configuration/#defining-contexts).
+1. Set up the `gcx` context to point to your instance as documented in [Defining contexts](https://github.com/grafana/gcx/#1-authenticate).
 1. Pull the resources you want to sync from the instance to your local repository:
 
 ```
-grafanactl resources pull dashboards --path <REPO_PATH>
+gcx resources pull dashboards --path <REPO_PATH>
 ```
 
 Next, commit and push the resources to your Git repository:
