@@ -1,11 +1,93 @@
 package kinds
 
 import (
+	"os"
+	"path"
+	"path/filepath"
+	"testing"
+
+	"github.com/stretchr/testify/require"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 )
+
+const pluginDirectory = "../../../../public/app/plugins/datasource/grafana-testdata-datasource/"
+
+func TestStaticSchemas(t *testing.T) {
+	settings := Settings()
+	examples := SettingsExamples()
+	routes := Routes()
+	require.NotNil(t, settings)
+	require.NotNil(t, examples)
+	require.NotNil(t, routes)
+
+	// Make sure the plugin folder is accurate
+	data, err := os.ReadFile(path.Join(pluginDirectory, "plugin.json"))
+	require.NoError(t, err)
+	require.NotEmpty(t, data, "expecting a plugin.json in the same directory")
+	provider := pluginschema.NewSchemaProvider(os.DirFS(pluginDirectory), "schema/")
+	apiVersion := "v0alpha1"
+
+	write := func(obj any, apiVersion, fname string) {
+		raw, err := pluginschema.ToYAML(obj)
+		require.NoError(t, err)
+		fpath := path.Join(pluginDirectory, "schema", apiVersion, fname)
+		os.MkdirAll(filepath.Dir(fpath), 0750)
+		err = os.WriteFile(fpath, raw, 0600)
+		require.NoError(t, err)
+		t.Logf("updated schema file: %s", fpath)
+	}
+
+	t.Run("settings", func(t *testing.T) {
+		ok := true
+		snapshot, err := provider.GetSettings(apiVersion)
+		require.NoError(t, err)
+		if snapshot == nil {
+			t.Errorf("settings do not exist")
+			ok = false
+		} else if diff := pluginschema.Diff(settings, snapshot); diff != "" {
+			t.Errorf("settings changed (-want +got):\n%s", diff)
+			ok = false
+		}
+		if !ok {
+			write(settings, apiVersion, "settings.yaml")
+		}
+	})
+
+	t.Run("settings.examples", func(t *testing.T) {
+		ok := true
+		snapshot, err := provider.GetSettingsExamples(apiVersion)
+		require.NoError(t, err)
+		if snapshot == nil {
+			t.Errorf("examples do not exist")
+			ok = false
+		} else if diff := pluginschema.Diff(examples, snapshot); diff != "" {
+			t.Errorf("examples changed (-want +got):\n%s", diff)
+			ok = false
+		}
+		if !ok {
+			write(examples, apiVersion, "settings.examples.yaml")
+		}
+	})
+
+	t.Run("routes", func(t *testing.T) {
+		ok := true
+		snapshot, err := provider.GetRoutes(apiVersion)
+		require.NoError(t, err)
+		if snapshot == nil {
+			t.Errorf("routes do not exist")
+			ok = false
+		} else if diff := pluginschema.Diff(routes, snapshot); diff != "" {
+			t.Errorf("routes changed (-want +got):\n%s", diff)
+			ok = false
+		}
+		if !ok {
+			write(routes, apiVersion, "routes.yaml")
+		}
+	})
+}
 
 func Settings() *pluginschema.Settings {
 	v := &pluginschema.Settings{
@@ -19,11 +101,11 @@ func Settings() *pluginschema.Settings {
 	p.Required = []string{"title"}
 	p.AdditionalProperties = &spec.SchemaOrBool{Allows: false}
 	p.Properties = map[string]spec.Schema{
-		"title": *spec.StringProperty().WithDescription("display name"),
-		"url":   *spec.StringProperty().WithDescription("not used"),
-	}
-	p.Example = map[string]any{
-		"url": "http://xxxx",
+		"title": *spec.StringProperty().
+			WithDescription("display name"),
+		"url": *spec.StringProperty().
+			WithDescription("not used").
+			WithExample("http://xxxx"),
 	}
 
 	return v
@@ -65,7 +147,7 @@ func SettingsExamples() *pluginschema.SettingsExamples {
 	}
 }
 
-func RoutesXXX() *pluginschema.RouteOpenAPI {
+func Routes() *pluginschema.Routes {
 	// Resource routes
 	// https://github.com/grafana/grafana/blob/main/pkg/tsdb/grafana-testdata-datasource/resource_handler.go#L20
 	unstructured := spec.MapProperty(nil)
@@ -96,10 +178,8 @@ func RoutesXXX() *pluginschema.RouteOpenAPI {
 		},
 	}
 
-	routes := &pluginschema.RouteOpenAPI{
-		OpenAPI: spec3.OpenAPI{},
-	}
-	routes.Register("resource", spec3.PathProps{
+	routes := &pluginschema.Routes{}
+	routes.Register("/resources", spec3.PathProps{
 		Summary: "hello world",
 		Get: &spec3.Operation{
 			OperationProps: spec3.OperationProps{
@@ -121,7 +201,7 @@ func RoutesXXX() *pluginschema.RouteOpenAPI {
 			},
 		}})
 
-	routes.Register("resources/scenarios", spec3.PathProps{
+	routes.Register("/resources/scenarios", spec3.PathProps{
 		Summary: "hello world",
 		Get: &spec3.Operation{
 			OperationProps: spec3.OperationProps{
@@ -130,7 +210,7 @@ func RoutesXXX() *pluginschema.RouteOpenAPI {
 		},
 	})
 
-	routes.Register("resources/stream", spec3.PathProps{
+	routes.Register("/resources/stream", spec3.PathProps{
 		Summary: "Get streaming response",
 		Get: &spec3.Operation{
 			OperationProps: spec3.OperationProps{
@@ -184,7 +264,7 @@ func RoutesXXX() *pluginschema.RouteOpenAPI {
 		},
 	})
 
-	routes.Register("resources/boom", spec3.PathProps{
+	routes.Register("/resources/boom", spec3.PathProps{
 		Summary: "force a panic",
 		Get: &spec3.Operation{
 			OperationProps: spec3.OperationProps{
@@ -198,7 +278,7 @@ func RoutesXXX() *pluginschema.RouteOpenAPI {
 		},
 	})
 
-	routes.Register("resources/test", spec3.PathProps{
+	routes.Register("/resources/test", spec3.PathProps{
 		Summary: "Echo any request",
 		Post: &spec3.Operation{
 			OperationProps: spec3.OperationProps{
@@ -208,7 +288,7 @@ func RoutesXXX() *pluginschema.RouteOpenAPI {
 		},
 	})
 
-	routes.Register("resources/test/json", spec3.PathProps{
+	routes.Register("/resources/test/json", spec3.PathProps{
 		Summary: "Echo json request",
 		Post: &spec3.Operation{
 			OperationProps: spec3.OperationProps{
@@ -218,7 +298,7 @@ func RoutesXXX() *pluginschema.RouteOpenAPI {
 		},
 	})
 
-	routes.Register("resources/sims", spec3.PathProps{
+	routes.Register("/resources/sims", spec3.PathProps{
 		Description: "Get list of simulations",
 		Get: &spec3.Operation{
 			OperationProps: spec3.OperationProps{
@@ -227,7 +307,7 @@ func RoutesXXX() *pluginschema.RouteOpenAPI {
 		},
 	})
 
-	routes.Register("resources/sim/{key}", spec3.PathProps{
+	routes.Register("/resources/sim/{key}", spec3.PathProps{
 		Description: "Get list of simulations",
 		Get: &spec3.Operation{
 			OperationProps: spec3.OperationProps{

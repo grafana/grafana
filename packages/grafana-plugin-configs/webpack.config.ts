@@ -255,7 +255,6 @@ const config = async (env: Env): Promise<Configuration> => {
           { from: 'plugin.json', to: '.' },
           { from: hasLicense() ? 'LICENSE' : '../../../../../LICENSE', to: '.' }, // Point to Grafana License by default
           { from: 'CHANGELOG.md', to: '.', force: true },
-          { from: 'spec.*', to: '.', noErrorOnMissing: true }, // openapi / queries {.json | .yaml}
           { from: '**/*.json', to: '.', filter: skipFiles }, // TODO<Add an error for checking the basic structure of the repo>
           { from: '**/*.svg', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
           { from: '**/*.png', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional

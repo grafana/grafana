@@ -6,6 +6,8 @@ import (
 	"slices"
 	"strings"
 
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
@@ -109,13 +111,12 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	}
 
 	return transformOpenAPI(PluginSpecTransformOptions{
-		oas:           oas,
-		cfg:           ds,
-		cfgSpecName:   "DataSourceSpec",
-		cfgPath:       root + "namespaces/{namespace}/datasources",
-		resourcesPath: root + "namespaces/{namespace}/datasources/{name}/resources",
-		proxyPath:     root + "namespaces/{namespace}/datasources/{name}/proxy",
-		schemas:       b.schemaProvider,
+		oas:         oas,
+		cfg:         ds,
+		cfgSpecName: "DataSourceSpec",
+		cfgPath:     root + "namespaces/{namespace}/datasources",
+		routePrefix: root + "namespaces/{namespace}/datasources/{name}",
+		schemas:     b.schemaProvider,
 	}, b.GetGroupVersion().Version)
 }
 
@@ -133,10 +134,7 @@ type PluginSpecTransformOptions struct {
 	cfgSpecName string
 
 	// Path where routes should be applied
-	resourcesPath string
-
-	// Path where routes should be applied
-	proxyPath string
+	routePrefix string
 
 	// Extensions
 	schemas pluginschema.SchemaProvider
@@ -224,38 +222,37 @@ func transformOpenAPI(p PluginSpecTransformOptions, apiVersion string) (*spec3.O
 	}
 
 	// Add custom schemas
-	maps.Copy(p.oas.Components.Schemas, routes.Components.Schemas)
-
-	// if p.ext.Routes != nil {
-	// 	if len(p.ext.Routes.Resource) > 0 {
-	// 		if err := p.applyRoutes(p.resourcesPath, p.ext.Routes.Resource); err != nil {
-	// 			return nil, err
-	// 		}
-	// 	}
-	// 	if len(p.ext.Routes.Proxy) > 0 {
-	// 		if err := p.applyRoutes(p.proxyPath, p.ext.Routes.Proxy); err != nil {
-	// 			return nil, err
-	// 		}
-	// 	}
-	// }
-	return oas, nil
-}
-
-func (p *PluginSpecTransformOptions) applyRoutes(prefix string, routes map[string]*spec3.Path) error {
-	var params []*spec3.Parameter
-
-	cfg := p.oas.Paths.Paths[p.cfgPath+"/{name}"]
-	if cfg == nil {
-		return fmt.Errorf("expecting registered path for: %s", p.cfgPath+"/{name}")
+	if routes.Components != nil {
+		maps.Copy(p.oas.Components.Schemas, routes.Components.Schemas)
+		maps.Copy(p.oas.Components.Responses, routes.Components.Responses)
+		maps.Copy(p.oas.Components.Examples, routes.Components.Examples)
+		maps.Copy(p.oas.Components.Headers, routes.Components.Headers)
+		maps.Copy(p.oas.Components.Parameters, routes.Components.Parameters)
+		maps.Copy(p.oas.Components.Links, routes.Components.Links)
+		maps.Copy(p.oas.Components.RequestBodies, routes.Components.RequestBodies)
 	}
-	if strings.Contains(prefix, "{namespace}") {
+
+	if err = routes.AssertPrefixes("/resources", "/proxy"); err != nil {
+		return oas, err
+	}
+
+	if len(routes.Paths) < 1 {
+		return oas, nil
+	}
+
+	var params []*spec3.Parameter
+	cfg := p.oas.Paths.Paths[p.routePrefix]
+	if cfg == nil {
+		return nil, fmt.Errorf("expecting registered path for: %s", p.routePrefix)
+	}
+	if strings.Contains(p.routePrefix, "{namespace}") {
 		for _, p := range cfg.Parameters {
 			if p.Name == "namespace" {
 				params = append(params, p)
 			}
 		}
 	}
-	if strings.Contains(prefix, "{name}") {
+	if strings.Contains(p.routePrefix, "{name}") {
 		for _, p := range cfg.Parameters {
 			if p.Name == "name" {
 				params = append(params, p)
@@ -263,29 +260,26 @@ func (p *PluginSpecTransformOptions) applyRoutes(prefix string, routes map[strin
 		}
 	}
 
-	// Remove all the paths that were not specified
-	for k := range p.oas.Paths.Paths {
-		if strings.HasPrefix(k, prefix) {
-			delete(p.oas.Paths.Paths, k)
+	// Add all the paths
+	caser := cases.Title(language.English)
+	for k, v := range routes.Paths {
+		tag := caser.String(k[1:]) // "Resources", "Proxy"
+		if idx := strings.Index(tag, "/"); idx > 0 {
+			tag = tag[:idx]
 		}
-	}
-
-	for k, v := range routes {
-		if k != "" && !strings.HasPrefix(k, "/") {
-			return fmt.Errorf("path must have slash prefix")
-		}
-		v.Parameters = append(v.Parameters, params...)
+		v.Parameters = params
 		for m, op := range builder.GetPathOperations(&v.PathProps) {
 			if op.Extensions == nil {
 				op.Extensions = make(spec.Extensions)
 			}
-			if !slices.Contains(op.Tags, "Route") {
-				op.Tags = append(op.Tags, "Route") // Custom resource?
+			if !slices.Contains(op.Tags, tag) {
+				op.Tags = append(op.Tags, tag)
 			}
 			tmp := strings.ReplaceAll(strings.ReplaceAll(k, "{", ""), "}", "")
-			op.OperationId = fmt.Sprintf("%s_route%s", strings.ToLower(m), strings.ReplaceAll(tmp, "/", "_"))
+			op.OperationId = fmt.Sprintf("%s%s", strings.ToLower(m), strings.ReplaceAll(tmp, "/", "_"))
 		}
-		p.oas.Paths.Paths[prefix+k] = v
+
+		p.oas.Paths.Paths[p.routePrefix+k] = v
 	}
-	return nil
+	return oas, nil
 }

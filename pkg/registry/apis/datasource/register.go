@@ -329,7 +329,7 @@ func getDatasourcePlugins(pluginSources sources.Registry) ([]PluginInfo, error) 
 				uniquePlugins[p.Primary.JSONData.ID] = true
 				pluginInfo = append(pluginInfo, PluginInfo{
 					JSON:    p.Primary.JSONData,
-					Schemas: pluginschema.NewSchemaProvider(p.Primary.FS, "schema"),
+					Schemas: pluginschema.NewSchemaProvider(p.Primary.FS, "schema/"),
 				})
 			}
 
@@ -342,7 +342,7 @@ func getDatasourcePlugins(pluginSources sources.Registry) ([]PluginInfo, error) 
 					uniquePlugins[child.JSONData.ID] = true
 					pluginInfo = append(pluginInfo, PluginInfo{
 						JSON:    child.JSONData,
-						Schemas: pluginschema.NewSchemaProvider(child.FS, "schema"),
+						Schemas: pluginschema.NewSchemaProvider(child.FS, "schema/"),
 					})
 				}
 			}

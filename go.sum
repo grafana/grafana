@@ -1640,6 +1640,12 @@ github.com/grafana/grafana-plugin-sdk-go v0.291.2-0.20260415141945-8c0a6b63d20f 
 github.com/grafana/grafana-plugin-sdk-go v0.291.2-0.20260415141945-8c0a6b63d20f/go.mod h1:E2+Dm1UD3vFv7vLZE0OELMIIfknqSzI8PZkLqs0XA/M=
 github.com/grafana/grafana-plugin-sdk-go v0.291.2-0.20260415165632-2ab4647d4f4a h1:bPGNtYwl4zLHtu4QW1CIHgYsFs4F0p8bcocHvMKo7Nw=
 github.com/grafana/grafana-plugin-sdk-go v0.291.2-0.20260415165632-2ab4647d4f4a/go.mod h1:E2+Dm1UD3vFv7vLZE0OELMIIfknqSzI8PZkLqs0XA/M=
+github.com/grafana/grafana-plugin-sdk-go v0.291.2-0.20260415181551-3c92eb29bae0 h1:VKV9EXJ+Rl7+SmSK2qL+t5eOjp3xT8LiSRUkRZt26eY=
+github.com/grafana/grafana-plugin-sdk-go v0.291.2-0.20260415181551-3c92eb29bae0/go.mod h1:E2+Dm1UD3vFv7vLZE0OELMIIfknqSzI8PZkLqs0XA/M=
+github.com/grafana/grafana-plugin-sdk-go v0.291.2-0.20260415190459-1406da10c9d6 h1:3l0l76GwUGTf6zGVHCuZb1E1HHw6kcbSKycheU/yuWM=
+github.com/grafana/grafana-plugin-sdk-go v0.291.2-0.20260415190459-1406da10c9d6/go.mod h1:E2+Dm1UD3vFv7vLZE0OELMIIfknqSzI8PZkLqs0XA/M=
+github.com/grafana/grafana-plugin-sdk-go v0.291.2-0.20260415193046-a70bc803834f h1:qfCO99TfaQb8bsbitNnoQcveFHsxf6bwgKWzWkzeCOQ=
+github.com/grafana/grafana-plugin-sdk-go v0.291.2-0.20260415193046-a70bc803834f/go.mod h1:E2+Dm1UD3vFv7vLZE0OELMIIfknqSzI8PZkLqs0XA/M=
 github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.10 h1:c7EwYiYYQsw2ds9Yx7QBMf3q8pFUr8Zey1hrXsRbOtg=
 github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.10/go.mod h1:S6d7Ck6J8UDOkQj9xfTp8pM9uAmslU5PXr+/h7ixYfY=
 github.com/grafana/jsonparser v0.0.0-20241004153430-023329977675 h1:U94jQ2TQr1m3HNyE8efSdyaBbDrdPaWImXyenuKZ/nw=
