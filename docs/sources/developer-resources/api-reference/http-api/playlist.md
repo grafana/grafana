@@ -16,6 +16,7 @@ labels:
     - oss
     - cloud
 title: 'Playlist HTTP API '
+weight: 100
 ---
 
 # Playlist API

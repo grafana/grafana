@@ -17,6 +17,7 @@ labels:
     - oss
     - cloud
 title: Dashboard HTTP API
+weight: 100
 ---
 
 # Dashboard APIs

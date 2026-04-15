@@ -28,6 +28,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+weight: 100
 ---
 
 # New Folders APIs

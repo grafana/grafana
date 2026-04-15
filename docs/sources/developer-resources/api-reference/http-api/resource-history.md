@@ -15,6 +15,7 @@ labels:
     - cloud
 title: Resource history HTTP API
 menuTitle: Resource History API
+weight: 100
 ---
 
 # Resource History HTTP API

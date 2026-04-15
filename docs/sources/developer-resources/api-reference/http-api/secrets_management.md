@@ -27,6 +27,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/custom-role-actions-scopes/
+weight: 100
 ---
 
 # Secrets Management API
