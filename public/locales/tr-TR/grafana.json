@@ -5471,6 +5471,9 @@
       "cancel-loading-dashboard": "Pano yüklemesini iptal et"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "",
+      "provisioning-message": "",
+      "provisioning-title": "",
       "text": {
         "not-found": "Bulunamadı"
       }
@@ -6508,6 +6511,10 @@
       "sql-expressions-title": "SQL İfadeleri",
       "title-add-another-transformation": "Başka bir dönüşüm ekle",
       "view-all": "Tümünü görüntüle"
+    },
+    "transformation-type-picker": {
+      "sql-cta-button": "",
+      "sql-cta-description": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "Tüm dönüşümleri silerek ana seçim ekranına geri döneceksiniz."
@@ -8806,6 +8813,9 @@
     "show-all-spans": "Tüm aralıkları göster",
     "span-bar": {
       "tooltip-critical-path": "Genel izleme/istek/iş akışındaki <1>kritik yol</1> üzerinde bir segment."
+    },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": ""
     },
     "span-bar-section": {
       "description-link": "İzleme görünümünde bir zaman çubuğu satırında hizmet ve işlem yanına ek bilgi ekleyin.",

@@ -5531,6 +5531,9 @@
       "cancel-loading-dashboard": "Отменить загрузку дашборда"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "",
+      "provisioning-message": "",
+      "provisioning-title": "",
       "text": {
         "not-found": "Не найдено"
       }
@@ -6570,6 +6573,10 @@
       "sql-expressions-title": "SQL-выражения",
       "title-add-another-transformation": "Добавление другого преобразования",
       "view-all": "Просмотреть все"
+    },
+    "transformation-type-picker": {
+      "sql-cta-button": "",
+      "sql-cta-description": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "Удалив все преобразования, вы вернетесь на главный экран выбора."
@@ -8896,6 +8903,9 @@
     "show-all-spans": "Показать все диапазоны",
     "span-bar": {
       "tooltip-critical-path": "Сегмент <1>критического пути</1> общей трассировки / запроса / рабочего процесса."
+    },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": ""
     },
     "span-bar-section": {
       "description-link": "Добавьте дополнительную информацию рядом со службой и операцией в строке панели диапазонов в представлении трассировки.",
