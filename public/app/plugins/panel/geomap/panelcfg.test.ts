@@ -1,4 +1,4 @@
-import { defaultMapViewConfig, defaultOptions, TooltipMode } from './panelcfg.gen';
+import { defaultMapViewConfig, defaultOptions, MapCenterID, TooltipMode } from './panelcfg.gen';
 
 describe('geomap panel configuration defaults', () => {
   it('should define tooltip modes for map controls (none vs details)', () => {
@@ -6,13 +6,24 @@ describe('geomap panel configuration defaults', () => {
     expect(TooltipMode.Details).toBe('details');
   });
 
-  it('should start with no overlay data layers in generated default options', () => {
-    expect(defaultOptions.layers).toEqual([]);
+  it('should define map center preset ids matching the CUE schema', () => {
+    expect(MapCenterID.Zero).toBe('zero');
+    expect(MapCenterID.Coords).toBe('coords');
+    expect(MapCenterID.Fit).toBe('fit');
   });
 
-  it('should align default map view id with registry zero preset', () => {
-    expect(defaultMapViewConfig.id).toBe('zero');
-    expect(defaultMapViewConfig.lat).toBe(0);
-    expect(defaultMapViewConfig.lon).toBe(0);
+  it('should start with no overlay data layers in generated default options', () => {
+    expect(defaultOptions).toEqual({ layers: [] });
+  });
+
+  it('should match CUE defaults for generated default map view config', () => {
+    expect(defaultMapViewConfig).toEqual({
+      allLayers: true,
+      id: 'zero',
+      lat: 0,
+      lon: 0,
+      noRepeat: false,
+      zoom: 1,
+    });
   });
 });
