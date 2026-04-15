@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: Authentication options for the HTTP API
-menuTitle: Authentication (deprecated)
+menuTitle: Authentication
 weight: 110
 aliases:
   - ../../../developers/http_api/authentication/ # /docs/grafana/next/developers/http_api/authentication/
