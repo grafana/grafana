@@ -8091,14 +8091,6 @@
       "open-in-explore": "Open in Explore View",
       "remove-favorite": "Remove from favorites"
     },
-    "editable-title": {
-      "error-saving": "Error saving data source name",
-      "input-label": "Data source name",
-      "input-placeholder": "Name",
-      "tooltip-cancel-button": "Cancel",
-      "tooltip-edit-button": "Edit",
-      "tooltip-save-button": "Save"
-    },
     "error-details-link": {
       "aria-label-more-details-about-the-error": "More details about the error"
     },
@@ -12458,7 +12450,13 @@
   },
   "page": {
     "editable-title": {
-      "edit-tooltip": "Edit title"
+      "cancel-tooltip": "Cancel",
+      "edit-tooltip": "Edit title",
+      "error": "An unknown error occurred",
+      "label": "Name",
+      "placeholder": "Name",
+      "required": "Please enter a title",
+      "save-tooltip": "Save"
     }
   },
   "panel": {
