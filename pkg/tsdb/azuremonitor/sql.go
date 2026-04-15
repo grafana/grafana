@@ -87,7 +87,7 @@ func (s *Service) normalizeGrafanaSQLRequest(ctx context.Context, req *backend.Q
 
 		var resources []dataquery.AzureMonitorResource
 		if rn != "" {
-			resources = []dataquery.AzureMonitorResource{dataquery.AzureMonitorResource{
+			resources = []dataquery.AzureMonitorResource{{
 				Subscription:    &sub,
 				ResourceGroup:   &rg,
 				ResourceName:    &rn,
