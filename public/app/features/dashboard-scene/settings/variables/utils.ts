@@ -131,8 +131,6 @@ export const getEditableVariables: () => Record<EditableVariableType, EditableVa
   },
 });
 
-export const ADHOC_VARIABLE_TYPE = 'adhoc';
-
 export function getEditableVariableDefinition(type: string): EditableVariableConfig {
   const editableVariables = getEditableVariables();
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
