@@ -3585,11 +3585,13 @@
       },
       "instance-details-drawer": {
         "alert-instance-label": "",
+        "back": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Détails de l’instance",
         "silence-button": "",
-        "silence-no-permission": ""
+        "silence-no-permission": "",
+        "silence-title-with-name": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "Vous n’avez aucune instance d’alerte déclenchée ou en attente pour la plage temporelle sélectionnée.",
@@ -4330,6 +4332,9 @@
       "libraryPanel_other": "{{count}} panneaux Bibliothèque",
       "total_one": "{{count}} objet",
       "total_other": "{{count}} objets"
+    },
+    "create-new": {
+      "dashboard-group": ""
     },
     "dashboards-tree": {
       "checkbox": {
@@ -5466,6 +5471,9 @@
       "cancel-loading-dashboard": "Annuler le chargement du tableau de bord"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "",
+      "provisioning-message": "",
+      "provisioning-title": "",
       "text": {
         "not-found": "Introuvable"
       }
@@ -6503,6 +6511,10 @@
       "sql-expressions-title": "Expressions SQL",
       "title-add-another-transformation": "Ajouter une autre transformation",
       "view-all": "Tout afficher"
+    },
+    "transformation-type-picker": {
+      "sql-cta-button": "",
+      "sql-cta-description": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "En supprimant toutes les transformations, vous serez redirigé vers l’écran principal de sélection."
@@ -8142,8 +8154,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Non pris en charge",
+      "badge-text-success": "",
       "badge-text-supported": "Pris en charge",
       "label": {
+        "advisor": "",
         "alerting": "Alerte",
         "type": "Type"
       }
@@ -8799,6 +8813,9 @@
     "show-all-spans": "Afficher toutes les traces",
     "span-bar": {
       "tooltip-critical-path": "Un segment sur le <1>chemin critique</1> de la trace/demande/flux de travail global."
+    },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": ""
     },
     "span-bar-section": {
       "description-link": "Ajoutez des informations supplémentaires à côté du service et de l’opération sur une ligne de la barre d’espace dans la vue de la trace.",
@@ -12362,7 +12379,7 @@
         "description-no-value": "Que faire lorsqu’aucune valeur n’est disponible ?",
         "description-value-mappings": "Adapter le texte affiché en fonction de la valeur d’entrée",
         "name-actions": "Actions",
-        "name-ad-hoc": "Filtrable dynamiquement",
+        "name-ad-hoc": "",
         "name-color-scheme": "Palette de couleurs",
         "name-data-links": "Liens de données",
         "name-decimals": "Décimales",
@@ -12821,6 +12838,7 @@
       "title-button-disabled": "Le plugin n’est pas encore utilisable, l’installation peut prendre un certain temps."
     },
     "install-controls": {
+      "contact-us": "",
       "install": "Installer",
       "installing": "Installation en cours",
       "update": "Mettre à jour",
@@ -14316,11 +14334,11 @@
       "view-as-list": "Voir en tant que liste"
     },
     "dashboard-actions": {
-      "import": "Importer",
+      "import": "",
       "new": "Nouveau",
       "new-dashboard": "Nouveau tableau de bord",
       "new-folder": "Nouveau dossier",
-      "new-template-dashboard": "Tableau de bord à partir d’un modèle"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Note"
@@ -15285,11 +15303,12 @@
     },
     "range-content": {
       "apply-button": "Appliquer la plage temporelle",
-      "default-error": "Veuillez saisir une date antérieure ou « {{now}} »",
+      "default-error": "",
       "fiscal-year": "Exercice fiscal : {{from}} - {{to}}",
       "from-input": "De",
       "open-input-calendar": "Ouvrir le calendrier",
-      "range-error": "« De » ne peut pas être ultérieur à « À »",
+      "range-error": "",
+      "required-error": "",
       "to-input": "À"
     },
     "range-picker": {

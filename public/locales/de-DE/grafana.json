@@ -3585,11 +3585,13 @@
       },
       "instance-details-drawer": {
         "alert-instance-label": "",
+        "back": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Instanzdetails",
         "silence-button": "",
-        "silence-no-permission": ""
+        "silence-no-permission": "",
+        "silence-title-with-name": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "Sie haben für den ausgewählten Zeitbereich keine Warnungsinstanzen im Status Auslösen oder Ausstehend.",
@@ -4330,6 +4332,9 @@
       "libraryPanel_other": "{{count}} Bibliotheksfenster",
       "total_one": "{{count}} Element",
       "total_other": "{{count}} Elemente"
+    },
+    "create-new": {
+      "dashboard-group": ""
     },
     "dashboards-tree": {
       "checkbox": {
@@ -5466,6 +5471,9 @@
       "cancel-loading-dashboard": "Laden des Dashboards abbrechen"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "",
+      "provisioning-message": "",
+      "provisioning-title": "",
       "text": {
         "not-found": "Nicht gefunden"
       }
@@ -6503,6 +6511,10 @@
       "sql-expressions-title": "SQL-Ausdrücke",
       "title-add-another-transformation": "Weitere Transformation hinzufügen",
       "view-all": "Alles anzeigen"
+    },
+    "transformation-type-picker": {
+      "sql-cta-button": "",
+      "sql-cta-description": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "Wenn Sie alle Transformationen löschen, kehren Sie zum Hauptauswahlbildschirm zurück."
@@ -8142,8 +8154,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Nicht unterstützt",
+      "badge-text-success": "",
       "badge-text-supported": "Unterstützt",
       "label": {
+        "advisor": "",
         "alerting": "Meldungen",
         "type": "Typ"
       }
@@ -8799,6 +8813,9 @@
     "show-all-spans": "Alle Spannen anzeigen",
     "span-bar": {
       "tooltip-critical-path": "Ein Segment auf dem <1>kritischen Pfad</1> des gesamten Trace/Request/Workflow."
+    },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": ""
     },
     "span-bar-section": {
       "description-link": "Ergänzen Sie in einer Zeile der Spannenleiste in der Trace-Ansicht zusätzliche Informationen neben dem Dienst und der Operation.",
@@ -12362,7 +12379,7 @@
         "description-no-value": "Was angezeigt wird, wenn kein Wert vorhanden ist",
         "description-value-mappings": "Ändern Sie den Anzeigetext je nach Eingabewert",
         "name-actions": "Aktionen",
-        "name-ad-hoc": "Ad-hoc filterbar",
+        "name-ad-hoc": "",
         "name-color-scheme": "Farbschema",
         "name-data-links": "Datenlinks",
         "name-decimals": "Dezimalstellen",
@@ -12821,6 +12838,7 @@
       "title-button-disabled": "Das Plugin ist noch nicht nutzbar. Die Fertigstellung der Installation kann einige Zeit dauern."
     },
     "install-controls": {
+      "contact-us": "",
       "install": "Installieren",
       "installing": "Wird installiert",
       "update": "Aktualisieren",
@@ -14316,11 +14334,11 @@
       "view-as-list": "Als Liste anzeigen"
     },
     "dashboard-actions": {
-      "import": "Importieren",
+      "import": "",
       "new": "Neu",
       "new-dashboard": "Neues Dashboard",
       "new-folder": "Neuer Ordner",
-      "new-template-dashboard": "Dashboard aus Vorlage"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Wertung"
@@ -15285,11 +15303,12 @@
     },
     "range-content": {
       "apply-button": "Zeitbereich anwenden",
-      "default-error": "Bitte geben Sie ein vergangenes Datum oder „{{now}}“ ein",
+      "default-error": "",
       "fiscal-year": "Geschäftsjahr: {{from}}–{{to}}",
       "from-input": "Ab",
       "open-input-calendar": "Kalender öffnen",
-      "range-error": "„Von“ darf nicht nach „Bis“ sein",
+      "range-error": "",
+      "required-error": "",
       "to-input": "Bis"
     },
     "range-picker": {

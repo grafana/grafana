@@ -77,7 +77,7 @@
       },
       "query-toolbox": {
         "content-hit-ctrlcmdreturn-to-run-query": "按 CTRL/CMD+Return 运行查询",
-        "tooltip-collapse": "折叠编辑器",
+        "tooltip-collapse": "收起编辑器",
         "tooltip-expand": "展开编辑器",
         "tooltip-format-query": "格式化查询"
       },

@@ -19,6 +19,8 @@ weight: 200
 
 In the **Dashboard controls** section of the sidebar, you can add variables, annotation queries, dashboard links, and controls to filter and group data, without leaving the dashboard.
 
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-controls-v13.0.png" max-width="400px" alt="Dashboard controls in the Dashboard options sidebar view" >}}
+
 ## Filter and group by
 
 <!-- vale Grafana.Spelling = NO -->
@@ -27,7 +29,13 @@ In the **Dashboard controls** section of the sidebar, you can add variables, ann
 Filter and group by is currently in public preview.
 Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 
+This feature renames the **Filters** variable (formerly ad hoc filter) to **Filter and Group by** and extends it by adding grouping for Prometheus and Loki data sources.
+However, in the dashboard schema, it is still referred to as `"kind": "AdhocVariable"`.
+
 To use this feature, enable the `dashboardUnifiedDrilldownControls` feature toggle in your Grafana configuration file.
+
+For information on the generally available filters experience, refer to the [Variables documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
+While that documentation reflects the generally available experience, the information applies to the filter and group by feature as well.
 {{< /admonition >}}
 
 <!-- vale Grafana.Spelling = YES -->
@@ -129,7 +137,7 @@ To enable this functionality, you need to add one or more overrides for the pane
 In the following example, the override:
 
 - Adds a regular expression, so that all fields are filterable
-- Enables the **Ad-hoc filterable** switch
+- Enables the **Filterable** switch
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filter-override-v13.0.png" max-width="400px" alt="Field override making all fields filterable" >}}
 
@@ -175,7 +183,7 @@ To add a variable, follow these steps:
 
 {{< /docs/list >}}
 
-For more detailed information on variables, refer to the full [Variables documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/).
+For more detailed information on variables, refer to the full [Variables documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/).
 
 ## Add annotation queries
 
@@ -263,7 +271,9 @@ To add a URL link to your dashboard, follow these steps:
 ## Manage dashboard controls
 
 After you add dashboard controls, you can manage them from the dashboard options.
-In this view, the sidebar includes collapsible sections for variables (including filter and group by), annotations, and links, including hidden controls that aren't otherwise visible on the dashboard.
+In this view, the sidebar includes collapsible sections for variables (including filter and group by), annotations, and links, including hidden controls that aren't otherwise visible on the dashboard:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-controls-mgmt-v13.0.png" max-width="450px" alt="Dashboard controls in the Dashboard options sidebar view" >}}
 
 To manage dashboard controls, follow these steps:
 

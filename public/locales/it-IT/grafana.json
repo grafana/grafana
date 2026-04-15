@@ -3585,11 +3585,13 @@
       },
       "instance-details-drawer": {
         "alert-instance-label": "",
+        "back": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Dettagli dell'istanza",
         "silence-button": "",
-        "silence-no-permission": ""
+        "silence-no-permission": "",
+        "silence-title-with-name": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "Non sono presenti istanze di avviso in stato di attivazione o in sospeso per l'intervallo di tempo selezionato.",
@@ -3760,7 +3762,7 @@
   },
   "alertlist": {
     "category-alert-state-filter": "Filtro stato avviso",
-    "category-filter": "Filtro",
+    "category-filter": "Filtra",
     "category-options": "Opzioni",
     "category-stat-styles": "",
     "descriptino-alerts-linked-to-dashboard": "Mostra solo gli avvisi collegati a questa dashboard",
@@ -4179,7 +4181,7 @@
         "description-small": "Richiedi spaziatura {{spacing}}",
         "label-large": "Grande",
         "label-medium": "Media",
-        "label-none": "Nessuna",
+        "label-none": "Nessuno",
         "label-small": "Piccola"
       },
       "label-rtl": "RTL"
@@ -4187,7 +4189,7 @@
   },
   "bargauge": {
     "bar-size-options": {
-      "label-auto": "Automatica",
+      "label-auto": "Automatico",
       "label-manual": "Manuale"
     },
     "category-bar-gauge": "Indicatore a barre",
@@ -4330,6 +4332,9 @@
       "libraryPanel_other": "{{count}} pannelli della libreria",
       "total_one": "{{count}} articolo",
       "total_other": "{{count}} articoli"
+    },
+    "create-new": {
+      "dashboard-group": ""
     },
     "dashboards-tree": {
       "checkbox": {
@@ -4544,8 +4549,8 @@
       "category-button": "Pulsante",
       "label": {
         "center": "Centro",
-        "left": "Sinistra",
-        "right": "Destra"
+        "left": "A sinistra",
+        "right": "A destra"
       },
       "name-align-text": "Allinea testo",
       "name-api": "API",
@@ -4597,9 +4602,9 @@
       "label": {
         "bottom": "In basso",
         "center": "Centro",
-        "left": "Sinistra",
+        "left": "A sinistra",
         "middle": "Centrale",
-        "right": "Destra",
+        "right": "A destra",
         "top": "In alto"
       },
       "name-align-text": "Allinea testo",
@@ -4648,9 +4653,9 @@
       "label": {
         "bottom": "In basso",
         "center": "Centro",
-        "left": "Sinistra",
+        "left": "A sinistra",
         "middle": "Centrale",
-        "right": "Destra",
+        "right": "A destra",
         "top": "In alto"
       },
       "name-align-text": "Allinea testo",
@@ -4702,9 +4707,9 @@
       "label": {
         "bottom": "In basso",
         "center": "Centro",
-        "left": "Sinistra",
+        "left": "A sinistra",
         "middle": "Centrale",
-        "right": "Destra",
+        "right": "A destra",
         "top": "In alto"
       },
       "placeholder": {
@@ -4735,9 +4740,9 @@
       "label": {
         "bottom": "In basso",
         "center": "Centro",
-        "left": "Sinistra",
+        "left": "A sinistra",
         "middle": "Centrale",
-        "right": "Destra",
+        "right": "A destra",
         "top": "In alto"
       },
       "name-align-text": "Allinea testo",
@@ -4787,9 +4792,9 @@
       "label": {
         "bottom": "In basso",
         "center": "Centro",
-        "left": "Sinistra",
+        "left": "A sinistra",
         "middle": "Centrale",
-        "right": "Destra",
+        "right": "A destra",
         "top": "In alto"
       },
       "name-align-text": "Allinea testo",
@@ -4822,9 +4827,9 @@
       "label": {
         "bottom": "In basso",
         "center": "Centro",
-        "left": "Sinistra",
+        "left": "A sinistra",
         "middle": "Centrale",
-        "right": "Destra",
+        "right": "A destra",
         "top": "In alto"
       },
       "name-align-text": "Allinea testo",
@@ -4865,9 +4870,9 @@
       "label": {
         "bottom": "In basso",
         "center": "Centro",
-        "left": "Sinistra",
+        "left": "A sinistra",
         "middle": "Centrale",
-        "right": "Destra",
+        "right": "A destra",
         "top": "In alto"
       },
       "name-align-text": "Allinea testo",
@@ -5466,6 +5471,9 @@
       "cancel-loading-dashboard": "Annulla caricamento della dashboard"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "",
+      "provisioning-message": "",
+      "provisioning-title": "",
       "text": {
         "not-found": "Non trovato"
       }
@@ -6503,6 +6511,10 @@
       "sql-expressions-title": "Espressioni SQL",
       "title-add-another-transformation": "Aggiungi un'altra trasformazione",
       "view-all": "Visualizza tutto"
+    },
+    "transformation-type-picker": {
+      "sql-cta-button": "",
+      "sql-cta-description": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "Eliminando tutte le trasformazioni, tornerai alla schermata di selezione principale."
@@ -8142,8 +8154,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Non supportata",
+      "badge-text-success": "",
       "badge-text-supported": "Supportata",
       "label": {
+        "advisor": "",
         "alerting": "Avvisi",
         "type": "Tipo"
       }
@@ -8800,6 +8814,9 @@
     "span-bar": {
       "tooltip-critical-path": "Un segmento sul <1>percorso critico</1> della traccia/richiesta/flusso di lavoro complessivo."
     },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": ""
+    },
     "span-bar-section": {
       "description-link": "Aggiungi ulteriori informazioni accanto al servizio e all'operazione su una riga della barra di intervallo nella visualizzazione della traccia.",
       "title-span-bar": "Barra di intervallo"
@@ -9117,7 +9134,7 @@
       "shape-gauge": "Arco",
       "sparkline": "Mostra grafico sparkline",
       "text-mode": "Modalità testo",
-      "text-mode-auto": "Automatica",
+      "text-mode-auto": "Automatico",
       "text-mode-name": "Nome",
       "text-mode-none": "Nessuno",
       "text-mode-value": "Valore",
@@ -9197,7 +9214,7 @@
         "description-coords": "Specifica i campi latitudine e longitudine",
         "description-geohash": "Specifica il campo geohash",
         "description-lookup": "Specifica dizionario geografico e campo di ricerca",
-        "label-auto": "Automatica",
+        "label-auto": "Automatico",
         "label-coords": "Coordinate",
         "label-geohash": "Geohash",
         "label-lookup": "Ricerca"
@@ -9981,7 +9998,7 @@
         "placeholder-label": "Testo facoltativo",
         "placeholder-soft-max": "Vedi: Opzioni standard > Max",
         "placeholder-soft-min": "Vedi: Opzioni standard > Min",
-        "placeholder-width": "Automatica",
+        "placeholder-width": "Automatico",
         "scale-distribution-editor": {
           "distribution-options": {
             "label-linear": "Lineare",
@@ -10517,7 +10534,7 @@
             "description-opacity": "Abilita sfumatura opacità di riempimento",
             "description-scheme": "Usa la combinazione di colori per definire la sfumatura",
             "label-hue": "Tonalità",
-            "label-none": "Nessuna",
+            "label-none": "Nessuno",
             "label-opacity": "Opacità",
             "label-scheme": "Schema"
           },
@@ -10688,7 +10705,7 @@
       "linear-threshold-placeholder": "1",
       "log-base-label": "Base registro",
       "scale-options": {
-        "label-auto": "Automatica",
+        "label-auto": "Automatico",
         "label-linear": "Lineare",
         "label-log": "Registro",
         "label-symlog": "Symlog"
@@ -11347,7 +11364,7 @@
       }
     },
     "logs-controls": {
-      "collapse": "Nascondi",
+      "collapse": "Comprimi",
       "deduplication": "Deduplicazione",
       "disable-prettify-json": "Riduci i registri JSON",
       "display-level-all": "Tutti i livelli",
@@ -12362,7 +12379,7 @@
         "description-no-value": "Cosa mostrare quando non è presente un valore",
         "description-value-mappings": "Modifica il testo visualizzato in base al valore inserito",
         "name-actions": "Azioni",
-        "name-ad-hoc": "Filtrabile ad hoc",
+        "name-ad-hoc": "",
         "name-color-scheme": "Schema colori",
         "name-data-links": "Collegamenti dati",
         "name-decimals": "Decimali",
@@ -12821,6 +12838,7 @@
       "title-button-disabled": "Il componente aggiuntivo non è ancora utilizzabile, potrebbe essere necessario un po' di tempo per completare l'installazione."
     },
     "install-controls": {
+      "contact-us": "",
       "install": "Installa",
       "installing": "Installazione in corso",
       "update": "Aggiorna",
@@ -14316,11 +14334,11 @@
       "view-as-list": "Mostra come elenco"
     },
     "dashboard-actions": {
-      "import": "Importa",
+      "import": "",
       "new": "Nuovo",
       "new-dashboard": "Nuovo dashboard",
       "new-folder": "Nuova cartella",
-      "new-template-dashboard": "Dashboard da modello"
+      "new-template-dashboard": ""
     },
     "generate-columns": {
       "score": "Punteggio"
@@ -14861,7 +14879,7 @@
         "label-calculate": "Calcola"
       }
     },
-    "category-stat-styles": "Stili statistiche",
+    "category-stat-styles": "Stili statistica",
     "color-mode-options": {
       "label-background-gradient": "Sfumatura sfondo",
       "label-background-solid": "Sfondo tinta unita",
@@ -14873,7 +14891,7 @@
     "graph-mode": {
       "options": {
         "label-area": "Area",
-        "label-none": "Nessuna"
+        "label-none": "Nessuno"
       }
     },
     "name-color-modcolor-mode-options": {
@@ -15010,7 +15028,7 @@
     },
     "cell-types": {
       "actions": "Azioni",
-      "auto": "Automatica",
+      "auto": "Automatico",
       "color-background": "Sfondo colorato",
       "color-text": "Testo colorato",
       "data-links": "Collegamenti dati",
@@ -15027,7 +15045,7 @@
       "label-background-display-mode": "Modalità di visualizzazione dello sfondo"
     },
     "column-alignment-options": {
-      "label-auto": "Automatica",
+      "label-auto": "Automatico",
       "label-center": "Centrale",
       "label-left": "A sinistra",
       "label-right": "A destra"
@@ -15285,11 +15303,12 @@
     },
     "range-content": {
       "apply-button": "Applica intervallo di tempo",
-      "default-error": "Inserisci una data passata o \"{{now}}\"",
+      "default-error": "",
       "fiscal-year": "Anno fiscale: {{from}} - {{to}}",
       "from-input": "Da",
       "open-input-calendar": "Apri calendario",
-      "range-error": "\"Da\" non può essere successivo a \"A\"",
+      "range-error": "",
+      "required-error": "",
       "to-input": "A"
     },
     "range-picker": {

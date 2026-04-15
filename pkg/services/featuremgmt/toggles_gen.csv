@@ -53,7 +53,9 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-04-11,dashboardDisableSchemaValidationV2,experimental,@grafana/grafana-app-platform-squad,false,false,false
 2025-04-11,dashboardSchemaValidationLogging,experimental,@grafana/grafana-app-platform-squad,false,false,false
 2025-07-30,scanRowInvalidDashboardParseFallbackEnabled,experimental,@grafana/search-and-storage,false,false,false
-2024-05-23,datasourceQueryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2026-04-13,datasources.queryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2026-04-13,datasources.loadOpenAPI,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2026-04-13,datasources.chunkedQueryStreaming,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-03-12,datasourceLegacyIdApi,experimental,@grafana/grafana-datasources-core-services,false,true,false
 2024-04-19,queryService,experimental,@grafana/grafana-datasources-core-services,false,true,false
 2025-08-28,queryServiceWithConnections,experimental,@grafana/grafana-datasources-core-services,false,true,false
@@ -114,7 +116,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-03-25,oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,false
 2025-11-19,refreshTokenRequired,experimental,@grafana/identity-access-team,false,false,false
 2024-04-04,newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,false,false
-2025-12-18,dashboardAdHocAndGroupByWrapper,experimental,@grafana/dashboards-squad,false,false,false
 2026-03-09,dashboardUnifiedDrilldownControls,privatePreview,@grafana/dashboards-squad,false,false,true
 2026-03-02,adHocFilterDefaultValues,experimental,@grafana/dashboards-squad,false,false,true
 2024-04-05,cloudWatchNewLabelParsing,GA,@grafana/data-sources-plugins,false,false,false
@@ -143,6 +144,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-06-13,authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
 2024-06-19,zanzana,experimental,@grafana/identity-access-team,false,false,false
 2025-10-21,zanzanaNoLegacyClient,experimental,@grafana/identity-access-team,false,false,false
+2026-03-25,zanzanaSearchUsersPermissions,experimental,@grafana/identity-access-team,false,false,false
 2024-10-25,reloadDashboardsOnParamsChange,experimental,@grafana/dashboards-squad,false,false,false
 2024-11-06,enableScopesInMetricsExplore,experimental,@grafana/dashboards-squad,false,false,false
 2024-06-27,cloudWatchRoundUpEndTime,GA,@grafana/data-sources-plugins,false,false,false
@@ -348,6 +350,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-04-02,enableColorblindSafePanelOptions,experimental,@grafana/dataviz-squad,false,false,true
 2026-04-03,cacheConfigUnifiedStorageMigration,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-04-10,querycaching.redirectToK8SApi,experimental,@grafana/grafana-operator-experience-squad,false,false,false
+2026-04-13,querycaching.enableConnectionsClient,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-04-02,compiledBootScript,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-02-13,influxDBConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
 2026-04-09,clickHouseConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
