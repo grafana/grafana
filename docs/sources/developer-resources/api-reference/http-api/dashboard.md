@@ -2,7 +2,6 @@
 aliases:
   - ../../../http_api/dashboard/ # /docs/grafana/next/http_api/dashboard/
   - ../../../developers/http_api/dashboard/ # /docs/grafana/next/developers/http_api/dashboard/
-  - ../../../developer-resources/api-reference/http-api/dashboard-versions/ # deleted
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/dashboard/
 description: Grafana Dashboard HTTP API
 keywords:

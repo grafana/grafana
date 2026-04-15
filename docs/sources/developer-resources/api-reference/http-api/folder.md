@@ -2,7 +2,6 @@
 aliases:
   - ../../../http_api/folder/ # /docs/grafana/next/http_api/folder/
   - ../../../developers/http_api/folder/ # /docs/grafana/next/developers/http_api/folder/
-  - ../../../developer-resources/api-reference/http-api/folder-dashboard-search/ # deleted
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/folder/
 description: Grafana Folder HTTP API
 keywords:
