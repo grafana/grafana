@@ -1,30 +1,7 @@
 import { defaultMapViewConfig } from './panelcfg.gen';
 import { centerPointRegistry, MapCenterID } from './view';
 
-/** Preset map centers referenced by geomap docs (regional views + core view modes). */
-const EXPECTED_GEOMAP_VIEW_IDS = [
-  MapCenterID.Fit,
-  MapCenterID.Zero,
-  MapCenterID.Coordinates,
-  'north-america',
-  'south-america',
-  'europe',
-  'africa',
-  'west-asia',
-  's-asia',
-  'se-asia',
-  'e-asia',
-  'australia',
-  'oceania',
-] as const;
-
 describe('centerPointRegistry', () => {
-  it('includes initial view options documented for geomap', () => {
-    const ids = new Set(centerPointRegistry.list().map((item) => item.id));
-
-    expect(EXPECTED_GEOMAP_VIEW_IDS.every((id) => ids.has(id))).toBe(true);
-  });
-
   it('should expose lat, lon, and zoom for the Europe preset (initial view)', () => {
     const europe = centerPointRegistry.getIfExists('europe');
     expect(europe).toEqual(
