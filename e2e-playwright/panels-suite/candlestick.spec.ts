@@ -24,44 +24,33 @@ test.describe('Panels test: Candlestick', { tag: ['@panels', '@candlestick'] }, 
       queryParams: new URLSearchParams({ editPanel: '1' }),
     });
 
-    const uplot = page.locator('.uplot');
-    await expect(uplot, 'uplot is rendered').toBeVisible();
-
-    // use the overlay canvas for interactions — it covers the actual data area
-    const uOver = uplot.locator('.u-over');
-    await expect(uOver).toBeVisible();
-    const box = await uOver.boundingBox();
-    if (!box) {
-      throw new Error('u-over bounding box not found');
-    }
-    const cx = Math.round(box.width / 2);
-    const cy = Math.round(box.height / 2);
-    const altX = Math.round(box.width / 4);
+    const candlestickUplot = page.locator('.uplot');
+    await expect(candlestickUplot, 'uplot is rendered').toBeVisible();
 
     const tooltip = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Tooltip.Wrapper);
 
     // hover to trigger tooltip
-    await uOver.hover({ position: { x: cx, y: cy } });
+    await candlestickUplot.hover({ position: { x: 100, y: 50 } });
     await expect(tooltip, 'tooltip appears on hover').toBeVisible();
 
     // click to pin, hover away to verify pinning
-    await uOver.click({ position: { x: cx, y: cy } });
-    await uOver.hover({ position: { x: altX, y: cy } });
+    await candlestickUplot.click({ position: { x: 100, y: 50 } });
+    await candlestickUplot.hover({ position: { x: 300, y: 50 } });
     await expect(tooltip, 'tooltip pinned on click').toBeVisible();
 
     // unpin by clicking elsewhere
-    await uOver.click({ position: { x: altX, y: cy } });
-    await uOver.blur();
+    await candlestickUplot.click({ position: { x: 300, y: 50 } });
+    await candlestickUplot.blur();
     await expect(tooltip, 'tooltip closed after unpinning').toBeHidden();
 
     // close via X button
-    await uOver.click({ position: { x: cx, y: cy } });
+    await candlestickUplot.click({ position: { x: 100, y: 50 } });
     await expect(tooltip, 'tooltip appears on click').toBeVisible();
     await dashboardPage.getByGrafanaSelector(selectors.components.Portal.container).getByLabel('Close').click();
     await expect(tooltip, 'tooltip closed on X click').toBeHidden();
 
     // CMD/CTRL+C does not dismiss
-    await uOver.click({ position: { x: cx, y: cy } });
+    await candlestickUplot.click({ position: { x: 100, y: 50 } });
     await expect(tooltip, 'tooltip appears on click').toBeVisible();
     await page.keyboard.press('Meta+C');
     await expect(tooltip, 'tooltip persists after CMD/CTRL+C').toBeVisible();
@@ -75,7 +64,7 @@ test.describe('Panels test: Candlestick', { tag: ['@panels', '@candlestick'] }, 
       .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Tooltip Tooltip mode'))
       .getByLabel('Hidden')
       .click();
-    await uOver.hover({ position: { x: cx, y: cy } });
+    await candlestickUplot.hover({ position: { x: 100, y: 50 } });
     await expect(tooltip, 'tooltip not shown when disabled').toBeHidden();
   });
 
@@ -135,22 +124,13 @@ test.describe('Panels test: Candlestick', { tag: ['@panels', '@candlestick'] }, 
       queryParams: new URLSearchParams({ editPanel: '5' }),
     });
 
-    const uplot = page.locator('.uplot');
-    await expect(uplot, 'uplot is rendered').toBeVisible();
-
-    const uOver = uplot.locator('.u-over');
-    await expect(uOver).toBeVisible();
-    const box = await uOver.boundingBox();
-    if (!box) {
-      throw new Error('u-over bounding box not found');
-    }
-    const cx = Math.round(box.width / 2);
-    const cy = Math.round(box.height / 2);
+    const candlestickUplot = page.locator('.uplot');
+    await expect(candlestickUplot, 'uplot is rendered').toBeVisible();
 
     const tooltip = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Tooltip.Wrapper);
 
     // click on chart to pin tooltip at a data point
-    await uOver.click({ position: { x: cx, y: cy } });
+    await candlestickUplot.click({ position: { x: 100, y: 50 } });
     await expect(tooltip, 'tooltip pinned on click').toBeVisible();
 
     // verify data link appears in tooltip

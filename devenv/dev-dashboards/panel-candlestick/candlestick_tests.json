@@ -21,7 +21,8 @@
         "fields": {},
         "includeAllFields": true,
         "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" },
-        "mode": "candles+volume"
+        "mode": "candles+volume",
+        "tooltip": { "mode": "single", "sort": "none" }
       },
       "targets": [
         {
@@ -143,7 +144,8 @@
         "fields": {},
         "includeAllFields": false,
         "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" },
-        "mode": "candles+volume"
+        "mode": "candles+volume",
+        "tooltip": { "mode": "single", "sort": "none" }
       },
       "targets": [
         {
