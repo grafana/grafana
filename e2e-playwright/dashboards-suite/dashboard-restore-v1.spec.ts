@@ -222,6 +222,8 @@ test.describe(
 
         // Delete all selected
         await page.getByRole('button', { name: 'Delete' }).click();
+        // Wait for the delete modal to finish loading folder contents
+        await expect(page.getByText(/item/)).toBeVisible();
         await page.getByPlaceholder('Type "Delete" to confirm').fill('Delete');
         await page.getByTestId(selectors.pages.ConfirmModal.delete).click();
 
@@ -275,6 +277,71 @@ test.describe(
         await folderBBrowseRow.getByLabel(/Expand folder/).click();
 
         await expect(page.getByTestId(selectors.pages.BrowseDashboards.table.row(dashB1Name))).toBeVisible();
+      });
+    });
+
+    test.describe('Deleted folder restore modal', () => {
+      const folderName = `E2E Del Folder ${SUFFIX}`;
+      const dashName = `E2E Del Folder Dash ${SUFFIX}`;
+      let folderUid: string;
+      let dashUid: string;
+
+      test.beforeAll(async ({ request }) => {
+        const folderResp = await request.post('/api/folders', { data: { title: folderName } });
+        expect(folderResp.ok()).toBeTruthy();
+        folderUid = (await folderResp.json()).uid;
+
+        const dashResp = await request.post(V1_API, {
+          data: k8sDashboardResource(makeNewDashboardRequestBody(dashName).dashboard, folderUid),
+        });
+        expect(dashResp.ok()).toBeTruthy();
+        dashUid = (await dashResp.json()).metadata.name;
+      });
+
+      test.afterAll(async ({ request }) => {
+        if (dashUid) {
+          await request.delete(`${V1_API}/${dashUid}`);
+        }
+        if (folderUid) {
+          await request.delete(`/api/folders/${folderUid}?forceDeleteRules=false`);
+        }
+      });
+
+      test('Restore modal for dashboard from deleted folder has no folder pre-selected and button disabled', async ({
+        page,
+        selectors,
+      }) => {
+        await page.goto('/dashboards');
+
+        // Select the folder row and delete it (cascade-deletes dashboard)
+        const folderRow = page.getByTestId(selectors.pages.BrowseDashboards.table.row(folderName));
+        await expect(folderRow).toBeVisible();
+        await folderRow.getByRole('checkbox').click({ force: true });
+
+        await page.getByRole('button', { name: 'Delete' }).click();
+        // Wait for the delete modal to finish loading folder contents
+        await expect(page.getByText(/item/)).toBeVisible();
+        await page.getByPlaceholder('Type "Delete" to confirm').fill('Delete');
+        await page.getByTestId(selectors.pages.ConfirmModal.delete).click();
+
+        await expect(page.getByTestId(selectors.components.Alert.alertV2('success')).first()).toBeVisible();
+
+        // SPA-navigate to recently deleted (no page refresh)
+        await page.getByRole('link', { name: 'Recently deleted' }).click();
+
+        // Select the dashboard (from the deleted folder) in recently-deleted list
+        const searchRow = page.getByTestId(selectors.pages.Search.table.row(dashName)).first();
+        await expect(searchRow).toBeVisible();
+        await searchRow.getByRole('checkbox').click({ force: true });
+
+        // Open restore modal
+        await page.getByRole('button', { name: 'Restore' }).click();
+
+        // Assert: folder picker shows "Select folder" -- NOT the deleted folder name
+        await expect(page.getByRole('button', { name: 'Select folder' })).toBeVisible();
+
+        // Assert: Restore button is disabled (no folder pre-selected)
+        await expect(page.getByTestId(selectors.pages.ConfirmModal.delete)).toBeDisabled();
       });
     });
   }
