@@ -5441,6 +5441,9 @@
       "cancel-loading-dashboard": "取消載入儀表板"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "",
+      "provisioning-message": "",
+      "provisioning-title": "",
       "text": {
         "not-found": "無結果"
       }
@@ -6477,6 +6480,10 @@
       "sql-expressions-title": "SQL 運算式",
       "title-add-another-transformation": "新增另一個轉換",
       "view-all": "檢視全部"
+    },
+    "transformation-type-picker": {
+      "sql-cta-button": "",
+      "sql-cta-description": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "刪除所有轉換後，您將返回主選擇畫面。"
@@ -8761,6 +8768,9 @@
     "show-all-spans": "顯示所有跨度",
     "span-bar": {
       "tooltip-critical-path": "整體追蹤/請求/工作流程的<1>關鍵路徑</1>上的區段。"
+    },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": ""
     },
     "span-bar-section": {
       "description-link": "在追蹤檢視中範圍列上的服務和操作旁新增其他資訊。",
