@@ -5,16 +5,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import webpack, { type Configuration } from 'webpack';
 
+import { getEnvConfig } from '../cli/env-util.ts';
+
 import CorsWorkerPlugin from './plugins/CorsWorkerPlugin.ts';
 import { esbuildRule, sassRule } from './rules.ts';
 
 const require = createRequire(import.meta.url);
-
-// Horrible temporary fix for env-util which is used by Jest so cannot be ESM.
-global.__dirname = path.dirname(fileURLToPath(import.meta.url));
-const getEnvConfig = require('../cli/env-util.ts').default;
-
-const envConfig = getEnvConfig();
+const grafanaRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const envConfig = getEnvConfig(grafanaRoot);
 
 export type Env = Record<string, string | true | undefined>;
 
