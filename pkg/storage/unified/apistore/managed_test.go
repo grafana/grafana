@@ -189,6 +189,50 @@ func TestManagedAuthorizer(t *testing.T) {
 			},
 		},
 		{
+			name: "terraform manager identity can change (provider version updates)",
+			auth: user,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "terraform-provider-grafana/v3.0.0",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "Terraform/crossTF000",
+					},
+				},
+			},
+		},
+		{
+			name: "terraform manager identity change from legacy crossplane ID",
+			auth: user,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "terraform-provider-grafana/v4.0.0",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "terraform-provider-grafana/crossplane",
+					},
+				},
+			},
+		},
+		{
 			name: "audience includes provisioning group",
 			auth: &serviceauthn.Identity{
 				Type: authtypes.TypeAccessPolicy,

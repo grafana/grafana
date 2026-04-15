@@ -66,12 +66,27 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 
 	// Changing the owner (kind or identity) is not allowed.
 	// Remove the old manager first, then add the new one.
-	if hasOld && (managerNew.Kind != managerOld.Kind || managerNew.Identity != managerOld.Identity) {
+	//
+	// Exception: For Terraform managers, only the kind matters. The identity
+	// changes based on provider version (e.g., "Terraform/crossTF000" or
+	// "terraform-provider-grafana/crossplane" to version-specific IDs), so we
+	// allow identity transitions as long as both old and new are Terraform.
+	if hasOld && managerNew.Kind != managerOld.Kind {
 		return &apierrors.StatusError{ErrStatus: metav1.Status{
 			Status:  metav1.StatusFailure,
 			Code:    http.StatusForbidden,
 			Reason:  metav1.StatusReasonForbidden,
-			Message: "Cannot change resource manager; remove the existing manager first, then add the new one",
+			Message: "Cannot change resource manager kind; remove the existing manager first, then add the new one",
+		}}
+	}
+
+	// For non-Terraform managers, identity changes are also blocked
+	if hasOld && managerNew.Kind != utils.ManagerKindTerraform && managerNew.Identity != managerOld.Identity {
+		return &apierrors.StatusError{ErrStatus: metav1.Status{
+			Status:  metav1.StatusFailure,
+			Code:    http.StatusForbidden,
+			Reason:  metav1.StatusReasonForbidden,
+			Message: "Cannot change resource manager identity; remove the existing manager first, then add the new one",
 		}}
 	}
 
