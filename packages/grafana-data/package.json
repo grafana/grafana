@@ -68,7 +68,7 @@
     "eventemitter3": "5.0.1",
     "fast_array_intersect": "1.1.0",
     "history": "4.10.1",
-    "lodash": "4.17.21",
+    "lodash": "^4.18.1",
     "marked": "16.1.1",
     "marked-mangle": "1.1.11",
     "moment": "2.30.1",

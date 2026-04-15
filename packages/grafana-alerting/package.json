@@ -91,6 +91,6 @@
   "dependencies": {
     "@faker-js/faker": "^9.8.0",
     "fishery": "^2.3.1",
-    "lodash": "^4.17.21"
+    "lodash": "^4.18.1"
   }
 }
