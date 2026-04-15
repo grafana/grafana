@@ -2,7 +2,8 @@
 aliases:
   - ../../../http_api/team/ # /docs/grafana/next/http_api/team/
   - ../../../developers/http_api/team/ # /docs/grafana/next/developers/http_api/team/
-canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/team/
+  - ../../../../developer-resources/api-reference/http-api/team/ #legacy folder
+canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/team/
 description: Grafana Team HTTP API
 keywords:
   - grafana
@@ -21,6 +22,14 @@ title: Team HTTP API
 ---
 
 # Team API
+
+{{< admonition type="caution" >}}
+
+Starting in Grafana 13, `/api` endpoints are being deprecated. This change doesn't disrupt or break your current setup: legacy APIs are not being disabled and remain fully accessible and operative. However, `/api` routes will no longer be updated and **will be removed in a future major release.**
+
+To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+
+{{< /admonition >}}
 
 This API can be used to manage Teams and Team Memberships.
 
