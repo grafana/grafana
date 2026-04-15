@@ -34,6 +34,10 @@ type Mapper interface {
 	// Used in list queries with SQL LIKE to match all permissions for this resource type.
 	// Example: "folders:uid:%" matches "folders:uid:abc", "folders:uid:xyz", etc.
 	ScopePattern() string
+
+	// AllowsKind reports whether the resource type permits assignments to the given permission kind.
+	// Returns true when no kind restriction is configured (all kinds allowed).
+	AllowsKind(kind v0alpha1.ResourcePermissionSpecPermissionKind) bool
 }
 
 // ScopeAttribute defines how a resource is identified in RBAC scope strings.
@@ -99,6 +103,13 @@ func (m mapper) ActionSet(level string) (string, error) {
 
 func (m mapper) ScopePattern() string {
 	return m.resource + ":" + string(m.scopeAttribute) + ":%"
+}
+
+func (m mapper) AllowsKind(kind v0alpha1.ResourcePermissionSpecPermissionKind) bool {
+	if m.allowedKinds == nil {
+		return true
+	}
+	return slices.Contains(m.allowedKinds, kind)
 }
 
 type mapperEntry struct {
