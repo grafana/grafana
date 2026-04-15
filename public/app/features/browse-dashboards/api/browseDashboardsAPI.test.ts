@@ -9,6 +9,7 @@ import { config, setBackendSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { customFolderCountsHandler } from '@grafana/test-utils/unstable';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -193,21 +194,22 @@ describe('browseDashboardsAPI', () => {
       const store = createTestStore();
 
       server.use(
-        http.get('/api/folders/folder-1/counts', () =>
-          HttpResponse.json({
-            folders: 2,
-            dashboards: 3,
-            library_elements: 4,
-            alertrules: 5,
-          })
-        ),
-        http.get('/api/folders/folder-2/counts', () =>
-          HttpResponse.json({
-            folders: 1,
-            dashboards: 2,
-            library_elements: 3,
-            alertrules: 4,
-          })
+        customFolderCountsHandler(({ params }) =>
+          HttpResponse.json(
+            params.uid === 'folder-1'
+              ? {
+                  folders: 2,
+                  dashboards: 3,
+                  library_elements: 4,
+                  alertrules: 5,
+                }
+              : {
+                  folders: 1,
+                  dashboards: 2,
+                  library_elements: 3,
+                  alertrules: 4,
+                }
+          )
         )
       );
 
@@ -230,7 +232,7 @@ describe('browseDashboardsAPI', () => {
       const store = createTestStore();
 
       server.use(
-        http.get('/api/folders/folder-1/counts', () =>
+        customFolderCountsHandler(() =>
           HttpResponse.json({
             folder: 2,
             dashboard: 3,
@@ -258,7 +260,7 @@ describe('browseDashboardsAPI', () => {
     it('defaults missing descendant counts to zero', async () => {
       const store = createTestStore();
 
-      server.use(http.get('/api/folders/folder-1/counts', () => HttpResponse.json({ dashboards: 3 })));
+      server.use(customFolderCountsHandler(() => HttpResponse.json({ dashboards: 3 })));
 
       const result = await store.dispatch(
         browseDashboardsAPI.endpoints.getAffectedItems.initiate({

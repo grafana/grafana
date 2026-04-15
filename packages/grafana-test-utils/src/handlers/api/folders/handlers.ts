@@ -134,8 +134,11 @@ const getMockFolderCounts = (folders: number, dashboards: number, library_elemen
   };
 };
 
+export const customFolderCountsHandler = (resolver: HttpResponseResolver) =>
+  http.get('/api/folders/:uid/counts', resolver);
+
 const folderCountsHandler = () =>
-  http.get<{ uid: string }, { title: string; version: number }>('/api/folders/:uid/counts', async ({ params }) => {
+  customFolderCountsHandler(async ({ params }) => {
     const { uid } = params;
     const folder = mockTree.find((v) => v.item.uid === uid);
 
