@@ -20,7 +20,7 @@
               severity: 'warning',
             },
             annotations: {
-              message: '{{ $labels.namespace }}/{{ $labels.job }}/{{ $labels.handler }} is experiencing {{ $value | humanize }}% errors',
+              message: '{{ $labels.cluster }}/{{ $labels.namespace }}/{{ $labels.job }}/{{ $labels.handler }} is experiencing {{ $value | humanize }}% errors',
             },
             'for': '5m',
           },
