@@ -264,7 +264,7 @@ describe('DeleteProvisionedFolderForm', () => {
       await waitFor(() => {
         expect(mockDeleteRepoFile).toHaveBeenCalledWith({
           name: 'test-repo',
-          path: 'folders/test-folder.json/',
+          path: 'folders/test-folder.json',
           ref: 'main', // branch workflow sets ref
           message: 'Custom delete message',
         });

@@ -23,7 +23,6 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { Button, RadioButtonGroup, InlineField, Box } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/filterByValue.svg';
 import lightImage from '../images/light/filterByValue.svg';
 
@@ -163,7 +162,6 @@ export const getFilterByValueTransformRegistryItem: () => TransformerRegistryIte
       'Remove rows from the query results using user-defined filters.'
     ),
     categories: new Set([TransformerCategory.Filter]),
-    help: getTransformationContent(DataTransformerID.filterByValue).helperDocs,
     imageDark: darkImage,
     imageLight: lightImage,
   });

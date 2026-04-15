@@ -195,7 +195,7 @@ export class TabsLayoutManager
   }
 
   public addNewTab(tab?: TabItem) {
-    const newTab = tab ?? new TabItem({});
+    const newTab = tab ?? new TabItem({ layout: getDashboardSceneFor(this).getDefaultLayout() });
     const existingNames = new Set(
       this.getTabsIncludingRepeats()
         .map((tab) => tab.state.title)
@@ -230,10 +230,6 @@ export class TabsLayoutManager
     const scene = getDashboardSceneFor(this);
     const tab = getTabFromClipboard(scene);
     this.addNewTab(tab);
-  }
-
-  public shouldUngroup(): boolean {
-    return this.state.tabs.length === 1;
   }
 
   public convertAllGridLayouts(gridLayoutType: GridLayoutType) {
@@ -456,19 +452,6 @@ export class TabsLayoutManager
     tabs.splice(toIndex, 0, removed);
     this.setState({ tabs });
     this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
-  }
-
-  public forceSelectTab(tabKey: string) {
-    const tabIndex = this.getTabsIncludingRepeats().findIndex((tab) => tab.state.key === tabKey);
-    const tab = this.getTabsIncludingRepeats()[tabIndex];
-
-    if (!tab) {
-      return;
-    }
-
-    const editPane = getDashboardSceneFor(this).state.editPane;
-    editPane.selectObject(tab!, tabKey, { force: true, multi: false });
-    this.setState({ currentTabSlug: tab.getSlug() });
   }
 
   public static createEmpty(): TabsLayoutManager {

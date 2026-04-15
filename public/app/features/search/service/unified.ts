@@ -332,6 +332,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
       uri += '&createdBy=' + encodeURIComponent(query.createdBy);
     }
 
+    if (query.ownerReference?.length) {
+      uri += '&' + query.ownerReference.map((ref) => `ownerReference=${encodeURIComponent(ref)}`).join('&');
+    }
+
     if (query.panelTitleSearch) {
       uri += '&panelTitleSearch=true';
     }

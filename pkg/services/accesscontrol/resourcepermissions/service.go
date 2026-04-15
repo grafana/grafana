@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
@@ -182,16 +183,16 @@ func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, r
 		actions := resourcePermissions[i].Actions
 		var expandedActions []string
 		for _, action := range actions {
-			if isFolderOrDashboardAction(action) {
+			if isActionSetEnabledResource(action) {
 				actionSetActions := s.actionSetSvc.ResolveActionSet(action)
 				if len(actionSetActions) > 0 {
-					// Add all actions for folder
-					if s.options.Resource == dashboards.ScopeFoldersRoot {
+					// Folders and routes: expand all actions unconditionally (no inherited scope filtering needed).
+					if s.options.Resource == folder.ScopeFoldersRoot || s.options.Resource == accesscontrol.AlertingRoutesResource {
 						expandedActions = append(expandedActions, actionSetActions...)
 						continue
 					}
-					// This check is needed for resolving inherited permissions - we don't want to include
-					// actions that are not related to dashboards when expanding dashboard action sets
+					// Dashboards: filter to only include actions relevant to the resource
+					// to avoid leaking inherited folder actions.
 					for _, actionSetAction := range actionSetActions {
 						if slices.Contains(s.actions, actionSetAction) {
 							expandedActions = append(expandedActions, actionSetAction)
@@ -225,12 +226,20 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 		return nil, err
 	}
 
+	var datasourceType string
+	if s.options.DatasourceTypeResolver != nil && resourceID != "*" {
+		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
+			datasourceType = t
+		}
+	}
+
 	return s.store.SetUserResourcePermission(ctx, orgID, user, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
 		Resource:          s.scopeResource(),
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
+		DatasourceType:    datasourceType,
 	}, s.options.OnSetUser)
 }
 
@@ -251,12 +260,20 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 		return nil, err
 	}
 
+	var datasourceType string
+	if s.options.DatasourceTypeResolver != nil && resourceID != "*" {
+		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
+			datasourceType = t
+		}
+	}
+
 	return s.store.SetTeamResourcePermission(ctx, orgID, teamID, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
 		Resource:          s.scopeResource(),
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
+		DatasourceType:    datasourceType,
 	}, s.options.OnSetTeam)
 }
 
@@ -277,12 +294,20 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 		return nil, err
 	}
 
+	var datasourceType string
+	if s.options.DatasourceTypeResolver != nil && resourceID != "*" {
+		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
+			datasourceType = t
+		}
+	}
+
 	return s.store.SetBuiltInResourcePermission(ctx, orgID, builtInRole, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
 		Resource:          s.scopeResource(),
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
+		DatasourceType:    datasourceType,
 	}, s.options.OnSetBuiltInRole)
 }
 
@@ -295,6 +320,13 @@ func (s *Service) SetPermissions(
 
 	if err := s.validateResource(ctx, orgID, resourceID); err != nil {
 		return nil, err
+	}
+
+	var datasourceType string
+	if s.options.DatasourceTypeResolver != nil && resourceID != "*" {
+		if t, err := s.options.DatasourceTypeResolver(ctx, orgID, resourceID); err == nil {
+			datasourceType = t
+		}
 	}
 
 	dbCommands := make([]SetResourcePermissionsCommand, 0, len(commands))
@@ -328,6 +360,7 @@ func (s *Service) SetPermissions(
 				ResourceID:        resourceID,
 				ResourceAttribute: s.options.ResourceAttribute,
 				Permission:        cmd.Permission,
+				DatasourceType:    datasourceType,
 			},
 		})
 	}
@@ -364,7 +397,7 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 	var actions []string
 
 	// Write action sets for folders and dashboards
-	if s.options.Resource == dashboards.ScopeFoldersRoot || s.options.Resource == dashboards.ScopeDashboardsRoot {
+	if s.options.Resource == folder.ScopeFoldersRoot || s.options.Resource == dashboards.ScopeDashboardsRoot {
 		actions = append(actions, s.options.GetActionSetName(permission))
 
 		// If we only want to store action sets, return now
@@ -372,6 +405,11 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 		if s.features.IsEnabledGlobally(featuremgmt.FlagOnlyStoreActionSets) {
 			return actions, nil
 		}
+	}
+
+	// New resources with no legacy granular data go straight to action-set-only.
+	if s.options.Resource == accesscontrol.AlertingRoutesResource {
+		return []string{s.options.GetActionSetName(permission)}, nil
 	}
 
 	for k, v := range s.options.PermissionsToActions {
@@ -386,6 +424,10 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID string) error {
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.validateResource")
 	defer span.End()
+
+	if resourceID == "*" {
+		return ErrInvalidResourceID.Build(ErrInvalidResourceIDData(resourceID))
+	}
 
 	if s.options.ResourceValidator != nil {
 		return s.options.ResourceValidator(ctx, orgID, resourceID)
@@ -524,9 +566,7 @@ func (a *ActionSetSvc) ResolveAction(action string) []string {
 	sets := a.store.ResolveAction(action)
 	filteredSets := make([]string, 0, len(sets))
 	for _, set := range sets {
-		// Only use action sets for folders and dashboards for now
-		// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:read`)
-		if !isFolderOrDashboardAction(set) {
+		if !isActionSetEnabledResource(set) {
 			continue
 		}
 		filteredSets = append(filteredSets, set)
@@ -540,9 +580,7 @@ func (a *ActionSetSvc) ResolveActionPrefix(actionPrefix string) []string {
 	sets := a.store.ResolveActionPrefix(actionPrefix)
 	filteredSets := make([]string, 0, len(sets))
 	for _, set := range sets {
-		// Only use action sets for folders and dashboards for now
-		// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:read`)
-		if !isFolderOrDashboardAction(set) {
+		if !isActionSetEnabledResource(set) {
 			continue
 		}
 		filteredSets = append(filteredSets, set)
@@ -553,9 +591,7 @@ func (a *ActionSetSvc) ResolveActionPrefix(actionPrefix string) []string {
 
 // ResolveActionSet resolves an action set to a list of corresponding actions.
 func (a *ActionSetSvc) ResolveActionSet(actionSet string) []string {
-	// Only use action sets for folders and dashboards for now
-	// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:read`)
-	if !isFolderOrDashboardAction(actionSet) {
+	if !isActionSetEnabledResource(actionSet) {
 		return nil
 	}
 	return a.store.ResolveActionSet(actionSet)
@@ -564,11 +600,11 @@ func (a *ActionSetSvc) ResolveActionSet(actionSet string) []string {
 // StoreActionSet stores action set. If a set with the given name has already been stored, the new actions will be appended to the existing actions.
 func (a *ActionSetSvc) StoreActionSet(name string, actions []string) {
 	// To avoid backwards incompatible changes, we don't want to store these actions in the DB
-	// Once action sets are fully enabled, we can include dashboards.ActionFoldersCreate in the list of other folder edit/admin actions
+	// Once action sets are fully enabled, we can include folder.ActionFoldersCreate in the list of other folder edit/admin actions
 	// Tracked in https://github.com/grafana/identity-access-team/issues/794
 	if name == "folders:edit" || name == "folders:admin" {
-		if !slices.Contains(a.ResolveActionSet(name), dashboards.ActionFoldersCreate) {
-			actions = append(actions, dashboards.ActionFoldersCreate)
+		if !slices.Contains(a.ResolveActionSet(name), folder.ActionFoldersCreate) {
+			actions = append(actions, folder.ActionFoldersCreate)
 		}
 	}
 
@@ -604,8 +640,10 @@ func (a *ActionSetSvc) RegisterActionSets(ctx context.Context, pluginID string, 
 	return nil
 }
 
-func isFolderOrDashboardAction(action string) bool {
-	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) || strings.HasPrefix(action, dashboards.ScopeFoldersRoot)
+func isActionSetEnabledResource(action string) bool {
+	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) ||
+		strings.HasPrefix(action, folder.ScopeFoldersRoot) ||
+		strings.HasPrefix(action, accesscontrol.AlertingRoutesKind)
 }
 
 // scopeResource returns the resource prefix used for Resource fields in commands/queries.

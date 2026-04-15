@@ -52,6 +52,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
             disabled={disabled}
             onChange={handleOnChange}
             value={htmlValue}
+            aria-invalid={!!invalid}
             {...inputProps}
             ref={(element) => {
               if (element && indeterminate) {

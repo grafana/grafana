@@ -19,20 +19,24 @@ var knownUnifiedStorageKeys = map[string]string{
 }
 
 const (
-	PlaylistResource    = "playlists.playlist.grafana.app"
-	FolderResource      = "folders.folder.grafana.app"
-	DashboardResource   = "dashboards.dashboard.grafana.app"
-	ShortURLResource    = "shorturls.shorturl.grafana.app"
-	DataSourceResources = "datasources.*.datasource.grafana.app" // All datasources
+	PlaylistResource         = "playlists.playlist.grafana.app"
+	FolderResource           = "folders.folder.grafana.app"
+	DashboardResource        = "dashboards.dashboard.grafana.app"
+	ShortURLResource         = "shorturls.shorturl.grafana.app"
+	StarsResource            = "stars.collections.grafana.app"
+	DataSourceResources      = "datasources.datasource.grafana.app" // All datasources
+	QueryCacheConfigResource = "querycacheconfigs.querycaching.grafana.app"
 )
 
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
 var MigratedUnifiedResources = map[string]bool{
-	PlaylistResource:    true,  // Only Mode5!
-	FolderResource:      true,  // Only Mode5!
-	DashboardResource:   true,  // Only Mode5!
-	ShortURLResource:    false, // Requires kubernetesShortURLs to be enabled by default
-	DataSourceResources: false,
+	PlaylistResource:         true,  // Only Mode5!
+	FolderResource:           true,  // Only Mode5!
+	DashboardResource:        true,  // Only Mode5!
+	ShortURLResource:         false, // Requires kubernetesShortURLs to be enabled by default
+	StarsResource:            false,
+	DataSourceResources:      false,
+	QueryCacheConfigResource: false,
 }
 
 // applyUnifiedStorageEnvOverrides scans environment variables matching
@@ -223,6 +227,20 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")
+
+	// Index snapshot settings
+	cfg.IndexSnapshotEnabled = section.Key("index_snapshot_enabled").MustBool(false)
+	cfg.IndexSnapshotBucketURL = section.Key("index_snapshot_bucket_url").String()
+	cfg.IndexSnapshotThreshold = section.Key("index_snapshot_threshold").MustInt(5000)
+	if cfg.IndexSnapshotThreshold < cfg.IndexFileThreshold {
+		cfg.Logger.Warn("index_snapshot_threshold is smaller than index_file_threshold, overriding", "configured", cfg.IndexSnapshotThreshold, "index_file_threshold", cfg.IndexFileThreshold)
+		cfg.IndexSnapshotThreshold = cfg.IndexFileThreshold
+	}
+	cfg.IndexSnapshotMaxAge = section.Key("index_snapshot_max_age").MustDuration(7 * 24 * time.Hour)
+	if cfg.IndexSnapshotMaxAge < cfg.MaxFileIndexAge {
+		cfg.Logger.Warn("index_snapshot_max_age is smaller than max_file_index_age, overriding", "configured", cfg.IndexSnapshotMaxAge, "max_file_index_age", cfg.MaxFileIndexAge)
+		cfg.IndexSnapshotMaxAge = cfg.MaxFileIndexAge
+	}
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,

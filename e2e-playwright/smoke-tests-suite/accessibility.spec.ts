@@ -19,13 +19,11 @@ test.describe(
   () => {
     (
       [
-        {
-          url: '/?orgId=1',
-          // DISABLED: The RSS panel on the home-page currently shows links that violate the a11y rules.
-          //   We need to get this fixed before re-enabling.
-          ignoredRules: ['link-name'],
-        },
+        // Misc
+        { url: '/?orgId=1' },
+        { url: '/dashboards', ignoredRules: ['label'] },
         { url: '/d/O6f11TZWk/panel-tests-bar-gauge' },
+        { url: '/alerting/list', ignoredRules: ['button-name', 'aria-required-parent'] },
 
         // Dashboard settings
         { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=settings' },
@@ -36,21 +34,36 @@ test.describe(
         { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=permissions' },
         { url: '/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=dashboard_json' },
 
-        // Misc
-        {
-          url: '/?orgId=1&search=open',
-          // DISABLED: The RSS panel on the home-page currently shows links that violate the a11y rules.
-          //   We need to get this fixed before re-enabling.
-          ignoredRules: ['link-name'],
-        },
-        { url: '/alerting/list', ignoredRules: ['button-name'] },
-        { url: '/datasources' },
-        { url: '/org/users' },
-        { url: '/org/teams' },
-        { url: '/plugins' },
+        // Connections
+        { url: '/connections' },
+        { url: '/connections/datasources' },
+        { url: '/connections/add-new-connection' },
+
+        // Admin pages
+        //  - General
+        { url: '/admin/upgrading' },
         { url: '/org' },
-        { url: '/org/apikeys' },
-        { url: '/dashboards', ignoredRules: ['label'] },
+        { url: '/admin/settings' },
+        { url: '/admin/orgs' },
+        { url: '/admin/migrate-to-cloud' },
+        { url: '/admin/provisioning' },
+
+        // - Plugins
+        { url: '/plugins' },
+        { url: '/datasources/correlations' },
+        { url: '/admin/extensions', ignoredRules: ['button-name'] },
+
+        // - Users and access
+        { url: '/admin/users' },
+        { url: '/org/teams' },
+        { url: '/org/serviceaccounts' },
+
+        { url: '/admin/authentication' },
+
+        // Profile pages
+        { url: '/profile' },
+        { url: '/profile/notifications' },
+        { url: '/profile/password' },
       ] satisfies A11yTestCase[]
     ).forEach(({ url, ...options }) =>
       test(url, async ({ page, selectors, scanForA11yViolations }) => {

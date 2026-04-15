@@ -1,8 +1,9 @@
-import { type DrilldownsApplicability } from '@grafana/data';
+import { type AdHocVariableFilter, type DrilldownsApplicability } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
   type AdHocFiltersVariable,
   type GroupByVariable,
+  isGroupByFilter,
   sceneGraph,
   type SceneObject,
   type SceneQueryRunner,
@@ -29,54 +30,54 @@ export async function getDrilldownApplicability(
   filtersVar?: AdHocFiltersVariable,
   groupByVar?: GroupByVariable
 ): Promise<DrilldownsApplicability[] | undefined> {
-  //if no drilldown vars return
   if (!filtersVar && !groupByVar) {
     return;
   }
 
   const datasource = getDatasourceFromQueryRunner(queryRunner);
-  // Use executed queries if available, otherwise fall back to configured queries
   const queries = queryRunner.state.data?.request?.targets ?? queryRunner.state.queries;
 
   const ds = await getDataSourceSrv().get(datasource?.uid);
 
-  // return if method not implemented
   if (!ds.getDrilldownsApplicability) {
     return;
   }
 
   const dsUid = sceneGraph.interpolate(queryRunner, datasource?.uid);
-  const timeRange = sceneGraph.getTimeRange(queryRunner).state.value;
-  const groupByKeys = [];
-  const filters = [];
-
-  const hasGroupByApplicability =
-    groupByVar && dsUid === sceneGraph.interpolate(groupByVar, groupByVar?.state.datasource?.uid);
   const hasFiltersApplicability =
     filtersVar && dsUid === sceneGraph.interpolate(filtersVar, filtersVar.state?.datasource?.uid);
 
-  // if neither vars use the ds from the queries, return
-  if (!hasGroupByApplicability && !hasFiltersApplicability) {
+  const useAdhocGroupBy = filtersVar?.state.enableGroupBy === true;
+  const hasGroupByApplicability =
+    !useAdhocGroupBy && groupByVar && dsUid === sceneGraph.interpolate(groupByVar, groupByVar.state.datasource?.uid);
+
+  if (!hasFiltersApplicability && !hasGroupByApplicability) {
     return;
   }
 
-  if (hasGroupByApplicability) {
-    groupByKeys.push(
-      ...(Array.isArray(groupByVar.state.value)
-        ? groupByVar.state.value.map((v) => String(v))
-        : groupByVar.state.value
-          ? [String(groupByVar.state.value)]
-          : [])
-    );
-  }
+  const filters: AdHocVariableFilter[] = [];
+  const groupByKeys: string[] = [];
 
   if (hasFiltersApplicability) {
-    filters.push(...filtersVar.state.filters, ...(filtersVar.state.originFilters ?? []));
+    const allFilters = [...filtersVar.state.filters, ...(filtersVar.state.originFilters ?? [])];
+    filters.push(...allFilters.filter((f) => !isGroupByFilter(f)));
+
+    if (useAdhocGroupBy) {
+      groupByKeys.push(...allFilters.filter((f) => isGroupByFilter(f)).map((f) => f.key));
+    }
   }
 
+  if (hasGroupByApplicability) {
+    const value = groupByVar.state.value;
+    const keys = Array.isArray(value) ? value.map((v) => String(v)) : value ? [String(value)] : [];
+    groupByKeys.push(...keys);
+  }
+
+  const timeRange = sceneGraph.getTimeRange(queryRunner).state.value;
+
   return await ds.getDrilldownsApplicability({
-    groupByKeys,
     filters,
+    ...(groupByKeys.length > 0 ? { groupByKeys } : {}),
     queries,
     timeRange,
     scopes: sceneGraph.getScopes(queryRunner),

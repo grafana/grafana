@@ -44,6 +44,7 @@ func defaultMigrationTestCases() []testcases.ResourceMigratorTestCase {
 		testcases.NewFoldersAndDashboardsTestCase(),
 		testcases.NewPlaylistsTestCase(),
 		testcases.NewShortURLsTestCase(),
+		testcases.NewStarsTestCase(),
 	}
 	// TODO: fix datasource migration tests on sqlite, see:
 	// https://github.com/grafana/grafana-enterprise/issues/11313
@@ -72,6 +73,9 @@ func TestIntegrationKVMigrations(t *testing.T) {
 
 type migrationTestOptions struct {
 	enableSQLKVBackend bool
+	// extraMigrationIDs adds migration IDs (and their default status) to the verification map.
+	// Used by enterprise tests to include enterprise-only migrations.
+	extraMigrationIDs map[string]bool
 }
 
 // runMigrationTestSuite executes the migration test suite for the given test cases
@@ -265,7 +269,7 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 				state.tc.Verify(t, helper, false)
 			})
 		}
-		verifyRegisteredMigrations(t, helper, false, true)
+		verifyRegisteredMigrations(t, helper, false, true, opts.extraMigrationIDs)
 	})
 
 	t.Run("Step 4: verify data is migrated to unified storage", func(t *testing.T) {
@@ -301,7 +305,7 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		}
 
 		t.Logf("Verifying migrations are correctly registered")
-		verifyRegisteredMigrations(t, helper, true, false)
+		verifyRegisteredMigrations(t, helper, true, false, opts.extraMigrationIDs)
 	})
 
 	t.Run("Step 5: verify data is migrated for all migrations", func(t *testing.T) {
@@ -338,7 +342,7 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		}
 
 		t.Logf("Verifying migrations are correctly registered")
-		verifyRegisteredMigrations(t, helper, false, false)
+		verifyRegisteredMigrations(t, helper, false, false, opts.extraMigrationIDs)
 
 		t.Logf("Verifying key_path is populated in resource_history after bulkimport")
 		verifyKeyPathPopulated(t, helper)
@@ -355,6 +359,7 @@ const (
 	playlistsID            = "playlists migration"
 	foldersAndDashboardsID = "folders and dashboards migration"
 	shorturlsID            = "shorturls migration"
+	starsID                = "stars migration"
 	datasourceID           = "datasources migration"
 )
 
@@ -363,13 +368,23 @@ var migrationIDsToDefault = map[string]bool{
 	foldersAndDashboardsID: true, // Auto-migrated when resource count is below threshold
 	shorturlsID:            false,
 	datasourceID:           false,
+	starsID:                false,
 }
 
-func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool) {
+func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool, extraMigrationIDs map[string]bool) {
 	getMigrationsQuery := fmt.Sprintf("SELECT migration_id FROM %s", migrationTable)
 	createTableMigrationID := fmt.Sprintf("create %s table", migrationTable)
 	expectedMigrationIDs := []string{createTableMigrationID}
+
+	allMigrationIDs := make(map[string]bool)
 	for id, enabled := range migrationIDsToDefault {
+		allMigrationIDs[id] = enabled
+	}
+	for id, enabled := range extraMigrationIDs {
+		allMigrationIDs[id] = enabled
+	}
+
+	for id, enabled := range allMigrationIDs {
 		if onlyDefault && !enabled {
 			continue
 		}

@@ -6,14 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/alerting/definition/compat"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
-	"github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/alerting/definition"
@@ -48,7 +46,7 @@ import (
 // gets an Alerting config
 //
 //     Responses:
-//       200: GettableUserConfig
+//       200: ExternalAlertmanagerConfig
 //       400: ValidationError
 //       404: NotFound
 
@@ -96,7 +94,7 @@ import (
 // get alertmanager status and configuration
 //
 //     Responses:
-//       200: GettableStatus
+//       200: ExternalAlertmanagerStatus
 //       400: ValidationError
 //       404: NotFound
 
@@ -153,16 +151,13 @@ import (
 // swagger:route POST /alertmanager/grafana/config/api/v1/receivers/test alertmanager RoutePostTestGrafanaReceivers
 //
 // Test Grafana managed receivers without saving them.
+// This endpoint has been removed. Please use `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{uid}/test` instead.
+//
+// Deprecated: true
 //
 //     Responses:
 //
-//       200: Ack
-//       207: MultiStatus
-//       400: ValidationError
-//       403: PermissionDenied
-//       404: NotFound
-//       408: Failure
-//       409: AlertManagerNotReady
+//       410: Gone
 
 // swagger:route POST /alertmanager/grafana/config/api/v1/templates/test alertmanager RoutePostTestGrafanaTemplates
 //
@@ -326,43 +321,6 @@ type RouteGetGrafanaAlertingConfigHistoryParams struct {
 	// Limit response to n historic configurations.
 	// in:query
 	Limit int `json:"limit"`
-}
-
-// swagger:parameters RoutePostTestGrafanaReceivers
-type TestReceiversConfigParams struct {
-	// in:body
-	Body TestReceiversConfigBodyParams
-}
-
-type TestReceiversConfigBodyParams struct {
-	Alert     *TestReceiversConfigAlertParams `yaml:"alert,omitempty" json:"alert,omitempty"`
-	Receivers []*PostableApiReceiver          `yaml:"receivers,omitempty" json:"receivers,omitempty"`
-}
-
-type TestReceiversConfigAlertParams struct {
-	Annotations model.LabelSet `yaml:"annotations,omitempty" json:"annotations,omitempty"`
-	Labels      model.LabelSet `yaml:"labels,omitempty" json:"labels,omitempty"`
-}
-
-// swagger:model
-type TestReceiversResult struct {
-	Alert      TestReceiversConfigAlertParams `json:"alert"`
-	Receivers  []TestReceiverResult           `json:"receivers"`
-	NotifiedAt time.Time                      `json:"notified_at"`
-}
-
-// swagger:model
-type TestReceiverResult struct {
-	Name    string                     `json:"name"`
-	Configs []TestReceiverConfigResult `json:"grafana_managed_receiver_configs"`
-}
-
-// swagger:model
-type TestReceiverConfigResult struct {
-	Name   string `json:"name"`
-	UID    string `json:"uid"`
-	Status string `json:"status"`
-	Error  string `json:"error,omitempty"`
 }
 
 // swagger:parameters RoutePostTestGrafanaTemplates
@@ -654,7 +612,7 @@ type PostableAlerts struct {
 // swagger:parameters RoutePostAlertingConfig RoutePostGrafanaAlertingConfig
 type BodyAlertingConfig struct {
 	// in:body
-	Body PostableUserConfig
+	Body ExternalAlertmanagerConfig
 }
 
 // swagger:parameters RoutePostGrafanaAlertingConfigHistoryActivate
@@ -1102,6 +1060,7 @@ type GettableGrafanaReceiver struct {
 	UID                   string          `json:"uid"`
 	Name                  string          `json:"name"`
 	Type                  string          `json:"type"`
+	Version               string          `json:"version,omitempty"`
 	DisableResolveMessage bool            `json:"disableResolveMessage"`
 	Settings              RawMessage      `json:"settings,omitempty"`
 	SecureFields          map[string]bool `json:"secureFields"`
@@ -1127,3 +1086,144 @@ type GettableGrafanaReceivers struct {
 }
 
 type EncryptFn func(ctx context.Context, payload []byte) ([]byte, error)
+
+// swagger:model
+type ExternalAlertmanagerConfig struct {
+	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
+	AlertmanagerConfig config.Config     `yaml:"alertmanager_config" json:"alertmanager_config"`
+	// amSimple stores a map[string]interface of the decoded alertmanager config.
+	// This enables circumventing the underlying alertmanager secret type
+	// which redacts itself during encoding.
+	amSimple map[string]interface{} `yaml:"-" json:"-"`
+}
+
+func (c *ExternalAlertmanagerConfig) MarshalJSON() ([]byte, error) {
+	// amSimple is populated by UnmarshalJSON/UnmarshalYAML and holds the raw alertmanager config
+	// without secret redaction. Marshaling without it would silently lose secret fields.
+	if c.amSimple == nil {
+		return nil, fmt.Errorf("cannot marshal ExternalAlertmanagerConfig to JSON: alertmanager config was not decoded")
+	}
+
+	type plain struct {
+		TemplateFiles      map[string]string      `yaml:"template_files" json:"template_files"`
+		AlertmanagerConfig map[string]interface{} `yaml:"alertmanager_config" json:"alertmanager_config"`
+	}
+
+	tmp := plain{
+		TemplateFiles:      c.TemplateFiles,
+		AlertmanagerConfig: c.amSimple,
+	}
+
+	return json.Marshal(tmp)
+}
+
+func (c *ExternalAlertmanagerConfig) UnmarshalJSON(b []byte) error {
+	type plain ExternalAlertmanagerConfig
+	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
+		return err
+	}
+
+	type intermediate struct {
+		AlertmanagerConfig map[string]interface{} `yaml:"alertmanager_config" json:"alertmanager_config"`
+	}
+
+	var tmp intermediate
+	if err := json.Unmarshal(b, &tmp); err != nil {
+		return err
+	}
+	// store the map[string]interface{} variant for re-encoding later without redaction
+	c.amSimple = tmp.AlertmanagerConfig
+
+	return nil
+}
+
+// MarshalYAML implements yaml.Marshaller.
+func (c *ExternalAlertmanagerConfig) MarshalYAML() (interface{}, error) {
+	// amSimple is populated by UnmarshalJSON/UnmarshalYAML and holds the raw alertmanager config
+	// without secret redaction. Marshaling without it would silently lose secret fields.
+	if c.amSimple == nil {
+		return nil, fmt.Errorf("cannot marshal ExternalAlertmanagerConfig to YAML: alertmanager config was not decoded")
+	}
+
+	yml, err := yaml.Marshal(c.amSimple)
+	if err != nil {
+		return nil, err
+	}
+	// cortex/loki actually pass the AM config as a string.
+	cortexPostableUserConfig := struct {
+		TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
+		AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
+	}{
+		TemplateFiles:      c.TemplateFiles,
+		AlertmanagerConfig: string(yml),
+	}
+	return cortexPostableUserConfig, nil
+}
+
+func (c *ExternalAlertmanagerConfig) UnmarshalYAML(value *yaml.Node) error {
+	// cortex/loki actually pass the AM config as a string.
+	type cortexPostableUserConfig struct {
+		TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
+		AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
+	}
+
+	var tmp cortexPostableUserConfig
+
+	if err := value.Decode(&tmp); err != nil {
+		return err
+	}
+
+	if err := yaml.Unmarshal([]byte(tmp.AlertmanagerConfig), &c.AlertmanagerConfig); err != nil {
+		return err
+	}
+
+	// store the map[string]interface{} variant for re-encoding later without redaction
+	if err := yaml.Unmarshal([]byte(tmp.AlertmanagerConfig), &c.amSimple); err != nil {
+		return err
+	}
+
+	c.TemplateFiles = tmp.TemplateFiles
+	return nil
+}
+
+// swagger:model
+type ExternalAlertmanagerStatus struct {
+	// cluster
+	// Required: true
+	Cluster *amv2.ClusterStatus `json:"cluster"`
+
+	// config
+	// Required: true
+	Config *config.Config `json:"config"`
+
+	// uptime
+	// Required: true
+	// Format: date-time
+	Uptime *strfmt.DateTime `json:"uptime"`
+
+	// version info
+	// Required: true
+	VersionInfo *amv2.VersionInfo `json:"versionInfo"`
+}
+
+func (s *ExternalAlertmanagerStatus) UnmarshalJSON(b []byte) error {
+	amStatus := amv2.AlertmanagerStatus{}
+	if err := json.Unmarshal(b, &amStatus); err != nil {
+		return err
+	}
+
+	if amStatus.Config == nil || amStatus.Config.Original == nil {
+		return fmt.Errorf("alertmanager status response missing config")
+	}
+
+	c := config.Config{}
+	if err := yaml.Unmarshal([]byte(*amStatus.Config.Original), &c); err != nil {
+		return err
+	}
+
+	s.Cluster = amStatus.Cluster
+	s.Config = &c
+	s.Uptime = amStatus.Uptime
+	s.VersionInfo = amStatus.VersionInfo
+	return nil
+}
