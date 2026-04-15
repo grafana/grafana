@@ -4,6 +4,7 @@ import { type ReactNode } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Text, useStyles2 } from '@grafana/ui';
+import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 
 import { type QueryEditorType } from '../constants';
 
@@ -22,13 +23,14 @@ export function StackedItemShell({ editorType, icon, label, name, isHidden, chil
   const styles = useStyles2(getStyles, editorType);
 
   return (
-    <div className={styles.item}>
+    <div className={styles.item} role="article" aria-label={name}>
       <div className={styles.header}>
         {icon}
-        <Text variant="code" color="maxContrast">
+        <Text variant="body" color="primary">
           {label}
         </Text>
-        <Text variant="code" weight="medium" color="info">
+        <NavToolbarSeparator />
+        <Text variant="code" weight="medium" color="primary">
           {name}
         </Text>
         {isHidden && <Icon name="eye-slash" size="sm" title={t('query-editor-next.stacked-view.hidden', 'Hidden')} />}
@@ -54,7 +56,7 @@ const getStyles = (theme: GrafanaTheme2, editorType: QueryEditorType) => {
         left: 0,
         top: 0,
         bottom: 0,
-        width: 3,
+        width: 4,
         background: borderColor,
         borderTopLeftRadius: theme.shape.radius.default,
         borderBottomLeftRadius: theme.shape.radius.default,
@@ -66,8 +68,9 @@ const getStyles = (theme: GrafanaTheme2, editorType: QueryEditorType) => {
       gap: theme.spacing(1),
       backgroundColor: theme.colors.background.secondary,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
-      height: theme.spacing(4),
+      minHeight: theme.spacing(5),
       padding: theme.spacing(0, 1.5),
+      paddingLeft: `calc(${theme.spacing(1.5)} + 4px)`,
     }),
     body: css({
       padding: theme.spacing(1.5),
