@@ -727,13 +727,6 @@ func TestIdentityQueries(t *testing.T) {
 			},
 			sqlQueryServiceAccountTokenGetTemplate: {
 				{
-					Name: "get_token_by_name",
-					Data: getServiceAccountToken(&GetServiceAccountTokenQuery{
-						Name:  "my-token",
-						OrgID: 1,
-					}),
-				},
-				{
 					Name: "get_token_by_name_and_sa",
 					Data: getServiceAccountToken(&GetServiceAccountTokenQuery{
 						Name:              "my-token",

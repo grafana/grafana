@@ -13,7 +13,5 @@ SELECT
 WHERE t.org_id = {{ .Arg .Query.OrgID }}
    AND u.is_service_account
    AND t.name = {{ .Arg .Query.Name }}
-{{ if .Query.ServiceAccountUID }}
    AND u.uid = {{ .Arg .Query.ServiceAccountUID }}
-{{ end }}
 LIMIT 1

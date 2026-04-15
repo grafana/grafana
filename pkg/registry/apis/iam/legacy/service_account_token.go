@@ -63,7 +63,12 @@ type getServiceAccountTokenQuery struct {
 	TokenTable string
 }
 
-func (getServiceAccountTokenQuery) Validate() error { return nil }
+func (q getServiceAccountTokenQuery) Validate() error {
+	if q.Query.ServiceAccountUID == "" {
+		return fmt.Errorf("expected non empty service account uid")
+	}
+	return nil
+}
 
 func newGetServiceAccountToken(sql *legacysql.LegacyDatabaseHelper, q *GetServiceAccountTokenQuery) getServiceAccountTokenQuery {
 	return getServiceAccountTokenQuery{

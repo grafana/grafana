@@ -110,7 +110,7 @@ func (s *TokensREST) Connect(ctx context.Context, name string, options runtime.O
 			return
 		}
 		if _, ok := obj.(*iamv0alpha1.ServiceAccount); !ok {
-			responder.Error(fmt.Errorf("unexpected object type %T", obj))
+			responder.Error(apierrors.NewInternalError(fmt.Errorf("unexpected object type %T", obj)))
 			return
 		}
 
@@ -146,7 +146,7 @@ func (s *TokensREST) handleGet(ctx context.Context, ns claims.NamespaceInfo, saN
 		ServiceAccountUID: saName,
 	})
 	if err != nil {
-		responder.Error(err)
+		responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to get token: %w", err)))
 		return
 	}
 	if token == nil {
@@ -167,7 +167,7 @@ func (s *TokensREST) handleList(ctx context.Context, ns claims.NamespaceInfo, sa
 		Pagination: common.PaginationFromListQuery(r.URL.Query()),
 	})
 	if err != nil {
-		responder.Error(err)
+		responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to list tokens: %w", err)))
 		return
 	}
 
@@ -223,7 +223,7 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 	// Generate the token ONCE — the same hash goes to both stores.
 	keyResult, err := satokengen.New(ServiceID)
 	if err != nil {
-		responder.Error(fmt.Errorf("failed to generate token: %w", err))
+		responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to generate token: %w", err)))
 		return
 	}
 
@@ -245,7 +245,7 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 			))
 			return
 		}
-		responder.Error(fmt.Errorf("failed to store token (legacy): %w", err))
+		responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to store token (legacy): %w", err)))
 		return
 	}
 
@@ -283,7 +283,7 @@ func (s *TokensREST) handleDelete(ctx context.Context, ns claims.NamespaceInfo, 
 		ServiceAccountID: saIDResult.ID,
 	})
 	if err != nil {
-		responder.Error(fmt.Errorf("failed to delete token: %w", err))
+		responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to delete token: %w", err)))
 		return
 	}
 	if rowsAffected == 0 {
