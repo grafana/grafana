@@ -10717,6 +10717,7 @@
       "description": "Description",
       "keys": "Keys"
     },
+    "shortcuts-aria-label": "List of keyboard shortcuts",
     "shortcuts-category": {
       "dashboard": "Dashboard",
       "focused-panel": "Focused panel",

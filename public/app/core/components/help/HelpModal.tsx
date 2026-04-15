@@ -17,7 +17,12 @@ export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
   const shortcuts = useShortcuts();
   return (
     <Modal title={t('help-modal.title', 'Shortcuts')} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
-      <Grid columns={{ xs: 1, sm: 2 }} gap={3} tabIndex={0}>
+      <Grid
+        columns={{ xs: 1, sm: 2 }}
+        gap={3}
+        tabIndex={0}
+        aria-label={t('help-modal.shortcuts-aria-label', 'List of keyboard shortcuts')}
+      >
         {Object.values(shortcuts).map(({ category, shortcuts }) => (
           <section key={category}>
             <table className={styles.table}>
