@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"context"
 	"strconv"
 	"sync"
 	"time"
@@ -34,7 +35,7 @@ func ProvideOSSDataKeyCache(cfg *setting.Cfg) encryption.DataKeyCache {
 	}
 }
 
-func (c *ossDataKeyCache) GetById(namespace, id string) (_ encryption.DataKeyCacheEntry, exists bool) {
+func (c *ossDataKeyCache) GetById(_ context.Context, namespace, id string) (_ encryption.DataKeyCacheEntry, exists bool) {
 	defer func() {
 		cacheReadsCounter.With(prometheus.Labels{
 			"hit":    strconv.FormatBool(exists),
@@ -62,7 +63,7 @@ func (c *ossDataKeyCache) GetById(namespace, id string) (_ encryption.DataKeyCac
 	return entry, true
 }
 
-func (c *ossDataKeyCache) GetByLabel(namespace, label string) (_ encryption.DataKeyCacheEntry, exists bool) {
+func (c *ossDataKeyCache) GetByLabel(_ context.Context, namespace, label string) (_ encryption.DataKeyCacheEntry, exists bool) {
 	defer func() {
 		cacheReadsCounter.With(prometheus.Labels{
 			"hit":    strconv.FormatBool(exists),
@@ -89,7 +90,7 @@ func (c *ossDataKeyCache) GetByLabel(namespace, label string) (_ encryption.Data
 	return entry, true
 }
 
-func (c *ossDataKeyCache) Set(namespace string, entry encryption.DataKeyCacheEntry) {
+func (c *ossDataKeyCache) Set(_ context.Context, namespace string, entry encryption.DataKeyCacheEntry) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
@@ -100,7 +101,7 @@ func (c *ossDataKeyCache) Set(namespace string, entry encryption.DataKeyCacheEnt
 	c.byLabel[namespacedKey{namespace, entry.Label}] = entry
 }
 
-func (c *ossDataKeyCache) RemoveExpired() {
+func (c *ossDataKeyCache) RemoveExpired(_ context.Context) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
@@ -117,7 +118,7 @@ func (c *ossDataKeyCache) RemoveExpired() {
 	}
 }
 
-func (c *ossDataKeyCache) Flush(namespace string) {
+func (c *ossDataKeyCache) Flush(_ context.Context, namespace string) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
