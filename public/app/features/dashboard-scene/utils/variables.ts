@@ -27,7 +27,7 @@ import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from 
 
 const DEFAULT_DATASOURCE = 'default';
 
-const keepOnlyUserDefinedVariables = (v: SceneVariable) => !v.UNSAFE_renderAsHidden;
+export const keepOnlyUserDefinedVariables = (v: SceneVariable) => !v.UNSAFE_renderAsHidden;
 
 /**
  * Excludes internal system variables (e.g. ScopesVariable)

@@ -10,7 +10,6 @@ import {
 } from 'app/features/dashboard-scene/utils/collectAncestorSceneVariables';
 import { useSelector } from 'app/types/store';
 
-import { useUserDefinedVariables } from '../../../dashboard-scene/utils/variables';
 import { getLastKey, getVariablesByKey } from '../../../variables/state/selectors';
 
 export interface Props {

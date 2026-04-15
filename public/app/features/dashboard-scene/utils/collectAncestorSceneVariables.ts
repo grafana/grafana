@@ -1,5 +1,7 @@
 import { type SceneObject, type SceneVariable, SceneVariableSet } from '@grafana/scenes';
 
+import { keepOnlyUserDefinedVariables } from './variables';
+
 /**
  * Resolves variables visible when editing from `sceneObject` (e.g. repeat options).
  *
@@ -15,7 +17,8 @@ export function collectAncestorSceneVariables(sceneObject: SceneObject): SceneVa
 
   while (current) {
     if (current.state.$variables instanceof SceneVariableSet) {
-      for (const variable of current.state.$variables.state.variables) {
+      const variables = current.state.$variables.state.variables.filter(keepOnlyUserDefinedVariables);
+      for (const variable of variables) {
         const name = variable.state.name;
         if (!seenNames.has(name)) {
           seenNames.add(name);
