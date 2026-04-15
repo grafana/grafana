@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { sceneGraph, type SceneObject, sceneUtils, useSceneObjectState } from '@grafana/scenes';
+import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext, useTheme2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -21,10 +21,8 @@ import { DashboardCodePane } from './DashboardCodePane';
 import { type DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
-import { ElementEditPane } from './ElementEditPane';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
-import { applyJsonToDashboard, getDashboardJsonText } from './codePaneUtils';
-import { getEditableElementForSelection } from './shared';
+import { type DashboardSidebarPane } from './types';
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -35,7 +33,7 @@ export interface Props {
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
 export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
-  const { openPane, selectionContext, isNewElement, openPaneTempHack } = useSceneObjectState(editPane, {
+  const { openPane, selectionContext } = useSceneObjectState(editPane, {
     shouldActivateOrKeepAlive: true,
   });
   const { isEditing, meta, uid } = dashboard.useState();
@@ -43,18 +41,6 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const hasUid = Boolean(uid);
   const isEmbedded = meta.isEmbedded;
   const selectedObject = editPane.getSelectedObject();
-  // the layout element that was selected when opening the 'add' pane
-  // used when adding new panel from the sidebar
-  const [lastSelectedElement, setLastSelectedElement] = useState<DashboardScene | SceneObject>(dashboard);
-
-  const editableElement = useMemo(() => {
-    return getEditableElementForSelection(editPane, selectionContext.selected, openPaneTempHack);
-  }, [editPane, selectionContext.selected, openPaneTempHack]);
-
-  const { variables } = sceneGraph.getVariables(dashboard)?.useState() ?? { variables: [] };
-  const adHocVar = variables.find((v) => sceneUtils.isAdHocVariable(v));
-  const groupByVar = variables.find((v) => sceneUtils.isGroupByVariable(v));
-
   const theme = useTheme2();
   const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
   const sidebarContext = useSidebarContext();
@@ -78,63 +64,18 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
 
   return (
     <>
-      {editableElement && isEditing && (
-        <Sidebar.OpenPane>
-          <ElementEditPane
-            key={selectionContext.selected.map((s) => s.id).join(',')} // force remount when selection changes
-            editPane={editPane}
-            element={editableElement}
-            isNewElement={isNewElement}
-          />
-        </Sidebar.OpenPane>
-      )}
-      {openPane === 'add' && (
-        <Sidebar.OpenPane>
-          <AddNewEditPane
-            selectedElement={lastSelectedElement}
-            onAddPanel={() => editPane.addNewPanel(lastSelectedElement)}
-            onPastePanel={() => editPane.pastePanel(lastSelectedElement, 'sidebar')}
-            dashboard={dashboard}
-          />
-        </Sidebar.OpenPane>
-      )}
-      {openPane === 'outline' && (
-        <Sidebar.OpenPane>
-          <DashboardOutline editPane={editPane} isEditing={isEditing} />
-        </Sidebar.OpenPane>
-      )}
-      {openPane === 'filters' && (
-        <Sidebar.OpenPane>
-          <DashboardFiltersOverviewPane
-            adhocFilters={adHocVar}
-            groupByVariable={groupByVar}
-            onClose={() => editPane.closePane()}
-          />
-        </Sidebar.OpenPane>
-      )}
-      {openPane === 'code' && (
-        <Sidebar.OpenPane>
-          <DashboardCodePane
-            key={dashboard.state.key}
-            initialValue={getDashboardJsonText(dashboard)}
-            onApply={(jsonText) => applyJsonToDashboard(dashboard, jsonText)}
-          />
-        </Sidebar.OpenPane>
-      )}
+      {openPane && <Sidebar.OpenPane>{openPane && <openPane.Component model={openPane} />}</Sidebar.OpenPane>}
       <Sidebar.Toolbar>
         {isEditing && (
           <div className={styles.editGroup}>
             <Sidebar.Button
               icon="plus"
               variant="primary"
-              onClick={() => {
-                setLastSelectedElement(selectedObject ?? dashboard);
-                editPane.openPane('add');
-              }}
+              onClick={() => editPane.openPane(new AddNewEditPane({}))}
               title={t('dashboard.sidebar.add.title', 'Add')}
               tooltip={t('dashboard.sidebar.add.tooltip', 'Add new element')}
               data-testid={selectors.pages.Dashboard.Sidebar.addButton}
-              active={selectedObject === null || openPane === 'add'}
+              active={openPane instanceof AddNewEditPane}
             />
 
             <Sidebar.Button
@@ -169,8 +110,8 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               tooltip={t('dashboard.sidebar.edit-schema.tooltip', 'Edit as code')}
               title={t('dashboard.sidebar.edit-schema.title', 'Code')}
               icon="brackets-curly"
-              onClick={() => editPane.openPane('code')}
-              active={openPane === 'code'}
+              onClick={() => editPane.openPane(new DashboardCodePane({}))}
+              active={openPane instanceof DashboardCodePane}
             />
             {config.featureToggles.dashboardUndoRedo && (
               <>
@@ -185,23 +126,16 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
           {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
           <Sidebar.Button
             icon="list-ui-alt"
-            onClick={() => editPane.openPane('outline')}
+            onClick={() => editPane.openPane(new DashboardOutline({}))}
             title={t('dashboard.sidebar.outline.title', 'Outline')}
             tooltip={t('dashboard.sidebar.outline.tooltip', 'Content outline')}
             data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
-            active={openPane === 'outline'}
+            active={openPane instanceof DashboardOutline}
           />
           {config.featureToggles.dashboardNewLayouts &&
             (config.featureToggles.dashboardFiltersOverview ||
-              config.featureToggles.dashboardUnifiedDrilldownControls) &&
-            adHocVar && (
-              <Sidebar.Button
-                icon="filter"
-                onClick={() => editPane.openPane('filters')}
-                title={t('dashboards.filters-overview.filters', 'Filters')}
-                tooltip={t('dashboards.filters-overview.open', 'Open filters overview pane')}
-                active={openPane === 'filters'}
-              />
+              config.featureToggles.dashboardUnifiedDrilldownControls) && (
+              <FiltersOverviewButton editPane={editPane} openPane={openPane} />
             )}
           {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
           {renderEnterpriseItems()}
@@ -228,6 +162,31 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
         </div>
       </Sidebar.Toolbar>
     </>
+  );
+}
+
+function FiltersOverviewButton({
+  editPane,
+  openPane,
+}: {
+  editPane: DashboardEditPane;
+  openPane: DashboardSidebarPane | undefined;
+}) {
+  const variables: SceneVariable[] = sceneGraph.getVariables(editPane)?.useState().variables ?? [];
+  const hasFilters = variables.some((v) => v.state.type === 'adhoc');
+
+  if (!hasFilters) {
+    return null;
+  }
+
+  return (
+    <Sidebar.Button
+      icon="filter"
+      onClick={() => editPane.openPane(new DashboardFiltersOverviewPane({}))}
+      title={t('dashboard.sidebar.filters', 'Filters')}
+      tooltip={t('dashboard.sidebar.open', 'Filters overview')}
+      active={openPane instanceof DashboardFiltersOverviewPane}
+    />
   );
 }
 

@@ -1,9 +1,6 @@
 import { render, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import { GrafanaEdition } from '@grafana/data/internal';
-import { config } from '@grafana/runtime';
-
 import { mockLocalStorage } from '../mocks';
 import { getPreviewToggle, setPreviewToggle } from '../previewToggles';
 
@@ -58,19 +55,21 @@ describe('RuleListPageTitle', () => {
     expect(ui.revertButton.query()).not.toBeInTheDocument();
   });
 
-  it('should not show toggle button on non-OSS editions even when flag is enabled', () => {
-    config.buildInfo.edition = GrafanaEdition.Enterprise;
-    renderRuleListPageTitle();
-    expect(ui.useNewExperienceButton.query()).not.toBeInTheDocument();
-    expect(ui.revertButton.query()).not.toBeInTheDocument();
+  describe('when alertingListViewV2PreviewToggle is enabled', () => {
+    testWithFeatureToggles({ enable: ['alertingListViewV2PreviewToggle', 'alertingListViewV2'] });
+
+    beforeEach(() => {
+      setPreviewToggle('alertingListViewV2', true);
+    });
+
+    it('should show the revert toggle button', () => {
+      renderRuleListPageTitle();
+      expect(ui.revertButton.get()).toBeInTheDocument();
+    });
   });
 
   describe('when on OLD view (alertingListViewV2PreviewToggle enabled, alertingListViewV2 disabled)', () => {
     testWithFeatureToggles({ enable: ['alertingListViewV2PreviewToggle'] });
-
-    beforeEach(() => {
-      config.buildInfo.edition = GrafanaEdition.OpenSource;
-    });
 
     it('should show "Use new experience" button', () => {
       renderRuleListPageTitle();
@@ -96,7 +95,6 @@ describe('RuleListPageTitle', () => {
     testWithFeatureToggles({ enable: ['alertingListViewV2PreviewToggle', 'alertingListViewV2'] });
 
     beforeEach(() => {
-      config.buildInfo.edition = GrafanaEdition.OpenSource;
       setPreviewToggle('alertingListViewV2', true);
     });
 
