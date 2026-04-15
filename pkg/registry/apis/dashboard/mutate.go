@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
@@ -59,6 +60,8 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 			delete(v.Spec.Object, "id")
 			internalID = int64(id)
 		}
+		// Strip BOMs from all string values in the dashboard spec
+		v.Spec.Object = util.StripBOMFromInterface(v.Spec.Object).(map[string]any)
 		resourceInfo = dashboardV0.DashboardResourceInfo
 
 	case *dashboardV1.Dashboard:
@@ -68,6 +71,8 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 			delete(v.Spec.Object, "id")
 			internalID = int64(id)
 		}
+		// Strip BOMs from all string values in the dashboard spec
+		v.Spec.Object = util.StripBOMFromInterface(v.Spec.Object).(map[string]any)
 		resourceInfo = dashboardV1.DashboardResourceInfo
 		migrationErr = migration.Migrate(ctx, v.Spec.Object, schemaversion.LATEST_VERSION)
 		if migrationErr != nil {
@@ -86,6 +91,12 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				Spec: dashboardV2alpha1.DashboardGridLayoutSpec{},
 			}
 		}
+		// Strip BOMs from title and description
+		v.Spec.Title = util.StripBOM(v.Spec.Title)
+		if v.Spec.Description != nil {
+			stripped := util.StripBOM(*v.Spec.Description)
+			v.Spec.Description = &stripped
+		}
 		resourceInfo = dashboardV2alpha1.DashboardResourceInfo
 
 	case *dashboardV2beta1.Dashboard:
@@ -97,6 +108,12 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				Spec: dashboardV2beta1.DashboardGridLayoutSpec{},
 			}
 		}
+		// Strip BOMs from title and description
+		v.Spec.Title = util.StripBOM(v.Spec.Title)
+		if v.Spec.Description != nil {
+			stripped := util.StripBOM(*v.Spec.Description)
+			v.Spec.Description = &stripped
+		}
 		resourceInfo = dashboardV2beta1.DashboardResourceInfo
 
 	case *dashboardV2.Dashboard:
@@ -105,6 +122,12 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				Kind: "GridLayout",
 				Spec: dashboardV2.DashboardGridLayoutSpec{},
 			}
+		}
+		// Strip BOMs from title and description
+		v.Spec.Title = util.StripBOM(v.Spec.Title)
+		if v.Spec.Description != nil {
+			stripped := util.StripBOM(*v.Spec.Description)
+			v.Spec.Description = &stripped
 		}
 		resourceInfo = dashboardV2.DashboardResourceInfo
 
