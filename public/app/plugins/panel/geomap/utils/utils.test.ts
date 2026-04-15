@@ -1,4 +1,5 @@
 import Feature from 'ol/Feature';
+import type OpenLayersMap from 'ol/Map';
 import Point from 'ol/geom/Point';
 import LayerGroup from 'ol/layer/Group';
 import TileLayer from 'ol/layer/Tile';
@@ -208,16 +209,18 @@ describe('isSegmentVisible', () => {
   it('should return true when segment spans more pixels than tolerance', () => {
     const map = {
       getPixelFromCoordinate: (coord: number[]) => coord,
-    } as unknown as import('ol/Map').default;
+    } as unknown as OpenLayersMap;
 
-    expect(isSegmentVisible(map, 1, [0, 0], [10, 0])).toBe(true);
+    const pixelTolerance = 1;
+    expect(isSegmentVisible(map, pixelTolerance, [0, 0], [10, 0])).toBe(true);
   });
 
   it('should return false when segment is within pixel tolerance', () => {
     const map = {
       getPixelFromCoordinate: (coord: number[]) => coord,
-    } as unknown as import('ol/Map').default;
+    } as unknown as OpenLayersMap;
 
-    expect(isSegmentVisible(map, 5, [0, 0], [1, 1])).toBe(false);
+    const pixelTolerance = 5;
+    expect(isSegmentVisible(map, pixelTolerance, [0, 0], [1, 1])).toBe(false);
   });
 });
