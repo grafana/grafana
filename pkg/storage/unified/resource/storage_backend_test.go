@@ -685,7 +685,7 @@ func TestKvStorageBackend_ReadResource_TooHighResourceVersion(t *testing.T) {
 	require.NotNil(t, response.Error, "ReadResource should return error for too high resource version")
 	require.Equal(t, int32(400), response.Error.Code)
 	require.Equal(t, "BadRequest", response.Error.Reason)
-	require.Contains(t, response.Error.Message, "resource version too large")
+	require.Contains(t, response.Error.Message, "too large resource version")
 }
 
 func TestKvStorageBackend_ListIterator_Success(t *testing.T) {

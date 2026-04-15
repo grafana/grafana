@@ -981,7 +981,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		// Check if the requested RV is higher than the latest available RV
 		if req.ResourceVersion > latestRV {
 			return &BackendReadResponse{
-				Error: NewBadRequestError(fmt.Sprintf("resource version too large: %d (current %d)", req.ResourceVersion, latestRV)),
+				Error: NewBadRequestError(fmt.Sprintf("too large resource version: %d (current %d)", req.ResourceVersion, latestRV)),
 			}
 		}
 	}
