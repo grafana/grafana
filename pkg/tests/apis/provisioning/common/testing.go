@@ -493,18 +493,18 @@ func getNameBeforeLastDash(name string) string {
 	return name[:lastDashIndex]
 }
 
+// TestdataPath returns the absolute path to a file in the shared testdata directory.
+func TestdataPath(filename string) string {
+	//nolint:dogsled
+	_, thisFile, _, _ := runtime.Caller(0)
+	return filepath.Join(filepath.Dir(thisFile), "../testdata", filename)
+}
+
 // RenderObject reads the filePath and renders it as a template with the given values.
-// The template is expected to be a YAML or JSON file.
-//
-// The values object is mutated to also include the helper property as `h`.
-func (h *ProvisioningTestHelper) RenderObject(t *testing.T, filePath string, values map[string]any) *unstructured.Unstructured {
+// The template is expected to be a YAML or JSON file. Values can be any type (struct, map, etc.).
+func (h *ProvisioningTestHelper) RenderObject(t *testing.T, filePath string, values any) *unstructured.Unstructured {
 	t.Helper()
 	file := readTestFile(t, filePath)
-
-	if values == nil {
-		values = make(map[string]any)
-	}
-	values["h"] = h
 
 	tmpl, err := template.New(filePath).Parse(string(file))
 	require.NoError(t, err, "failed to parse template")
@@ -729,11 +729,37 @@ func (h *ProvisioningTestHelper) ValidateManagedDashboardsFolderMetadata(t *test
 	}
 }
 
+func marshalWorkflows(t *testing.T, workflows []string) string {
+	t.Helper()
+	if workflows == nil {
+		workflows = []string{}
+	}
+	b, err := json.Marshal(workflows)
+	require.NoError(t, err)
+	return string(b)
+}
+
 type TestRepo struct {
-	Name                   string
-	Target                 string
-	Path                   string
-	Values                 map[string]any
+	// Template fields (directly accessible by Go templates via .FieldName)
+	Name                      string
+	Title                     string
+	Description               string
+	SyncEnabled               bool
+	SyncTarget                string
+	SyncIntervalSeconds       int
+	Path                      string
+	Workflows                 []string
+	WorkflowsJSON             string
+	URL                       string
+	Branch                    string
+	Token                     string
+	TokenUser                 string
+	WebhookSecret             string
+	GenerateName              string
+	GenerateDashboardPreviews bool
+
+	// Test control fields (not used by templates)
+	LocalPath              string
 	Copies                 map[string]string
 	ExpectedDashboards     int
 	ExpectedFolders        int
@@ -742,51 +768,101 @@ type TestRepo struct {
 	Template               string
 }
 
-func (h *ProvisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
-	if repo.Target == "" {
-		repo.Target = "instance"
-	}
+type LocalRepositorySpec struct {
+	Name                string
+	SyncEnabled         bool
+	SyncTarget          string
+	SyncIntervalSeconds int
+	Path                string
+	Title               string
+	Description         string
+	Workflows           []string
+	WorkflowsJSON       string
+}
 
-	// Use custom path if provided, otherwise use default provisioning path
-	repoPath := h.ProvisioningPath
-	if repo.Path != "" {
-		repoPath = repo.Path
-		// Ensure the directory exists
-		err := os.MkdirAll(repoPath, 0o750)
+func (h *ProvisioningTestHelper) CreateLocalRepository(t *testing.T, repo LocalRepositorySpec) {
+	t.Helper()
+
+	if repo.SyncTarget == "" {
+		repo.SyncTarget = "folder"
+	}
+	if repo.Path == "" {
+		repo.Path = h.ProvisioningPath
+	}
+	repo.WorkflowsJSON = marshalWorkflows(t, repo.Workflows)
+
+	localRepo := h.RenderObject(t, TestdataPath("local.json.tmpl"), repo)
+
+	_, err := h.Repositories.Resource.Create(t.Context(), localRepo, metav1.CreateOptions{})
+	require.NoError(t, err)
+	h.WaitForHealthyRepository(t, repo.Name)
+}
+
+type GitHubRepositorySpec struct {
+	Name                      string
+	GenerateName              string
+	SyncEnabled               bool
+	SyncTarget                string
+	SyncIntervalSeconds       int
+	URL                       string
+	Branch                    string
+	Path                      string
+	Title                     string
+	Description               string
+	Token                     string
+	TokenUser                 string
+	WebhookSecret             string
+	GenerateDashboardPreviews bool
+	Workflows                 []string
+	WorkflowsJSON             string
+}
+
+func (h *ProvisioningTestHelper) CreateGitHubRepository(t *testing.T, repo GitHubRepositorySpec) string {
+	t.Helper()
+
+	if repo.SyncTarget == "" {
+		repo.SyncTarget = "folder"
+	}
+	repo.WorkflowsJSON = marshalWorkflows(t, repo.Workflows)
+
+	githubRepo := h.RenderObject(t, TestdataPath("github.json.tmpl"), repo)
+	createdRepo, err := h.Repositories.Resource.Create(t.Context(), githubRepo, metav1.CreateOptions{})
+	require.NoError(t, err)
+	createdName := createdRepo.GetName()
+	require.NotEmpty(t, createdName)
+
+	h.WaitForHealthyRepository(t, createdName)
+	return createdName
+}
+
+func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
+	if repo.SyncTarget == "" {
+		repo.SyncTarget = "instance"
+	}
+	repo.SyncEnabled = !repo.SkipSync
+	repo.WorkflowsJSON = marshalWorkflows(t, repo.Workflows)
+
+	localPath := h.ProvisioningPath
+	if repo.LocalPath != "" {
+		localPath = repo.LocalPath
+		err := os.MkdirAll(localPath, 0o750)
 		require.NoError(t, err, "should be able to create repository path")
 	}
-
-	templateVars := map[string]any{
-		"Name":        repo.Name,
-		"SyncEnabled": !repo.SkipSync,
-		"SyncTarget":  repo.Target,
-	}
-	if repo.Path != "" {
-		templateVars["Path"] = repoPath
-	}
-	// Add custom values from TestRepo
-	for key, value := range repo.Values {
-		templateVars[key] = value
-	}
-
-	var thisFile string
-	if _, file, _, ok := runtime.Caller(0); ok {
-		thisFile = file
-	}
-	tmpl := filepath.Join(filepath.Dir(thisFile), "../testdata/local-write.json.tmpl")
+	tmpl := TestdataPath("local.json.tmpl")
 	if repo.Template != "" {
 		tmpl = repo.Template
+	} else if repo.Path == "" {
+		repo.Path = localPath
 	}
-	localTmp := h.RenderObject(t, tmpl, templateVars)
+	localTmp := h.RenderObject(t, tmpl, repo)
 
 	_, err := h.Repositories.Resource.Create(t.Context(), localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
 	h.WaitForHealthyRepository(t, repo.Name)
 
 	for from, to := range repo.Copies {
-		if repo.Path != "" {
-			// Copy to custom path
-			fullPath := path.Join(repoPath, to)
+		if repo.LocalPath != "" {
+			fullPath := path.Join(localPath, to)
 			err := os.MkdirAll(path.Dir(fullPath), 0o750)
 			require.NoError(t, err, "failed to create directories for custom path")
 			file := readTestFile(t, from)
@@ -2512,49 +2588,22 @@ func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget 
 	if len(workflows) == 0 {
 		workflows = []string{"write"}
 	}
-
-	repoSpec := map[string]interface{}{
-		"apiVersion": "provisioning.grafana.app/v0alpha1",
-		"kind":       "Repository",
-		"metadata": map[string]interface{}{
-			"name":      repoName,
-			"namespace": "default",
-		},
-		"spec": map[string]interface{}{
-			"title":       fmt.Sprintf("Test Repository %s", repoName),
-			"description": fmt.Sprintf("Integration test repository for %s", repoName),
-			"type":        "git",
-			"git": map[string]interface{}{
-				"url":       remote.URL,
-				"branch":    "main",
-				"path":      "",
-				"tokenUser": user.Username,
-			},
-			"sync": map[string]interface{}{
-				"enabled":         false,
-				"target":          syncTarget,
-				"intervalSeconds": 60,
-			},
-			"workflows": workflows,
-		},
-		"secure": map[string]interface{}{
-			"token": map[string]interface{}{
-				"create": user.Password,
-			},
-		},
-	}
-
-	repoJSON, err := json.Marshal(repoSpec)
+	workflowsJSON, err := json.Marshal(workflows)
 	require.NoError(t, err)
 
-	result := h.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Body(repoJSON).
-		SetHeader("Content-Type", "application/json").
-		Do(context.Background())
+	repoObj := h.RenderObject(t, TestdataPath("git.json.tmpl"), map[string]any{
+		"Name":          repoName,
+		"Title":         fmt.Sprintf("Test Repository %s", repoName),
+		"URL":           remote.URL,
+		"Branch":        "main",
+		"TokenUser":     user.Username,
+		"SyncTarget":    syncTarget,
+		"Token":         user.Password,
+		"WorkflowsJSON": string(workflowsJSON),
+	})
 
-	require.NoError(t, result.Error(), "failed to create repository")
+	_, err = h.Repositories.Resource.Create(ctx, repoObj, metav1.CreateOptions{})
+	require.NoError(t, err, "failed to create repository")
 
 	h.waitForReadyRepository(t, repoName)
 
@@ -2756,44 +2805,19 @@ func (h *GitTestHelper) CreateExportGitRepo(t *testing.T, repoName string) {
 	_, err = local.InitWithRemote(user, remote)
 	require.NoError(t, err, "failed to initialize local repo with remote")
 
-	spec := map[string]interface{}{
-		"apiVersion": "provisioning.grafana.app/v0alpha1",
-		"kind":       "Repository",
-		"metadata": map[string]interface{}{
-			"name":      repoName,
-			"namespace": "default",
-		},
-		"spec": map[string]interface{}{
-			"title": repoName,
-			"type":  "git",
-			"git": map[string]interface{}{
-				"url":       remote.URL,
-				"branch":    "main",
-				"tokenUser": user.Username,
-			},
-			"sync": map[string]interface{}{
-				"enabled": false,
-				"target":  "instance",
-			},
-			"workflows": []string{"write"},
-		},
-		"secure": map[string]interface{}{
-			"token": map[string]interface{}{
-				"create": user.Password,
-			},
-		},
-	}
+	repoObj := h.RenderObject(t, TestdataPath("git.json.tmpl"), map[string]any{
+		"Name":          repoName,
+		"Title":         repoName,
+		"URL":           remote.URL,
+		"Branch":        "main",
+		"TokenUser":     user.Username,
+		"SyncTarget":    "instance",
+		"Token":         user.Password,
+		"WorkflowsJSON": `["write"]`,
+	})
 
-	body, err := json.Marshal(spec)
-	require.NoError(t, err)
-
-	result := h.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Body(body).
-		SetHeader("Content-Type", "application/json").
-		Do(ctx)
-	require.NoError(t, result.Error(), "failed to register export git repository %q with Grafana", repoName)
+	_, err = h.Repositories.Resource.Create(ctx, repoObj, metav1.CreateOptions{})
+	require.NoError(t, err, "failed to register export git repository %q with Grafana", repoName)
 
 	h.waitForReadyRepository(t, repoName)
 }
