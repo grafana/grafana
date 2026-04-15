@@ -88,7 +88,9 @@ u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
 type ProvisioningTestHelper struct {
 	*apis.K8sTestHelper
 	ProvisioningPath string
+	Namespace        string // Namespace for this helper (set by WithNamespace or defaults to "default")
 
+	// Default clients for Org1 (backwards compatibility)
 	Repositories       *apis.K8sResourceClient
 	Connections        *apis.K8sResourceClient
 	Jobs               *apis.K8sResourceClient
@@ -100,6 +102,93 @@ type ProvisioningTestHelper struct {
 	AdminREST          *rest.RESTClient
 	EditorREST         *rest.RESTClient
 	ViewerREST         *rest.RESTClient
+}
+
+// WithNamespace returns a new ProvisioningTestHelper scoped to the specified namespace and user.
+// This is useful for multi-org testing where you need separate helpers for different organizations.
+func (h *ProvisioningTestHelper) WithNamespace(namespace string, user apis.User) *ProvisioningTestHelper {
+	gv := &schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"}
+
+	return &ProvisioningTestHelper{
+		ProvisioningPath: h.ProvisioningPath,
+		Namespace:        namespace,
+		K8sTestHelper:    h.K8sTestHelper,
+
+		Repositories: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       provisioning.RepositoryResourceInfo.GroupVersionResource(),
+		}),
+		Connections: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       provisioning.ConnectionResourceInfo.GroupVersionResource(),
+		}),
+		Jobs: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       provisioning.JobResourceInfo.GroupVersionResource(),
+		}),
+		Folders: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       folder.FolderResourceInfo.GroupVersionResource(),
+		}),
+		DashboardsV0: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       dashboardV0.DashboardResourceInfo.GroupVersionResource(),
+		}),
+		DashboardsV1: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
+		}),
+		DashboardsV2alpha1: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       dashboardsV2alpha1.DashboardResourceInfo.GroupVersionResource(),
+		}),
+		DashboardsV2beta1: h.GetResourceClient(apis.ResourceClientArgs{
+			User:      user,
+			Namespace: namespace,
+			GVR:       dashboardsV2beta1.DashboardResourceInfo.GroupVersionResource(),
+		}),
+		AdminREST:  user.RESTClient(nil, gv),
+		EditorREST: user.RESTClient(nil, gv),
+		ViewerREST: user.RESTClient(nil, gv),
+	}
+}
+
+// Cleanup deletes all provisioning resources in the helper's namespace.
+// This should be called (typically via defer) after tests that create resources in specific namespaces.
+func (h *ProvisioningTestHelper) Cleanup(t *testing.T) {
+	t.Helper()
+	ctx := context.Background()
+
+	// Delete all repositories
+	if err := h.Repositories.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		t.Logf("warning: failed to delete repositories: %v", err)
+	}
+
+	// Delete all connections
+	if err := h.Connections.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		t.Logf("warning: failed to delete connections: %v", err)
+	}
+
+	// Delete all folders
+	if err := h.Folders.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		t.Logf("warning: failed to delete folders: %v", err)
+	}
+
+	// Delete all dashboards (V0, V1, V2alpha1, V2beta1)
+	for _, client := range []*apis.K8sResourceClient{h.DashboardsV0, h.DashboardsV1, h.DashboardsV2alpha1, h.DashboardsV2beta1} {
+		if client != nil {
+			if err := client.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil && !apierrors.IsNotFound(err) {
+				t.Logf("warning: failed to delete dashboards: %v", err)
+			}
+		}
+	}
 }
 
 func (h *ProvisioningTestHelper) SyncAndWait(t *testing.T, repo string, options *provisioning.SyncJobOptions) {
@@ -114,7 +203,7 @@ func (h *ProvisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 	})
 
 	result := h.AdminREST.Post().
-		Namespace("default").
+		Namespace(h.Namespace).
 		Resource("repositories").
 		Name(repo).
 		SubResource("jobs").
@@ -404,18 +493,18 @@ func getNameBeforeLastDash(name string) string {
 	return name[:lastDashIndex]
 }
 
+// TestdataPath returns the absolute path to a file in the shared testdata directory.
+func TestdataPath(filename string) string {
+	//nolint:dogsled
+	_, thisFile, _, _ := runtime.Caller(0)
+	return filepath.Join(filepath.Dir(thisFile), "../testdata", filename)
+}
+
 // RenderObject reads the filePath and renders it as a template with the given values.
-// The template is expected to be a YAML or JSON file.
-//
-// The values object is mutated to also include the helper property as `h`.
-func (h *ProvisioningTestHelper) RenderObject(t *testing.T, filePath string, values map[string]any) *unstructured.Unstructured {
+// The template is expected to be a YAML or JSON file. Values can be any type (struct, map, etc.).
+func (h *ProvisioningTestHelper) RenderObject(t *testing.T, filePath string, values any) *unstructured.Unstructured {
 	t.Helper()
 	file := readTestFile(t, filePath)
-
-	if values == nil {
-		values = make(map[string]any)
-	}
-	values["h"] = h
 
 	tmpl, err := template.New(filePath).Parse(string(file))
 	require.NoError(t, err, "failed to parse template")
@@ -640,11 +729,37 @@ func (h *ProvisioningTestHelper) ValidateManagedDashboardsFolderMetadata(t *test
 	}
 }
 
+func marshalWorkflows(t *testing.T, workflows []string) string {
+	t.Helper()
+	if workflows == nil {
+		workflows = []string{}
+	}
+	b, err := json.Marshal(workflows)
+	require.NoError(t, err)
+	return string(b)
+}
+
 type TestRepo struct {
-	Name                   string
-	Target                 string
-	Path                   string
-	Values                 map[string]any
+	// Template fields (directly accessible by Go templates via .FieldName)
+	Name                      string
+	Title                     string
+	Description               string
+	SyncEnabled               bool
+	SyncTarget                string
+	SyncIntervalSeconds       int
+	Path                      string
+	Workflows                 []string
+	WorkflowsJSON             string
+	URL                       string
+	Branch                    string
+	Token                     string
+	TokenUser                 string
+	WebhookSecret             string
+	GenerateName              string
+	GenerateDashboardPreviews bool
+
+	// Test control fields (not used by templates)
+	LocalPath              string
 	Copies                 map[string]string
 	ExpectedDashboards     int
 	ExpectedFolders        int
@@ -653,51 +768,101 @@ type TestRepo struct {
 	Template               string
 }
 
-func (h *ProvisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
-	if repo.Target == "" {
-		repo.Target = "instance"
-	}
+type LocalRepositorySpec struct {
+	Name                string
+	SyncEnabled         bool
+	SyncTarget          string
+	SyncIntervalSeconds int
+	Path                string
+	Title               string
+	Description         string
+	Workflows           []string
+	WorkflowsJSON       string
+}
 
-	// Use custom path if provided, otherwise use default provisioning path
-	repoPath := h.ProvisioningPath
-	if repo.Path != "" {
-		repoPath = repo.Path
-		// Ensure the directory exists
-		err := os.MkdirAll(repoPath, 0o750)
+func (h *ProvisioningTestHelper) CreateLocalRepository(t *testing.T, repo LocalRepositorySpec) {
+	t.Helper()
+
+	if repo.SyncTarget == "" {
+		repo.SyncTarget = "folder"
+	}
+	if repo.Path == "" {
+		repo.Path = h.ProvisioningPath
+	}
+	repo.WorkflowsJSON = marshalWorkflows(t, repo.Workflows)
+
+	localRepo := h.RenderObject(t, TestdataPath("local.json.tmpl"), repo)
+
+	_, err := h.Repositories.Resource.Create(t.Context(), localRepo, metav1.CreateOptions{})
+	require.NoError(t, err)
+	h.WaitForHealthyRepository(t, repo.Name)
+}
+
+type GitHubRepositorySpec struct {
+	Name                      string
+	GenerateName              string
+	SyncEnabled               bool
+	SyncTarget                string
+	SyncIntervalSeconds       int
+	URL                       string
+	Branch                    string
+	Path                      string
+	Title                     string
+	Description               string
+	Token                     string
+	TokenUser                 string
+	WebhookSecret             string
+	GenerateDashboardPreviews bool
+	Workflows                 []string
+	WorkflowsJSON             string
+}
+
+func (h *ProvisioningTestHelper) CreateGitHubRepository(t *testing.T, repo GitHubRepositorySpec) string {
+	t.Helper()
+
+	if repo.SyncTarget == "" {
+		repo.SyncTarget = "folder"
+	}
+	repo.WorkflowsJSON = marshalWorkflows(t, repo.Workflows)
+
+	githubRepo := h.RenderObject(t, TestdataPath("github.json.tmpl"), repo)
+	createdRepo, err := h.Repositories.Resource.Create(t.Context(), githubRepo, metav1.CreateOptions{})
+	require.NoError(t, err)
+	createdName := createdRepo.GetName()
+	require.NotEmpty(t, createdName)
+
+	h.WaitForHealthyRepository(t, createdName)
+	return createdName
+}
+
+func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
+	if repo.SyncTarget == "" {
+		repo.SyncTarget = "instance"
+	}
+	repo.SyncEnabled = !repo.SkipSync
+	repo.WorkflowsJSON = marshalWorkflows(t, repo.Workflows)
+
+	localPath := h.ProvisioningPath
+	if repo.LocalPath != "" {
+		localPath = repo.LocalPath
+		err := os.MkdirAll(localPath, 0o750)
 		require.NoError(t, err, "should be able to create repository path")
 	}
-
-	templateVars := map[string]any{
-		"Name":        repo.Name,
-		"SyncEnabled": !repo.SkipSync,
-		"SyncTarget":  repo.Target,
-	}
-	if repo.Path != "" {
-		templateVars["Path"] = repoPath
-	}
-	// Add custom values from TestRepo
-	for key, value := range repo.Values {
-		templateVars[key] = value
-	}
-
-	var thisFile string
-	if _, file, _, ok := runtime.Caller(0); ok {
-		thisFile = file
-	}
-	tmpl := filepath.Join(filepath.Dir(thisFile), "../testdata/local-write.json.tmpl")
+	tmpl := TestdataPath("local.json.tmpl")
 	if repo.Template != "" {
 		tmpl = repo.Template
+	} else if repo.Path == "" {
+		repo.Path = localPath
 	}
-	localTmp := h.RenderObject(t, tmpl, templateVars)
+	localTmp := h.RenderObject(t, tmpl, repo)
 
 	_, err := h.Repositories.Resource.Create(t.Context(), localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
 	h.WaitForHealthyRepository(t, repo.Name)
 
 	for from, to := range repo.Copies {
-		if repo.Path != "" {
-			// Copy to custom path
-			fullPath := path.Join(repoPath, to)
+		if repo.LocalPath != "" {
+			fullPath := path.Join(localPath, to)
 			err := os.MkdirAll(path.Dir(fullPath), 0o750)
 			require.NoError(t, err, "failed to create directories for custom path")
 			file := readTestFile(t, from)
@@ -1006,6 +1171,7 @@ func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provis
 
 	h := &ProvisioningTestHelper{
 		ProvisioningPath: provisioningPath,
+		Namespace:        "default", // Default namespace (org1)
 		K8sTestHelper:    k8sHelper,
 
 		Repositories:       repositories,
@@ -1957,77 +2123,113 @@ func (h *ProvisioningTestHelper) GetRepositories() *apis.K8sResourceClient {
 	return h.Repositories
 }
 
-// SyncAndWaitWithSuccess triggers a full pull sync, asserts that it succeeds,
-// and waits for the repository's lastRef to be set. Use this as the initial
-// sync in tests that later trigger incremental syncs, so that lastRef is
-// guaranteed to be populated.
-func SyncAndWaitWithSuccess(t *testing.T, h SyncHelper, repoName string) {
-	t.Helper()
+// ---------------------------------------------------------------------------
+// Job matchers — composable assertions for completed sync jobs.
+// ---------------------------------------------------------------------------
 
-	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
-	})
-	requireJobSuccess(t, job)
-	waitForRepoLastRef(t, h.GetRepositories(), repoName)
+// JobMatcher asserts properties of a completed sync job.
+type JobMatcher func(t *testing.T, job *unstructured.Unstructured)
+
+// HasState returns a matcher that asserts the job finished in the given state.
+func HasState(expected provisioning.JobState) JobMatcher {
+	return func(t *testing.T, job *unstructured.Unstructured) {
+		t.Helper()
+		actual := MustNestedString(job.Object, "status", "state")
+		require.Equal(t, string(expected), actual,
+			"job %q should have state %s", job.GetName(), expected)
+	}
 }
 
-// SyncAndWaitSuccessfulIncremental triggers an incremental pull sync, waits for
-// it to complete, and asserts that the job succeeded.
-func SyncAndWaitSuccessfulIncremental(t *testing.T, h SyncHelper, repoName string) {
-	t.Helper()
-
-	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{Incremental: true},
-	})
-	requireJobSuccess(t, job)
+// HasNoErrors returns a matcher that asserts the job completed without errors.
+func HasNoErrors() JobMatcher {
+	return func(t *testing.T, job *unstructured.Unstructured) {
+		t.Helper()
+		errs := MustNestedStringSlice(job.Object, "status", "errors")
+		require.Empty(t, errs, "job %q has errors: %v", job.GetName(), errs)
+	}
 }
 
-// RequireJobSuccess asserts that a completed job has state "success" and no errors.
-func requireJobSuccess(t *testing.T, job *unstructured.Unstructured) {
+// ---------------------------------------------------------------------------
+// SyncAndWait — configurable pull-sync helper.
+// ---------------------------------------------------------------------------
+
+// SyncOption configures the behaviour of SyncAndWait.
+type SyncOption func(*syncOpts)
+
+type syncOpts struct {
+	repoName    string
+	incremental bool
+	matchers    []JobMatcher
+}
+
+// Repo sets the repository name for the sync.
+func Repo(name string) SyncOption {
+	return func(o *syncOpts) { o.repoName = name }
+}
+
+// Incremental makes SyncAndWait trigger an incremental pull instead of a full one.
+func Incremental(o *syncOpts) { o.incremental = true }
+
+// Expect adds arbitrary job matchers that are applied to the completed job.
+// For the common cases prefer Succeeded() or Warning() directly.
+func Expect(m ...JobMatcher) SyncOption {
+	return func(o *syncOpts) {
+		o.matchers = append(o.matchers, m...)
+	}
+}
+
+// Succeeded is a SyncOption that asserts the job succeeded with no errors.
+func Succeeded() SyncOption {
+	return Expect(HasNoErrors(), HasState(provisioning.JobStateSuccess))
+}
+
+// Warning is a SyncOption that asserts the job finished with warning state
+// and no errors.
+func Warning() SyncOption {
+	return Expect(HasNoErrors(), HasState(provisioning.JobStateWarning))
+}
+
+// SyncAndWait triggers a pull sync, waits for it to complete, and asserts the
+// expected outcome using the provided matchers.
+//
+// Every call must include Repo() to identify the target repository and an
+// expectation such as Succeeded() or Warning(). Pass Incremental for an
+// incremental sync.
+//
+// Full (non-incremental) syncs also wait for the repository's lastRef to be
+// set, which is required before an incremental sync can be triggered.
+func SyncAndWait(t *testing.T, h SyncHelper, opts ...SyncOption) {
 	t.Helper()
-	lastState := MustNestedString(job.Object, "status", "state")
-	lastErrors := MustNestedStringSlice(job.Object, "status", "errors")
-	require.Empty(t, lastErrors, "job %q has errors: %v", job.GetName(), lastErrors)
-	require.Equal(t, string(provisioning.JobStateSuccess), lastState,
-		"job %q should succeed", job.GetName())
+
+	o := syncOpts{}
+	for _, fn := range opts {
+		fn(&o)
+	}
+
+	require.NotEmpty(t, o.repoName, "SyncAndWait requires Repo()")
+	require.NotEmpty(t, o.matchers, "SyncAndWait requires an expectation such as Succeeded() or Warning()")
+
+	job := h.TriggerJobAndWaitForComplete(t, o.repoName, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{Incremental: o.incremental},
+	})
+
+	for _, m := range o.matchers {
+		m(t, job)
+	}
+
+	if !o.incremental {
+		waitForRepoLastRef(t, h.GetRepositories(), o.repoName)
+	}
 }
 
 // RequireJobWarning asserts that a completed job has state "warning" and no errors.
+// Prefer Warning() for use with SyncAndWait; this standalone function is kept
+// for callers that assert on a job obtained outside SyncAndWait.
 func RequireJobWarning(t *testing.T, job *unstructured.Unstructured) {
 	t.Helper()
-	lastState := MustNestedString(job.Object, "status", "state")
-	lastErrors := MustNestedStringSlice(job.Object, "status", "errors")
-	require.Empty(t, lastErrors, "job %q has errors: %v", job.GetName(), lastErrors)
-	require.Equal(t, string(provisioning.JobStateWarning), lastState,
-		"job %q should have warning state", job.GetName())
-}
-
-// SyncAndWaitWithWarning triggers a full pull sync, asserts that it completes
-// with a warning state (no errors), and waits for lastRef. Use this for syncs
-// where a warning is the expected outcome (e.g. missing folder metadata).
-func SyncAndWaitWithWarning(t *testing.T, h SyncHelper, repoName string) {
-	t.Helper()
-
-	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
-	})
-	RequireJobWarning(t, job)
-	waitForRepoLastRef(t, h.GetRepositories(), repoName)
-}
-
-// SyncAndWaitIncrementalWithWarning triggers an incremental pull sync, waits
-// for it to complete, and asserts that the job finished with a warning state.
-func SyncAndWaitIncrementalWithWarning(t *testing.T, h SyncHelper, repoName string) {
-	t.Helper()
-
-	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{Incremental: true},
-	})
-	RequireJobWarning(t, job)
+	HasNoErrors()(t, job)
+	HasState(provisioning.JobStateWarning)(t, job)
 }
 
 // GetFolderGeneration returns the current generation of the folder with the given UID.
@@ -2386,49 +2588,22 @@ func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget 
 	if len(workflows) == 0 {
 		workflows = []string{"write"}
 	}
-
-	repoSpec := map[string]interface{}{
-		"apiVersion": "provisioning.grafana.app/v0alpha1",
-		"kind":       "Repository",
-		"metadata": map[string]interface{}{
-			"name":      repoName,
-			"namespace": "default",
-		},
-		"spec": map[string]interface{}{
-			"title":       fmt.Sprintf("Test Repository %s", repoName),
-			"description": fmt.Sprintf("Integration test repository for %s", repoName),
-			"type":        "git",
-			"git": map[string]interface{}{
-				"url":       remote.URL,
-				"branch":    "main",
-				"path":      "",
-				"tokenUser": user.Username,
-			},
-			"sync": map[string]interface{}{
-				"enabled":         false,
-				"target":          syncTarget,
-				"intervalSeconds": 60,
-			},
-			"workflows": workflows,
-		},
-		"secure": map[string]interface{}{
-			"token": map[string]interface{}{
-				"create": user.Password,
-			},
-		},
-	}
-
-	repoJSON, err := json.Marshal(repoSpec)
+	workflowsJSON, err := json.Marshal(workflows)
 	require.NoError(t, err)
 
-	result := h.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Body(repoJSON).
-		SetHeader("Content-Type", "application/json").
-		Do(context.Background())
+	repoObj := h.RenderObject(t, TestdataPath("git.json.tmpl"), map[string]any{
+		"Name":          repoName,
+		"Title":         fmt.Sprintf("Test Repository %s", repoName),
+		"URL":           remote.URL,
+		"Branch":        "main",
+		"TokenUser":     user.Username,
+		"SyncTarget":    syncTarget,
+		"Token":         user.Password,
+		"WorkflowsJSON": string(workflowsJSON),
+	})
 
-	require.NoError(t, result.Error(), "failed to create repository")
+	_, err = h.Repositories.Resource.Create(ctx, repoObj, metav1.CreateOptions{})
+	require.NoError(t, err, "failed to create repository")
 
 	h.waitForReadyRepository(t, repoName)
 
@@ -2630,44 +2805,19 @@ func (h *GitTestHelper) CreateExportGitRepo(t *testing.T, repoName string) {
 	_, err = local.InitWithRemote(user, remote)
 	require.NoError(t, err, "failed to initialize local repo with remote")
 
-	spec := map[string]interface{}{
-		"apiVersion": "provisioning.grafana.app/v0alpha1",
-		"kind":       "Repository",
-		"metadata": map[string]interface{}{
-			"name":      repoName,
-			"namespace": "default",
-		},
-		"spec": map[string]interface{}{
-			"title": repoName,
-			"type":  "git",
-			"git": map[string]interface{}{
-				"url":       remote.URL,
-				"branch":    "main",
-				"tokenUser": user.Username,
-			},
-			"sync": map[string]interface{}{
-				"enabled": false,
-				"target":  "instance",
-			},
-			"workflows": []string{"write"},
-		},
-		"secure": map[string]interface{}{
-			"token": map[string]interface{}{
-				"create": user.Password,
-			},
-		},
-	}
+	repoObj := h.RenderObject(t, TestdataPath("git.json.tmpl"), map[string]any{
+		"Name":          repoName,
+		"Title":         repoName,
+		"URL":           remote.URL,
+		"Branch":        "main",
+		"TokenUser":     user.Username,
+		"SyncTarget":    "instance",
+		"Token":         user.Password,
+		"WorkflowsJSON": `["write"]`,
+	})
 
-	body, err := json.Marshal(spec)
-	require.NoError(t, err)
-
-	result := h.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Body(body).
-		SetHeader("Content-Type", "application/json").
-		Do(ctx)
-	require.NoError(t, result.Error(), "failed to register export git repository %q with Grafana", repoName)
+	_, err = h.Repositories.Resource.Create(ctx, repoObj, metav1.CreateOptions{})
+	require.NoError(t, err, "failed to register export git repository %q with Grafana", repoName)
 
 	h.waitForReadyRepository(t, repoName)
 }
@@ -2794,4 +2944,42 @@ func SharedHelper(t *testing.T, env *SharedEnv) *ProvisioningTestHelper {
 	helper := env.GetCleanHelper(t)
 	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient()
 	return helper
+}
+
+// LabelPendingDelete is the label key written by the tenant watcher to mark
+// resources whose namespace is pending deletion.
+const LabelPendingDelete = "cloud.grafana.com/pending-delete"
+
+// SetPendingDeleteLabel adds the pending-delete label to the named resource.
+// It retries on 409 Conflict to handle concurrent status updates from the controller.
+func SetPendingDeleteLabel(t *testing.T, resource dynamic.ResourceInterface, name string) {
+	t.Helper()
+	err := RetryOnConflict(func() error {
+		obj, err := resource.Get(t.Context(), name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		labels := obj.GetLabels()
+		if labels == nil {
+			labels = make(map[string]string)
+		}
+		labels[LabelPendingDelete] = "true"
+		obj.SetLabels(labels)
+		_, err = resource.Update(t.Context(), obj, metav1.UpdateOptions{})
+		return err
+	})
+	require.NoError(t, err, "setting the pending-delete label on %q should be allowed", name)
+}
+
+// RetryOnConflict retries fn on 409 Conflict up to 5 times, returning the last
+// error (or nil on success).
+func RetryOnConflict(fn func() error) error {
+	var err error
+	for range 10 {
+		err = fn()
+		if !apierrors.IsConflict(err) {
+			return err
+		}
+	}
+	return err
 }

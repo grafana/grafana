@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	claims "github.com/grafana/authlib/types"
@@ -163,12 +164,15 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	ctx, span := s.tracer.Start(ctx, "team.List")
 	defer span.End()
 
+	query := legacy.ListTeamQuery{}
+	query.ID = getDeprecatedInternalIDFromLabelSelectors(options)
+
 	res, err := common.List(
 		ctx, teamResource, s.ac, common.PaginationFromListOptions(options),
 		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[*iamv0alpha1.Team], error) {
-			found, err := s.store.ListTeams(ctx, ns, legacy.ListTeamQuery{
-				Pagination: p,
-			})
+			q := query
+			q.Pagination = p
+			found, err := s.store.ListTeams(ctx, ns, q)
 
 			if err != nil {
 				return nil, err
@@ -269,6 +273,35 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 
 	iamTeam := toTeamObject(result.Team, ns)
 	return &iamTeam, nil
+}
+
+func getDeprecatedInternalIDFromLabelSelectors(options *internalversion.ListOptions) int64 {
+	if options.LabelSelector == nil {
+		return 0
+	}
+
+	reqs, selectable := options.LabelSelector.Requirements()
+	if !selectable {
+		return 0
+	}
+
+	for _, req := range reqs {
+		if req.Key() != utils.LabelKeyDeprecatedInternalID || req.Operator() != selection.Equals {
+			continue
+		}
+
+		vals := req.Values()
+		if vals.Len() != 1 {
+			return 0
+		}
+
+		idStr, _ := vals.PopAny()
+		if id, err := strconv.ParseInt(idStr, 10, 64); err == nil {
+			return id
+		}
+	}
+
+	return 0
 }
 
 func toTeamObject(t team.Team, ns claims.NamespaceInfo) iamv0alpha1.Team {

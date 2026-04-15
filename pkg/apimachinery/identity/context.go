@@ -11,6 +11,18 @@ import (
 
 type ctxUserKey struct{}
 type metadataIdentityUIDKey struct{}
+type ctxOrgIDKey struct{}
+
+// WithOrgID stores the org ID in context as a fallback when no requester is available.
+func WithOrgID(ctx context.Context, orgID int64) context.Context {
+	return context.WithValue(ctx, ctxOrgIDKey{}, orgID)
+}
+
+// OrgIDFrom returns the org ID stored by WithOrgID, and whether it was present.
+func OrgIDFrom(ctx context.Context) (int64, bool) {
+	orgID, ok := ctx.Value(ctxOrgIDKey{}).(int64)
+	return orgID, ok
+}
 
 // WithOriginalIdentityUID sets the UID to use for createdBy/updatedBy annotations when the
 // context identity is overridden (e.g. by the store wrapper using service identity). Storage

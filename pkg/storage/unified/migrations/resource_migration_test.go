@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/util/xorm"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -69,12 +68,12 @@ func testDef(gr schema.GroupResource, lockTables, renameTables []string) Migrati
 	}
 }
 
-func newRunner(t *testing.T, locker MigrationTableLocker, renamer MigrationTableRenamer, def MigrationDefinition) (*MigrationRunner, *MockUnifiedMigrator) {
+func newRunner(t *testing.T, locker MigrationTableLocker, renamer MigrationTableRenamer, def MigrationDefinition) (*MigrationRunner, *fakeUnifiedMigrator) {
 	t.Helper()
-	m := NewMockUnifiedMigrator(t)
-	m.EXPECT().Migrate(mock.Anything, mock.Anything).Return(&resourcepb.BulkResponse{}, nil)
-	m.EXPECT().RebuildIndexes(mock.Anything, mock.Anything).Return(nil)
-	return NewMigrationRunner(m, locker, renamer, setting.NewCfg(), def, nil), m
+	fake := &fakeUnifiedMigrator{
+		migrateResponse: &resourcepb.BulkResponse{},
+	}
+	return NewMigrationRunner(fake, locker, renamer, setting.NewCfg(), def, nil), fake
 }
 
 func ensureOrg(t *testing.T, engine *xorm.Engine) {
@@ -418,7 +417,7 @@ func TestIntegrationRunMySQL_CrashRecovery(t *testing.T) {
 	runMigration(t, env.engine, runner, migrator.MySQL)
 
 	// Recovery restores tables, then full migration re-runs including rename
-	m.AssertCalled(t, "Migrate", mock.Anything, mock.Anything)
+	require.Greater(t, m.migrateCalled, 0)
 	assertRenamed(t, env.engine, t1, t2)
 }
 

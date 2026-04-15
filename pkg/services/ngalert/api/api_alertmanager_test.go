@@ -482,6 +482,7 @@ var validConfig = `{
 			"grafana_managed_receiver_configs": [{
 				"uid": "receiver-uid",
 				"name": "email receiver",
+				"version": "v1",
 				"type": "email",
 				"settings": {
 					"addresses": "<example@email.com>"
@@ -509,6 +510,7 @@ var validConfigWithoutAutogen = `{
 			"grafana_managed_receiver_configs": [{
 				"name": "some email",
 				"type": "email",
+				"version": "v1",
 				"settings": {
 					"addresses": "<some@email.com>"
 				}
@@ -518,6 +520,7 @@ var validConfigWithoutAutogen = `{
 			"grafana_managed_receiver_configs": [{
 				"name": "other email",
 				"type": "email",
+				"version": "v1",
 				"settings": {
 					"addresses": "<other@email.com>"
 				}
@@ -558,6 +561,7 @@ var validConfigWithAutogen = `{
 			"grafana_managed_receiver_configs": [{
 				"name": "some email",
 				"type": "email",
+				"version": "v1",
 				"settings": {
 					"addresses": "<some@email.com>"
 				}
@@ -567,6 +571,7 @@ var validConfigWithAutogen = `{
 			"grafana_managed_receiver_configs": [{
 				"name": "other email",
 				"type": "email",
+				"version": "v1",
 				"settings": {
 					"addresses": "<other@email.com>"
 				}
@@ -586,6 +591,7 @@ var brokenConfig = `
 			"grafana_managed_receiver_configs": [{
 				"uid": "abc",
 				"name": "default-email",
+				"version": "v1",
 				"type": "email",
 				"settings": {}
 			}]
