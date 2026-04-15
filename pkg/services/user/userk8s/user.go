@@ -202,10 +202,12 @@ func (s *UserK8sService) GetByLogin(ctx context.Context, cmd *user.GetUserByLogi
 	}
 
 	if strings.Contains(loginOrEmail, "@") {
-		if u, err := s.getByFieldSelector(ctx, ctxLogger, client, "spec.email", loginOrEmail, orgID); err != nil {
+		u, err := s.getByFieldSelector(ctx, ctxLogger, client, "spec.email", loginOrEmail, orgID)
+		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 			span.RecordError(err)
 			return nil, err
-		} else if u != nil {
+		}
+		if u != nil {
 			return u, nil
 		}
 	}
@@ -214,9 +216,6 @@ func (s *UserK8sService) GetByLogin(ctx context.Context, cmd *user.GetUserByLogi
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
-	}
-	if u == nil {
-		return nil, user.ErrUserNotFound
 	}
 
 	return u, nil
@@ -249,9 +248,6 @@ func (s *UserK8sService) GetByEmail(ctx context.Context, cmd *user.GetUserByEmai
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
-	}
-	if u == nil {
-		return nil, user.ErrUserNotFound
 	}
 
 	return u, nil
@@ -436,11 +432,6 @@ func (s *UserK8sService) GetSignedInUser(ctx context.Context, cmd *user.GetSigne
 		span.SetStatus(codes.Error, lookupErr.Error())
 		return nil, lookupErr
 	}
-	if found == nil {
-		span.RecordError(user.ErrUserNotFound)
-		span.SetStatus(codes.Error, user.ErrUserNotFound.Error())
-		return nil, user.ErrUserNotFound
-	}
 
 	return toSignedInUser(found, orgID), nil
 }
@@ -517,7 +508,7 @@ func (s *UserK8sService) getByFieldSelectorRaw(ctx context.Context, logger log.L
 		return nil, err
 	}
 	if len(result.Items) == 0 {
-		return nil, nil
+		return nil, user.ErrUserNotFound
 	}
 	var found iamv0alpha1.User
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(result.Items[0].Object, &found); err != nil {
@@ -530,9 +521,6 @@ func (s *UserK8sService) getByFieldSelector(ctx context.Context, logger log.Logg
 	found, err := s.getByFieldSelectorRaw(ctx, logger, client, field, value)
 	if err != nil {
 		return nil, err
-	}
-	if found == nil {
-		return nil, nil
 	}
 	return toUser(found, orgID), nil
 }
