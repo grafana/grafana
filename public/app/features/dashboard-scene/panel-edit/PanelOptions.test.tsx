@@ -112,7 +112,7 @@ describe('PanelOptions', () => {
     it('Can edit title', async () => {
       const { panel } = setup();
 
-      expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
+      expect(screen.getByTestId(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
 
       const input = screen.getByTestId(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'));
       fireEvent.change(input, { target: { value: 'New title' } });
@@ -123,7 +123,7 @@ describe('PanelOptions', () => {
     it('Clearing title should set hoverHeader to true', async () => {
       const { panel } = setup();
 
-      expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
+      expect(screen.getByTestId(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
 
       const input = screen.getByTestId(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'));
       fireEvent.change(input, { target: { value: '' } });
@@ -140,7 +140,7 @@ describe('PanelOptions', () => {
     it('Should be rendered', async () => {
       const {} = setup();
 
-      expect(screen.getByLabelText(overrideRuleTooltipDescription)).toBeInTheDocument();
+      expect(screen.getByText(overrideRuleTooltipDescription)).toBeInTheDocument();
     });
 
     it('Can update', async () => {
@@ -148,7 +148,7 @@ describe('PanelOptions', () => {
 
       await userEvent.click(screen.getByLabelText('Remove property'));
 
-      expect(screen.queryByLabelText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
+      expect(screen.queryByText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
     });
 
     it('Can delete rule', async () => {
@@ -156,7 +156,7 @@ describe('PanelOptions', () => {
 
       await userEvent.click(screen.getByLabelText('Remove override'));
 
-      expect(screen.queryByLabelText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
+      expect(screen.queryByText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
     });
   });
 

@@ -235,22 +235,20 @@ func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
 		require.NoError(t, err)
 	})
 
-	t.Run("save key with no data", func(t *testing.T) {
+	t.Run("save key with no data fails", func(t *testing.T) {
 		emptyKey := namespacedKey(nsPrefix, "empty-key")
 
 		// Save a key with empty data
-		saveKVHelper(t, kv, ctx, testSection, emptyKey, strings.NewReader(""))
+		writer, err := kv.Save(ctx, testSection, emptyKey)
+		require.NoError(t, err)
+		err = writer.Close()
+		assert.Error(t, err)
+		assert.Equal(t, kvpkg.ErrEmptyValue, err)
 
-		// Verify it was saved with empty data
-		reader, err := kv.Get(ctx, testSection, emptyKey)
-		require.NoError(t, err)
-
-		value, err := io.ReadAll(reader)
-		require.NoError(t, err)
-		assert.Equal(t, "", string(value))
-		assert.Len(t, value, 0)
-		err = reader.Close()
-		require.NoError(t, err)
+		// Verify it was NOT saved
+		_, err = kv.Get(ctx, testSection, emptyKey)
+		assert.Error(t, err)
+		assert.Equal(t, resource.ErrNotFound, err)
 	})
 }
 
@@ -306,7 +304,7 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 	}
 
 	t.Run("list all keys", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -367,7 +365,7 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 		// Use a key range with no keys.
 		startKey, endKey := "aaaaa", "aaaaz"
 
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
 			StartKey: startKey,
 			EndKey:   endKey,
@@ -380,7 +378,7 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("interrupting the iterator", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -405,7 +403,7 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	}
 
 	t.Run("keys with limit", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{Limit: 3}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -414,7 +412,7 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys with range", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
 			StartKey: namespacedKey(nsPrefix, "b"),
 			EndKey:   namespacedKey(nsPrefix, "d"),
@@ -426,7 +424,7 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys with prefix", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
 			StartKey: namespacedKey(nsPrefix, "c"),
 			EndKey:   namespacedKey(nsPrefix, resource.PrefixRangeEnd("c")),
@@ -438,7 +436,7 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys with limit and range", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
 			StartKey: namespacedKey(nsPrefix, "a"),
 			EndKey:   namespacedKey(nsPrefix, "c"),
@@ -462,7 +460,7 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	}
 
 	t.Run("keys in ascending order (default)", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{Sort: resource.SortOrderAsc}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -471,7 +469,7 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys in descending order", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{Sort: resource.SortOrderDesc}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -480,7 +478,7 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys descending with prefix", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
 			StartKey: namespacedKey(nsPrefix, "a"),
 			EndKey:   namespacedKey(nsPrefix, resource.PrefixRangeEnd("a")),
@@ -493,7 +491,7 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys descending with limit", func(t *testing.T) {
-		var keys []string
+		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
 			Sort:  resource.SortOrderDesc,
 			Limit: 3,
@@ -684,7 +682,7 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 			key   string
 			value string
 		}
-		var results []result
+		var results []result //nolint:prealloc
 		for kv, err := range kv.BatchGet(ctx, testSection, keys) {
 			require.NoError(t, err)
 			value, err := io.ReadAll(kv.Value)
@@ -739,7 +737,7 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 			key   string
 			value string
 		}
-		var results []result
+		var results []result //nolint:prealloc
 		for kv, err := range kv.BatchGet(ctx, testSection, keys) {
 			require.NoError(t, err)
 			value, err := io.ReadAll(kv.Value)
@@ -757,7 +755,7 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch get with all non-existent keys", func(t *testing.T) {
 		keys := namespacedKeys(nsPrefix, []string{"non-existent-1", "non-existent-2", "non-existent-3"})
-		var results []resource.KeyValue
+		var results []resource.KeyValue //nolint:prealloc
 		for kv, err := range kv.BatchGet(ctx, testSection, keys) {
 			require.NoError(t, err)
 			results = append(results, kv)
@@ -769,7 +767,7 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch get with empty keys list", func(t *testing.T) {
 		keys := []string{}
-		var results []resource.KeyValue
+		var results []resource.KeyValue //nolint:prealloc
 		for kv, err := range kv.BatchGet(ctx, testSection, keys) {
 			require.NoError(t, err)
 			results = append(results, kv)
@@ -808,7 +806,7 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 
 		// Batch get in specific order
 		keys := namespacedKeys(nsPrefix, []string{"z-key", "invalid-key1", "a-key", "invalid-key2", "m-key", "invalid-key3"})
-		var results []string
+		var results []string //nolint:prealloc
 		for kv, err := range kv.BatchGet(ctx, testSection, keys) {
 			require.NoError(t, err)
 			err = kv.Value.Close()
@@ -1035,14 +1033,6 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		err := kv.Batch(ctx, section, ops)
 		assert.ErrorIs(t, err, kvpkg.ErrKeyAlreadyExists)
 
-		// Verify BatchError fields
-		var batchErr *kvpkg.BatchError
-		if assert.ErrorAs(t, err, &batchErr) {
-			assert.Equal(t, 0, batchErr.Index, "failed operation index should be 0")
-			assert.Equal(t, "create-exists-key", batchErr.Op.Key, "failed operation key should match")
-			assert.Equal(t, kvpkg.BatchOpCreate, batchErr.Op.Mode, "failed operation mode should be Create")
-		}
-
 		// Verify the original value is unchanged
 		reader, err := kv.Get(ctx, section, "create-exists-key")
 		require.NoError(t, err)
@@ -1081,14 +1071,6 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 		err := kv.Batch(ctx, section, ops)
 		assert.ErrorIs(t, err, resource.ErrNotFound)
-
-		// Verify BatchError fields
-		var batchErr *kvpkg.BatchError
-		if assert.ErrorAs(t, err, &batchErr) {
-			assert.Equal(t, 0, batchErr.Index, "failed operation index should be 0")
-			assert.Equal(t, "update-nonexistent-key", batchErr.Op.Key, "failed operation key should match")
-			assert.Equal(t, kvpkg.BatchOpUpdate, batchErr.Op.Mode, "failed operation mode should be Update")
-		}
 
 		// Verify the key was not created
 		_, err = kv.Get(ctx, section, "update-nonexistent-key")
@@ -1155,14 +1137,6 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 		err := kv.Batch(ctx, section, ops)
 		assert.ErrorIs(t, err, kvpkg.ErrKeyAlreadyExists)
-
-		// Verify BatchError identifies the correct operation
-		var batchErr *kvpkg.BatchError
-		if assert.ErrorAs(t, err, &batchErr) {
-			assert.Equal(t, 1, batchErr.Index, "failed operation index should be 1 (second operation)")
-			assert.Equal(t, "rollback-exists", batchErr.Op.Key, "failed operation key should match")
-			assert.Equal(t, kvpkg.BatchOpCreate, batchErr.Op.Mode, "failed operation mode should be Create")
-		}
 
 		// Verify rollback: the first operation should NOT have persisted
 		_, err = kv.Get(ctx, section, "rollback-new1")
@@ -1243,20 +1217,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		}
 
 		err := kv.Batch(ctx, section, ops)
-		require.Error(t, err)
-
-		// Verify BatchError provides correct context
-		var batchErr *kvpkg.BatchError
-		require.ErrorAs(t, err, &batchErr, "error should be a BatchError")
-		assert.Equal(t, 2, batchErr.Index, "failed operation index should be 2")
-		assert.Equal(t, "error-context-nonexistent", batchErr.Op.Key, "failed operation key should match")
-		assert.Equal(t, kvpkg.BatchOpUpdate, batchErr.Op.Mode, "failed operation mode should be Update")
-		assert.ErrorIs(t, batchErr.Err, resource.ErrNotFound, "underlying error should be ErrNotFound")
-
-		// Verify error message contains useful information
-		errMsg := err.Error()
-		assert.Contains(t, errMsg, "batch operation 2", "error message should contain operation index")
-		assert.Contains(t, errMsg, "error-context-nonexistent", "error message should contain key")
+		assert.ErrorIs(t, err, resource.ErrNotFound)
 
 		// Verify atomic rollback - no keys should have been created
 		_, err = kv.Get(ctx, section, "error-context-key0")

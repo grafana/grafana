@@ -1,9 +1,9 @@
-import { CoreApp, TimeRange } from '@grafana/data';
+import { CoreApp, type TimeRange } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
 import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 
 import { SpanLinkType } from '../../types/links';
-import { TraceSpan } from '../../types/trace';
+import { type TraceSpan } from '../../types/trace';
 
 import { getSpanDetailLinkButtons, getProfileLinkButtonsContext } from './SpanDetailLinkButtons';
 

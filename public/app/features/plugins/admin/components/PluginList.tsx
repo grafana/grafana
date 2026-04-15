@@ -4,7 +4,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { EmptyState, Grid } from '@grafana/ui';
 
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin } from '../types';
 
 import { PluginListItem } from './PluginListItem';
 

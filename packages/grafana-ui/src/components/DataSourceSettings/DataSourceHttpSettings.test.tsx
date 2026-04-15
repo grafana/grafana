@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { DataSourceHttpSettings } from './DataSourceHttpSettings';
-import { HttpSettingsProps } from './types';
+import { type HttpSettingsProps } from './types';
 
 const setup = (propOverrides?: object) => {
   const onChange = jest.fn();

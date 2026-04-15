@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/grafana/alerting/receivers/line"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -338,7 +337,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			deleteUID:        baseReceiver.UID,
 			callerProvenance: models.ProvenanceNone,
 			existing:         util.Pointer(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceFile))),
-			expectedErr:      validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceFile, models.ProvenanceNone),
+			expectedErr:      validation.MakeErrProvenanceChangeNotAllowedWithReason(models.ProvenanceFile, models.ProvenanceNone, "transition is not allowed"),
 		},
 		{
 			name:             "delete provisioning provenance fails when caller is a different type", // TODO: This should fail once we move from lenient to strict validation.
@@ -539,7 +538,7 @@ func TestReceiverService_Create(t *testing.T) {
 				),
 			)),
 			expectedStored: &definitions.PostableApiReceiver{
-				Receiver: config.Receiver{
+				Receiver: definitions.Receiver{
 					Name: lineIntegration.Name,
 				},
 				PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
@@ -784,7 +783,7 @@ func TestReceiverService_Update(t *testing.T) {
 			user:        writer,
 			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceNone)),
 			existing:    util.Pointer(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceFile))),
-			expectedErr: validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceFile, models.ProvenanceNone),
+			expectedErr: validation.MakeErrProvenanceChangeNotAllowedWithReason(models.ProvenanceFile, models.ProvenanceNone, "transition is not allowed"),
 		},
 		{
 			name:     "changing provenance from one type to another fails", // TODO: This should fail once we move from lenient to strict validation.
@@ -1801,6 +1800,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...cr
 		log.NewNopLogger(),
 		fakes.NewFakeReceiverPermissionsService(),
 		tracing.InitializeTracerForTest(),
+		validation.ValidateProvenanceRelaxed,
 		false,
 	)
 	for _, opt := range opts {

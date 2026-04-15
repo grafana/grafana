@@ -3,14 +3,16 @@ package resource
 import (
 	"context"
 	"encoding/json"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/goleak"
 
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -18,8 +20,23 @@ func setupTestEventStore(t *testing.T) *eventStore {
 	return newEventStore(setupBadgerKV(t))
 }
 
+// TestMain verifies that all background goroutines are properly shut down after tests.
 func TestMain(m *testing.M) {
-	testsuite.Run(m)
+	db.SetupTestDB()
+	goleak.VerifyTestMain(m,
+		goleak.Cleanup(func(exitCode int) {
+			db.CleanupTestDB()
+			os.Exit(exitCode)
+		}),
+		goleak.IgnoreTopFunction("github.com/open-feature/go-sdk/openfeature.(*eventExecutor).startEventListener.func1.1"),
+		goleak.IgnoreTopFunction("github.com/patrickmn/go-cache.(*janitor).Run"),                          // go-cache janitor stops via GC finalizer, not an explicit close.
+		goleak.IgnoreTopFunction("go.opentelemetry.io/otel/sdk/trace.(*batchSpanProcessor).processQueue"), // OTel span processor from test infra.
+		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),                                   // database/sql background goroutines from test DB setup.
+		goleak.IgnoreTopFunction("database/sql.(*DB).connectionCleaner"),
+		goleak.IgnoreTopFunction("github.com/go-sql-driver/mysql.(*mysqlConn).startWatcher.func1"),                                             // MySQL driver connection watcher from test DB setup.
+		goleak.IgnoreTopFunction("github.com/hashicorp/golang-lru/v2/expirable.NewLRU[...].func1"),                                             // expirable LRU cleanup goroutine.
+		goleak.IgnoreTopFunction("github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager.(*ResourceVersionManager).startBatchProcessor"), // ResourceVersionManager has no shutdown hook; compat tests intentionally exercise it.
+	)
 }
 
 func setupTestEventStoreSqlKv(t *testing.T) *eventStore {
@@ -461,7 +478,7 @@ func TestIntegrationEventStore_ListSince_Empty(t *testing.T) {
 func testEventStoreListSinceEmpty(t *testing.T, ctx context.Context, store *eventStore) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	// List events when store is empty
-	retrievedEvents := make([]Event, 0)
+	retrievedEvents := make([]Event, 0) //nolint:prealloc
 	for event, err := range store.ListSince(ctx, 0, SortOrderAsc) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, event)
@@ -833,7 +850,7 @@ func testListKeysSinceWithSnowflakeTime(t *testing.T, ctx context.Context, store
 
 	// List events since 90 minutes ago using subtractDurationFromSnowflake
 	sinceRV := subtractDurationFromSnowflake(snowflakeFromTime(now), 90*time.Minute)
-	retrievedEvents := make([]string, 0)
+	retrievedEvents := make([]string, 0) //nolint:prealloc
 	for eventKey, err := range store.ListKeysSince(ctx, sinceRV, SortOrderAsc) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, eventKey)
@@ -850,7 +867,7 @@ func testListKeysSinceWithSnowflakeTime(t *testing.T, ctx context.Context, store
 
 	// List events since 30 minutes ago using subtractDurationFromSnowflake
 	sinceRV = subtractDurationFromSnowflake(snowflakeFromTime(now), 30*time.Minute)
-	retrievedEvents = make([]string, 0)
+	retrievedEvents = make([]string, 0) //nolint:prealloc
 	for eventKey, err := range store.ListKeysSince(ctx, sinceRV, SortOrderAsc) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, eventKey)

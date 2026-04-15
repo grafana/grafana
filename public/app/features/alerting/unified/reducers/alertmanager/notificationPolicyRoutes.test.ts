@@ -1,8 +1,8 @@
 import { produce } from 'immer';
 
-import { AlertManagerCortexConfig, MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerCortexConfig, MatcherOperator, type Route } from 'app/plugins/datasource/alertmanager/types';
 
-import { FormAmRoute } from '../../types/amroutes';
+import { type FormAmRoute } from '../../types/amroutes';
 import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
 
 import { addRouteAction, deleteRouteAction, routesReducer, updateRouteAction } from './notificationPolicyRoutes';

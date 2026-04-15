@@ -32,5 +32,6 @@ COPY public/img/icons public/img/icons
 ADD devenv/frontend-service/build/grafana bin/grafana
 
 COPY public/build/assets-manifest.json public/build/assets-manifest.json
+COPY public/build/boot.js public/build/boot.js
 
 ENTRYPOINT ["bin/grafana", "server"]

@@ -1,6 +1,6 @@
-import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
-import { RepositoryFormData } from '../types';
+import { type RepositoryFormData } from '../types';
 
 export const getWorkflows = (data: RepositoryFormData): RepositorySpec['workflows'] => {
   if (data.readOnly) {
@@ -23,9 +23,13 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
     workflows: getWorkflows(data),
   };
 
+  if (data.webhook?.baseUrl) {
+    spec.webhook = { baseUrl: data.webhook.baseUrl };
+  }
+
   const baseConfig = {
     url: data.url || '',
-    branch: data.branch || (data.type !== 'github' ? 'main' : ''),
+    branch: data.branch || '',
     path: data.path,
   };
 

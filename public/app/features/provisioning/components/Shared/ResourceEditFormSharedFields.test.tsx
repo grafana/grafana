@@ -1,12 +1,12 @@
 import { render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import type { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useBranchDropdownOptions } from '../../hooks/useBranchDropdownOptions';
-import { ProvisionedDashboardFormData } from '../../types/form';
+import { type ProvisionedDashboardFormData } from '../../types/form';
 
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 // Mock RTK Query hook used inside ResourceEditFormSharedFields to avoid requiring a Redux Provider
@@ -24,6 +24,10 @@ jest.mock('../../hooks/useLastBranch', () => ({
     getLastBranch: jest.fn().mockReturnValue(undefined),
     setLastBranch: jest.fn(),
   }),
+}));
+
+jest.mock('../../hooks/useGetRepositoryFolders', () => ({
+  useGetRepositoryFolders: jest.fn().mockReturnValue({ options: [], loading: false, error: null }),
 }));
 
 const mockRepo: { github: RepositoryView; local: RepositoryView } = {
@@ -199,16 +203,62 @@ describe('ResourceEditFormSharedFields', () => {
       expect(configuredOption.infoOption).toBe(true);
       expect(configuredOption.label).toBe('main (read-only)');
     });
+
+    it('should add selected custom branch as a new option', () => {
+      const customBranch = 'feature/new-branch';
+
+      const { result } = renderHook(() =>
+        useBranchDropdownOptions({
+          repository: { ...mockRepo.github, branch: 'main' },
+          selectedBranch: customBranch,
+          branchData: { items: [{ name: 'develop' }] },
+          canPushToConfiguredBranch: true,
+          canPushToNonConfiguredBranch: true,
+        })
+      );
+
+      const customOption = result.current.find((option) => option.value === customBranch);
+      expect(customOption).toEqual(
+        expect.objectContaining({
+          label: 'feature/new-branch',
+          description: 'New branch',
+          value: 'feature/new-branch',
+        })
+      );
+    });
+
+    it('should not mark selected branch as new when it already exists in repository refs', () => {
+      const existingBranch = 'feature/existing-branch';
+
+      const { result } = renderHook(() =>
+        useBranchDropdownOptions({
+          repository: { ...mockRepo.github, branch: 'main' },
+          selectedBranch: existingBranch,
+          branchData: { items: [{ name: existingBranch }] },
+          canPushToConfiguredBranch: true,
+          canPushToNonConfiguredBranch: true,
+        })
+      );
+
+      const existingOption = result.current.find((option) => option.value === existingBranch);
+      expect(existingOption).toEqual(
+        expect.objectContaining({
+          label: existingBranch,
+          value: existingBranch,
+        })
+      );
+    });
   });
 
   describe('User Interactions', () => {
-    it('should allow typing in path field', async () => {
+    it('should render folder and filename fields for new dashboards', async () => {
       const { user } = setup({ isNew: true });
 
-      const pathInput = screen.getByRole('textbox', { name: /path/i });
-      await user.type(pathInput, 'dashboards/test.json');
+      const filenameInput = screen.getByRole('textbox', { name: /filename/i });
+      expect(screen.getByRole('combobox', { name: /folder/i })).toBeInTheDocument();
 
-      expect(pathInput).toHaveValue('dashboards/test.json');
+      await user.type(filenameInput, 'test.json');
+      expect(filenameInput).toHaveValue('test.json');
     });
 
     it('should allow typing in comment field', async () => {
@@ -273,14 +323,46 @@ describe('ResourceEditFormSharedFields', () => {
       const user = userEvent.setup();
       render(<TestComponent />);
 
-      const pathInput = screen.getByRole('textbox', { name: /path/i });
+      const filenameInput = screen.getByRole('textbox', { name: /filename/i });
       const commentTextarea = screen.getByRole('textbox', { name: /comment/i });
 
-      await user.type(pathInput, 'test.json');
+      await user.type(filenameInput, 'test.json');
       await user.type(commentTextarea, 'Test comment');
 
       expect(formValues?.path).toBe('test.json');
       expect(formValues?.comment).toBe('Test comment');
+    });
+
+    it('should combine folder and filename into path value', async () => {
+      let formValues: Partial<ProvisionedDashboardFormData> | undefined;
+
+      const TestComponent = () => {
+        const methods = useForm<ProvisionedDashboardFormData>({
+          defaultValues: { path: 'dashboards/test.json', comment: '', ref: '', workflow: 'write' },
+        });
+
+        formValues = methods.watch();
+
+        return (
+          <FormProvider {...methods}>
+            <ResourceEditFormSharedFields canPushToConfiguredBranch={true} isNew={true} resourceType="dashboard" />
+          </FormProvider>
+        );
+      };
+
+      const user = userEvent.setup();
+      render(<TestComponent />);
+
+      // Verify initial split
+      expect(screen.getByRole('combobox', { name: /folder/i })).toHaveValue('dashboards');
+      expect(screen.getByRole('textbox', { name: /filename/i })).toHaveValue('test.json');
+
+      // Change filename and verify combined path
+      const filenameInput = screen.getByRole('textbox', { name: /filename/i });
+      await user.clear(filenameInput);
+      await user.type(filenameInput, 'new-dashboard.json');
+
+      expect(formValues?.path).toBe('dashboards/new-dashboard.json');
     });
   });
 

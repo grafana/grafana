@@ -9,6 +9,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -55,10 +57,17 @@ func TestIntegrationPreferences(t *testing.T) {
 			Method: http.MethodPut,
 			Path:   "/api/user/preferences",
 			Body: []byte(`{
-				"weekStart": "saturday"
+				"weekStart": "tuesday"
 			}`),
 		}, &raw)
 		require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "create preference for user")
+
+		out, err := clientAdmin.Resource.Patch(ctx, "user-"+clientAdmin.Args.User.Identity.GetIdentifier(), types.StrategicMergePatchType, []byte(`{
+			"spec": { "weekStart": "saturday" }
+		}`), metav1.PatchOptions{})
+		require.NoError(t, err)
+		v, _, _ := unstructured.NestedString(out.Object, "spec", "weekStart")
+		require.Equal(t, "saturday", v)
 
 		// http://localhost:3000/api/teams/1/preferences
 		legacyResponse = apis.DoRequest(helper, apis.RequestParams{
@@ -71,6 +80,12 @@ func TestIntegrationPreferences(t *testing.T) {
 			}`),
 		}, &raw)
 		require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "create preference for user")
+
+		// Fetch the same resource over k8s apis
+		out, err = clientAdmin.Resource.Get(ctx, "team-"+helper.Org1.Staff.UID, metav1.GetOptions{})
+		require.NoError(t, err)
+		v, _, _ = unstructured.NestedString(out.Object, "spec", "weekStart")
+		require.Equal(t, "sunday", v)
 
 		// http://localhost:3000/api/org/preferences
 		legacyResponse = apis.DoRequest(helper, apis.RequestParams{
@@ -90,7 +105,7 @@ func TestIntegrationPreferences(t *testing.T) {
 		// Admin has access to all three (namespace, team, and user)
 		rsp, err = clientAdmin.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
-		names := []string{}
+		names := make([]string, 0, len(rsp.Items))
 		for _, item := range rsp.Items {
 			names = append(names, item.GetName())
 		}
@@ -125,7 +140,7 @@ func TestIntegrationPreferences(t *testing.T) {
 		// The viewer should only have namespace (eg org level) permissions
 		rsp, err = clientViewer.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
-		names = []string{}
+		names = make([]string, 0, len(rsp.Items))
 		for _, item := range rsp.Items {
 			names = append(names, item.GetName())
 		}

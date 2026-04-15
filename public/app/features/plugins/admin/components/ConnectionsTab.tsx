@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { EmptyState, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { ViewProps } from 'app/features/datasources/components/DataSourcesList';
+import { type ViewProps } from 'app/features/datasources/components/DataSourcesList';
 import { DataSourcesListCard } from 'app/features/datasources/components/DataSourcesListCard';
 import { useLoadDataSources } from 'app/features/datasources/state/hooks';
 import { getDataSources } from 'app/features/datasources/state/selectors';
 import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin } from '../types';
 
 import { GetStartedWithDataSource } from './GetStartedWithPlugin/GetStartedWithDataSource';
 

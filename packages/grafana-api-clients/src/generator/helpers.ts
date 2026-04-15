@@ -1,6 +1,6 @@
 import { execSync } from 'child_process';
 import fs from 'fs';
-import { OpenAPIV3 } from 'openapi-types';
+import { type OpenAPIV3 } from 'openapi-types';
 import path from 'path';
 
 type PlopActionFunction = (
@@ -66,7 +66,7 @@ export const runGenerateApis =
       let command;
       if (isEnterprise) {
         command =
-          'yarn workspace @grafana/api-clients process-specs && npx rtk-query-codegen-openapi ./local/generate-enterprise-apis.ts';
+          'yarn workspace @grafana/openapi process-specs && npx rtk-query-codegen-openapi ./local/generate-enterprise-apis.ts';
       } else {
         command = 'yarn workspace @grafana/api-clients generate-apis';
       }

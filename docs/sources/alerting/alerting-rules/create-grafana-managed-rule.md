@@ -132,6 +132,15 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/tutorials/
 ---
 
+{{< admonition type="caution" >}}
+Pre-provisioned Loki and Prometheus data source-managed alerts have been deprecated in Grafana Cloud and can not be created in new stacks.
+New Grafana Cloud stacks will use Grafana-managed alerting (GMA) by default. Datasource-managed alerting (DMA) is not provisioned in new stacks. Existing stacks are not affected.
+
+This applies to the default Loki and Prometheus Grafana Cloud data sources managed by Grafana Labs and Cloud Alertmanager, which will not be available nor will Grafana provision the data source for it. If you add your own Mimir, Loki, or Alertmanager data sources, you can continue to use data source-managed alerts.
+
+Cloud users can import DMA rules into GMA rules with the import tool. See the [import data source-managed alerts to Grafana-managed alerts documentation](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/alerting-migration/) for information on how to do this.
+{{< /admonition >}}
+
 # Configure Grafana-managed alert rules
 
 Grafana-managed alert rules are the default way to create alert rules in Grafana.
@@ -160,7 +169,7 @@ You can find the public data sources that support alert rules in the [Grafana Pl
 
 In Grafana Cloud, the number of Grafana-managed alert rules you can create depends on your Grafana Cloud plan.
 
-- Free Forever plan: You can create up to 100 free alert rules, with each alert rule having a maximum of 1000 alert instances.
+- Free Forever plan: You can create up to 500 free alert rules, with each alert rule having a maximum of 1000 alert instances.
 - All paid plans: They have a soft limit of 2000 alert rules and support unlimited alert instances. To increase the limit, open a support ticket from the [Cloud portal](/docs/grafana-cloud/account-management/support/).
 
 ### Permissions

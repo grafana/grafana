@@ -1,6 +1,6 @@
 import { css } from '@emotion/react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 export function getDashboardGridStyles(theme: GrafanaTheme2) {
   return css({
@@ -83,7 +83,7 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
     },
 
     '.dashboard-selectable-element': {
-      '&:hover': {
+      '&:not(.dashboard-selected-element):hover': {
         outline: `1px dashed ${theme.colors.border.strong}`,
         outlineOffset: '0px',
         borderRadius: theme.shape.radius.default,

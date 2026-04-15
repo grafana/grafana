@@ -145,7 +145,7 @@ func Test_readPluginSettings(t *testing.T) {
 
 	t.Run("when plugins.preinstall is defined", func(t *testing.T) {
 		defaultPreinstallPluginsList := make([]InstallPlugin, 0, len(defaultPreinstallPlugins))
-		defaultPreinstallPluginsIDs := []string{}
+		defaultPreinstallPluginsIDs := make([]string, 0, len(defaultPreinstallPlugins))
 		for _, p := range defaultPreinstallPlugins {
 			defaultPreinstallPluginsList = append(defaultPreinstallPluginsList, p)
 			defaultPreinstallPluginsIDs = append(defaultPreinstallPluginsIDs, p.ID)

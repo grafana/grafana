@@ -1,13 +1,18 @@
 import { css, cx } from '@emotion/css';
 import { useCallback } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { GroupByVariable, VariableValueOption, VariableValueSingle } from '@grafana/scenes';
-import { Button, Checkbox, ClickOutsideWrapper, Icon, Input, Stack, useStyles2 } from '@grafana/ui';
+import {
+  type AdHocFiltersVariable,
+  GroupByVariable,
+  type VariableValueOption,
+  type VariableValueSingle,
+} from '@grafana/scenes';
+import { Button, Checkbox, ClickOutsideWrapper, FilterInput, Spinner, Stack, useStyles2 } from '@grafana/ui';
 
 interface Props {
-  groupByVariable: GroupByVariable;
+  groupByVariable: GroupByVariable | AdHocFiltersVariable;
   onCancel: () => void;
   isLoading: boolean;
   searchValue: string;
@@ -45,40 +50,80 @@ export function PanelGroupByActionPopover({
   };
 
   const handleApply = useCallback(() => {
-    if (!values.length) {
-      return;
-    }
+    if (groupByVariable instanceof GroupByVariable) {
+      groupByVariable.changeValueTo(values, values.map(String), true);
+    } else {
+      const selectedKeys = new Set(values.map(String));
+      const originFilters = groupByVariable.state.originFilters ?? [];
+      const originGroupByKeys = new Set<string>();
 
-    groupByVariable.changeValueTo(values, values.map(String), true);
+      const updatedOriginFilters = originFilters.map((f) => {
+        if (f.operator !== 'groupBy') {
+          return f;
+        }
+        originGroupByKeys.add(f.key);
+        const shouldBeActive = selectedKeys.has(f.key);
+        return { ...f, dismissedGroupBy: !shouldBeActive };
+      });
+
+      const nonGroupByFilters = groupByVariable.state.filters.filter((f) => f.operator !== 'groupBy');
+      const newUserGroupBys = values
+        .filter((v) => !originGroupByKeys.has(String(v)))
+        .map((v) => ({ key: String(v), operator: 'groupBy', value: '' }));
+
+      const allOriginsRestored = updatedOriginFilters
+        .filter((f) => f.operator === 'groupBy' && f.origin)
+        .every((f) => !f.dismissedGroupBy);
+      const isBackToDefaults = allOriginsRestored && newUserGroupBys.length === 0;
+
+      const finalOriginFilters = updatedOriginFilters.map((f) => {
+        if (f.operator !== 'groupBy' || !f.origin) {
+          return f;
+        }
+        return { ...f, restorable: !isBackToDefaults };
+      });
+
+      groupByVariable.setState({
+        originFilters: finalOriginFilters,
+        filters: [...nonGroupByFilters, ...newUserGroupBys],
+      });
+    }
     onCancel();
   }, [groupByVariable, onCancel, values]);
 
-  const isAnyOptionChecked = () => {
-    if (!values.length) {
-      return false;
-    }
-
-    return values.some((value) => options.find((option) => option.value === value));
-  };
+  const groupByHasCurrentValues =
+    groupByVariable instanceof GroupByVariable
+      ? Array.isArray(groupByVariable.state.value)
+        ? groupByVariable.state.value.length > 0
+        : Boolean(groupByVariable.state.value)
+      : groupByVariable.state.filters.some((f) => f.operator === 'groupBy') ||
+        (groupByVariable.state.originFilters ?? []).some((f) => f.operator === 'groupBy' && !f.dismissedGroupBy);
 
   return (
     <ClickOutsideWrapper onClick={onCancel} useCapture={true}>
       {/* This is just blocking click events from bubbeling and should not have a keyboard interaction. */}
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
-      <div className={styles.menuContainer} onClick={(ev) => ev.stopPropagation()}>
+      <div
+        className={styles.menuContainer}
+        onClick={(ev) => ev.stopPropagation()}
+        onPointerDown={(ev) => ev.stopPropagation()}
+        onPointerUp={(ev) => ev.stopPropagation()}
+      >
         <Stack direction="column">
           <div className={styles.searchContainer}>
-            <Input
-              prefix={<Icon name="search" />}
+            <FilterInput
               placeholder={t('panel-group-by.search-placeholder', 'Search')}
               value={searchValue}
-              onChange={(e) => setSearchValue(e.currentTarget.value)}
+              onChange={setSearchValue}
+              escapeRegex={false}
             />
           </div>
 
           <div className={styles.listContainer}>
             {isLoading ? (
               <div className={styles.emptyMessage}>
+                <Spinner size="sm" inline />
+                &nbsp;
                 <Trans i18nKey="panel-group-by.loading">Loading options</Trans>
               </div>
             ) : options.length === 0 ? (
@@ -97,7 +142,7 @@ export function PanelGroupByActionPopover({
           </div>
 
           <Stack justifyContent="end" direction="row-reverse">
-            <Button size="sm" onClick={handleApply} disabled={!isAnyOptionChecked()}>
+            <Button size="sm" onClick={handleApply} disabled={!values.length && !groupByHasCurrentValues}>
               <Trans i18nKey="grafana-ui.table.filter-popup-apply">Ok</Trans>
             </Button>
             <Button size="sm" variant="secondary" onClick={onCancel}>

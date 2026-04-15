@@ -8,13 +8,11 @@ import (
 	"time"
 
 	"github.com/fullstorydev/grpchan"
-	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
 
-	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/services"
@@ -61,6 +59,8 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	cfg.EnableSQLKVBackend = false
 	cfg.MaxFileIndexAge = 24 * time.Hour
 	cfg.SimulatedNetworkLatency = simulatedNetworkLatency
+	cfg.DisablePruner = db.IsTestDbSQLite()
+	cfg.NotifierSettleDelay = time.Millisecond // keep it low in tests as most of them don't exercise concurrent writes
 	dbstore := db.InitTestDB(t)
 	dbSection := cfg.SectionWithEnvOverrides("database")
 	if isHA {
@@ -100,12 +100,20 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 	t.Cleanup(db.CleanupTestDB)
 
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
+		if db.IsTestDbSQLite() {
+			t.Skip("sqlite not compatible with HA")
+		}
+
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
 			return newTestBackend(t, true, 0, 0)
 		}, nil)
 	})
 
 	t.Run("NotHA (in process notifier)", func(t *testing.T) {
+		if !db.IsTestDbSQLite() {
+			t.Skip("in-process notifier only used with sqlite")
+		}
+
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
 			return newTestBackend(t, false, 0, 0)
 		}, nil)
@@ -125,12 +133,20 @@ func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
 	}
 
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
+		if db.IsTestDbSQLite() {
+			t.Skip("sqlite not compatible with HA")
+		}
+
 		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) resource.StorageBackend {
 			return newTestBackend(t, true, 0, 0)
 		}, newKvBackend, opts)
 	})
 
 	t.Run("NotHA (in process notifier)", func(t *testing.T) {
+		if !db.IsTestDbSQLite() {
+			t.Skip("in-process notifier only used with sqlite")
+		}
+
 		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) resource.StorageBackend {
 			return newTestBackend(t, false, 0, 0)
 		}, newKvBackend, opts)
@@ -215,17 +231,28 @@ func TestClientServer(t *testing.T) {
 
 	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		grpcService.StopAsync()
+		_ = services.StopAndAwaitTerminated(ctx, grpcService)
+	})
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, nil, registerer, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, grpcService)
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, nil, registerer, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, grpcService,
+		sql.WithAuthenticator(func(ctx context.Context) (context.Context, error) {
+			auth := grpcUtils.Authenticator{Tracer: otel.Tracer("test")}
+			return auth.Authenticate(ctx)
+		}),
+	)
 	require.NoError(t, err)
 	var client resourcepb.ResourceStoreClient
 
-	clientCtx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{
-			Subject: "testuser",
-		},
-		Rest: authn.AccessTokenClaims{},
-	}))
+	clientCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+		Type:    types.TypeUser,
+		UserID:  1,
+		UserUID: "user-uid-1",
+		OrgID:   1,
+		Login:   "testuser",
+		Name:    "Test User",
+	})
 
 	t.Run("Start and stop service", func(t *testing.T) {
 		err = services.StartAndAwaitRunning(ctx, grpcService)
@@ -238,12 +265,7 @@ func TestClientServer(t *testing.T) {
 	t.Run("Create a client", func(t *testing.T) {
 		conn, err := unified.GrpcConn(grpcService.GetAddress(), prometheus.NewPedanticRegistry())
 		require.NoError(t, err)
-		client, err = resource.NewRemoteResourceClient(tracing.NewNoopTracerService(), conn, conn, resource.RemoteResourceClientConfig{
-			Token:            "some-token",
-			TokenExchangeURL: "http://some-change-url",
-			AllowInsecure:    true,
-		})
-		require.NoError(t, err)
+		client = resource.NewLegacyResourceClient(conn, conn)
 	})
 
 	t.Run("Create a resource", func(t *testing.T) {
@@ -301,6 +323,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	cfg.EnableSearch = true
 	cfg.IndexFileThreshold = 1000 // Ensures memory indexing
 	cfg.IndexPath = t.TempDir()   // Temporary directory for indexes
+	cfg.DisablePruner = db.IsTestDbSQLite()
 
 	features := featuremgmt.WithFeatures()
 
@@ -323,7 +346,12 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
 	require.NoError(t, err)
 
-	svc, err := sql.ProvideSearchGRPCService(cfg, features, log.New("test"), registerer, docBuilders, nil, nil, kv.Config{}, nil, backend, grpcService)
+	svc, err := sql.ProvideSearchGRPCService(cfg, features, log.New("test"), registerer, docBuilders, nil, nil, kv.Config{}, nil, backend, grpcService,
+		sql.WithAuthenticator(func(ctx context.Context) (context.Context, error) {
+			auth := grpcUtils.Authenticator{Tracer: otel.Tracer("test")}
+			return auth.Authenticate(ctx)
+		}),
+	)
 	require.NoError(t, err)
 
 	var client resource.SearchClient
@@ -353,7 +381,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	})
 
 	t.Run("Check service is healthy", func(t *testing.T) {
-		resp, err := client.IsHealthy(clientCtx, &resourcepb.HealthCheckRequest{})
+		resp, err := client.IsHealthy(clientCtx, &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 	})

@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/authz"
+	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/frontend"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -51,8 +52,9 @@ func NewModule(opts Options,
 	moduleRegisterer ModuleRegisterer,
 	storageBackend resource.StorageBackend, // Ensures unified storage backend is initialized
 	hooksService *hooks.HooksService,
+	storeProvider zStore.StoreProvider,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService, storeProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +78,7 @@ func newModuleServer(opts Options,
 	moduleRegisterer ModuleRegisterer,
 	storageBackend resource.StorageBackend,
 	hooksService *hooks.HooksService,
+	storeProvider zStore.StoreProvider,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
@@ -107,6 +110,8 @@ func newModuleServer(opts Options,
 		storageBackend:   storageBackend,
 		hooksService:     hooksService,
 		searchClient:     searchClient,
+		healthNotifier:   NewHealthNotifier(),
+		storeProvider:    storeProvider,
 	}
 
 	return s, nil
@@ -153,6 +158,17 @@ type ModuleServer struct {
 	// moduleRegisterer allows registration of modules provided by other builds (e.g. enterprise).
 	moduleRegisterer ModuleRegisterer
 	hooksService     *hooks.HooksService
+
+	// storeProvider creates OpenFGA datastores for the Zanzana server.
+	storeProvider zStore.StoreProvider
+
+	// healthNotifier is shared between the InstrumentationServer and the OperatorServer
+	// so that operators can signal readiness to the /readyz endpoint.
+	healthNotifier *HealthNotifier
+
+	// StorageServiceOptions allows injecting extra sql.ServiceOption values into the
+	// StorageServer and SearchServer module registrations. This is intended for tests.
+	StorageServiceOptions []sql.ServiceOption
 }
 
 // init initializes the server and its services.
@@ -222,7 +238,18 @@ func (s *ModuleServer) Run() error {
 	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)
 	m.RegisterModule(modules.SearchServerRing, s.initSearchServerRing)
 	m.RegisterModule(modules.SearchServerDistributor, func() (services.Service, error) {
-		return resource.ProvideSearchDistributorServer(otel.Tracer("index-server-distributor"), s.cfg, s.searchServerRing, s.searchServerRingClientPool, s.grpcService)
+		svc, err := resource.ProvideSearchDistributorServer(otel.Tracer("index-server-distributor"), s.cfg, s.searchServerRing, s.searchServerRingClientPool, s.grpcService)
+		if err != nil {
+			return nil, err
+		}
+		s.grpcService.Health.Register(
+			grpcserver.HealthProbeFunc(func(ctx context.Context) (bool, error) {
+				return svc.State() == services.Running, nil
+			}),
+			resourcepb.ResourceIndex_ServiceDesc.ServiceName,
+			resourcepb.ManagedObjectIndex_ServiceDesc.ServiceName,
+		)
+		return svc, nil
 	})
 
 	m.RegisterModule(modules.Core, func() (services.Service, error) {
@@ -251,7 +278,30 @@ func (s *ModuleServer) Run() error {
 			}
 			indexMetrics = s.indexMetrics
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient, s.grpcService)
+		svc, err := sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient, s.grpcService, s.StorageServiceOptions...)
+		if err != nil {
+			return nil, err
+		}
+		probe, ok := svc.(grpcserver.HealthProbe)
+		s.grpcService.Health.Register(grpcserver.HealthProbeFunc(func(ctx context.Context) (bool, error) {
+			if svc.State() != services.Running {
+				return false, nil
+			}
+			if ok {
+				return probe.CheckHealth(ctx)
+			}
+			return true, nil
+		}),
+			resourcepb.ResourceStore_ServiceDesc.ServiceName,
+			resourcepb.ResourceIndex_ServiceDesc.ServiceName,
+			resourcepb.ManagedObjectIndex_ServiceDesc.ServiceName,
+			resourcepb.BlobStore_ServiceDesc.ServiceName,
+			resourcepb.BulkStore_ServiceDesc.ServiceName,
+			resourcepb.Diagnostics_ServiceDesc.ServiceName,
+			resourcepb.Quotas_ServiceDesc.ServiceName,
+		)
+
+		return svc, nil
 	})
 
 	m.RegisterModule(modules.SearchServer, func() (services.Service, error) {
@@ -259,11 +309,29 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.grpcService)
+		svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.grpcService, s.StorageServiceOptions...)
+		if err != nil {
+			return nil, err
+		}
+		probe, ok := svc.(grpcserver.HealthProbe)
+		s.grpcService.Health.Register(grpcserver.HealthProbeFunc(func(ctx context.Context) (bool, error) {
+			if svc.State() != services.Running {
+				return false, nil
+			}
+			if ok {
+				return probe.CheckHealth(ctx)
+			}
+			return true, nil
+		}),
+			resourcepb.ResourceIndex_ServiceDesc.ServiceName,
+			resourcepb.ManagedObjectIndex_ServiceDesc.ServiceName,
+			resourcepb.Diagnostics_ServiceDesc.ServiceName,
+		)
+		return svc, nil
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
-		return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer)
+		return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer, s.storeProvider)
 	})
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {
@@ -299,9 +367,10 @@ func (s *ModuleServer) initOperatorServer() (services.Service, error) {
 							Commit:      s.commit,
 							BuildBranch: s.buildBranch,
 						},
-						CLIContext: cliContext,
-						Config:     s.cfg,
-						Registerer: s.registerer,
+						CLIContext:     cliContext,
+						Config:         s.cfg,
+						Registerer:     s.registerer,
+						HealthNotifier: s.healthNotifier,
 					}
 					return op.RunFunc(deps)
 				},

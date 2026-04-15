@@ -1,16 +1,16 @@
 import { invert } from 'lodash';
-import Prism, { Grammar, Token } from 'prismjs';
+import Prism, { type Grammar, Token } from 'prismjs';
 
 import { createAssistantContextItem } from '@grafana/assistant';
 import {
-  AbstractLabelMatcher,
+  type AbstractLabelMatcher,
   AbstractLabelOperator,
-  DataFrame,
-  DataQueryResponse,
-  DataQueryRequest,
+  type DataFrame,
+  type DataQueryResponse,
+  type DataQueryRequest,
 } from '@grafana/data';
 
-import { GrafanaPyroscopeDataQuery } from './dataquery.gen';
+import { type GrafanaPyroscopeDataQuery } from './dataquery.gen';
 
 export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLabelMatcher[] {
   const labelMatchers: AbstractLabelMatcher[] = [];

@@ -41,7 +41,6 @@ export function hasValidSourceSelection(
 }
 
 export interface Step1ValidationParams {
-  canImport: boolean;
   policyTreeName: string | null;
   notificationsSource: 'yaml' | 'datasource';
   notificationsYamlFile: File | null;
@@ -52,16 +51,15 @@ export interface Step1ValidationParams {
  * Validates that Step 1 form is complete and valid
  */
 export function isStep1Valid(params: Step1ValidationParams): boolean {
-  const { canImport, policyTreeName, notificationsSource, notificationsYamlFile, notificationsDatasourceUID } = params;
+  const { policyTreeName, notificationsSource, notificationsYamlFile, notificationsDatasourceUID } = params;
 
-  if (!canImport || !policyTreeName) {
+  if (!policyTreeName) {
     return false;
   }
   return hasValidSourceSelection(notificationsSource, notificationsYamlFile, notificationsDatasourceUID);
 }
 
 export interface Step2ValidationParams {
-  canImport: boolean;
   rulesSource: 'yaml' | 'datasource';
   rulesYamlFile: File | null;
   rulesDatasourceUID: string | null | undefined;
@@ -74,16 +72,11 @@ export interface Step2ValidationParams {
  * Validates that Step 2 form is complete and valid
  */
 export function isStep2Valid(params: Step2ValidationParams): boolean {
-  const { canImport, rulesSource, rulesYamlFile, rulesDatasourceUID, selectedRoutingTree, targetDatasourceUID } =
-    params;
+  const { rulesSource, rulesYamlFile, rulesDatasourceUID, selectedRoutingTree, targetDatasourceUID } = params;
 
-  if (!canImport) {
-    return false;
-  }
   if (!hasValidSourceSelection(rulesSource, rulesYamlFile, rulesDatasourceUID)) {
     return false;
   }
-  // A routing tree must be selected
   if (!selectedRoutingTree) {
     return false;
   }

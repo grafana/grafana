@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Stack, useStyles2, Text } from '@grafana/ui';
 
 type AddNewSectionProps = {
@@ -33,7 +33,7 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(2),
     }),
     sectionHeader: css({
-      margin: theme.spacing(0, 0, 3, 0),
+      margin: theme.spacing(0, 0, 2, 0),
     }),
   };
 }

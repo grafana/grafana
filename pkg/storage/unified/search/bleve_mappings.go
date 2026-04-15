@@ -41,7 +41,14 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFie
 	titlePhraseMapping.Store = false // already stored in title
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE_PHRASE, titlePhraseMapping)
 
-	// for searching by title - uses an edge ngram token filter
+	// for partial/prefix searching by title - uses ngram token filter
+	titleNgramMapping := bleve.NewTextFieldMapping()
+	titleNgramMapping.Analyzer = TITLE_ANALYZER
+	titleNgramMapping.Store = false // already stored in title
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE_NGRAM, titleNgramMapping)
+
+	// for searching by title - uses ngram token filter
+	// TODO: remove this once all clients query title_ngram directly
 	titleSearchMapping := bleve.NewTextFieldMapping()
 	titleSearchMapping.Analyzer = TITLE_ANALYZER
 	titleSearchMapping.Store = false // already stored in title
@@ -77,6 +84,17 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFie
 
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_OWNER_REFERENCES, &mapping.FieldMapping{
 		Name:               resource.SEARCH_FIELD_OWNER_REFERENCES,
+		Type:               "text",
+		Analyzer:           keyword.Name,
+		Store:              true,
+		Index:              true,
+		IncludeTermVectors: false,
+		IncludeInAll:       false,
+		DocValues:          false,
+	})
+
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_CREATED_BY, &mapping.FieldMapping{
+		Name:               resource.SEARCH_FIELD_CREATED_BY,
 		Type:               "text",
 		Analyzer:           keyword.Name,
 		Store:              true,

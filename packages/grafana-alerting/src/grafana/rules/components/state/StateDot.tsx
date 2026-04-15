@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Stack, useStyles2 } from '@grafana/ui';
 
 interface DotStylesProps {
-  color: 'success' | 'error' | 'warning' | 'unknown';
+  color: 'success' | 'error' | 'warning' | 'unknown' | 'info';
 }
 
 const StateDot = ({ color }: DotStylesProps) => {
@@ -24,6 +24,7 @@ const getDotStyles = (theme: GrafanaTheme2, { color }: DotStylesProps) => {
   const errorStyle = color === 'error';
   const successStyle = color === 'success';
   const warningStyle = color === 'warning';
+  const infoStyle = color === 'info';
 
   return {
     dot: css(
@@ -51,6 +52,11 @@ const getDotStyles = (theme: GrafanaTheme2, { color }: DotStylesProps) => {
         css({
           backgroundColor: theme.colors.error.main,
           outlineColor: theme.colors.error.transparent,
+        }),
+      infoStyle &&
+        css({
+          backgroundColor: theme.colors.info.main,
+          outlineColor: theme.colors.info.transparent,
         })
     ),
   };

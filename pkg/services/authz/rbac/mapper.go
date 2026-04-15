@@ -27,10 +27,6 @@ type Mapping interface {
 	HasFolderSupport() bool
 	// SkipScope returns true if the translation does not require a scope for the given verb.
 	SkipScope(verb string) bool
-	// VerbForAction returns the K8s verb for the given RBAC action.
-	// If multiple verbs map to the same action, returns the first match.
-	// If no verb is found, returns empty string and false.
-	VerbForAction(action string) (string, bool)
 	// Resource returns the K8s resource name for this mapping.
 	Resource() string
 }
@@ -92,16 +88,6 @@ func (t translation) SkipScope(verb string) bool {
 	return false
 }
 
-// Reverse lookup: find which k8s verbs map to the RBAC action
-func (t translation) VerbForAction(action string) (string, bool) {
-	for verb, rbacAction := range t.verbMapping {
-		if rbacAction == action {
-			return verb, true
-		}
-	}
-	return "", false
-}
-
 func (t translation) Resource() string {
 	return t.resource
 }
@@ -110,7 +96,11 @@ func (t translation) Resource() string {
 type MapperRegistry interface {
 	// Get returns the permission mapper for the given group and resource.
 	// If no translation is found, it returns false.
-	Get(group, resource string) (Mapping, bool)
+	Get(group, resource, subresource string) (Mapping, bool)
+	// GetAPIResourceName returns the API resource name (e.g. "repositories") for the given group and resource.
+	// Use this to send the canonical resource name in Check requests instead of legacy names (e.g. "provisioning.repositories").
+	// Returns ("", false) if no translation is found.
+	GetAPIResourceName(group, resource string) (string, bool)
 	// GetAll returns all the translations for the given group
 	GetAll(group string) []Mapping
 	// GetGroups returns all registered group names
@@ -223,28 +213,61 @@ func NewMapperRegistry() MapperRegistry {
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
 			"librarypanels": newResourceTranslation("library.panels", "uid", true, nil),
+			// Annotations subresource for dashboards
+			// Uses dashboard scope (dashboards:uid:...) but annotation actions
+			"dashboards/annotations": translation{
+				resource:  "dashboards",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:              "annotations:read",
+					utils.VerbList:             "annotations:read",
+					utils.VerbWatch:            "annotations:read",
+					utils.VerbCreate:           "annotations:create",
+					utils.VerbUpdate:           "annotations:write",
+					utils.VerbPatch:            "annotations:write",
+					utils.VerbDelete:           "annotations:delete",
+					utils.VerbDeleteCollection: "annotations:delete",
+				},
+				// Mirror dashboard action sets so managed roles like "dashboards:view" also grant annotations:read.
+				actionSetMapping: map[string][]string{
+					utils.VerbGet:              {"dashboards:view", "folders:view", "dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
+					utils.VerbList:             {"dashboards:view", "folders:view", "dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
+					utils.VerbWatch:            {"dashboards:view", "folders:view", "dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
+					utils.VerbCreate:           {"dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
+					utils.VerbUpdate:           {"dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
+					utils.VerbPatch:            {"dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
+					utils.VerbDelete:           {"dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
+					utils.VerbDeleteCollection: {"dashboards:edit", "folders:edit", "dashboards:admin", "folders:admin"},
+				},
+				folderSupport: true,
+			},
 		},
 		"folder.grafana.app": {
 			"folders": newFolderTranslation(),
 		},
 		"iam.grafana.app": {
 			// Users is a special case. We translate user permissions from id to uid based.
-			"users":           newResourceTranslation("users", "uid", false, map[string]bool{utils.VerbCreate: true}),
+			"users": translation{
+				resource:  "users",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbCreate:           "users:create",
+					utils.VerbGet:              "org.users:read",
+					utils.VerbUpdate:           "org.users:write",
+					utils.VerbPatch:            "org.users:write",
+					utils.VerbDelete:           "org.users:remove",
+					utils.VerbDeleteCollection: "users:delete",
+					utils.VerbList:             "org.users:read",
+					utils.VerbWatch:            "org.users:read",
+					utils.VerbGetPermissions:   "users.permissions:read",
+					utils.VerbSetPermissions:   "users.permissions:write",
+				},
+				folderSupport:   false,
+				skipScopeOnVerb: map[string]bool{utils.VerbCreate: true},
+			},
 			"serviceaccounts": newResourceTranslation("serviceaccounts", "uid", false, map[string]bool{utils.VerbCreate: true}),
 			// Teams is a special case. We translate user permissions from id to uid based.
 			"teams": newResourceTranslation("teams", "uid", false, map[string]bool{utils.VerbCreate: true}),
-			"coreroles": translation{
-				resource:  "roles",
-				attribute: "uid",
-				verbMapping: map[string]string{
-					utils.VerbGet:   "roles:read",
-					utils.VerbList:  "roles:read",
-					utils.VerbWatch: "roles:read",
-				},
-				folderSupport: false,
-				// No need to skip scope on create for roles because we translate `permissions:type:delegate` to `roles:*``
-				skipScopeOnVerb: nil,
-			},
 			"globalroles": translation{
 				resource:  "roles",
 				attribute: "uid",
@@ -336,6 +359,11 @@ func NewMapperRegistry() MapperRegistry {
 			"checktypes": newResourceTranslation("advisor.checktypes", "uid", false, nil),
 			"register":   newResourceTranslation("advisor.register", "uid", false, nil),
 		},
+		"annotation.grafana.app": {
+			// Uses "type" as scope attribute for org-level annotations (e.g. annotations:type:organization).
+			// No actionSetMapping — dashboard action sets don't apply to org-level annotations.
+			"annotations": newResourceTranslation("annotations", "type", false, nil),
+		},
 	})
 
 	return mapper
@@ -372,19 +400,41 @@ func (m mapper) findGroupKey(group string) (string, bool) {
 	return "", false
 }
 
-func (m mapper) Get(group, resource string) (Mapping, bool) {
+func (m mapper) Get(group, resource, subresource string) (Mapping, bool) {
 	groupKey, ok := m.findGroupKey(group)
 	if !ok {
 		return nil, false
 	}
 
+	lookupResource := resource
+	if subresource != "" {
+		lookupResource = resource + "/" + subresource
+	}
+
 	resources := m[groupKey]
-	t, ok := resources[resource]
+	t, ok := resources[lookupResource]
 	if !ok {
 		return nil, false
 	}
 
 	return &t, true
+}
+
+func (m mapper) GetAPIResourceName(group, resource string) (string, bool) {
+	groupKey, ok := m.findGroupKey(group)
+	if !ok {
+		return "", false
+	}
+	resources := m[groupKey]
+	if _, ok := resources[resource]; ok {
+		return resource, true
+	}
+	for apiResource, t := range resources {
+		if t.Resource() == resource {
+			return apiResource, true
+		}
+	}
+	return "", false
 }
 
 func (m mapper) GetAll(group string) []Mapping {

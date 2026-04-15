@@ -1,6 +1,6 @@
-import { memo, ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 
-import { Field } from '@grafana/data';
+import { type Field } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { renderSingleLink } from '../../DataLinksActionsTooltip';
@@ -12,6 +12,9 @@ interface MaybeWrapWithLinkProps {
   children: ReactNode;
 }
 
+/**
+ * @internal
+ */
 export const MaybeWrapWithLink = memo(({ field, rowIdx, children }: MaybeWrapWithLinkProps): ReactNode => {
   const linksCount = field.config.links?.length ?? 0;
   const actionsCount = field.config.actions?.length ?? 0;
