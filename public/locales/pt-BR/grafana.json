@@ -5471,6 +5471,9 @@
       "cancel-loading-dashboard": "Cancelar carregamento do painel"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "",
+      "provisioning-message": "",
+      "provisioning-title": "",
       "text": {
         "not-found": "Não encontrado"
       }
@@ -6508,6 +6511,10 @@
       "sql-expressions-title": "Expressões SQL",
       "title-add-another-transformation": "Adicionar outra transformação",
       "view-all": "Ver tudo"
+    },
+    "transformation-type-picker": {
+      "sql-cta-button": "",
+      "sql-cta-description": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "Ao excluir todas as transformações, você voltará para a tela de seleção principal."
@@ -8806,6 +8813,9 @@
     "show-all-spans": "Mostrar todos os períodos",
     "span-bar": {
       "tooltip-critical-path": "Um segmento no <1>caminho crítico</1> do rastro/solicitação/fluxo de trabalho geral."
+    },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": ""
     },
     "span-bar-section": {
       "description-link": "Adicione informações adicionais ao lado do serviço e da operação em uma linha da barra de intervalo na visualização de rastros.",

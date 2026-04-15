@@ -5471,6 +5471,9 @@
       "cancel-loading-dashboard": "Laden des Dashboards abbrechen"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "",
+      "provisioning-message": "",
+      "provisioning-title": "",
       "text": {
         "not-found": "Nicht gefunden"
       }
@@ -6508,6 +6511,10 @@
       "sql-expressions-title": "SQL-Ausdrücke",
       "title-add-another-transformation": "Weitere Transformation hinzufügen",
       "view-all": "Alles anzeigen"
+    },
+    "transformation-type-picker": {
+      "sql-cta-button": "",
+      "sql-cta-description": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "Wenn Sie alle Transformationen löschen, kehren Sie zum Hauptauswahlbildschirm zurück."
@@ -8806,6 +8813,9 @@
     "show-all-spans": "Alle Spannen anzeigen",
     "span-bar": {
       "tooltip-critical-path": "Ein Segment auf dem <1>kritischen Pfad</1> des gesamten Trace/Request/Workflow."
+    },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": ""
     },
     "span-bar-section": {
       "description-link": "Ergänzen Sie in einer Zeile der Spannenleiste in der Trace-Ansicht zusätzliche Informationen neben dem Dienst und der Operation.",
