@@ -2,6 +2,10 @@
 
 package v0alpha1
 
+import (
+	json "encoding/json"
+)
+
 // +k8s:openapi-gen=true
 type AlertRuleIntervalTrigger struct {
 	Interval AlertRulePromDuration `json:"interval"`
@@ -55,29 +59,71 @@ func (AlertRuleExecErrState) OpenAPIModelName() string {
 
 // TODO(@moustafab): this should be imported from the notifications package
 // +k8s:openapi-gen=true
-type AlertRuleNotificationSettings struct {
-	Receiver            string                     `json:"receiver"`
-	GroupBy             []string                   `json:"groupBy,omitempty"`
-	GroupWait           *AlertRulePromDuration     `json:"groupWait,omitempty"`
-	GroupInterval       *AlertRulePromDuration     `json:"groupInterval,omitempty"`
-	RepeatInterval      *AlertRulePromDuration     `json:"repeatInterval,omitempty"`
-	MuteTimeIntervals   []AlertRuleTimeIntervalRef `json:"muteTimeIntervals,omitempty"`
-	ActiveTimeIntervals []AlertRuleTimeIntervalRef `json:"activeTimeIntervals,omitempty"`
-}
+type AlertRuleNotificationSettings = AlertRuleSimplifiedRoutingOrNamedRoutingTree
 
 // NewAlertRuleNotificationSettings creates a new AlertRuleNotificationSettings object.
 func NewAlertRuleNotificationSettings() *AlertRuleNotificationSettings {
-	return &AlertRuleNotificationSettings{}
+	return NewAlertRuleSimplifiedRoutingOrNamedRoutingTree()
 }
 
-// OpenAPIModelName returns the OpenAPI model name for AlertRuleNotificationSettings.
-func (AlertRuleNotificationSettings) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleNotificationSettings"
+// +k8s:openapi-gen=true
+type AlertRuleSimplifiedRouting struct {
+	Type                AlertRuleNotificationSettingsType `json:"type"`
+	Receiver            string                            `json:"receiver"`
+	GroupBy             []string                          `json:"groupBy,omitempty"`
+	GroupWait           *AlertRulePromDuration            `json:"groupWait,omitempty"`
+	GroupInterval       *AlertRulePromDuration            `json:"groupInterval,omitempty"`
+	RepeatInterval      *AlertRulePromDuration            `json:"repeatInterval,omitempty"`
+	MuteTimeIntervals   []AlertRuleTimeIntervalRef        `json:"muteTimeIntervals,omitempty"`
+	ActiveTimeIntervals []AlertRuleTimeIntervalRef        `json:"activeTimeIntervals,omitempty"`
+}
+
+// NewAlertRuleSimplifiedRouting creates a new AlertRuleSimplifiedRouting object.
+func NewAlertRuleSimplifiedRouting() *AlertRuleSimplifiedRouting {
+	return &AlertRuleSimplifiedRouting{
+		Type: AlertRuleNotificationSettingsTypeSimplifiedRouting,
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for AlertRuleSimplifiedRouting.
+func (AlertRuleSimplifiedRouting) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleSimplifiedRouting"
+}
+
+// +k8s:openapi-gen=true
+type AlertRuleNotificationSettingsType string
+
+const (
+	AlertRuleNotificationSettingsTypeSimplifiedRouting AlertRuleNotificationSettingsType = "SimplifiedRouting"
+	AlertRuleNotificationSettingsTypeNamedRoutingTree  AlertRuleNotificationSettingsType = "NamedRoutingTree"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for AlertRuleNotificationSettingsType.
+func (AlertRuleNotificationSettingsType) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleNotificationSettingsType"
 }
 
 // TODO(@moustafab): validate regex for time interval ref
 // +k8s:openapi-gen=true
 type AlertRuleTimeIntervalRef string
+
+// +k8s:openapi-gen=true
+type AlertRuleNamedRoutingTree struct {
+	Type        AlertRuleNotificationSettingsType `json:"type"`
+	RoutingTree string                            `json:"routingTree"`
+}
+
+// NewAlertRuleNamedRoutingTree creates a new AlertRuleNamedRoutingTree object.
+func NewAlertRuleNamedRoutingTree() *AlertRuleNamedRoutingTree {
+	return &AlertRuleNamedRoutingTree{
+		Type: AlertRuleNotificationSettingsTypeNamedRoutingTree,
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for AlertRuleNamedRoutingTree.
+func (AlertRuleNamedRoutingTree) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleNamedRoutingTree"
+}
 
 // TODO: validate that only one can specify source=true
 // & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
@@ -181,4 +227,71 @@ func NewAlertRuleSpec() *AlertRuleSpec {
 // OpenAPIModelName returns the OpenAPI model name for AlertRuleSpec.
 func (AlertRuleSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleSpec"
+}
+
+// +k8s:openapi-gen=true
+type AlertRuleSimplifiedRoutingOrNamedRoutingTree struct {
+	SimplifiedRouting *AlertRuleSimplifiedRouting `json:"SimplifiedRouting,omitempty"`
+	NamedRoutingTree  *AlertRuleNamedRoutingTree  `json:"NamedRoutingTree,omitempty"`
+}
+
+// NewAlertRuleSimplifiedRoutingOrNamedRoutingTree creates a new AlertRuleSimplifiedRoutingOrNamedRoutingTree object.
+func NewAlertRuleSimplifiedRoutingOrNamedRoutingTree() *AlertRuleSimplifiedRoutingOrNamedRoutingTree {
+	return &AlertRuleSimplifiedRoutingOrNamedRoutingTree{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `AlertRuleSimplifiedRoutingOrNamedRoutingTree` as JSON.
+func (resource AlertRuleSimplifiedRoutingOrNamedRoutingTree) MarshalJSON() ([]byte, error) {
+	if resource.SimplifiedRouting != nil {
+		return json.Marshal(resource.SimplifiedRouting)
+	}
+	if resource.NamedRoutingTree != nil {
+		return json.Marshal(resource.NamedRoutingTree)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `AlertRuleSimplifiedRoutingOrNamedRoutingTree` from JSON.
+func (resource *AlertRuleSimplifiedRoutingOrNamedRoutingTree) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
+	parsedAsMap := make(map[string]interface{})
+	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
+		return err
+	}
+
+	discriminator, found := parsedAsMap["type"]
+	if !found {
+		discriminator = "SimplifiedRouting"
+	}
+
+	switch discriminator {
+	case "NamedRoutingTree":
+		var alertRuleNamedRoutingTree AlertRuleNamedRoutingTree
+		if err := json.Unmarshal(raw, &alertRuleNamedRoutingTree); err != nil {
+			return err
+		}
+
+		resource.NamedRoutingTree = &alertRuleNamedRoutingTree
+		return nil
+	case "SimplifiedRouting":
+		var alertRuleSimplifiedRouting AlertRuleSimplifiedRouting
+		if err := json.Unmarshal(raw, &alertRuleSimplifiedRouting); err != nil {
+			return err
+		}
+
+		resource.SimplifiedRouting = &alertRuleSimplifiedRouting
+		return nil
+	}
+
+	return nil
+}
+
+// OpenAPIModelName returns the OpenAPI model name for AlertRuleSimplifiedRoutingOrNamedRoutingTree.
+func (AlertRuleSimplifiedRoutingOrNamedRoutingTree) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleSimplifiedRoutingOrNamedRoutingTree"
 }

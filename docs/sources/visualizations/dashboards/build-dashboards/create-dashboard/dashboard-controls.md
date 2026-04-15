@@ -137,7 +137,7 @@ To enable this functionality, you need to add one or more overrides for the pane
 In the following example, the override:
 
 - Adds a regular expression, so that all fields are filterable
-- Enables the **Ad-hoc filterable** switch
+- Enables the **Filterable** switch
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filter-override-v13.0.png" max-width="400px" alt="Field override making all fields filterable" >}}
 
