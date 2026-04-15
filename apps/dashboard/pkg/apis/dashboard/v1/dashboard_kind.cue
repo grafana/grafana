@@ -860,13 +860,13 @@ lineage: schemas: [{
 			repeat?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
-		#DatasourceControlSourceRef: {
-			type: "datasource"
-			// The plugin type-id
+		// Source for dashboard links and template variables registered outside the dashboard JSON.
+		// - datasource: plugin type-id in `group`
+		// - globalvariable: org-wide or folder scope label in `group` (e.g. org, folder UID)
+		#ControlSourceRef: {
+			type: "datasource" | "globalvariable"
 			group: string
 		}
-
-		#ControlSourceRef: #DatasourceControlSourceRef
 	}
 },
 ]

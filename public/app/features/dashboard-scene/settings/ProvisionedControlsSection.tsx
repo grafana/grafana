@@ -60,6 +60,20 @@ export function SourceIcon({ origin }: { origin: ControlSourceRef | undefined })
   const styles = useStyles2(getStyles);
   const pluginName = usePluginName(origin);
 
+  if (origin?.type === 'globalvariable') {
+    return (
+      <Tooltip
+        content={t(
+          'dashboard-scene.provisioned-controls-section.tooltip-global-variable',
+          'Global or folder variable ({{scope}})',
+          { scope: origin.group || 'org' }
+        )}
+      >
+        <Icon name="brackets" className={styles.iconMuted} aria-hidden />
+      </Tooltip>
+    );
+  }
+
   return (
     <Tooltip content={getSourceTooltip(pluginName)}>
       <Icon name="database" className={styles.iconMuted} aria-hidden />
@@ -78,14 +92,14 @@ function getSourceTooltip(pluginName: string | undefined): string {
 
 function usePluginName(origin: ControlSourceRef | undefined): string | undefined {
   return useMemo(() => {
-    if (!origin?.group) {
+    if (!origin?.group || origin.type === 'globalvariable') {
       return undefined;
     }
 
     const list = getDataSourceSrv().getList({});
     const ds = list.find((d) => d.meta.id === origin.group);
     return ds?.meta.name ?? origin.group;
-  }, [origin?.group]);
+  }, [origin?.group, origin?.type]);
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

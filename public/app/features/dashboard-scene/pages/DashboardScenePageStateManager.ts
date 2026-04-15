@@ -56,6 +56,7 @@ import {
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
+import { fetchGlobalDashboardVariablesForLoad, mergeDefaultVariableKinds } from '../utils/globalDashboardVariables';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
 
@@ -99,6 +100,8 @@ export interface LoadDashboardOptions {
   slug?: string;
   type?: string;
   urlFolderUid?: string;
+  /** Folder UID for the loaded dashboard (e.g. on reload when annotations are not re-fetched). */
+  folderUid?: string;
   defaultVariables?: VariableKind[];
   defaultLinks?: DashboardLink[];
 }
@@ -158,6 +161,13 @@ abstract class DashboardScenePageStateManagerBase<T>
   abstract reloadDashboard(queryParams: UrlQueryMap): Promise<void>;
   abstract transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
   abstract loadSnapshotScene(slug: string): Promise<DashboardScene>;
+
+  /**
+   * Hook for subclasses to merge async data (e.g. global dashboard variables) into load options before scene creation.
+   */
+  protected async prepareLoadOptions(options: LoadDashboardOptions, _rsp: T | null): Promise<LoadDashboardOptions> {
+    return options;
+  }
 
   protected cache: Record<string, DashboardScene> = {};
 
@@ -465,7 +475,8 @@ abstract class DashboardScenePageStateManagerBase<T>
       return null;
     }
 
-    const scene = this.transformResponseToScene(rsp, options);
+    const effectiveOptions = await this.prepareLoadOptions(options, rsp);
+    const scene = this.transformResponseToScene(rsp, effectiveOptions);
 
     return scene;
   }
@@ -906,6 +917,31 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 > {
   private dashboardLoader = new DashboardLoaderSrvV2();
 
+  protected async prepareLoadOptions(
+    options: LoadDashboardOptions,
+    rsp: DashboardWithAccessInfo<DashboardV2Spec> | null
+  ): Promise<LoadDashboardOptions> {
+    if (!rsp || !config.featureToggles.globalDashboardVariables) {
+      return options;
+    }
+    if (options.route === DashboardRoutes.Public) {
+      return options;
+    }
+
+    try {
+      const folderUid =
+        rsp.metadata.annotations?.[AnnoKeyFolder] ?? options.folderUid ?? options.urlFolderUid;
+      const globals = await fetchGlobalDashboardVariablesForLoad(rsp, folderUid);
+      return {
+        ...options,
+        defaultVariables: mergeDefaultVariableKinds(options.defaultVariables, globals),
+      };
+    } catch (e) {
+      console.warn('Failed to load global dashboard variables', e);
+      return options;
+    }
+  }
+
   public async loadSnapshotScene(slug: string): Promise<DashboardScene> {
     const rsp = await this.dashboardLoader.loadSnapshot(slug);
     const v2Response = ensureV2Response(rsp);
@@ -1084,7 +1120,15 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         return;
       }
 
-      const scene = transformSaveModelSchemaV2ToScene(rsp);
+      const baseLoadOptions: LoadDashboardOptions = {
+        uid,
+        route: DashboardRoutes.Normal,
+        slug: dashboard.state.meta.slug,
+        type: 'db',
+        folderUid: dashboard.state.meta.folderUid,
+      };
+      const loadOptions = await this.prepareLoadOptions(baseLoadOptions, rsp);
+      const scene = transformSaveModelSchemaV2ToScene(rsp, loadOptions);
 
       // we need to call and restore dashboard state on every reload that pulls a new dashboard version
       if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(uid)) {

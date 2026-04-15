@@ -215,6 +215,14 @@ export interface DashboardSceneState extends SceneObjectState {
   defaultLinksLoading?: boolean;
 }
 
+function isPersistedOrGlobalDashboardVariable(origin: SceneVariable['state']['origin']): boolean {
+  if (origin === undefined) {
+    return true;
+  }
+  const t = Reflect.get(origin, 'type');
+  return t === 'globalvariable';
+}
+
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
   static Component = DashboardSceneRenderer;
 
@@ -336,7 +344,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public setDefaultVariables(defaultVariables: VariableKind[]) {
     const variableSet = sceneGraph.getVariables(this);
-    const userVars = variableSet.state.variables.filter((v) => !v.state.origin);
+    // Keep persisted variables (no origin) and org/folder globals (not replaced by datasource defaults).
+    const userVars = variableSet.state.variables.filter((v) => {
+      return isPersistedOrGlobalDashboardVariable(v.state.origin);
+    });
     const defaultVarObjects = defaultVariables
       .map((v) => {
         try {
@@ -358,7 +369,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public clearDefaultControls() {
     const variableSet = sceneGraph.getVariables(this);
-    const nonDefaultVars = variableSet.state.variables.filter((v) => !v.state.origin);
+    const nonDefaultVars = variableSet.state.variables.filter((v) => {
+      return isPersistedOrGlobalDashboardVariable(v.state.origin);
+    });
     variableSet.setState({ variables: nonDefaultVars });
 
     const nonDefaultLinks = this.state.links.filter((l) => !l.origin);

@@ -346,10 +346,7 @@ export interface DashboardLink {
    * The source that registered the link (if any)
    */
   origin?: {
-    type: 'datasource';
-    /**
-     * The plugin type-id
-     */
+    type: ('datasource' | 'globalvariable');
     group: string;
   };
   /**

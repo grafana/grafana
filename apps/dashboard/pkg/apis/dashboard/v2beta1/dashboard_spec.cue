@@ -821,13 +821,12 @@ VariableOption: {
 }
 
 // Source information for controls (e.g. variables or links)
-DatasourceControlSourceRef: {
-	type: "datasource"
-	// The plugin type-id
+// - datasource: plugin type-id in `group`
+// - globalvariable: org-wide or folder scope label in `group` (e.g. org, folder UID)
+ControlSourceRef: {
+	type:  "datasource" | "globalvariable"
 	group: string
 }
-
-ControlSourceRef: DatasourceControlSourceRef
 
 // Query variable specification
 QueryVariableSpec: {
