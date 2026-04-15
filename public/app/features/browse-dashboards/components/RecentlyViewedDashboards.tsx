@@ -42,7 +42,7 @@ export function RecentlyViewedDashboards() {
     reportInteraction('grafana_recently_viewed_dashboards_toggle_section', {
       expanded: !isOpen,
     });
-    setIsOpen(!isOpen);
+    setIsOpen(prev => !prev);
   };
 
   useEffect(() => {
@@ -71,9 +71,7 @@ export function RecentlyViewedDashboards() {
         </Stack>
       }
       isOpen={isOpen}
-      // passing empty function to disable controlled mode, we only want to control isOpen when click on title
-      // this avoid entire header section being clickable which can be confusing with the Clear history button
-      onToggle={() => { }}
+      onToggle={handleSectionToggle}
       className={styles.title}
       contentClassName={styles.content}
     >
