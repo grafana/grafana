@@ -3,7 +3,7 @@ import { Trans, t } from '@grafana/i18n';
 import { type SceneObject, SceneVariableSet } from '@grafana/scenes';
 import { Box, Button, Stack } from '@grafana/ui';
 
-import { openAddSectionVariablePane } from '../settings/variables/VariableAddEditableElement';
+import { openAddSectionVariablePane } from '../settings/variables/VariableTypeSelectionPane';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
@@ -81,15 +81,11 @@ export function SectionVariablesList({ sectionOwner }: SectionVariablesListProps
     <Stack direction="column" gap={0}>
       {variables.map((variable) => (
         <Button
-          key={variable.state.key ?? variable.state.name}
+          key={variable.state.key!}
           variant="secondary"
           size="sm"
           fill="text"
-          onClick={() =>
-            dashboard.state.editPane.selectObject(variable, variable.state.key ?? variable.state.name, {
-              force: true,
-            })
-          }
+          onClick={() => dashboard.state.editPane.selectObject(variable, { force: true })}
         >
           {variable.state.name}
         </Button>

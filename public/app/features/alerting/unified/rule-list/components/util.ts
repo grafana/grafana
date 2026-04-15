@@ -116,6 +116,13 @@ export function normalizeState(state?: PromAlertingRuleState): NormalizedState {
 }
 
 function isValidState(state: string): state is NonNullable<NormalizedState> {
-  const valid: Array<NonNullable<NormalizedState>> = ['normal', 'firing', 'pending', 'unknown', 'recovering'] as const;
+  const valid: Array<NonNullable<NormalizedState>> = [
+    'normal',
+    'firing',
+    'pending',
+    'unknown',
+    'recovering',
+    'inhibited',
+  ] as const;
   return valid.some((v) => v === state);
 }

@@ -62,6 +62,11 @@ func TestSimpleServer(t *testing.T) {
 		Backend: store,
 	})
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = server.Stop(ctx)
+	})
 
 	t.Run("playlist happy CRUD paths", func(t *testing.T) {
 		raw := []byte(`{
@@ -471,7 +476,7 @@ func TestSimpleServer(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		// Update should return an ErrOptimisticLockingFailed the second time
+		// Update should return a conflict error the second time
 
 		_, err = server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
@@ -479,12 +484,13 @@ func TestSimpleServer(t *testing.T) {
 			ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
 
-		rsp, _ := server.Update(ctx, &resourcepb.UpdateRequest{
+		rsp, err := server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
-		require.Equal(t, rsp.Error.Code, ErrOptimisticLockingFailed.Code)
-		require.Equal(t, rsp.Error.Message, ErrOptimisticLockingFailed.Message)
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusConflict), rsp.Error.Code)
+		require.Contains(t, rsp.Error.Message, "requested RV does not match current RV")
 	})
 }
 
@@ -604,13 +610,15 @@ func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) 
 }
 
 func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	s := &server{
 		artificialSuccessfulWriteDelay: 1 * time.Millisecond,
 		log:                            log.NewNopLogger(),
 	}
 
 	check := func(t *testing.T, expectedSleep bool, res responseWithErrorResult, err error) {
-		slept := s.sleepAfterSuccessfulWriteOperation("test", &resourcepb.ResourceKey{}, res, err)
+		slept := s.sleepAfterSuccessfulWriteOperation(ctx, "test", &resourcepb.ResourceKey{}, res, err)
 		require.Equal(t, expectedSleep, slept)
 	}
 
@@ -933,6 +941,11 @@ func TestGracefulShutdown(t *testing.T) {
 			Backend: store,
 		})
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = srv.Stop(ctx)
+		})
 		return srv
 	}
 

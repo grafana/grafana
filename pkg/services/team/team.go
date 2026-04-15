@@ -65,3 +65,8 @@ func MiddlewareTeamUIDResolver(teamService Service, paramName string) web.Handle
 		}
 	}
 }
+
+func TeamUIDFrom(ctx context.Context) (string, bool) {
+	uid, ok := ctx.Value(TeamUIDCtxKey{}).(string)
+	return uid, ok && uid != ""
+}

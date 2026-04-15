@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
-	foldersV1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/stretchr/testify/assert"
@@ -25,9 +25,9 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	dashboardAPIVersion := dashboardV1.DashboardResourceInfo.GroupVersion().String()
 	helper := sharedHelper(t)
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:            repoName,
-		Target:          "folder",
+		SyncTarget:      "folder",
 		ExpectedFolders: 1,
 	})
 
@@ -107,8 +107,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow managed dashboard in unmanaged folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "unmanaged-folder-",
 				},
@@ -148,8 +148,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow unmanaged dashboard in unmanaged folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "plain-folder-",
 				},
@@ -188,8 +188,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("reject moving unmanaged dashboard to managed folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "src-folder-",
 				},
@@ -237,8 +237,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow moving dashboard to unmanaged folder", func(t *testing.T) {
 		folderA := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "folder-a-",
 				},
@@ -252,8 +252,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		folderB := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "folder-b-",
 				},
@@ -303,8 +303,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow removing manager from dashboard in unmanaged folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "mgr-change-folder-",
 				},
@@ -353,8 +353,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow changing manager identity on dashboard in unmanaged folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "mgr-id-change-folder-",
 				},
@@ -418,8 +418,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("reject unmanaged sub-folder in managed folder", func(t *testing.T) {
 		folder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "unmanaged-subfolder-",
 					"annotations": map[string]interface{}{
@@ -442,8 +442,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("reject sub-folder managed by different manager in managed folder", func(t *testing.T) {
 		folder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "wrong-mgr-subfolder-",
 					"annotations": map[string]interface{}{
@@ -467,8 +467,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow managed sub-folder in unmanaged folder", func(t *testing.T) {
 		parent := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "unmanaged-parent-",
 				},
@@ -482,8 +482,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		child := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "managed-child-",
 					"annotations": map[string]interface{}{
@@ -506,8 +506,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("allow unmanaged sub-folder in unmanaged folder", func(t *testing.T) {
 		parent := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "plain-parent-",
 				},
@@ -521,8 +521,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		child := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "plain-child-",
 					"annotations": map[string]interface{}{
@@ -546,9 +546,9 @@ func TestIntegrationProvisioning_BlockManagerChange(t *testing.T) {
 	ctx := context.Background()
 
 	const repo = "managed-change-test"
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"testdata/all-panels.json": "all-panels.json",
 		},
@@ -634,9 +634,9 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResource(t *testing.T) {
 	ctx := context.Background()
 
 	const repo = "admin-release-test"
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"testdata/all-panels.json": "all-panels.json",
 		},
@@ -720,9 +720,9 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResourceViaPatch(t *testi
 	ctx := context.Background()
 
 	const repo = "admin-release-patch-test"
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"testdata/all-panels.json": "all-panels.json",
 		},

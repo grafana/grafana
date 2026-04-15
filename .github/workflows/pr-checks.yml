@@ -1,22 +1,11 @@
 name: PR Checks
 on:
-  pull_request_target:
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - ready_for_review
-      - labeled
-      - unlabeled
-      - edited
-      - auto_merge_enabled
-  issues:
-    types:
-      - milestoned
-      - demilestoned
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 concurrency:
-  group: pr-checks-${{ github.event.number }}
+  group: pr-checks-${{ github.event.number }}-new
+  cancel-in-progress: true
 
 permissions:
   statuses: write
@@ -30,17 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     steps:
-      - name: Checkout Actions
-        uses: actions/checkout@v5
-        with:
-          repository: "grafana/grafana-github-actions"
-          path: ./actions
-          ref: main
-          persist-credentials: false
-      - name: Install Actions
-        run: npm install --production --prefix ./actions
       - name: Run PR Checks
-        uses: ./actions/pr-checks
+        uses: grafana/grafana-github-actions/pr-checks@main
         with:
           token: ${{secrets.GITHUB_TOKEN}}
           configPath: pr-checks

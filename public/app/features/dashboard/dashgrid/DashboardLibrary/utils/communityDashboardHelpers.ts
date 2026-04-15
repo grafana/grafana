@@ -20,6 +20,7 @@ import {
 import { type GnetDashboard, type Link } from '../types';
 
 import { type InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
+import type { AssistantSource } from './templateDashboardHelpers';
 
 export const SEARCH_DEBOUNCE_MS = 500;
 export const DEFAULT_SORT_ORDER = 'downloads';
@@ -98,7 +99,8 @@ export function navigateToTemplate(
   sourceEntryPoint: SourceEntryPoint,
   eventLocation: EventLocation,
   contentKind: ContentKind,
-  datasourceTypes?: string[]
+  datasourceTypes?: string[],
+  assistantSource?: AssistantSource
 ): void {
   const searchParams = new URLSearchParams({
     datasource: datasourceUid,
@@ -117,6 +119,10 @@ export function navigateToTemplate(
     searchParams.set('datasourceTypes', JSON.stringify(datasourceTypes));
   }
 
+  if (assistantSource) {
+    searchParams.set('assistantSource', assistantSource);
+  }
+
   locationService.push({
     pathname: DASHBOARD_LIBRARY_ROUTES.Template,
     search: searchParams.toString(),
@@ -129,6 +135,7 @@ interface UseCommunityDashboardParams {
   sourceEntryPoint: SourceEntryPoint;
   eventLocation: EventLocation;
   onShowMapping?: (context: MappingContext) => void;
+  assistantSource?: AssistantSource;
 }
 
 /**
@@ -242,6 +249,7 @@ export async function onUseCommunityDashboard({
   sourceEntryPoint,
   eventLocation,
   onShowMapping,
+  assistantSource,
 }: UseCommunityDashboardParams): Promise<void> {
   // Note: item_clicked tracking is done by the caller (CommunityDashboardSection or SuggestedDashboards)
   // with the correct discoveryMethod before calling this function
@@ -284,7 +292,8 @@ export async function onUseCommunityDashboard({
         sourceEntryPoint,
         eventLocation,
         CONTENT_KINDS.COMMUNITY_DASHBOARD,
-        datasourceTypes
+        datasourceTypes,
+        assistantSource
       );
     } else {
       // Show mapping form for unmapped datasources and/or constants
@@ -305,7 +314,8 @@ export async function onUseCommunityDashboard({
               sourceEntryPoint,
               eventLocation,
               CONTENT_KINDS.COMMUNITY_DASHBOARD,
-              datasourceTypes
+              datasourceTypes,
+              assistantSource
             ),
         });
       }

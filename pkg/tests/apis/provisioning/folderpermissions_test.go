@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	foldersV1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/stretchr/testify/assert"
@@ -21,9 +21,9 @@ import (
 func TestIntegrationFolderPermissions_ProvisionedFolders(t *testing.T) {
 	repoName := "nested-folder-repo"
 	helper := sharedHelper(t)
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:            repoName,
-		Target:          "folder",
+		SyncTarget:      "folder",
 		ExpectedFolders: 1,
 		Copies: map[string]string{
 			"testdata/all-panels.json": "folder/subfolder/dashboard.json",
@@ -72,9 +72,9 @@ func TestIntegrationFolderPermissions_ProvisionedFolders(t *testing.T) {
 func TestIntegrationFolderPermissions_UnprovisionedFolders(t *testing.T) {
 	const repo = "test-repo"
 	helper := sharedHelper(t)
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:            repo,
-		Target:          "folder",
+		SyncTarget:      "folder",
 		ExpectedFolders: 1,
 	})
 
@@ -129,8 +129,8 @@ func TestIntegrationFolderPermissions_UnprovisionedFolders(t *testing.T) {
 	t.Run("should update permissions for unmanaged folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": foldersV1beta1.FolderResourceInfo.GroupVersion().String(),
-				"kind":       foldersV1beta1.FolderResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"generateName": "test-folder-",
 				},

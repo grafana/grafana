@@ -11,10 +11,8 @@ import (
 
 	alertingmodels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
-	"github.com/grafana/alerting/receivers/schema"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -28,16 +26,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const (
-	defaultTestReceiversTimeout = 15 * time.Second
-	maxTestReceiversTimeout     = 30 * time.Second
-)
-
 type receiversAuthz interface {
 	FilterRead(ctx context.Context, user identity.Requester, receivers ...ReceiverStatus) ([]ReceiverStatus, error)
-	AuthorizeUpdateProtected(context.Context, identity.Requester, ReceiverStatus) error
-	AuthorizeTest(context.Context, identity.Requester, ReceiverStatus) error
-	AuthorizeTestNew(ctx context.Context, user identity.Requester) error
 }
 
 type AlertmanagerSrv struct {
@@ -202,67 +192,18 @@ func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) respons
 	}
 	statuses, err = srv.receiverAuthz.FilterRead(c.Req.Context(), c.SignedInUser, statuses...)
 	if err != nil {
-		response.ErrOrFallback(http.StatusInternalServerError, "failed to apply permissions to the receivers", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to apply permissions to the receivers", err)
 	}
 	return response.JSON(http.StatusOK, statuses)
 }
 
-func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
-	// It's ok performance wise, because the 99% use-case is just a single integration.
-	for _, receiver := range body.Receivers {
-		if len(receiver.GrafanaManagedReceivers) == 0 {
-			continue
-		}
-		var err error
-		if receiver.Name == "" {
-			err = srv.receiverAuthz.AuthorizeTestNew(c.Req.Context(), c.SignedInUser)
-		} else {
-			err = srv.receiverAuthz.AuthorizeTest(c.Req.Context(), c.SignedInUser, ReceiverStatus{Name: receiver.Name})
-		}
-		if err != nil {
-			if errors.As(err, &errutil.Error{}) {
-				return response.Err(err)
-			}
-			return ErrResp(http.StatusInternalServerError, err, "failed to authorize request")
-		}
-	}
-	if err := srv.crypto.ProcessSecureSettings(c.Req.Context(), c.GetOrgID(), body.Receivers, func(receiverName string, paths []schema.IntegrationFieldPath) error {
-		return srv.receiverAuthz.AuthorizeUpdateProtected(c.Req.Context(), c.SignedInUser, ReceiverStatus{Name: receiverName})
-	}); err != nil {
-		var unknownReceiverError UnknownReceiverError
-		if errors.As(err, &unknownReceiverError) {
-			return ErrResp(http.StatusBadRequest, err, "")
-		}
-		if errors.As(err, &errutil.Error{}) {
-			return response.Err(err)
-		}
-		return ErrResp(http.StatusInternalServerError, err, "failed to post process Alertmanager configuration")
-	}
-
-	ctx, cancelFunc, err := contextWithTimeoutFromRequest(
-		c.Req.Context(),
-		c.Req,
-		defaultTestReceiversTimeout,
-		maxTestReceiversTimeout)
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "")
-	}
-	defer cancelFunc()
-
-	am, errResp := srv.AlertmanagerFor(c.GetOrgID())
-	if errResp != nil {
-		return errResp
-	}
-
-	result, status, err := am.TestReceivers(ctx, body)
-	if err != nil {
-		if errors.Is(err, alertingNotify.ErrNoReceivers) {
-			return response.Error(http.StatusBadRequest, "", err)
-		}
-		return response.Error(http.StatusInternalServerError, "", err)
-	}
-
-	return response.JSON(status, newTestReceiversResult(result))
+func (srv AlertmanagerSrv) RoutePostTestReceivers(_ *contextmodel.ReqContext) response.Response {
+	// Respond with a 410 Gone status code
+	return response.Error(
+		http.StatusGone,
+		"This endpoint has been removed. Please use `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{uid}/test` instead.",
+		nil,
+	)
 }
 
 func (srv AlertmanagerSrv) RoutePostTestTemplates(c *contextmodel.ReqContext, body apimodels.TestTemplatesConfigBodyParams) response.Response {
@@ -299,29 +240,6 @@ func contextWithTimeoutFromRequest(ctx context.Context, r *http.Request, default
 	}
 	ctx, cancelFunc := context.WithTimeout(ctx, timeout)
 	return ctx, cancelFunc, nil
-}
-
-func newTestReceiversResult(r *alertingNotify.TestReceiversResult) apimodels.TestReceiversResult {
-	v := apimodels.TestReceiversResult{
-		Alert: apimodels.TestReceiversConfigAlertParams{
-			Annotations: r.Alert.Annotations,
-			Labels:      r.Alert.Labels,
-		},
-		Receivers:  make([]apimodels.TestReceiverResult, len(r.Receivers)),
-		NotifiedAt: r.NotifedAt,
-	}
-	for ix, next := range r.Receivers {
-		configs := make([]apimodels.TestReceiverConfigResult, len(next.Configs))
-		for jx, config := range next.Configs {
-			configs[jx].Name = config.Name
-			configs[jx].UID = config.UID
-			configs[jx].Status = config.Status
-			configs[jx].Error = config.Error
-		}
-		v.Receivers[ix].Configs = configs
-		v.Receivers[ix].Name = next.Name
-	}
-	return v
 }
 
 func newTestTemplateResult(res *notifier.TestTemplatesResults) apimodels.TestTemplatesResults {

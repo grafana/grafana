@@ -3,7 +3,7 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 import { config } from '@grafana/runtime';
 import { type Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { AnnoKeyManagerIdentity } from 'app/features/apiserver/types';
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 
 import { type RepoType } from '../Wizard/types';
 import { getIsReadOnlyRepo } from '../utils/repository';
@@ -132,9 +132,12 @@ export const useGetResourceRepositoryView = ({
       };
     }
 
-    // For nested folders we need to see what the folder thinks
+    // For nested folders we need to see what the folder thinks.
+    // Only treat as repo-managed if the manager kind is explicitly 'repo' —
+    // folders managed by plugins, terraform, kubectl, etc. should not be matched against provisioning repos.
+    const annotatedManagerKind = folder?.metadata?.annotations?.[AnnoKeyManagerKind];
     const annotatedFolderName = folder?.metadata?.annotations?.[AnnoKeyManagerIdentity];
-    if (annotatedFolderName) {
+    if (annotatedFolderName && annotatedManagerKind === ManagerKind.Repo) {
       repository = items.find((repo) => repo.name === annotatedFolderName);
       if (repository) {
         return {

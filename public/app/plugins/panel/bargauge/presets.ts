@@ -1,5 +1,6 @@
 import {
   FieldColorModeId,
+  FieldType,
   ThresholdsMode,
   type VisualizationPresetsSupplier,
   type VisualizationSuggestion,
@@ -10,6 +11,7 @@ import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeSizing, BarGaugeVal
 import { LegendDisplayMode } from '@grafana/ui';
 
 import { defaultOptions, type Options } from './panelcfg.gen';
+import { BARGAUGE_CARD_OPTIONS } from './suggestions';
 
 const defaultPresetThresholds = {
   mode: ThresholdsMode.Percentage,
@@ -60,7 +62,7 @@ const basicHorizontalPreset = (): VisualizationSuggestion<Options> => {
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: BARGAUGE_CARD_OPTIONS,
   };
 };
 
@@ -103,7 +105,7 @@ const basicVerticalPreset = (): VisualizationSuggestion<Options> => {
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: BARGAUGE_CARD_OPTIONS,
   };
 };
 
@@ -146,7 +148,7 @@ const gradientHorizontalPreset = (): VisualizationSuggestion<Options> => {
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: BARGAUGE_CARD_OPTIONS,
   };
 };
 
@@ -188,7 +190,7 @@ const lcdHorizontalPreset = (): VisualizationSuggestion<Options> => {
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: BARGAUGE_CARD_OPTIONS,
   };
 };
 
@@ -230,7 +232,7 @@ const gradientBlYlRdPreset = (): VisualizationSuggestion<Options> => {
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: BARGAUGE_CARD_OPTIONS,
   };
 };
 
@@ -273,11 +275,15 @@ const gradientVerticalPreset = (): VisualizationSuggestion<Options> => {
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: BARGAUGE_CARD_OPTIONS,
   };
 };
 
-export const barGaugePresetsSupplier: VisualizationPresetsSupplier<Options> = () => {
+export const barGaugePresetsSupplier: VisualizationPresetsSupplier<Options> = ({ dataSummary }) => {
+  if (!dataSummary?.hasData || !dataSummary.hasFieldType(FieldType.number)) {
+    return [];
+  }
+
   return [
     basicHorizontalPreset(),
     basicVerticalPreset(),
