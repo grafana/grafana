@@ -930,8 +930,8 @@
     "/datasources/{name}/resources": {
       "summary": "hello world",
       "get": {
-        "tags": ["Route"],
-        "operationId": "get_route",
+        "tags": ["Resources"],
+        "operationId": "get_resources",
         "responses": {
           "default": {
             "content": {
@@ -960,8 +960,8 @@
     "/datasources/{name}/resources/boom": {
       "summary": "force a panic",
       "get": {
-        "tags": ["Route"],
-        "operationId": "get_route_boom",
+        "tags": ["Resources"],
+        "operationId": "get_resources_boom",
         "responses": {
           "default": {
             "content": {
@@ -976,8 +976,8 @@
         }
       },
       "post": {
-        "tags": ["Route"],
-        "operationId": "post_route_boom",
+        "tags": ["Resources"],
+        "operationId": "post_resources_boom",
         "responses": {
           "default": {
             "content": {
@@ -1007,8 +1007,8 @@
     "/datasources/{name}/resources/scenarios": {
       "summary": "hello world",
       "get": {
-        "tags": ["Route"],
-        "operationId": "get_route_scenarios",
+        "tags": ["Resources"],
+        "operationId": "get_resources_scenarios",
         "responses": {
           "default": {
             "content": {
@@ -1038,8 +1038,8 @@
     "/datasources/{name}/resources/sim/{key}": {
       "description": "Get list of simulations",
       "get": {
-        "tags": ["Route"],
-        "operationId": "get_route_sim_key",
+        "tags": ["Resources"],
+        "operationId": "get_resources_sim_key",
         "parameters": [
           {
             "name": "key",
@@ -1061,8 +1061,8 @@
         }
       },
       "post": {
-        "tags": ["Route"],
-        "operationId": "post_route_sim_key",
+        "tags": ["Resources"],
+        "operationId": "post_resources_sim_key",
         "parameters": [
           {
             "name": "key",
@@ -1109,8 +1109,8 @@
     "/datasources/{name}/resources/sims": {
       "description": "Get list of simulations",
       "get": {
-        "tags": ["Route"],
-        "operationId": "get_route_sims",
+        "tags": ["Resources"],
+        "operationId": "get_resources_sims",
         "responses": {
           "default": {
             "content": {
@@ -1140,8 +1140,8 @@
     "/datasources/{name}/resources/stream": {
       "summary": "Get streaming response",
       "get": {
-        "tags": ["Route"],
-        "operationId": "get_route_stream",
+        "tags": ["Resources"],
+        "operationId": "get_resources_stream",
         "parameters": [
           {
             "name": "count",
@@ -1220,8 +1220,8 @@
     "/datasources/{name}/resources/test": {
       "summary": "Echo any request",
       "post": {
-        "tags": ["Route"],
-        "operationId": "post_route_test",
+        "tags": ["Resources"],
+        "operationId": "post_resources_test",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1261,8 +1261,8 @@
     "/datasources/{name}/resources/test/json": {
       "summary": "Echo json request",
       "post": {
-        "tags": ["Route"],
-        "operationId": "post_route_test_json",
+        "tags": ["Resources"],
+        "operationId": "post_resources_test_json",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1349,13 +1349,11 @@
           },
           "url": {
             "description": "not used",
-            "type": "string"
+            "type": "string",
+            "example": "http://xxxx"
           }
         },
-        "additionalProperties": false,
-        "example": {
-          "url": "http://xxxx"
-        }
+        "additionalProperties": false
       },
       "QueryRequestSchema": {
         "description": "Schema for a set of queries sent to the query method",

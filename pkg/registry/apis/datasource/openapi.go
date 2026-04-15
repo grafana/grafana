@@ -84,19 +84,21 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		},
 	}
 
-	// Hide the resource routes -- explicit ones will be added if defined below
-	prefix := root + "namespaces/{namespace}/datasources/{name}/resource"
-	r := oas.Paths.Paths[prefix]
-	if r != nil && r.Get != nil {
-		r.Get.Description = "Get resources in the datasource plugin. NOTE, additional routes may exist, but are not exposed via OpenAPI"
-		r.Delete = nil
-		r.Head = nil
-		r.Patch = nil
-		r.Post = nil
-		r.Put = nil
-		r.Options = nil
+	// Hide the resource+proxy routes -- explicit ones will be added if defined below
+	for _, v := range []string{"resources", "proxy"} {
+		prefix := root + "namespaces/{namespace}/datasources/{name}/" + v
+		r := oas.Paths.Paths[prefix]
+		if r != nil && r.Get != nil {
+			r.Get.Description = "Get resources in the " + v + " plugin. NOTE, additional routes may exist, but are not exposed via OpenAPI"
+			r.Delete = nil
+			r.Head = nil
+			r.Patch = nil
+			r.Post = nil
+			r.Put = nil
+			r.Options = nil
+		}
+		delete(oas.Paths.Paths, prefix+"/{path}")
 	}
-	delete(oas.Paths.Paths, prefix+"/{path}")
 
 	// Set explicit apiVersion and kind on the datasource
 	ds, ok := oas.Components.Schemas[datasourceV0.DataSource{}.OpenAPIModelName()]
