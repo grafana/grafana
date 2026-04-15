@@ -34,7 +34,8 @@ func TestStaticSchemas(t *testing.T) {
 		raw, err := pluginschema.ToYAML(obj)
 		require.NoError(t, err)
 		fpath := path.Join(pluginDirectory, "schema", apiVersion, fname)
-		os.MkdirAll(filepath.Dir(fpath), 0750)
+		err = os.MkdirAll(filepath.Dir(fpath), 0750)
+		require.NoError(t, err)
 		err = os.WriteFile(fpath, raw, 0600)
 		require.NoError(t, err)
 		t.Logf("updated schema file: %s", fpath)
@@ -311,32 +312,35 @@ func Routes() *pluginschema.Routes {
 		Description: "Get list of simulations",
 		Get: &spec3.Operation{
 			OperationProps: spec3.OperationProps{
-				Parameters: []*spec3.Parameter{
-					{
-						ParameterProps: spec3.ParameterProps{
-							Name:        "key",
-							In:          "path",
-							Description: "simulation key (should include hz)",
-						},
-					},
-				},
 				Responses: unstructuredResponse,
 			},
 		},
-
 		Post: &spec3.Operation{
 			OperationProps: spec3.OperationProps{
-				Parameters: []*spec3.Parameter{
-					{
-						ParameterProps: spec3.ParameterProps{
-							Name:        "key",
-							In:          "path",
-							Description: "simulation key (should include hz)",
+				RequestBody: unstructuredRequest,
+				Responses:   unstructuredResponse,
+			},
+		},
+		Parameters: []*spec3.Parameter{
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "key",
+					In:          "path",
+					Description: "simulation key (should include hz)",
+					Required:    true,
+					Examples: map[string]*spec3.Example{
+						"1hz": {
+							ExampleProps: spec3.ExampleProps{
+								Value: "1hz",
+							},
+						},
+						"10hz": {
+							ExampleProps: spec3.ExampleProps{
+								Value: "10hz",
+							},
 						},
 					},
 				},
-				RequestBody: unstructuredRequest,
-				Responses:   unstructuredResponse,
 			},
 		},
 	})

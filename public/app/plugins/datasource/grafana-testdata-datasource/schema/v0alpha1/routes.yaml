@@ -39,10 +39,6 @@ paths:
   /resources/sim/{key}:
     description: Get list of simulations
     get:
-      parameters:
-      - description: simulation key (should include hz)
-        in: path
-        name: key
       responses:
         default:
           content:
@@ -50,11 +46,17 @@ paths:
               schema:
                 additionalProperties: true
                 type: object
+    parameters:
+    - description: simulation key (should include hz)
+      examples:
+        10hz:
+          value: 10hz
+        1hz:
+          value: 1hz
+      in: path
+      name: key
+      required: true
     post:
-      parameters:
-      - description: simulation key (should include hz)
-        in: path
-        name: key
       requestBody:
         content:
           application/json:

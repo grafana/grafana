@@ -142,6 +142,7 @@ type PluginSpecTransformOptions struct {
 	schemas pluginschema.SchemaProvider
 }
 
+// nolint:gocyclo
 func transformOpenAPI(p PluginSpecTransformOptions, apiVersion string) (*spec3.OpenAPI, error) {
 	if p.schemas == nil {
 		return p.oas, nil // nothing special
@@ -198,13 +199,12 @@ func transformOpenAPI(p PluginSpecTransformOptions, apiVersion string) (*spec3.O
 			}
 		}
 
+		// Add examples to the POST request
 		examples, err := p.schemas.GetSettingsExamples(apiVersion)
 		if err != nil {
 			return nil, err
 		}
-
-		// Add examples to the POST request
-		if len(examples.Examples) > 0 {
+		if examples != nil && len(examples.Examples) > 0 {
 			cfg := oas.Paths.Paths[p.cfgPath]
 			if cfg == nil {
 				return nil, fmt.Errorf("no route registered: %s", p.cfgPath)
@@ -225,13 +225,7 @@ func transformOpenAPI(p PluginSpecTransformOptions, apiVersion string) (*spec3.O
 
 	// Add custom schemas
 	if routes.Components != nil {
-		maps.Copy(p.oas.Components.Schemas, routes.Components.Schemas)
-		maps.Copy(p.oas.Components.Responses, routes.Components.Responses)
-		maps.Copy(p.oas.Components.Examples, routes.Components.Examples)
-		maps.Copy(p.oas.Components.Headers, routes.Components.Headers)
-		maps.Copy(p.oas.Components.Parameters, routes.Components.Parameters)
-		maps.Copy(p.oas.Components.Links, routes.Components.Links)
-		maps.Copy(p.oas.Components.RequestBodies, routes.Components.RequestBodies)
+		copyComponents(routes.Components, p.oas.Components)
 	}
 
 	if err = routes.AssertPrefixes("/resources", "/proxy"); err != nil {
@@ -269,7 +263,7 @@ func transformOpenAPI(p PluginSpecTransformOptions, apiVersion string) (*spec3.O
 		if idx := strings.Index(tag, "/"); idx > 0 {
 			tag = tag[:idx]
 		}
-		v.Parameters = params
+		v.Parameters = append(params, v.Parameters...)
 		for m, op := range builder.GetPathOperations(&v.PathProps) {
 			if op.Extensions == nil {
 				op.Extensions = make(spec.Extensions)
@@ -284,4 +278,56 @@ func transformOpenAPI(p PluginSpecTransformOptions, apiVersion string) (*spec3.O
 		p.oas.Paths.Paths[p.routePrefix+k] = v
 	}
 	return oas, nil
+}
+
+// safely copy components from src to dst
+func copyComponents(src *spec3.Components, dst *spec3.Components) {
+	if src.Schemas != nil {
+		if dst.Schemas == nil {
+			dst.Schemas = make(map[string]*spec.Schema)
+		}
+		maps.Copy(dst.Schemas, src.Schemas)
+	}
+
+	if src.Responses != nil {
+		if dst.Responses == nil {
+			dst.Responses = make(map[string]*spec3.Response)
+		}
+		maps.Copy(dst.Responses, src.Responses)
+	}
+
+	if src.Examples != nil {
+		if dst.Examples == nil {
+			dst.Examples = make(map[string]*spec3.Example)
+		}
+		maps.Copy(dst.Examples, src.Examples)
+	}
+
+	if src.Headers != nil {
+		if dst.Headers == nil {
+			dst.Headers = make(map[string]*spec3.Header)
+		}
+		maps.Copy(dst.Headers, src.Headers)
+	}
+
+	if src.Parameters != nil {
+		if dst.Parameters == nil {
+			dst.Parameters = make(map[string]*spec3.Parameter)
+		}
+		maps.Copy(dst.Parameters, src.Parameters)
+	}
+
+	if src.Links != nil {
+		if dst.Links == nil {
+			dst.Links = make(map[string]*spec3.Link)
+		}
+		maps.Copy(dst.Links, src.Links)
+	}
+
+	if src.RequestBodies != nil {
+		if dst.RequestBodies == nil {
+			dst.RequestBodies = make(map[string]*spec3.RequestBody)
+		}
+		maps.Copy(dst.RequestBodies, src.RequestBodies)
+	}
 }
