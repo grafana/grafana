@@ -15,12 +15,12 @@ jest.mock('../config', () => ({
 }));
 
 const mockAddEvent = jest.fn();
-jest.mocked(getEchoSrv).mockReturnValue({ addEvent: mockAddEvent } as ReturnType<typeof getEchoSrv>);
+jest.mocked(getEchoSrv).mockReturnValue({ addEvent: mockAddEvent } as unknown as ReturnType<typeof getEchoSrv>);
 
 describe('reportPageview', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.mocked(getEchoSrv).mockReturnValue({ addEvent: mockAddEvent } as ReturnType<typeof getEchoSrv>);
+    jest.mocked(getEchoSrv).mockReturnValue({ addEvent: mockAddEvent } as unknown as ReturnType<typeof getEchoSrv>);
     config.appSubUrl = '';
   });
 
