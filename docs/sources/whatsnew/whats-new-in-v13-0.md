@@ -35,7 +35,6 @@ posts:
       - whats-new/2026-04-02-dashboards-faster-panel-creation-with-saved-queries-visualization-suggestions.md
       - whats-new/2026-03-20-saved-queries-new-interface-and-improved-filtering-experience.md
       - whats-new/2026-03-31-updated-visualization-suggestions-now-generally-available.md
-      - whats-new/2026-04-02-dashboards-faster-panel-creation-with-saved-queries-visualization-suggestions.md
       - whats-new/2026-04-08-new-panel-graphviz.md
       - whats-new/2026-04-01-query-experience-next.md
   - title: AI
