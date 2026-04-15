@@ -2,7 +2,6 @@ package dashboard
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -178,47 +177,7 @@ func getFieldValidationMode(a admission.Attributes) string {
 // stripBOMIfEnabled conditionally strips BOMs from v2 dashboard specs based on skipBOMStripping flag.
 func (b *DashboardsAPIBuilder) stripBOMIfEnabled(spec interface{}, version string) error {
 	if !b.skipBOMStripping {
-		if err := stripBOMFromV2Spec(spec); err != nil {
-			return fmt.Errorf("failed to strip BOMs from %s dashboard: %w", version, err)
-		}
+		util.StripBOMFromStruct(spec)
 	}
-	return nil
-}
-
-// stripBOMFromV2Spec strips BOMs from all string fields in a v2 dashboard spec
-// using reflection to avoid JSON marshal/unmarshal overhead.
-func stripBOMFromV2Spec(spec interface{}) error {
-	util.StripBOMFromStruct(spec)
-	return nil
-}
-
-// stripBOMFromV2SpecJSON is the old JSON-based implementation kept for comparison/benchmarking.
-// It strips BOMs from all string fields in a v2 dashboard spec
-// by converting to unstructured, cleaning, and converting back.
-func stripBOMFromV2SpecJSON(spec interface{}) error {
-	// Convert spec to unstructured (map[string]any) via JSON
-	specBytes, err := json.Marshal(spec)
-	if err != nil {
-		return fmt.Errorf("failed to marshal spec: %w", err)
-	}
-
-	var unstructuredSpec map[string]any
-	if err := json.Unmarshal(specBytes, &unstructuredSpec); err != nil {
-		return fmt.Errorf("failed to unmarshal spec: %w", err)
-	}
-
-	// Strip BOMs from all strings recursively
-	cleanedSpec := util.StripBOMFromInterface(unstructuredSpec).(map[string]any)
-
-	// Convert back to typed struct
-	cleanedBytes, err := json.Marshal(cleanedSpec)
-	if err != nil {
-		return fmt.Errorf("failed to marshal cleaned spec: %w", err)
-	}
-
-	if err := json.Unmarshal(cleanedBytes, spec); err != nil {
-		return fmt.Errorf("failed to unmarshal cleaned spec: %w", err)
-	}
-
 	return nil
 }

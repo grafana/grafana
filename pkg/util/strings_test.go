@@ -514,3 +514,84 @@ func TestStripBOMFromStruct(t *testing.T) {
 func stringPtr(s string) *string {
 	return &s
 }
+
+// Benchmark StripBOMFromStruct performance
+func BenchmarkStripBOMFromStruct(b *testing.B) {
+	type SmallStruct struct {
+		Title       string
+		Description string
+	}
+
+	type MediumStruct struct {
+		Title       string
+		Description *string
+		Tags        []string
+		Metadata    map[string]string
+	}
+
+	type LargeStruct struct {
+		Title       string
+		Description *string
+		Tags        []string
+		Categories  []string
+		Metadata    map[string]string
+		Properties  map[string]string
+		Nested      *MediumStruct
+	}
+
+	b.Run("small struct", func(b *testing.B) {
+		s := &SmallStruct{
+			Title:       "\ufeffTitle",
+			Description: "Description\ufeff",
+		}
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			StripBOMFromStruct(s)
+		}
+	})
+
+	b.Run("medium struct", func(b *testing.B) {
+		s := &MediumStruct{
+			Title:       "\ufeffTitle",
+			Description: stringPtr("Description\ufeff"),
+			Tags:        []string{"\ufefftag1", "tag2\ufeff", "tag3"},
+			Metadata: map[string]string{
+				"key1": "\ufeffvalue1",
+				"key2": "value2\ufeff",
+			},
+		}
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			StripBOMFromStruct(s)
+		}
+	})
+
+	b.Run("large nested struct", func(b *testing.B) {
+		s := &LargeStruct{
+			Title:       "\ufeffTitle",
+			Description: stringPtr("Description\ufeff"),
+			Tags:        []string{"\ufefftag1", "tag2\ufeff", "tag3", "tag4", "tag5"},
+			Categories:  []string{"\ufeffcat1", "cat2\ufeff", "cat3", "cat4"},
+			Metadata: map[string]string{
+				"author": "\ufeffJohn Doe",
+				"status": "published\ufeff",
+			},
+			Properties: map[string]string{
+				"color": "\ufeffblue",
+				"size":  "large\ufeff",
+			},
+			Nested: &MediumStruct{
+				Title:       "\ufeffNested Title",
+				Description: stringPtr("Nested Description\ufeff"),
+				Tags:        []string{"\ufefftag1", "tag2\ufeff"},
+				Metadata: map[string]string{
+					"nested": "\ufeffvalue",
+				},
+			},
+		}
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			StripBOMFromStruct(s)
+		}
+	})
+}

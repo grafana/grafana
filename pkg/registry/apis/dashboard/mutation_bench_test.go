@@ -10,6 +10,7 @@ import (
 
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // createSmallDashboard creates a minimal dashboard with just title and description
@@ -313,59 +314,31 @@ func BenchmarkMutate_LargeDashboard_WithBOMs(b *testing.B) {
 	}
 }
 
-// Benchmark the stripBOMFromV2Spec function directly
-func BenchmarkStripBOMFromV2Spec_Small(b *testing.B) {
+// Benchmark the util.StripBOMFromStruct function directly on dashboard specs
+func BenchmarkStripBOMFromStruct_DashboardSmall(b *testing.B) {
 	spec := createSmallDashboard(true).Spec
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = stripBOMFromV2Spec(&spec)
+		util.StripBOMFromStruct(&spec)
 	}
 }
 
-func BenchmarkStripBOMFromV2Spec_Medium(b *testing.B) {
+func BenchmarkStripBOMFromStruct_DashboardMedium(b *testing.B) {
 	spec := createMediumDashboard(true).Spec
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = stripBOMFromV2Spec(&spec)
+		util.StripBOMFromStruct(&spec)
 	}
 }
 
-func BenchmarkStripBOMFromV2Spec_Large(b *testing.B) {
+func BenchmarkStripBOMFromStruct_DashboardLarge(b *testing.B) {
 	spec := createLargeDashboard(true).Spec
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = stripBOMFromV2Spec(&spec)
-	}
-}
-
-// Benchmark the JSON-based implementation for comparison
-func BenchmarkStripBOMFromV2SpecJSON_Small(b *testing.B) {
-	spec := createSmallDashboard(true).Spec
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = stripBOMFromV2SpecJSON(&spec)
-	}
-}
-
-func BenchmarkStripBOMFromV2SpecJSON_Medium(b *testing.B) {
-	spec := createMediumDashboard(true).Spec
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = stripBOMFromV2SpecJSON(&spec)
-	}
-}
-
-func BenchmarkStripBOMFromV2SpecJSON_Large(b *testing.B) {
-	spec := createLargeDashboard(true).Spec
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = stripBOMFromV2SpecJSON(&spec)
+		util.StripBOMFromStruct(&spec)
 	}
 }
 
