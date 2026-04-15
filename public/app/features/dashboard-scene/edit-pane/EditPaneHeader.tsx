@@ -20,7 +20,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
   const { hasCopiedPanel, hasCopiedRow, hasCopiedTab } = useClipboardState();
 
   // TODO this type check here is hacky and should be replaced with a more generic solid solution
-  const canPaste = element instanceof RowItem || element instanceof TabItem ? element : undefined;
+  const pasteTarget = element instanceof RowItem || element instanceof TabItem ? element : undefined;
   const onCopy = element.onCopy?.bind(element);
   const onDuplicate = element.onDuplicate?.bind(element);
   const onDelete = element.onDelete?.bind(element);
@@ -53,7 +53,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
                     onClick={onDuplicate}
                   />
                 ) : null}
-                {canPaste && hasCopiedPanel ? (
+                {pasteTarget && hasCopiedPanel ? (
                   <Menu.Item
                     icon="clipboard-alt"
                     label={t('dashboard.layout.common.paste', 'Paste')}
