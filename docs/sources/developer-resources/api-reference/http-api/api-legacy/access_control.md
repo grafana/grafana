@@ -4,7 +4,7 @@ aliases:
   - ../../../http_api/accesscontrol/ # /docs/grafana/next/http_api/accesscontrol/
   - ../../../developers/http_api/access_control/ # /docs/grafana/next/developers/http_api/access_control/
   - ../../../../developer-resources/api-reference/http-api/access-control/ #legacy folder
-canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/access_control/
+canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/access_control/
 description: ''
 keywords:
   - grafana

@@ -3,7 +3,8 @@ aliases:
   - ../../../http_api/org/ # /docs/grafana/next/http_api/org/
   - ../../../http_api/organization/ # /docs/grafana/next/http_api/organization/
   - ../../../developers/http_api/org/ # /docs/grafana/next/developers/http_api/org/
-canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/org/
+  - ../../../../developer-resources/api-reference/http-api/org/ #legacy folder
+canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/org/
 description: Grafana Organization HTTP API
 keywords:
   - grafana

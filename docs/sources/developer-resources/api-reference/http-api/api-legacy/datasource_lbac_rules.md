@@ -2,7 +2,8 @@
 aliases:
   - ../../../http_api/datasource_lbac_rules/ # /docs/grafana/next/http_api/datasource_lbac_rules/
   - ../../../developers/http_api/datasource_lbac_rules/ # /docs/grafana/next/developers/http_api/datasource_lbac_rules/
-canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/datasource_lbac_rules/
+  - ../../../../developer-resources/api-reference/http-api/datasource_lbac_rules/ #legacy folder
+canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/datasource_lbac_rules/
 description: Data Source LBAC rules API
 keywords:
   - grafana

@@ -18,6 +18,7 @@ menuTitle: Authentication (deprecated)
 weight: 110
 aliases:
   - ../../../developers/http_api/authentication/ # /docs/grafana/next/developers/http_api/authentication/
+  - ../../../../developer-resources/api-reference/http-api/api-legacy/authentication/ #legacy folder
 ---
 
 {{< admonition type="caution" >}}
