@@ -257,7 +257,7 @@ func TestManagedAuthorizer(t *testing.T) {
 		{
 			name: "terraform: new (simple ID) → legacy (User-Agent) blocked (no reverting)",
 			auth: user,
-			err:  "Cannot revert to legacy Terraform manager ID",
+			err:  "Cannot revert to User-Agent based Terraform manager ID",
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
 					Generation: 2,
