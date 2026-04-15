@@ -190,7 +190,8 @@
 
 ```
 
-# | 観点 | 重要度 | 説明 | 該当箇所 |
+
+No | 観点 | 重要度 | 説明 | 該当箇所 |
   |---|------|--------|------|----------|
   | 1 | **TOCTOU Race Condition** | **A** | `CountDevices` と UPSERT の間にトランザクションがなく、高トラフィック時に device limit を超過しうる | `pkg/services/anonymous/anonimpl/anonstore/database.go` `CreateOrUpdateDevice` (L133-146) |
   | 2 | **updateDevice の RowsAffected==0 の意味の不一致** | **A** | デバイスが存在しない/期限切れの場合も `ErrDeviceLimitReached` を返す。誤ったエラーで認証がブロックされる可能性 | `pkg/services/anonymous/anonimpl/anonstore/database.go` `updateDevice` (L101-131) |
