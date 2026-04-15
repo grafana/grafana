@@ -51,7 +51,8 @@
         "fields": {},
         "includeAllFields": false,
         "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" },
-        "mode": "candles"
+        "mode": "candles",
+        "tooltip": { "mode": "single", "sort": "none" }
       },
       "targets": [
         {
@@ -80,7 +81,8 @@
         "fields": {},
         "includeAllFields": false,
         "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" },
-        "mode": "candles"
+        "mode": "candles",
+        "tooltip": { "mode": "single", "sort": "none" }
       },
       "targets": [
         {
@@ -109,7 +111,8 @@
         "fields": {},
         "includeAllFields": false,
         "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" },
-        "mode": "volume"
+        "mode": "volume",
+        "tooltip": { "mode": "single", "sort": "none" }
       },
       "targets": [
         {

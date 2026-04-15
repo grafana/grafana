@@ -10,9 +10,8 @@ test.describe('Panels test: Candlestick render', { tag: ['@panels', '@candlestic
   test('renders successfully', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
 
-    // all 5 panels with data should render a uplot chart
-    const uplotElements = page.locator('.uplot');
     // 5 panels with data render uplot; the no-data panel does not
+    const uplotElements = page.locator('.uplot');
     await expect(uplotElements, 'panels are rendered').toHaveCount(5);
 
     // no panel should show an error icon
