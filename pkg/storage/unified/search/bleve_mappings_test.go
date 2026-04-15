@@ -51,4 +51,5 @@ func TestDocumentMapping(t *testing.T) {
 	fmt.Printf("DOC: fields %d\n", len(doc.Fields))
 	fmt.Printf("DOC: size %d\n", doc.Size())
 	require.Equal(t, 21, len(doc.Fields))
+	require.False(t, doc.HasComposite(), "_all composite field should be disabled")
 }

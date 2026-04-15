@@ -319,6 +319,40 @@ func TestTitleNgramFieldSearch(t *testing.T) {
 	})
 }
 
+func TestWildcardQuery(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+
+	t.Run("wildcard query matches title", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Hello World",
+			"name2": "Goodbye Moon",
+		})
+
+		checkSearchQuery(t, index, newTestQuery("hell*"), []string{"name1"})
+		// title field also has a keyword mapping that preserves original case,
+		// so capitalized wildcards also match
+		checkSearchQuery(t, index, newTestQuery("Hell*"), []string{"name1"})
+	})
+
+	t.Run("wildcard query matches multiple documents", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Dashboard One",
+			"name2": "Dashboard Two",
+			"name3": "Alert Rules",
+		})
+
+		res, err := index.Search(context.Background(), nil, newTestQuery("dashboard*"), nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(2), res.TotalHits)
+	})
+}
+
 func TestScoringHierarchy(t *testing.T) {
 	key := resource.NamespacedResource{
 		Namespace: "default",

@@ -78,7 +78,7 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFie
 		Store:              true,
 		Index:              true,
 		IncludeTermVectors: false,
-		IncludeInAll:       true,
+		IncludeInAll:       false,
 		DocValues:          false,
 	})
 
@@ -125,7 +125,7 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFie
 		Store:              true,
 		Index:              true,
 		IncludeTermVectors: false,
-		IncludeInAll:       true,
+		IncludeInAll:       false,
 	})
 	manager.AddFieldMappingsAt("id", &mapping.FieldMapping{
 		Name:               "id",
@@ -134,7 +134,7 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFie
 		Store:              true,
 		Index:              true,
 		IncludeTermVectors: false,
-		IncludeInAll:       true,
+		IncludeInAll:       false,
 	})
 
 	source := bleve.NewDocumentStaticMapping()
@@ -145,7 +145,7 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFie
 		Store:              true,
 		Index:              true,
 		IncludeTermVectors: false,
-		IncludeInAll:       true,
+		IncludeInAll:       false,
 	})
 	source.AddFieldMappingsAt("checksum", &mapping.FieldMapping{
 		Name:               "checksum",
@@ -154,7 +154,7 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFie
 		Store:              true,
 		Index:              true,
 		IncludeTermVectors: false,
-		IncludeInAll:       true,
+		IncludeInAll:       false,
 	})
 	source.AddFieldMappingsAt("timestampMillis", mapping.NewNumericFieldMapping())
 
@@ -196,6 +196,13 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFie
 	}
 
 	mapper.AddSubDocumentMapping(strings.TrimSuffix(resource.SEARCH_FIELD_PREFIX, "."), fieldMapper)
+
+	// Disable bleve's internal "_all" composite field. By default bleve merges
+	// terms from all fields with IncludeInAll:true into a synthetic "_all"
+	// field. We never query it (all searches target explicit fields). Disabling
+	// it significantly reduces index size (see mapping/index.go:366-371 in
+	// blevesearch/bleve).
+	mapper.AddSubDocumentMapping("_all", bleve.NewDocumentDisabledMapping())
 
 	selectableFieldsMapper := bleve.NewDocumentStaticMapping()
 	for _, field := range selectableFields {

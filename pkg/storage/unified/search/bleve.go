@@ -1091,22 +1091,15 @@ func (b *bleveIndex) Search(
 		return response, nil
 	}
 
-	// Show all fields when nothing is selected
+	// Show all fields when nothing is selected.
+	// Individual field names tell bleve which stored values to load.
+	// The sentinel triggers hitsToTable to use the curated allFields column list.
 	if len(searchrequest.Fields) < 1 && req.Limit > 0 {
 		f, err := b.index.Fields()
 		if err != nil {
 			return nil, err
 		}
-		if len(f) > 0 {
-			searchrequest.Fields = f
-		} else {
-			searchrequest.Fields = []string{
-				resource.SEARCH_FIELD_TITLE,
-				resource.SEARCH_FIELD_FOLDER,
-				resource.SEARCH_FIELD_SOURCE_PATH,
-				resource.SEARCH_FIELD_MANAGED_BY,
-			}
-		}
+		searchrequest.Fields = append(f, resource.SEARCH_FIELD_ALL_FIELDS)
 	}
 	stats.AddRequestConversionTime(time.Since(conversionStarts))
 
@@ -1286,6 +1279,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		if strings.Contains(req.Query, "*") {
 			// wildcard query is expensive - should be used with caution
 			wildcard := bleve.NewWildcardQuery(req.Query)
+			wildcard.SetField(resource.SEARCH_FIELD_TITLE)
 			queries = append(queries, wildcard)
 		} else {
 			// When using a
@@ -1743,7 +1737,9 @@ func newQuery(key string, value string, prefix string) query.Query {
 	}
 	if strings.Contains(value, "*") {
 		// wildcard query is expensive - should be used with caution
-		return bleve.NewWildcardQuery(value)
+		q := bleve.NewWildcardQuery(value)
+		q.SetField(prefix + key)
+		return q
 	}
 	delimiter, ok := hasTerms(value)
 	if slices.Contains(termFields, key) && ok {
@@ -1805,7 +1801,7 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 
 	fields := []*resourcepb.ResourceTableColumnDefinition{}
 	for _, name := range selectFields {
-		if name == "_all" {
+		if name == resource.SEARCH_FIELD_ALL_FIELDS {
 			fields = b.allFields
 			break
 		}
