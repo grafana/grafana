@@ -994,11 +994,6 @@
       "count": 1
     }
   },
-  "public/app/core/components/Page/EditableTitle.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
   "public/app/core/components/PanelTypeFilter/PanelTypeFilter.tsx": {
     "@grafana/no-locale-compare": {
       "count": 1
