@@ -41,12 +41,13 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	const repo = "local-repository"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Target:             "instance",          // Export is only supported for instance sync
+		SyncTarget:         "instance", // Export is only supported for instance sync
+		Workflows:          []string{"write"},
 		Copies:             map[string]string{}, // No initial files needed for export test
 		ExpectedDashboards: 4,                   // 4 dashboards created above (v0, v1, v2alpha1, v2beta1)
 		ExpectedFolders:    0,                   // No folders expected after sync
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Now export
 	helper.DebugState(t, repo, "BEFORE EXPORT TO REPOSITORY")
@@ -176,12 +177,13 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 	const repo = "version-test-repository"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Target:             "instance", // Export is only supported for instance sync
+		SyncTarget:         "instance", // Export is only supported for instance sync
+		Workflows:          []string{"write"},
 		Copies:             map[string]string{},
 		ExpectedDashboards: len(tests),
 		ExpectedFolders:    0,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Export dashboards
 	spec := provisioning.JobSpec{

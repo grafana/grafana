@@ -18,9 +18,9 @@ import (
 func TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag(t *testing.T) {
 	repoName := "nested-folder-repo-flag"
 	helper := sharedHelper(t)
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:            repoName,
-		Target:          "folder",
+		SyncTarget:      "folder",
 		ExpectedFolders: 1,
 		Copies: map[string]string{
 			"../testdata/all-panels.json": "folder/subfolder/dashboard.json",

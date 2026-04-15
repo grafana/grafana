@@ -5471,6 +5471,9 @@
       "cancel-loading-dashboard": "Avbryt laddning av instrumentpanel"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "",
+      "provisioning-message": "",
+      "provisioning-title": "",
       "text": {
         "not-found": "Hittades inte"
       }
@@ -6508,6 +6511,10 @@
       "sql-expressions-title": "SQL-uttryck",
       "title-add-another-transformation": "Lägg till ytterligare en transformering",
       "view-all": "Visa alla"
+    },
+    "transformation-type-picker": {
+      "sql-cta-button": "",
+      "sql-cta-description": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "Om du tar bort alla transformationer kommer du att återgå till huvudvalsskärmen."
@@ -8806,6 +8813,9 @@
     "show-all-spans": "Visa hela tidsspannet",
     "span-bar": {
       "tooltip-critical-path": "Ett segment på den <1>kritiska sökvägen</1> för övergripande spårning/begäran/arbetsflöde."
+    },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": ""
     },
     "span-bar-section": {
       "description-link": "Lägg till ytterligare information bredvid tjänsten och operationen på en rad med spårfält i spårningsvyn.",

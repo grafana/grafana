@@ -5441,6 +5441,9 @@
       "cancel-loading-dashboard": "取消加载数据面板"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "",
+      "provisioning-message": "",
+      "provisioning-title": "",
       "text": {
         "not-found": "未找到"
       }
@@ -6477,6 +6480,10 @@
       "sql-expressions-title": "SQL 表达式",
       "title-add-another-transformation": "添加其他转换",
       "view-all": "查看全部"
+    },
+    "transformation-type-picker": {
+      "sql-cta-button": "",
+      "sql-cta-description": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "删除所有转换后，您将返回主选择屏幕。"
@@ -8761,6 +8768,9 @@
     "show-all-spans": "显示所有跨度",
     "span-bar": {
       "tooltip-critical-path": "整个跟踪/请求/工作流的<1>关键路径</1>上的一个区段。"
+    },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": ""
     },
     "span-bar-section": {
       "description-link": "在跟踪视图中的跨度栏行上，在服务和操作旁边添加其他信息。",
