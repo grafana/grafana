@@ -32,17 +32,17 @@ func TestIntegrationProvisioning_NamespaceRepositoryQuota(t *testing.T) {
 
 	// --- Step 1: create 2 repos with unlimited quota  ---------
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 0})
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo1Name,
-		Path:                   repo1Path,
-		Target:                 "folder",
+		LocalPath:              repo1Path,
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo2Name,
-		Path:                   repo2Path,
-		Target:                 "folder",
+		LocalPath:              repo2Path,
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})

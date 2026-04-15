@@ -148,6 +148,31 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 }
 
 func (s *Service) GetSignedInUser(ctx context.Context, cmd *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	ctx, span := s.tracer.Start(ctx, "user.wrapper.GetSignedInUser", trace.WithAttributes(
+		attribute.Int64("userID", cmd.UserID),
+		attribute.Int64("orgID", cmd.OrgID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	if s.isKubernetesUserServiceEnabled(ctx) {
+		if hasOrgID(ctx) || cmd.OrgID > 0 {
+			result, err := s.k8sService.GetSignedInUser(ctx, cmd)
+			if err == nil {
+				span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
+				return result, nil
+			}
+			// Fall back to legacy is needed on the following cases:
+			// -  When the user is not found in k8s. It happens with integration tests where the user is created in the legacy store but not in k8s.
+			// -  When there is no request context (e.g. calls from the k8s API server handler).
+			ctxLogger.Warn("k8s GetSignedInUser failed, falling back to legacy", "userID", cmd.UserID, "err", err)
+		} else {
+			ctxLogger.Warn("kubernetesUsersRedirect is enabled but no orgID found in context, falling back to legacy")
+		}
+	}
+
+	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.GetSignedInUser(ctx, cmd)
 }
 

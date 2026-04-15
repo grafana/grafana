@@ -175,9 +175,17 @@ const (
 	// Enable fallback parsing behavior when scan row encounters invalid dashboard JSON
 	FlagScanRowInvalidDashboardParseFallbackEnabled = "scanRowInvalidDashboardParseFallbackEnabled"
 
-	// FlagDatasourceQueryTypes
-	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
-	FlagDatasourceQueryTypes = "datasourceQueryTypes"
+	// FlagDatasourcesQueryTypes
+	// Load Query types from spec.{version}.query.{yaml|json}
+	FlagDatasourcesQueryTypes = "datasources.queryTypes"
+
+	// FlagDatasourcesLoadOpenAPI
+	// Load the openapi spec from spec.{version}.openapi.{yaml|json}
+	FlagDatasourcesLoadOpenAPI = "datasources.loadOpenAPI"
+
+	// FlagDatasourcesChunkedQueryStreaming
+	// Allow requesting query results as chunked jsonl rather than single json blob
+	FlagDatasourcesChunkedQueryStreaming = "datasources.chunkedQueryStreaming"
 
 	// FlagDatasourceLegacyIdApi
 	// Register legacy datasource apis that use the numeric id
@@ -933,6 +941,10 @@ const (
 	// FlagQuerycachingRedirectToK8SApi
 	// Redirect caching service cache config reads from legacy storage to K8s API
 	FlagQuerycachingRedirectToK8SApi = "querycaching.redirectToK8SApi"
+
+	// FlagQuerycachingEnableConnectionsClient
+	// Use connections client instead of storage to resolve datasource plugin ID in query caching
+	FlagQuerycachingEnableConnectionsClient = "querycaching.enableConnectionsClient"
 
 	// FlagCompiledBootScript
 	// Boots the frontend using the boot.js script built from TS instead of the embedded boot script

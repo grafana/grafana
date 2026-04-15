@@ -67,20 +67,6 @@ var (
 					return fmt.Sprintf("%d", cast.Spec.PanelRef.PanelID), nil
 				},
 			},
-			{
-				FieldSelector: "spec.notificationSettings.receiver",
-				FieldValueFunc: func(o resource.Object) (string, error) {
-					cast, ok := o.(*AlertRule)
-					if !ok {
-						return "", errors.New("provided object must be of type *AlertRule")
-					}
-					if cast.Spec.NotificationSettings == nil {
-						return "", nil
-					}
-
-					return cast.Spec.NotificationSettings.Receiver, nil
-				},
-			},
 		}))
 	kindAlertRule = resource.Kind{
 		Schema: schemaAlertRule,

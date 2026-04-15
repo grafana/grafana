@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/dashvalidator
 go 1.25.9
 
 require (
-	github.com/grafana/authlib/types v0.0.0-20260316143530-e1d123886039
+	github.com/grafana/authlib/types v0.0.0-20260414201248-d766c8627a66
 	github.com/grafana/grafana v6.1.6+incompatible
 	github.com/grafana/grafana-app-sdk v0.53.1
 	github.com/grafana/grafana-app-sdk/logging v0.53.0
@@ -129,8 +129,8 @@ require (
 	github.com/google/pprof v0.0.0-20260115054156-294ebfa9ad83 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.7.0 // indirect
-	github.com/grafana/alerting v0.0.0-20260330164719-5946ccd00861 // indirect
-	github.com/grafana/authlib v0.0.0-20260316143530-e1d123886039 // indirect
+	github.com/grafana/alerting v0.0.0-20260330161147-03db0b961b17 // indirect
+	github.com/grafana/authlib v0.0.0-20260414201248-d766c8627a66 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
 	github.com/grafana/grafana-aws-sdk v1.4.3 // indirect
@@ -288,6 +288,7 @@ require (
 	google.golang.org/grpc v1.80.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.1 // indirect
 	gopkg.in/mail.v2 v2.3.1 // indirect
