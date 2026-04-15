@@ -125,14 +125,14 @@ describe('timeseriesPresetsSupplier', () => {
 
     it('does not boost lineWidth for bar presets', () => {
       const barPreset = result.find((p) => p.name === 'Bars')!;
-      const custom: Partial<GraphFieldConfig> = { drawStyle: GraphDrawStyle.Bars, lineWidth: 1 };
+      const custom: Partial<GraphFieldConfig> = { drawStyle: GraphDrawStyle.Bars, lineWidth: 3 };
       const suggestion = {
         ...barPreset,
         options: {} as Partial<Options>,
         fieldConfig: { defaults: { custom }, overrides: [] },
       };
       barPreset.cardOptions!.previewModifier!(suggestion);
-      expect(suggestion.fieldConfig!.defaults!.custom!.lineWidth).toBe(1);
+      expect(suggestion.fieldConfig!.defaults!.custom!.lineWidth).toBe(3);
     });
   });
 });

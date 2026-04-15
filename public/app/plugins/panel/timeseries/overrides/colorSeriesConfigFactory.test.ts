@@ -115,7 +115,6 @@ describe('changeSeriesColorConfigFactory', () => {
     expect(config.overrides).toHaveLength(1);
     expect(config.overrides[0].properties).toHaveLength(1);
     expect(config.overrides[0].properties[0].value.fixedColor).toBe('blue');
-    // original unchanged
     expect(existingConfig.overrides[0].properties[0].value.fixedColor).toBe('green');
   });
 
