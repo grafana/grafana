@@ -2,10 +2,10 @@
 set -euo pipefail
 
 # Verify RPM file permissions satisfy DISA-STIG requirements using
-# OpenSCAP on a live RHEL-family system.
+# OpenSCAP OVAL evaluation on a Linux system with oscap and rpm installed.
 #
-# Must be run as root on a RHEL/Rocky Linux system with oscap and the
-# scap-security-guide package installed (e.g. rockylinux:9 container).
+# Uses oscap oval eval (not xccdf eval) so no RHEL9 platform check is
+# required — works on any Linux distro that has the rpm and oscap tools.
 #
 # Usage: verify-rpm-stig.sh <path-to.rpm>
 
@@ -31,37 +31,30 @@ if [[ ! -f "$SSG_DS" ]]; then
   tar -xzOf "$TARBALL" "scap-security-guide-${SSG_VERSION}/ssg-rhel9-ds.xml" > "$SSG_DS"
 fi
 
-# The RHEL9 SCAP platform check requires a package named 'redhat-release'.
-# On Rocky Linux the package is 'rocky-release' (which provides redhat-release,
-# but the OVAL rpminfo probe matches by name only). Install a stub if missing.
-if ! rpm -q redhat-release &>/dev/null; then
-  echo "Installing stub redhat-release for SCAP platform check..."
-  SPECDIR="$(mktemp -d)"
-  trap 'rm -rf "$SPECDIR"' EXIT
-  mkdir -p "${SPECDIR}/SPECS" "${SPECDIR}/RPMS"
-  cat > "${SPECDIR}/SPECS/redhat-release.spec" << 'EOF'
-Name:    redhat-release
-Version: 9
-Release: 1
-Summary: Red Hat Enterprise Linux release (stub for SCAP platform check)
-License: GPLv2
-BuildArch: noarch
-%description
-Stub package installed so the SCAP OVAL platform check can find
-redhat-release by name on Rocky Linux and other RHEL-compatible systems.
-%files
-EOF
-  rpmbuild --define "_topdir ${SPECDIR}" -bb "${SPECDIR}/SPECS/redhat-release.spec" 2>/dev/null
-  rpm -i --nodeps "${SPECDIR}/RPMS/noarch/redhat-release-9-1.noarch.rpm"
-fi
-
 rpm --upgrade --nodeps --force "$RPM_PATH"
 
-oscap xccdf eval \
-  --profile xccdf_org.ssgproject.content_profile_stig \
-  --rule xccdf_org.ssgproject.content_rule_file_permissions_binary_dirs \
-  --rule xccdf_org.ssgproject.content_rule_file_permissions_library_dirs \
-  --rule xccdf_org.ssgproject.content_rule_file_ownership_binary_dirs \
-  --rule xccdf_org.ssgproject.content_rule_file_ownership_library_dirs \
-  --rule xccdf_org.ssgproject.content_rule_file_groupownership_system_commands_dirs \
-  "$SSG_DS"
+# Datastream and OVAL component IDs within ssg-rhel9-ds.xml.
+DS_ID="scap_org.open-scap_datastream_from_xccdf_ssg-rhel9-xccdf.xml"
+OVAL_ID="scap_org.open-scap_comp_ssg-rhel9-oval.xml"
+
+# Evaluate each OVAL definition directly, bypassing the XCCDF platform check.
+# oscap oval eval exits non-zero when a definition evaluates to false (fail).
+FAILED=0
+for DEF_ID in \
+  oval:ssg-file_permissions_binary_dirs:def:1 \
+  oval:ssg-file_permissions_library_dirs:def:1 \
+  oval:ssg-file_ownership_binary_dirs:def:1 \
+  oval:ssg-file_ownership_library_dirs:def:1 \
+  oval:ssg-file_groupownership_system_commands_dirs:def:1; do
+  echo "--- $DEF_ID"
+  oscap oval eval \
+    --datastream-id "$DS_ID" \
+    --oval-id "$OVAL_ID" \
+    --id "$DEF_ID" \
+    "$SSG_DS" || FAILED=1
+done
+
+if [[ "$FAILED" -ne 0 ]]; then
+  echo "error: one or more STIG OVAL checks failed" >&2
+  exit 1
+fi

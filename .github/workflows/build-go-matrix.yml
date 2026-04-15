@@ -174,15 +174,15 @@ jobs:
           touch data/plugins-bundled/.platform-linux-amd64.stamp
       - name: Build tar.gz
         env:
-          OS: linux
-          ARCH: amd64
+          GOOS: linux
+          GOARCH: amd64
           BUILD_VERSION: '0.0.0'
           BUILD_NUMBER: stig-test
         run: make build-targz BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
       - name: Build RPM
         env:
-          OS: linux
-          ARCH: amd64
+          GOOS: linux
+          GOARCH: amd64
           BUILD_VERSION: '0.0.0'
           BUILD_NUMBER: stig-test
         run: make build-rpm BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"

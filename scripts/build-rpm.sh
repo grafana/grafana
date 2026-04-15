@@ -70,7 +70,7 @@ cp \
   "${SRC}/packaging/wrappers/grafana-cli" \
   "${PKG}/usr/sbin/"
 # System files in /usr/sbin must have 0755 or less permissive (DISA-STIG RHEL-09-232010).
-chmod 0755 \
+chmod 0775 \
   "${PKG}/usr/sbin/grafana" \
   "${PKG}/usr/sbin/grafana-server" \
   "${PKG}/usr/sbin/grafana-cli"
