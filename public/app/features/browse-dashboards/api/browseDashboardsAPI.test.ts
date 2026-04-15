@@ -188,6 +188,95 @@ describe('browseDashboardsAPI', () => {
     expect(deleteFolderSpy).toHaveBeenCalledTimes(1);
   });
 
+  describe('getAffectedItems', () => {
+    it('aggregates plural descendant count keys', async () => {
+      const store = createTestStore();
+
+      server.use(
+        http.get('/api/folders/folder-1/counts', () =>
+          HttpResponse.json({
+            folders: 2,
+            dashboards: 3,
+            library_elements: 4,
+            alertrules: 5,
+          })
+        ),
+        http.get('/api/folders/folder-2/counts', () =>
+          HttpResponse.json({
+            folders: 1,
+            dashboards: 2,
+            library_elements: 3,
+            alertrules: 4,
+          })
+        )
+      );
+
+      const result = await store.dispatch(
+        browseDashboardsAPI.endpoints.getAffectedItems.initiate({
+          folderUIDs: ['folder-1', 'folder-2'],
+          dashboardUIDs: ['dashboard-1'],
+        })
+      );
+
+      expect(result.data).toEqual({
+        folders: 5,
+        dashboards: 6,
+        library_elements: 7,
+        alertrules: 9,
+      });
+    });
+
+    it('falls back to legacy descendant count keys', async () => {
+      const store = createTestStore();
+
+      server.use(
+        http.get('/api/folders/folder-1/counts', () =>
+          HttpResponse.json({
+            folder: 2,
+            dashboard: 3,
+            librarypanel: 4,
+            alertrule: 5,
+          })
+        )
+      );
+
+      const result = await store.dispatch(
+        browseDashboardsAPI.endpoints.getAffectedItems.initiate({
+          folderUIDs: ['folder-1'],
+          dashboardUIDs: [],
+        })
+      );
+
+      expect(result.data).toEqual({
+        folders: 3,
+        dashboards: 3,
+        library_elements: 4,
+        alertrules: 5,
+      });
+    });
+
+    it('defaults missing descendant counts to zero', async () => {
+      const store = createTestStore();
+
+      server.use(http.get('/api/folders/folder-1/counts', () => HttpResponse.json({ dashboards: 3 })));
+
+      const result = await store.dispatch(
+        browseDashboardsAPI.endpoints.getAffectedItems.initiate({
+          folderUIDs: ['folder-1'],
+          dashboardUIDs: ['dashboard-1', 'dashboard-2'],
+        })
+      );
+
+      expect(result.data).toEqual({
+        folders: 1,
+        dashboards: 5,
+        library_elements: 0,
+        alertrules: 0,
+      });
+      expect(result.data && Object.values(result.data).every(Number.isFinite)).toBe(true);
+    });
+  });
+
   // RTK Query logs a console.error for void queryFn returning { data: undefined }.
   describe('deleteFolders', () => {
     let consoleErrorSpy: jest.SpyInstance;

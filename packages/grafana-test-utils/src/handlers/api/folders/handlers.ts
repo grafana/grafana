@@ -125,12 +125,12 @@ const saveFolderHandler = () =>
     return HttpResponse.json({ ...folder.item, title: body.title });
   });
 
-const getMockFolderCounts = (folder: number, dashboard: number, librarypanel: number, alertrule: number) => {
+const getMockFolderCounts = (folders: number, dashboards: number, library_elements: number, alertrules: number) => {
   return {
-    folder,
-    dashboard,
-    librarypanel,
-    alertrule,
+    folders,
+    dashboards,
+    library_elements,
+    alertrules,
   };
 };
 
