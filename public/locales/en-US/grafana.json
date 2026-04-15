@@ -12450,7 +12450,13 @@
   },
   "page": {
     "editable-title": {
-      "edit-tooltip": "Edit title"
+      "cancel-tooltip": "Cancel",
+      "edit-tooltip": "Edit title",
+      "error": "An unknown error occurred",
+      "label": "Name",
+      "placeholder": "Name",
+      "required": "Please enter a title",
+      "save-tooltip": "Save"
     }
   },
   "panel": {
