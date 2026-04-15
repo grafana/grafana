@@ -1,0 +1,14 @@
+spec:
+  additionalProperties: false
+  description: Test data does not require any explicit configuration
+  example:
+    url: http://xxxx
+  properties:
+    title:
+      description: display name
+      type: string
+    url:
+      description: not used
+      type: string
+  required:
+  - title

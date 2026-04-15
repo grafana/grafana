@@ -1,8 +1,7 @@
 package kinds
 
 import (
-	"os"
-	"path"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -70,13 +69,5 @@ func TestQueryTypeDefinitions(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	builder.UpdateQueryDefinition(t, "./")
-
-	// Temporary... we should update the test
-	const dir = "../../../../public/app/plugins/datasource/grafana-testdata-datasource/"
-	data, err := os.ReadFile("./query.types.json")
-	if err == nil {
-		err = os.WriteFile(path.Join(dir, "spec.v0alpha1.query.json"), data, 0644)
-		require.NoError(t, err)
-	}
+	builder.UpdateQueryDefinition(t, filepath.Join(pluginDirectory, "schema", "v0alpha1"))
 }

@@ -3,42 +3,45 @@ package kinds
 import (
 	"os"
 	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginspec"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 )
 
+const pluginDirectory = "../../../../public/app/plugins/datasource/grafana-testdata-datasource/"
+
 func TestSpecProvider(t *testing.T) {
-	info := OpenAPISpec()
+	info := Settings()
 	require.NotNil(t, info)
 
-	const dir = "../../../../public/app/plugins/datasource/grafana-testdata-datasource/"
-
 	// Make sure the plugin folder is accurate
-	data, err := os.ReadFile(path.Join(dir, "plugin.json"))
+	data, err := os.ReadFile(path.Join(pluginDirectory, "plugin.json"))
 	require.NoError(t, err)
 	require.NotEmpty(t, data, "expecting a plugin.json in the same directory")
 
 	writeSpec := false
-	fname := "spec.v0alpha1.openapi.yaml"
-	provider := pluginspec.NewSpecProvider(os.DirFS(dir))
-	snapshot, err := provider.GetOpenAPI("v0alpha1")
+	fname := "v0alpha1/settings.yaml"
+	provider := pluginschema.NewSchemaProvider(os.DirFS(pluginDirectory), "schema")
+	snapshot, err := provider.GetSettings("v0alpha1")
 	require.NoError(t, err)
 	if snapshot == nil {
 		t.Errorf("schema does not exist")
 		writeSpec = true
-	} else if diff := info.Diff(snapshot); diff != "" {
+	} else if diff := pluginschema.Diff(info, snapshot); diff != "" {
 		t.Errorf("schema changed (-want +got):\n%s", diff)
 		writeSpec = true
 	}
 
 	if writeSpec {
-		raw, err := info.ToYAML()
+		raw, err := pluginschema.ToYAML(info)
 		require.NoError(t, err)
-		err = os.WriteFile(path.Join(dir, fname), raw, 0600)
+		fpath := path.Join(pluginDirectory, fname)
+		os.MkdirAll(filepath.Dir(fpath), 0750)
+		err = os.WriteFile(fpath, raw, 0600)
 		require.NoError(t, err)
-		require.FailNow(t, "spec did not exist")
+		require.FailNow(t, "schema did not exist")
 	}
 }

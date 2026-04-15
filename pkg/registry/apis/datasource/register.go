@@ -15,7 +15,7 @@ import (
 	openapi "k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginspec"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -50,7 +50,7 @@ type DataSourceAPIBuilder struct {
 	datasources            PluginDatasourceProvider
 	contextProvider        PluginContextWrapper
 	accessControl          accesscontrol.AccessControl
-	schemaProvider         pluginspec.SpecProvider
+	schemaProvider         pluginschema.SchemaProvider
 	queryTypes             *datasourceV0.QueryTypeDefinitionList
 	cfg                    DataSourceAPIBuilderConfig
 	dataSourceCRUDMetric   *prometheus.HistogramVec
@@ -303,7 +303,7 @@ func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinit
 
 type PluginInfo struct {
 	JSON    plugins.JSONData
-	Schemas pluginspec.SpecProvider
+	Schemas pluginschema.SchemaProvider
 }
 
 func getDatasourcePlugins(pluginSources sources.Registry) ([]PluginInfo, error) {
@@ -329,7 +329,7 @@ func getDatasourcePlugins(pluginSources sources.Registry) ([]PluginInfo, error) 
 				uniquePlugins[p.Primary.JSONData.ID] = true
 				pluginInfo = append(pluginInfo, PluginInfo{
 					JSON:    p.Primary.JSONData,
-					Schemas: pluginspec.NewSpecProvider(p.Primary.FS),
+					Schemas: pluginschema.NewSchemaProvider(p.Primary.FS, "schema"),
 				})
 			}
 
@@ -342,7 +342,7 @@ func getDatasourcePlugins(pluginSources sources.Registry) ([]PluginInfo, error) 
 					uniquePlugins[child.JSONData.ID] = true
 					pluginInfo = append(pluginInfo, PluginInfo{
 						JSON:    child.JSONData,
-						Schemas: pluginspec.NewSpecProvider(child.FS),
+						Schemas: pluginschema.NewSchemaProvider(child.FS, "schema"),
 					})
 				}
 			}

@@ -9,7 +9,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginspec"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
@@ -108,10 +108,6 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		return oas, nil
 	}
 
-	custom, err := b.schemaProvider.GetOpenAPI(b.GetGroupVersion().Version)
-	if err != nil {
-		return nil, err
-	}
 	return transformOpenAPI(PluginSpecTransformOptions{
 		oas:           oas,
 		cfg:           ds,
@@ -119,8 +115,8 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		cfgPath:       root + "namespaces/{namespace}/datasources",
 		resourcesPath: root + "namespaces/{namespace}/datasources/{name}/resources",
 		proxyPath:     root + "namespaces/{namespace}/datasources/{name}/proxy",
-		ext:           custom,
-	})
+		schemas:       b.schemaProvider,
+	}, b.GetGroupVersion().Version)
 }
 
 type PluginSpecTransformOptions struct {
@@ -143,28 +139,31 @@ type PluginSpecTransformOptions struct {
 	proxyPath string
 
 	// Extensions
-	ext *pluginspec.OpenAPIExtension
+	schemas pluginschema.SchemaProvider
 }
 
-func transformOpenAPI(p PluginSpecTransformOptions) (*spec3.OpenAPI, error) {
-	if p.ext == nil {
+func transformOpenAPI(p PluginSpecTransformOptions, apiVersion string) (*spec3.OpenAPI, error) {
+	if p.schemas == nil {
 		return p.oas, nil // nothing special
 	}
+
+	settings, err := p.schemas.GetSettings(apiVersion)
+	if err != nil {
+		return nil, err
+	}
+
 	oas := p.oas
 
-	// Add custom schemas
-	maps.Copy(p.oas.Components.Schemas, p.ext.Schemas)
-
 	// Replace the generic DataSourceSpec with the explicit one
-	if p.ext.Settings.Spec != nil {
-		oas.Components.Schemas[p.cfgSpecName] = p.ext.Settings.Spec
+	if settings != nil && settings.Spec != nil {
+		oas.Components.Schemas[p.cfgSpecName] = settings.Spec
 		p.cfg.Properties["spec"] = spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Ref: spec.MustCreateRef("#/components/schemas/" + p.cfgSpecName),
 			},
 		}
 
-		if len(p.ext.Settings.SecureValues) > 0 {
+		if len(settings.SecureValues) > 0 {
 			example := common.InlineSecureValues{}
 			ref := spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue")
 			secure := &spec.Schema{
@@ -173,7 +172,7 @@ func transformOpenAPI(p PluginSpecTransformOptions) (*spec3.OpenAPI, error) {
 					AdditionalProperties: &spec.SchemaOrBool{Allows: false},
 				}}
 
-			for _, v := range p.ext.Settings.SecureValues {
+			for _, v := range settings.SecureValues {
 				secure.Properties[v.Key] = spec.Schema{
 					SchemaProps: spec.SchemaProps{
 						Description: v.Description,
@@ -199,8 +198,13 @@ func transformOpenAPI(p PluginSpecTransformOptions) (*spec3.OpenAPI, error) {
 			}
 		}
 
+		examples, err := p.schemas.GetSettingsExamples(apiVersion)
+		if err != nil {
+			return nil, err
+		}
+
 		// Add examples to the POST request
-		if len(p.ext.Settings.Examples) > 0 {
+		if len(examples.Examples) > 0 {
 			cfg := oas.Paths.Paths[p.cfgPath]
 			if cfg == nil {
 				return nil, fmt.Errorf("no route registered: %s", p.cfgPath)
@@ -209,23 +213,31 @@ func transformOpenAPI(p PluginSpecTransformOptions) (*spec3.OpenAPI, error) {
 				return nil, fmt.Errorf("expecting under: %s", p.cfgPath)
 			}
 			for _, c := range cfg.Post.RequestBody.Content {
-				c.Examples = p.ext.Settings.Examples
+				c.Examples = examples.Examples
 			}
 		}
 	}
 
-	if p.ext.Routes != nil {
-		if len(p.ext.Routes.Resource) > 0 {
-			if err := p.applyRoutes(p.resourcesPath, p.ext.Routes.Resource); err != nil {
-				return nil, err
-			}
-		}
-		if len(p.ext.Routes.Proxy) > 0 {
-			if err := p.applyRoutes(p.proxyPath, p.ext.Routes.Proxy); err != nil {
-				return nil, err
-			}
-		}
+	routes, err := p.schemas.GetRoutes(apiVersion)
+	if err != nil || routes == nil {
+		return oas, err
 	}
+
+	// Add custom schemas
+	maps.Copy(p.oas.Components.Schemas, routes.Components.Schemas)
+
+	// if p.ext.Routes != nil {
+	// 	if len(p.ext.Routes.Resource) > 0 {
+	// 		if err := p.applyRoutes(p.resourcesPath, p.ext.Routes.Resource); err != nil {
+	// 			return nil, err
+	// 		}
+	// 	}
+	// 	if len(p.ext.Routes.Proxy) > 0 {
+	// 		if err := p.applyRoutes(p.proxyPath, p.ext.Routes.Proxy); err != nil {
+	// 			return nil, err
+	// 		}
+	// 	}
+	// }
 	return oas, nil
 }
 

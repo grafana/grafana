@@ -1,20 +1,17 @@
 {
-  "type": "table",
-  "targets": [
+  "from": "now-1h",
+  "to": "now",
+  "queries": [
     {
       "refId": "A",
-      "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "TheUID"
-      },
+      "maxDataPoints": 1000,
+      "intervalMs": 5,
       "scenarioId": "random_walk"
     },
     {
       "refId": "B",
-      "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "TheUID"
-      },
+      "maxDataPoints": 1000,
+      "intervalMs": 5,
       "pulseWave": {
         "offCount": 20,
         "offValue": 1.23,
@@ -26,10 +23,8 @@
     },
     {
       "refId": "C",
-      "datasource": {
-        "type": "grafana-testdata-datasource",
-        "uid": "TheUID"
-      },
+      "maxDataPoints": 1000,
+      "intervalMs": 5,
       "scenarioId": "random_walk",
       "seriesCount": 10,
       "spread": 0.2

@@ -1,8 +1,6 @@
 {
   "type": "object",
-  "required": [
-    "queries"
-  ],
+  "required": ["queries"],
   "properties": {
     "$schema": {
       "description": "helper",
@@ -59,9 +57,7 @@
           "datasource": {
             "description": "The datasource",
             "type": "object",
-            "required": [
-              "type"
-            ],
+            "required": ["type"],
             "properties": {
               "apiVersion": {
                 "description": "The apiserver version",
@@ -86,20 +82,13 @@
           "errorSource": {
             "description": "Possible enum values:\n - `\"plugin\"` \n - `\"downstream\"` ",
             "type": "string",
-            "enum": [
-              "plugin",
-              "downstream"
-            ],
+            "enum": ["plugin", "downstream"],
             "x-enum-description": {}
           },
           "errorType": {
             "description": "Possible enum values:\n - `\"frontend_exception\"` \n - `\"frontend_observable\"` \n - `\"server_panic\"` ",
             "type": "string",
-            "enum": [
-              "frontend_exception",
-              "frontend_observable",
-              "server_panic"
-            ],
+            "enum": ["frontend_exception", "frontend_observable", "server_panic"],
             "x-enum-description": {}
           },
           "flamegraphDiff": {
@@ -144,13 +133,7 @@
               "type": {
                 "description": "Possible enum values:\n - `\"random\"` \n - `\"random edges\"` \n - `\"response_medium\"` \n - `\"response_small\"` \n - `\"feature_showcase\"` ",
                 "type": "string",
-                "enum": [
-                  "random",
-                  "random edges",
-                  "response_medium",
-                  "response_small",
-                  "feature_showcase"
-                ],
+                "enum": ["random", "random edges", "response_medium", "response_small", "feature_showcase"],
                 "x-enum-description": {}
               }
             },
@@ -200,9 +183,7 @@
           "resultAssertions": {
             "description": "Optionally define expected query result behavior",
             "type": "object",
-            "required": [
-              "typeVersion"
-            ],
+            "required": ["typeVersion"],
             "properties": {
               "maxFrames": {
                 "description": "Maximum frame count",
@@ -282,19 +263,14 @@
           },
           "sim": {
             "type": "object",
-            "required": [
-              "key"
-            ],
+            "required": ["key"],
             "properties": {
               "config": {
                 "type": "object"
               },
               "key": {
                 "type": "object",
-                "required": [
-                  "tick",
-                  "type"
-                ],
+                "required": ["tick", "type"],
                 "properties": {
                   "tick": {
                     "type": "number"
@@ -328,12 +304,7 @@
           },
           "stream": {
             "type": "object",
-            "required": [
-              "noise",
-              "speed",
-              "spread",
-              "type"
-            ],
+            "required": ["noise", "speed", "spread", "type"],
             "properties": {
               "bands": {
                 "type": "integer"
@@ -350,12 +321,7 @@
               "type": {
                 "description": "Possible enum values:\n - `\"fetch\"` \n - `\"logs\"` \n - `\"signal\"` \n - `\"traces\"` ",
                 "type": "string",
-                "enum": [
-                  "fetch",
-                  "logs",
-                  "signal",
-                  "traces"
-                ],
+                "enum": ["fetch", "logs", "signal", "traces"],
                 "x-enum-description": {}
               },
               "url": {
@@ -371,10 +337,7 @@
           "timeRange": {
             "description": "TimeRange represents the query range\nNOTE: unlike generic /ds/query, we can now send explicit time values in each query\nNOTE: the values for timeRange are not saved in a dashboard, they are constructed on the fly",
             "type": "object",
-            "required": [
-              "from",
-              "to"
-            ],
+            "required": ["from", "to"],
             "properties": {
               "from": {
                 "description": "From is the start time of the query.",
