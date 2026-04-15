@@ -384,31 +384,14 @@ describe('GroupToSubframe transformer - V2 migration', () => {
     expect(calcRule!.aggregations).toEqual([ReducerID.sum, ReducerID.mean]);
   });
 
-  it('migrateGroupToNestedTableOptions should set keepNestedField to false on all migrated rules', () => {
-    const v1Options: GroupToNestedTableTransformerOptions = {
-      fields: {
-        message: {
-          operation: GroupByOperationID.groupBy,
-          aggregations: [],
-        },
-        values: {
-          operation: GroupByOperationID.aggregate,
-          aggregations: [ReducerID.sum],
-        },
-      },
-    };
-
-    const v2 = migrateGroupToNestedTableOptions(v1Options);
-
-    for (const rule of v2.rules) {
-      expect(rule.keepNestedField).toBe(false);
-    }
-  });
-
-  it('isV1GroupToNestedTableOptions should return true for V1 config and false for V2 config', () => {
+  it('should return true for V1 config and false for V2 config', () => {
     const v1: GroupToNestedTableTransformerOptions = {
       fields: { message: { operation: GroupByOperationID.groupBy, aggregations: [] } },
     };
+    expect(isV1GroupToNestedTableOptions(v1)).toBe(true);
+  });
+
+  it('should return false for V2 config', () => {
     const v2: GroupToNestedTableTransformerOptionsV2 = {
       rules: [
         {
@@ -418,9 +401,21 @@ describe('GroupToSubframe transformer - V2 migration', () => {
         },
       ],
     };
-
-    expect(isV1GroupToNestedTableOptions(v1)).toBe(true);
     expect(isV1GroupToNestedTableOptions(v2)).toBe(false);
+  });
+
+  it('should return false if both rules and fields exist, even if fields is empty', () => {
+    const v2ConfigFromV1 = {
+      fields: {},
+      rules: [
+        {
+          matcher: { id: FieldMatcherID.byName, options: 'message' },
+          operation: GroupByOperationID.groupBy,
+          aggregations: [],
+        },
+      ],
+    };
+    expect(isV1GroupToNestedTableOptions(v2ConfigFromV1)).toBe(false);
   });
 });
 

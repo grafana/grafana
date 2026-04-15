@@ -88,8 +88,10 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   }, [variable]);
 
   const editActions = useMemo(
-    () => <ControlEditActions onClickEdit={onClickEditVariable} onClickDelete={onClickDeleteVariable} />,
-    [onClickDeleteVariable, onClickEditVariable]
+    () => (
+      <ControlEditActions element={variable} onClickEdit={onClickEditVariable} onClickDelete={onClickDeleteVariable} />
+    ),
+    [variable, onClickDeleteVariable, onClickEditVariable]
   );
 
   // UNSAFE_renderAsHidden variables (like ScopesVariable) should always render invisibly
@@ -175,7 +177,7 @@ function VariableLabel({
   layout?: ControlsLayout;
 }) {
   const { state } = variable;
-  const elementId = `var-${state.key}`;
+  const elementId = sceneUtils.getVariableControlId(state.type, state.key);
 
   if (variable.state.hide === VariableHide.hideLabel) {
     return null;
@@ -219,7 +221,13 @@ export function SectionVariableControls({ variableSet }: { variableSet: SceneVar
   }
 
   return (
-    <div className={styles.sectionVariables}>
+    // Prevent row selection on click (see RowItemRenderer onPointerUp)
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+    <div
+      className={styles.sectionVariables}
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
+    >
       {visibleVariables.map((variable) => (
         <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
       ))}
