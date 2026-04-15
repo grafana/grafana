@@ -26,6 +26,7 @@ import { LineStyleEditor } from './LineStyleEditor';
 import { SpanNullsEditor } from './SpanNullsEditor';
 import { ThresholdsStyleEditor } from './ThresholdsStyleEditor';
 
+/* istanbul ignore file */
 export const defaultGraphConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
   lineInterpolation: LineInterpolation.Linear,
