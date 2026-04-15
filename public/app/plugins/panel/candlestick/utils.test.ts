@@ -7,6 +7,15 @@ import { drawMarkers } from './utils';
 // @ts-ignore jest-canvas-mock import fixes type errors in IDE
 let unused = {} as unknown as CanvasRenderingContext2DEvent;
 
+/**
+ * These snapshot tests might need to be updated whenever uPlot is updated if that impacts how the candlestick panel is drawn in the canvas,
+ * but should be good at catching unintentional regression in the drawMarkers method.
+ * Since this method only has outputs in the canvas, I'm not sure how it can be tested otherwise without mocks that are probably more wedded to implementation
+ * TL;DR if this test is failing after updating uPlot, delete the __snapshot__/utils.test.ts.snap and re-run the tests and commit the output
+ * If this test is failing after making changes to drawMarkers, verify that you intended to change the canvas and then do the same.
+ *
+ * @todo replace with screenshot regression testing
+ */
 describe('drawMarkers', () => {
   const height = 400;
   const width = 800;
