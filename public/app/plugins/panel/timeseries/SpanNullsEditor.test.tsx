@@ -24,7 +24,7 @@ describe('SpanNullsEditor', () => {
       expect(screen.getByRole('radio', { name: /always/i })).toBeChecked();
     });
 
-    it('should preserve custom threshold value in the Threshold option', () => {
+    it('should render with Threshold selected for a custom threshold value', () => {
       const onChange = jest.fn();
       render(<SpanNullsEditor value={7200000} onChange={onChange} context={mockContext} item={mockItem} />);
 
@@ -69,17 +69,11 @@ describe('SpanNullsEditor', () => {
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     });
 
-    it('should show threshold input when value is a number', () => {
+    it('should show threshold input with "<" prefix when value is a number', () => {
       const onChange = jest.fn();
       render(<SpanNullsEditor value={3600000} onChange={onChange} context={mockContext} item={mockItem} />);
 
       expect(screen.getByRole('textbox')).toBeInTheDocument();
-    });
-
-    it('should show "<" prefix in the threshold input', () => {
-      const onChange = jest.fn();
-      render(<SpanNullsEditor value={3600000} onChange={onChange} context={mockContext} item={mockItem} />);
-
       expect(screen.getByText('<')).toBeInTheDocument();
     });
   });

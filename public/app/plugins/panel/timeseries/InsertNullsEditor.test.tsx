@@ -21,24 +21,21 @@ describe('InsertNullsEditor', () => {
       const onChange = jest.fn();
       render(<InsertNullsEditor value={false} onChange={onChange} context={mockContext} item={mockItem} />);
 
-      const neverButton = screen.getByRole('radio', { name: /never/i });
-      expect(neverButton).toBeChecked();
+      expect(screen.getByRole('radio', { name: /never/i })).toBeChecked();
     });
 
-    it('should render with Threshold selected when value is a number', () => {
+    it('should render with Threshold selected for a custom threshold value', () => {
       const onChange = jest.fn();
-      render(<InsertNullsEditor value={3600000} onChange={onChange} context={mockContext} item={mockItem} />);
+      render(<InsertNullsEditor value={7200000} onChange={onChange} context={mockContext} item={mockItem} />);
 
-      const thresholdButton = screen.getByRole('radio', { name: /threshold/i });
-      expect(thresholdButton).toBeChecked();
+      expect(screen.getByRole('radio', { name: /threshold/i })).toBeChecked();
     });
 
     it('should call onChange with false when Never is selected', async () => {
       const onChange = jest.fn();
       render(<InsertNullsEditor value={3600000} onChange={onChange} context={mockContext} item={mockItem} />);
 
-      const neverButton = screen.getByRole('radio', { name: /never/i });
-      await userEvent.click(neverButton);
+      await userEvent.click(screen.getByRole('radio', { name: /never/i }));
 
       expect(onChange).toHaveBeenCalledWith(false);
     });
@@ -47,23 +44,13 @@ describe('InsertNullsEditor', () => {
       const onChange = jest.fn();
       render(<InsertNullsEditor value={false} onChange={onChange} context={mockContext} item={mockItem} />);
 
-      const thresholdButton = screen.getByRole('radio', { name: /threshold/i });
-      await userEvent.click(thresholdButton);
+      await userEvent.click(screen.getByRole('radio', { name: /threshold/i }));
 
       expect(onChange).toHaveBeenCalledWith(3600000);
     });
-
-    it('should preserve custom threshold value in the Threshold option', () => {
-      const onChange = jest.fn();
-      const customMs = 7200000; // 2h
-      render(<InsertNullsEditor value={customMs} onChange={onChange} context={mockContext} item={mockItem} />);
-
-      const thresholdButton = screen.getByRole('radio', { name: /threshold/i });
-      expect(thresholdButton).toBeChecked();
-    });
   });
 
-  describe('Threshold input visibility', () => {
+  describe('Threshold input', () => {
     it('should not show threshold input when value is false', () => {
       const onChange = jest.fn();
       render(<InsertNullsEditor value={false} onChange={onChange} context={mockContext} item={mockItem} />);
@@ -71,17 +58,11 @@ describe('InsertNullsEditor', () => {
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     });
 
-    it('should show threshold input when value is a number', () => {
+    it('should show threshold input with ">" prefix when value is a number', () => {
       const onChange = jest.fn();
       render(<InsertNullsEditor value={3600000} onChange={onChange} context={mockContext} item={mockItem} />);
 
       expect(screen.getByRole('textbox')).toBeInTheDocument();
-    });
-
-    it('should show ">" prefix in the threshold input', () => {
-      const onChange = jest.fn();
-      render(<InsertNullsEditor value={3600000} onChange={onChange} context={mockContext} item={mockItem} />);
-
       expect(screen.getByText('>')).toBeInTheDocument();
     });
   });
