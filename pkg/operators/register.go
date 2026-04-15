@@ -28,11 +28,4 @@ func init() {
 		Description: "Pick and execute provisioning jobs using lease-based claiming",
 		RunFunc:     provisioning.RunJobQueueController,
 	})
-
-	// IAM Operators
-	server.RegisterOperator(server.Operator{
-		Name:        "iam-folder-reconciler",
-		Description: "Reconcile folder resources into Zanzana",
-		RunFunc:     iam.RunIAMFolderReconciler,
-	})
 }
