@@ -5531,6 +5531,9 @@
       "cancel-loading-dashboard": "Zrušit načítání nástěnky"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "",
+      "provisioning-message": "",
+      "provisioning-title": "",
       "text": {
         "not-found": "Nenalezeno"
       }
@@ -6570,6 +6573,10 @@
       "sql-expressions-title": "Výrazy SQL",
       "title-add-another-transformation": "Přidejte další transformaci",
       "view-all": "Zobrazit vše"
+    },
+    "transformation-type-picker": {
+      "sql-cta-button": "",
+      "sql-cta-description": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "Odstraněním všech transformací se vrátíte na hlavní obrazovku výběru."
@@ -8896,6 +8903,9 @@
     "show-all-spans": "Zobrazit všechny rozsahy",
     "span-bar": {
       "tooltip-critical-path": "Segment na <1>kritické cestě</1> celkové stopy / požadavku / pracovního postupu."
+    },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": ""
     },
     "span-bar-section": {
       "description-link": "Přidejte další informace vedle služby a provozu v řádku rozsahu v zobrazení trasování.",
