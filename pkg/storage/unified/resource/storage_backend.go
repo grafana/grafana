@@ -943,12 +943,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 // eventstore is used as a commit signal: an event is written only after the
 // optimistic locking checks, so its presence proves the write is committed.
 func (k *kvStorageBackend) confirmExistence(ctx context.Context, key DataKey) (bool, error) {
-	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.confirmExistence", trace.WithAttributes(
-		attribute.String("namespace", key.Namespace),
-		attribute.String("group", key.Group),
-		attribute.String("resource", key.Resource),
-		attribute.String("name", key.Name),
-	))
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.confirmExistence")
 	defer span.End()
 
 	const eventThreshold = 30 * time.Second
@@ -1418,12 +1413,7 @@ func convertEventType(action kv.DataAction) resourcepb.WatchEvent_Type {
 }
 
 func (k *kvStorageBackend) getValueFromDataStore(ctx context.Context, dataKey DataKey) ([]byte, error) {
-	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.getValueFromDataStore", trace.WithAttributes(
-		attribute.String("namespace", dataKey.Namespace),
-		attribute.String("group", dataKey.Group),
-		attribute.String("resource", dataKey.Resource),
-		attribute.String("name", dataKey.Name),
-	))
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.getValueFromDataStore")
 	defer span.End()
 
 	raw, err := k.dataStore.Get(ctx, dataKey)
@@ -1843,9 +1833,6 @@ func (i *kvHistoryIterator) Value() []byte {
 
 // WatchWriteEvents returns a channel that receives write events.
 func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
-	_, span := tracer.Start(ctx, "resource.kvStorageBackend.WatchWriteEvents")
-	defer span.End()
-
 	// Create a channel to receive events
 	events := make(chan *WrittenEvent, 10000) // TODO: make this configurable
 
@@ -1915,9 +1902,9 @@ func (k *kvStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedR
 
 func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.GetResourceLastImportTimes")
-	defer span.End()
 
 	return func(yield func(ResourceLastImportTime, error) bool) {
+		defer span.End()
 		valid, _, err := k.lastImportStore.ListLastImportTimes(ctx, k.lastImportTimeMaxAge)
 		if err != nil {
 			yield(ResourceLastImportTime{}, err)
