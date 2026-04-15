@@ -147,7 +147,7 @@ jobs:
   verify-pkg-stig:
     needs: detect-changes
     if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && needs.detect-changes.outputs.rpm-packaging == 'true')
-    name: verify rpm stig (linux/amd64)
+    name: verify pkg stig (linux/amd64)
     runs-on: ubuntu-x64-large
     permissions:
       contents: read
