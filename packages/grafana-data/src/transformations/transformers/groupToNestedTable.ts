@@ -104,13 +104,9 @@ function findMatchingRule(
   rules: GroupToNestedTableMatcherConfig[]
 ): GroupToNestedTableMatcherConfig | undefined {
   for (const rule of rules) {
-    try {
-      const matcher = getFieldMatcher(rule.matcher);
-      if (matcher(field, frame, allFrames)) {
-        return rule;
-      }
-    } catch {
-      // Unknown matcher id — skip this rule
+    const matcher = getFieldMatcher(rule.matcher);
+    if (matcher(field, frame, allFrames)) {
+      return rule;
     }
   }
   return undefined;
