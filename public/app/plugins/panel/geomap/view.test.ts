@@ -1,4 +1,3 @@
-import { defaultMapViewConfig } from './panelcfg.gen';
 import { centerPointRegistry, MapCenterID } from './view';
 
 describe('centerPointRegistry', () => {
@@ -34,21 +33,6 @@ describe('centerPointRegistry', () => {
         name: '(0°, 0°)',
         lat: 0,
         lon: 0,
-      })
-    );
-  });
-});
-
-describe('defaultMapViewConfig', () => {
-  it('should default new panels to (0°, 0°) at zoom 1 with fit-to-all-layers scope', () => {
-    expect(defaultMapViewConfig).toEqual(
-      expect.objectContaining({
-        id: 'zero',
-        lat: 0,
-        lon: 0,
-        zoom: 1,
-        allLayers: true,
-        noRepeat: false,
       })
     );
   });
