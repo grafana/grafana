@@ -25,7 +25,7 @@ weight: 01
 Available in Grafana 12 and later.
 {{< /admonition >}}
 
-Grafana is deprecating legacy APIs (`/api` )in favor of a new generation of improved APIs (`/apis`) which follow a standardized API structure alongside consistent API versioning.
+Grafana 13 marks the deprecation of legacy API endpoints (`/api`) in favor of a new generation of improved APIs (`/apis`), a Kubernetes-style API layer which follows a standardized API structure alongside consistent API versioning.
 
 **Legacy APIs are not being disabled or removed for the moment**, and any breaking changes will be announced well in advance to avoid disruptions.
 

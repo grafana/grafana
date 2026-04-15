@@ -4,8 +4,8 @@ aliases:
   - ../../overview/ # /docs/grafana/next/overview/
   - ../../../developers/http_api/ # /docs/grafana/developers/http_api/
   - ../../developers/http_api/ # /docs/grafana/next/developers/http_api/
-canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/
-description: Grafana HTTP API legacy
+canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy
+description: Legacy Grafana HTTP API
 keywords:
   - grafana
   - http
@@ -18,11 +18,11 @@ labels:
     - oss
     - cloud
 title: Legacy Grafana HTTP API
-weight: 03
+weight: 1000
 ---
 
 # Legacy Grafana HTTP API
 
-Grafana is deprecating legacy APIs (`/api` )in favor of a new generation of improved APIs (`/apis`) which follow a standardized API structure alongside consistent API versioning. To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+Grafana 13 marks the deprecation of legacy API endpoints in favor of a new generation of improved APIs (`/apis`), a Kubernetes-style API layer which follows a standardized API structure alongside consistent API versioning. To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
 
-Legacy APIs include:
+This change doesn't disrupt or break your current setup. Legacy `/api` endpoints are not being disabled or removed, they remain fully accessible and will continue to work. However, `/api` routes will no longer be updated and **will be removed in a future major release.**
