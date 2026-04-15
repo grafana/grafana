@@ -35,7 +35,7 @@ func TestIntegrationProvisioning_PendingDeleteLabel_SkipsReconciliation(t *testi
 	repoObj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 	require.NoError(t, err)
 
-	initialRepo := common.UnstructuredToRepository(t, repoObj)
+	initialRepo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 	require.Equal(t, initialRepo.Generation, initialRepo.Status.ObservedGeneration,
 		"generation and observedGeneration should match after initial sync")
 
@@ -70,7 +70,7 @@ func TestIntegrationProvisioning_PendingDeleteLabel_SkipsReconciliation(t *testi
 		if err != nil {
 			return false
 		}
-		repo := common.UnstructuredToRepository(t, obj)
+		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
 		return repo.Status.ObservedGeneration >= newGeneration
 	}, 10*time.Second, 200*time.Millisecond,
 		"ObservedGeneration must not advance while the pending-delete label is set (reconciliation should be skipped)")
@@ -95,7 +95,7 @@ func TestIntegrationProvisioning_PendingDeleteLabel_SkipsReconciliation(t *testi
 		if err != nil {
 			return
 		}
-		repo := common.UnstructuredToRepository(t, obj)
+		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
 		assert.Equal(collect, provisioning.JobStateSuccess, repo.Status.Sync.State,
 			"repository should reach success sync state after label removal")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,

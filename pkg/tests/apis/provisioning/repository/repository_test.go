@@ -96,8 +96,8 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			}
 
 			// Marshal as real objects to ",omitempty" values are tested properly
-			expectedRepo := common.UnstructuredToRepository(t, input)
-			returnedRepo := common.UnstructuredToRepository(t, output)
+			expectedRepo := common.MustFromUnstructured[provisioning.Repository](t, input)
+			returnedRepo := common.MustFromUnstructured[provisioning.Repository](t, output)
 			require.Equal(t, expectedRepo.Spec, returnedRepo.Spec)
 
 			// A viewer should be able to read the repository
@@ -117,7 +117,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			require.True(t, ok, "expecting unstructured object")
 
 			// Verify viewer gets the same repository data
-			viewerRepo := common.UnstructuredToRepository(t, viewerUnstruct)
+			viewerRepo := common.MustFromUnstructured[provisioning.Repository](t, viewerUnstruct)
 			require.Equal(t, expectedRepo.Spec, viewerRepo.Spec, "viewer should see same repository spec")
 
 			// Viewer can see file listing
@@ -629,7 +629,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		created, err := helper.Repositories.Resource.Create(ctx, r, metav1.CreateOptions{})
 		require.NoError(t, err)
 
-		createdRepo := common.UnstructuredToRepository(t, created)
+		createdRepo := common.MustFromUnstructured[provisioning.Repository](t, created)
 		require.Equal(t, int64(10), createdRepo.Spec.Sync.IntervalSeconds, "interval should be updated with default value")
 	})
 
@@ -646,7 +646,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		require.NoError(t, err, "repository creation should succeed")
 
 		// Verify finalizers were automatically added by the mutator
-		createdRepo := common.UnstructuredToRepository(t, created)
+		createdRepo := common.MustFromUnstructured[provisioning.Repository](t, created)
 		require.NotEmpty(t, createdRepo.Finalizers, "finalizers should be automatically added")
 		require.Contains(t, createdRepo.Finalizers, repository.RemoveOrphanResourcesFinalizer, "should contain RemoveOrphanResourcesFinalizer")
 		require.Contains(t, createdRepo.Finalizers, repository.CleanFinalizer, "should contain CleanFinalizer")
@@ -662,7 +662,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		created, err := helper.Repositories.Resource.Create(ctx, r, metav1.CreateOptions{})
 		require.NoError(t, err, "repository creation should succeed")
 
-		createdRepo := common.UnstructuredToRepository(t, created)
+		createdRepo := common.MustFromUnstructured[provisioning.Repository](t, created)
 		require.NotEmpty(t, createdRepo.Finalizers, "finalizers should be present after creation")
 		require.Contains(t, createdRepo.Finalizers, repository.RemoveOrphanResourcesFinalizer, "should contain RemoveOrphanResourcesFinalizer")
 		require.Contains(t, createdRepo.Finalizers, repository.CleanFinalizer, "should contain CleanFinalizer")
@@ -677,7 +677,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			require.NoError(collect, err, "repository update should succeed")
 
 			// Verify finalizers were re-added by the mutator
-			updatedRepo := common.UnstructuredToRepository(t, updated)
+			updatedRepo := common.MustFromUnstructured[provisioning.Repository](t, updated)
 			require.NotEmpty(collect, updatedRepo.Finalizers, "finalizers should be re-added after update")
 			require.Contains(collect, updatedRepo.Finalizers, repository.RemoveOrphanResourcesFinalizer, "should contain RemoveOrphanResourcesFinalizer")
 			require.Contains(collect, updatedRepo.Finalizers, repository.CleanFinalizer, "should contain CleanFinalizer")
@@ -867,7 +867,7 @@ func TestIntegrationProvisioning_ReadOnlyRepositoryNoWebhook(t *testing.T) {
 		repoObj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
 		require.NoError(t, err, "failed to get repository")
 
-		repo := common.UnstructuredToRepository(t, repoObj)
+		repo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		require.Empty(t, repo.Spec.Workflows, "repository should have no workflows (read-only)")
 		require.Nil(t, repo.Status.Webhook, "read-only repository should not have a webhook")
 	})
@@ -909,7 +909,7 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 		created, err := helper.Repositories.Resource.Create(ctx, repo, metav1.CreateOptions{})
 		require.NoError(t, err, "should create repository with webhook config")
 
-		createdRepo := common.UnstructuredToRepository(t, created)
+		createdRepo := common.MustFromUnstructured[provisioning.Repository](t, created)
 		require.NotNil(t, createdRepo.Spec.Webhook, "webhook config should be persisted")
 		require.Equal(t, "https://grafana.example.com", createdRepo.Spec.Webhook.BaseURL, "trailing slash should be trimmed by mutator")
 	})
@@ -946,7 +946,7 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 		created, err := helper.Repositories.Resource.Create(ctx, repo, metav1.CreateOptions{})
 		require.NoError(t, err, "should accept HTTP webhook base URL")
 
-		createdRepo := common.UnstructuredToRepository(t, created)
+		createdRepo := common.MustFromUnstructured[provisioning.Repository](t, created)
 		require.NotNil(t, createdRepo.Spec.Webhook)
 		require.Equal(t, "http://internal-proxy.example.com", createdRepo.Spec.Webhook.BaseURL, "trailing slash should be trimmed by mutator")
 	})
@@ -955,7 +955,7 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 		obj, err := helper.Repositories.Resource.Get(ctx, "repo-with-webhook", metav1.GetOptions{})
 		require.NoError(t, err, "should read back repository")
 
-		repo := common.UnstructuredToRepository(t, obj)
+		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
 		require.NotNil(t, repo.Spec.Webhook, "webhook config should be present on read")
 		require.Equal(t, "https://grafana.example.com", repo.Spec.Webhook.BaseURL)
 	})
@@ -965,14 +965,14 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 			obj, err := helper.Repositories.Resource.Get(ctx, "repo-with-webhook", metav1.GetOptions{})
 			require.NoError(t, err)
 
-			repo := common.UnstructuredToRepository(t, obj)
+			repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
 			repo.Spec.Webhook.BaseURL = "https://new-proxy.example.com/"
-			updated := common.RepositoryToUnstructured(t, repo)
+			updated := common.MustToUnstructured(t, repo)
 
 			result, err := helper.Repositories.Resource.Update(ctx, updated, metav1.UpdateOptions{})
 			require.NoError(collect, err, "should update webhook base URL")
 
-			updatedRepo := common.UnstructuredToRepository(t, result)
+			updatedRepo := common.MustFromUnstructured[provisioning.Repository](t, result)
 			require.NotNil(collect, updatedRepo.Spec.Webhook)
 			assert.Equal(collect, "https://new-proxy.example.com", updatedRepo.Spec.Webhook.BaseURL, "trailing slash should be trimmed by mutator")
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
@@ -983,14 +983,14 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 			obj, err := helper.Repositories.Resource.Get(ctx, "repo-with-webhook", metav1.GetOptions{})
 			require.NoError(t, err)
 
-			repo := common.UnstructuredToRepository(t, obj)
+			repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
 			repo.Spec.Webhook = nil
-			updated := common.RepositoryToUnstructured(t, repo)
+			updated := common.MustToUnstructured(t, repo)
 
 			result, err := helper.Repositories.Resource.Update(ctx, updated, metav1.UpdateOptions{})
 			require.NoError(collect, err, "should clear webhook config")
 
-			updatedRepo := common.UnstructuredToRepository(t, result)
+			updatedRepo := common.MustFromUnstructured[provisioning.Repository](t, result)
 			assert.Nil(collect, updatedRepo.Spec.Webhook, "webhook config should be nil after removal")
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 	})
@@ -1819,7 +1819,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 	require.EventuallyWithT(t, func(collectT *assert.CollectT) {
 		c, err := helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
 		require.NoError(collectT, err, "can list values")
-		conn := common.UnstructuredToConnection(t, c)
+		conn := common.MustFromUnstructured[provisioning.Connection](t, c)
 		require.NotEqual(collectT, 0, conn.Status.ObservedGeneration, "resource should be reconciled at least once")
 		require.Equal(collectT, conn.Status.ObservedGeneration, conn.Generation, "resource should be reconciled")
 		// Token should be there
@@ -1857,7 +1857,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 	require.EventuallyWithT(t, func(collectT *assert.CollectT) {
 		repo, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
 		require.NoError(collectT, err, "can get repository")
-		r := common.UnstructuredToRepository(t, repo)
+		r := common.MustFromUnstructured[provisioning.Repository](t, repo)
 		require.NotEqual(collectT, 0, r.Status.ObservedGeneration, "resource should be reconciled at least once")
 		require.Equal(collectT, r.Status.ObservedGeneration, r.Generation, "resource should be reconciled")
 		// Token should be there
@@ -1884,7 +1884,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 	for attempt := range maxStatusRetries {
 		repoUnstructured, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
 		require.NoError(t, err, "can get repository")
-		firstReconciledRepo = common.UnstructuredToRepository(t, repoUnstructured)
+		firstReconciledRepo = common.MustFromUnstructured[provisioning.Repository](t, repoUnstructured)
 
 		now := time.Now()
 		firstReconciledRepo.Status.ObservedGeneration = firstReconciledRepo.Generation
@@ -1914,7 +1914,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 				Reason:             provisioning.ReasonAvailable,
 			},
 		}
-		updatedRepo := common.RepositoryToUnstructured(t, firstReconciledRepo)
+		updatedRepo := common.MustToUnstructured(t, firstReconciledRepo)
 		// This should also trigger a reconciliation loop
 		_, err = helper.Repositories.Resource.UpdateStatus(ctx, updatedRepo, metav1.UpdateOptions{})
 		if err == nil {
@@ -1929,7 +1929,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 	require.EventuallyWithT(t, func(collectT *assert.CollectT) {
 		repo, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
 		require.NoError(collectT, err, "can get repository")
-		r := common.UnstructuredToRepository(t, repo)
+		r := common.MustFromUnstructured[provisioning.Repository](t, repo)
 		// Token should be there
 		require.False(collectT, r.Secure.Token.IsZero())
 		// and different from the previous one
