@@ -2,6 +2,7 @@
 aliases:
   - ../../../http_api/dashboard/ # /docs/grafana/next/http_api/dashboard/
   - ../../../developers/http_api/dashboard/ # /docs/grafana/next/developers/http_api/dashboard/
+  - ../../../developer-resources/api-reference/http-api/dashboard-versions/ # deleted
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/dashboard/
 description: Grafana Dashboard HTTP API
 keywords:
@@ -21,6 +22,8 @@ title: Dashboard HTTP API
 # Dashboard APIs
 
 {{< admonition type="note" >}}
+Available in Grafana 12 and later.
+
 This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
 {{< /admonition >}}
 

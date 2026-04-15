@@ -21,6 +21,8 @@ title: 'Playlist HTTP API '
 # Playlist API
 
 {{< admonition type="note" >}}
+Available in Grafana 12 and later.
+
 This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
 {{< /admonition >}}
 
