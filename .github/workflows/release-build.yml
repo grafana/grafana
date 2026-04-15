@@ -412,6 +412,35 @@ jobs:
           path: upload/artifacts-deb-rpm-${{ matrix.name }}
           retention-days: 1
 
+  verify-rpm-stig:
+    name: verify rpm stig (linux-amd64)
+    runs-on: ubuntu-x64-large
+    needs:
+      - build-deb-rpm
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: artifacts-deb-rpm-linux-amd64
+          path: dist
+      - name: Install STIG check tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libopenscap8 rpm
+      - name: Cache SCAP datastream
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # zizmor: ignore[cache-poisoning] -- v5.0.4; key is pinned and content is SHA512-verified
+        with:
+          path: /tmp/ssg-rhel9-ds.xml
+          key: ssg-rhel9-ds-0.1.80
+      - name: Verify RPM permissions (DISA-STIG)
+        run: |
+          for RPM in dist/*.rpm; do break; done
+          sudo bash scripts/verify-rpm-stig.sh "$RPM"
+
   build-docker-alpine:
     name: docker (alpine) / ${{ matrix.name }}
     runs-on: ubuntu-x64-large

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Custom OVAL definitions for Grafana DISA-STIG file-permission checks that are
+  not covered by the stock ssg-rhel9 datastream.
+
+  RHEL-09-232020 (CCE-83909-2) covers /usr/lib library files but its OVAL
+  filename filter matches only "^.*\.so.*$", so it misses systemd unit files.
+  This document closes that gap by checking grafana-owned unit files directly.
+
+  Evaluated with: oscap oval eval <this-file>
+  Exit code 0 = all definitions compliant; 1 = at least one failure.
+-->
+<oval_definitions
+  xmlns="http://oval.mitre.org/XMLSchema/oval-definitions-5"
+  xmlns:unix="http://oval.mitre.org/XMLSchema/oval-definitions-5#unix"
+  xmlns:oval="http://oval.mitre.org/XMLSchema/oval-common-5"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+    http://oval.mitre.org/XMLSchema/oval-definitions-5
+      oval-definitions-schema.xsd
+    http://oval.mitre.org/XMLSchema/oval-definitions-5#unix
+      unix-definitions-schema.xsd
+    http://oval.mitre.org/XMLSchema/oval-common-5
+      oval-common-schema.xsd">
+
+  <generator>
+    <oval:product_name>Grafana custom STIG checks</oval:product_name>
+    <oval:schema_version>5.11.1</oval:schema_version>
+    <oval:timestamp>2025-01-01T00:00:00</oval:timestamp>
+  </generator>
+
+  <definitions>
+    <!--
+      Grafana systemd unit files in /usr/lib/systemd/system/ must have mode
+      0644 or less permissive (DISA-STIG RHEL-09-232020 intent).
+
+      A file is compliant when NONE of the following bits are set:
+        uexec (0100), gwrite (0020), gexec (0010), owrite (0002), oexec (0001)
+
+      The test uses check="all": every matching file must satisfy the state.
+      If any file has a more-permissive mode the definition evaluates FALSE.
+    -->
+    <definition class="compliance" id="oval:grafana:def:1" version="1">
+      <metadata>
+        <title>Grafana systemd unit files must not be more permissive than 0644</title>
+        <affected family="unix">
+          <platform>Red Hat Enterprise Linux 9</platform>
+        </affected>
+        <description>
+          DISA-STIG RHEL-09-232020: files in /usr/lib must have mode 0644 or
+          less permissive.  The stock ssg-rhel9 rule (file_permissions_library_dirs)
+          only checks *.so files; this definition covers Grafana systemd unit files.
+        </description>
+        <reference ref_id="RHEL-09-232020" source="DISA-STIG"/>
+      </metadata>
+      <criteria>
+        <criterion test_ref="oval:grafana:tst:1"
+                   comment="grafana systemd unit files have mode 0644 or less"/>
+      </criteria>
+    </definition>
+  </definitions>
+
+  <tests>
+    <!-- Passes only when ALL collected files satisfy the permission state. -->
+    <unix:file_test id="oval:grafana:tst:1" version="1"
+                    check="all" check_existence="at_least_one_exists"
+                    comment="grafana systemd unit files must not exceed mode 0644">
+      <unix:object object_ref="oval:grafana:obj:1"/>
+      <unix:state state_ref="oval:grafana:ste:1"/>
+    </unix:file_test>
+  </tests>
+
+  <objects>
+    <!-- Match grafana-owned unit files: grafana*.{service,socket,timer,target} -->
+    <unix:file_object id="oval:grafana:obj:1" version="1"
+                      comment="grafana systemd unit files in /usr/lib/systemd/system">
+      <unix:path>/usr/lib/systemd/system</unix:path>
+      <unix:filename operation="pattern match">^grafana.*\.(service|socket|timer|target)$</unix:filename>
+    </unix:file_object>
+  </objects>
+
+  <states>
+    <!--
+      Compliant state: no permission bit beyond 0644 is set.
+      Each element must evaluate to false for the file to be compliant.
+      check_existence and check on the test handle the "all must match" logic.
+    -->
+    <unix:file_state id="oval:grafana:ste:1" version="1"
+                     comment="mode must not be more permissive than 0644">
+      <unix:uexec datatype="boolean">false</unix:uexec>
+      <unix:gwrite datatype="boolean">false</unix:gwrite>
+      <unix:gexec datatype="boolean">false</unix:gexec>
+      <unix:owrite datatype="boolean">false</unix:owrite>
+      <unix:oexec datatype="boolean">false</unix:oexec>
+    </unix:file_state>
+  </states>
+
+</oval_definitions>

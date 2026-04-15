@@ -69,6 +69,11 @@ cp \
   "${SRC}/packaging/wrappers/grafana-server" \
   "${SRC}/packaging/wrappers/grafana-cli" \
   "${PKG}/usr/sbin/"
+# System files in /usr/sbin must have 0755 or less permissive (DISA-STIG RHEL-09-232010).
+chmod 0755 \
+  "${PKG}/usr/sbin/grafana" \
+  "${PKG}/usr/sbin/grafana-server" \
+  "${PKG}/usr/sbin/grafana-cli"
 
 # Copy full grafana tree under /usr/share/grafana.
 cp -r "${SRC}" "${PKG}/usr/share/grafana"
@@ -76,6 +81,10 @@ cp -r "${SRC}" "${PKG}/usr/share/grafana"
 # Copy rpm-specific config files (matches artifacts/package_rpm.go ConfigFiles).
 cp "${SRC}/packaging/rpm/sysconfig/grafana-server"        "${PKG}/etc/sysconfig/grafana-server"
 cp "${SRC}/packaging/rpm/systemd/grafana-server.service"  "${PKG}/usr/lib/systemd/system/grafana-server.service"
+# System files in /usr/lib must have 0644 or less permissive (DISA-STIG RHEL-09-232020).
+chmod 0644 \
+  "${PKG}/etc/sysconfig/grafana-server" \
+  "${PKG}/usr/lib/systemd/system/grafana-server.service"
 
 FILENAME="${TARGZ_PACKAGE_NAME}_${BUILD_VERSION}_${BUILD_NUMBER}_${OS}_${ARCH_LABEL}.rpm"
 
