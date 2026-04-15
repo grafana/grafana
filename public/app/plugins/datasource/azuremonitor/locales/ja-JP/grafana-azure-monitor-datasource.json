@@ -285,7 +285,7 @@
       "tooltip-time-range": "<0>クエリに使用する時間範囲を指定します。<1>クエリ</1>オプションの場合、クエリで指定された時間範囲のみを使用します。<3>ダッシュボード</3>の場合、Grafanaの時間範囲のみを使用します。</0>"
     },
     "top-field": {
-      "label-top": "上位"
+      "label-top": "上"
     },
     "trace-type-field": {
       "label-event-type": "イベントタイプ",

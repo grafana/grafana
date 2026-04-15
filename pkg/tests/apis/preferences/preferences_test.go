@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -62,11 +63,26 @@ func TestIntegrationPreferences(t *testing.T) {
 		}, &raw)
 		require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "create preference for user")
 
-		out, err := clientAdmin.Resource.Patch(ctx, "user-"+clientAdmin.Args.User.Identity.GetIdentifier(), types.StrategicMergePatchType, []byte(`{
+		userName := "user-" + clientAdmin.Args.User.Identity.GetIdentifier()
+		out, err := clientAdmin.Resource.Patch(ctx, userName, types.StrategicMergePatchType, []byte(`{
 			"spec": { "weekStart": "saturday" }
 		}`), metav1.PatchOptions{})
 		require.NoError(t, err)
 		v, _, _ := unstructured.NestedString(out.Object, "spec", "weekStart")
+		require.Equal(t, "saturday", v)
+
+		// Remove it
+		err = clientAdmin.Resource.Delete(ctx, userName, metav1.DeleteOptions{})
+		require.NoError(t, err)
+
+		// Now create the value using patch
+		out, err = clientAdmin.Resource.Patch(ctx, userName, types.ApplyYAMLPatchType, []byte(`{
+			"apiVersion": "preferences.grafana.app/v1alpha1",
+			"kind": "Preferences",
+			"spec": { "weekStart": "saturday" }
+		}`), metav1.PatchOptions{FieldManager: "test", Force: ptr.To(true)}) // requires field manager
+		require.NoError(t, err)
+		v, _, _ = unstructured.NestedString(out.Object, "spec", "weekStart")
 		require.Equal(t, "saturday", v)
 
 		// http://localhost:3000/api/teams/1/preferences
@@ -100,8 +116,6 @@ func TestIntegrationPreferences(t *testing.T) {
 		}, &raw)
 		require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "create preference for user")
 
-		adminPrefsName := "user-" + clientAdmin.Args.User.Identity.GetIdentifier()
-
 		// Admin has access to all three (namespace, team, and user)
 		rsp, err = clientAdmin.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
@@ -112,10 +126,10 @@ func TestIntegrationPreferences(t *testing.T) {
 		require.Equal(t, []string{
 			"namespace",
 			fmt.Sprintf("team-%s", helper.Org1.Staff.UID),
-			adminPrefsName,
+			userName,
 		}, names)
 
-		obj, err := clientAdmin.Resource.Get(ctx, adminPrefsName, metav1.GetOptions{})
+		obj, err := clientAdmin.Resource.Get(ctx, userName, metav1.GetOptions{})
 		require.NoError(t, err)
 		jj, err := json.MarshalIndent(obj.Object["spec"], "", "  ")
 		require.NoError(t, err)
