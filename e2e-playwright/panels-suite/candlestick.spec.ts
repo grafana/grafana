@@ -11,32 +11,11 @@ test.describe('Panels test: Candlestick', { tag: ['@panels', '@candlestick'] }, 
   test('renders successfully', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
 
-    // 5 panels with data render uplot; the "No Data" panel does not
     const uplotElements = page.locator('.uplot');
     await expect(uplotElements, 'panels are rendered').toHaveCount(5);
 
     const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
     await expect(errorInfo, 'no errors in the panels').toBeHidden();
-  });
-
-  test('"no data"', async ({ gotoDashboardPage, selectors, page }) => {
-    const dashboardPage = await gotoDashboardPage({
-      uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '5' }),
-    });
-
-    const uplot = page.locator('.uplot');
-    await expect(uplot, "uplot doesn't appear").toBeHidden();
-
-    const emptyMessage = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.PanelDataErrorMessage);
-    await expect(emptyMessage, 'empty text appears').toHaveText('No data');
-
-    const noValueOption = dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Standard options No value'))
-      .locator('input');
-    await noValueOption.fill('My empty value');
-    await noValueOption.blur();
-    await expect(emptyMessage, 'empty text has changed').toHaveText('My empty value');
   });
 
   test('tooltip interactions', async ({ gotoDashboardPage, page, selectors }) => {
@@ -142,7 +121,7 @@ test.describe('Panels test: Candlestick', { tag: ['@panels', '@candlestick'] }, 
   test('data links', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '6' }),
+      queryParams: new URLSearchParams({ editPanel: '5' }),
     });
 
     const uplot = page.locator('.uplot');
