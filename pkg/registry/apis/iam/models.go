@@ -38,10 +38,6 @@ var _ builder.APIGroupMutation = (*IdentityAccessManagementAPIBuilder)(nil)
 // Used by wire to identify the storage backend for custom roles.
 type RoleStorageBackend interface{ resource.StorageBackend }
 
-// RoleBindingStorageBackend uses the resource.StorageBackend interface to provide storage for role bindings.
-// Used by wire to identify the storage backend for role bindings.
-type RoleBindingStorageBackend interface{ resource.StorageBackend }
-
 // ExternalGroupMappingStorageBackend uses the resource.StorageBackend interface to provide storage for external group mappings.
 // Used by wire to identify the storage backend for external group mappings.
 type ExternalGroupMappingStorageBackend interface{ resource.StorageBackend }
@@ -62,7 +58,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	externalGroupMappingApiInstaller ExternalGroupMappingApiInstaller
 	resourcePermissionsStorage       resource.StorageBackend
 	mappers                          *resourcepermission.MappersRegistry
-	roleBindingsStorage              RoleBindingStorageBackend
+	roleBindingsApiInstaller         RoleBindingApiInstaller
 
 	// Required for resource permissions authorization
 	// fetches resources parent folders
@@ -101,10 +97,6 @@ type IdentityAccessManagementAPIBuilder struct {
 	// ac is used for legacy permission checks in role bindings.
 	// nil where only k8s-mapped permissions are supported.
 	ac accesscontrol.AccessControl
-
-	// roleConfigProvider provides the REST config for a dynamic client that fetches
-	// roles referenced by role bindings
-	roleConfigProvider iamauthorizer.ConfigProvider
 
 	// Not set for multi-tenant deployment for now
 	sso ssosettings.Service
