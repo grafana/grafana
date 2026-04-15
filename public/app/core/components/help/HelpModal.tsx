@@ -308,7 +308,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'nowrap',
     }),
     shortcutTableKey: css({
-      display: 'inline-block',
       textAlign: 'center',
       marginRight: theme.spacing(0.5),
       padding: '3px 5px',
