@@ -5441,6 +5441,9 @@
       "cancel-loading-dashboard": "Batalkan memuat dasbor"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "",
+      "provisioning-message": "",
+      "provisioning-title": "",
       "text": {
         "not-found": "Tidak ditemukan"
       }
@@ -6477,6 +6480,10 @@
       "sql-expressions-title": "Ekspresi SQL",
       "title-add-another-transformation": "Tambah transformasi lain",
       "view-all": "Lihat semua"
+    },
+    "transformation-type-picker": {
+      "sql-cta-button": "",
+      "sql-cta-description": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "Dengan menghapus semua transformasi, Anda akan kembali ke layar pilihan utama."
@@ -8761,6 +8768,9 @@
     "show-all-spans": "Tampilkan semua rentang",
     "span-bar": {
       "tooltip-critical-path": "Segmen di <1>jalur kritis</1> dari keseluruhan pelacakan/permintaan/alur kerja."
+    },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": ""
     },
     "span-bar-section": {
       "description-link": "Tambahkan info tambahan di samping layanan dan operasi pada baris bilah rentang dalam tampilan jejak.",
