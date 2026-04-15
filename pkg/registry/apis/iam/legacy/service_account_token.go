@@ -223,8 +223,9 @@ func (s *legacySQLStore) CreateServiceAccountTokenWithHash(
 	now := time.Now().UTC()
 
 	createCmd := CreateServiceAccountTokenCommand{
-		Name:             cmd.TokenName,
-		HashedKey:        cmd.HashedKey,
+		Name:      cmd.TokenName,
+		HashedKey: cmd.HashedKey,
+		// Not used, set to Viewer by default (https://github.com/grafana/grafana/blob/6e4128bcc235baf2a1ca2f85f4139b33f706fa07/pkg/services/serviceaccounts/database/token_store.go#L54)
 		Role:             "Viewer",
 		OrgID:            ns.OrgID,
 		ServiceAccountID: saIDResult.ID,
