@@ -24,11 +24,19 @@ test.describe('Panels test: Candlestick data links', { tag: ['@panels', '@candle
     const candlestickUplot = page.locator('.uplot').first();
     await expect(candlestickUplot, 'uplot is rendered').toBeVisible();
 
+    // compute position from the data overlay area
+    const uOver = candlestickUplot.locator('.u-over');
+    const box = await uOver.boundingBox();
+    if (!box) {
+      throw new Error('u-over bounding box not found');
+    }
+    const center = { x: Math.round(box.width / 2), y: Math.round(box.height / 2) };
+
     const tooltip = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Tooltip.Wrapper);
 
     // pin tooltip on a data point
-    await candlestickUplot.hover({ position: { x: 200, y: 100 }, force: true });
-    await candlestickUplot.click({ position: { x: 200, y: 100 }, force: true });
+    await candlestickUplot.hover({ position: center, force: true });
+    await candlestickUplot.click({ position: center, force: true });
     await expect(tooltip, 'tooltip pinned on click').toBeVisible();
 
     // pinned tooltip should contain the configured data link
