@@ -9,6 +9,7 @@ import (
 	"time"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -64,6 +65,9 @@ func (s *LegacySQL) listPreferences(ctx context.Context,
 	if err != nil {
 		return nil, 0, fmt.Errorf("execute template %q: %w", sqlPreferencesQuery.Name(), err)
 	}
+
+	// Debug the SQL query
+	logging.FromContext(ctx).Info("ListPreferences", "query", q, "args", req.GetArgs())
 
 	sess := sql.DB.GetSqlxSession()
 	rows, err := sess.Query(ctx, q, req.GetArgs()...)

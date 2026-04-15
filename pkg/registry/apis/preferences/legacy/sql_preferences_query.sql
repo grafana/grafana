@@ -19,7 +19,7 @@ WHERE p.org_id = {{ .Arg .OrgID }}
    {{ if .HasTeams }} 
    OR t.uid IN ({{ .ArgList .UserTeams }})
    {{ end }}
-   OR p.user_id = 0
+   OR (p.user_id = 0 AND p.team_id = 0)
   {{ end }}
   )
 {{ end }}
