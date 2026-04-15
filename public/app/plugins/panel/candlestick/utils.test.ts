@@ -7,13 +7,9 @@ import { drawMarkers } from './utils';
 // @ts-ignore jest-canvas-mock import fixes type errors in IDE
 let unused = {} as unknown as CanvasRenderingContext2DEvent;
 
-jest.mock('uplot', () => {
-  return jest.requireActual<uPlot>('uplot');
-});
-
 describe('drawMarkers', () => {
-  const height = 100;
-  const width = 50;
+  const height = 400;
+  const width = 800;
   const upColor = '#00ff00';
   const downColor = '#ff0000';
   const flatColor = '#888888';
@@ -32,56 +28,61 @@ describe('drawMarkers', () => {
       ...overrides,
     });
 
-  const getPlot = (data?: uPlot.AlignedData, series?: uPlot.Series[]) => {
-    return new uPlot(
+  const getPlot = async (data?: uPlot.AlignedData, series?: uPlot.Series[]) => {
+    const u = new uPlot(
       {
         height,
         width,
         series:
           series ??
           ([
-            { idxs: [0, 0], scale: 'x' },
-            { scale: 'y/open' },
-            { scale: 'y/high' },
-            { scale: 'y/low' },
-            { scale: 'y/close' },
+            {},
+            { scale: 'y' }, // open
+            { scale: 'y' }, // high
+            { scale: 'y' }, // low
+            { scale: 'y' }, // close
           ] as uPlot.Series[]),
       },
       data ?? [
-        [1000], // time
-        [12], // open
-        [15], // high
-        [5], // low
-        [10], // close
+        [1000, 2000], // time
+        [5, 10], // open
+        [50, 100], // high
+        [4, 8], // low
+        [15, 30], // close
       ]
     );
+
+    // uPlot does some async work after construction, let's wait until that is complete
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    return u;
   };
 
   describe('candle', () => {
     describe('Color strategy: OpenOpen', () => {
-      it('events', () => {
-        const u = getPlot();
+      it('events', async () => {
+        const u = await getPlot();
         expect(() => getDraw()(u)).not.toThrow();
         const events = u.ctx.__getEvents();
         expect(events).toMatchSnapshot();
       });
 
-      it('path', () => {
-        const u = getPlot();
+      it('path', async () => {
+        const u = await getPlot();
         expect(() => getDraw()(u)).not.toThrow();
         const path = u.ctx.__getPath();
         expect(path).toMatchSnapshot();
       });
 
-      it('draw', () => {
-        const u = getPlot();
+      it('draw', async () => {
+        const u = await getPlot();
         expect(() => getDraw()(u)).not.toThrow();
         const calls = u.ctx.__getDrawCalls();
         expect(calls).toMatchSnapshot();
       });
 
-      it('clipping region', () => {
-        const u = getPlot();
+      it('clipping region', async () => {
+        const u = await getPlot();
         expect(() => getDraw()(u)).not.toThrow();
         const clippingRegion = u.ctx.__getClippingRegion();
         expect(clippingRegion).toMatchSnapshot();
@@ -89,30 +90,30 @@ describe('drawMarkers', () => {
     });
 
     describe('Color strategy: CloseClose', () => {
-      it('events', () => {
-        const u = getPlot();
+      it('events', async () => {
+        const u = await getPlot();
         expect(() => getDraw({ colorStrategy: ColorStrategy.CloseClose })(u)).not.toThrow();
         const events = u.ctx.__getEvents();
         expect(events).toMatchSnapshot();
       });
 
-      it('path', () => {
-        const u = getPlot();
+      it('path', async () => {
+        const u = await getPlot();
         expect(() => getDraw({ colorStrategy: ColorStrategy.CloseClose })(u)).not.toThrow();
         const path = u.ctx.__getPath();
         expect(path).toMatchSnapshot();
       });
 
-      it('draw', () => {
+      it('draw', async () => {
         // HERE
-        const u = getPlot();
+        const u = await getPlot();
         expect(() => getDraw({ colorStrategy: ColorStrategy.CloseClose })(u)).not.toThrow();
         const calls = u.ctx.__getDrawCalls();
         expect(calls).toMatchSnapshot();
       });
 
-      it('clipping region', () => {
-        const u = getPlot();
+      it('clipping region', async () => {
+        const u = await getPlot();
         expect(() => getDraw({ colorStrategy: ColorStrategy.CloseClose })(u)).not.toThrow();
         const clippingRegion = u.ctx.__getClippingRegion();
         expect(clippingRegion).toMatchSnapshot();
@@ -130,12 +131,12 @@ describe('drawMarkers', () => {
       [150000, 200000], // volume
     ];
     const volumeSeries: uPlot.Series[] = [
-      { idxs: [0, 0], scale: 'x' },
-      { scale: 'y/open' },
-      { scale: 'y/high' },
-      { scale: 'y/low' },
-      { scale: 'y/close' },
-      { scale: 'y/volume' },
+      { scale: 'x' },
+      { scale: 'y' },
+      { scale: 'y' },
+      { scale: 'y' },
+      { scale: 'y' },
+      { scale: 'y' },
     ];
     const volumeOpts: Parameters<typeof drawMarkers>[0] = {
       mode: VizDisplayMode.CandlesVolume,
@@ -148,29 +149,29 @@ describe('drawMarkers', () => {
       volumeAlpha: 0.5,
       flatAsUp: true,
     };
-    it('events', () => {
-      const u = getPlot(volumeAlignedData, volumeSeries);
+    it('events', async () => {
+      const u = await getPlot(volumeAlignedData, volumeSeries);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const events = u.ctx.__getEvents();
       expect(events).toMatchSnapshot();
     });
 
-    it('path', () => {
-      const u = getPlot(volumeAlignedData, volumeSeries);
+    it('path', async () => {
+      const u = await getPlot(volumeAlignedData, volumeSeries);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const path = u.ctx.__getPath();
       expect(path).toMatchSnapshot();
     });
 
-    it('draw', () => {
-      const u = getPlot(volumeAlignedData, volumeSeries);
+    it('draw', async () => {
+      const u = await getPlot(volumeAlignedData, volumeSeries);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const calls = u.ctx.__getDrawCalls();
       expect(calls).toMatchSnapshot();
     });
 
-    it('clipping region', () => {
-      const u = getPlot(volumeAlignedData, volumeSeries);
+    it('clipping region', async () => {
+      const u = await getPlot(volumeAlignedData, volumeSeries);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const clippingRegion = u.ctx.__getClippingRegion();
       expect(clippingRegion).toMatchSnapshot();
@@ -208,29 +209,29 @@ describe('drawMarkers', () => {
       volumeAlpha: 0.5,
       flatAsUp: true,
     };
-    it('events', () => {
-      const u = getPlot(volumeAlignedData, volumeSeries);
+    it('events', async () => {
+      const u = await getPlot(volumeAlignedData, volumeSeries);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const events = u.ctx.__getEvents();
       expect(events).toMatchSnapshot();
     });
 
-    it('path', () => {
-      const u = getPlot(volumeAlignedData, volumeSeries);
+    it('path', async () => {
+      const u = await getPlot(volumeAlignedData, volumeSeries);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const path = u.ctx.__getPath();
       expect(path).toMatchSnapshot();
     });
 
-    it('draw', () => {
-      const u = getPlot(volumeAlignedData, volumeSeries);
+    it('draw', async () => {
+      const u = await getPlot(volumeAlignedData, volumeSeries);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const calls = u.ctx.__getDrawCalls();
       expect(calls).toMatchSnapshot();
     });
 
-    it('clipping region', () => {
-      const u = getPlot(volumeAlignedData, volumeSeries);
+    it('clipping region', async () => {
+      const u = await getPlot(volumeAlignedData, volumeSeries);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const clippingRegion = u.ctx.__getClippingRegion();
       expect(clippingRegion).toMatchSnapshot();
