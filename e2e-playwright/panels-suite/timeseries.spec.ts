@@ -1,6 +1,64 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-const DASHBOARD_UID = '1KxMUdE7k';
+const DASHBOARD_UID = 'TkZXxlNG3';
+const PANNING_DASHBOARD_UID = '1KxMUdE7k';
+
+test.describe('Panels test: TimeSeries', { tag: ['@panels', '@timeseries'] }, () => {
+  test('renders successfully', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+    });
+
+    const timeseriesUplot = page.locator('.uplot');
+    await expect(timeseriesUplot.first(), 'panels are rendered').toBeVisible();
+
+    const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
+    await expect(errorInfo, 'no errors in the panels').toBeHidden();
+  });
+
+  test('tooltip interactions', async ({ gotoDashboardPage, page, selectors }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '19' }),
+    });
+
+    const timeseriesUplot = page.locator('.uplot');
+    await expect(timeseriesUplot, 'uplot is rendered').toBeVisible();
+
+    const tooltip = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Tooltip.Wrapper);
+
+    await timeseriesUplot.hover({ position: { x: 100, y: 50 } });
+    await expect(tooltip, 'tooltip appears on hover').toBeVisible();
+
+    await timeseriesUplot.click({ position: { x: 100, y: 50 } });
+    await timeseriesUplot.hover({ position: { x: 300, y: 50 } });
+    await expect(tooltip, 'tooltip pinned on click').toBeVisible();
+
+    await timeseriesUplot.click({ position: { x: 300, y: 50 } });
+    await timeseriesUplot.blur();
+    await expect(tooltip, 'tooltip closed after unpinning and hovering away').toBeHidden();
+
+    await timeseriesUplot.click({ position: { x: 100, y: 50 } });
+    await expect(tooltip, 'tooltip appears on click').toBeVisible();
+    await dashboardPage.getByGrafanaSelector(selectors.components.Portal.container).getByLabel('Close').click();
+    await expect(tooltip, 'tooltip closed on "x" click').toBeHidden();
+
+    await timeseriesUplot.click({ position: { x: 100, y: 50 } });
+    await expect(tooltip, 'tooltip appears on click').toBeVisible();
+    await page.keyboard.press('Meta+C');
+    await expect(tooltip, 'tooltip persists after CMD/CTRL+C').toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(tooltip, 'tooltip closed on Escape key').toBeHidden();
+
+    await dashboardPage
+      .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Tooltip Tooltip mode'))
+      .getByLabel('Hidden')
+      .click();
+    await timeseriesUplot.hover({ position: { x: 100, y: 50 } });
+    await expect(tooltip, 'tooltip is not shown when disabled').toBeHidden();
+  });
+});
 
 test.use({
   featureToggles: {
@@ -16,7 +74,7 @@ test.describe('Panels test: TimeSeries X-axis panning', { tag: ['@panels', '@tim
     let initialToTime: number;
 
     const dashboardPage = await test.step('Load dashboard and verify cursor changes to grab', async () => {
-      const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
+      const dashboardPage = await gotoDashboardPage({ uid: PANNING_DASHBOARD_UID });
 
       const timeseriesPanel = page.locator('.uplot').first();
       await expect(timeseriesPanel, 'panel rendered').toBeVisible();
