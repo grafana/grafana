@@ -25,6 +25,12 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
   const selectedFolders = Object.keys(selectedItems.folder || {}).filter((uid) => selectedItems.folder[uid]);
   const selectedDashboards = Object.keys(selectedItems.dashboard || {}).filter((uid) => selectedItems.dashboard[uid]);
   const selectedPanels = Object.keys(selectedItems.panel || {}).filter((uid) => selectedItems.panel[uid]);
+
+  const totalCount = 
+    selectedDashboards.length +
+    selectedFolders.length +
+    selectedPanels.length;
+    
   const { data: folderData } = useGetFolderQueryFacade(selectedFolders.length === 1 ? selectedFolders[0] : undefined);
 
   // If we are only moving one folder, we can show a different message
@@ -74,9 +80,10 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
                 &quot; and the following content:
               </Trans>
             ) : (
-              <Trans i18nKey="browse-dashboards.action.delete-modal-text">
-                This action will delete the following content:
-              </Trans>
+              <Trans i18nKey="browse-dashboards.action.delete-modal-text"
+                defaults="Do you want to delete {{count}} items?"
+                values={{ count: totalCount}}
+              />
             )}
           </Text>
           <DescendantCount selectedItems={selectedItems} />
