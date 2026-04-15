@@ -130,6 +130,17 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 		meta.SetDeprecatedInternalID(internalID) // nolint:staticcheck
 	}
 
+	return b.validateDashboardIfStrict(ctx, a, migrationErr, resourceInfo)
+}
+
+// validateDashboardIfStrict validates the dashboard spec if field validation mode is strict.
+func (b *DashboardsAPIBuilder) validateDashboardIfStrict(ctx context.Context, a admission.Attributes, migrationErr error, resourceInfo utils.ResourceInfo) error {
+	obj := a.GetObject()
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return err
+	}
+
 	fieldValidationMode := getFieldValidationMode(a)
 
 	var validationErrorList field.ErrorList

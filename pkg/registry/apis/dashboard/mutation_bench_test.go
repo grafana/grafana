@@ -149,26 +149,11 @@ func BenchmarkMutate_SmallDashboard_NoBOMs(b *testing.B) {
 		features: featuremgmt.WithFeatures(),
 	}
 
-	dashboard := createSmallDashboard(false)
-	attrs := admission.NewAttributesRecord(
-		dashboard,
-		nil,
-		dashv2alpha1.DashboardResourceInfo.GroupVersionKind(),
-		"",
-		"test",
-		dashv2alpha1.DashboardResourceInfo.GroupVersionResource(),
-		"",
-		admission.Create,
-		&metav1.CreateOptions{},
-		false,
-		nil,
-	)
-
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		// Create fresh dashboard for each iteration
-		dashboard = createSmallDashboard(false)
-		attrs = admission.NewAttributesRecord(
+		dashboard := createSmallDashboard(false)
+		attrs := admission.NewAttributesRecord(
 			dashboard,
 			nil,
 			dashv2alpha1.DashboardResourceInfo.GroupVersionKind(),

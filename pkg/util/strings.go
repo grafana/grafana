@@ -279,5 +279,9 @@ func stripBOMReflect(v reflect.Value) {
 				stripBOMReflect(val)
 			}
 		}
+
+	default:
+		// Other types (Int, Float, Bool, etc.) don't contain strings, so no action needed
+		return
 	}
 }
