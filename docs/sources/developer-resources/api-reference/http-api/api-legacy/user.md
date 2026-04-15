@@ -28,6 +28,14 @@ refs:
 # User API
 
 {{< admonition type="caution" >}}
+
+Starting in Grafana 13, `/api` endpoints are being deprecated. This change doesn't disrupt or break your current setup: legacy APIs are not being disabled and remain fully accessible and operative. However, `/api` routes will no longer be updated and **will be removed in a future major release.**
+
+To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+
+{{< /admonition >}}
+
+{{< admonition type="caution" >}}
 You can't authenticate to the User HTTP API with service account tokens.
 Service accounts are limited to an organization and an organization role.
 They can't be granted [Grafana server administrator permissions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators).
