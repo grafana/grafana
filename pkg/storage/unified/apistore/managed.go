@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"slices"
-	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,7 +25,14 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-var errResourceIsManagedInRepository = fmt.Errorf("this resource is managed by a repository")
+var (
+	errResourceIsManagedInRepository = fmt.Errorf("this resource is managed by a repository")
+
+	// terraformUserAgentPattern matches the User-Agent based manager ID format used by Terraform providers.
+	// Format: "Terraform/{version} (+https://www.terraform.io) terraform-provider-{name}/{version}"
+	// Example: "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0"
+	terraformUserAgentPattern = regexp.MustCompile(`^Terraform/[^ ]+ \(\+https://www\.terraform\.io\) terraform-provider-[^/]+/.+$`)
+)
 
 // isTerraformUserAgentID checks if a Terraform manager identity uses the
 // DEPRECATED User-Agent based format (e.g., "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0").
@@ -45,10 +52,8 @@ var errResourceIsManagedInRepository = fmt.Errorf("this resource is managed by a
 // Reference: https://github.com/grafana/terraform-provider-grafana/blob/main/pkg/provider/framework_provider.go#L307
 // Format: "Terraform/{version} (+https://www.terraform.io) terraform-provider-{name}/{version}"
 func isTerraformUserAgentID(identity string) bool {
-	// Detect User-Agent strings from Terraform providers
-	return strings.Contains(identity, "Terraform/") &&
-		strings.Contains(identity, "+https://www.terraform.io") &&
-		strings.Contains(identity, "terraform-provider-")
+	// Use regex to precisely validate the User-Agent format structure
+	return terraformUserAgentPattern.MatchString(identity)
 }
 
 func checkManagerPropertiesOnDelete(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
