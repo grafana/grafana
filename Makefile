@@ -323,9 +323,9 @@ update-workspace: gen-go
 .PHONY: build-go
 build-go: pkg/services/preference/themes_generated.go
 	@echo "compiling backend ($(OS)/$(ARCH))"
-	$(GO_BUILD_ENV) $(GO) build $(GO_BUILD_ARGS) -o ./bin/$(OS)/$(ARCH)/grafana ./pkg/cmd/grafana
-	$(GO_BUILD_ENV) $(GO) build $(GO_BUILD_ARGS) -o ./bin/$(OS)/$(ARCH)/grafana-server ./pkg/cmd/grafana-server
-	$(GO_BUILD_ENV) $(GO) build $(GO_BUILD_ARGS) -o ./bin/$(OS)/$(ARCH)/grafana-cli ./pkg/cmd/grafana-cli
+	$(GO_BUILD_ENV) $(GO) build $(GO_BUILD_ARGS) -o ./bin/$(OS)/$(ARCH)/grafana$(if $(filter windows,$(OS)),.exe) ./pkg/cmd/grafana
+	$(GO_BUILD_ENV) $(GO) build $(GO_BUILD_ARGS) -o ./bin/$(OS)/$(ARCH)/grafana-server$(if $(filter windows,$(OS)),.exe) ./pkg/cmd/grafana-server
+	$(GO_BUILD_ENV) $(GO) build $(GO_BUILD_ARGS) -o ./bin/$(OS)/$(ARCH)/grafana-cli$(if $(filter windows,$(OS)),.exe) ./pkg/cmd/grafana-cli
 	if [ "$(OS)" = "$(GO_HOST_OS)" ] && [ "$(ARCH)" = "$(GO_HOST_ARCH)" ]; then \
 		cp ./bin/$(OS)/$(ARCH)/grafana ./bin/grafana; \
 		cp ./bin/$(OS)/$(ARCH)/grafana-server ./bin/grafana-server; \
