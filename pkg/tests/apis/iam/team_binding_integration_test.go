@@ -3,10 +3,8 @@ package identity
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"strconv"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -37,7 +35,6 @@ func TestIntegrationTeamBindings(t *testing.T) {
 					AppModeProduction:      false,
 					DisableAnonymous:       true,
 					RBACSingleOrganization: true,
-					EnableLog:              true,
 					APIServerStorageType:   "unified",
 					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 						"teambindings.iam.grafana.app": {
@@ -50,7 +47,6 @@ func TestIntegrationTeamBindings(t *testing.T) {
 						featuremgmt.FlagKubernetesUsersApi,
 					},
 				},
-				CustomHTTPClient: &http.Client{Timeout: 60 * time.Second},
 			})
 
 			ctx := context.Background()
