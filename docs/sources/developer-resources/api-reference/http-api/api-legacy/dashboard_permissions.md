@@ -3,7 +3,8 @@ aliases:
   - ../../../http_api/dashboard_permissions/ # /docs/grafana/next/http_api/dashboard_permissions/
   - ../../../http_api/dashboardpermissions/ # /docs/grafana/next/http_api/dashboardpermissions/
   - ../../../developers/http_api/dashboard_permissions/ # /docs/grafana/next/developers/http_api/dashboard_permissions/
-canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/dashboard_permissions/
+  - ../../../../developer-resources/api-reference/http-api/dashboard_permissions/ #legacy folder
+canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/dashboard_permissions/
 description: Grafana Dashboard Permissions HTTP API
 keywords:
   - grafana
@@ -23,6 +24,14 @@ title: Dashboard Permissions HTTP API
 ---
 
 # Dashboard Permissions API
+
+{{< admonition type="caution" >}}
+
+Starting in Grafana 13, `/api` endpoints are being deprecated. This change doesn't disrupt or break your current setup: legacy APIs are not being disabled and remain fully accessible and operative. However, `/api` routes will no longer be updated and **will be removed in a future major release.**
+
+To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+
+{{< /admonition >}}
 
 This API can be used to update/get the permissions for a dashboard.
 

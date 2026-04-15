@@ -2,7 +2,8 @@
 aliases:
   - ../../../http_api/preferences/ # /docs/grafana/next/http_api/preferences/
   - ../../../developers/http_api/preferences/ # /docs/grafana/next/developers/http_api/preferences/
-canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/preferences/
+  - ../../../../developer-resources/api-reference/http-api/preferences/ #legacy folder
+canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/preferences/
 description: Grafana HTTP API
 keywords:
   - grafana
@@ -19,6 +20,14 @@ title: 'Preferences API'
 ---
 
 # User and Org Preferences API
+
+{{< admonition type="caution" >}}
+
+Starting in Grafana 13, `/api` endpoints are being deprecated. This change doesn't disrupt or break your current setup: legacy APIs are not being disabled and remain fully accessible and operative. However, `/api` routes will no longer be updated and **will be removed in a future major release.**
+
+To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+
+{{< /admonition >}}
 
 Keys:
 

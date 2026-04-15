@@ -3,7 +3,8 @@ aliases:
   - ../../../http_api/data_source/ # /docs/grafana/next/http_api/data_source/
   - ../../../http_api/datasource/ # /docs/grafana/next/http_api/datasource/
   - ../../../developers/http_api/data_source/ # /docs/grafana/next/developers/http_api/data_source/
-canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/data_source/
+  - ../../../../developer-resources/api-reference/http-api/data_source/ #legacy folder
+canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/data_source/
 description: Grafana Data source HTTP API
 keywords:
   - grafana
@@ -20,6 +21,14 @@ title: Data source HTTP API
 ---
 
 # Data source API
+
+{{< admonition type="caution" >}}
+
+Starting in Grafana 13, `/api` endpoints are being deprecated. This change doesn't disrupt or break your current setup: legacy APIs are not being disabled and remain fully accessible and operative. However, `/api` routes will no longer be updated and **will be removed in a future major release.**
+
+To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+
+{{< /admonition >}}
 
 > If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
