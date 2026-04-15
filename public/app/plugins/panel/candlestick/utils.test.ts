@@ -58,7 +58,7 @@ describe('drawMarkers', () => {
     return u;
   };
 
-  describe('candle', () => {
+  describe('options', () => {
     describe('Color strategy: OpenOpen', () => {
       it('events', async () => {
         const u = await getPlot();
@@ -115,6 +115,37 @@ describe('drawMarkers', () => {
       it('clipping region', async () => {
         const u = await getPlot();
         expect(() => getDraw({ colorStrategy: ColorStrategy.CloseClose })(u)).not.toThrow();
+        const clippingRegion = u.ctx.__getClippingRegion();
+        expect(clippingRegion).toMatchSnapshot();
+      });
+    });
+
+    describe('Candle Style: CandleStyle.OHLCBars', () => {
+      it('events', async () => {
+        const u = await getPlot();
+        expect(() => getDraw({ candleStyle: CandleStyle.OHLCBars })(u)).not.toThrow();
+        const events = u.ctx.__getEvents();
+        expect(events).toMatchSnapshot();
+      });
+
+      it('path', async () => {
+        const u = await getPlot();
+        expect(() => getDraw({ candleStyle: CandleStyle.OHLCBars })(u)).not.toThrow();
+        const path = u.ctx.__getPath();
+        expect(path).toMatchSnapshot();
+      });
+
+      it('draw', async () => {
+        // HERE
+        const u = await getPlot();
+        expect(() => getDraw({ candleStyle: CandleStyle.OHLCBars })(u)).not.toThrow();
+        const calls = u.ctx.__getDrawCalls();
+        expect(calls).toMatchSnapshot();
+      });
+
+      it('clipping region', async () => {
+        const u = await getPlot();
+        expect(() => getDraw({ candleStyle: CandleStyle.OHLCBars })(u)).not.toThrow();
         const clippingRegion = u.ctx.__getClippingRegion();
         expect(clippingRegion).toMatchSnapshot();
       });
