@@ -42,6 +42,7 @@ import { InstanceSilenceForm } from './InstanceSilenceForm';
 import { InstanceStateInfoBanner } from './InstanceStateInfoBanner';
 import { InstanceTimelineSection } from './InstanceTimelineSection';
 import { QueryVisualization } from './QueryVisualization';
+import { type DeclareIncidentDrilldownPayload } from './declareIncidentDrilldown';
 import { isDrawerRangeShorterThanQuery } from './drawerTimeRangeUtils';
 import { useInstanceAlertState } from './instanceStateUtils';
 import { convertStateHistoryToAnnotations } from './stateHistoryUtils';
@@ -79,7 +80,7 @@ type DrawerView =
   | { type: 'contact-point-list'; receiverName: string }
   | { type: 'notification-history-details'; notificationUuid: string; timestampMs?: number }
   | { type: 'silence' }
-  | { type: 'declare-incident'; incidentURL: string };
+  | ({ type: 'declare-incident' } & DeclareIncidentDrilldownPayload);
 
 export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, onClose }: InstanceDetailsDrawerProps) {
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
@@ -220,8 +221,8 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     setViewStack((current) => [...current, { type: 'silence' }]);
   }, []);
 
-  const handleOpenDeclareIncident = useCallback((incidentURL: string) => {
-    setViewStack((current) => [...current, { type: 'declare-incident', incidentURL }]);
+  const handleOpenDeclareIncident = useCallback((payload: DeclareIncidentDrilldownPayload) => {
+    setViewStack((current) => [...current, { type: 'declare-incident', ...payload }]);
   }, []);
 
   const sharedTitleProps = useMemo(
@@ -332,7 +333,12 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
 
     const overlayBody =
       activeView.type === 'declare-incident' ? (
-        <InstanceDeclareIncidentForm incidentURL={activeView.incidentURL} />
+        <InstanceDeclareIncidentForm
+          incidentURL={activeView.incidentURL}
+          pluginId={activeView.pluginId}
+          defaultTitle={activeView.defaultTitle}
+          onDismiss={animateCloseTopDrawer}
+        />
       ) : (
         <InstanceSilenceForm ruleUid={ruleUID} instanceLabels={instanceLabels} onClose={animateCloseTopDrawer} />
       );
