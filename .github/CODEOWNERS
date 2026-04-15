@@ -139,6 +139,7 @@
 /pkg/ifaces/ @grafana/grafana-backend-group
 /pkg/infra/db/ @grafana/grafana-backend-group
 /pkg/infra/features/ @grafana/grafana-backend-services-squad
+/pkg/infra/leaderelection/ @grafana/access-squad
 /pkg/infra/localcache/ @grafana/grafana-backend-group
 /pkg/infra/log/ @grafana/grafana-backend-group
 /pkg/infra/metrics/ @grafana/grafana-backend-group
@@ -1043,6 +1044,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/types/ @grafana/grafana-frontend-platform
 /public/app/types/unified-alerting-dto.ts @grafana/alerting-frontend
 /public/app/types/unified-alerting.ts @grafana/alerting-frontend
+/public/boot/ @grafana/grafana-frontend-platform
 /public/dashboards/ @grafana/dashboards-squad
 /public/gazetteer/ @ryantxu
 /public/img/ @grafana/grafana-frontend-platform

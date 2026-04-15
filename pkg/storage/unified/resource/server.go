@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -32,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
@@ -1661,8 +1661,9 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				}
 
 				if s.storageMetrics != nil {
-					// record latency - resource version is a unix timestamp in microseconds so we convert to seconds
-					latencySeconds := float64(time.Now().UnixMicro()-event.ResourceVersion) / 1e6
+					// record latency - resource version can be either a unix microsecond timestamp (SQL backend)
+					// or a snowflake ID (KV backend), so we use resourceVersionTime to handle both formats.
+					latencySeconds := time.Since(resourceVersionTime(event.ResourceVersion)).Seconds()
 					if latencySeconds > 0 {
 						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
 					}
@@ -1938,9 +1939,9 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 // Resource versions can be either snowflake IDs (KV backend) or microsecond
 // Unix timestamps (SQL backend).
 func resourceVersionTime(rv int64) time.Time {
-	micro := rv
 	if IsSnowflake(rv) {
-		micro = rvmanager.RVFromSnowflake(rv)
+		msec := (rv >> (snowflake.NodeBits + snowflake.StepBits)) + snowflake.Epoch
+		return time.UnixMilli(msec)
 	}
-	return time.UnixMicro(micro)
+	return time.UnixMicro(rv)
 }
