@@ -23,6 +23,8 @@ describe('VizTooltipFooter', () => {
       origin: field,
       target: undefined,
     };
+    //Adding this due to React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7.
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     render(
       <MemoryRouter>
@@ -31,6 +33,7 @@ describe('VizTooltipFooter', () => {
     );
     await userEvent.click(screen.getByRole('link'));
     expect(onClick).toHaveBeenCalled();
+    jest.spyOn(console, 'warn').mockRestore();
   });
 
   it('should render ad hoc filter button and fire onclick', async () => {
