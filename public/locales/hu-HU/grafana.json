@@ -2434,7 +2434,7 @@
     },
     "pages": {
       "triage": {
-        "subtitle": "Tekintse meg, hogy mi okoz jelenleg riasztást, és nézze át az előzményadatokat a jelenlegi vagy múltbeli problémák kivizsgálásához."
+        "subtitle": "Tekintse meg, hogy mi vált ki jelenleg riasztást, és nézze át az előzményadatokat a jelenlegi vagy múltbeli problémák kivizsgálásához."
       }
     },
     "panel-alert-tab-content": {
@@ -3585,11 +3585,13 @@
       },
       "instance-details-drawer": {
         "alert-instance-label": "",
+        "back": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Példány részletei",
         "silence-button": "",
-        "silence-no-permission": ""
+        "silence-no-permission": "",
+        "silence-title-with-name": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "Nincsenek aktív vagy függő állapotú riasztáspéldányok a kiválasztott időtartományban.",
@@ -3740,7 +3742,7 @@
       "table": "Táblázat"
     },
     "welcome-header": {
-      "description-alert-activity": "Tekintse meg, hogy mi okoz jelenleg riasztást, és nézze át az előzményadatokat a jelenlegi vagy múltbeli problémák kivizsgálásához.",
+      "description-alert-activity": "Tekintse meg, hogy mi vált ki jelenleg riasztást, és nézze át az előzményadatokat a jelenlegi vagy múltbeli problémák kivizsgálásához.",
       "description-alert-rules": "Határozza meg azt a feltételt, amelynek teljesülnie kell, mielőtt egy riasztási szabály aktiválódik",
       "description-configure-firing-alert-instances-routed-contact": "Konfigurálja, hogyan történjen az aktív riasztáspéldányok továbbítása a kapcsolattartási pontokhoz",
       "description-configure-receives-notifications": "Állítsa be, hogy ki kapjon értesítéseket, és hogyan legyenek elküldve",
@@ -4190,7 +4192,7 @@
       "label-auto": "Automatikus",
       "label-manual": "Kézi"
     },
-    "category-bar-gauge": "Sávdiagram",
+    "category-bar-gauge": "Sávdiagramos mérőeszköz",
     "description-max-height": "Maximális sormagasság (vízszintes tájolás)",
     "description-min-height": "Minimális sormagasság (vízszintes tájolás)",
     "description-min-width": "Minimális oszlopszélesség (függőleges tájolás)",
@@ -4297,7 +4299,7 @@
     "bulk-delete-resources-form": {
       "button-cancel": "Mégse",
       "button-delete": "Törlés",
-      "button-deleting": "Törlés...",
+      "button-deleting": "Törlés…",
       "delete-warning": "Ezzel a művelettel törli a kijelölt mappákat és minden almappájukat. Összességében ez a következőket érinti:",
       "error-deleting-resources": "Hiba történt az erőforrások törlésekor"
     },
@@ -4357,7 +4359,7 @@
       "api-error": "A mappa törlése nem sikerült",
       "button-cancel": "Mégse",
       "button-delete": "Törlés",
-      "button-deleting": "Törlés...",
+      "button-deleting": "Törlés…",
       "commit": "Mappa törlése",
       "delete-warning": "Ez törli ezt a mappát és minden almappáját. Összességében ez a következőket érinti:",
       "missing-info": "",
@@ -4454,7 +4456,7 @@
       "clear": "Előzmények törlése",
       "error": "A legutóbb megtekintett irányítópultokat nem sikerült betölteni.",
       "retry": "Újra",
-      "title": "Legutóbb megtekintve"
+      "title": "Legutóbb megtekintett"
     },
     "rename-folder": {
       "read-only-message": ""
@@ -4603,7 +4605,7 @@
         "left": "Balra",
         "middle": "Középső",
         "right": "Jobbra",
-        "top": "Felső"
+        "top": "Felül"
       },
       "name-align-text": "Szöveg igazítása",
       "name-text": "Szöveg",
@@ -4654,7 +4656,7 @@
         "left": "Balra",
         "middle": "Középső",
         "right": "Jobbra",
-        "top": "Felső"
+        "top": "Felül"
       },
       "name-align-text": "Szöveg igazítása",
       "name-text": "Szöveg",
@@ -4708,7 +4710,7 @@
         "left": "Balra",
         "middle": "Középső",
         "right": "Jobbra",
-        "top": "Felső"
+        "top": "Felül"
       },
       "placeholder": {
         "auto": "Automatikus"
@@ -4741,7 +4743,7 @@
         "left": "Balra",
         "middle": "Középső",
         "right": "Jobbra",
-        "top": "Felső"
+        "top": "Felül"
       },
       "name-align-text": "Szöveg igazítása",
       "name-text": "Szöveg",
@@ -4793,7 +4795,7 @@
         "left": "Balra",
         "middle": "Középső",
         "right": "Jobbra",
-        "top": "Felső"
+        "top": "Felül"
       },
       "name-align-text": "Szöveg igazítása",
       "name-text": "Szöveg",
@@ -4828,7 +4830,7 @@
         "left": "Balra",
         "middle": "Középső",
         "right": "Jobbra",
-        "top": "Felső"
+        "top": "Felül"
       },
       "name-align-text": "Szöveg igazítása",
       "name-text": "Szöveg",
@@ -4871,7 +4873,7 @@
         "left": "Balra",
         "middle": "Középső",
         "right": "Jobbra",
-        "top": "Felső"
+        "top": "Felül"
       },
       "name-align-text": "Szöveg igazítása",
       "name-text": "Szöveg",
@@ -5469,6 +5471,9 @@
       "cancel-loading-dashboard": "Irányítópult betöltésének megszakítása"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "",
+      "provisioning-message": "",
+      "provisioning-title": "",
       "text": {
         "not-found": "Nem található"
       }
@@ -6507,6 +6512,10 @@
       "title-add-another-transformation": "Másik transzformáció hozzáadása",
       "view-all": "Összes megjelenítése"
     },
+    "transformation-type-picker": {
+      "sql-cta-button": "",
+      "sql-cta-description": ""
+    },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "Ha minden transzformációt töröl, visszakerül a fő kiválasztási képernyőre."
     },
@@ -6822,12 +6831,12 @@
           "label": "Irányítópult felett"
         },
         "controls-menu": {
-          "description": "Akkor érhető el, ha a vezérlőmenü nyitva van",
+          "description": "Akkor érhető el, ha a vezérlőmenü meg van nyitva",
           "label": "Vezérlőmenü"
         },
         "hidden": {
           "description": "Elrejti a kapcsolót a jegyzet be- vagy kikapcsolásához",
-          "label": "Rejtve"
+          "label": "Rejtett"
         }
       },
       "delete": "Törlés",
@@ -7187,7 +7196,7 @@
       "error-invalid-json": "Érvénytelen JSON",
       "error-invalid-layout": "Az elrendezés JSON-tartalma nem ment át az érvényesítésen. Ellenőrizze a JSON-tartalmat, és próbálkozzon újra.",
       "error-invalid-v2-panel": "A panel JSON-tartalma nem ment át az érvényesítésen. Ellenőrizze a JSON-tartalmat, és próbálkozzon újra.",
-      "validation-error": "Érvényesítési hiba"
+      "validation-error": "Validálási hiba"
     },
     "interval-variable-form": {
       "description-auto-option": "Dinamikusan kiszámítja az intervallumot úgy, hogy az időtartományt elosztja a megadott számmal",
@@ -7677,7 +7686,7 @@
         },
         "hidden": {
           "description": "Csak szerkesztési módban látható",
-          "label": "Rejtve"
+          "label": "Rejtett"
         },
         "hidden-label": {
           "description": "Az irányítópult felett, de a változó nevének megjelenítése nélkül",
@@ -8805,6 +8814,9 @@
     "span-bar": {
       "tooltip-critical-path": "A teljes nyomkövetés/kérés/munkafolyamat <1>kritikus útvonalának</1 > egy szegmense."
     },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": ""
+    },
     "span-bar-section": {
       "description-link": "Adjon hozzá további információkat a szolgáltatás és a művelet mellett egy terjedelemsávsorban a nyomkövetési nézetben.",
       "title-span-bar": "Terjedelemsáv"
@@ -8897,7 +8909,7 @@
       "filters": "Szűrők",
       "give-feedback": "Visszajelzés",
       "high-latency": "Magas késleltetés",
-      "high-latency-tooltip": "Kiválasztja a nyom leghosszabb, felső 10%-ba tartozó tartományát (p90). ",
+      "high-latency-tooltip": "Kiválasztja a nyom leghosszabb, felső 10%-ába tartozó tartományát (p90).",
       "link-copied": "Hivatkozás a vágólapra másolva",
       "overview": "Áttekintés",
       "path": "Útvonal",
@@ -10442,7 +10454,7 @@
           "not-equals": ""
         },
         "remove-all": "Az összes megjelenített érték eltávolítása a szűrőből",
-        "select-all": "Összes kijelölése",
+        "select-all": "Összes kiválasztása",
         "selected": "{{ numSelected }} kijelölve",
         "selected-some-hidden": "{{ numSelected }} kijelölve ({{ numHidden }} elrejtve)"
       },
@@ -12367,7 +12379,7 @@
         "description-no-value": "Érték hiányában megjelenítendő",
         "description-value-mappings": "Megjelenített szöveg módosítása a bemeneti érték alapján",
         "name-actions": "Műveletek",
-        "name-ad-hoc": "Eseti alapon szűrhető",
+        "name-ad-hoc": "",
         "name-color-scheme": "Színséma",
         "name-data-links": "Adathivatkozások",
         "name-decimals": "Tizedesjegyek",
@@ -12826,6 +12838,7 @@
       "title-button-disabled": "A bővítmény még nem használható, és kis időt vehet igénybe a telepítés befejezése."
     },
     "install-controls": {
+      "contact-us": "",
       "install": "Telepítés",
       "installing": "Telepítés",
       "update": "Frissítés",
@@ -14103,7 +14116,7 @@
       "alert": "",
       "expression": "Kifejezés",
       "query": "Lekérdezés",
-      "transformation": "Átalakítás"
+      "transformation": "Transzformáció"
     },
     "sidebar": {
       "add-below": "",

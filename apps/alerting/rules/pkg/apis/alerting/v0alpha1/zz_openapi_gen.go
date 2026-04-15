@@ -8,24 +8,26 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		AlertRule{}.OpenAPIModelName():                        schema_pkg_apis_alerting_v0alpha1_AlertRule(ref),
-		AlertRuleExpression{}.OpenAPIModelName():              schema_pkg_apis_alerting_v0alpha1_AlertRuleExpression(ref),
-		AlertRuleIntervalTrigger{}.OpenAPIModelName():         schema_pkg_apis_alerting_v0alpha1_AlertRuleIntervalTrigger(ref),
-		AlertRuleList{}.OpenAPIModelName():                    schema_pkg_apis_alerting_v0alpha1_AlertRuleList(ref),
-		AlertRuleNotificationSettings{}.OpenAPIModelName():    schema_pkg_apis_alerting_v0alpha1_AlertRuleNotificationSettings(ref),
-		AlertRulePanelRef{}.OpenAPIModelName():                schema_pkg_apis_alerting_v0alpha1_AlertRulePanelRef(ref),
-		AlertRuleRelativeTimeRange{}.OpenAPIModelName():       schema_pkg_apis_alerting_v0alpha1_AlertRuleRelativeTimeRange(ref),
-		AlertRuleSpec{}.OpenAPIModelName():                    schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref),
-		AlertRuleStatus{}.OpenAPIModelName():                  schema_pkg_apis_alerting_v0alpha1_AlertRuleStatus(ref),
-		AlertRulestatusOperatorState{}.OpenAPIModelName():     schema_pkg_apis_alerting_v0alpha1_AlertRulestatusOperatorState(ref),
-		RecordingRule{}.OpenAPIModelName():                    schema_pkg_apis_alerting_v0alpha1_RecordingRule(ref),
-		RecordingRuleExpression{}.OpenAPIModelName():          schema_pkg_apis_alerting_v0alpha1_RecordingRuleExpression(ref),
-		RecordingRuleIntervalTrigger{}.OpenAPIModelName():     schema_pkg_apis_alerting_v0alpha1_RecordingRuleIntervalTrigger(ref),
-		RecordingRuleList{}.OpenAPIModelName():                schema_pkg_apis_alerting_v0alpha1_RecordingRuleList(ref),
-		RecordingRuleRelativeTimeRange{}.OpenAPIModelName():   schema_pkg_apis_alerting_v0alpha1_RecordingRuleRelativeTimeRange(ref),
-		RecordingRuleSpec{}.OpenAPIModelName():                schema_pkg_apis_alerting_v0alpha1_RecordingRuleSpec(ref),
-		RecordingRuleStatus{}.OpenAPIModelName():              schema_pkg_apis_alerting_v0alpha1_RecordingRuleStatus(ref),
-		RecordingRulestatusOperatorState{}.OpenAPIModelName(): schema_pkg_apis_alerting_v0alpha1_RecordingRulestatusOperatorState(ref),
+		AlertRule{}.OpenAPIModelName():                                    schema_pkg_apis_alerting_v0alpha1_AlertRule(ref),
+		AlertRuleExpression{}.OpenAPIModelName():                          schema_pkg_apis_alerting_v0alpha1_AlertRuleExpression(ref),
+		AlertRuleIntervalTrigger{}.OpenAPIModelName():                     schema_pkg_apis_alerting_v0alpha1_AlertRuleIntervalTrigger(ref),
+		AlertRuleList{}.OpenAPIModelName():                                schema_pkg_apis_alerting_v0alpha1_AlertRuleList(ref),
+		AlertRuleNamedRoutingTree{}.OpenAPIModelName():                    schema_pkg_apis_alerting_v0alpha1_AlertRuleNamedRoutingTree(ref),
+		AlertRulePanelRef{}.OpenAPIModelName():                            schema_pkg_apis_alerting_v0alpha1_AlertRulePanelRef(ref),
+		AlertRuleRelativeTimeRange{}.OpenAPIModelName():                   schema_pkg_apis_alerting_v0alpha1_AlertRuleRelativeTimeRange(ref),
+		AlertRuleSimplifiedRouting{}.OpenAPIModelName():                   schema_pkg_apis_alerting_v0alpha1_AlertRuleSimplifiedRouting(ref),
+		AlertRuleSimplifiedRoutingOrNamedRoutingTree{}.OpenAPIModelName(): schema_pkg_apis_alerting_v0alpha1_AlertRuleSimplifiedRoutingOrNamedRoutingTree(ref),
+		AlertRuleSpec{}.OpenAPIModelName():                                schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref),
+		AlertRuleStatus{}.OpenAPIModelName():                              schema_pkg_apis_alerting_v0alpha1_AlertRuleStatus(ref),
+		AlertRulestatusOperatorState{}.OpenAPIModelName():                 schema_pkg_apis_alerting_v0alpha1_AlertRulestatusOperatorState(ref),
+		RecordingRule{}.OpenAPIModelName():                                schema_pkg_apis_alerting_v0alpha1_RecordingRule(ref),
+		RecordingRuleExpression{}.OpenAPIModelName():                      schema_pkg_apis_alerting_v0alpha1_RecordingRuleExpression(ref),
+		RecordingRuleIntervalTrigger{}.OpenAPIModelName():                 schema_pkg_apis_alerting_v0alpha1_RecordingRuleIntervalTrigger(ref),
+		RecordingRuleList{}.OpenAPIModelName():                            schema_pkg_apis_alerting_v0alpha1_RecordingRuleList(ref),
+		RecordingRuleRelativeTimeRange{}.OpenAPIModelName():               schema_pkg_apis_alerting_v0alpha1_RecordingRuleRelativeTimeRange(ref),
+		RecordingRuleSpec{}.OpenAPIModelName():                            schema_pkg_apis_alerting_v0alpha1_RecordingRuleSpec(ref),
+		RecordingRuleStatus{}.OpenAPIModelName():                          schema_pkg_apis_alerting_v0alpha1_RecordingRuleStatus(ref),
+		RecordingRulestatusOperatorState{}.OpenAPIModelName():             schema_pkg_apis_alerting_v0alpha1_RecordingRulestatusOperatorState(ref),
 	}
 }
 
@@ -192,12 +194,100 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleList(ref common.ReferenceCallbac
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_AlertRuleNotificationSettings(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_AlertRuleNamedRoutingTree(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"routingTree": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"type", "routingTree"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_alerting_v0alpha1_AlertRulePanelRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"dashboardUID": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"panelID": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+				},
+				Required: []string{"dashboardUID", "panelID"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_alerting_v0alpha1_AlertRuleRelativeTimeRange(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"from": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"to": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"from", "to"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_alerting_v0alpha1_AlertRuleSimplifiedRouting(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"receiver": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -266,63 +356,33 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleNotificationSettings(ref common.
 						},
 					},
 				},
-				Required: []string{"receiver"},
+				Required: []string{"type", "receiver"},
 			},
 		},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_AlertRulePanelRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_AlertRuleSimplifiedRoutingOrNamedRoutingTree(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"dashboardUID": {
+					"SimplifiedRouting": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Ref: ref(AlertRuleSimplifiedRouting{}.OpenAPIModelName()),
 						},
 					},
-					"panelID": {
+					"NamedRoutingTree": {
 						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
+							Ref: ref(AlertRuleNamedRoutingTree{}.OpenAPIModelName()),
 						},
 					},
 				},
-				Required: []string{"dashboardUID", "panelID"},
 			},
 		},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_AlertRuleRelativeTimeRange(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"from": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"to": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"from", "to"},
-			},
-		},
+		Dependencies: []string{
+			AlertRuleNamedRoutingTree{}.OpenAPIModelName(), AlertRuleSimplifiedRouting{}.OpenAPIModelName()},
 	}
 }
 
@@ -415,7 +475,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref common.ReferenceCallbac
 					},
 					"notificationSettings": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref(AlertRuleNotificationSettings{}.OpenAPIModelName()),
+							Ref: ref(AlertRuleSimplifiedRoutingOrNamedRoutingTree{}.OpenAPIModelName()),
 						},
 					},
 					"expressions": {
@@ -442,7 +502,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			AlertRuleExpression{}.OpenAPIModelName(), AlertRuleIntervalTrigger{}.OpenAPIModelName(), AlertRuleNotificationSettings{}.OpenAPIModelName(), AlertRulePanelRef{}.OpenAPIModelName()},
+			AlertRuleExpression{}.OpenAPIModelName(), AlertRuleIntervalTrigger{}.OpenAPIModelName(), AlertRulePanelRef{}.OpenAPIModelName(), AlertRuleSimplifiedRoutingOrNamedRoutingTree{}.OpenAPIModelName()},
 	}
 }
 

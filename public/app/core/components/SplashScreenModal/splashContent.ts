@@ -54,7 +54,7 @@ export function getSplashScreenConfig(): SplashScreenConfig {
         ],
         cta: {
           text: t('splash-screen.assistant.cta', 'Show me'),
-          url: `https://grafana.com/grafana/plugins/grafana-assistant-app/?${UTM}`,
+          url: `${window.location.origin}/plugins/grafana-assistant-app/?${UTM}`,
         },
         heroImageUrl: assistantHeroImage,
       },

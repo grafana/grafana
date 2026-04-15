@@ -25,9 +25,9 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	dashboardAPIVersion := dashboardV1.DashboardResourceInfo.GroupVersion().String()
 	helper := sharedHelper(t)
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:            repoName,
-		Target:          "folder",
+		SyncTarget:      "folder",
 		ExpectedFolders: 1,
 	})
 
@@ -546,9 +546,9 @@ func TestIntegrationProvisioning_BlockManagerChange(t *testing.T) {
 	ctx := context.Background()
 
 	const repo = "managed-change-test"
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"testdata/all-panels.json": "all-panels.json",
 		},
@@ -634,9 +634,9 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResource(t *testing.T) {
 	ctx := context.Background()
 
 	const repo = "admin-release-test"
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"testdata/all-panels.json": "all-panels.json",
 		},
@@ -720,9 +720,9 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResourceViaPatch(t *testi
 	ctx := context.Background()
 
 	const repo = "admin-release-patch-test"
-	helper.CreateRepo(t, common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"testdata/all-panels.json": "all-panels.json",
 		},

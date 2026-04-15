@@ -505,7 +505,7 @@
       }
     },
     "alert-rule": {
-      "term": "Правило оповещения"
+      "term": "Правило оповещений"
     },
     "alert-rule-drawer": {
       "error-title": "",
@@ -837,7 +837,7 @@
       }
     },
     "channel-sub-form": {
-      "badge-deprecated": "Не поддерживается",
+      "badge-deprecated": "Устарела",
       "delete": "Удалить",
       "duplicate": "Дублировать",
       "label-integration": "Интеграция",
@@ -1349,7 +1349,7 @@
       "alert-options": {
         "label": {
           "firing": "Активно",
-          "resolved": "Устранено"
+          "resolved": "Решено"
         }
       },
       "review-alert-payload": " Просмотр данных оповещения для добавления в полезные данные:",
@@ -2351,7 +2351,7 @@
     },
     "notification-route": {
       "no-labels": "Нет меток",
-      "notification-policy": "Политика уведомления"
+      "notification-policy": "Политика уведомлений"
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "Развернуть маршрут политики",
@@ -2863,7 +2863,7 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "Показать все",
-      "button-show-all-instances": "Показать все экземпляры оповещения ({{totalItemsCount}})",
+      "button-show-all-instances": "Показать все экземпляры оповещений ({{totalItemsCount}})",
       "showing-count": "Показано экземпляров: {{visibleItemsCount}} из {{totalItemsCount}}",
       "showing-count-with-state": "Показано экземпляров ({{alertState}}): {{visibleItemsCount}} из {{totalItemsCount}}"
     },
@@ -3115,7 +3115,7 @@
         "alert-title": "Выполняется обновление"
       },
       "tab": {
-        "details": "Подробности",
+        "details": "Сведения",
         "query-conditions": "Запрос и условия"
       },
       "title-something-wrong-evaluating-alert": "Ошибка при оценке правила оповещения"
@@ -3139,13 +3139,13 @@
         "success": "Оценка правила возобновлена"
       },
       "state": {
-        "firing": "Активное",
+        "firing": "Активно",
         "normal": "Нормальное",
         "pending": "В ожидании",
         "recovering": "Восстановление"
       },
       "type": {
-        "alert": "Правило оповещения",
+        "alert": "Правило оповещений",
         "recording": "Правило записи"
       },
       "update-rule": {
@@ -3220,7 +3220,7 @@
       "error-load-description": "Не удалось загрузить сохраненные поисковые запросы. Попробуйте обновить страницу.",
       "error-load-title": "Не удалось загрузить сохраненные поисковые запросы",
       "error-name-duplicate": "Сохраненный поисковой запрос с таким именем уже существует",
-      "error-name-required": "Требуется указать имя",
+      "error-name-required": "Укажите имя",
       "error-rename-description": "Не удалось сохранить изменения. Повторите попытку.",
       "error-rename-title": "Не удалось переименовать",
       "error-save-description": "Не удалось сохранить изменения. Повторите попытку.",
@@ -3623,11 +3623,13 @@
       },
       "instance-details-drawer": {
         "alert-instance-label": "",
+        "back": "",
         "declare-incident": "",
         "declare-incident-no-permission": "",
         "instance-details": "Сведения об экземпляре",
         "silence-button": "",
-        "silence-no-permission": ""
+        "silence-no-permission": "",
+        "silence-title-with-name": ""
       },
       "labels-column-title": "",
       "no-firing-or-pending-instances": "У вас нет экземпляров оповещений в состоянии отправки или ожидания для выбранного временного интервала.",
@@ -4242,7 +4244,7 @@
     "display-mode-options": {
       "label-basic": "Базовый",
       "label-gradient": "Градиент",
-      "label-retro": "Ретро ЖКИ"
+      "label-retro": "Ретро ЖК"
     },
     "name-bar-size": "Размер столбцов",
     "name-display-mode": "Режим отображения",
@@ -4580,7 +4582,7 @@
     },
     "name-additional-fields": "Дополнительные поля",
     "name-candle-style": "Вид свечей",
-    "name-close": "Закрытие",
+    "name-close": "Закрыть",
     "name-color-strategy": "Цветовая стратегия",
     "name-down-color": "Цвет снижения",
     "name-high": "Максимум",
@@ -5529,6 +5531,9 @@
       "cancel-loading-dashboard": "Отменить загрузку дашборда"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "",
+      "provisioning-message": "",
+      "provisioning-title": "",
       "text": {
         "not-found": "Не найдено"
       }
@@ -5892,9 +5897,9 @@
     },
     "get-panel-filters": {
       "description": {
-        "annotation-following-panels": "Не отправлять данные аннотаций на следующие панели",
-        "annotation-panels-support-annotations": "Отправить данные аннотаций на все панели, поддерживающие их",
-        "annotations-explicitly-listed-panels": "Отправить аннотации только на указанные панели"
+        "annotation-following-panels": "Данные аннотаций не будут отправлены на следующие панели",
+        "annotation-panels-support-annotations": "Отправляйте данные аннотаций на все панели, которые их поддерживают",
+        "annotations-explicitly-listed-panels": "Отправляйте аннотации только на указанные панели"
       },
       "label": {
         "all-panels": "Все панели",
@@ -6129,7 +6134,7 @@
         "hide-time-info-description": "Отключите показ временного интервала в заголовке панели",
         "time-from": "Временной интервал панели",
         "time-from-description": "Переопределяет временной интервал дашборда. Используйте одно из заданных значений или введите собственное, например 5m или 2h.",
-        "time-shift": "Сдвиг времени",
+        "time-shift": "Временной сдвиг",
         "time-shift-description": "Добавляет временной сдвиг относительно временного интервала дашборда или панели. Используйте одно из заданных значений или введите собственное, например 5m или 2h.",
         "time-window-compare": "Сравнение времени",
         "time-window-compare-description": "Сравнение данных двух временных интервалов",
@@ -6446,7 +6451,7 @@
         "tooltip": "Войти в режим редактирования"
       },
       "edit-button": {
-        "enter": "Изменить",
+        "enter": "Редактировать",
         "enter-tooltip": "Вход в режим редактирования",
         "exit": "Выйти из режима редактирования",
         "exit-tooltip": "Выход из режима редактирования"
@@ -6568,6 +6573,10 @@
       "sql-expressions-title": "SQL-выражения",
       "title-add-another-transformation": "Добавление другого преобразования",
       "view-all": "Просмотреть все"
+    },
+    "transformation-type-picker": {
+      "sql-cta-button": "",
+      "sql-cta-description": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "Удалив все преобразования, вы вернетесь на главный экран выбора."
@@ -6704,7 +6713,7 @@
       "customize-with-assistant-button": "",
       "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "Источник данных указан",
-      "details-tooltip": "Подробности",
+      "details-tooltip": "Сведения",
       "no-preview": "",
       "view-dashboard-button": "",
       "view-dashboard-button-label": "",
@@ -7186,9 +7195,9 @@
     },
     "get-panel-filters": {
       "description": {
-        "annotation-following-panels": "Не отправлять данные аннотаций на следующие панели",
-        "annotation-panels-support-annotations": "Отправить данные аннотаций на все панели, поддерживающие их",
-        "annotations-explicitly-listed-panels": "Отправить аннотации только на указанные панели"
+        "annotation-following-panels": "Данные аннотаций не будут отправлены на следующие панели",
+        "annotation-panels-support-annotations": "Отправляйте данные аннотаций на все панели, которые их поддерживают",
+        "annotations-explicitly-listed-panels": "Отправляйте аннотации только на указанные панели"
       },
       "label": {
         "all-panels": "Все панели",
@@ -8895,6 +8904,9 @@
     "span-bar": {
       "tooltip-critical-path": "Сегмент <1>критического пути</1> общей трассировки / запроса / рабочего процесса."
     },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": ""
+    },
     "span-bar-section": {
       "description-link": "Добавьте дополнительную информацию рядом со службой и операцией в строке панели диапазонов в представлении трассировки.",
       "title-span-bar": "Панель диапазонов"
@@ -9434,7 +9446,7 @@
     "tooltip-options": {
       "description-details": "Показывать всплывающее окно при наведении",
       "description-none": "Показывать содержимое при нажатии, а не при наведении",
-      "label-details": "Подробности",
+      "label-details": "Сведения",
       "label-none": "Нет"
     },
     "utils": {
@@ -9893,7 +9905,7 @@
             "name-decibel": "Децибел",
             "name-hexadecimal": "Шестнадцатеричный",
             "name-hexadecimal-0x": "Шестнадцатеричный (0x)",
-            "name-humidity": "Влажность (%)",
+            "name-humidity": "Влажность (%H)",
             "name-locale": "Формат локали",
             "name-number": "Число",
             "name-percent-1": "Процент (0,0–1,0)",
@@ -9908,7 +9920,7 @@
         },
         "pressure": {
           "formats": {
-            "name-bars": "Бар",
+            "name-bars": "Столбцы",
             "name-hectopascals": "Гектопаскаль",
             "name-inches-mercury": "Дюймы ртутного столба",
             "name-kilobars": "Килобар",
@@ -11685,7 +11697,7 @@
       }
     },
     "validation-srv": {
-      "message-name-required": "Требуется ввести имя",
+      "message-name-required": "Укажите имя",
       "message-reserved-name": "Это имя зарезервировано, его нельзя использовать для папки.",
       "message-same-name": "Дашборд или папка с таким именем уже существует",
       "message-same-name-current-folder": "В текущей папке уже существует дашборд или папка с таким именем",
@@ -12499,7 +12511,7 @@
         "description-no-value": "Что показывать, когда нет значения",
         "description-value-mappings": "Изменить отображаемый текст на основе введенного значения",
         "name-actions": "Действия",
-        "name-ad-hoc": "Для специальных фильтров",
+        "name-ad-hoc": "",
         "name-color-scheme": "Цветовая схема",
         "name-data-links": "Ссылки на данные",
         "name-decimals": "Кол-во знаков после запятой",
@@ -12958,6 +12970,7 @@
       "title-button-disabled": "Плагин еще не готов к использованию. Завершение установки может занять некоторое время"
     },
     "install-controls": {
+      "contact-us": "",
       "install": "Установить",
       "installing": "Установка",
       "update": "Обновить",
@@ -16665,7 +16678,7 @@
     },
     "static-options": {
       "add-option-button-label": "Добавить новый параметр",
-      "drag-and-drop": "Изменить порядок путем перетаскивания",
+      "drag-and-drop": "Измените порядок путем перетаскивания",
       "label-header": "Отображаемый текст",
       "label-placeholder": "Значение по умолчанию",
       "remove-option-button-label": "Удалить параметр",
