@@ -20,6 +20,8 @@ import (
 	"github.com/grafana/pyroscope/api/gen/proto/go/querier/v1/querierv1connect"
 )
 
+const utf8LabelNamesFeatureToggle = "pyroscopeUTF8LabelNames"
+
 type ProfileType struct {
 	ID    string `json:"id"`
 	Label string `json:"label"`
@@ -122,6 +124,9 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 		Limit:         limit,
 		ExemplarType:  exemplarType,
 	})
+	if backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(utf8LabelNamesFeatureToggle) {
+		setUTF8AcceptHeader(req.Header())
+	}
 
 	resp, err := c.connectClient.SelectSeries(ctx, req)
 	if err != nil {
@@ -276,11 +281,15 @@ func getUnits(profileTypeID string) string {
 func (c *PyroscopeClient) LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, error) {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.LabelNames")
 	defer span.End()
-	resp, err := c.connectClient.LabelNames(ctx, connect.NewRequest(&typesv1.LabelNamesRequest{
+	req := connect.NewRequest(&typesv1.LabelNamesRequest{
 		Matchers: []string{labelSelector},
 		Start:    start,
 		End:      end,
-	}))
+	})
+	if backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(utf8LabelNamesFeatureToggle) {
+		setUTF8AcceptHeader(req.Header())
+	}
+	resp, err := c.connectClient.LabelNames(ctx, req)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())

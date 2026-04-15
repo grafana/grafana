@@ -300,6 +300,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-01-05,smoothingTransformation,experimental,@grafana/datapro,false,false,true
 2026-01-06,secretsManagementAppPlatformAwsKeeper,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-01-07,profilesExemplars,experimental,@grafana/observability-traces-and-profiling,false,false,false
+2026-04-03,pyroscopeUTF8LabelNames,preview,@grafana/observability-traces-and-profiling,false,false,false
 2026-01-14,alertingSyncDispatchTimer,experimental,@grafana/alerting-squad,false,true,false
 2026-02-18,queryWithAssistant,experimental,@grafana/data-sources-plugins,false,false,true
 2026-02-18,queryEditorNext,privatePreview,@grafana/datapro,false,false,true

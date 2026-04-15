@@ -2569,6 +2569,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:         "pyroscopeUTF8LabelNames",
+			Description:  "Enables support for UTF-8 label names in Pyroscope label selectors",
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: false,
+			Expression:   "true",
+		},
+		{
 			Name:            "alertingSyncDispatchTimer",
 			Description:     "Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods",
 			Stage:           FeatureStageExperimental,

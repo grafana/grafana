@@ -1507,6 +1507,11 @@ export interface FeatureToggles {
   */
   profilesExemplars?: boolean;
   /**
+  * Enables support for UTF-8 label names in Pyroscope label selectors
+  * @default true
+  */
+  pyroscopeUTF8LabelNames?: boolean;
+  /**
   * Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
   * @default false
   */
