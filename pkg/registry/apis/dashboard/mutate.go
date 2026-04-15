@@ -93,10 +93,7 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 		}
 		// Strip BOMs from title and description
 		v.Spec.Title = util.StripBOM(v.Spec.Title)
-		if v.Spec.Description != nil {
-			stripped := util.StripBOM(*v.Spec.Description)
-			v.Spec.Description = &stripped
-		}
+		stripBOMFromPointerString(v.Spec.Description)
 		resourceInfo = dashboardV2alpha1.DashboardResourceInfo
 
 	case *dashboardV2beta1.Dashboard:
@@ -110,10 +107,7 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 		}
 		// Strip BOMs from title and description
 		v.Spec.Title = util.StripBOM(v.Spec.Title)
-		if v.Spec.Description != nil {
-			stripped := util.StripBOM(*v.Spec.Description)
-			v.Spec.Description = &stripped
-		}
+		stripBOMFromPointerString(v.Spec.Description)
 		resourceInfo = dashboardV2beta1.DashboardResourceInfo
 
 	case *dashboardV2.Dashboard:
@@ -125,10 +119,7 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 		}
 		// Strip BOMs from title and description
 		v.Spec.Title = util.StripBOM(v.Spec.Title)
-		if v.Spec.Description != nil {
-			stripped := util.StripBOM(*v.Spec.Description)
-			v.Spec.Description = &stripped
-		}
+		stripBOMFromPointerString(v.Spec.Description)
 		resourceInfo = dashboardV2.DashboardResourceInfo
 
 	default:
@@ -181,4 +172,10 @@ func getFieldValidationMode(a admission.Attributes) string {
 	}
 
 	return validation
+}
+
+func stripBOMFromPointerString(s *string) {
+	if s != nil {
+		*s = util.StripBOM(*s)
+	}
 }
