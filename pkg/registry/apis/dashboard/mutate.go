@@ -175,12 +175,6 @@ func getFieldValidationMode(a admission.Attributes) string {
 	return validation
 }
 
-func stripBOMFromPointerString(s *string) {
-	if s != nil {
-		*s = util.StripBOM(*s)
-	}
-}
-
 // stripBOMIfEnabled conditionally strips BOMs from v2 dashboard specs based on skipBOMStripping flag.
 func (b *DashboardsAPIBuilder) stripBOMIfEnabled(spec interface{}, version string) error {
 	if !b.skipBOMStripping {
