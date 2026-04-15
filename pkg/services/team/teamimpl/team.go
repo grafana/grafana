@@ -156,6 +156,12 @@ func (s *Service) isKubernetesTeamServiceEnabled(ctx context.Context) bool {
 	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx))
 }
 
+// shouldFallbackToLegacy determines whether to fallback to the legacy service for a given request.
+// The main use case is for internal calls coming from the externalgroupmapping legacy search, those
+// calls have a service identity and no contexthandler, so we use that as a heuristic to determine
+// if we should fallback to the legacy service. This allows us to incrementally migrate the
+// externalgroupmapping search to the new k8s team service without breaking existing functionality.
+// We can remove this fallback once the migration is complete and all internal calls are using the new k8s team service.
 func (s *Service) shouldFallbackToLegacy(ctx context.Context) bool {
 	return identity.IsServiceIdentity(ctx) && contexthandler.FromContext(ctx) == nil
 }
