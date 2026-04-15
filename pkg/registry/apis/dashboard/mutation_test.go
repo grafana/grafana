@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
+// nolint:gocyclo
 func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 	migration.Initialize(testutil.NewDataSourceProvider(testutil.StandardTestConfig), testutil.NewLibraryElementProvider(), migration.DefaultCacheTTL)
 	tests := []struct {
