@@ -108,6 +108,8 @@ export interface QueryEditorUIState {
   setPendingTransformation: (pending: PendingTransformation | null) => void;
   finalizePendingTransformation: (transformationId: string) => void;
   showVersionBanner: boolean;
+  isStackedView: boolean;
+  setIsStackedView: (value: boolean) => void;
 }
 
 export interface QueryEditorActions {

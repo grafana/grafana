@@ -10,15 +10,21 @@ import { QueryEditorFooter } from './Footer/QueryEditorFooter';
 import { ContentHeaderSceneWrapper } from './Header/ContentHeader';
 import { DatasourceHelpPanel } from './Header/DatasourceHelpPanel';
 import { useAlertingContext, useQueryEditorUIContext } from './QueryEditorContext';
+import { StackedView } from './StackedView';
 
 export function QueryEditorContent() {
   const styles = useStyles2(getStyles);
 
-  const { cardType, showingDatasourceHelp, pendingExpression, pendingTransformation } = useQueryEditorUIContext();
+  const { cardType, showingDatasourceHelp, pendingExpression, pendingTransformation, isStackedView } =
+    useQueryEditorUIContext();
   const { alertRules } = useAlertingContext();
   const hasPendingPicker = !!pendingExpression || !!pendingTransformation;
   const isAlertView = cardType === QueryEditorType.Alert;
   const isAlertEmptyState = isAlertView && alertRules.length === 0;
+
+  if (isStackedView) {
+    return <StackedView />;
+  }
 
   const shouldShowHeader = !isAlertEmptyState;
   const shouldShowFooter = !hasPendingPicker && !isAlertView;

@@ -133,6 +133,8 @@ describe('QueryEditorRenderer', () => {
             toggleQuerySelection: jest.fn(),
             toggleTransformationSelection: jest.fn(),
             clearSelection: jest.fn(),
+            isStackedView: false,
+            setIsStackedView: jest.fn(),
           }}
           actions={mockActions}
           typeConfig={mockTypeConfig}

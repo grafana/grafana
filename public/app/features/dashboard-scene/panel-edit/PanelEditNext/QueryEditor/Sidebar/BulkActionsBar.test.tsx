@@ -146,8 +146,7 @@ describe('BulkActionsBar', () => {
           actionsOverrides: { bulkToggleQueriesHide },
         });
 
-        // None of the selected queries have hide:true so the button says "Hide"
-        await user.click(screen.getByRole('button', { name: /hide/i }));
+        await user.click(screen.getByRole('button', { name: /hide all selected/i }));
         expect(bulkToggleQueriesHide).toHaveBeenCalledWith(['A', 'B'], true);
       });
 
@@ -160,8 +159,7 @@ describe('BulkActionsBar', () => {
           actionsOverrides: { bulkToggleQueriesHide },
         });
 
-        // All selected queries are hidden — button says "Show"
-        await user.click(screen.getByRole('button', { name: /show/i }));
+        await user.click(screen.getByRole('button', { name: /show all selected/i }));
         expect(bulkToggleQueriesHide).toHaveBeenCalledWith(['A', 'B'], false);
       });
     });
@@ -229,6 +227,41 @@ describe('BulkActionsBar', () => {
         expect(screen.queryByTestId('datasource-modal')).not.toBeInTheDocument();
       });
     });
+
+    describe('stacked view', () => {
+      it('shows the stacked view button when 2+ queries are selected', () => {
+        renderBar({ uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] } });
+        expect(screen.getByRole('button', { name: /stacked list/i })).toBeInTheDocument();
+      });
+
+      it('calls setIsStackedView(true) when not in stacked view', async () => {
+        const setIsStackedView = jest.fn();
+        const { user } = renderBar({
+          uiStateOverrides: { selectedQueryRefIds: ['A', 'B'], isStackedView: false, setIsStackedView },
+        });
+
+        await user.click(screen.getByRole('button', { name: /stacked list/i }));
+        expect(setIsStackedView).toHaveBeenCalledWith(true);
+      });
+
+      it('calls setIsStackedView(false) when already in stacked view', async () => {
+        const setIsStackedView = jest.fn();
+        const { user } = renderBar({
+          uiStateOverrides: { selectedQueryRefIds: ['A', 'B'], isStackedView: true, setIsStackedView },
+        });
+
+        await user.click(screen.getByRole('button', { name: /stacked list/i }));
+        expect(setIsStackedView).toHaveBeenCalledWith(false);
+      });
+
+      it('renders with primary variant when in stacked view', () => {
+        renderBar({
+          uiStateOverrides: { selectedQueryRefIds: ['A', 'B'], isStackedView: true },
+        });
+
+        expect(screen.getByRole('button', { name: /stacked list/i })).toHaveAttribute('aria-pressed', 'true');
+      });
+    });
   });
 
   describe('transformation bulk actions', () => {
@@ -281,8 +314,7 @@ describe('BulkActionsBar', () => {
           actionsOverrides: { bulkToggleTransformationsDisabled },
         });
 
-        // Transformations are enabled (no disabled flag), so button says "Disable all"
-        await user.click(screen.getByRole('button', { name: /disable all/i }));
+        await user.click(screen.getByRole('button', { name: /disable all selected/i }));
         expect(bulkToggleTransformationsDisabled).toHaveBeenCalledWith(['tx-0', 'tx-1'], true);
       });
 
@@ -306,9 +338,35 @@ describe('BulkActionsBar', () => {
           actionsOverrides: { bulkToggleTransformationsDisabled },
         });
 
-        // All selected are disabled — button says "Enable all"
-        await user.click(screen.getByRole('button', { name: /enable all/i }));
+        await user.click(screen.getByRole('button', { name: /enable all selected/i }));
         expect(bulkToggleTransformationsDisabled).toHaveBeenCalledWith(['tx-0', 'tx-1'], false);
+      });
+    });
+
+    describe('stacked view', () => {
+      it('shows the stacked view button when 2+ transformations are selected', () => {
+        renderBar({ uiStateOverrides: { selectedTransformationIds: ['tx-0', 'tx-1'] } });
+        expect(screen.getByRole('button', { name: /stacked list/i })).toBeInTheDocument();
+      });
+
+      it('calls setIsStackedView(true) when not in stacked view', async () => {
+        const setIsStackedView = jest.fn();
+        const { user } = renderBar({
+          uiStateOverrides: { selectedTransformationIds: ['tx-0', 'tx-1'], isStackedView: false, setIsStackedView },
+        });
+
+        await user.click(screen.getByRole('button', { name: /stacked list/i }));
+        expect(setIsStackedView).toHaveBeenCalledWith(true);
+      });
+
+      it('calls setIsStackedView(false) when already in stacked view', async () => {
+        const setIsStackedView = jest.fn();
+        const { user } = renderBar({
+          uiStateOverrides: { selectedTransformationIds: ['tx-0', 'tx-1'], isStackedView: true, setIsStackedView },
+        });
+
+        await user.click(screen.getByRole('button', { name: /stacked list/i }));
+        expect(setIsStackedView).toHaveBeenCalledWith(false);
       });
     });
   });
