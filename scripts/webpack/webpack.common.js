@@ -4,7 +4,7 @@ const webpack = require('webpack');
 
 const CorsWorkerPlugin = require('./plugins/CorsWorkerPlugin');
 
-module.exports = (env = {}) => ({
+module.exports = {
   target: 'web',
   entry: {
     app: './public/app/index.ts',
@@ -15,10 +15,10 @@ module.exports = (env = {}) => ({
     asyncWebAssembly: true,
   },
   output: {
-    clean: env.react19 ? false : true,
+    clean: true,
     path: path.resolve(__dirname, '../../public/build'),
-    filename: env.react19 ? '[name]-react19.[contenthash].js' : '[name].[contenthash].js',
-    chunkFilename: env.react19 ? '[name]-react19.[contenthash].js' : '[name].[contenthash].js',
+    filename: '[name].[contenthash].js',
+    chunkFilename: '[name].[contenthash].js',
     publicPath: 'public/build/',
   },
   resolve: {
@@ -63,22 +63,6 @@ module.exports = (env = {}) => ({
     },
   ],
   plugins: [
-    ...(env.react19
-      ? [
-          new webpack.NormalModuleReplacementPlugin(/^react$/, (resource) => {
-            resource.request = resource.request.replace('react', 'react-19');
-          }),
-          new webpack.NormalModuleReplacementPlugin(/^react-dom/, (resource) => {
-            resource.request = resource.request.replace('react-dom', 'react-dom-19');
-          }),
-          new webpack.NormalModuleReplacementPlugin(/^react\/jsx-runtime$/, (resource) => {
-            resource.request = resource.request.replace('react/jsx-runtime', 'react-19/jsx-runtime');
-          }),
-          new webpack.NormalModuleReplacementPlugin(/^react\/jsx-dev-runtime/, (resource) => {
-            resource.request = resource.request.replace('react/jsx-dev-runtime', 'react-19/jsx-dev-runtime');
-          }),
-        ]
-      : []),
     new CorsWorkerPlugin(),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
@@ -158,4 +142,4 @@ module.exports = (env = {}) => ({
       },
     },
   },
-});
+};

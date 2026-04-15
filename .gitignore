@@ -177,7 +177,6 @@ pkg/services/featuremgmt/openfeature-manifest-react.gen.json
 
 # Ignore frontend build manifest
 manifest.json
-manifest-react19.json
 
 # Ignore go local build dependencies
 /scripts/go/bin/**

@@ -70,8 +70,8 @@
     "@types/jest": "^29.5.4",
     "@types/lodash": "4.17.20",
     "@types/node": "24.10.1",
-    "@types/react": "18.3.18",
-    "@types/react-dom": "18.3.5",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
     "@types/react-virtualized-auto-sizer": "1.0.8",
     "@types/systemjs": "6.15.3",
     "@types/uuid": "10.0.0",
@@ -86,7 +86,7 @@
     "@grafana/data": ">=10.4.0",
     "@grafana/runtime": ">=10.4.0",
     "@grafana/ui": ">=10.4.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   }
 }

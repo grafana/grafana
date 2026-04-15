@@ -65,8 +65,7 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
 
     content = (
       <div {...commonButtonProps}>
-        {/* to use inert in React 18, we have to do this hacky object spread thing. https://stackoverflow.com/questions/72720469/error-when-using-inert-attribute-with-typescript */}
-        <div style={innerStyles} className={styles.renderContainer} {...{ inert: '' }}>
+        <div style={innerStyles} className={styles.renderContainer} inert>
           <PanelRenderer
             title=""
             data={previewData}
@@ -86,9 +85,6 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    selectedSuggestion: css({
-      filter: `blur(1px) ${theme.isDark ? 'brightness(0.5)' : 'opacity(0.3)'}`,
-    }),
     vizBox: css({
       position: 'relative',
       background: 'none',

@@ -15,7 +15,7 @@ import { SidebarSize } from './constants';
 import { useQueryEditorBanner, useVizAndDataPaneLayout } from './hooks';
 
 export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const { showBanner, dismissBanner } = useQueryEditorBanner();
   const { scene, layout } = useVizAndDataPaneLayout(model, containerRef, showBanner);
   const styles = useStyles2(getStyles, layout.sidebarSize);
