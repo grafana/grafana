@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
@@ -51,6 +51,7 @@ export function QueryEditorContextWrapper({
   const queryRunner = getQueryRunnerFor(panel);
   const queryRunnerState = queryRunner?.useState();
   const [pendingSavedQueryState, setPendingSavedQueryState] = useState<PendingSavedQuery | null>(null);
+  const [isStackedView, setIsStackedView] = useState(false);
   const { isDrawerOpen } = useQueryLibraryContext();
   const pendingSavedQuery = isDrawerOpen ? pendingSavedQueryState : null;
 
@@ -119,8 +120,15 @@ export function QueryEditorContextWrapper({
 
   const clearSelection = useCallback(() => {
     setSelectedAlertId(null);
+    setIsStackedView(false);
     clearSelectionRaw();
   }, [clearSelectionRaw]);
+
+  useEffect(() => {
+    if (isStackedView && selectedQueryRefIds.length < 2 && selectedTransformationIds.length < 2) {
+      setIsStackedView(false);
+    }
+  }, [isStackedView, selectedQueryRefIds.length, selectedTransformationIds.length]);
 
   const selectAlert = useCallback(
     (alertId: string | null) => {
@@ -300,6 +308,8 @@ export function QueryEditorContextWrapper({
       },
       finalizePendingTransformation,
       showVersionBanner: Boolean(showVersionBanner),
+      isStackedView,
+      setIsStackedView,
     }),
     [
       selectedQuery,
@@ -335,6 +345,7 @@ export function QueryEditorContextWrapper({
       finalizePendingTransformation,
       clearPendingTransformation,
       showVersionBanner,
+      isStackedView,
     ]
   );
 

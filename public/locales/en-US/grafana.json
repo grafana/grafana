@@ -14054,7 +14054,6 @@
     "bulk-actions": {
       "change-datasource": "Change data source for selected queries",
       "clear-selection": "Clear selection",
-      "datasource": "Data source",
       "delete": "Delete",
       "delete-confirm-body": "This action cannot be undone.",
       "delete-confirm-title_one": "Delete {{count}} item?",
@@ -14062,14 +14061,12 @@
       "delete-tooltip": "Delete selected",
       "delete-transformations-confirm-title_one": "Delete {{count}} transformation?",
       "delete-transformations-confirm-title_other": "Delete {{count}} transformations?",
-      "disable-all": "Disable all",
       "disable-all-tooltip": "Disable all selected",
-      "enable-all": "Enable all",
       "enable-all-tooltip": "Enable all selected",
-      "hide": "Hide",
       "hide-all-tooltip": "Hide all selected",
-      "show": "Show",
       "show-all-tooltip": "Show all selected",
+      "stacked-view-tooltip": "View selected queries in a stacked list",
+      "stacked-view-transformations-tooltip": "View selected transformations in a stacked list",
       "toolbar-label": "Bulk actions"
     },
     "delete-modal": {
@@ -14162,6 +14159,16 @@
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations",
       "view-toggle": "View"
+    },
+    "stacked-view": {
+      "exit": "Exit stacked view",
+      "expression": "Expression",
+      "hidden": "Hidden",
+      "transformation-label": "Transformation",
+      "viewing-queries_one": "Viewing {{count}} queries",
+      "viewing-queries_other": "Viewing {{count}} queries",
+      "viewing-transformations_one": "Viewing {{count}} transformations",
+      "viewing-transformations_other": "Viewing {{count}} transformations"
     },
     "transformation-debug": {
       "input-data": "Input data",
