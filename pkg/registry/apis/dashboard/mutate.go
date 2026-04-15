@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -91,9 +92,10 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				Spec: dashboardV2alpha1.DashboardGridLayoutSpec{},
 			}
 		}
-		// Strip BOMs from title and description
-		v.Spec.Title = util.StripBOM(v.Spec.Title)
-		stripBOMFromPointerString(v.Spec.Description)
+		// Strip BOMs from all string fields recursively
+		if err := stripBOMFromV2Spec(&v.Spec); err != nil {
+			return fmt.Errorf("failed to strip BOMs from v2alpha1 dashboard: %w", err)
+		}
 		resourceInfo = dashboardV2alpha1.DashboardResourceInfo
 
 	case *dashboardV2beta1.Dashboard:
@@ -105,9 +107,10 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				Spec: dashboardV2beta1.DashboardGridLayoutSpec{},
 			}
 		}
-		// Strip BOMs from title and description
-		v.Spec.Title = util.StripBOM(v.Spec.Title)
-		stripBOMFromPointerString(v.Spec.Description)
+		// Strip BOMs from all string fields recursively
+		if err := stripBOMFromV2Spec(&v.Spec); err != nil {
+			return fmt.Errorf("failed to strip BOMs from v2beta1 dashboard: %w", err)
+		}
 		resourceInfo = dashboardV2beta1.DashboardResourceInfo
 
 	case *dashboardV2.Dashboard:
@@ -117,9 +120,10 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 				Spec: dashboardV2.DashboardGridLayoutSpec{},
 			}
 		}
-		// Strip BOMs from title and description
-		v.Spec.Title = util.StripBOM(v.Spec.Title)
-		stripBOMFromPointerString(v.Spec.Description)
+		// Strip BOMs from all string fields recursively
+		if err := stripBOMFromV2Spec(&v.Spec); err != nil {
+			return fmt.Errorf("failed to strip BOMs from v2 dashboard: %w", err)
+		}
 		resourceInfo = dashboardV2.DashboardResourceInfo
 
 	default:
@@ -178,4 +182,34 @@ func stripBOMFromPointerString(s *string) {
 	if s != nil {
 		*s = util.StripBOM(*s)
 	}
+}
+
+// stripBOMFromV2Spec strips BOMs from all string fields in a v2 dashboard spec
+// by converting to unstructured, cleaning, and converting back.
+func stripBOMFromV2Spec(spec interface{}) error {
+	// Convert spec to unstructured (map[string]any) via JSON
+	specBytes, err := json.Marshal(spec)
+	if err != nil {
+		return fmt.Errorf("failed to marshal spec: %w", err)
+	}
+
+	var unstructuredSpec map[string]any
+	if err := json.Unmarshal(specBytes, &unstructuredSpec); err != nil {
+		return fmt.Errorf("failed to unmarshal spec: %w", err)
+	}
+
+	// Strip BOMs from all strings recursively
+	cleanedSpec := util.StripBOMFromInterface(unstructuredSpec).(map[string]any)
+
+	// Convert back to typed struct
+	cleanedBytes, err := json.Marshal(cleanedSpec)
+	if err != nil {
+		return fmt.Errorf("failed to marshal cleaned spec: %w", err)
+	}
+
+	if err := json.Unmarshal(cleanedBytes, spec); err != nil {
+		return fmt.Errorf("failed to unmarshal cleaned spec: %w", err)
+	}
+
+	return nil
 }

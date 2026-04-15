@@ -12,6 +12,7 @@ import (
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
@@ -250,6 +251,66 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			expectedTitle:       "Dashboard Title",
 			expectedDescription: "Descriptionwith BOM",
 		},
+		{
+			name: "v2alpha1 should strip BOMs from nested fields (tags, links)",
+			inputObj: &dashv2alpha1.Dashboard{
+				Spec: dashv2alpha1.DashboardSpec{
+					Title:       "\ufeffDashboard with nested BOMs",
+					Description: ptr.To("Description\ufeffwith BOM"),
+					Tags:        []string{"\ufeffTag1", "Tag2\ufeff", "Tag3"},
+					Links: []dashv2alpha1.DashboardDashboardLink{
+						{
+							Title:   "\ufeffLink Title",
+							Tooltip: "Tooltip\ufeffwith BOM",
+							Icon:    "\ufefficon-name",
+						},
+					},
+				},
+			},
+			operation:         admission.Create,
+			checkBOMStripping: true,
+			expectedTitle:     "Dashboard with nested BOMs",
+		},
+		{
+			name: "v2beta1 should strip BOMs from nested fields (tags, links)",
+			inputObj: &dashv2beta1.Dashboard{
+				Spec: dashv2beta1.DashboardSpec{
+					Title:       "\ufeffDashboard with nested BOMs v2beta1",
+					Description: ptr.To("Description\ufeffwith BOM"),
+					Tags:        []string{"\ufeffTag1", "Tag2\ufeff", "Tag3"},
+					Links: []dashv2beta1.DashboardDashboardLink{
+						{
+							Title:   "\ufeffLink Title",
+							Tooltip: "Tooltip\ufeffwith BOM",
+							Icon:    "\ufefficon-name",
+						},
+					},
+				},
+			},
+			operation:         admission.Create,
+			checkBOMStripping: true,
+			expectedTitle:     "Dashboard with nested BOMs v2beta1",
+		},
+		{
+			name: "v2 should strip BOMs from nested fields (tags, links)",
+			inputObj: &dashv2.Dashboard{
+				Spec: dashv2.DashboardSpec{
+					Title:       "\ufeffDashboard with nested BOMs v2",
+					Description: ptr.To("Description\ufeffwith BOM"),
+					Tags:        []string{"\ufeffTag1", "Tag2\ufeff", "Tag3"},
+					Links: []dashv2.DashboardDashboardLink{
+						{
+							Title:   "\ufeffLink Title",
+							Tooltip: "Tooltip\ufeffwith BOM",
+							Icon:    "\ufefficon-name",
+						},
+					},
+				},
+			},
+			operation:         admission.Create,
+			checkBOMStripping: true,
+			expectedTitle:     "Dashboard with nested BOMs v2",
+		},
 	}
 
 	for _, tt := range tests {
@@ -348,8 +409,16 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 						require.Equal(t, tt.expectedTitle, v.Spec.Title, "title should have BOMs stripped")
 						require.NotContains(t, v.Spec.Title, "\ufeff", "title should not contain BOMs")
 						if v.Spec.Description != nil {
-							require.Equal(t, tt.expectedDescription, *v.Spec.Description, "description should have BOMs stripped")
 							require.NotContains(t, *v.Spec.Description, "\ufeff", "description should not contain BOMs")
+						}
+						// Check nested fields (tags, links)
+						for _, tag := range v.Spec.Tags {
+							require.NotContains(t, tag, "\ufeff", "tags should not contain BOMs")
+						}
+						for _, link := range v.Spec.Links {
+							require.NotContains(t, link.Title, "\ufeff", "link title should not contain BOMs")
+							require.NotContains(t, link.Tooltip, "\ufeff", "link tooltip should not contain BOMs")
+							require.NotContains(t, link.Icon, "\ufeff", "link icon should not contain BOMs")
 						}
 					}
 				case *dashv2beta1.Dashboard:
@@ -357,8 +426,16 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 						require.Equal(t, tt.expectedTitle, v.Spec.Title, "title should have BOMs stripped")
 						require.NotContains(t, v.Spec.Title, "\ufeff", "title should not contain BOMs")
 						if v.Spec.Description != nil {
-							require.Equal(t, tt.expectedDescription, *v.Spec.Description, "description should have BOMs stripped")
 							require.NotContains(t, *v.Spec.Description, "\ufeff", "description should not contain BOMs")
+						}
+						// Check nested fields (tags, links)
+						for _, tag := range v.Spec.Tags {
+							require.NotContains(t, tag, "\ufeff", "tags should not contain BOMs")
+						}
+						for _, link := range v.Spec.Links {
+							require.NotContains(t, link.Title, "\ufeff", "link title should not contain BOMs")
+							require.NotContains(t, link.Tooltip, "\ufeff", "link tooltip should not contain BOMs")
+							require.NotContains(t, link.Icon, "\ufeff", "link icon should not contain BOMs")
 						}
 					} else if tt.expectedTitle != "" {
 						require.Equal(t, tt.expectedTitle, v.Spec.Title, "title should be set")
@@ -366,6 +443,23 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 					if !tt.checkBOMStripping {
 						require.NotNil(t, v.Spec.Layout, "layout should be set")
 						require.NotNil(t, v.Spec.Layout.GridLayoutKind, "layout should be a GridLayout")
+					}
+				case *dashv2.Dashboard:
+					if tt.checkBOMStripping {
+						require.Equal(t, tt.expectedTitle, v.Spec.Title, "title should have BOMs stripped")
+						require.NotContains(t, v.Spec.Title, "\ufeff", "title should not contain BOMs")
+						if v.Spec.Description != nil {
+							require.NotContains(t, *v.Spec.Description, "\ufeff", "description should not contain BOMs")
+						}
+						// Check nested fields (tags, links)
+						for _, tag := range v.Spec.Tags {
+							require.NotContains(t, tag, "\ufeff", "tags should not contain BOMs")
+						}
+						for _, link := range v.Spec.Links {
+							require.NotContains(t, link.Title, "\ufeff", "link title should not contain BOMs")
+							require.NotContains(t, link.Tooltip, "\ufeff", "link tooltip should not contain BOMs")
+							require.NotContains(t, link.Icon, "\ufeff", "link icon should not contain BOMs")
+						}
 					}
 				}
 			}
