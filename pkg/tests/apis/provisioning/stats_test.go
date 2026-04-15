@@ -19,8 +19,8 @@ func TestIntegrationProvisioning_Stats(t *testing.T) {
 	const repo = "stats-test-repo1"
 
 	testRepo := common.TestRepo{
-		Name:   repo,
-		Target: "folder",
+		Name:       repo,
+		SyncTarget: "folder",
 		Copies: map[string]string{
 			"testdata/all-panels.json":   "dashboard1.json",
 			"testdata/text-options.json": "folder/dashboard2.json",
@@ -28,7 +28,7 @@ func TestIntegrationProvisioning_Stats(t *testing.T) {
 		ExpectedDashboards: 2,
 		ExpectedFolders:    2, // folder sync creates a folder for the repo + one nested folder
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	// Create some unmanaged dashboards directly in Grafana
 	unmanagedDash1 := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v1.yaml")

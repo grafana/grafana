@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -207,7 +208,23 @@ func (s *preferenceStorage) Create(ctx context.Context, obj runtime.Object, crea
 func (s *preferenceStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	old, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
-		return nil, false, err
+		// Allows upsert with PATCH
+		if k8serrors.IsNotFound(err) {
+			p := &preferences.Preferences{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Preferences",
+					APIVersion: preferences.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: requestK8s.NamespaceValue(ctx),
+				},
+			}
+			p.UID = gapiutil.CalculateClusterWideUID(p)
+			old = p
+		} else {
+			return nil, false, err
+		}
 	}
 
 	obj, err := objInfo.UpdatedObject(ctx, old)
