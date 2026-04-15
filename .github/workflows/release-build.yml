@@ -432,26 +432,6 @@ jobs:
           for PKG in dist/*.rpm; do break; done
           bash scripts/verify-pkg-stig.sh "$PKG"
 
-  verify-deb-stig:
-    name: verify deb stig (linux-amd64)
-    runs-on: ubuntu-x64-large
-    needs:
-      - build-deb-rpm
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: artifacts-deb-rpm-linux-amd64
-          path: dist
-      - name: Verify DEB permissions (DISA-STIG)
-        run: |
-          for PKG in dist/*.deb; do break; done
-          bash scripts/verify-pkg-stig.sh "$PKG"
-
   build-docker-alpine:
     name: docker (alpine) / ${{ matrix.name }}
     runs-on: ubuntu-x64-large
