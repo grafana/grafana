@@ -18,6 +18,7 @@ import (
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -173,7 +174,7 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 			var svc *TeamK8sService
 
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil, tracing.InitializeTracerForTest())
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
@@ -181,7 +182,7 @@ func TestTeamK8sService_CreateTeam(t *testing.T) {
 				provider := &mockDirectRestConfigProvider{
 					restConfig: &clientrest.Config{Host: ts.URL},
 				}
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, tracing.InitializeTracerForTest())
 			}
 
 			var ctx context.Context
@@ -404,7 +405,7 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 			var svc *TeamK8sService
 
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil, tracing.InitializeTracerForTest())
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if tt.serverResponse != nil {
@@ -416,7 +417,7 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 				provider := &mockDirectRestConfigProvider{
 					restConfig: &clientrest.Config{Host: ts.URL},
 				}
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, tracing.InitializeTracerForTest())
 			}
 
 			var ctx context.Context
@@ -598,7 +599,7 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 			var svc *TeamK8sService
 
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil, tracing.InitializeTracerForTest())
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
@@ -606,7 +607,7 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 				provider := &mockDirectRestConfigProvider{
 					restConfig: &clientrest.Config{Host: ts.URL},
 				}
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, tracing.InitializeTracerForTest())
 			}
 
 			var ctx context.Context
@@ -938,7 +939,7 @@ func TestTeamK8sService_SearchTeams(t *testing.T) {
 			cfg := setting.NewCfg()
 
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), cfg, nil)
+				svc = NewTeamK8sService(log.NewNopLogger(), cfg, nil, tracing.InitializeTracerForTest())
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if tt.serverResponse != nil {
@@ -950,7 +951,7 @@ func TestTeamK8sService_SearchTeams(t *testing.T) {
 				provider := &mockDirectRestConfigProvider{
 					restConfig: &clientrest.Config{Host: ts.URL},
 				}
-				svc = NewTeamK8sService(log.NewNopLogger(), cfg, provider)
+				svc = NewTeamK8sService(log.NewNopLogger(), cfg, provider, tracing.InitializeTracerForTest())
 			}
 
 			var ctx context.Context
@@ -1132,7 +1133,7 @@ func TestTeamK8sService_DeleteTeam(t *testing.T) {
 			var svc *TeamK8sService
 
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil, tracing.InitializeTracerForTest())
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
@@ -1140,7 +1141,7 @@ func TestTeamK8sService_DeleteTeam(t *testing.T) {
 				provider := &mockDirectRestConfigProvider{
 					restConfig: &clientrest.Config{Host: ts.URL},
 				}
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, tracing.InitializeTracerForTest())
 			}
 
 			var ctx context.Context
@@ -1222,12 +1223,12 @@ func TestTeamK8sService_GetTeamsByUser(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var svc *TeamK8sService
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), nil)
+				svc = NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), nil, tracing.InitializeTracerForTest())
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
 				provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
-				svc = NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), provider)
+				svc = NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), provider, tracing.InitializeTracerForTest())
 			}
 
 			var ctx context.Context
@@ -1297,12 +1298,12 @@ func TestTeamK8sService_GetTeamIDsByUser(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var svc *TeamK8sService
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil, tracing.InitializeTracerForTest())
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
 				provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, tracing.InitializeTracerForTest())
 			}
 
 			var ctx context.Context
@@ -1367,12 +1368,12 @@ func TestTeamK8sService_IsTeamMember(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var svc *TeamK8sService
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil, tracing.InitializeTracerForTest())
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
 				provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, tracing.InitializeTracerForTest())
 			}
 
 			ctx := contextWithReqContext()
@@ -1466,16 +1467,16 @@ func TestTeamK8sService_RemoveUsersMemberships(t *testing.T) {
 			var deletedBindings []string
 
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, nil, tracing.InitializeTracerForTest())
 			} else if tt.serverResponse != nil {
 				handler := tt.serverResponse(&deletedBindings)
 				ts := httptest.NewServer(http.HandlerFunc(handler))
 				defer ts.Close()
 				provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, tracing.InitializeTracerForTest())
 			} else {
 				provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: "http://localhost:0"}}
-				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider)
+				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, tracing.InitializeTracerForTest())
 			}
 
 			var ctx context.Context
@@ -1557,12 +1558,12 @@ func TestTeamK8sService_GetUserTeamMemberships(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var svc *TeamK8sService
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), nil)
+				svc = NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), nil, tracing.InitializeTracerForTest())
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
 				provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
-				svc = NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), provider)
+				svc = NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), provider, tracing.InitializeTracerForTest())
 			}
 
 			ctx := contextWithReqContext()
@@ -1657,12 +1658,12 @@ func TestTeamK8sService_GetTeamMembers(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var svc *TeamK8sService
 			if tt.nilProvider {
-				svc = NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), nil)
+				svc = NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), nil, tracing.InitializeTracerForTest())
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
 				provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
-				svc = NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), provider)
+				svc = NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), provider, tracing.InitializeTracerForTest())
 			}
 
 			var ctx context.Context

@@ -7,6 +7,10 @@ import (
 	"fmt"
 	"strconv"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -22,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	iamteam "github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -53,16 +58,18 @@ var userGVR = schema.GroupVersionResource{
 type TeamK8sService struct {
 	logger          log.Logger
 	cfg             *setting.Cfg
+	tracer          tracing.Tracer
 	namespaceMapper request.NamespaceMapper
 	configProvider  apiserver.DirectRestConfigProvider
 }
 
 var _ team.Service = (*TeamK8sService)(nil)
 
-func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider) *TeamK8sService {
+func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, tracer tracing.Tracer) *TeamK8sService {
 	return &TeamK8sService{
 		logger:          logger,
 		cfg:             cfg,
+		tracer:          tracer,
 		namespaceMapper: request.GetNamespaceMapper(cfg),
 		configProvider:  configProvider,
 	}
@@ -247,15 +254,25 @@ func resolveTeamByLegacyID(ctx context.Context, client dynamic.ResourceInterface
 }
 
 func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
+	ctx, span := s.tracer.Start(ctx, "team.createTeam", trace.WithAttributes(
+		attribute.String("name", cmd.Name),
+	))
+	defer span.End()
+
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return team.Team{}, err
 	}
 	orgID := requester.GetOrgID()
+	span.SetAttributes(attribute.Int64("orgID", orgID))
 	namespace := s.namespaceMapper(orgID)
 
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return team.Team{}, err
 	}
 
@@ -279,16 +296,22 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 
 	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&k8sTeam)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return team.Team{}, err
 	}
 
 	result, err := client.Create(ctx, &unstructured.Unstructured{Object: unstructuredObj}, metav1.CreateOptions{})
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return team.Team{}, err
 	}
 
 	var created iamv0alpha1.Team
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, &created); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return team.Team{}, err
 	}
 
@@ -306,15 +329,25 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 }
 
 func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
+	ctx, span := s.tracer.Start(ctx, "team.updateTeam", trace.WithAttributes(
+		attribute.Int64("teamID", cmd.ID),
+	))
+	defer span.End()
+
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	orgID := requester.GetOrgID()
+	span.SetAttributes(attribute.Int64("orgID", orgID))
 
 	namespace := s.namespaceMapper(orgID)
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
@@ -323,42 +356,68 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 		result, err = client.Get(ctx, uid, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
+				span.RecordError(team.ErrTeamNotFound)
+				span.SetStatus(codes.Error, team.ErrTeamNotFound.Error())
 				return team.ErrTeamNotFound
 			}
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return err
 		}
 	} else {
 		result, err = resolveTeamByLegacyID(ctx, client, cmd.ID)
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return err
 		}
 	}
 
 	updated := result.DeepCopy()
 	if err := unstructured.SetNestedField(updated.Object, cmd.Name, "spec", "title"); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	if err := unstructured.SetNestedField(updated.Object, cmd.Email, "spec", "email"); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	if err := unstructured.SetNestedField(updated.Object, cmd.ExternalUID, "spec", "externalUID"); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
 	_, err = client.Update(ctx, updated, metav1.UpdateOptions{})
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+	}
 	return err
 }
 
 func (s *TeamK8sService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
+	ctx, span := s.tracer.Start(ctx, "team.deleteTeam", trace.WithAttributes(
+		attribute.Int64("teamID", cmd.ID),
+	))
+	defer span.End()
+
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	orgID := requester.GetOrgID()
+	span.SetAttributes(attribute.Int64("orgID", orgID))
 
 	namespace := s.namespaceMapper(orgID)
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
@@ -366,6 +425,8 @@ func (s *TeamK8sService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCom
 	if !ok {
 		resolved, resolveErr := resolveTeamByLegacyID(ctx, client, cmd.ID)
 		if resolveErr != nil {
+			span.RecordError(resolveErr)
+			span.SetStatus(codes.Error, resolveErr.Error())
 			return resolveErr
 		}
 		uid = resolved.GetName()
@@ -374,8 +435,12 @@ func (s *TeamK8sService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCom
 	err = client.Delete(ctx, uid, metav1.DeleteOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
+			span.RecordError(team.ErrTeamNotFound)
+			span.SetStatus(codes.Error, team.ErrTeamNotFound.Error())
 			return team.ErrTeamNotFound
 		}
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
@@ -398,11 +463,19 @@ func (s *TeamK8sService) getRESTClient(ctx context.Context) (*rest.RESTClient, e
 }
 
 func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
+	ctx, span := s.tracer.Start(ctx, "team.searchTeams", trace.WithAttributes(
+		attribute.Int64("orgID", query.OrgID),
+		attribute.String("query", query.Query),
+	))
+	defer span.End()
+
 	sortParams := legacysort.ConvertToSortParams(query.SortOpts, iamteam.TeamSortFieldMapping())
 
 	namespace := s.namespaceMapper(query.OrgID)
 	restClient, err := s.getRESTClient(ctx)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return team.SearchTeamQueryResult{}, err
 	}
 
@@ -437,16 +510,22 @@ func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeam
 
 	result := req.Do(ctx)
 	if err := result.Error(); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return team.SearchTeamQueryResult{}, err
 	}
 
 	body, err := result.Raw()
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return team.SearchTeamQueryResult{}, err
 	}
 
 	var searchResp iamv0alpha1.GetSearchTeamsResponse
 	if err := json.Unmarshal(body, &searchResp); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return team.SearchTeamQueryResult{}, err
 	}
 
@@ -478,19 +557,32 @@ func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeam
 }
 
 func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
+	ctx, span := s.tracer.Start(ctx, "team.getTeamByID", trace.WithAttributes(
+		attribute.Int64("teamID", query.ID),
+		attribute.String("teamUID", query.UID),
+	))
+	defer span.End()
+
 	if query.ID == 0 && query.UID == "" {
+		span.RecordError(team.ErrTeamNotFound)
+		span.SetStatus(codes.Error, team.ErrTeamNotFound.Error())
 		return nil, team.ErrTeamNotFound
 	}
 
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 	orgID := requester.GetOrgID()
+	span.SetAttributes(attribute.Int64("orgID", orgID))
 
 	namespace := s.namespaceMapper(orgID)
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
@@ -504,19 +596,27 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 		result, err = client.Get(ctx, uid, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
+				span.RecordError(team.ErrTeamNotFound)
+				span.SetStatus(codes.Error, team.ErrTeamNotFound.Error())
 				return nil, team.ErrTeamNotFound
 			}
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return nil, err
 		}
 	} else {
 		result, err = resolveTeamByLegacyID(ctx, client, query.ID)
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return nil, err
 		}
 	}
 
 	var fetched iamv0alpha1.Team
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, &fetched); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
@@ -532,20 +632,32 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 }
 
 func (s *TeamK8sService) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error) {
+	ctx, span := s.tracer.Start(ctx, "team.getTeamsByUser", trace.WithAttributes(
+		attribute.Int64("userID", query.UserID),
+	))
+	defer span.End()
+
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 	orgID := requester.GetOrgID()
+	span.SetAttributes(attribute.Int64("orgID", orgID))
 	namespace := s.namespaceMapper(orgID)
 
 	userUID, err := s.resolveUserUID(ctx, namespace, query.UserID)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
 	bindings, err := s.listTeamBindings(ctx, namespace, fields.OneTermEqualSelector("spec.subject.name", userUID).String())
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
@@ -564,6 +676,8 @@ func (s *TeamK8sService) GetTeamsByUser(ctx context.Context, query *team.GetTeam
 		Limit: len(teamUIDs),
 	})
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
@@ -571,20 +685,32 @@ func (s *TeamK8sService) GetTeamsByUser(ctx context.Context, query *team.GetTeam
 }
 
 func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
+	ctx, span := s.tracer.Start(ctx, "team.getTeamIDsByUser", trace.WithAttributes(
+		attribute.Int64("userID", query.UserID),
+	))
+	defer span.End()
+
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 	orgID := requester.GetOrgID()
+	span.SetAttributes(attribute.Int64("orgID", orgID))
 	namespace := s.namespaceMapper(orgID)
 
 	userUID, err := s.resolveUserUID(ctx, namespace, query.UserID)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
 	bindings, err := s.listTeamBindings(ctx, namespace, fields.OneTermEqualSelector("spec.subject.name", userUID).String())
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
@@ -599,20 +725,33 @@ func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTe
 }
 
 func (s *TeamK8sService) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
+	ctx, span := s.tracer.Start(ctx, "team.isTeamMember", trace.WithAttributes(
+		attribute.Int64("orgID", orgId),
+		attribute.Int64("teamID", teamId),
+		attribute.Int64("userID", userId),
+	))
+	defer span.End()
+
 	namespace := s.namespaceMapper(orgId)
 
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return false, err
 	}
 	resolved, err := resolveTeamByLegacyID(ctx, client, teamId)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return false, err
 	}
 	teamUID := resolved.GetName()
 
 	userUID, err := s.resolveUserUID(ctx, namespace, userId)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return false, err
 	}
 
@@ -622,6 +761,8 @@ func (s *TeamK8sService) IsTeamMember(ctx context.Context, orgId int64, teamId i
 	).String()
 	bindings, err := s.listTeamBindings(ctx, namespace, fieldSelector)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return false, err
 	}
 
@@ -629,25 +770,39 @@ func (s *TeamK8sService) IsTeamMember(ctx context.Context, orgId int64, teamId i
 }
 
 func (s *TeamK8sService) RemoveUsersMemberships(ctx context.Context, userID int64) error {
+	ctx, span := s.tracer.Start(ctx, "team.removeUsersMemberships", trace.WithAttributes(
+		attribute.Int64("userID", userID),
+	))
+	defer span.End()
+
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	orgID := requester.GetOrgID()
+	span.SetAttributes(attribute.Int64("orgID", orgID))
 	namespace := s.namespaceMapper(orgID)
 
 	userUID, err := s.resolveUserUID(ctx, namespace, userID)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
 	bindings, err := s.listTeamBindings(ctx, namespace, fields.OneTermEqualSelector("spec.subject.name", userUID).String())
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
 	bindingClient, err := s.getDynamicClient(ctx, namespace, teamBindingGVR)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
@@ -660,14 +815,27 @@ func (s *TeamK8sService) RemoveUsersMemberships(ctx context.Context, userID int6
 		}
 	}
 
-	return errors.Join(errs...)
+	if joinedErr := errors.Join(errs...); joinedErr != nil {
+		span.RecordError(joinedErr)
+		span.SetStatus(codes.Error, joinedErr.Error())
+		return joinedErr
+	}
+	return nil
 }
 
 func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*team.TeamMemberDTO, error) {
+	ctx, span := s.tracer.Start(ctx, "team.getUserTeamMemberships", trace.WithAttributes(
+		attribute.Int64("orgID", orgID),
+		attribute.Int64("userID", userID),
+	))
+	defer span.End()
+
 	namespace := s.namespaceMapper(orgID)
 
 	userUID, err := s.resolveUserUID(ctx, namespace, userID)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
@@ -681,6 +849,8 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 
 	bindings, err := s.listTeamBindings(ctx, namespace, fieldSelector)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
@@ -731,22 +901,35 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 }
 
 func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
+	ctx, span := s.tracer.Start(ctx, "team.getTeamMembers", trace.WithAttributes(
+		attribute.Int64("teamID", query.TeamID),
+		attribute.String("teamUID", query.TeamUID),
+	))
+	defer span.End()
+
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 	orgID := requester.GetOrgID()
+	span.SetAttributes(attribute.Int64("orgID", orgID))
 	namespace := s.namespaceMapper(orgID)
 
 	teamUID := query.TeamUID
 	teamID := query.TeamID
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 	if teamUID == "" {
 		resolved, err := resolveTeamByLegacyID(ctx, client, query.TeamID)
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return nil, err
 		}
 		teamUID = resolved.GetName()
@@ -768,6 +951,8 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 
 	bindings, err := s.listTeamBindings(ctx, namespace, fieldSelector)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
