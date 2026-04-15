@@ -20,7 +20,7 @@ type FolderMetadataIncrementalDiffBuilder interface {
 		currentRef string,
 		repoDiff []repository.VersionedFileChange,
 		resourcesList *provisioning.ResourceList,
-	) ([]repository.VersionedFileChange, []replacedFolder, []*resources.InvalidFolderMetadata, error)
+	) ([]repository.VersionedFileChange, map[string][]string, []replacedFolder, []*resources.InvalidFolderMetadata, error)
 }
 
 type folderMetadataIncrementalDiffBuilder struct {
@@ -30,6 +30,7 @@ type folderMetadataIncrementalDiffBuilder struct {
 type replacedFolder struct {
 	Path   string
 	OldUID string
+	Reason string
 }
 
 // NewFolderMetadataIncrementalDiffBuilder wires the repository reader used to
@@ -47,17 +48,24 @@ func NewFolderMetadataIncrementalDiffBuilder(
 // events into synthetic folder changes plus direct-child updates.
 //
 // The rebuilder keeps unrelated git changes intact, preserves real diff paths,
-// and returns any old folder UIDs that must be deleted after the rewritten diff
-// is applied.
+// and returns:
+//
+//   - a rebuilt incremental diff of repository changes,
+//   - a relocations map summarizing folder UID relocations,
+//   - a list of folders whose UID was replaced, and
+//   - any invalid folder metadata warnings.
+//
+// Tree cleanup based on these results is handled by callers; this method does
+// not perform it directly.
 func (d *folderMetadataIncrementalDiffBuilder) BuildIncrementalDiff(
 	ctx context.Context,
 	currentRef string,
 	repoDiff []repository.VersionedFileChange,
 	resourcesList *provisioning.ResourceList,
-) ([]repository.VersionedFileChange, []replacedFolder, []*resources.InvalidFolderMetadata, error) {
+) ([]repository.VersionedFileChange, map[string][]string, []replacedFolder, []*resources.InvalidFolderMetadata, error) {
 	input := splitMetadataChanges(repoDiff)
 	if !input.HasMetadataChanges() {
-		return repoDiff, nil, nil, nil
+		return repoDiff, nil, nil, nil, nil
 	}
 
 	index := newManagedResourceIndex(resourcesList)
@@ -67,12 +75,12 @@ func (d *folderMetadataIncrementalDiffBuilder) BuildIncrementalDiff(
 	for _, change := range input.MetadataChanges() {
 		warnings, err := d.rewriteMetadataChange(ctx, currentRef, input, index, diffTracker, change)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, nil, nil, err
 		}
 		invalid = append(invalid, warnings...)
 	}
 
-	return diffTracker.IncrementalDiff(), diffTracker.ReplacedFolders(), invalid, nil
+	return diffTracker.IncrementalDiff(), diffTracker.Relocations(), diffTracker.ReplacedFolders(), invalid, nil
 }
 
 // rewriteMetadataChange dispatches each handled metadata action to the
@@ -126,12 +134,12 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 		})
 	}
 
-	replaced, newUID, err := d.replacementsForMetadataChange(index, folderPath, folder)
+	replaced, newUID, err := d.replacementsForMetadataChange(index, folderPath, folder, change.Action)
 	if err != nil {
 		return nil, err
 	}
-	if newUID != "" {
-		diffTracker.TrackActiveUID(newUID)
+	if newUID != "" && isFolderRelocating(index, input, diffTracker.activeUIDs, newUID, folderPath) {
+		diffTracker.TrackRelocation(folderPath, newUID)
 	}
 	for _, r := range replaced {
 		diffTracker.AppendReplaced(r)
@@ -357,6 +365,19 @@ func (d *folderMetadataIncrementalDiffBuilder) readMetadata(
 	return nil, nil, fmt.Errorf("read folder metadata for %s: %w", folderPath, err)
 }
 
+// reasonForMetadataAction maps a file action on a _folder.json entry to the
+// replacement reason recorded on the deleted old folder.
+func reasonForMetadataAction(action repository.FileAction) string {
+	switch action {
+	case repository.FileActionCreated, repository.FileActionRenamed:
+		return provisioning.ReasonFolderMetadataCreated
+	case repository.FileActionUpdated:
+		return provisioning.ReasonFolderMetadataUpdated
+	default:
+		return provisioning.ReasonFolderMetadataUpdated
+	}
+}
+
 // replacementsForMetadataChange determines which existing folder identities at
 // a path are superseded by the new metadata.
 //
@@ -368,6 +389,7 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementsForMetadataChange(
 	index managedResourceIndex,
 	folderPath string,
 	folder *folders.Folder,
+	action repository.FileAction,
 ) ([]replacedFolder, string, error) {
 	// Replacements are only scheduled for confirmed identity transitions. If the
 	// managed folder does not exist yet, or metadata could not be parsed into a
@@ -384,6 +406,7 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementsForMetadataChange(
 		return nil, newUID, nil
 	}
 
+	reason := reasonForMetadataAction(action)
 	var replaced []replacedFolder
 	for _, item := range items {
 		if newUID == item.Name {
@@ -392,6 +415,7 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementsForMetadataChange(
 		replaced = append(replaced, replacedFolder{
 			Path:   folderPath,
 			OldUID: item.Name,
+			Reason: reason,
 		})
 	}
 	return replaced, newUID, nil
@@ -432,6 +456,7 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementForDeletedMetadataItem
 		return &replacedFolder{
 			Path:   folderPath,
 			OldUID: existing.Name,
+			Reason: provisioning.ReasonFolderMetadataDeleted,
 		}
 	}
 
@@ -443,6 +468,7 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementForDeletedMetadataItem
 	return &replacedFolder{
 		Path:   folderPath,
 		OldUID: existing.Name,
+		Reason: provisioning.ReasonFolderMetadataDeleted,
 	}
 }
 
@@ -451,4 +477,25 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementForDeletedMetadataItem
 // entries.
 func folderPathForMetadataChange(metadataPath string) string {
 	return safepath.EnsureTrailingSlash(safepath.Dir(metadataPath))
+}
+
+// isFolderRelocating reports whether a folder with the given name is genuinely
+// moving from another path to targetPath in this diff without any UID change.
+func isFolderRelocating(index managedResourceIndex, input folderMetadataDiffSplit, activeUIDs map[string]struct{}, name, targetPath string) bool {
+	if _, alreadyClaimed := activeUIDs[name]; alreadyClaimed {
+		return false
+	}
+	for _, item := range index.ExistingByName(name) {
+		if item.Group != resources.FolderResource.Group {
+			continue
+		}
+		sourcePath := safepath.EnsureTrailingSlash(item.Path)
+		if sourcePath == targetPath {
+			continue
+		}
+		if input.IsMetadataVacatingAt(sourcePath) || input.HadChangeOriginallyAt(sourcePath) {
+			return true
+		}
+	}
+	return false
 }
