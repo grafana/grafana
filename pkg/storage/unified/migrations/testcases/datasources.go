@@ -46,7 +46,7 @@ func (tc *datasourcesTestCase) Resources() []schema.GroupVersionResource {
 			Resource: "datasources",
 		},
 		{
-			Group:    "*.datasource.grafana.app",
+			Group:    "datasource.grafana.app",
 			Version:  "v0alpha1",
 			Resource: "datasources",
 		},

@@ -419,7 +419,7 @@
         "aria-label-select-resolution": "Resolutie selecteren",
         "aria-label-type": "Type radiobuttonsgroep",
         "format-options": {
-          "label-heatmap": "Heatmap",
+          "label-heatmap": "Diagram",
           "label-table": "Tabel",
           "label-time-series": "Tijdreeks"
         },
@@ -481,8 +481,8 @@
       "results-table": {
         "content-descriptive-type": "Bij het maken van een {{descriptiveType}} stelt Prometheus meerdere series bloot met de typeteller. ",
         "description": "Beschrijving",
-        "message-expand-label-filters": "Er zijn geen statistieken gevonden. Probeer uw labelfilters uit te breiden.",
-        "message-expand-search": "Er zijn geen statistieken gevonden. Probeer uw zoekopdracht en filters uit te breiden.",
+        "message-expand-label-filters": "Er zijn geen statistieken gevonden. Probeer je labelfilters uit te breiden.",
+        "message-expand-search": "Er zijn geen statistieken gevonden. Probeer je zoekopdracht en filters uit te breiden.",
         "message-no-metrics-found": "Er zijn geen statistieken gevonden in de gegevensbron.",
         "name": "Naam",
         "type": "Type"

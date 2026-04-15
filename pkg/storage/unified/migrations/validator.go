@@ -119,7 +119,7 @@ func (v *CountValidator) Validate(ctx context.Context, sess *xorm.Session, respo
 
 	counter := sess.Table(v.opts.Table).Where(v.opts.Where, orgID)
 	if v.opts.Distinct != "" {
-		counter = sess.Distinct(v.opts.Distinct)
+		counter = counter.Distinct(v.opts.Distinct)
 	}
 	legacyCount, err := counter.Count()
 	if err != nil {

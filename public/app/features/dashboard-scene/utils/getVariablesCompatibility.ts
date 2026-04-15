@@ -19,20 +19,15 @@ export function getVariablesCompatibility(sceneObject: SceneObject): TypedVariab
   // the same section + dashboard globals.
   if (sceneObject instanceof DashboardScene) {
     const selectedObject = sceneObject.state.editPane.getSelectedObject();
-    if (selectedObject && selectedObject !== sceneObject) {
+
+    if (selectedObject) {
       // @ts-expect-error
       return collectAncestorVariables(selectedObject);
     }
   }
 
-  // If called with a non-root scene object, walk up its ancestry
-  if (!(sceneObject instanceof DashboardScene)) {
-    // @ts-expect-error
-    return collectAncestorVariables(sceneObject);
-  }
-
-  // Default: dashboard vars + all section vars (for dashboard view mode)
-  return collectAllVariables(sceneObject);
+  // Default: dashboard global vars
+  return collectGlobalVariables(sceneObject);
 }
 
 function collectAncestorVariables(sceneObject: SceneObject): VariableModel[] {
@@ -40,10 +35,15 @@ function collectAncestorVariables(sceneObject: SceneObject): VariableModel[] {
   const seenNames = new Set<string>();
   const keepQueryOptions = true;
 
+  // The variable being edited is excluded from its own set
+  // this is to avoid self-reference in that variable's editor
+  const excludedVariable = sceneObject;
   let current: SceneObject | undefined = sceneObject;
   while (current) {
     if (current.state.$variables instanceof SceneVariableSet) {
-      const models = sceneVariablesSetToVariables(current.state.$variables, keepQueryOptions);
+      const set = current.state.$variables;
+      const models = sceneVariablesSetToVariables(set, keepQueryOptions, excludedVariable);
+
       for (const model of models) {
         if (!seenNames.has(model.name)) {
           allModels.push(model);
@@ -57,25 +57,11 @@ function collectAncestorVariables(sceneObject: SceneObject): VariableModel[] {
   return allModels;
 }
 
-function collectAllVariables(sceneObject: SceneObject): TypedVariableModel[] {
+function collectGlobalVariables(sceneObject: SceneObject): TypedVariableModel[] {
   const set = sceneGraph.getVariables(sceneObject);
   const keepQueryOptions = true;
 
   const legacyModels = sceneVariablesSetToVariables(set, keepQueryOptions);
-  const dashboardNames = new Set(legacyModels.map((v) => v.name));
-
-  const sectionSets: SceneVariableSet[] = [];
-  collectChildVariableSets(sceneObject, sectionSets);
-
-  for (const sectionSet of sectionSets) {
-    const sectionModels = sceneVariablesSetToVariables(sectionSet, keepQueryOptions);
-    for (const model of sectionModels) {
-      if (!dashboardNames.has(model.name)) {
-        legacyModels.push(model);
-        dashboardNames.add(model.name);
-      }
-    }
-  }
 
   // Sadly templateSrv.getVariables returns TypedVariableModel but sceneVariablesSetToVariables return persisted schema model
   // They look close to identical (differ in what is optional in some places).
@@ -83,13 +69,4 @@ function collectAllVariables(sceneObject: SceneObject): TypedVariableModel[] {
   // So type and name are important. Maybe some external data sources also check current value so that is also important.
   // @ts-expect-error
   return legacyModels;
-}
-
-function collectChildVariableSets(sceneObject: SceneObject, result: SceneVariableSet[]): void {
-  sceneObject.forEachChild((child) => {
-    if (child.state.$variables instanceof SceneVariableSet) {
-      result.push(child.state.$variables);
-    }
-    collectChildVariableSets(child, result);
-  });
 }
