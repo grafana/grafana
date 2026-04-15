@@ -494,7 +494,7 @@ func TestWrapper_Watch(t *testing.T) {
 		fakeWatcher.Add(obj)
 		fakeWatcher.Stop()
 
-		var events []watch.Event
+		events := make([]watch.Event, 0, len(w.ResultChan()))
 		for e := range w.ResultChan() {
 			events = append(events, e)
 		}
@@ -519,7 +519,7 @@ func TestWrapper_Watch(t *testing.T) {
 		fakeWatcher.Add(obj)
 		fakeWatcher.Stop()
 
-		var events []watch.Event
+		events := make([]watch.Event, 0, len(w.ResultChan()))
 		for e := range w.ResultChan() {
 			events = append(events, e)
 		}
@@ -546,7 +546,7 @@ func TestWrapper_Watch(t *testing.T) {
 		fakeWatcher.Action(watch.Bookmark, bookmarkObj)
 		fakeWatcher.Stop()
 
-		var events []watch.Event
+		events := make([]watch.Event, 0, len(w.ResultChan()))
 		for e := range w.ResultChan() {
 			events = append(events, e)
 		}
@@ -573,7 +573,7 @@ func TestWrapper_Watch(t *testing.T) {
 		fakeWatcher.Action(watch.Error, errObj)
 		fakeWatcher.Stop()
 
-		var events []watch.Event
+		events := make([]watch.Event, 0, len(w.ResultChan()))
 		for e := range w.ResultChan() {
 			events = append(events, e)
 		}
