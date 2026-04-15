@@ -1285,6 +1285,27 @@ func TestUserK8sService_GetSignedInUser(t *testing.T) {
 			},
 		},
 		{
+			name:           "sets OrgID to -1 and OrgName to 'Org missing' when role is invalid",
+			requesterOrgID: 1,
+			cmd:            &user.GetSignedInUserQuery{UserID: 42, OrgID: 1},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				u := newTestK8sUser("some-uid", "org-1", "jdoe", "jdoe@example.com")
+				u.Spec.Role = "InvalidRole"
+				makeUserListResponse(u)(w, r)
+			},
+			expectUser: &user.SignedInUser{
+				UserUID:        "some-uid",
+				OrgID:          -1,
+				OrgName:        "Org missing",
+				Login:          "jdoe",
+				Email:          "jdoe@example.com",
+				Name:           "John Doe",
+				IsGrafanaAdmin: true,
+				EmailVerified:  true,
+				LastSeenAt:     time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC),
+			},
+		},
+		{
 			name:           "returns ErrNoUniqueID when no identifier provided",
 			requesterOrgID: 1,
 			cmd:            &user.GetSignedInUserQuery{OrgID: 1},

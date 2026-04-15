@@ -539,13 +539,11 @@ func (s *UserK8sService) getByFieldSelector(ctx context.Context, logger log.Logg
 
 func toSignedInUser(u *iamv0alpha1.User, orgID int64) *user.SignedInUser {
 	userID := getUserID(u)
-	role := identity.RoleType(u.Spec.Role)
 
 	signedInUser := &user.SignedInUser{
 		UserID:         userID,
 		UserUID:        u.Name,
 		OrgID:          orgID,
-		OrgRole:        role,
 		Login:          u.Spec.Login,
 		Name:           u.Spec.Title,
 		Email:          u.Spec.Email,
@@ -555,7 +553,10 @@ func toSignedInUser(u *iamv0alpha1.User, orgID int64) *user.SignedInUser {
 		LastSeenAt:     time.Unix(u.Status.LastSeenAt, 0),
 	}
 
-	if signedInUser.OrgRole == "" {
+	role := identity.RoleType(u.Spec.Role)
+	if role.IsValid() {
+		signedInUser.OrgRole = role
+	} else {
 		signedInUser.OrgID = -1
 		signedInUser.OrgName = "Org missing"
 	}
