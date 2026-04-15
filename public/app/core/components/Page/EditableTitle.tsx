@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -18,6 +18,7 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();
+  const shouldSkipBlurSubmit = useRef(false);
 
   // sync local value with prop value
   useEffect(() => {
@@ -28,6 +29,15 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
     setLocalValue(value);
     setErrorMessage(undefined);
     setIsEditing(false);
+  };
+
+  const onBlur = (event: React.FormEvent<HTMLInputElement>) => {
+    if (shouldSkipBlurSubmit.current) {
+      shouldSkipBlurSubmit.current = false;
+      return;
+    }
+
+    void onSubmit(event);
   };
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement | HTMLInputElement>) => {
@@ -107,7 +117,7 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
           // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus
           autoComplete="off"
-          onBlur={onSubmit}
+          onBlur={onBlur}
           onChange={(event) => setLocalValue(event.currentTarget.value)}
           onFocus={() => setIsEditing(true)}
         />
@@ -126,6 +136,9 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
           size="lg"
           variant="secondary"
           tooltip={t('page.editable-title.cancel-tooltip', 'Cancel')}
+          onMouseDown={() => {
+            shouldSkipBlurSubmit.current = true;
+          }}
           onClick={onCancel}
           disabled={isLoading}
         />
