@@ -43,6 +43,29 @@ func TestValidateOnCreate(t *testing.T) {
 			want: errInvalidName,
 		},
 		{
+			name: "wildcard resource name - should fail",
+			obj: &iamv0alpha1.ResourcePermission{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "folder.grafana.app-folders-*",
+				},
+				Spec: iamv0alpha1.ResourcePermissionSpec{
+					Resource: iamv0alpha1.ResourcePermissionspecResource{
+						ApiGroup: "folder.grafana.app",
+						Resource: "folders",
+						Name:     "*",
+					},
+					Permissions: []iamv0alpha1.ResourcePermissionspecPermission{
+						{
+							Kind: iamv0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+							Name: "Editor",
+							Verb: "edit",
+						},
+					},
+				},
+			},
+			want: errInvalidSpec,
+		},
+		{
 			name: "mismatched name and spec - should fail",
 			obj: &iamv0alpha1.ResourcePermission{
 				ObjectMeta: v1.ObjectMeta{
@@ -179,6 +202,11 @@ func TestValidateDeleteInput(t *testing.T) {
 			name:    "invalid name - should fail",
 			objName: "some-invalid-name",
 			want:    errInvalidName,
+		},
+		{
+			name:    "wildcard resource name - should fail",
+			objName: "folder.grafana.app-folders-*",
+			want:    errInvalidSpec,
 		},
 		{
 			name:    "enabled group/resource (folder) - should pass",

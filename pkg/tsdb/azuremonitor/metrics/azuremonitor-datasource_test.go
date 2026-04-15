@@ -568,6 +568,231 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 	}
 }
 
+func TestAzureMonitorParseResponseGrafanaSqlRenamesFields(t *testing.T) {
+	resources := map[string]dataquery.AzureMonitorResource{}
+	resources[strings.ToLower("/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana")] =
+		dataquery.AzureMonitorResource{ResourceGroup: strPtr("grafanastaging"), ResourceName: strPtr("grafana")}
+	subscription := "12345678-aaaa-bbbb-cccc-123456789abc"
+
+	azData := loadTestFile(t, "azuremonitor/1-azure-monitor-response-avg.json")
+	datasource := &AzureMonitorDatasource{}
+	q := &types.AzureMonitorQuery{
+		GrafanaSql: true,
+		URL:        "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
+		Params: url.Values{
+			"aggregation": {"Average"},
+		},
+		Resources:    resources,
+		Subscription: subscription,
+	}
+	frames, err := datasource.parseResponse(azData, q, "http://ds", "")
+	require.NoError(t, err)
+	require.NotEmpty(t, frames)
+	for _, f := range frames {
+		require.Equal(t, "time", f.Fields[0].Name)
+		require.Equal(t, "value", f.Fields[1].Name)
+		require.Len(t, f.Fields, 3)
+		require.Equal(t, "resourceName", f.Fields[2].Name)
+	}
+}
+
+func TestAzureMonitorParseResponseGrafanaSqlMultiResource(t *testing.T) {
+	ts := time.Date(2019, 2, 8, 10, 13, 0, 0, time.UTC)
+	avg1 := 2.0
+	avg2 := 5.0
+
+	azData := types.AzureMonitorResponse{
+		Value: []struct {
+			ID   string `json:"id"`
+			Type string `json:"type"`
+			Name struct {
+				Value          string `json:"value"`
+				LocalizedValue string `json:"localizedValue"`
+			} `json:"name"`
+			Unit       string `json:"unit"`
+			Timeseries []struct {
+				Metadatavalues []struct {
+					Name struct {
+						Value          string `json:"value"`
+						LocalizedValue string `json:"localizedValue"`
+					} `json:"name"`
+					Value string `json:"value"`
+				} `json:"metadatavalues"`
+				Data []struct {
+					TimeStamp time.Time `json:"timeStamp"`
+					Average   *float64  `json:"average,omitempty"`
+					Total     *float64  `json:"total,omitempty"`
+					Count     *float64  `json:"count,omitempty"`
+					Maximum   *float64  `json:"maximum,omitempty"`
+					Minimum   *float64  `json:"minimum,omitempty"`
+				} `json:"data"`
+			} `json:"timeseries"`
+		}{
+			{
+				Name: struct {
+					Value          string `json:"value"`
+					LocalizedValue string `json:"localizedValue"`
+				}{Value: "Percentage CPU", LocalizedValue: "Percentage CPU"},
+				Unit: "Percent",
+				Timeseries: []struct {
+					Metadatavalues []struct {
+						Name struct {
+							Value          string `json:"value"`
+							LocalizedValue string `json:"localizedValue"`
+						} `json:"name"`
+						Value string `json:"value"`
+					} `json:"metadatavalues"`
+					Data []struct {
+						TimeStamp time.Time `json:"timeStamp"`
+						Average   *float64  `json:"average,omitempty"`
+						Total     *float64  `json:"total,omitempty"`
+						Count     *float64  `json:"count,omitempty"`
+						Maximum   *float64  `json:"maximum,omitempty"`
+						Minimum   *float64  `json:"minimum,omitempty"`
+					} `json:"data"`
+				}{
+					{
+						Metadatavalues: []struct {
+							Name struct {
+								Value          string `json:"value"`
+								LocalizedValue string `json:"localizedValue"`
+							} `json:"name"`
+							Value string `json:"value"`
+						}{
+							{Name: struct {
+								Value          string `json:"value"`
+								LocalizedValue string `json:"localizedValue"`
+							}{Value: "microsoft.resourceid", LocalizedValue: "microsoft.resourceid"},
+								Value: "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm-a"},
+						},
+						Data: []struct {
+							TimeStamp time.Time `json:"timeStamp"`
+							Average   *float64  `json:"average,omitempty"`
+							Total     *float64  `json:"total,omitempty"`
+							Count     *float64  `json:"count,omitempty"`
+							Maximum   *float64  `json:"maximum,omitempty"`
+							Minimum   *float64  `json:"minimum,omitempty"`
+						}{{TimeStamp: ts, Average: &avg1}},
+					},
+					{
+						Metadatavalues: []struct {
+							Name struct {
+								Value          string `json:"value"`
+								LocalizedValue string `json:"localizedValue"`
+							} `json:"name"`
+							Value string `json:"value"`
+						}{
+							{Name: struct {
+								Value          string `json:"value"`
+								LocalizedValue string `json:"localizedValue"`
+							}{Value: "microsoft.resourceid", LocalizedValue: "microsoft.resourceid"},
+								Value: "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm-b"},
+						},
+						Data: []struct {
+							TimeStamp time.Time `json:"timeStamp"`
+							Average   *float64  `json:"average,omitempty"`
+							Total     *float64  `json:"total,omitempty"`
+							Count     *float64  `json:"count,omitempty"`
+							Maximum   *float64  `json:"maximum,omitempty"`
+							Minimum   *float64  `json:"minimum,omitempty"`
+						}{{TimeStamp: ts, Average: &avg2}},
+					},
+				},
+			},
+		},
+	}
+
+	resources := map[string]dataquery.AzureMonitorResource{
+		strings.ToLower("/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm-a"): {
+			ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm-a"),
+		},
+		strings.ToLower("/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm-b"): {
+			ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm-b"),
+		},
+	}
+
+	datasource := &AzureMonitorDatasource{}
+	q := &types.AzureMonitorQuery{
+		GrafanaSql: true,
+		URL:        "/subscriptions/sub1/providers/microsoft.insights/metrics",
+		Params:     url.Values{"aggregation": {"Average"}},
+		Resources:  resources,
+		RefID:      "A",
+	}
+
+	frames, err := datasource.parseResponse(azData, q, "http://ds", "sub1")
+	require.NoError(t, err)
+	require.Len(t, frames, 2)
+
+	for _, f := range frames {
+		require.Len(t, f.Fields, 3, "each frame should have time, value, resourceName")
+		require.Equal(t, "time", f.Fields[0].Name)
+		require.Equal(t, "value", f.Fields[1].Name)
+		require.Equal(t, "resourceName", f.Fields[2].Name)
+	}
+
+	require.Equal(t, "vm-a", frames[0].Fields[2].At(0))
+	require.Equal(t, "vm-b", frames[1].Fields[2].At(0))
+}
+
+func TestAzureMonitorParseResponseGrafanaSqlFalseKeepsDefaultFieldNames(t *testing.T) {
+	resources := map[string]dataquery.AzureMonitorResource{}
+	resources[strings.ToLower("/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana")] =
+		dataquery.AzureMonitorResource{ResourceGroup: strPtr("grafanastaging"), ResourceName: strPtr("grafana")}
+	subscription := "12345678-aaaa-bbbb-cccc-123456789abc"
+
+	azData := loadTestFile(t, "azuremonitor/1-azure-monitor-response-avg.json")
+	datasource := &AzureMonitorDatasource{}
+	q := &types.AzureMonitorQuery{
+		GrafanaSql: false,
+		URL:        "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
+		Params: url.Values{
+			"aggregation": {"Average"},
+		},
+		Resources:    resources,
+		Subscription: subscription,
+	}
+	frames, err := datasource.parseResponse(azData, q, "http://ds", "")
+	require.NoError(t, err)
+	require.NotEmpty(t, frames)
+	for _, f := range frames {
+		require.Equal(t, data.TimeSeriesTimeFieldName, f.Fields[0].Name)
+		require.Equal(t, "Percentage CPU", f.Fields[1].Name)
+	}
+}
+
+func TestBuildQuerySetsGrafanaSqlFromJSON(t *testing.T) {
+	datasource := &AzureMonitorDatasource{}
+	q := backend.DataQuery{
+		RefID: "A",
+		TimeRange: backend.TimeRange{
+			From: time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC),
+			To:   time.Date(2018, 3, 15, 13, 34, 0, 0, time.UTC),
+		},
+		JSON: []byte(`{
+			"grafanaSql": true,
+			"subscription": "12345678-aaaa-bbbb-cccc-123456789abc",
+			"azureMonitor": {
+				"aggregation": "Average",
+				"metricNamespace": "Microsoft.Compute/virtualMachines",
+				"metricName": "Percentage CPU",
+				"timeGrain": "PT1M",
+				"resources": [{
+					"subscription": "12345678-aaaa-bbbb-cccc-123456789abc",
+					"resourceGroup": "grafanastaging",
+					"resourceName": "grafana",
+					"metricNamespace": "Microsoft.Compute/virtualMachines"
+				}]
+			}
+		}`),
+	}
+	result, err := datasource.buildQuery(q, types.DatasourceInfo{
+		Settings: types.AzureMonitorSettings{SubscriptionId: "default-subscription"},
+	})
+	require.NoError(t, err)
+	require.True(t, result.GrafanaSql)
+}
+
 func TestFindClosestAllowIntervalMS(t *testing.T) {
 	humanIntervalToMS := map[string]int64{
 		"3m":  180000,

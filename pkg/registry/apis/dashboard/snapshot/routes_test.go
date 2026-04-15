@@ -124,7 +124,7 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 			routes := GetRoutes(
 				snapshotService,
 				dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
-				acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboardsnapshots.ActionSnapshotsCreate}}),
+				acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 				map[string]common.OpenAPIDefinition{},
 				tt.setupStorageMock(t),
 				dashboardService,
