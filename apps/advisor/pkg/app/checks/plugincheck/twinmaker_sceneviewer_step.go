@@ -12,7 +12,7 @@ import (
 const (
 	twinmakerSceneViewerStepID  = "twinmaker_sceneviewer"
 	twinmakerAppPluginID        = "grafana-iot-twinmaker-app"
-	twinmakerSceneViewerMessage = "The SceneViewer panel in the TwinMaker App will stop working in Grafana 13.1"
+	twinmakerSceneViewerMessage = "The SceneViewer panel in the TwinMaker App will stop working in Grafana 13.1. Ignore or silence this warning if you are not using the SceneViewer panel."
 )
 
 var _ checks.Step = &twinmakerSceneViewerStep{}
