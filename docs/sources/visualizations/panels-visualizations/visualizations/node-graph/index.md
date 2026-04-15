@@ -266,11 +266,11 @@ Optional fields:
 | nodeRadius    | number        | Radius value in pixels. Used to manage node size.                                                                                                                                                                                                                                                                                                                        |
 | highlighted   | boolean       | Sets whether the node should be highlighted. Useful for example to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                                                                                                                                                                                                      |
 
-### Field configuration
+### Set field options
 
-The tables above reference `config.displayName`, `config.color.fixedColor`, and `field.config.color.mode`. These values are set in the `config` property of each field in the data frame response from your data source.
+The tables above reference `config.displayName`, `config.color.fixedColor`, and `field.config.color.mode`. Set these values in each field's `config` object in the data frame returned by your data source.
 
-If you are building a data source plugin or returning data frames from an API, set field configuration in the field definition. For example, in a JSON data frame response:
+If you are building a data source plugin or returning data frames from an API, define these field options in the field definition. For example, in a JSON data frame response:
 
 ```json
 {
@@ -300,11 +300,11 @@ If you are building a data source plugin or returning data frames from an API, s
 }
 ```
 
-Common field configuration properties used by the node graph panel:
+Common field properties used by the node graph panel:
 
 | Property                  | Description                                                                                                  |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `config.displayName`      | Human-readable label shown in tooltips and context menus instead of the raw field name.                       |
+| `config.displayName`      | Readable label shown in tooltips and context menus instead of the raw field name.                             |
 | `config.color.fixedColor` | Fixed color for `arc__*` fields (for example, `"green"`, `"red"`, `"#FF5733"`).                              |
 | `config.color.mode`       | Color mode for the `color` field. Use `"fixed"` for a single color or `"continuous-GrYlRd"` for a gradient.  |
 | `config.unit`             | Unit displayed alongside numeric values (for example, `"ms"`, `"percent"`, `"bytes"`).                       |
