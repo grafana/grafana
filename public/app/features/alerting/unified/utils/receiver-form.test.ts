@@ -486,6 +486,53 @@ describe('grafanaReceiverToFormValues', () => {
   });
 });
 
+describe('grafanaReceiverToFormValues with frozen RTKQ data', () => {
+  // Regression test for: TypeError: Cannot add property clientKey, object is not extensible
+  //
+  // RTKQ uses immer which deep-freezes all cached objects.
+  // grafanaChannelConfigToFormChannelValues must deep-clone settings so that
+  // react-hook-form can mutate them freely. Without the deep clone, RHF's internal
+  // set() crashes when trying to add properties to frozen nested objects like tlsConfig.
+
+  function makeFrozenReceiver(): GrafanaManagedContactPoint {
+    return {
+      name: 'webhook-receiver',
+      grafana_managed_receiver_configs: [
+        {
+          type: 'webhook',
+          settings: Object.freeze({
+            url: 'http://example.com',
+            tlsConfig: Object.freeze({
+              insecureSkipVerify: false,
+            }),
+          }),
+          secureFields: Object.freeze({
+            'tlsConfig.caCertificate': true,
+            'tlsConfig.clientKey': true,
+          }),
+        },
+      ],
+    };
+  }
+
+  it('should deep-clone nested settings when input has frozen objects', () => {
+    const [formValues] = grafanaReceiverToFormValues(makeFrozenReceiver());
+
+    expect(Object.isFrozen(formValues.items[0].settings)).toBe(false);
+    expect(Object.isFrozen(formValues.items[0].settings.tlsConfig)).toBe(false);
+  });
+
+  it('should not throw when writing to nested settings from frozen input', () => {
+    // Reproduces the exact error path where react-hook-form's set() writes to
+    // settings.tlsConfig.clientKey.
+    const [formValues] = grafanaReceiverToFormValues(makeFrozenReceiver());
+
+    expect(() => {
+      (formValues.items[0].settings.tlsConfig as Record<string, unknown>).clientKey = '';
+    }).not.toThrow();
+  });
+});
+
 describe('convertJsonToJiraField', () => {
   it('should convert nested objects to JSON strings ', () => {
     const input = {

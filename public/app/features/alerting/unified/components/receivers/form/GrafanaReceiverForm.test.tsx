@@ -2,6 +2,7 @@ import 'core-js/stable/structured-clone';
 import { type MemoryHistoryBuildOptions } from 'history';
 import { HttpResponse, delay, http } from 'msw';
 import { type ComponentProps, type ReactNode } from 'react';
+import { deepFreeze } from 'test/core/redux/reducerTester';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
@@ -605,6 +606,64 @@ describe('GrafanaReceiverForm', () => {
       expect(integrationPayload.secureFields).not.toHaveProperty('http_config.oauth2.tls_config.clientKey');
 
       expect(postRequestBody).toMatchSnapshot();
+    });
+
+    it('should restore TLS config values after switching integration type back to webhook with frozen (RTKQ-like) settings', async () => {
+      // Regression test for: TypeError: Cannot add property clientKey, object is not extensible
+      //
+      // RTKQ uses immer which deep-freezes all cached objects. grafanaChannelConfigToFormChannelValues
+      // must deep-clone settings so nested objects like tlsConfig are mutable. Without the deep clone,
+      // when the user switches integration type and back, ChannelSubForm passes frozen nested objects
+      // to react-hook-form's setValue. When TLS config fields then mount and register, RHF's internal
+      // set() tries to write into the frozen tlsConfig, causing:
+      //   TypeError: Cannot add property clientKey, object is not extensible
+      const contactPointName = 'webhook-frozen-test';
+      const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
+        .withIntegrations((integrationFactory) => [
+          integrationFactory
+            .webhook()
+            .params({
+              settings: {
+                url: 'http://example.com',
+                // tlsConfig has insecureSkipVerify but NOT the secure field values (caCertificate,
+                // clientCert, clientKey). This matches the real scenario where secure field
+                // values are stored separately. When TLS config fields register, RHF tries to ADD
+                // these properties to the frozen tlsConfig object → TypeError.
+                tlsConfig: {
+                  insecureSkipVerify: false,
+                },
+              },
+              secureFields: {
+                'tlsConfig.caCertificate': true,
+                'tlsConfig.clientCertificate': true,
+                'tlsConfig.clientKey': true,
+              },
+            })
+            .build(),
+        ])
+        .build({ id: 'webhook-id', name: contactPointName, metadata: { name: contactPointName } });
+
+      deepFreeze(contactPoint);
+
+      const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      // Switch to a different integration type
+      await clickSelectOption(ui.typeSelector.get(), 'Slack');
+      expect(ui.typeSelector.get()).toHaveTextContent('Slack');
+
+      // Switch back to Webhook — this triggers setValue(settingsFieldPath, initialValues.settings)
+      // where initialValues.settings.tlsConfig is a deep-frozen RTKQ cache reference.
+      await clickSelectOption(ui.typeSelector.get(), 'Webhook');
+      expect(ui.typeSelector.get()).toHaveTextContent('Webhook');
+
+      // Expand optional settings to render TLS config fields. Without the fix,
+      // RHF's set() can't write into the frozen tlsConfig and crashes.
+      await user.click(ui.webhook.optionalSettings.get());
+      const restoredTlsContainer = await ui.webhook.tlsConfig.container.find();
+      expect(ui.webhook.tlsConfig.clientKey.get(restoredTlsContainer)).toHaveValue('configured');
+      expect(ui.webhook.tlsConfig.clientKey.get(restoredTlsContainer)).toBeDisabled();
     });
   });
 
