@@ -194,9 +194,9 @@ func TestIntegration_SkipFolderTreeForAdmin(t *testing.T) {
 		assert.Equal(t, 3, len(result.Elements))
 		assert.Equal(t, 0, trackingSvc.GetCallCount(), "GetFolders should not be called for admin with SkipFolderTreeForAdmin")
 
-		// FolderName should be the default (General) since folder tree was not fetched
+		// FolderName should be empty since folder tree was not fetched
 		for _, elem := range result.Elements {
-			assert.Equal(t, "General", elem.Meta.FolderName, "FolderName should default to General when SkipFolderTreeForAdmin is set")
+			assert.Empty(t, elem.Meta.FolderName, "FolderName should be empty when SkipFolderTreeForAdmin is set")
 		}
 	})
 

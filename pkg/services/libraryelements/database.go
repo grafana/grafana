@@ -483,10 +483,11 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 					continue
 				}
 			}
-			title := dashboards.RootFolderName
+			var title string
 			if needsFolderTree {
-				if t := folderTree.GetTitle(element.FolderUID); t != "" {
-					title = t
+				title = folderTree.GetTitle(element.FolderUID)
+				if title == "" {
+					title = dashboards.RootFolderName
 				}
 			}
 			retDTOs = append(retDTOs, model.LibraryElementDTO{
