@@ -25,17 +25,17 @@ import (
 func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 	migration.Initialize(testutil.NewDataSourceProvider(testutil.StandardTestConfig), testutil.NewLibraryElementProvider(), migration.DefaultCacheTTL)
 	tests := []struct {
-		name                 string
-		inputObj             runtime.Object
-		operation            admission.Operation
-		expectedID           int64
-		migrationExpected    bool
-		expectedTitle        string
-		expectedDescription  string
-		expectedError        bool
-		fieldValidationMode  string
-		checkBOMStripping    bool
-		expectedPanelTitle   string
+		name                string
+		inputObj            runtime.Object
+		operation           admission.Operation
+		expectedID          int64
+		migrationExpected   bool
+		expectedTitle       string
+		expectedDescription string
+		expectedError       bool
+		fieldValidationMode string
+		checkBOMStripping   bool
+		expectedPanelTitle  string
 	}{
 		{
 			name: "should skip non-create/update operations",

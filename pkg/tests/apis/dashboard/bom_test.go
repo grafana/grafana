@@ -170,7 +170,7 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 					"name": "bom-test-v1",
 					"annotations": map[string]interface{}{
 						"grafana.app/managedBy": "provisioning",
-						"grafana.app/managerId":  "test-repo",
+						"grafana.app/managerId": "test-repo",
 					},
 				},
 				"spec": map[string]interface{}{
@@ -309,7 +309,7 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 				"metadata": map[string]interface{}{
 					"name": "bom-test-finalizer-simulation",
 					"annotations": map[string]interface{}{
-						"grafana.app/managedBy":     "provisioning",
+						"grafana.app/managedBy":      "provisioning",
 						"grafana.app/managerId":      "test-repo",
 						"grafana.app/sourcePath":     "/dashboards/test.json",
 						"grafana.app/sourceChecksum": "abc123",
