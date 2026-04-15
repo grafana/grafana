@@ -211,8 +211,9 @@ func TestManagedAuthorizer(t *testing.T) {
 			},
 		},
 		{
-			name: "terraform: new (simple ID) → new (different simple ID) allowed",
+			name: "terraform: new (simple ID) → new (different simple ID) blocked",
 			auth: user,
+			err:  "Cannot change Terraform manager ID; stable custom IDs are immutable",
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
 					Generation: 2,
@@ -257,7 +258,7 @@ func TestManagedAuthorizer(t *testing.T) {
 		{
 			name: "terraform: new (simple ID) → legacy (User-Agent) blocked (no reverting)",
 			auth: user,
-			err:  "Cannot revert to User-Agent based Terraform manager ID",
+			err:  "Cannot change Terraform manager ID back to User-Agent format",
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
 					Generation: 2,

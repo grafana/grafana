@@ -119,20 +119,30 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 	// HACK: Terraform managers get special treatment for identity changes.
 	// See isTerraformUserAgentID() for full explanation of why this exists.
 	//
-	// We allow one-way migration from deprecated User-Agent based IDs to stable custom IDs,
-	// but prevent reverting back to User-Agent format. This fixes the original design mistake
-	// of using HTTP User-Agent as a manager identifier.
+	// We allow one-way migration from deprecated User-Agent based IDs to stable custom IDs.
+	// Once migrated to a custom ID, that identity is locked (cannot be changed).
+	// User-Agent IDs can still be updated to other User-Agent IDs (for version updates).
 	if hasOld && managerNew.Kind == utils.ManagerKindTerraform && managerNew.Identity != managerOld.Identity {
 		oldIsUserAgent := isTerraformUserAgentID(managerOld.Identity)
 		newIsUserAgent := isTerraformUserAgentID(managerNew.Identity)
 
-		// Block: custom ID → User-Agent (reverting to unstable format)
+		// Block: custom ID → User-Agent (reverting to deprecated format)
 		if !oldIsUserAgent && newIsUserAgent {
 			return &apierrors.StatusError{ErrStatus: metav1.Status{
 				Status:  metav1.StatusFailure,
 				Code:    http.StatusForbidden,
 				Reason:  metav1.StatusReasonForbidden,
-				Message: "Cannot revert to User-Agent based Terraform manager ID; use stable custom IDs",
+				Message: "Cannot change Terraform manager ID back to User-Agent format; stable custom IDs are immutable",
+			}}
+		}
+
+		// Block: custom ID → different custom ID (identity is locked after migration)
+		if !oldIsUserAgent && !newIsUserAgent {
+			return &apierrors.StatusError{ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusForbidden,
+				Reason:  metav1.StatusReasonForbidden,
+				Message: "Cannot change Terraform manager ID; stable custom IDs are immutable",
 			}}
 		}
 	}
