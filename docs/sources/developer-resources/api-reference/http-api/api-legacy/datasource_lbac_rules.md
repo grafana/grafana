@@ -2,7 +2,8 @@
 aliases:
   - ../../../http_api/datasource_lbac_rules/ # /docs/grafana/next/http_api/datasource_lbac_rules/
   - ../../../developers/http_api/datasource_lbac_rules/ # /docs/grafana/next/developers/http_api/datasource_lbac_rules/
-canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/datasource_lbac_rules/
+  - ../../../../developer-resources/api-reference/http-api/datasource_lbac_rules/ #legacy folder
+canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/datasource_lbac_rules/
 description: Data Source LBAC rules API
 keywords:
   - grafana
@@ -20,6 +21,14 @@ title: Datasource LBAC rules HTTP API
 ---
 
 # Data Source LBAC rules API
+
+{{< admonition type="caution" >}}
+
+Starting in Grafana 13, `/api` endpoints are being deprecated. This change doesn't disrupt or break your current setup: legacy APIs are not being disabled and remain fully accessible and operative. However, `/api` routes will no longer be updated and **will be removed in a future major release.**
+
+To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+
+{{< /admonition >}}
 
 LBAC (Label-Based Access Control) rules can be set for teams.
 
