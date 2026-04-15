@@ -30,7 +30,6 @@ posts:
       - whats-new/2026-03-19-annotation-updates.md
       - whats-new/2026-04-01-copy-and-paste-panel-styles.md
       - whats-new/2026-03-26-stop-juggling-dashboards-with-section-level-variables.md
-      - whats-new/2026-03-30-visualization-presets.md
       - whats-new/2026-04-01-customize-suggested-dashboards-with-grafana-assistant.md
       - whats-new/2026-04-02-dashboards-faster-panel-creation-with-saved-queries-visualization-suggestions.md
       - whats-new/2026-03-20-saved-queries-new-interface-and-improved-filtering-experience.md
