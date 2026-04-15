@@ -17,10 +17,11 @@ keywords:
 labels:
   products:
     - cloud
-title: Datasource LBAC rules HTTP API
+title: Data source LBAC rules HTTP API
+menuTitle: Data source LBAC rules HTTP API
 ---
 
-# Data Source LBAC rules API
+# Data source LBAC rules API
 
 {{< admonition type="caution" >}}
 
