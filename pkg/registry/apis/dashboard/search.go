@@ -659,10 +659,6 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	return searchRequest, nil
 }
 
-func allowK6Folder(user identity.Requester) bool {
-	return user != nil && user.IsIdentityType(claims.TypeServiceAccount)
-}
-
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(obj)
