@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -70,11 +71,11 @@ func RunJobQueueController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	workerDeps, err := resolveWorkerDeps(deps.Config, &controllerCfg.ControllerConfig, deps.Registerer, tracer, controllerCfg.maxSyncWorkers)
+	workerDeps, err := resolveWorkerDeps(deps.Config, &controllerCfg.ControllerConfig, deps.Registerer, tracer, controllerCfg.maxSyncWorkers, controllerCfg.folderAPIVersion)
 	if err != nil {
 		return fmt.Errorf("resolve worker dependencies: %w", err)
 	}
-	workers, err := SetupWorkers(*workerDeps)
+	workers, metrics, err := SetupWorkers(*workerDeps)
 	if err != nil {
 		return fmt.Errorf("setup workers: %w", err)
 	}
@@ -99,6 +100,7 @@ func RunJobQueueController(deps server.OperatorDependencies) error {
 		jobHistoryWriter,
 		jobController.InsertNotifications(),
 		deps.Registerer,
+		metrics,
 		workers...,
 	)
 	if err != nil {
@@ -155,6 +157,7 @@ type jobQueueControllerConfig struct {
 	leaseRenewalInterval time.Duration
 	concurrentDrivers    int
 	maxSyncWorkers       int
+	folderAPIVersion     string
 }
 
 func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*jobQueueControllerConfig, error) {
@@ -164,6 +167,8 @@ func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Reg
 	}
 
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
+	folderAPIVersion := operatorSec.Key("folders_api_version").MustString(folderv1beta1.APIVersion)
+
 	return &jobQueueControllerConfig{
 		ControllerConfig:     *controllerCfg,
 		concurrentDrivers:    operatorSec.Key("concurrent_drivers").MustInt(3),
@@ -171,5 +176,6 @@ func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Reg
 		maxJobTimeout:        operatorSec.Key("max_job_timeout").MustDuration(20 * time.Minute),
 		jobInterval:          operatorSec.Key("job_interval").MustDuration(30 * time.Second),
 		leaseRenewalInterval: operatorSec.Key("lease_renewal_interval").MustDuration(30 * time.Second),
+		folderAPIVersion:     folderAPIVersion,
 	}, nil
 }

@@ -9,11 +9,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
+	deleteresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/deleteresources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
+	releaseresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/releaseresources"
+	jobsync "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -34,16 +36,17 @@ type WorkerSetupConfig struct {
 	MaxSyncWorkers        int
 	ExportEnabled         bool
 	FolderMetadataEnabled bool
+	FolderAPIVersion      string
 	URLProvider           func(ctx context.Context, namespace string) string
 }
 
 // SetupWorkers constructs all job workers from resolved dependencies.
 // This is the single source of truth for worker construction used by both operators.
-func SetupWorkers(cfg WorkerSetupConfig) ([]jobs.Worker, error) {
+func SetupWorkers(cfg WorkerSetupConfig) ([]jobs.Worker, *jobs.JobMetrics, error) {
 	metrics := jobs.RegisterJobMetrics(cfg.Registry)
 
-	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, cfg.Tracer, cfg.MaxSyncWorkers, metrics, cfg.FolderMetadataEnabled)
-	syncWorker := sync.NewSyncWorker(
+	syncer := jobsync.NewSyncer(jobsync.Compare, jobsync.FullSync, jobsync.IncrementalSync, cfg.Tracer, cfg.MaxSyncWorkers, metrics, cfg.FolderMetadataEnabled)
+	syncWorker := jobsync.NewSyncWorker(
 		cfg.Clients,
 		cfg.RepositoryResources,
 		cfg.StatusPatcher.Patch,
@@ -65,6 +68,7 @@ func SetupWorkers(cfg WorkerSetupConfig) ([]jobs.Worker, error) {
 		stageIfPossible,
 		metrics,
 		cfg.ExportEnabled,
+		cfg.FolderAPIVersion,
 	)
 
 	// Migration export preserves original names so the takeover
@@ -77,6 +81,7 @@ func SetupWorkers(cfg WorkerSetupConfig) ([]jobs.Worker, error) {
 		stageIfPossible,
 		metrics,
 		cfg.ExportEnabled,
+		cfg.FolderAPIVersion,
 	)
 	cleaner := migrate.NewNamespaceCleaner(cfg.Clients)
 	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
@@ -88,7 +93,11 @@ func SetupWorkers(cfg WorkerSetupConfig) ([]jobs.Worker, error) {
 
 	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, cfg.RepositoryResources, metrics)
 	moveWorker := move.NewWorker(syncWorker, stageIfPossible, cfg.RepositoryResources, metrics)
-	fixMetadataWorker := fixfoldermetadata.NewWorker()
+	fixMetadataWorker := fixfoldermetadata.NewWorker(resources.FolderGVKForVersion(cfg.FolderAPIVersion))
+
+	// Orphan cleanup workers
+	releaseResourcesWorker := releaseresourcespkg.NewWorker(cfg.ResourceLister, cfg.Clients, 10)
+	deleteResourcesWorker := deleteresourcespkg.NewWorker(cfg.ResourceLister, cfg.Clients, 10)
 
 	renderer := pullrequest.NewNoOpRenderer()
 	evaluator := pullrequest.NewEvaluator(renderer, cfg.Parsers, cfg.URLProvider, cfg.Registry)
@@ -102,15 +111,17 @@ func SetupWorkers(cfg WorkerSetupConfig) ([]jobs.Worker, error) {
 		deleteWorker,
 		moveWorker,
 		fixMetadataWorker,
+		releaseResourcesWorker,
+		deleteResourcesWorker,
 		prWorker,
 	}
 
-	return workers, nil
+	return workers, &metrics, nil
 }
 
 // resolveWorkerDeps builds a WorkerSetupConfig from an operator's ControllerConfig.
 // Both operators use this to bridge their config into the shared SetupWorkers function.
-func resolveWorkerDeps(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry prometheus.Registerer, tracer tracing.Tracer, maxSyncWorkers int) (*WorkerSetupConfig, error) {
+func resolveWorkerDeps(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry prometheus.Registerer, tracer tracing.Tracer, maxSyncWorkers int, folderAPIVersion string) (*WorkerSetupConfig, error) {
 	featureManager, err := featuremgmt.ProvideManagerService(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to provide feature manager: %w", err)
@@ -136,7 +147,7 @@ func resolveWorkerDeps(cfg *setting.Cfg, controllerCfg *ControllerConfig, regist
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled)
+	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled, folderAPIVersion)
 	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 
 	urlProvider, err := controllerCfg.URLProvider()
@@ -155,6 +166,7 @@ func resolveWorkerDeps(cfg *setting.Cfg, controllerCfg *ControllerConfig, regist
 		MaxSyncWorkers:        maxSyncWorkers,
 		ExportEnabled:         exportEnabled,
 		FolderMetadataEnabled: folderMetadataEnabled,
+		FolderAPIVersion:      folderAPIVersion,
 		URLProvider:           urlProvider,
 	}, nil
 }
