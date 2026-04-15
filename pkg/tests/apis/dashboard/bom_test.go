@@ -17,7 +17,7 @@ import (
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/tests/testutil"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // TestIntegrationDashboard_BOMs tests that BOMs in dashboards are handled correctly
