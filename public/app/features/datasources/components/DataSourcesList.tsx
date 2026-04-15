@@ -87,7 +87,7 @@ export function DataSourcesListView({
   const theme = useTheme2();
   const location = useLocation();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [keepAllRowsMounted, setKeepAllRowsMounted] = useState(false);
+  const isKeyboardNavigating = useIsKeyboardNavigating();
   const { datasourceFailureByUID } = useDatasourceFailureByUID();
   const favoritesCheckbox =
     favoriteDataSources?.enabled && handleFavoritesCheckboxChange && showFavoritesOnly !== undefined
@@ -113,26 +113,6 @@ export function DataSourcesListView({
     });
   }, [location]);
 
-  useEffect(() => {
-    const enableFullListForKeyboardNavigation = (event: KeyboardEvent) => {
-      if (event.key === 'Tab') {
-        setKeepAllRowsMounted(true);
-      }
-    };
-
-    const enableVirtualizationForPointerNavigation = () => {
-      setKeepAllRowsMounted(false);
-    };
-
-    window.addEventListener('keydown', enableFullListForKeyboardNavigation);
-    window.addEventListener('pointerdown', enableVirtualizationForPointerNavigation);
-
-    return () => {
-      window.removeEventListener('keydown', enableFullListForKeyboardNavigation);
-      window.removeEventListener('pointerdown', enableVirtualizationForPointerNavigation);
-    };
-  }, []);
-
   const rowGap = Number.parseFloat(theme.spacing(1)) || 8;
   const rowVirtualizer = useVirtualizer({
     count: dataSources.length,
@@ -143,7 +123,7 @@ export function DataSourcesListView({
       const measuredHeight = element.getBoundingClientRect().height;
       return measuredHeight > 0 ? measuredHeight : ROW_ESTIMATE_HEIGHT;
     },
-    overscan: keepAllRowsMounted ? VIRTUAL_LIST_KEYBOARD_OVERSCAN : VIRTUAL_LIST_OVERSCAN,
+    overscan: isKeyboardNavigating ? VIRTUAL_LIST_KEYBOARD_OVERSCAN : VIRTUAL_LIST_OVERSCAN,
     gap: rowGap,
     initialRect: VIRTUAL_LIST_INITIAL_RECT,
   });
@@ -264,6 +244,32 @@ function DataSourcesListVirtualized({
       </ul>
     </div>
   );
+}
+
+function useIsKeyboardNavigating(): boolean {
+  const [isKeyboardNavigating, setIsKeyboardNavigating] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Tab') {
+        setIsKeyboardNavigating(true);
+      }
+    };
+
+    const handlePointerDown = () => {
+      setIsKeyboardNavigating(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('pointerdown', handlePointerDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, []);
+
+  return isKeyboardNavigating;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
