@@ -8,6 +8,8 @@
 
 import { type z } from 'zod';
 
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
+import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
@@ -93,6 +95,18 @@ export const addPanelCommand: MutationCommand<AddPanelPayload> = {
               gridItem.setState(updates);
             }
           }
+        }
+      }
+
+      if (layoutItem?.spec?.conditionalRendering) {
+        if (isAutoGrid) {
+          const gridItem = vizPanel.parent;
+          if (gridItem instanceof AutoGridItem) {
+            const group = ConditionalRenderingGroup.deserialize(layoutItem.spec.conditionalRendering);
+            gridItem.setState({ conditionalRendering: group });
+          }
+        } else {
+          warnings.push('conditionalRendering ignored: show/hide rules are only supported with Auto grid layout.');
         }
       }
 
