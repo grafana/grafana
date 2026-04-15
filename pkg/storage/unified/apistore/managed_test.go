@@ -189,14 +189,14 @@ func TestManagedAuthorizer(t *testing.T) {
 			},
 		},
 		{
-			name: "terraform: legacy → new format allowed (migration)",
+			name: "terraform: legacy (User-Agent) → new (simple ID) allowed (migration)",
 			auth: user,
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
 					Generation: 2,
 					Annotations: map[string]string{
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
-						utils.AnnoKeyManagerIdentity: "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0",
+						utils.AnnoKeyManagerIdentity: "grafana-terraform-provider",
 					},
 				},
 			},
@@ -211,14 +211,14 @@ func TestManagedAuthorizer(t *testing.T) {
 			},
 		},
 		{
-			name: "terraform: new → new format allowed (version updates)",
+			name: "terraform: new (simple ID) → new (different simple ID) allowed",
 			auth: user,
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
 					Generation: 2,
 					Annotations: map[string]string{
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
-						utils.AnnoKeyManagerIdentity: "Terraform/1.6.0 (+https://www.terraform.io) terraform-provider-grafana/v4.1.0",
+						utils.AnnoKeyManagerIdentity: "my-terraform-provider-v2",
 					},
 				},
 			},
@@ -227,20 +227,20 @@ func TestManagedAuthorizer(t *testing.T) {
 					Generation: 1,
 					Annotations: map[string]string{
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
-						utils.AnnoKeyManagerIdentity: "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0",
+						utils.AnnoKeyManagerIdentity: "my-terraform-provider",
 					},
 				},
 			},
 		},
 		{
-			name: "terraform: legacy → legacy allowed",
+			name: "terraform: legacy (User-Agent) → legacy (different User-Agent) allowed",
 			auth: user,
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
 					Generation: 2,
 					Annotations: map[string]string{
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
-						utils.AnnoKeyManagerIdentity: "Terraform/crossTF000 (+https://www.terraform.io) terraform-provider-grafana/crossplane-v2",
+						utils.AnnoKeyManagerIdentity: "Terraform/1.6.0 (+https://www.terraform.io) terraform-provider-grafana/v4.0.0",
 					},
 				},
 			},
@@ -255,7 +255,7 @@ func TestManagedAuthorizer(t *testing.T) {
 			},
 		},
 		{
-			name: "terraform: new → legacy blocked (no reverting)",
+			name: "terraform: new (simple ID) → legacy (User-Agent) blocked (no reverting)",
 			auth: user,
 			err:  "Cannot revert to legacy Terraform manager ID",
 			obj: &dashboard.Dashboard{
@@ -263,7 +263,7 @@ func TestManagedAuthorizer(t *testing.T) {
 					Generation: 2,
 					Annotations: map[string]string{
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
-						utils.AnnoKeyManagerIdentity: "Terraform/crossTF000 (+https://www.terraform.io) terraform-provider-grafana/crossplane",
+						utils.AnnoKeyManagerIdentity: "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0",
 					},
 				},
 			},
@@ -272,7 +272,7 @@ func TestManagedAuthorizer(t *testing.T) {
 					Generation: 1,
 					Annotations: map[string]string{
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
-						utils.AnnoKeyManagerIdentity: "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0",
+						utils.AnnoKeyManagerIdentity: "grafana-terraform-provider",
 					},
 				},
 			},
