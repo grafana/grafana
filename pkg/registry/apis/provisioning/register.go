@@ -704,7 +704,6 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	}
 
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
-	b.repoStore = repositoryStorage
 	b.repoLister = repository.NewStorageLister(repositoryStorage)
 
 	// Create admission handler and register mutators/validators
@@ -757,24 +756,25 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create connection storage: %w", err)
 	}
 	connectionStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, connectionsStore)
-	b.connectionStore = connectionsStore
 
 	// When serving a non-storage version (e.g. v1beta1), wrap the CRUD stores
 	// so that List re-stamps each item's apiVersion to match the served version.
-	var repoStorage rest.Storage = repositoryStorage
-	var connStorage rest.Storage = connectionsStore
-	var jobStorage rest.Storage = jobStore
+	// See grafanaregistry.VersionedStore for details on why this is necessary.
 	if b.gv.Version != provisioning.VERSION {
-		repoStorage = grafanaregistry.NewVersionedStore(repositoryStorage, b.gv)
-		connStorage = grafanaregistry.NewVersionedStore(connectionsStore, b.gv)
-		jobStorage = grafanaregistry.NewVersionedStore(jobStore, b.gv)
+		storage[provisioning.RepositoryResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(repositoryStorage, b.gv)
+		storage[provisioning.ConnectionResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(connectionsStore, b.gv)
+		storage[provisioning.JobResourceInfo.StoragePath()] = grafanaregistry.NewVersionedStore(jobStore, b.gv)
+		b.repoStore = grafanaregistry.NewVersionedStore(repositoryStorage, b.gv)
+		b.connectionStore = grafanaregistry.NewVersionedStore(connectionsStore, b.gv)
+	} else {
+		storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
+		storage[provisioning.ConnectionResourceInfo.StoragePath()] = connectionsStore
+		storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
+		b.repoStore = repositoryStorage
+		b.connectionStore = connectionsStore
 	}
-
-	storage[provisioning.JobResourceInfo.StoragePath()] = jobStorage
-	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repoStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
-	storage[provisioning.ConnectionResourceInfo.StoragePath()] = connStorage
 	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
 	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = NewConnectionRepositoriesConnector(b)
 
