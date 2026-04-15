@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -14,12 +15,12 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
-
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	utilsOrig "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 )
 
@@ -78,8 +79,8 @@ func (s *preferenceStorage) List(ctx context.Context, options *internalversion.L
 		return nil, err
 	}
 	ns := requestK8s.NamespaceValue(ctx)
-	if user.GetIdentityType() == authlib.TypeAccessPolicy {
-		user = nil // nill user can see everything
+	if user.GetIdentityType() != authlib.TypeUser {
+		return nil, fmt.Errorf("only users may list preferences")
 	}
 	return s.sql.ListPreferences(ctx, ns, user, true)
 }
@@ -108,8 +109,6 @@ func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav
 		default:
 			return false, fmt.Errorf("unsupported name")
 		}
-	}, func(p *preferenceModel) bool {
-		return true
 	})
 	if err != nil {
 		return nil, err
@@ -209,7 +208,23 @@ func (s *preferenceStorage) Create(ctx context.Context, obj runtime.Object, crea
 func (s *preferenceStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	old, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
-		return nil, false, err
+		// Allows upsert with PATCH
+		if k8serrors.IsNotFound(err) {
+			p := &preferences.Preferences{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Preferences",
+					APIVersion: preferences.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: requestK8s.NamespaceValue(ctx),
+				},
+			}
+			p.UID = gapiutil.CalculateClusterWideUID(p)
+			old = p
+		} else {
+			return nil, false, err
+		}
 	}
 
 	obj, err := objInfo.UpdatedObject(ctx, old)
@@ -315,6 +330,7 @@ func asPreferencesResource(ns string, p *preferenceModel) preferences.Preference
 		}
 	}
 
+	obj.UID = gapiutil.CalculateClusterWideUID(&obj)
 	return obj
 }
 

@@ -119,8 +119,7 @@ var dashboardKind = dashboard.DashboardResourceInfo.GroupVersionKind().Kind
 
 func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, baseURL string, change repository.VersionedFileChange, opts provisioning.PullRequestJobOptions, parser resources.Parser, shouldRender bool) fileChangeInfo {
 	if change.Action == repository.FileActionDeleted {
-		// TODO: read the old and verify
-		return fileChangeInfo{Change: change, Error: "delete feedback not yet implemented"}
+		return e.evaluateDeletedFile(ctx, repo, baseURL, change, parser)
 	}
 
 	info := fileChangeInfo{Change: change}
@@ -189,6 +188,38 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 					info.Error = err.Error()
 				}
 			}
+		}
+	}
+
+	return info
+}
+
+// evaluateDeletedFile is best-effort: it tries to read and parse the file at
+// the previous ref to extract metadata (kind, title, GrafanaURL)
+func (e *evaluator) evaluateDeletedFile(ctx context.Context, repo repository.Reader, baseURL string, change repository.VersionedFileChange, parser resources.Parser) fileChangeInfo {
+	info := fileChangeInfo{Change: change}
+
+	fileInfo, err := repo.Read(ctx, change.Path, change.PreviousRef)
+	if err != nil {
+		return info
+	}
+
+	info.Parsed, err = parser.Parse(ctx, fileInfo)
+	if err != nil {
+		return info
+	}
+
+	obj := info.Parsed.Obj
+	info.Title = info.Parsed.Meta.FindTitle(obj.GetName())
+
+	if info.Parsed.GVK.Kind == dashboardKind {
+		urlBuilder, err := url.Parse(baseURL)
+		if err != nil {
+			return info
+		}
+		if info.Parsed.Existing != nil {
+			grafanaURL := urlBuilder.JoinPath("d", obj.GetName(), slugify.Slugify(info.Title))
+			info.GrafanaURL = grafanaURL.String()
 		}
 	}
 

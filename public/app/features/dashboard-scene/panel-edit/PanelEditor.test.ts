@@ -146,7 +146,7 @@ describe('PanelEditor', () => {
 
       deactivate = activateFullSceneTree(dashboard);
 
-      expect(dashboard.state.editPane.getSelectedObject()).toBeNull();
+      expect(dashboard.state.editPane.getSelectedObject()).toBeUndefined();
     });
   });
 

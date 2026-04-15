@@ -50,10 +50,10 @@ func TestCrossNamespaceIsolation_FolderSync(t *testing.T) {
 	t.Run("create repositories in different namespaces", func(t *testing.T) {
 		// Create orgA repository with folder sync
 		orgARepoPath := t.TempDir()
-		orgAHelper.CreateRepo(t, common.TestRepo{
-			Name:   orgARepoName,
-			Target: "folder", // Folder sync
-			Path:   orgARepoPath,
+		orgAHelper.CreateLocalRepo(t, common.TestRepo{
+			Name:       orgARepoName,
+			SyncTarget: "folder",
+			Path:       orgARepoPath,
 			Copies: map[string]string{
 				"simple-dashboard.json": "team-alpha/dashboard1.json",
 			},
@@ -63,10 +63,10 @@ func TestCrossNamespaceIsolation_FolderSync(t *testing.T) {
 
 		// Create orgB repository with folder sync
 		orgBRepoPath := t.TempDir()
-		orgBHelper.CreateRepo(t, common.TestRepo{
-			Name:   orgBRepoName,
-			Target: "folder", // Folder sync
-			Path:   orgBRepoPath,
+		orgBHelper.CreateLocalRepo(t, common.TestRepo{
+			Name:       orgBRepoName,
+			SyncTarget: "folder",
+			Path:       orgBRepoPath,
 			Copies: map[string]string{
 				"simple-dashboard.json": "team-beta/dashboard2.json",
 			},
@@ -245,11 +245,11 @@ spec:
 
 		// Create repo in orgA that syncs this dashboard
 		const repoName = "namespace-override-test"
-		orgAHelper.CreateRepo(t, common.TestRepo{
-			Name:     repoName,
-			Target:   "folder",
-			Path:     repoPath,
-			SkipSync: true,
+		orgAHelper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repoName,
+			SyncTarget: "folder",
+			Path:       repoPath,
+			SkipSync:   true,
 		})
 
 		// Sync the repository
@@ -296,11 +296,12 @@ spec:
 		repoPath := t.TempDir()
 		const repoName = "files-endpoint-test"
 
-		orgAHelper.CreateRepo(t, common.TestRepo{
-			Name:     repoName,
-			Target:   "folder",
-			Path:     repoPath,
-			SkipSync: true,
+		orgAHelper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repoName,
+			SyncTarget: "folder",
+			Workflows:  []string{"write"},
+			Path:       repoPath,
+			SkipSync:   true,
 		})
 
 		// Create a dashboard JSON that specifies orgB's namespace
