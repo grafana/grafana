@@ -21,15 +21,12 @@ function editPanelUrl() {
   return new URLSearchParams({ editPanel: PANEL_ID });
 }
 
-// The "+" add buttons in the sidebar section headers are wrapped in a div[role="button"]
-// (SidebarCollapsableHeader) with stopPropagation. getByRole('button') matches the wrapper
-// first and swallows the click, so we target the actual <button> element directly.
 function addQueryOrExpressionButton(page: Page) {
-  return page.locator('button[aria-label="Add query or expression"]');
+  return page.getByLabel('Add query or expression');
 }
 
 function addTransformationButton(page: Page) {
-  return page.locator('button[aria-label="Add transformation"]');
+  return page.getByLabel('Add transformation');
 }
 
 // ---------------------------------------------------------------------------
@@ -353,7 +350,7 @@ test.describe('Query Editor Next: Expression Flows', { tag: ['@panels', '@queryE
     await expect(page.getByRole('button', { name: 'SQL', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'SQL', exact: true }).click();
 
-    await expect(page.locator('.monaco-editor').first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('sql-expression-editor')).toBeVisible({ timeout: 15_000 });
   });
 });
 
