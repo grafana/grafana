@@ -12,6 +12,7 @@ import (
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/playlist/pkg/apis/manifestdata"
+	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	playlistapp "github.com/grafana/grafana/apps/playlist/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -24,11 +25,6 @@ var (
 	_ appsdkapiserver.AppInstaller = (*AppInstaller)(nil)
 )
 
-const (
-	playlistAPIGroup = "playlist.grafana.app"
-	playlistResource = "playlists"
-)
-
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
 	features     featuremgmt.FeatureToggles
@@ -36,23 +32,27 @@ type AppInstaller struct {
 	logger       log.Logger
 }
 
-func RegisterAppInstaller(
-	features featuremgmt.FeatureToggles,
-	accessControlService accesscontrol.Service,
-	accessClient authlib.AccessClient,
-) (*AppInstaller, error) {
-	if err := DeclareFixedRoles(accessControlService); err != nil {
-		return nil, fmt.Errorf("declaring fixed roles: %w", err)
+// ProvidePlaylistRoles declares the fixed RBAC roles for playlists and registers
+// them immediately. This must be wired in single-tenant mode; MT flavors that
+// manage roles differently can omit it.
+func ProvidePlaylistRoles(service accesscontrol.Service) error {
+	if err := DeclareFixedRoles(service); err != nil {
+		return fmt.Errorf("declaring fixed roles: %w", err)
 	}
-	// Register fixed roles immediately when AC has already been initialized.
-	// This avoids startup-order races where playlist roles are declared after
-	// initial role registration and would otherwise not be effective until next reload.
-	if roleRegistry, ok := accessControlService.(accesscontrol.RoleRegistry); ok {
+	// Register immediately in case the role registry has already been seeded,
+	// so playlist roles are effective without requiring a server restart.
+	if roleRegistry, ok := service.(accesscontrol.RoleRegistry); ok {
 		if err := roleRegistry.RegisterFixedRoles(context.Background()); err != nil {
-			return nil, fmt.Errorf("registering fixed roles: %w", err)
+			return fmt.Errorf("registering fixed roles: %w", err)
 		}
 	}
+	return nil
+}
 
+func RegisterAppInstaller(
+	features featuremgmt.FeatureToggles,
+	accessClient authlib.AccessClient,
+) (*AppInstaller, error) {
 	installer := &AppInstaller{
 		features:     features,
 		accessClient: accessClient,
@@ -103,8 +103,8 @@ func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 			}
 			checkRsp, err := p.accessClient.Check(ctx, authInfo, authlib.CheckRequest{
 				Verb:        attr.GetVerb(),
-				Group:       playlistAPIGroup,
-				Resource:    playlistResource,
+				Group:       playlistv1.APIGroup,
+				Resource:    playlistv1.PlaylistSchema().Plural(),
 				Namespace:   attr.GetNamespace(),
 				Name:        attr.GetName(),
 				Subresource: attr.GetSubresource(),
