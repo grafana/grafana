@@ -553,7 +553,7 @@ export class LokiDatasource
       return res.values ?? [];
     }
 
-    // detected_labels has different structure then other metadata responses
+    // detected_labels has different structure than other metadata responses
     if (res && 'detectedLabels' in res && Array.isArray(res.detectedLabels)) {
       return res.detectedLabels ?? [];
     }
