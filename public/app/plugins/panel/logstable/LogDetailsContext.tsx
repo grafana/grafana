@@ -5,10 +5,10 @@ import { type LogRowModel } from '@grafana/data';
 export interface LogDetailsContextData {
   currentLog: LogRowModel | undefined;
   closeDetails: () => void;
-  detailsDisplayed: (log: LogRowModel) => boolean;
+  detailsDisplayed: (rowIndex: number) => boolean;
   enableLogDetails: boolean;
   showDetails: LogRowModel[];
-  toggleDetails: (log: LogRowModel) => void;
+  toggleDetails: (rowIndex: number) => void;
 }
 
 export const emptyContextData: LogDetailsContextData = {
@@ -36,11 +36,7 @@ export interface Props {
   logs: LogRowModel[];
 }
 
-export const LogDetailsContextProvider = ({
-  children,
-  enableLogDetails,
-  logs,
-}: Props) => {
+export const LogDetailsContextProvider = ({ children, enableLogDetails, logs }: Props) => {
   const [showDetails, setShowDetails] = useState<LogRowModel[]>([]);
   const [currentLog, setCurrentLog] = useState<LogRowModel | undefined>(undefined);
 
@@ -63,13 +59,24 @@ export const LogDetailsContextProvider = ({
   }, []);
 
   const detailsDisplayed = useCallback(
-    (log: LogRowModel) => !!showDetails.find((shownLog) => shownLog.uid === log.uid),
-    [showDetails]
+    (rowIndex: number) => {
+      const log = logs.at(rowIndex);
+      if (!log) {
+        return false;
+      }
+      return !!showDetails.find((shownLog) => shownLog.uid === log.uid);
+    },
+    [logs, showDetails]
   );
 
   const toggleDetails = useCallback(
-    (log: LogRowModel) => {
+    (rowIndex: number) => {
       if (!enableLogDetails) {
+        return;
+      }
+      const log = logs.at(rowIndex);
+      if (!log) {
+        console.error(`LogDetailsContext: undefined log at rowIndex ${rowIndex}`);
         return;
       }
       const found = showDetails.find((stateLog) => stateLog.uid === log.uid);
@@ -85,7 +92,7 @@ export const LogDetailsContextProvider = ({
         setCurrentLog(log);
       }
     },
-    [currentLog, enableLogDetails, showDetails]
+    [currentLog, enableLogDetails, logs, showDetails]
   );
 
   return (

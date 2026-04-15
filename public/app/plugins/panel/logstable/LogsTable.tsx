@@ -243,15 +243,17 @@ export const LogsTable = ({
   );
 
   const logRows = useMemo(() => {
-    const logs = dataFrameToLogsModel(
-      panelData.series,
-      panelData.request?.intervalMs,
-      undefined,
-      panelData.request?.targets,
-      false
-    );
+    const logs = rawTableFrame
+      ? dataFrameToLogsModel(
+          [rawTableFrame],
+          panelData.request?.intervalMs,
+          undefined,
+          panelData.request?.targets,
+          false
+        )
+      : null;
     return logs?.rows || [];
-  }, [panelData.request?.intervalMs, panelData.request?.targets, panelData.series]);
+  }, [panelData.request?.intervalMs, panelData.request?.targets, rawTableFrame]);
 
   const noSeries = data.series.length === 0;
   const noValues = data.series[frameIndex]?.fields?.[0]?.values?.length === 0;

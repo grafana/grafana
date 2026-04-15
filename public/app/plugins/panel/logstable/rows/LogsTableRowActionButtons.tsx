@@ -13,6 +13,7 @@ import {
 } from '@grafana/ui';
 import { type LogsFrame } from 'app/features/logs/logsFrame';
 
+import { useLogDetailsContext } from '../LogDetailsContext';
 import { type BuildLinkToLogLine } from '../types';
 
 interface Props extends CustomCellRendererProps {
@@ -31,15 +32,20 @@ export function LogsTableRowActionButtons(props: Props) {
   const theme = useTheme2();
   const [isInspecting, setIsInspecting] = useState(false);
   const styles = getStyles(theme);
+  const { enableLogDetails, detailsDisplayed, toggleDetails } = useLogDetailsContext();
 
   const handleViewClick = () => {
     setIsInspecting(true);
   };
 
+  const handleDetailsClick = () => {
+    toggleDetails(rowIndex);
+  };
+
   return (
     <>
       <div className={styles.container}>
-        {showInspectLogLine && (
+        {!enableLogDetails && showInspectLogLine && (
           <div className={styles.buttonWrapper}>
             <IconButton
               className={styles.inspectButton}
@@ -50,6 +56,21 @@ export function LogsTableRowActionButtons(props: Props) {
               size="md"
               name="eye"
               onClick={handleViewClick}
+              tabIndex={0}
+            />
+          </div>
+        )}
+        {enableLogDetails && (
+          <div className={styles.buttonWrapper}>
+            <IconButton
+              className={styles.inspectButton}
+              tooltip={t('explore.logs-table.action-buttons.show-details', 'Show details')}
+              variant={detailsDisplayed(rowIndex) ? 'primary' : 'secondary'}
+              aria-label={t('explore.logs-table.action-buttons.show-details', 'Show details')}
+              tooltipPlacement="top"
+              size="md"
+              name="eye"
+              onClick={handleDetailsClick}
               tabIndex={0}
             />
           </div>
