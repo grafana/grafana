@@ -144,7 +144,7 @@ jobs:
           GOARM: ${{ matrix.goarm }}
         run: make build-go
 
-  verify-rpm-stig:
+  verify-pkg-stig:
     needs: detect-changes
     if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && needs.detect-changes.outputs.rpm-packaging == 'true')
     name: verify rpm stig (linux/amd64)
@@ -186,13 +186,22 @@ jobs:
           BUILD_VERSION: '0.0.0'
           BUILD_NUMBER: stig-test
         run: make build-rpm BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
+      - name: Build DEB
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          BUILD_VERSION: '0.0.0'
+          BUILD_NUMBER: stig-test
+        run: make build-deb BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"
       - name: Cache SCAP datastream
         uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # zizmor: ignore[cache-poisoning] -- v5.0.4; key is pinned and content is SHA512-verified
         with:
           path: /tmp/ssg-rhel9-ds.xml
           key: ssg-rhel9-ds-0.1.80
       - name: Verify RPM permissions (DISA-STIG)
-        run: sudo bash scripts/verify-rpm-stig.sh dist/grafana_0.0.0_stig-test_linux_amd64.rpm
+        run: sudo bash scripts/verify-pkg-stig.sh dist/grafana_0.0.0_stig-test_linux_amd64.rpm
+      - name: Verify DEB permissions (DISA-STIG)
+        run: sudo bash scripts/verify-pkg-stig.sh dist/grafana_0.0.0_stig-test_linux_amd64.deb
 
   # Job required by branch rules: runs even when detect-changes or build jobs were skipped,
   # and fails if any build-go or build-go-enterprise matrix job failed.
@@ -201,7 +210,7 @@ jobs:
       - detect-changes
       - build-go
       - build-go-enterprise
-      - verify-rpm-stig
+      - verify-pkg-stig
     if: always()
     name: All steps completed
     runs-on: ubuntu-latest

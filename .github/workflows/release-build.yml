@@ -412,8 +412,8 @@ jobs:
           path: upload/artifacts-deb-rpm-${{ matrix.name }}
           retention-days: 1
 
-  verify-rpm-stig:
-    name: verify rpm stig (linux-amd64)
+  verify-pkg-stig:
+    name: verify pkg stig (linux-amd64)
     runs-on: ubuntu-x64-large
     needs:
       - build-deb-rpm
@@ -441,8 +441,12 @@ jobs:
           key: ssg-rhel9-ds-0.1.80
       - name: Verify RPM permissions (DISA-STIG)
         run: |
-          for RPM in dist/*.rpm; do break; done
-          sudo bash scripts/verify-rpm-stig.sh "$RPM"
+          for PKG in dist/*.rpm; do break; done
+          sudo bash scripts/verify-pkg-stig.sh "$PKG"
+      - name: Verify DEB permissions (DISA-STIG)
+        run: |
+          for PKG in dist/*.deb; do break; done
+          sudo bash scripts/verify-pkg-stig.sh "$PKG"
 
   build-docker-alpine:
     name: docker (alpine) / ${{ matrix.name }}

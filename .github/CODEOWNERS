@@ -1082,7 +1082,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/build-deb.sh @grafana/grafana-backend-services-squad
 /scripts/build-rpm.sh @grafana/grafana-backend-services-squad
 /scripts/build-targz.sh @grafana/grafana-backend-services-squad
-scripts/verify-rpm-stig.sh @grafana/grafana-backend-services-squad
+scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/check-breaking-changes.sh @grafana/grafana-frontend-platform
 /scripts/ci-* @grafana/grafana-developer-enablement-squad
 /scripts/publish-npm-packages.sh @grafana/grafana-developer-enablement-squad @grafana/grafana-frontend-platform

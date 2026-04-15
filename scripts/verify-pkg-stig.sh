@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Verify RPM file permissions satisfy DISA-STIG requirements using
-# OpenSCAP OVAL evaluation on a Linux system with oscap and rpm installed.
+# Verify RPM or DEB file permissions satisfy DISA-STIG requirements using
+# OpenSCAP OVAL evaluation on a Linux system with oscap installed.
 #
 # Uses oscap oval eval (not xccdf eval) so no RHEL9 platform check is
-# required — works on any Linux distro that has the rpm and oscap tools.
+# required — works on any Linux distro that has oscap and rpm/dpkg tools.
 #
-# Usage: verify-rpm-stig.sh <path-to.rpm>
+# Usage: verify-pkg-stig.sh <path-to.rpm|path-to.deb>
 
 if [[ "$(uname -s)" != "Linux" ]]; then
   echo "error: this script must be run on Linux" >&2
   exit 1
 fi
 
-RPM_PATH="${1:?Usage: verify-rpm-stig.sh <path-to.rpm>}"
+PKG_PATH="${1:?Usage: verify-pkg-stig.sh <path-to.rpm|path-to.deb>}"
 
 SSG_VERSION="0.1.80"
 SSG_SHA512="bab6f8eb6feece70ec6d39778a20a4d9386e4a449984c0a4d5a72fdb2d1fbc2dcdb3c35f178d4f745c35df1c31a4e15920ff2c19fc2f77263844ae4910de0f3a"
@@ -31,7 +31,18 @@ if [[ ! -f "$SSG_DS" ]]; then
   tar -xzOf "$TARBALL" "scap-security-guide-${SSG_VERSION}/ssg-rhel9-ds.xml" > "$SSG_DS"
 fi
 
-rpm --upgrade --nodeps --force --ignorearch "$RPM_PATH"
+case "$PKG_PATH" in
+  *.rpm)
+    rpm --upgrade --nodeps --force --ignorearch "$PKG_PATH"
+    ;;
+  *.deb)
+    dpkg --install --force-architecture --force-depends "$PKG_PATH"
+    ;;
+  *)
+    echo "error: unsupported package format: $PKG_PATH" >&2
+    exit 1
+    ;;
+esac
 
 # Datastream and OVAL component IDs within ssg-rhel9-ds.xml.
 DS_ID="scap_org.open-scap_datastream_from_xccdf_ssg-rhel9-xccdf.xml"
