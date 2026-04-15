@@ -5531,6 +5531,9 @@
       "cancel-loading-dashboard": "Anuluj wczytywanie pulpitu"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "",
+      "provisioning-message": "",
+      "provisioning-title": "",
       "text": {
         "not-found": "Nie znaleziono"
       }
@@ -6570,6 +6573,10 @@
       "sql-expressions-title": "Wyrażenia SQL",
       "title-add-another-transformation": "Dodaj inną transformację",
       "view-all": "Wyświetl wszystko"
+    },
+    "transformation-type-picker": {
+      "sql-cta-button": "",
+      "sql-cta-description": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "Po usunięciu wszystkich transformacji nastąpi powrót do głównego ekranu wyboru."
@@ -8896,6 +8903,9 @@
     "show-all-spans": "Pokaż wszystkie zakresy",
     "span-bar": {
       "tooltip-critical-path": "Segment na <1>ścieżce krytycznej</1> ogólnego śladu / żądania / przepływu pracy."
+    },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": ""
     },
     "span-bar-section": {
       "description-link": "Dodaj dodatkowe informacje obok usługi i operacji w wierszu paska zakresu w widoku śledzenia.",

@@ -6512,6 +6512,10 @@
       "title-add-another-transformation": "Add another transformation",
       "view-all": "View all"
     },
+    "transformation-type-picker": {
+      "sql-cta-button": "Add SQL expression",
+      "sql-cta-description": "Prefer SQL? Add a SQL expression to your queries instead."
+    },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "By deleting all transformations, you will go back to the main selection screen."
     },
@@ -8809,6 +8813,9 @@
     "show-all-spans": "Show all spans",
     "span-bar": {
       "tooltip-critical-path": "A segment on the <1>critical path</1> of the overall trace / request / workflow."
+    },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": "Recovered by Adaptive Traces."
     },
     "span-bar-section": {
       "description-link": "Add additional info next to the service and operation on a span bar row in the trace view.",

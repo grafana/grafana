@@ -1103,7 +1103,7 @@
       "unknown": "Desconocido"
     },
     "disabled-tooltip": {
-      "content-appear-compatible-datasources": "Parece que no tiene ninguna fuente de datos compatible."
+      "content-appear-compatible-datasources": "Parece que no tienes ninguna fuente de datos compatible."
     },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Evaluaciones para iniciar alerta",
@@ -1601,19 +1601,19 @@
     },
     "home": {
       "irm-card-description": "Unifique la respuesta de guardia, las alertas y los incidentes con Grafana Cloud IRM.",
-      "irm-card-item-1": "Gestione los horarios de guardia con su calendario o Terraform.",
-      "irm-card-item-2": "Responda a los incidentes a través de la web, la aplicación, Slack u otros canales.",
-      "irm-card-item-3": "Identifique las causas raíz con Grafana SIFT, que funciona con IA.",
-      "irm-card-item-4": "Analice incidentes pasados para mejorar la respuesta y la resiliencia.",
+      "irm-card-item-1": "Gestiona los horarios de guardia con tu calendario o Terraform.",
+      "irm-card-item-2": "Responde a los incidentes a través de la web, la aplicación, Slack u otros canales.",
+      "irm-card-item-3": "Identifica las causas raíz con Grafana SIFT, que funciona con IA.",
+      "irm-card-item-4": "Analiza incidentes pasados para mejorar la respuesta y la resiliencia.",
       "irm-card-title": "Respuesta y gestión de incidentes",
       "label-get-started": "Empezar",
       "label-insights": "Información",
-      "synthetic-monitoring-card-description": "Supervise los flujos de usuarios críticos, los sitios web y las API externamente, desde ubicaciones en todo el mundo.",
-      "synthetic-monitoring-card-item-1": "Simule recorridos de usuario de extremo a extremo con comprobaciones del navegador.",
-      "synthetic-monitoring-card-item-2": "Ejecute comprobaciones de ping, DNS, HTTP/S y TCP en cada capa de la red.",
-      "synthetic-monitoring-card-item-3": "Utilice más de 20 sondas globales o sondas privadas detrás de su cortafuegos.",
-      "synthetic-monitoring-card-item-4": "Realice un seguimiento de los SLO con alertas integradas al estilo Prometheus directamente desde la interfaz de usuario.",
-      "synthetic-monitoring-card-title": "Supervisión sintética"
+      "synthetic-monitoring-card-description": "Monitoriza los flujos de usuarios críticos, los sitios web y las API externamente, desde ubicaciones en todo el mundo.",
+      "synthetic-monitoring-card-item-1": "Simula recorridos de usuario de extremo a extremo con comprobaciones del navegador.",
+      "synthetic-monitoring-card-item-2": "Ejecuta comprobaciones de ping, DNS, HTTP/S y TCP en cada capa de la red.",
+      "synthetic-monitoring-card-item-3": "Utiliza más de 20 sondas globales o sondas privadas detrás de tu cortafuegos.",
+      "synthetic-monitoring-card-item-4": "Realiza un seguimiento de los SLO con alertas integradas al estilo Prometheus directamente desde la interfaz de usuario.",
+      "synthetic-monitoring-card-title": "Monitorización sintética"
     },
     "import-to-gma": {
       "action-button": "Importar",
@@ -1635,10 +1635,10 @@
         "loading": "Cargando...",
         "loading-body": "Preparando los datos para la importación. Este proceso puede llevar un tiempo...",
         "no-rules-body": "No hay reglas que importar. Selecciona un espacio de nombres o un grupo de reglas diferente.",
-        "no-rules-body-yaml": "No hay reglas que importar. Seleccione un archivo YAML distinto.",
+        "no-rules-body-yaml": "No hay reglas que importar. Selecciona un archivo YAML distinto.",
         "no-rules-title": "No hay reglas para importar",
         "not-using-rules-managed-by-integrations-or-plugins": {
-          "text": "Las reglas gestionadas por integraciones o complementos no deben importarse a las gestionadas por Grafana.",
+          "text": "Las reglas gestionadas por integraciones o plugins no deben importarse a las gestionadas por Grafana.",
           "title": "Información"
         },
         "plugin-rules-warning": {
@@ -1824,10 +1824,10 @@
       "yaml": {
         "description": "Seleccionar un archivo YAML compatible con Prometheus para importar",
         "label": "Archivo YAML de Prometheus",
-        "required-message": "Seleccione un archivo",
+        "required-message": "Selecciona un archivo",
         "target-datasource": "Fuente de datos de destino",
-        "target-datasource-description": "Seleccione la fuente de datos que consultarán las reglas importadas. Asegúrese de que las métricas utilizadas en las reglas importadas estén disponibles en esta fuente de datos.",
-        "target-datasource-required": "Seleccione una fuente de datos de destino"
+        "target-datasource-description": "Selecciona la fuente de datos que consultarán las reglas importadas. Asegúrate de que las métricas utilizadas en las reglas importadas estén disponibles en esta fuente de datos.",
+        "target-datasource-required": "Selecciona una fuente de datos de destino"
       },
       "yaml-error": "Error al analizar el archivo YAML: {{error}}",
       "renamed-intervals_one": "",
@@ -1973,7 +1973,7 @@
         "new-grafana-recording-rule": "Nueva regla de registro",
         "new-recording-rule": "Nueva regla de registro",
         "no-rules-created": "Aún no ha creado ninguna regla",
-        "provisioning": "También puede definir reglas a través del aprovisionamiento de archivos o Terraform"
+        "provisioning": "También puedes definir reglas a través del aprovisionamiento de archivos o Terraform"
       },
       "folder-actions": {
         "button": {
@@ -2540,7 +2540,7 @@
         "error-code": "Mensaje de error: «{{error}}»",
         "routes": {
           "conflictingMatchers": "No se puede añadir o actualizar la ruta: los comparadores entrarán en conflicto con un árbol de enrutamiento externo si fusionamos los comparadores {{-matchers}}. Esto haría que la ruta fuera inaccesible.",
-          "unknownMatchers": "<coincidencias desconocidas>"
+          "unknownMatchers": "<comparadores desconocidos>"
         },
         "suffix": "Actualiza la página y vuelve a intentarlo.",
         "title": "Error al añadir o actualizar la política de notificación"
@@ -2728,7 +2728,7 @@
     "recording-rules": {
       "description-target-data-source": "La fuente de datos de Prometheus para almacenar las reglas de registro en",
       "label-target-data-source": "Fuente de datos de destino",
-      "target-data-source-required": "Seleccione una fuente de datos de destino"
+      "target-data-source-required": "Selecciona una fuente de datos de destino"
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Selecciona el espacio de nombres y el grupo para tu regla de registro.",
@@ -3632,7 +3632,7 @@
     },
     "unknown-contact-point-details": {
       "unknown-contact-point": "Punto de contacto desconocido",
-      "unknown-contact-point-tooltip": "No se han podido encontrar los detalles. Esto puede deberse a que no tiene acceso al punto de contacto"
+      "unknown-contact-point-tooltip": "No se han podido encontrar los detalles. Esto puede deberse a que no tienes acceso al punto de contacto"
     },
     "unknown-rule-list-item": {
       "title-unknown-rule-type": "Tipo de regla desconocido"
@@ -3746,8 +3746,8 @@
       "description-alert-rules": "Define la condición que debe cumplirse antes de que se active una regla de alerta",
       "description-configure-firing-alert-instances-routed-contact": "Configurar cómo se enrutan las instancias de alerta de activación a los puntos de contacto",
       "description-configure-receives-notifications": "Configurar quién recibe las notificaciones y cómo se envían",
-      "href-text-alert-activity": "Ver actividad de alerta",
-      "title-alert-activity": "Actividad de alerta",
+      "href-text-alert-activity": "Ver actividad de alertas",
+      "title-alert-activity": "Actividad de alertas",
       "title-alert-rules": "Reglas de alerta",
       "title-contact-points": "Puntos de contacto",
       "title-notification-policies": "Políticas de notificación"
@@ -3830,7 +3830,7 @@
       "text-loading": "Cargando..."
     },
     "unified-alert-list-panel": {
-      "body-permission-required": "No tiene los permisos necesarios para leer las reglas de alerta.",
+      "body-permission-required": "No tienes los permisos necesarios para leer las reglas de alerta.",
       "title-permission-required": "Permiso obligatorio"
     },
     "view-mode-options": {
@@ -3955,20 +3955,20 @@
       "allowed-groups-object-ids": "{{ allowedGroupsLabel }} debe ser {{ objectIDsField }}.",
       "allowed-organizations-description": "Lista de organizaciones separadas por comas o espacios. El usuario debe ser miembro \nde al menos una organización para iniciar sesión.",
       "allowed-organizations-label": "Organizaciones permitidas",
-      "allowed-organizations-placeholder": "Introduzca organizaciones (mi-equipo, miequipo...) y pulse Intro para añadirlas",
+      "allowed-organizations-placeholder": "Introduce organizaciones (mi-equipo, miequipo...) y pulsa Intro para añadirlas",
       "api-url-description": "El punto final de información del usuario de tu proveedor de OAuth2. La información devuelta por este punto final debe ser compatible con <2>OpenID UserInfo</2>.",
       "api-url-required": "Este campo debe ser una URL válida si se configura.",
       "auth-style-description": "Determina cómo se envían los valores de «{{ clientIDLabel }}» y «{{ clientSecretLabel }}» al proveedor de Oauth2. El valor predeterminado es «Detección automática».",
       "auth-style-label": "Estilo de autenticación",
-      "auth-url-description": "El punto final de autorización de su proveedor de OAuth2.",
+      "auth-url-description": "El punto de conexión de autorización de tu proveedor de OAuth2.",
       "auth-url-required": "Este campo es obligatorio y debe ser una URL válida.",
       "auto-login-description": "Inicie sesión automáticamente, omitiendo la pantalla de inicio de sesión.",
       "auto-login-label": "Inicio de sesión automático",
-      "client-authentication-description": "El método de autenticación del cliente utilizado para autenticarse en el punto final del token.",
+      "client-authentication-description": "El método de autenticación del cliente utilizado para autenticarse en el punto de conexión del token.",
       "client-authentication-label": "Autenticación de cliente",
       "client-authentication-none": "Ninguno",
-      "client-id-description": "El {{ clientIDLabel }} de su aplicación OAuth2.",
-      "client-secret-description": "El {{ clientSecretLabel }} de su aplicación OAuth2.",
+      "client-id-description": "El {{ clientIDLabel }} de tu aplicación OAuth2.",
+      "client-secret-description": "El {{ clientSecretLabel }} de tu aplicación OAuth2.",
       "define-allowed-groups-label": "Definir grupos permitidos",
       "define-allowed-teams-ids-label": "Definir ID de equipos permitidos",
       "display-name-description": "Se mostrará en la página de inicio de sesión como «Iniciar sesión con...». Resulta útil si utiliza más de un proveedor de identidad o protocolos SSO.",
@@ -3980,7 +3980,7 @@
       "email-attribute-name-label": "Nombre del atributo de correo electrónico",
       "email-attribute-path-description": "Expresión JMESPath que se utilizará para la búsqueda de correo electrónico del usuario a partir de la información del usuario.",
       "email-attribute-path-label": "Ruta del atributo de correo electrónico",
-      "federated-credential-audience-description": "El público de la credencial de identidad federada de su aplicación OAuth2.",
+      "federated-credential-audience-description": "El público de la credencial de identidad federada de tu aplicación OAuth2.",
       "federated-credential-audience-label": "Público de FIC",
       "force-use-graph-api-description": "Si se ha habilitado, Grafana obtendrá los grupos de usuarios mediante la API de Microsoft Graph.",
       "force-use-graph-api-label": "Forzar uso de la API de Graph",
@@ -4002,7 +4002,7 @@
       "login-prompt-label": "Aviso de inicio de sesión",
       "login-prompt-login": "Iniciar sesión",
       "login-prompt-select-account": "Seleccionar cuenta",
-      "managed-identity-client-id-description": "El ID de cliente de identidad administrada de la credencial de identidad federada de su aplicación OAuth2.",
+      "managed-identity-client-id-description": "El ID de cliente de identidad administrada de la credencial de identidad federada de tu aplicación OAuth2.",
       "managed-identity-client-id-label": "ID de cliente de identidad gestionada de FIC",
       "name-attribute-path-description": "Expresión JMESPath que se utilizará para la búsqueda de nombres de usuario a partir del token de ID de usuario. \nEste nombre se utilizará como nombre para mostrar del usuario.",
       "name-attribute-path-label": "Ruta del atributo de nombre",
@@ -4014,7 +4014,7 @@
       "organization-attribute-path-description": "Expresión JMESPath que se utilizará para la búsqueda de organizaciones. Si configura «{{ orgMappingLabel }}», también debe configurar «{{ orgAttributePathLabel }}».",
       "organization-attribute-path-label": "Ruta del atributo de organización",
       "organization-mapping-label": "Asignación de organización",
-      "organization-mapping-placeholder": "Introduzca asignaciones (mi-equipo:1:Visualizador...) y pulse Intro para añadirlas",
+      "organization-mapping-placeholder": "Introduce asignaciones (mi-equipo:1:Visualizador...) y pulsa Intro para añadirlas",
       "required": "Este campo es obligatorio",
       "role-attribute-path-description": "Expresión {{ jmesPathLabel }} que se utilizará para la búsqueda de roles de Grafana.",
       "role-attribute-path-label": "Ruta del atributo de rol",
@@ -4024,12 +4024,12 @@
       "section-extra-security": "Medidas de seguridad adicionales",
       "section-general-settings": "Ajustes generales",
       "section-user-mapping": "Asignación de usuario",
-      "server-discovery-url-description": "El punto final .well-known/openid-configuration para su IdP La información extraída de esta URL se utilizará para rellenar los campos «{{ authURLLabel }}», «{{ tokenURLLabel }}» y «{{ apiURLLabel }}».",
+      "server-discovery-url-description": "El punto de conexión .well-known/openid-configuration para tu IdP. La información extraída de esta URL se utilizará para rellenar los campos «{{ authURLLabel }}», «{{ tokenURLLabel }}» y «{{ apiURLLabel }}».",
       "signout-redirect-url-description": "La URL a la que se redirigirá al usuario después de cerrar la sesión en Grafana.",
       "signout-redirect-url-label": "URL de redirección de cierre de sesión",
-      "skip-org-role-sync-description": "Evita sincronizar los roles de organización de los usuarios desde su IdP.",
+      "skip-org-role-sync-description": "Evita sincronizar los roles de organización de los usuarios desde tu IdP.",
       "skip-org-role-sync-label": "Omitir sincronización de funciones de la organización",
-      "team-ids-attribute-path-description": "La expresión JMESPath que se utilizará para la búsqueda de ID de equipo de Grafana dentro de los resultados devueltos por el punto final «{{ teamsURLLabel }}».",
+      "team-ids-attribute-path-description": "La expresión JMESPath que se utilizará para la búsqueda de ID de equipo de Grafana dentro de los resultados devueltos por el punto de conexión «{{ teamsURLLabel }}».",
       "team-ids-attribute-path-label": "Ruta del atributo de ID de equipo",
       "team-ids-attribute-path-required": "Este campo debe establecerse si se configuran «{{ teamIDsLabel }}».",
       "team-ids-description": "Si se establece, el usuario debe ser miembro de uno de los equipos dados para iniciar sesión.",
@@ -4038,7 +4038,7 @@
       "team-ids-label": "ID de equipo",
       "team-ids-numbers": "Los ID de equipo deben ser números.",
       "team-ids-other": "Lista de cadenas de los ID de equipo.",
-      "team-ids-placeholder": "Introduzca los ID de equipo y pulse Intro para añadirlos",
+      "team-ids-placeholder": "Introduce los ID de equipo y pulsa Intro para añadirlos",
       "teams-url-description": "La URL utilizada para consultar los ID de equipo. Si no se establece, el valor predeterminado es /teams.",
       "teams-url-description-oauth": "Si configura «{{ teamsURLLabel }}», también debe configurar «{{ teamIDsAttributePathLabel }}».",
       "teams-url-label": "URL de equipos",
@@ -4049,9 +4049,9 @@
       "tls-client-cert-label": "Certificado de cliente TLS",
       "tls-client-key-description": "La ruta del archivo a la clave. No es aplicable en Grafana Cloud.",
       "tls-client-key-label": "Clave de cliente TLS",
-      "tls-skip-verify-description": "Si se ha habilitado, el cliente acepta cualquier certificado que presente el servidor y cualquier nombre de host \nen dicho certificado. Utilice esta opción solo para realizar pruebas, puesto que este modo deja \nSSL/TLS expuesto a ataques de intermediario.",
+      "tls-skip-verify-description": "Si se ha habilitado, el cliente acepta cualquier certificado que presente el servidor y cualquier nombre de host \nen dicho certificado. Utiliza esta opción solo para realizar pruebas, puesto que este modo deja \nSSL/TLS expuesto a ataques de intermediario.",
       "tls-skip-verify-label": "Omitir verificación de TLS",
-      "token-url-description": "El punto final del token de su proveedor de OAuth2.",
+      "token-url-description": "El punto de conexión del token de tu proveedor de OAuth2.",
       "token-url-required": "Este campo es obligatorio y debe ser una URL válida.",
       "use-pkce-description": "Si está habilitado, Grafana utilizará la <2>clave de prueba para el intercambio de código (PKCE)</2> con la concesión de código de autorización OAuth2.",
       "use-pkce-label": "Utilizar PKCE",
@@ -4120,7 +4120,7 @@
   "barchart": {
     "config": {
       "category-thresholds": "Umbrales",
-      "description-color-by-field": "Utilice el valor del color de un campo hermano para colorear cada valor de la barra.",
+      "description-color-by-field": "Utiliza el valor del color de un campo hermano para colorear cada valor de la barra.",
       "description-x-label-max-length": "Las etiquetas del eje X se truncarán a la longitud proporcionada",
       "name-bar-radius": "Radio de la barra",
       "name-bar-width": "Ancho de barra",
@@ -4509,7 +4509,7 @@
       "label-since-open": "Desde la apertura",
       "label-since-prior-close": "Desde el cierre anterior"
     },
-    "description-additional-fields": "Utilice las opciones de series temporales estándar para configurar cualquier campo no asignado anteriormente",
+    "description-additional-fields": "Utiliza las opciones de series temporales estándar para configurar cualquier campo no asignado anteriormente",
     "description-close": "Valor al final del periodo",
     "description-high": "Valor máximo dentro del periodo",
     "description-low": "Valor mínimo dentro del periodo",
@@ -5064,7 +5064,7 @@
       "item-1": "Demuestra y mejora el valor de tu servicio de observabilidad haciendo un seguimiento de la participación de los usuarios",
       "item-2": "Identifica y corrige las fuentes de datos lentas y propensas a errores para mantener el rendimiento de Grafana",
       "item-3": "Busca y elimina las fuentes de datos no utilizadas para borrar tu instancia",
-      "item-4": "Revisa de un vistazo los datos de uso de las fuentes de datos individuales en la interfaz de usuario, ordena los resultados de búsqueda por uso y errores, o consulta los logs de uso detallados",
+      "item-4": "Revisa de un vistazo los datos de uso de las fuentes de datos individuales en la interfaz de usuario, ordena los resultados de búsqueda por uso y errores, o profundiza en los logs de uso detallados",
       "title": "Comprende el uso de tus fuentes de datos con Grafana Cloud"
     },
     "new-data-source-page": {
@@ -5471,6 +5471,9 @@
       "cancel-loading-dashboard": "Cancelar la carga del dashboard"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "",
+      "provisioning-message": "",
+      "provisioning-title": "",
       "text": {
         "not-found": "No encontrado"
       }
@@ -6125,7 +6128,7 @@
     },
     "remove-panel": {
       "text": {
-        "remove-panel": "¿Seguro que quiere eliminar este panel?"
+        "remove-panel": "¿Seguro que quieres eliminar este panel?"
       },
       "title": {
         "remove-panel": "Eliminar panel"
@@ -6368,7 +6371,7 @@
       }
     },
     "title": {
-      "action": "Cambiar título del panel de control"
+      "action": "Cambiar título del dashboard"
     },
     "toolbar": {
       "add": "Añadir",
@@ -6508,6 +6511,10 @@
       "sql-expressions-title": "Expresiones de SQL",
       "title-add-another-transformation": "Añadir otra transformación",
       "view-all": "Ver todo"
+    },
+    "transformation-type-picker": {
+      "sql-cta-button": "",
+      "sql-cta-description": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "Al eliminar todas las transformaciones, volverás a la pantalla de selección principal."
@@ -6658,7 +6665,7 @@
       "datasources-title": "Configuración de la fuente de datos",
       "description": "Este dashboard requiere la configuración de la fuente de datos. Selecciona las fuentes de datos para cada entrada a continuación.",
       "preview": "Vista previa del dashboard",
-      "auto-mapped_one": "{{count}} fuentes de datos se configuraron automáticamente:",
+      "auto-mapped_one": "{{count}} fuente de datos se configuró automáticamente:",
       "auto-mapped_other": "{{count}} fuentes de datos se configuraron automáticamente:"
     },
     "community-mapping-select-datasource": "Seleccionar una fuente de datos",
@@ -6750,8 +6757,8 @@
     },
     "add-to-dashboard": {
       "message": {
-        "could-navigate-selected-dashboard-please-again": "No se ha podido acceder al dashboard seleccionado. Vuelva a intentarlo.",
-        "could-panel-dashboard-please-again": "No se ha podido añadir el panel al dashboard. Vuelva a intentarlo."
+        "could-navigate-selected-dashboard-please-again": "No se ha podido acceder al dashboard seleccionado. Vuelve a intentarlo.",
+        "could-panel-dashboard-please-again": "No se ha podido añadir el panel al dashboard. Vuelve a intentarlo."
       }
     },
     "add-to-dashboard-form": {
@@ -7299,7 +7306,7 @@
     },
     "on-remove-panel": {
       "text": {
-        "remove-panel": "¿Seguro que quiere eliminar este panel?"
+        "remove-panel": "¿Seguro que quieres eliminar este panel?"
       },
       "title": {
         "remove-panel": "Eliminar panel"
@@ -7438,7 +7445,7 @@
         "yaml": "YAML"
       },
       "share-externally": "Compartir el dashboard con otra instancia",
-      "share-externally-tooltip": "Elimina todos los metadatos específicos de la instancia y las referencias de origen de datos del recurso antes de la exportación."
+      "share-externally-tooltip": "Elimina todos los metadatos específicos de la instancia y las referencias de fuente de datos del recurso antes de la exportación."
     },
     "revert-dashboard-modal": {
       "body-restore-version": "¿Seguro que quieres restaurar el dashboard a la versión {{version}}? Todos los cambios no guardados se perderán.",
@@ -7474,7 +7481,7 @@
     },
     "save-dashboard-form": {
       "aria-label-message": "mensaje",
-      "body-dashboard-drastically-changed": "El dashboard se guardará utilizando el nuevo esquema experimental de dashboard de Grafana. Esta acción no se puede deshacer y podría provocar la pérdida irreversible de datos. Recomendamos guardar este dashboard como una copia. Si recibe este mensaje en un entorno de producción, póngase en contacto con el servicio de asistencia para desactivar la función.",
+      "body-dashboard-drastically-changed": "El dashboard se guardará utilizando el nuevo esquema experimental de dashboard de Grafana. Esta acción no se puede deshacer y podría provocar la pérdida irreversible de datos. Recomendamos guardar este dashboard como una copia. Si recibes este mensaje en un entorno de producción, ponte en contacto con el servicio de asistencia para desactivar la función.",
       "cancel-button": {
         "cancel": "Cancelar"
       },
@@ -7488,8 +7495,8 @@
         "title-someone-else-has-updated-this-dashboard": "Otra persona ha actualizado este dashboard",
         "would-still-dashboard": "¿Seguro que quieres guardar este dashboard?"
       },
-      "schema-v2-library-panels-export": "Debido a las limitaciones del nuevo esquema del dashboard (V2), los paneles de la biblioteca se convertirán en paneles normales con contenido incrustado durante la exportación externa.",
-      "schema-v2-library-panels-export-title": "Los paneles de biblioteca se convertirán en paneles normales",
+      "schema-v2-library-panels-export": "Debido a las limitaciones del nuevo esquema del dashboard (V2), los paneles de la librería se convertirán en paneles normales con contenido incrustado durante la exportación externa.",
+      "schema-v2-library-panels-export-title": "Los paneles de librería se convertirán en paneles normales",
       "title-dashboard-drastically-changed": "El dashboard ha cambiado de forma irreversible"
     },
     "save-dashboard-form-common-options": {
@@ -8807,6 +8814,9 @@
     "span-bar": {
       "tooltip-critical-path": "Un segmento en la <1>ruta crítica</1> de la traza/solicitud/flujo de trabajo general."
     },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": ""
+    },
     "span-bar-section": {
       "description-link": "Añade información adicional junto al servicio y la operación en una fila de la barra de intervalo en la vista de trazas.",
       "title-span-bar": "Barra de intervalo"
@@ -8966,8 +8976,8 @@
       "export-externally-label": "Exportar el panel de control para utilizarlo en otra instancia",
       "export-format": "Formato",
       "export-mode": "Modelo",
-      "info-text": "Copiar o descargar un archivo que contenga la definición de su dashboard",
-      "title": "Exportar panel"
+      "info-text": "Copiar o descargar un archivo que contenga la definición de tu dashboard",
+      "title": "Exportar dashboard"
     },
     "menu": {
       "export-as-json-label": "Exportar",
@@ -9077,7 +9087,7 @@
       "new-password-label": "Nueva contraseña",
       "skip-button": "Omitir",
       "submit-button": "Enviar",
-      "tooltip-skip-button": "Si se omite, se le pedirá que cambie la contraseña la próxima vez que inicie sesión."
+      "tooltip-skip-button": "Si se omite, se te pedirá que cambies la contraseña la próxima vez que inicies sesión."
     },
     "contact-admin": "¿Has olvidado tu nombre de usuario o correo electrónico? Ponte en contacto con el administrador de Grafana.",
     "email-sent": "Se ha enviado un correo electrónico con un enlace de restablecimiento a la dirección de correo electrónico. Lo recibirás en breve.",
@@ -9107,7 +9117,7 @@
         "gradient": "Gradiente",
         "label": "Efectos"
       },
-      "endpoint-marker": "Marcador de punto final",
+      "endpoint-marker": "Marcador de punto de conexión",
       "endpoint-marker-description": "El brillo solo es compatible con el modo oscuro",
       "endpoint-marker-glow": "Brillo",
       "endpoint-marker-none": "Ninguno",
@@ -9409,7 +9419,7 @@
           "create-integration-alerting-contact-point": "Crea una integración de IRM para un punto de contacto de alerta.",
           "initialize-incident-plugin-declare-manage-incidents": "Inicializa el plugin Incident para declarar y gestionar incidentes.",
           "practice-solving-an-incident": "Practicar resolución de un incidente",
-          "receive-alerts-oncall-notifications-within-environment": "Recibe alertas y notificaciones de OnCall en su entorno de chat.",
+          "receive-alerts-oncall-notifications-within-environment": "Recibe alertas y notificaciones de OnCall en tu entorno de chat.",
           "select-chat-ops-channels-to-route-notifications": "Seleccionar canales de ChatOps para enrutar las notificaciones"
         },
         "label": {
@@ -9422,22 +9432,22 @@
         "title": {
           "add-slack-notifications-to-irm-integrations": "Añadir notificaciones de Slack a las integraciones de IRM",
           "connect-alerting-to-irm": "Conectar las alertas a IRM",
-          "connect-irm-to-your-slack-workspace": "Conectar IRM a su espacio de trabajo de Slack",
-          "connect-your-messaging-workspace-to-incident": "Conectar su espacio de trabajo de mensajería a Incident",
-          "connect-your-messaging-workspace-to-on-call": "Conectar su espacio de trabajo de mensajería a OnCall",
+          "connect-irm-to-your-slack-workspace": "Conectar IRM a tu espacio de trabajo de Slack",
+          "connect-your-messaging-workspace-to-incident": "Conectar tu espacio de trabajo de mensajería a Incident",
+          "connect-your-messaging-workspace-to-on-call": "Conectar tu espacio de trabajo de mensajería a OnCall",
           "create-incident-drill": "Crear simulacro de incidente",
           "detect": "Detectar",
           "initialize-incident-plugin": "Inicializar el plugin Incident",
           "messaging-workspace-channel-on-call-integration": "Añadir canal de espacio de trabajo de mensajería a la integración de OnCall",
           "respond": "Responder",
-          "test-your-configuration": "Pruebe su configuración"
+          "test-your-configuration": "Prueba tu configuración"
         }
       },
       "get-grafana-alerting-config-steps": {
         "description": {
-          "create-alert-monitor-system": "Crea una regla de alerta para supervisar su sistema.",
+          "create-alert-monitor-system": "Crea una regla de alerta para monitorizar tu sistema.",
           "create-on-call-integration-alerting-contact-point": "Crea una integración de OnCall para un punto de contacto de alerta.",
-          "create-slos-to-monitor-your-service": "Crea SLO para supervisar su servicio."
+          "create-slos-to-monitor-your-service": "Crea SLO para monitorizar tu servicio."
         },
         "label": {
           "connect": "Conectarse",
@@ -10072,7 +10082,7 @@
     "components": {
       "sparkline": {
         "warning": {
-          "too-few-values": "Sparkline requiere al menos dos valores para renderizar."
+          "too-few-values": "El modo minigráfico requiere al menos dos valores para renderizar."
         }
       }
     },
@@ -11103,7 +11113,7 @@
     "live-panel": {
       "error": "Error",
       "grafana-requires-feature": "Grafana Live requiere un indicador de característica para ejecutarse",
-      "panel-editor-channel": "Utilice el editor del panel para elegir un canal",
+      "panel-editor-channel": "Utiliza el editor del panel para elegir un canal",
       "title-grafana-live": "Grafana Live",
       "waiting-for-data": "Esperando datos:"
     },
@@ -11305,7 +11315,7 @@
     "log-list-search": {
       "close": "Cerrar la búsqueda",
       "filter": "Filtrar logs coincidentes",
-      "info": "Búsqueda en el lado del cliente de cadenas dentro de los logs mostrados. No debe confundirse con los filtros de consulta. Utilice este componente para buscar cadenas específicas en los resultados de sus logs.",
+      "info": "Búsqueda en el lado del cliente de cadenas dentro de los logs mostrados. No debe confundirse con los filtros de consulta. Utiliza este componente para buscar cadenas específicas en los resultados de tus logs.",
       "input-placeholder": "Búsqueda en logs",
       "next": "Resultado siguiente",
       "prev": "Resultado anterior"
@@ -11398,8 +11408,8 @@
         },
         "tooltip": "Establecer ajuste de líneas"
       },
-      "newest-first": "Ordenado por los logs más nuevos primero: haga clic para mostrar los más antiguos primero",
-      "oldest-first": "Ordenado por los logs más antiguos primero: haga clic para mostrar los más nuevos primero",
+      "newest-first": "Ordenado por los logs más nuevos primero: haz clic para mostrar los más antiguos primero",
+      "oldest-first": "Ordenado por los logs más antiguos primero: haz clic para mostrar los más nuevos primero",
       "prettify-json": "Expandir logs JSON",
       "remove-escaping": "Eliminar escape",
       "resolution-ms": "ms",
@@ -12246,7 +12256,7 @@
     "name-show-image": "Mostrar imagen",
     "name-url": "URL",
     "news-panel": {
-      "body-error-loading-rss-feed": "Asegúrese de que la URL del feed sea correcta y de que CORS esté configurado correctamente en el servidor. Consulte la <2>documentación del panel de noticias.</2>",
+      "body-error-loading-rss-feed": "Asegúrate de que la URL del feed sea correcta y de que CORS esté configurado correctamente en el servidor. Consulta la <2>documentación del panel de noticias.</2>",
       "loading": "Cargando...",
       "title-error-loading-rss-feed": "Error al cargar el feed RSS"
     },
@@ -12270,7 +12280,7 @@
     "name-secondary-stat-unit": "Unidad de estadística secundaria",
     "name-zoom-mode": "Modo zoom",
     "zoom-mode-options": {
-      "description-cooperative": "Le permite desplazarse por la página con normalidad",
+      "description-cooperative": "Te permite desplazarte por la página con normalidad",
       "description-greedy": "Reacciona a todos los gestos de zoom",
       "label-cooperative": "Cooperativo",
       "label-greedy": "Avaricioso"
@@ -12694,7 +12704,7 @@
         "permission": "No tienes permiso para ver esta página.",
         "title-access-denied": "Acceso denegado"
       },
-      "error-loading-plugin": "No se ha podido cargar el complemento",
+      "error-loading-plugin": "No se ha podido cargar el plugin",
       "no-root-app-page-component-found": "No se ha encontrado ningún componente de página de la aplicación raíz"
     },
     "browse": {
@@ -12837,13 +12847,13 @@
     "install-controls-button": {
       "title-uninstall-modal": "Desinstalar {{plugin}}",
       "uninstall-controls": {
-        "body-uninstall-plugin": "¿Seguro que quieres desinstalar este complemento?",
+        "body-uninstall-plugin": "¿Seguro que quieres desinstalar este plugin?",
         "confirmText-confirm": "Confirmar"
       }
     },
     "install-controls-warning": {
       "body-not-published": "Este plugin no está publicado en <2>grafana.com/plugins</2> y no se puede gestionar a través del catálogo.",
-      "enterprise-plugin-info": "Este complemento solo está disponible en Grafana Cloud y Grafana Enterprise.",
+      "enterprise-plugin-info": "Este plugin solo está disponible en Grafana Cloud y Grafana Enterprise.",
       "learn-more": "Más información",
       "title-dev-alert": "Esta es una compilación de desarrollo del plugin y no se puede desinstalar.",
       "title-plugin-doesnt-support-version-grafana": "Este plugin no es compatible con tu versión de Grafana.",
@@ -13015,7 +13025,7 @@
   },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
-      "comment-placeholder-describe-changes-optional": "Añada una nota para describir sus cambios (opcional)",
+      "comment-placeholder-describe-changes-optional": "Añade una nota para describir tus cambios (opcional)",
       "custom-value-description": "",
       "description-branch": "",
       "description-branch-restricted": "",
@@ -13143,7 +13153,7 @@
     },
     "connect-page": {
       "subTitle": {
-        "connect-external-storage-manage-resources": "Conéctese a un almacenamiento externo para gestionar sus recursos"
+        "connect-external-storage-manage-resources": "Conéctate a un almacenamiento externo para gestionar tus recursos"
       }
     },
     "connect-repository-button": {
@@ -13237,7 +13247,7 @@
       "back-to-repositories": "Volver a los repositorios",
       "repository-config-exists-configuration": "Asegúrate de que la configuración del repositorio exista en el archivo de configuración.",
       "subTitle": {
-        "configure-repository-storing-resources": "Configure un repositorio para almacenar sus recursos."
+        "configure-repository-storing-resources": "Configura un repositorio para almacenar tus recursos."
       },
       "text": {
         "configure-repository": "Configurar repositorio"
@@ -13340,7 +13350,7 @@
       "modal-title-set-up-public-access": "Configurar el acceso público",
       "modal-title-set-up-required-features": "Configurar las características necesarias",
       "step-description-copy-url": "Desde la salida de ngrok, copia la URL de redireccionamiento https:// que tiene el siguiente aspecto:",
-      "step-description-enable-feature-toggles": "Añade la función de aprovisionamiento a tu archivo custom.ini. Nota: kubernetesDashboards está habilitado de forma predeterminada, pero si lo has deshabilitado explícitamente, deberás habilitarlo en la configuración de Grafana o eliminar la anulación de su configuración.",
+      "step-description-enable-feature-toggles": "Añade la función de aprovisionamiento a tu archivo custom.ini. Nota: kubernetesDashboards está habilitado de forma predeterminada, pero si lo has deshabilitado explícitamente, deberás habilitarlo en la configuración de Grafana o eliminar la anulación de tu configuración.",
       "step-description-start-ngrok": "Ejecuta este comando para crear un túnel seguro a tu Grafana local:",
       "step-description-update-grafana-config": "Añade esto a tu archivo custom.ini, sustituyendo la URL por tu URL real de ngrok:",
       "step-title-copy-url": "Copia tu URL pública",
@@ -14876,7 +14886,7 @@
       "label-none": "Ninguno",
       "label-value": "Valor"
     },
-    "description-graph-mode": "Modo gráfico/sparkline del panel de estadísticas",
+    "description-graph-mode": "Modo gráfico/minigráfico del panel de estadísticas",
     "description-text-mode": "Controlar si se muestra el nombre y el valor o solo el nombre",
     "graph-mode": {
       "options": {
@@ -16515,7 +16525,7 @@
       "loading": "Cargando...",
       "no-unknowns": "No se han encontrado variables renombradas o que falten.",
       "renamed-or-missing-variables": "Variables renombradas o que faltan",
-      "tooltip-renamed-or-missing-variables": "Haga clic para expandir una lista con todas las referencias de variables que se han renombrado o que faltan en el dashboard.",
+      "tooltip-renamed-or-missing-variables": "Haz clic para expandir una lista con todas las referencias de variables que se han renombrado o que faltan en el dashboard.",
       "variable": "Variable"
     },
     "variable-check-indicator": {
@@ -16580,7 +16590,7 @@
   "welcome": {
     "welcome-banner": {
       "need-help": "¿Necesitas ayuda?",
-      "welcome-to-grafana": "Le damos la bienvenida a Grafana"
+      "welcome-to-grafana": "Te damos la bienvenida a Grafana"
     }
   },
   "xychart": {
