@@ -370,6 +370,5 @@ export async function interpolateDashboardForCompatibilityCheck(
   // 5. Interpolate in the frontend — no backend round-trip needed
   const inputs: InputMapping[] = mappingResult.mappings;
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return interpolateV1Dashboard(dashboardJson as unknown as Record<string, unknown>, inputs) as unknown as DashboardJson;
+  return interpolateV1Dashboard(dashboardJson, inputs);
 }

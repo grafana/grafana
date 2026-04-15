@@ -14,6 +14,7 @@ import { LibraryElementKind } from '../../../library-panels/types';
 import {
   type DashboardInput,
   type DashboardInputs,
+  type DashboardJson,
   type DataSourceInput,
   type ImportDashboardDTO,
   type ImportFormDataV2,
@@ -311,22 +312,19 @@ export interface InterpolateInputMapping {
  * into the shape that applyV1Inputs expects and applies the substitution.
  */
 export function interpolateV1Dashboard(
-  dashboard: Record<string, unknown>,
+  dashboard: DashboardJson,
   inputMappings: InterpolateInputMapping[]
-): Record<string, unknown> {
-  const rawInputs = dashboard.__inputs as Array<Record<string, unknown>> | undefined;
+): DashboardJson {
+  const rawInputs = dashboard.__inputs;
   const dsInputs: DataSourceInput[] = (rawInputs ?? [])
-    .filter(
-      (input): input is Record<string, unknown> & { type: 'datasource'; pluginId: string } =>
-        input.type === 'datasource' && typeof input.pluginId === 'string'
-    )
+    .filter((input) => input.type === 'datasource' && 'pluginId' in input && typeof input.pluginId === 'string')
     .map((input) => ({
       name: String(input.name ?? ''),
       label: String(input.label ?? ''),
       info: String(input.description ?? ''),
       value: String(input.value ?? ''),
       type: InputType.DataSource,
-      pluginId: String(input.pluginId),
+      pluginId: String('pluginId' in input ? input.pluginId : ''),
     }));
   const constantRawInputs = (rawInputs ?? []).filter((input) => input.type === 'constant');
 
@@ -345,23 +343,35 @@ export function interpolateV1Dashboard(
   for (const mapping of effectiveMappings.filter((m) => m.type === 'datasource')) {
     const dsInput = dsInputs.find((i) => i.name === mapping.name);
     const pluginId = mapping.pluginId ?? dsInput?.pluginId;
-    if (pluginId && !seenPluginIds.has(pluginId)) {
-      if (pluginId === ExpressionDatasourceRef.type) {
-        formDataSources.push({
-          uid: ExpressionDatasourceRef.uid,
-          type: ExpressionDatasourceRef.type,
-          name: ExpressionDatasourceRef.name,
-        } as DataSourceInstanceSettings);
-        seenPluginIds.add(pluginId);
-        continue;
-      }
-      const settings = getDataSourceSrv().getInstanceSettings(mapping.value);
-      if (settings) {
-        formDataSources.push(settings);
-        seenPluginIds.add(pluginId);
-      }
+    if (!pluginId || seenPluginIds.has(pluginId)) {
+      continue;
     }
+
+    // Expression datasources are always forced to __expr__ regardless of user input,
+    // matching the backend behavior:
+    //   if inputDefJson.Get("pluginId").MustString() == expr.DatasourceType {
+    //       input = &dashboardimport.ImportDashboardInput{Value: expr.DatasourceType}
+    //   }
+    if (pluginId === ExpressionDatasourceRef.type) {
+      formDataSources.push({
+        uid: ExpressionDatasourceRef.uid,
+        type: ExpressionDatasourceRef.type,
+        name: ExpressionDatasourceRef.name,
+      } as DataSourceInstanceSettings);
+      seenPluginIds.add(pluginId);
+      continue;
+    }
+
+    const settings = getDataSourceSrv().getInstanceSettings(mapping.value);
+    if (!settings) {
+      throw new Error(
+        `Dashboard import failed: datasource input "${mapping.name}" references UID "${mapping.value}" which was not found`
+      );
+    }
+    formDataSources.push(settings);
+    seenPluginIds.add(pluginId);
   }
+  // Ensure expression datasources are included even when not explicitly mapped
   for (const dsInput of dsInputs) {
     if (dsInput.pluginId === ExpressionDatasourceRef.type && !seenPluginIds.has(ExpressionDatasourceRef.type)) {
       formDataSources.push({
@@ -386,22 +396,20 @@ export function interpolateV1Dashboard(
   });
 
   const form: ImportDashboardDTO = {
-    title: String(dashboard.title ?? ''),
-    uid: String(dashboard.uid ?? ''),
+    title: dashboard.title ?? '',
+    uid: dashboard.uid ?? '',
     gnetId: '',
     constants: formConstants,
     dataSources: formDataSources,
     elements: [],
     folder: { uid: '' },
   };
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const result = applyV1Inputs(dashboard as unknown as Dashboard, { dataSources: dsInputs, constants }, form);
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const raw = result as unknown as Record<string, unknown>;
-  delete raw.__inputs;
-  delete raw.__elements;
-  delete raw.__requires;
-  return raw;
+  const result = applyV1Inputs(dashboard, { dataSources: dsInputs, constants }, form);
+  const interpolated = { ...result } as DashboardJson;
+  delete interpolated.__inputs;
+  delete interpolated.__elements;
+  delete interpolated.__requires;
+  return interpolated;
 }
 
 /**
