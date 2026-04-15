@@ -241,6 +241,14 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		cfg.Logger.Warn("index_snapshot_max_age is smaller than max_file_index_age, overriding", "configured", cfg.IndexSnapshotMaxAge, "max_file_index_age", cfg.MaxFileIndexAge)
 		cfg.IndexSnapshotMaxAge = cfg.MaxFileIndexAge
 	}
+
+	// Vector storage config (separate pgvector database)
+	vectorSection := cfg.Raw.Section("unified_storage.vector-storage")
+	cfg.VectorDBHost = vectorSection.Key("db_host").String()
+	cfg.VectorDBName = vectorSection.Key("db_name").String()
+	cfg.VectorDBUser = vectorSection.Key("db_user").String()
+	cfg.VectorDBPassword = vectorSection.Key("db_password").String()
+	cfg.VectorDBSSLMode = vectorSection.Key("db_sslmode").MustString("disable")
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,

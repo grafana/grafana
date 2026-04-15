@@ -680,6 +680,12 @@ type Cfg struct {
 	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
+	// Vector storage (separate pgvector database)
+	VectorDBHost     string
+	VectorDBName     string
+	VectorDBUser     string
+	VectorDBPassword string
+	VectorDBSSLMode  string
 	OverridesFilePath                          string
 	OverridesReloadInterval                    time.Duration
 	EnforcedQuotaResources                     []string

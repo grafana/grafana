@@ -326,3 +326,72 @@ func TestIsTargetEligibleForMigrations(t *testing.T) {
 		})
 	}
 }
+
+func TestVectorStorageConfig(t *testing.T) {
+	t.Run("reads vector storage database config", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		setSectionKey := func(sectionName, key, value string) {
+			section := cfg.Raw.Section(sectionName)
+			_, err := section.NewKey(key, value)
+			assert.NoError(t, err)
+		}
+
+		// Set vector storage config
+		setSectionKey("unified_storage.vector-storage", "db_host", "localhost")
+		setSectionKey("unified_storage.vector-storage", "db_name", "vector_db")
+		setSectionKey("unified_storage.vector-storage", "db_user", "postgres")
+		setSectionKey("unified_storage.vector-storage", "db_password", "secret123")
+		setSectionKey("unified_storage.vector-storage", "db_sslmode", "require")
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.Equal(t, "localhost", cfg.VectorDBHost)
+		assert.Equal(t, "vector_db", cfg.VectorDBName)
+		assert.Equal(t, "postgres", cfg.VectorDBUser)
+		assert.Equal(t, "secret123", cfg.VectorDBPassword)
+		assert.Equal(t, "require", cfg.VectorDBSSLMode)
+	})
+
+	t.Run("vector storage ssl mode defaults to disable", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		setSectionKey := func(sectionName, key, value string) {
+			section := cfg.Raw.Section(sectionName)
+			_, err := section.NewKey(key, value)
+			assert.NoError(t, err)
+		}
+
+		// Set vector storage config without db_sslmode
+		setSectionKey("unified_storage.vector-storage", "db_host", "localhost")
+		setSectionKey("unified_storage.vector-storage", "db_name", "vector_db")
+		setSectionKey("unified_storage.vector-storage", "db_user", "postgres")
+		setSectionKey("unified_storage.vector-storage", "db_password", "secret123")
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.Equal(t, "localhost", cfg.VectorDBHost)
+		assert.Equal(t, "vector_db", cfg.VectorDBName)
+		assert.Equal(t, "postgres", cfg.VectorDBUser)
+		assert.Equal(t, "secret123", cfg.VectorDBPassword)
+		assert.Equal(t, "disable", cfg.VectorDBSSLMode)
+	})
+
+	t.Run("vector storage config fields are empty strings when not set", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.Equal(t, "", cfg.VectorDBHost)
+		assert.Equal(t, "", cfg.VectorDBName)
+		assert.Equal(t, "", cfg.VectorDBUser)
+		assert.Equal(t, "", cfg.VectorDBPassword)
+		assert.Equal(t, "disable", cfg.VectorDBSSLMode)
+	})
+}
