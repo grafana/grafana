@@ -77,11 +77,14 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 		return nil, fmt.Errorf("failed to decode the Azure Monitor query object from JSON: %w", err)
 	}
 
+	// TODO: Move this to the generated type
 	var queryEnvelope struct {
 		GrafanaSql bool `json:"grafanaSql"`
 	}
-	// Best-effort: same JSON may omit grafanaSql (Explore / panels).
-	_ = json.Unmarshal(query.JSON, &queryEnvelope)
+	err = json.Unmarshal(query.JSON, &queryEnvelope)
+	if err != nil {
+		queryEnvelope.GrafanaSql = false
+	}
 
 	azJSONModel := queryJSONModel.AzureMonitor
 	// Legacy: If only MetricDefinition is set, use it as namespace
@@ -104,7 +107,7 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 	resourceIDs := []string{}
 	resourceMap := map[string]dataquery.AzureMonitorResource{}
 	if hasOne, resourceGroup, resourceName := hasOneResource(queryJSONModel); hasOne {
-		ub := urlBuilder{
+		ub := UrlBuilder{
 			ResourceURI: azJSONModel.ResourceUri,
 			// Alternative, used to reconstruct resource URI if it's not present
 			DefaultSubscription: &dsInfo.Settings.SubscriptionId,
@@ -115,7 +118,7 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 		}
 
 		// Construct the resourceURI (for legacy query objects pre Grafana 9)
-		resourceUri, err := ub.buildResourceURI()
+		resourceUri, err := ub.BuildResourceURI()
 		if err != nil {
 			return nil, err
 		}
@@ -130,14 +133,14 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 		}
 	} else {
 		for _, r := range azJSONModel.Resources {
-			ub := urlBuilder{
+			ub := UrlBuilder{
 				DefaultSubscription: &dsInfo.Settings.SubscriptionId,
 				Subscription:        queryJSONModel.Subscription,
 				ResourceGroup:       r.ResourceGroup,
 				MetricNamespace:     azJSONModel.MetricNamespace,
 				ResourceName:        r.ResourceName,
 			}
-			resourceUri, err := ub.buildResourceURI()
+			resourceUri, err := ub.BuildResourceURI()
 			if err != nil {
 				return nil, err
 			}

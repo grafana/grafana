@@ -63,12 +63,10 @@ func discoverResourcesForAzureMonitorSQL(ctx context.Context, dsInfo types.Datas
 		if rn == "" {
 			continue
 		}
-		rgLocal := rgg
-		nameLocal := rn
 		res := dataquery.AzureMonitorResource{
 			Subscription:    &subCopy,
-			ResourceGroup:   &rgLocal,
-			ResourceName:    &nameLocal,
+			ResourceGroup:   &rgg,
+			ResourceName:    &rn,
 			MetricNamespace: &nsCopy,
 		}
 		out = append(out, res)

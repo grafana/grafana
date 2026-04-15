@@ -169,19 +169,23 @@ func (p *metricsSchema) TableParameterValues(ctx context.Context, req *schemas.T
 		return &schemas.TableParametersValuesResponse{TableParameterValues: out, Errors: map[string]string{"": err.Error()}}, nil
 	}
 
-	switch req.TableParameter {
-	case subscription:
+	if req.TableParameter == subscription {
 		vals, err := listSubscriptionParameterValues(ctx, dsInfo)
 		if err != nil {
 			return &schemas.TableParametersValuesResponse{TableParameterValues: out, Errors: map[string]string{"": err.Error()}}, nil
 		}
 		out[req.TableParameter] = vals
+		return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
+	}
+
+	subRaw := req.DependencyValues[subscription]
+	sub := parseSubscriptionIDFromParameter(subRaw)
+	if sub == "" {
+		return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
+	}
+
+	switch req.TableParameter {
 	case metricName:
-		subRaw := req.DependencyValues[subscription]
-		sub := parseSubscriptionIDFromParameter(subRaw)
-		if sub == "" {
-			return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
-		}
 		ns := convertNamespace(stripTableParameterValues(req.Table))
 		names, err := listMetricNamesForTable(ctx, dsInfo, sub, ns, req.DependencyValues)
 		if err != nil {
@@ -190,10 +194,8 @@ func (p *metricsSchema) TableParameterValues(ctx context.Context, req *schemas.T
 		}
 		out[req.TableParameter] = names
 	case aggregation:
-		subRaw := req.DependencyValues[subscription]
-		sub := parseSubscriptionIDFromParameter(subRaw)
 		mn := strings.TrimSpace(req.DependencyValues[metricName])
-		if sub == "" || mn == "" {
+		if mn == "" {
 			return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
 		}
 		ns := convertNamespace(stripTableParameterValues(req.Table))
@@ -204,11 +206,6 @@ func (p *metricsSchema) TableParameterValues(ctx context.Context, req *schemas.T
 		}
 		out[req.TableParameter] = vals
 	case resourceGroup:
-		subRaw := req.DependencyValues[subscription]
-		sub := parseSubscriptionIDFromParameter(subRaw)
-		if sub == "" {
-			return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
-		}
 		ns := convertNamespace(stripTableParameterValues(req.Table))
 		vals, err := listResourceGroupsForNamespace(ctx, dsInfo, sub, ns)
 		if err != nil {
@@ -217,11 +214,6 @@ func (p *metricsSchema) TableParameterValues(ctx context.Context, req *schemas.T
 		}
 		out[req.TableParameter] = vals
 	case region:
-		subRaw := req.DependencyValues[subscription]
-		sub := parseSubscriptionIDFromParameter(subRaw)
-		if sub == "" {
-			return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
-		}
 		ns := convertNamespace(stripTableParameterValues(req.Table))
 		rg := strings.TrimSpace(req.DependencyValues[resourceGroup])
 		vals, err := listRegionsForNamespace(ctx, dsInfo, sub, ns, rg)
@@ -231,11 +223,6 @@ func (p *metricsSchema) TableParameterValues(ctx context.Context, req *schemas.T
 		}
 		out[req.TableParameter] = vals
 	case resourceName:
-		subRaw := req.DependencyValues[subscription]
-		sub := parseSubscriptionIDFromParameter(subRaw)
-		if sub == "" {
-			return &schemas.TableParametersValuesResponse{TableParameterValues: out}, nil
-		}
 		ns := convertNamespace(stripTableParameterValues(req.Table))
 		rg := strings.TrimSpace(req.DependencyValues[resourceGroup])
 		rgn := strings.TrimSpace(req.DependencyValues[region])
@@ -482,7 +469,13 @@ func listMetricNamesForTable(ctx context.Context, dsInfo types.DatasourceInfo, s
 }
 
 func fetchMetricNamesForResource(ctx context.Context, dsInfo types.DatasourceInfo, subscription, namespace, resourceGroup, resourceName, region string) ([]string, error) {
-	uri, err := metrics.BuildResourceURIString(subscription, resourceGroup, namespace, resourceName)
+	ub := metrics.UrlBuilder{
+		Subscription:    &subscription,
+		ResourceGroup:   &resourceGroup,
+		MetricNamespace: &namespace,
+		ResourceName:    &resourceName,
+	}
+	uri, err := ub.BuildResourceURI()
 	if err != nil {
 		return nil, err
 	}

@@ -116,7 +116,13 @@ func aggregationEnumValues(def *metricDefinitionFull) []string {
 }
 
 func fetchMetricDefinitionsForResource(ctx context.Context, dsInfo types.DatasourceInfo, subscription, namespace, resourceGroup, resourceName, region string) ([]metricDefinitionFull, error) {
-	uri, err := metrics.BuildResourceURIString(subscription, resourceGroup, namespace, resourceName)
+	ub := metrics.UrlBuilder{
+		Subscription:    &subscription,
+		ResourceGroup:   &resourceGroup,
+		MetricNamespace: &namespace,
+		ResourceName:    &resourceName,
+	}
+	uri, err := ub.BuildResourceURI()
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +205,13 @@ func parseFlexibleTime(s string) (time.Time, error) {
 // fetchDimensionValuesMetadata calls the Azure Monitor metrics API with resultType=metadata and collects
 // distinct values for the given dimension name.
 func fetchDimensionValuesMetadata(ctx context.Context, dsInfo types.DatasourceInfo, subscription, namespace, resourceGroup, resourceName, region, metricName, dimensionName string, tr apidata.TimeRange) ([]string, error) {
-	uri, err := metrics.BuildResourceURIString(subscription, resourceGroup, namespace, resourceName)
+	ub := metrics.UrlBuilder{
+		Subscription:    &subscription,
+		ResourceGroup:   &resourceGroup,
+		MetricNamespace: &namespace,
+		ResourceName:    &resourceName,
+	}
+	uri, err := ub.BuildResourceURI()
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +341,7 @@ func (p *metricsSchema) metricsColumnsEnriched(ctx context.Context, dsInfo types
 	}
 
 	eqOps := []schemas.Operator{schemas.OperatorEquals, schemas.OperatorIn}
-	cols := make([]schemas.Column, 0, len(base)+len(def.Dimensions)+2)
+	cols := make([]schemas.Column, 0, len(base)+len(def.Dimensions))
 	cols = append(cols, base...)
 	for _, d := range def.Dimensions {
 		dimName := strings.TrimSpace(d.Value)

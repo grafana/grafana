@@ -87,15 +87,13 @@ func (s *Service) normalizeGrafanaSQLRequest(ctx context.Context, req *backend.Q
 
 		var resources []dataquery.AzureMonitorResource
 		if rn != "" {
-			res := dataquery.AzureMonitorResource{}
-			res.Subscription = &sub
-			res.ResourceGroup = &rg
-			res.ResourceName = &rn
-			res.MetricNamespace = &ns
-			if rgn != "" {
-				res.Region = &rgn
-			}
-			resources = []dataquery.AzureMonitorResource{res}
+			resources = []dataquery.AzureMonitorResource{dataquery.AzureMonitorResource{
+				Subscription:    &sub,
+				ResourceGroup:   &rg,
+				ResourceName:    &rn,
+				MetricNamespace: &ns,
+				Region:          &rgn,
+			}}
 		} else {
 			if rgn == "" {
 				sqlErrors[q.RefID] = fmt.Errorf("azure monitor sql: region table parameter is required for multi-resource queries (when resourceName is omitted)")
@@ -112,9 +110,8 @@ func (s *Service) normalizeGrafanaSQLRequest(ctx context.Context, req *backend.Q
 				continue
 			}
 			resources = discovered
-			r := rgn
 			for i := range resources {
-				resources[i].Region = &r
+				resources[i].Region = &rgn
 			}
 		}
 		az.Resources = resources
@@ -173,8 +170,7 @@ func mergeTableParams(table string, explicit map[string]any) map[string]any {
 	if len(parts) < 2 {
 		return out
 	}
-	// Optional future: parse ordered suffix segments. v1 relies on TableParameterValues.
-	_ = parts[1]
+
 	return out
 }
 

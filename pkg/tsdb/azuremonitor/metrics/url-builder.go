@@ -7,8 +7,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-// urlBuilder builds the URL for calling the Azure Monitor API
-type urlBuilder struct {
+// UrlBuilder builds the URL for calling the Azure Monitor API
+type UrlBuilder struct {
 	ResourceURI *string
 
 	// Following fields will be used to generate a ResourceURI
@@ -20,7 +20,7 @@ type urlBuilder struct {
 	MetricDefinition    *string
 }
 
-func (params *urlBuilder) buildResourceURI() (*string, error) {
+func (params *UrlBuilder) BuildResourceURI() (*string, error) {
 	if params.ResourceURI != nil && *params.ResourceURI != "" {
 		return params.ResourceURI, nil
 	}
@@ -84,22 +84,6 @@ func (params *urlBuilder) buildResourceURI() (*string, error) {
 
 	resourceURI := strings.Join(urlArray, "/")
 	return &resourceURI, nil
-}
-
-// BuildResourceURIString builds the ARM resource ID path used by Azure Monitor metrics APIs
-// (e.g. /subscriptions/{sub}/resourceGroups/{rg}/providers/...).
-func BuildResourceURIString(subscription, resourceGroup, metricNamespace, resourceName string) (*string, error) {
-	sub := subscription
-	rg := resourceGroup
-	ns := metricNamespace
-	rn := resourceName
-	ub := urlBuilder{
-		Subscription:    &sub,
-		ResourceGroup:   &rg,
-		MetricNamespace: &ns,
-		ResourceName:    &rn,
-	}
-	return ub.buildResourceURI()
 }
 
 // BuildSubscriptionMetricsURL returns a URL for querying metrics for all resources in a subscription
