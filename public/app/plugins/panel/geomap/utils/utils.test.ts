@@ -33,7 +33,7 @@ jest.mock('app/plugins/datasource/grafana/datasource', () => ({
   getGrafanaDatasource: jest.fn(),
 }));
 
-import { hasVariableDependencies, hasLayerData } from './utils';
+import { hasVariableDependencies, hasLayerData, isUrl, isSegmentVisible } from './utils';
 
 // Test fixtures
 const createTestFeature = () => new Feature(new Point([0, 0]));
@@ -189,5 +189,35 @@ describe('hasLayerData', () => {
       layers: [webglLayer],
     });
     expect(hasLayerData(group)).toBe(true);
+  });
+});
+
+describe('isUrl', () => {
+  it('should return true for http and https URLs', () => {
+    expect(isUrl('https://example.com/path')).toBe(true);
+    expect(isUrl('http://localhost:3000')).toBe(true);
+  });
+
+  it('should return false for non-http schemes or invalid URLs', () => {
+    expect(isUrl('ftp://files.example.com')).toBe(false);
+    expect(isUrl('not a url')).toBe(false);
+  });
+});
+
+describe('isSegmentVisible', () => {
+  it('should return true when segment spans more pixels than tolerance', () => {
+    const map = {
+      getPixelFromCoordinate: (coord: number[]) => coord,
+    } as unknown as import('ol/Map').default;
+
+    expect(isSegmentVisible(map, 1, [0, 0], [10, 0])).toBe(true);
+  });
+
+  it('should return false when segment is within pixel tolerance', () => {
+    const map = {
+      getPixelFromCoordinate: (coord: number[]) => coord,
+    } as unknown as import('ol/Map').default;
+
+    expect(isSegmentVisible(map, 5, [0, 0], [1, 1])).toBe(false);
   });
 });
