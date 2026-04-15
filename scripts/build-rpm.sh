@@ -108,6 +108,8 @@ fpm \
   --rpm-posttrans="${SRC}/packaging/rpm/control/posttrans" \
   --rpm-digest=sha256 \
   --rpm-compression xzmt \
+  --rpm-user root \
+  --rpm-group root \
   .
 
 echo "created dist/${FILENAME}"

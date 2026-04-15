@@ -61,4 +61,7 @@ oscap xccdf eval \
   --profile xccdf_org.ssgproject.content_profile_stig \
   --rule xccdf_org.ssgproject.content_rule_file_permissions_binary_dirs \
   --rule xccdf_org.ssgproject.content_rule_file_permissions_library_dirs \
+  --rule xccdf_org.ssgproject.content_rule_file_ownership_binary_dirs \
+  --rule xccdf_org.ssgproject.content_rule_file_ownership_library_dirs \
+  --rule xccdf_org.ssgproject.content_rule_file_groupownership_system_commands_dirs \
   "$SSG_DS"
