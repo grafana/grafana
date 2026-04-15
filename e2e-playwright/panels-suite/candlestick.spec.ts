@@ -1,6 +1,163 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-const DASHBOARD_UID = 'MP-Di9F7k';
+const DASHBOARD_UID = 'panel-tests-candlestick';
+const PANNING_DASHBOARD_UID = 'MP-Di9F7k';
+
+test.use({
+  viewport: { width: 1280, height: 2000 },
+});
+
+test.describe('Panels test: Candlestick', { tag: ['@panels', '@candlestick'] }, () => {
+  test('renders successfully', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
+
+    // 5 panels with data render uplot; the "No Data" panel does not
+    const uplotElements = page.locator('.uplot');
+    await expect(uplotElements, 'panels are rendered').toHaveCount(5);
+
+    const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
+    await expect(errorInfo, 'no errors in the panels').toBeHidden();
+  });
+
+  test('"no data"', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '5' }),
+    });
+
+    const uplot = page.locator('.uplot');
+    await expect(uplot, "uplot doesn't appear").toBeHidden();
+
+    const emptyMessage = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.PanelDataErrorMessage);
+    await expect(emptyMessage, 'empty text appears').toHaveText('No data');
+
+    const noValueOption = dashboardPage
+      .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Standard options No value'))
+      .locator('input');
+    await noValueOption.fill('My empty value');
+    await noValueOption.blur();
+    await expect(emptyMessage, 'empty text has changed').toHaveText('My empty value');
+  });
+
+  test('tooltip interactions', async ({ gotoDashboardPage, page, selectors }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '1' }),
+    });
+
+    const uplot = page.locator('.uplot');
+    await expect(uplot, 'uplot is rendered').toBeVisible();
+
+    const tooltip = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Tooltip.Wrapper);
+
+    // hover to trigger tooltip
+    await uplot.hover({ position: { x: 200, y: 100 } });
+    await expect(tooltip, 'tooltip appears on hover').toBeVisible();
+
+    // click to pin, hover away to verify pinning
+    await uplot.click({ position: { x: 200, y: 100 } });
+    await uplot.hover({ position: { x: 400, y: 100 } });
+    await expect(tooltip, 'tooltip pinned on click').toBeVisible();
+
+    // unpin by clicking elsewhere
+    await uplot.click({ position: { x: 400, y: 100 } });
+    await uplot.blur();
+    await expect(tooltip, 'tooltip closed after unpinning').toBeHidden();
+
+    // close via X button
+    await uplot.click({ position: { x: 200, y: 100 } });
+    await expect(tooltip, 'tooltip appears on click').toBeVisible();
+    await dashboardPage.getByGrafanaSelector(selectors.components.Portal.container).getByLabel('Close').click();
+    await expect(tooltip, 'tooltip closed on X click').toBeHidden();
+
+    // CMD/CTRL+C does not dismiss
+    await uplot.click({ position: { x: 200, y: 100 } });
+    await expect(tooltip, 'tooltip appears on click').toBeVisible();
+    await page.keyboard.press('Meta+C');
+    await expect(tooltip, 'tooltip persists after CMD/CTRL+C').toBeVisible();
+
+    // Escape key dismisses
+    await page.keyboard.press('Escape');
+    await expect(tooltip, 'tooltip closed on Escape').toBeHidden();
+
+    // disable tooltips via options pane
+    await dashboardPage
+      .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Tooltip Tooltip mode'))
+      .getByLabel('Hidden')
+      .click();
+    await uplot.hover({ position: { x: 200, y: 100 } });
+    await expect(tooltip, 'tooltip not shown when disabled').toBeHidden();
+  });
+
+  test('legend', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '1' }),
+    });
+
+    const legend = dashboardPage.getByGrafanaSelector(selectors.components.VizLayout.legend);
+    await expect(legend, 'legend is rendered').toBeVisible();
+
+    const panelOptionsLegendGroup = page.getByTestId(selectors.components.OptionsGroup.group('Legend'));
+    const legendVisibilityClickableLabel = panelOptionsLegendGroup.getByText('Visibility');
+    const legendVisibilitySwitch = panelOptionsLegendGroup.getByLabel('Visibility');
+
+    await expect(legendVisibilitySwitch, 'legend is enabled by default').toBeChecked();
+    await legendVisibilityClickableLabel.click();
+    await expect(legendVisibilitySwitch).not.toBeChecked();
+    await expect(legend, 'legend is no longer visible').not.toBeVisible();
+  });
+
+  test('panel options in edit mode', async ({ gotoDashboardPage, selectors }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '1' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Candlestick Mode'))
+    ).toBeVisible();
+    await expect(
+      dashboardPage.getByGrafanaSelector(
+        selectors.components.PanelEditor.OptionsPane.fieldLabel('Candlestick Candle style')
+      )
+    ).toBeVisible();
+    await expect(
+      dashboardPage.getByGrafanaSelector(
+        selectors.components.PanelEditor.OptionsPane.fieldLabel('Candlestick Color strategy')
+      )
+    ).toBeVisible();
+    await expect(
+      dashboardPage.getByGrafanaSelector(
+        selectors.components.PanelEditor.OptionsPane.fieldLabel('Candlestick Up color')
+      )
+    ).toBeVisible();
+    await expect(
+      dashboardPage.getByGrafanaSelector(
+        selectors.components.PanelEditor.OptionsPane.fieldLabel('Candlestick Down color')
+      )
+    ).toBeVisible();
+  });
+
+  test('data links', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '6' }),
+    });
+
+    const uplot = page.locator('.uplot');
+    await expect(uplot, 'uplot is rendered').toBeVisible();
+
+    const tooltip = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Tooltip.Wrapper);
+
+    // click on chart to pin tooltip at a data point
+    await uplot.click({ position: { x: 200, y: 100 } });
+    await expect(tooltip, 'tooltip pinned on click').toBeVisible();
+
+    // verify data link appears in tooltip
+    await expect(tooltip.getByText('Example Data Link'), 'data link visible in tooltip').toBeVisible();
+  });
+});
 
 test.use({
   featureToggles: {
@@ -16,7 +173,7 @@ test.describe('Panels test: Candlestick X-axis panning', { tag: ['@panels', '@ca
     let initialToTime: number;
 
     const dashboardPage = await test.step('Load dashboard and verify cursor changes to grab', async () => {
-      const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
+      const dashboardPage = await gotoDashboardPage({ uid: PANNING_DASHBOARD_UID });
 
       const candlestickPanel = page.locator('.uplot').first();
       await expect(candlestickPanel, 'panel rendered').toBeVisible();
