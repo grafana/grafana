@@ -361,7 +361,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	enableTeamsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(ctx))
 	enableUserApi := b.isSingleOrgSetup() && client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
 	enableServiceAccountsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountsApi, false, openfeature.TransactionContext(ctx))
-	// enableServiceAccountTokensApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountTokensApi, false, openfeature.TransactionContext(ctx))
+	enableServiceAccountTokensApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountTokensApi, false, openfeature.TransactionContext(ctx))
 	enableExternalGroupMappingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesExternalGroupMappingsApi, false, openfeature.TransactionContext(ctx))
 	enableSsoSettingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesSsoSettingsApi, false, openfeature.TransactionContext(ctx))
 
@@ -392,7 +392,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	if enableServiceAccountsApi {
-		if err := b.UpdateServiceAccountsAPIGroup(opts, storage, enableZanzanaSync); err != nil {
+		if err := b.UpdateServiceAccountsAPIGroup(opts, storage, enableZanzanaSync, enableServiceAccountTokensApi); err != nil {
 			return err
 		}
 	}
@@ -612,7 +612,7 @@ func (b *IdentityAccessManagementAPIBuilder) useStatusDualWriter(resourceInfo ut
 	return true
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync bool) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync bool, enableServiceAccountTokensApi bool) error {
 	saResource := iamv0.ServiceAccountResourceInfo
 	saUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, saResource, opts.OptsGetter)
 	if err != nil {
@@ -639,7 +639,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts 
 		saStore = dw
 	}
 
-	storage[saResource.StoragePath("tokens")] = serviceaccounttoken.NewTokensREST(saStore, b.store)
+	if enableServiceAccountTokensApi {
+		storage[saResource.StoragePath("tokens")] = serviceaccounttoken.NewTokensREST(saStore, b.store)
+	}
 
 	return nil
 }

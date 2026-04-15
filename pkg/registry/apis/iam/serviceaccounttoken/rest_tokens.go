@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
@@ -35,6 +36,10 @@ const (
 	maxTokenNameLength  = 190
 	maxExpiresInSeconds = 157_680_000 // 5 years
 )
+
+// validTokenName allows alphanumerics, hyphens, underscores, and dots.
+// Slashes are forbidden to prevent path-traversal in URL segments.
+var validTokenName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 
 var (
 	_ rest.Storage         = (*TokensREST)(nil)
@@ -196,6 +201,10 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 		responder.Error(apierrors.NewBadRequest(fmt.Sprintf("tokenName must be at most %d characters", maxTokenNameLength)))
 		return
 	}
+	if !validTokenName.MatchString(req.TokenName) {
+		responder.Error(apierrors.NewBadRequest("tokenName may only contain alphanumerics, hyphens, underscores, and dots"))
+		return
+	}
 	if req.ExpiresInSeconds < 0 {
 		responder.Error(apierrors.NewBadRequest("expiresInSeconds must not be negative"))
 		return
@@ -219,7 +228,7 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 	}
 
 	// --- Write to legacy api_key table (Mode0 / Mode1) ---
-	cmd := legacy.SaveServiceAccountTokenHashCommand{
+	cmd := legacy.CreateServiceAccountTokenWithHashCommand{
 		TokenName:         req.TokenName,
 		HashedKey:         keyResult.HashedKey,
 		ServiceAccountUID: saName,
@@ -227,7 +236,7 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 	if expires > 0 {
 		cmd.Expires = &expires
 	}
-	if err := s.legacyStore.SaveServiceAccountTokenHash(ctx, ns, cmd); err != nil {
+	if err := s.legacyStore.CreateServiceAccountTokenWithHash(ctx, ns, cmd); err != nil {
 		if errors.Is(err, legacy.ErrTokenAlreadyExists) {
 			responder.Error(apierrors.NewConflict(
 				schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounttokens"},
@@ -313,7 +322,7 @@ func mapTokenItem(t legacy.ServiceAccountToken) iamv0alpha1.TokenItem {
 //   - Fixes 200 response schemas (k8s defaults to TypeMeta)
 //   - Adds request body and 201 response for POST /tokens
 //   - Renames {path} to {tokenName} on /tokens/{path}
-//   - Removes PUT and PATCH operations
+//   - Removes DELETE, PUT, and PATCH from the collection path (DELETE only applies to /tokens/{tokenName})
 func PostProcessOpenAPI(oas *spec3.OpenAPI) {
 	if oas.Paths == nil || oas.Paths.Paths == nil {
 		return
@@ -336,7 +345,7 @@ func PostProcessOpenAPI(oas *spec3.OpenAPI) {
 		}
 	}
 
-	// --- /tokens: fix GET/POST/DELETE response schemas ---
+	// --- /tokens: fix GET/POST response schemas, remove DELETE/PUT/PATCH ---
 	if p, ok := oas.Paths.Paths[tokensBasePath]; ok {
 		if p.Get != nil {
 			p.Get.Responses.StatusCodeResponses[200] = jsonResponse("ListTokensBody", "OK")
@@ -358,12 +367,11 @@ func PostProcessOpenAPI(oas *spec3.OpenAPI) {
 			p.Post.Responses.StatusCodeResponses[201] = jsonResponse("CreateTokenBody", "Token created")
 		}
 
-		if p.Delete != nil {
-			p.Delete.Responses.StatusCodeResponses[200] = jsonResponse("DeleteTokenBody", "OK")
-		}
-
+		p.Delete = nil
 		p.Put = nil
 		p.Patch = nil
+
+		fixNameParam(p)
 	}
 
 	// --- /tokens/{path}: fix response schemas, rename to {tokenName}, remove PUT/PATCH ---
@@ -386,8 +394,22 @@ func PostProcessOpenAPI(oas *spec3.OpenAPI) {
 		p.Post = nil
 		p.Put = nil
 		p.Patch = nil
+
+		fixNameParam(p)
+
 		delete(oas.Paths.Paths, tokensSubPath)
 		oas.Paths.Paths[tokensBasePath+"/{tokenName}"] = p
+	}
+}
+
+// fixNameParam corrects the "name" parameter description from the k8s-generated
+// "name of the ListSATokenResponse" to "name of the ServiceAccount".
+func fixNameParam(p *spec3.Path) {
+	for _, v := range p.Parameters {
+		if v.Name == "name" {
+			v.Description = "name of the ServiceAccount"
+			break
+		}
 	}
 }
 

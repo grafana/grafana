@@ -328,13 +328,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['ServiceAccount'],
       }),
-      deleteServiceAccountTokens: build.mutation<
-        DeleteServiceAccountTokensApiResponse,
-        DeleteServiceAccountTokensApiArg
-      >({
-        query: (queryArg) => ({ url: `/serviceaccounts/${queryArg.name}/tokens`, method: 'DELETE' }),
-        invalidatesTags: ['ServiceAccount'],
-      }),
       getServiceAccountTokensWithPath: build.query<
         GetServiceAccountTokensWithPathApiResponse,
         GetServiceAccountTokensWithPathApiArg
@@ -1155,30 +1148,25 @@ export type UpdateServiceAccountApiArg = {
 };
 export type GetServiceAccountTokensApiResponse = /** status 200 OK */ ListTokensBody;
 export type GetServiceAccountTokensApiArg = {
-  /** name of the ListSATokenResponse */
+  /** name of the ServiceAccount */
   name: string;
 };
 export type CreateServiceAccountTokensApiResponse = /** status 201 Token created */ CreateTokenBody;
 export type CreateServiceAccountTokensApiArg = {
-  /** name of the ListSATokenResponse */
+  /** name of the ServiceAccount */
   name: string;
   createTokenRequestBody: CreateTokenRequestBody;
 };
-export type DeleteServiceAccountTokensApiResponse = /** status 200 OK */ DeleteTokenBody;
-export type DeleteServiceAccountTokensApiArg = {
-  /** name of the ListSATokenResponse */
-  name: string;
-};
 export type GetServiceAccountTokensWithPathApiResponse = /** status 200 OK */ TokenItem;
 export type GetServiceAccountTokensWithPathApiArg = {
-  /** name of the ListSATokenResponse */
+  /** name of the ServiceAccount */
   name: string;
   /** name of the token to operate on */
   tokenName: string;
 };
 export type DeleteServiceAccountTokensWithPathApiResponse = /** status 200 OK */ DeleteTokenBody;
 export type DeleteServiceAccountTokensWithPathApiArg = {
-  /** name of the ListSATokenResponse */
+  /** name of the ServiceAccount */
   name: string;
   /** name of the token to operate on */
   tokenName: string;
@@ -2209,7 +2197,6 @@ export const {
   useGetServiceAccountTokensQuery,
   useLazyGetServiceAccountTokensQuery,
   useCreateServiceAccountTokensMutation,
-  useDeleteServiceAccountTokensMutation,
   useGetServiceAccountTokensWithPathQuery,
   useLazyGetServiceAccountTokensWithPathQuery,
   useDeleteServiceAccountTokensWithPathMutation,

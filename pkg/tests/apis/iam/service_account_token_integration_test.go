@@ -405,9 +405,9 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, http.StatusBadRequest, rsp.Response.StatusCode)
 	})
 
-	t.Run("should allow token names with special characters", func(t *testing.T) {
+	t.Run("should allow token names with dots hyphens and underscores", func(t *testing.T) {
 		body, err := json.Marshal(createTokenRequest{
-			TokenName: "my-token_v2.prod (backup)",
+			TokenName: "my-token_v2.prod",
 		})
 		require.NoError(t, err)
 
@@ -420,17 +420,42 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		}, &res)
 
 		require.Equal(t, http.StatusCreated, rsp.Response.StatusCode)
-		require.Equal(t, "my-token_v2.prod (backup)", res.ServiceAccountTokenName)
+		require.Equal(t, "my-token_v2.prod", res.ServiceAccountTokenName)
 
 		// Verify we can get it back.
 		var getRes tokenItem
 		getRsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodGet,
-			Path:   tokenPath(ns, saName, "my-token_v2.prod (backup)"),
+			Path:   tokenPath(ns, saName, "my-token_v2.prod"),
 		}, &getRes)
 
 		require.Equal(t, http.StatusOK, getRsp.Response.StatusCode)
-		require.Equal(t, "my-token_v2.prod (backup)", getRes.Title)
+		require.Equal(t, "my-token_v2.prod", getRes.Title)
+	})
+
+	t.Run("should reject token names with invalid characters", func(t *testing.T) {
+		invalidNames := []string{
+			"has spaces",
+			"has/slash",
+			"has(parens)",
+			"has@at",
+		}
+		for _, name := range invalidNames {
+			body, err := json.Marshal(createTokenRequest{
+				TokenName: name,
+			})
+			require.NoError(t, err)
+
+			var res createTokenResponse
+			rsp := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodPost,
+				Path:   tokensPath(ns, saName),
+				Body:   body,
+			}, &res)
+
+			require.Equal(t, http.StatusBadRequest, rsp.Response.StatusCode, "token name %q should be rejected", name)
+		}
 	})
 }

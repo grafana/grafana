@@ -1890,34 +1890,11 @@
           "kind": "ListSATokenResponse"
         }
       },
-      "delete": {
-        "tags": ["ServiceAccount"],
-        "description": "connect DELETE requests to tokens of ServiceAccount",
-        "operationId": "deleteServiceAccountTokens",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DeleteTokenBody"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "iam.grafana.app",
-          "version": "v0alpha1",
-          "kind": "ListSATokenResponse"
-        }
-      },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the ListSATokenResponse",
+          "description": "name of the ServiceAccount",
           "required": true,
           "schema": {
             "type": "string",
@@ -1977,7 +1954,7 @@
         {
           "name": "name",
           "in": "path",
-          "description": "name of the ListSATokenResponse",
+          "description": "name of the ServiceAccount",
           "required": true,
           "schema": {
             "type": "string",

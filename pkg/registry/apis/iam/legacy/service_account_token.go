@@ -43,8 +43,8 @@ type DeleteServiceAccountTokenCommand struct {
 	ServiceAccountID int64
 }
 
-// SaveServiceAccountTokenHashCommand stores a pre-generated hashed token in the legacy api_key table.
-type SaveServiceAccountTokenHashCommand struct {
+// CreateServiceAccountTokenWithHashCommand stores a pre-generated hashed token in the legacy api_key table.
+type CreateServiceAccountTokenWithHashCommand struct {
 	TokenName         string // token name used as api_key.name
 	HashedKey         string // PBKDF2-SHA256 hash from satokengen
 	ServiceAccountUID string // UID of the owning service account
@@ -158,47 +158,6 @@ func (s *legacySQLStore) GetServiceAccountToken(ctx context.Context, ns claims.N
 	return &t, nil
 }
 
-func (s *legacySQLStore) CreateServiceAccountToken(ctx context.Context, ns claims.NamespaceInfo, cmd CreateServiceAccountTokenCommand) (*ServiceAccountToken, error) {
-	cmd.OrgID = ns.OrgID
-	if cmd.OrgID == 0 {
-		return nil, fmt.Errorf("expected non zero org id")
-	}
-
-	now := time.Now().UTC()
-	cmd.Created = legacysql.NewDBTime(now)
-	cmd.Updated = legacysql.NewDBTime(now)
-
-	sql, err := s.getDB(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	req := newCreateServiceAccountToken(sql, &cmd)
-	q, err := sqltemplate.Execute(sqlCreateServiceAccountTokenTemplate, req)
-	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlCreateServiceAccountTokenTemplate.Name(), err)
-	}
-
-	var tokenID int64
-	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
-		var txErr error
-		tokenID, txErr = st.ExecWithReturningId(ctx, q, req.GetArgs()...)
-		return txErr
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create service account token: %w", err)
-	}
-
-	return &ServiceAccountToken{
-		ID:      tokenID,
-		Name:    cmd.Name,
-		Revoked: cmd.IsRevoked,
-		Expires: cmd.Expires,
-		Created: cmd.Created.Time,
-		Updated: cmd.Updated.Time,
-	}, nil
-}
-
 func (s *legacySQLStore) DeleteServiceAccountToken(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteServiceAccountTokenCommand) (int64, error) {
 	cmd.OrgID = ns.OrgID
 	if cmd.OrgID == 0 {
@@ -229,13 +188,13 @@ func (s *legacySQLStore) DeleteServiceAccountToken(ctx context.Context, ns claim
 	return rowsAffected, nil
 }
 
-// SaveServiceAccountTokenHash stores a pre-generated hashed token in the legacy api_key table.
-// Returns ErrTokenAlreadyExists if a token with the same name already exists for the service account.
+// CreateServiceAccountTokenWithHash stores a pre-generated hashed token in the legacy api_key table.
+// Returns ErrTokenAlreadyExists if the DB unique constraint is violated (duplicate name).
 // The caller generates the token via satokengen and passes the hash here.
-func (s *legacySQLStore) SaveServiceAccountTokenHash(
+func (s *legacySQLStore) CreateServiceAccountTokenWithHash(
 	ctx context.Context,
 	ns claims.NamespaceInfo,
-	cmd SaveServiceAccountTokenHashCommand,
+	cmd CreateServiceAccountTokenWithHashCommand,
 ) error {
 	cmd.OrgID = ns.OrgID
 	if cmd.OrgID == 0 {
@@ -254,18 +213,6 @@ func (s *legacySQLStore) SaveServiceAccountTokenHash(
 	})
 	if err != nil {
 		return fmt.Errorf("service account not found: %w", err)
-	}
-
-	// Check if a token with the same name already exists.
-	existing, err := s.GetServiceAccountToken(ctx, ns, GetServiceAccountTokenQuery{
-		Name:              cmd.TokenName,
-		ServiceAccountUID: cmd.ServiceAccountUID,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to check existing token: %w", err)
-	}
-	if existing != nil {
-		return ErrTokenAlreadyExists
 	}
 
 	now := time.Now().UTC()
@@ -290,8 +237,6 @@ func (s *legacySQLStore) SaveServiceAccountTokenHash(
 
 	return sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
 		if _, txErr := st.ExecWithReturningId(ctx, createQuery, createReq.GetArgs()...); txErr != nil {
-			// Catch DB unique constraint violations as a fallback for the
-			// pre-check above (handles the race between check and insert).
 			if dialect := sql.DB.GetDialect(); dialect != nil && dialect.IsUniqueConstraintViolation(txErr) {
 				return ErrTokenAlreadyExists
 			}
