@@ -759,11 +759,22 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	connectionStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, connectionsStore)
 	b.connectionStore = connectionsStore
 
-	storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
-	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
+	// When serving a non-storage version (e.g. v1beta1), wrap the CRUD stores
+	// so that List re-stamps each item's apiVersion to match the served version.
+	var repoStorage rest.Storage = repositoryStorage
+	var connStorage rest.Storage = connectionsStore
+	var jobStorage rest.Storage = jobStore
+	if b.gv.Version != provisioning.VERSION {
+		repoStorage = grafanaregistry.NewVersionedStore(repositoryStorage, b.gv)
+		connStorage = grafanaregistry.NewVersionedStore(connectionsStore, b.gv)
+		jobStorage = grafanaregistry.NewVersionedStore(jobStore, b.gv)
+	}
+
+	storage[provisioning.JobResourceInfo.StoragePath()] = jobStorage
+	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repoStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
-	storage[provisioning.ConnectionResourceInfo.StoragePath()] = connectionsStore
+	storage[provisioning.ConnectionResourceInfo.StoragePath()] = connStorage
 	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
 	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = NewConnectionRepositoriesConnector(b)
 
