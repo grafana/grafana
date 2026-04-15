@@ -82,6 +82,11 @@ type sqlEmbeddingsSearchResponse struct {
 	Metadata    json.RawMessage
 }
 
+// MetadataFilterEntry is a pre-built JSONB containment filter for the search template.
+type MetadataFilterEntry struct {
+	JSON string // e.g. `{"datasource_uids":["ds1"]}`
+}
+
 type sqlEmbeddingsSearchRequest struct {
 	sqltemplate.SQLTemplate
 	Namespace      string
@@ -92,10 +97,9 @@ type sqlEmbeddingsSearchRequest struct {
 	Response       *sqlEmbeddingsSearchResponse
 
 	// Filters (nil means no filter)
-	NameValues       []string
-	FolderValues     []string
-	DatasourceValues []string
-	LanguageValues   []string
+	NameValues      []string
+	FolderValues    []string
+	MetadataFilters []MetadataFilterEntry
 }
 
 func (r *sqlEmbeddingsSearchRequest) Validate() error {
@@ -126,24 +130,6 @@ func (r *sqlEmbeddingsSearchRequest) FolderFilter() bool {
 
 func (r *sqlEmbeddingsSearchRequest) FolderFilterSlice() reflect.Value {
 	return reflect.ValueOf(r.FolderValues)
-}
-
-func (r *sqlEmbeddingsSearchRequest) DatasourceFilter() bool {
-	return len(r.DatasourceValues) > 0
-}
-
-func (r *sqlEmbeddingsSearchRequest) DatasourceFilterJSON() string {
-	b, _ := json.Marshal(map[string][]string{"datasource_uids": r.DatasourceValues})
-	return string(b)
-}
-
-func (r *sqlEmbeddingsSearchRequest) LanguageFilter() bool {
-	return len(r.LanguageValues) > 0
-}
-
-func (r *sqlEmbeddingsSearchRequest) LanguageFilterJSON() string {
-	b, _ := json.Marshal(map[string][]string{"query_languages": r.LanguageValues})
-	return string(b)
 }
 
 // -- GetLatestRV request --

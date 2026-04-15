@@ -2,6 +2,7 @@ package vector
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -99,10 +100,10 @@ func (b *pgvectorBackend) Search(ctx context.Context, namespace, group, resource
 			req.NameValues = f.Values
 		case "folder":
 			req.FolderValues = f.Values
-		case "datasource_uids":
-			req.DatasourceValues = f.Values
-		case "query_languages":
-			req.LanguageValues = f.Values
+		default:
+			// Generic JSONB containment filter: metadata @> '{"field": ["v1","v2"]}'
+			j, _ := json.Marshal(map[string][]string{f.Field: f.Values})
+			req.MetadataFilters = append(req.MetadataFilters, MetadataFilterEntry{JSON: string(j)})
 		}
 	}
 

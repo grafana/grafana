@@ -97,8 +97,10 @@ func TestVectorQueries(t *testing.T) {
 						Limit:            5,
 						NameValues:       []string{"dash-1"},
 						FolderValues:     []string{"folder-a", "folder-b"},
-						DatasourceValues: []string{"ds-uid-1"},
-						LanguageValues:   []string{"promql"},
+						MetadataFilters: []MetadataFilterEntry{
+							{JSON: `{"datasource_uids":["ds-uid-1"]}`},
+							{JSON: `{"query_languages":["promql"]}`},
+						},
 						Response:         &sqlEmbeddingsSearchResponse{},
 					},
 				},

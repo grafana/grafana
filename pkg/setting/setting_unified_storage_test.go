@@ -340,11 +340,11 @@ func TestVectorStorageConfig(t *testing.T) {
 		}
 
 		// Set vector storage config
-		setSectionKey("unified_storage.vector-storage", "db_host", "localhost")
-		setSectionKey("unified_storage.vector-storage", "db_name", "vector_db")
-		setSectionKey("unified_storage.vector-storage", "db_user", "postgres")
-		setSectionKey("unified_storage.vector-storage", "db_password", "secret123")
-		setSectionKey("unified_storage.vector-storage", "db_sslmode", "require")
+		setSectionKey("database_vector", "db_host", "localhost")
+		setSectionKey("database_vector", "db_name", "vector_db")
+		setSectionKey("database_vector", "db_user", "postgres")
+		setSectionKey("database_vector", "db_password", "secret123")
+		setSectionKey("database_vector", "db_sslmode", "require")
 
 		cfg.setUnifiedStorageConfig()
 
@@ -367,10 +367,10 @@ func TestVectorStorageConfig(t *testing.T) {
 		}
 
 		// Set vector storage config without db_sslmode
-		setSectionKey("unified_storage.vector-storage", "db_host", "localhost")
-		setSectionKey("unified_storage.vector-storage", "db_name", "vector_db")
-		setSectionKey("unified_storage.vector-storage", "db_user", "postgres")
-		setSectionKey("unified_storage.vector-storage", "db_password", "secret123")
+		setSectionKey("database_vector", "db_host", "localhost")
+		setSectionKey("database_vector", "db_name", "vector_db")
+		setSectionKey("database_vector", "db_user", "postgres")
+		setSectionKey("database_vector", "db_password", "secret123")
 
 		cfg.setUnifiedStorageConfig()
 

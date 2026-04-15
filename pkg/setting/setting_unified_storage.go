@@ -243,7 +243,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	}
 
 	// Vector storage config (separate pgvector database)
-	vectorSection := cfg.Raw.Section("unified_storage.vector-storage")
+	vectorSection := cfg.Raw.Section("database_vector")
 	cfg.VectorDBHost = vectorSection.Key("db_host").String()
 	cfg.VectorDBName = vectorSection.Key("db_name").String()
 	cfg.VectorDBUser = vectorSection.Key("db_user").String()

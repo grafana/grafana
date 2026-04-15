@@ -15,11 +15,8 @@ SELECT
     {{ if .FolderFilter }}
     AND {{ .Ident "folder" }} IN ({{ .ArgList .FolderFilterSlice }})
     {{ end }}
-    {{ if .DatasourceFilter }}
-    AND {{ .Ident "metadata" }} @> {{ .Arg .DatasourceFilterJSON }}
-    {{ end }}
-    {{ if .LanguageFilter }}
-    AND {{ .Ident "metadata" }} @> {{ .Arg .LanguageFilterJSON }}
+    {{ range .MetadataFilters }}
+    AND {{ $.Ident "metadata" }} @> {{ $.Arg .JSON }}
     {{ end }}
     ORDER BY {{ .Ident "embedding" }} <=> {{ .Arg .QueryEmbedding }}
     LIMIT {{ .Arg .Limit }}
