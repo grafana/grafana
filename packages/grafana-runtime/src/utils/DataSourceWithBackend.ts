@@ -401,8 +401,8 @@ class DataSourceWithBackend<
    * Run the datasource healthcheck
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
-     const useNewApi = getFeatureFlagClient().getBooleanValue(
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend,
+    const useNewApi = getFeatureFlagClient().getBooleanValue(
+      'datasourcesApiServerEnableHealthEndpointFrontend',
       false
     );
     const healthCheckURL = useNewApi
