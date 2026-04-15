@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -645,6 +646,46 @@ func TestGetActionSetName(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+func TestMapPermission_ServiceAccount(t *testing.T) {
+	saOpts := Options{
+		Resource: serviceaccounts.ScopeServiceAccountRoot,
+		PermissionsToActions: map[string][]string{
+			"Edit":  {serviceaccounts.ActionRead, serviceaccounts.ActionWrite},
+			"Admin": {serviceaccounts.ActionRead, serviceaccounts.ActionWrite, serviceaccounts.ActionDelete},
+		},
+	}
+
+	t.Run("flag off: emits action set token AND granular actions", func(t *testing.T) {
+		svc := &Service{
+			options:  saOpts,
+			features: featuremgmt.WithFeatures(),
+		}
+		actions, err := svc.mapPermission("Edit")
+		require.NoError(t, err)
+		assert.Contains(t, actions, saOpts.GetActionSetName("Edit"), "should include action set token")
+		assert.Contains(t, actions, serviceaccounts.ActionRead, "should include granular read action")
+		assert.Contains(t, actions, serviceaccounts.ActionWrite, "should include granular write action")
+	})
+
+	t.Run("flag on: emits only action set token", func(t *testing.T) {
+		svc := &Service{
+			options:  saOpts,
+			features: featuremgmt.WithFeatures(featuremgmt.FlagOnlyStoreServiceAccountActionSets),
+		}
+		actions, err := svc.mapPermission("Edit")
+		require.NoError(t, err)
+		require.Len(t, actions, 1)
+		assert.Equal(t, saOpts.GetActionSetName("Edit"), actions[0])
+	})
+}
+
+func TestIsActionSetEnabledResource_ServiceAccount(t *testing.T) {
+	t.Run("serviceaccounts actions are enabled", func(t *testing.T) {
+		assert.True(t, isActionSetEnabledResource(serviceaccounts.ScopeServiceAccountRoot+":edit"))
+		assert.True(t, isActionSetEnabledResource(serviceaccounts.ScopeServiceAccountRoot+":admin"))
+	})
 }
 
 func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, team.Service) {
