@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,6 +26,12 @@ import (
 )
 
 var errResourceIsManagedInRepository = fmt.Errorf("this resource is managed by a repository")
+
+// isLegacyTerraformID checks if a Terraform manager identity uses legacy placeholder values
+// like "crossTF000" or "crossplane" that were used before version-specific IDs.
+func isLegacyTerraformID(identity string) bool {
+	return strings.Contains(identity, "crossTF000") || strings.Contains(identity, "crossplane")
+}
 
 func checkManagerPropertiesOnDelete(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 	return enforceManagerProperties(auth, obj)
@@ -67,10 +74,10 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 	// Changing the owner (kind or identity) is not allowed.
 	// Remove the old manager first, then add the new one.
 	//
-	// Exception: For Terraform managers, only the kind matters. The identity
-	// is derived from the HTTP User-Agent and changes with provider versions
-	// (e.g., "Terraform/crossTF000 (+https://www.terraform.io) terraform-provider-grafana/crossplane"),
-	// so we allow identity transitions as long as both old and new are Terraform.
+	// Exception: For Terraform managers, the identity is derived from the HTTP
+	// User-Agent and changes with provider versions. We allow identity transitions
+	// to support provider upgrades, but prevent reverting to legacy placeholder IDs
+	// like "crossTF000" or "crossplane" once migrated to version-specific IDs.
 	if hasOld && managerNew.Kind != managerOld.Kind {
 		return &apierrors.StatusError{ErrStatus: metav1.Status{
 			Status:  metav1.StatusFailure,
@@ -88,6 +95,22 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 			Reason:  metav1.StatusReasonForbidden,
 			Message: "Cannot change resource manager identity; remove the existing manager first, then add the new one",
 		}}
+	}
+
+	// For Terraform managers, prevent reverting from new format back to legacy IDs
+	if hasOld && managerNew.Kind == utils.ManagerKindTerraform && managerNew.Identity != managerOld.Identity {
+		oldIsLegacy := isLegacyTerraformID(managerOld.Identity)
+		newIsLegacy := isLegacyTerraformID(managerNew.Identity)
+
+		// Block: new format → legacy format (reverting)
+		if !oldIsLegacy && newIsLegacy {
+			return &apierrors.StatusError{ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusForbidden,
+				Reason:  metav1.StatusReasonForbidden,
+				Message: "Cannot revert to legacy Terraform manager ID; use version-specific IDs",
+			}}
+		}
 	}
 
 	// Adding a manager or updating flags on the same owner.

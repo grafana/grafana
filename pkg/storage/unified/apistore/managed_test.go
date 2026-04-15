@@ -189,7 +189,7 @@ func TestManagedAuthorizer(t *testing.T) {
 			},
 		},
 		{
-			name: "terraform manager identity can change (user-agent based ID)",
+			name: "terraform: legacy → new format allowed (migration)",
 			auth: user,
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
@@ -211,7 +211,7 @@ func TestManagedAuthorizer(t *testing.T) {
 			},
 		},
 		{
-			name: "terraform manager identity transitions work across any versions",
+			name: "terraform: new → new format allowed (version updates)",
 			auth: user,
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
@@ -219,6 +219,51 @@ func TestManagedAuthorizer(t *testing.T) {
 					Annotations: map[string]string{
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
 						utils.AnnoKeyManagerIdentity: "Terraform/1.6.0 (+https://www.terraform.io) terraform-provider-grafana/v4.1.0",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0",
+					},
+				},
+			},
+		},
+		{
+			name: "terraform: legacy → legacy allowed",
+			auth: user,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "Terraform/crossTF000 (+https://www.terraform.io) terraform-provider-grafana/crossplane-v2",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "Terraform/crossTF000 (+https://www.terraform.io) terraform-provider-grafana/crossplane",
+					},
+				},
+			},
+		},
+		{
+			name: "terraform: new → legacy blocked (no reverting)",
+			auth: user,
+			err:  "Cannot revert to legacy Terraform manager ID",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "Terraform/crossTF000 (+https://www.terraform.io) terraform-provider-grafana/crossplane",
 					},
 				},
 			},
