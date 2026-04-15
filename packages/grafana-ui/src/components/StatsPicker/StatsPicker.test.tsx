@@ -66,7 +66,7 @@ describe('StatsPicker', () => {
     jest.clearAllMocks();
   });
 
-  const renderWithField = (picker: ReactElement) =>
+  const renderWithField = (picker: ReactElement<{}>) =>
     render(
       <Field label="Stats" htmlFor={TEST_INPUT_ID}>
         {picker}
