@@ -126,7 +126,6 @@ type DashboardsAPIBuilder struct {
 	dashboardActivityChannel live.DashboardActivityChannel
 	dashboardK8sClient       client.K8sHandler // for provisioning checks during delete validation
 	isStandalone             bool              // skips any handling including anything to do with legacy storage
-	skipBOMStripping         bool              // for benchmarking: skips BOM stripping in mutation hook
 }
 
 func RegisterAPIService(
