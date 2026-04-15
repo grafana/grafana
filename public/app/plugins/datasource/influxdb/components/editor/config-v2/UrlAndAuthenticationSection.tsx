@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useEffect, useState } from 'react';
 import { firstValueFrom } from 'rxjs';
 
 import { onUpdateDatasourceJsonDataOptionSelect, onUpdateDatasourceOption } from '@grafana/data';
@@ -37,8 +38,64 @@ const getQueryLanguageOptions = (productName: string): Array<{ value: string }> 
 };
 
 export const UrlAndAuthenticationSection = (props: Props) => {
-  const { options, onOptionsChange } = props;
+  const { options, onOptionsChange, validation } = props;
   const styles = useStyles2(getStyles);
+
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!validation) {
+      return;
+    }
+    if (options.url) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next.url;
+        return next;
+      });
+      validation.clearError('url');
+    }
+    if (options.jsonData.product) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next.product;
+        return next;
+      });
+      validation.clearError('product');
+    }
+    if (options.jsonData.version) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next.version;
+        return next;
+      });
+      validation.clearError('version');
+    }
+    return validation.registerValidation(() => {
+      const errors: Record<string, string> = {};
+      if (!options.url) {
+        errors.url = 'URL is required';
+      }
+      if (!options.jsonData.product) {
+        errors.product = 'Product is required';
+      }
+      if (!options.jsonData.version) {
+        errors.version = 'Query language is required';
+      }
+      setFieldErrors(errors);
+      Object.entries(errors).forEach(([field, msg]) => validation.setError(field, msg));
+      if (!errors.url) {
+        validation.clearError('url');
+      }
+      if (!errors.product) {
+        validation.clearError('product');
+      }
+      if (!errors.version) {
+        validation.clearError('version');
+      }
+      return Object.keys(errors).length === 0;
+    });
+  }, [options.url, options.jsonData.product, options.jsonData.version, validation]);
 
   const isInfluxVersion = (v: string): v is InfluxVersion =>
     typeof v === 'string' && (v === InfluxVersion.Flux || v === InfluxVersion.InfluxQL || v === InfluxVersion.SQL);
@@ -178,7 +235,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
           </TextLink>
         </Text>
         <Box direction="column" marginTop={3}>
-          <Field label="URL" noMargin required>
+          <Field label="URL" noMargin required invalid={!!fieldErrors.url} error={fieldErrors.url}>
             <Input
               data-testid="influxdb-v2-config-url-input"
               placeholder="example: http://localhost:8086/"
@@ -213,6 +270,8 @@ export const UrlAndAuthenticationSection = (props: Props) => {
                     }
                     noMargin
                     required
+                    invalid={!!fieldErrors.product}
+                    error={fieldErrors.product}
                   >
                     <Combobox
                       data-testid="influxdb-v2-config-product-select"
@@ -230,6 +289,8 @@ export const UrlAndAuthenticationSection = (props: Props) => {
                     description={<div className={styles.dropdown}>The query language depends on product selection</div>}
                     noMargin
                     required
+                    invalid={!!fieldErrors.version}
+                    error={fieldErrors.version}
                   >
                     <Combobox
                       data-testid="influxdb-v2-config-query-language-select"
