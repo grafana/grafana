@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -418,5 +419,98 @@ func BenchmarkMutate_LargeDashboard_NoStripping(b *testing.B) {
 			nil,
 		)
 		_ = builder.Mutate(context.Background(), attrs, nil)
+	}
+}
+
+// Benchmark processing N dashboards to measure throughput
+func BenchmarkMutate_BatchDashboards(b *testing.B) {
+	builder := &DashboardsAPIBuilder{
+		features: featuremgmt.WithFeatures(),
+	}
+
+	dashboardCounts := []int{10, 100, 1000}
+
+	for _, count := range dashboardCounts {
+		b.Run(fmt.Sprintf("%d_small_dashboards", count), func(b *testing.B) {
+			// Pre-create dashboards
+			dashboards := make([]*dashv2alpha1.Dashboard, count)
+			for i := 0; i < count; i++ {
+				dashboards[i] = createSmallDashboard(true)
+			}
+
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				for _, dashboard := range dashboards {
+					attrs := admission.NewAttributesRecord(
+						dashboard,
+						nil,
+						dashv2alpha1.DashboardResourceInfo.GroupVersionKind(),
+						"",
+						"test",
+						dashv2alpha1.DashboardResourceInfo.GroupVersionResource(),
+						"",
+						admission.Create,
+						&metav1.CreateOptions{},
+						false,
+						nil,
+					)
+					_ = builder.Mutate(context.Background(), attrs, nil)
+				}
+			}
+		})
+
+		b.Run(fmt.Sprintf("%d_medium_dashboards", count), func(b *testing.B) {
+			dashboards := make([]*dashv2alpha1.Dashboard, count)
+			for i := 0; i < count; i++ {
+				dashboards[i] = createMediumDashboard(true)
+			}
+
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				for _, dashboard := range dashboards {
+					attrs := admission.NewAttributesRecord(
+						dashboard,
+						nil,
+						dashv2alpha1.DashboardResourceInfo.GroupVersionKind(),
+						"",
+						"test",
+						dashv2alpha1.DashboardResourceInfo.GroupVersionResource(),
+						"",
+						admission.Create,
+						&metav1.CreateOptions{},
+						false,
+						nil,
+					)
+					_ = builder.Mutate(context.Background(), attrs, nil)
+				}
+			}
+		})
+
+		b.Run(fmt.Sprintf("%d_large_dashboards", count), func(b *testing.B) {
+			dashboards := make([]*dashv2alpha1.Dashboard, count)
+			for i := 0; i < count; i++ {
+				dashboards[i] = createLargeDashboard(true)
+			}
+
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				for _, dashboard := range dashboards {
+					attrs := admission.NewAttributesRecord(
+						dashboard,
+						nil,
+						dashv2alpha1.DashboardResourceInfo.GroupVersionKind(),
+						"",
+						"test",
+						dashv2alpha1.DashboardResourceInfo.GroupVersionResource(),
+						"",
+						admission.Create,
+						&metav1.CreateOptions{},
+						false,
+						nil,
+					)
+					_ = builder.Mutate(context.Background(), attrs, nil)
+				}
+			}
+		})
 	}
 }
