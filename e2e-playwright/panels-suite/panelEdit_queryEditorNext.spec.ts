@@ -22,11 +22,11 @@ function editPanelUrl() {
 }
 
 function addQueryOrExpressionButton(page: Page) {
-  return page.getByLabel('Add query or expression');
+  return page.locator('button[aria-label="Add query or expression"]');
 }
 
 function addTransformationButton(page: Page) {
-  return page.getByLabel('Add transformation');
+  return page.locator('button[aria-label="Add transformation"]');
 }
 
 // ---------------------------------------------------------------------------
