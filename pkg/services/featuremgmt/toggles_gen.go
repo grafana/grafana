@@ -762,6 +762,10 @@ const (
 	// When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
 	FlagOnlyStoreActionSets = "onlyStoreActionSets"
 
+	// FlagOnlyStoreServiceAccountActionSets
+	// When storing service account resource permissions, only store action sets and not the full list of underlying permissions
+	FlagOnlyStoreServiceAccountActionSets = "onlyStoreServiceAccountActionSets"
+
 	// FlagExcludeRedundantManagedPermissions
 	// Exclude redundant individual dashboard/folder permissions from managed roles at query time
 	FlagExcludeRedundantManagedPermissions = "excludeRedundantManagedPermissions"
