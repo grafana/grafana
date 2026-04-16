@@ -3,11 +3,13 @@ import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
+import { useTheme2 } from '@grafana/ui';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { type ExpressionQuery } from 'app/features/expressions/types';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { type PanelDataPaneNext } from '../PanelDataPaneNext';
+import { getQueryEditorTypeConfig } from '../constants';
 
 import {
   type PendingExpression,
@@ -43,6 +45,7 @@ export function QueryEditorContextWrapper({
   showVersionBanner?: boolean;
   children: ReactNode;
 }) {
+  const theme = useTheme2();
   const { panelRef, datasource, dsSettings, dsError } = dataPane.useState();
   const panel = panelRef.resolve();
   const queryRunner = getQueryRunnerFor(panel);
@@ -211,6 +214,8 @@ export function QueryEditorContextWrapper({
       transformations,
     };
   }, [panel, transformations]);
+
+  const typeConfig = useMemo(() => getQueryEditorTypeConfig(theme), [theme]);
 
   const queryOptions = useQueryOptions({ panel, queryRunner, dsSettings });
 
@@ -390,6 +395,7 @@ export function QueryEditorContextWrapper({
       alertingState={alertingState}
       uiState={uiState}
       actions={actions}
+      typeConfig={typeConfig}
     >
       {children}
     </QueryEditorProvider>

@@ -156,10 +156,9 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 
 		registerer := prometheus.NewPedanticRegistry()
 		storageMetrics := resource.ProvideStorageMetrics(registerer)
-		tracingService := tracing.NewNoopTracerService()
 		env.Cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").SetValue(string(options.StorageTypeUnified))
 		env.Cfg.DisablePruner = db.IsTestDbSQLite()
-		storageBackend, err := sql.NewStorageBackend(env.Cfg, env.SQLStore, registerer, storageMetrics, tracingService, false)
+		storageBackend, err := sql.NewStorageBackend(env.Cfg, env.SQLStore, registerer, storageMetrics, false)
 		require.NoError(t, err)
 		require.NotNil(t, storageBackend)
 		backendService := storageBackend.(services.Service)

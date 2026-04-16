@@ -972,7 +972,7 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 		},
 	}
 
-	// NOTE: folder creation does not return ErrFolderAccessDenied neither ErrFolderNotFound
+	// NOTE: folder creation does not return ErrAccessDenied neither ErrFolderNotFound
 	tcs := []testCase{
 		{
 			description:  "folder creation succeeds given the correct request for creating a folder",
@@ -991,8 +991,8 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithTitleEmpty,
 			expectedCode:           http.StatusBadRequest,
-			expectedMessage:        dashboards.ErrFolderTitleEmpty.Error(),
-			expectedFolderSvcError: dashboards.ErrFolderTitleEmpty,
+			expectedMessage:        folder.ErrTitleEmpty.Error(),
+			expectedFolderSvcError: folder.ErrTitleEmpty,
 			permissions:            folderCreatePermission,
 		},
 		{
@@ -1015,8 +1015,8 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithoutParentInput,
 			expectedCode:           http.StatusPreconditionFailed,
-			expectedMessage:        dashboards.ErrFolderVersionMismatch.Error(),
-			expectedFolderSvcError: dashboards.ErrFolderVersionMismatch,
+			expectedMessage:        folder.ErrVersionMismatch.Error(),
+			expectedFolderSvcError: folder.ErrVersionMismatch,
 			createSecondRecord:     true,
 			permissions:            folderCreatePermission,
 		},

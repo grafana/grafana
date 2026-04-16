@@ -101,7 +101,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                                     |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                                 |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |
-| `logsPanelControls`               | Enables a control component for the logs panel in Explore                                              |
 | `alertingListViewV2PreviewToggle` | Enables the alerting list view v2 preview toggle                                                       |
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
 | `vizPresets`                      | Enable visualization presets                                                                           |
@@ -110,6 +109,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `newPanelPadding`                 | Increases panel padding globally                                                                       |
 | `panelTimeSettings`               | Enables a new panel time settings drawer                                                               |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
+| `profilesExemplars`               | Enables profiles exemplars support in profiles drilldown                                               |
 | `splashScreen`                    | Enables the splash screen modal for introducing new Grafana features on first session                  |
 
 ## Development feature toggles

@@ -16,9 +16,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiserverrest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -420,6 +425,77 @@ func TestIntegrationSearchTeamsRedirect(t *testing.T) {
 				assert.Equal(t, *hit.MemberCount, t2.MemberCount)
 			}
 		}
+	})
+}
+
+// go test -timeout 120s -run ^TestIntegrationServiceIdentityFallbackToLegacy$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
+func TestIntegrationServiceIdentityFallbackToLegacy(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := setupTeamTestHelper(t)
+
+	setTeamK8sFeatureToggle(t, false)
+	teamID, _ := createTeamViaAPI(t, helper, "svc-identity-fallback", "fallback@example.com")
+	t.Cleanup(func() {
+		setTeamK8sFeatureToggle(t, false)
+		deleteTeamViaAPI(t, helper, teamID)
+	})
+
+	env := helper.GetEnv()
+	teamSvc, err := teamimpl.ProvideService(env.SQLStore, env.Cfg, tracing.NewNoopTracerService(), nil)
+	require.NoError(t, err)
+
+	setTeamK8sFeatureToggle(t, true)
+
+	signedInUser := &user.SignedInUser{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {ac.ActionTeamsRead: []string{ac.ScopeTeamsAll}},
+		},
+	}
+	svcCtx := identity.WithServiceIdentityContext(context.Background(), 1)
+
+	t.Run("SearchTeams with service identity falls back to legacy", func(t *testing.T) {
+		result, err := teamSvc.SearchTeams(svcCtx, &team.SearchTeamsQuery{
+			OrgID:        1,
+			Query:        "svc-identity-fallback",
+			SignedInUser: signedInUser,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), result.TotalCount)
+		assert.Equal(t, "svc-identity-fallback", result.Teams[0].Name)
+	})
+
+	t.Run("GetTeamByID with service identity falls back to legacy", func(t *testing.T) {
+		result, err := teamSvc.GetTeamByID(svcCtx, &team.GetTeamByIDQuery{
+			ID:           teamID,
+			OrgID:        1,
+			SignedInUser: signedInUser,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, "svc-identity-fallback", result.Name)
+	})
+
+	t.Run("SearchTeams without service identity routes to k8s", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), signedInUser)
+		_, err := teamSvc.SearchTeams(ctx, &team.SearchTeamsQuery{
+			OrgID:        1,
+			Query:        "svc-identity-fallback",
+			SignedInUser: signedInUser,
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "config provider not initialized")
+	})
+
+	t.Run("GetTeamByID without service identity routes to k8s", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), signedInUser)
+		_, err := teamSvc.GetTeamByID(ctx, &team.GetTeamByIDQuery{
+			ID:           teamID,
+			OrgID:        1,
+			SignedInUser: signedInUser,
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "config provider not initialized")
 	})
 }
 

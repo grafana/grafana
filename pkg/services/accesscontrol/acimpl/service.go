@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/seeding"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
@@ -56,7 +57,7 @@ func ProvideService(
 	cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, userService user.Service, actionResolver accesscontrol.ActionResolver,
 	features featuremgmt.FeatureToggles, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry,
-	lock *serverlock.ServerLockService,
+	lock *serverlock.ServerLockService, zanzanaClient zanzana.Client,
 ) (*Service, error) {
 	service := ProvideOSSService(
 		cfg,
@@ -70,7 +71,7 @@ func ProvideService(
 		lock,
 	)
 
-	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
+	api.NewAccessControlAPI(routeRegister, accessControl, service, userService, features, zanzanaClient).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
 		return nil, err
 	}
@@ -82,7 +83,7 @@ func ProvideService(
 
 	// Clean up plugin RBAC data for configured plugins
 	if len(cfg.RBAC.PluginsCleanup) > 0 {
-		if err := service.CleanupPluginRBAC(context.Background(), cfg.RBAC.PluginsCleanup); err != nil {
+		if err := service.CleanupPluginRBAC(context.Background(), cfg.RBAC.PluginsCleanup...); err != nil {
 			return nil, err
 		}
 	}
@@ -897,7 +898,7 @@ func (s *Service) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscont
 }
 
 // CleanupPluginRBAC removes all RBAC data (roles, permissions, assignments) for the given plugin IDs.
-func (s *Service) CleanupPluginRBAC(ctx context.Context, pluginIDs []string) error {
+func (s *Service) CleanupPluginRBAC(ctx context.Context, pluginIDs ...string) error {
 	return s.store.CleanupPluginRBAC(ctx, pluginIDs)
 }
 

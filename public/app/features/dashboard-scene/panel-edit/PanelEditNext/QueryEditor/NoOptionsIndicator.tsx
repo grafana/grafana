@@ -4,14 +4,18 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
 
-import { QUERY_EDITOR_COLORS } from '../constants';
+import { QueryEditorType } from '../constants';
+
+import { useQueryEditorTypeConfig } from './QueryEditorContext';
 
 interface NoOptionsIndicatorProps {
   name: string;
 }
 
 export function NoOptionsIndicator({ name }: NoOptionsIndicatorProps) {
-  const styles = useStyles2(getStyles);
+  const typeConfig = useQueryEditorTypeConfig();
+  const transformationColor = typeConfig[QueryEditorType.Transformation].color;
+  const styles = useStyles2(getStyles, transformationColor);
   return (
     <div className={styles.wrapper}>
       <Icon name="check-circle" size="lg" className={styles.icon} />
@@ -32,7 +36,7 @@ export function NoOptionsIndicator({ name }: NoOptionsIndicatorProps) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, transformationColor: string) => ({
   wrapper: css({
     display: 'flex',
     alignItems: 'center',
@@ -41,7 +45,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     overflow: 'hidden',
     position: 'relative',
-    background: `color-mix(in srgb, ${QUERY_EDITOR_COLORS.transformation} 10%, ${theme.colors.background.secondary} 100%)`,
+    background: `color-mix(in srgb, ${transformationColor} 10%, ${theme.colors.background.secondary} 100%)`,
 
     '&::before': {
       content: '""',
@@ -50,11 +54,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
       top: 0,
       bottom: 0,
       width: 3,
-      background: QUERY_EDITOR_COLORS.transformation,
+      background: transformationColor,
     },
   }),
   icon: css({
-    color: QUERY_EDITOR_COLORS.transformation,
+    color: transformationColor,
     flexShrink: 0,
   }),
   title: css({

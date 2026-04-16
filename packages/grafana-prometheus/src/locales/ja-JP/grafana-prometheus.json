@@ -58,7 +58,7 @@
         "aria-label-step-field": "ステップフィールド",
         "min-step": "最小ステップ",
         "query-type": "クエリタイプ",
-        "tooltip-units-builtin-variables-example-interval-rateinterval": "ここでは時間単位と組み込み変数を使用できます。例: {{example1}}、{{example2}}、{{example3}}、{{example4}}、{{example5}}、{{example6}}、{{example7}}（単位が指定されていない場合のデフォルト: {{default}}）"
+        "tooltip-units-builtin-variables-example-interval-rateinterval": "ここでは時間単位と組み込み変数を使用できます。例：{{example1}}、{{example2}}、{{example3}}、{{example4}}、{{example5}}、{{example6}}、{{example7}}（単位が指定されていない場合のデフォルト：{{default}}）"
       },
       "prom-query-field": {
         "placeholder-enter-a-prom-ql-query": "PromQLクエリを入力…"
@@ -82,7 +82,7 @@
         "placeholder-select-query-type": "クエリタイプを選択",
         "placeholder-series-query": "系列クエリ",
         "returns-metrics-matching-specified-metric-regex": "指定された正規表現に一致するメトリックのリストを返します。",
-        "tooltip-classic-query": "Prometheus変数クエリエディターの元の実装。これらのドキュメントに記載されているように、正しいクエリタイプとパラメーターを含む文字列を入力してください。例: {{exampleQuery}}。",
+        "tooltip-classic-query": "Prometheus変数クエリエディターの元の実装。これらのドキュメントに記載されているように、正しいクエリタイプとパラメーターを含む文字列を入力してください。例：{{exampleQuery}}。",
         "tooltip-label": "メトリックが指定されていない限り、すべてのメトリックのラベル名に対するラベル値のリストを返します。",
         "tooltip-metric-regex": "ラベル名のリストを返します。オプションで、指定されたメトリック正規表現でフィルタリングすることも可能です。",
         "tooltip-query": "クエリのPrometheusクエリ結果のリストを返します。これには、Prometheus関数を含めることもできます。例: {{exampleQuery}}。",
@@ -176,7 +176,7 @@
         "label-series-limit": "系列制限",
         "label-use-series-endpoint": "系列エンドポイントを使用",
         "more-info": "データソースでのPrometheusタイプとバージョンの設定の詳細については、<2>プロビジョニングドキュメント</2>をご覧ください。",
-        "placeholder-example-maxsourceresolutionmtimeout": "例: {{example}}",
+        "placeholder-example-maxsourceresolutionmtimeout": "例：{{example}}",
         "title-interval-behaviour": "間隔の動作",
         "title-other": "その他",
         "title-performance": "パフォーマンス",
@@ -338,7 +338,7 @@
         "label-native-histogram": "ネイティブヒストグラム",
         "label-no-type": "型なし",
         "label-summary": "概要",
-        "label-unknown": "不明な"
+        "label-unknown": "不明"
       },
       "handle-function": {
         "text": {
@@ -353,7 +353,7 @@
       "label-filters": {
         "label-filters": "ラベルフィルター",
         "label-label-filters": "ラベルフィルター",
-        "tooltip-label-filters": "オプション: このクエリタイプのメトリック選択をフィルタリングするために使用します。"
+        "tooltip-label-filters": "オプション：このクエリタイプのメトリック選択をフィルタリングするために使用します。"
       },
       "label-param-editor": {
         "loadingMessage-loading-labels": "ラベルを読み込み中",
@@ -366,11 +366,11 @@
           "tooltip-open-metrics-explorer": "メトリックエクスプローラーを開く"
         },
         "label-metric": "メトリック",
-        "tooltip-metric": "オプション: 指定されたメトリックのラベル名に対するラベル値のリストを返します。"
+        "tooltip-metric": "オプション：指定されたメトリクスのラベル名に対するラベル値のリストを返します。"
       },
       "metrics-modal": {
         "aria-label-browse-metrics": "メトリックを参照",
-        "currently-selected": "現在選択中: {{selected}}",
+        "currently-selected": "現在選択中：{{selected}}",
         "metrics-pre-filtered": "これらのメトリックは、ラベルフィルターで選択されたラベルによって事前にフィルタリングされています。",
         "title-metrics-explorer": "メトリックエクスプローラー"
       },
@@ -438,16 +438,16 @@
         "kick-start-your-query": "クエリを開始",
         "label-explain": "説明",
         "run-queries": "クエリを実行",
-        "title-parsing-error-switch-builder": "解析エラー: ビルダーモードに切り替えますか？"
+        "title-parsing-error-switch-builder": "解析エラー：ビルダーモードに切り替えますか？"
       },
       "prom-query-legend-editor": {
         "aria-label-legend": "凡例コンボボックス",
         "label-legend": "凡例",
         "placeholder-select-legend-mode": "凡例モードを選択",
-        "tooltip-legend": "系列名の上書きまたはテンプレート。例: {{templateExample}}は{{labelName}}のラベル値に置き換えられます。"
+        "tooltip-legend": "系列名の上書きまたはテンプレート。例：{{templateExample}}は{{labelName}}のラベル値に置き換えられます。"
       },
       "query-builder-hints": {
-        "hint-details": "ヒント: {{hintDetails}}"
+        "hint-details": "ヒント：{{hintDetails}}"
       },
       "query-editor-mode-toggle": {
         "editor-modes": {
