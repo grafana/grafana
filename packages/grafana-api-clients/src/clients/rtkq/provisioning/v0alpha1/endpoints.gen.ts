@@ -1929,6 +1929,7 @@ export type TokenStatus = {
 export type WebhookStatus = {
   id?: number;
   lastEvent?: number;
+  lastRotated?: number;
   subscribedEvents?: string[];
   url?: string;
 };
