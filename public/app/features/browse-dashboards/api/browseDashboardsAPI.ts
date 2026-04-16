@@ -79,25 +79,14 @@ interface RestoreDashboardArgs {
   dashboard: Resource<Dashboard | DashboardV2Spec>;
 }
 
-// We need to do this as the API will return different responses depending on the type of storage used, even though we
-// are using the old api/ endpoint.
-const normalizeDescendantCounts = (folderCounts: DescendantCountDTO): DescendantCount => {
-  if ('folders' in folderCounts) {
-    return {
-      folders: folderCounts.folders ?? 0,
-      dashboards: folderCounts.dashboards ?? 0,
-      library_elements: folderCounts.library_elements ?? 0,
-      alertrules: folderCounts.alertrules ?? 0,
-    };
-  } else {
-    return {
-      folders: folderCounts.folder ?? 0,
-      dashboards: folderCounts.dashboard ?? 0,
-      library_elements: folderCounts.librarypanel ?? 0,
-      alertrules: folderCounts.alertrule ?? 0,
-    };
-  }
-};
+// We need to do this as the API will return different responses depending on the type of storage used and existing
+// resource types, even when we are using the old api/ endpoint.
+const normalizeDescendantCounts = (folderCounts: DescendantCountDTO): DescendantCount => ({
+  folders: folderCounts.folders ?? folderCounts.folder ?? 0,
+  dashboards: folderCounts.dashboards ?? folderCounts.dashboard ?? 0,
+  library_elements: folderCounts.library_elements ?? folderCounts.librarypanel ?? 0,
+  alertrules: folderCounts.alertrules ?? folderCounts.alertrule ?? 0,
+});
 
 export interface ListFolderQueryArgs {
   page: number;

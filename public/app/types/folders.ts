@@ -49,22 +49,20 @@ export interface FolderState {
 
 /**
  * API response from `/api/folders/${folderUID}/counts`
- * Supports both the current resource-style keys and older legacy aliases which depends on whether the unified storage
- * is used or not.
+ * Supports both the current resource-style keys and older legacy aliases, which depends on whether the unified storage
+ * is used or not. Also, the API does not exactly guarantee the shape or keys as it does it dynamically based on
+ * existing resource types.
  */
-export type DescendantCountDTO =
-  | {
-      folders: number;
-      dashboards: number;
-      library_elements: number;
-      alertrules: number;
-    }
-  | {
-      folder: number;
-      dashboard: number;
-      librarypanel: number;
-      alertrule: number;
-    };
+export interface DescendantCountDTO {
+  folders?: number;
+  dashboards?: number;
+  library_elements?: number;
+  alertrules?: number;
+  folder?: number;
+  dashboard?: number;
+  librarypanel?: number;
+  alertrule?: number;
+}
 
 type DescendantResource = 'folders' | 'dashboards' | 'library_elements' | 'alertrules';
 /** Summary of descendant counts by resource type, with keys matching the App Platform API response */

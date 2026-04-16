@@ -256,6 +256,27 @@ describe('browseDashboardsAPI', () => {
         alertrules: 5,
       });
     });
+
+    it('defaults missing descendant counts to zero', async () => {
+      const store = createTestStore();
+
+      server.use(customFolderCountsHandler(() => HttpResponse.json({ dashboards: 3 })));
+
+      const result = await store.dispatch(
+        browseDashboardsAPI.endpoints.getAffectedItems.initiate({
+          folderUIDs: ['folder-1'],
+          dashboardUIDs: ['dashboard-1', 'dashboard-2'],
+        })
+      );
+
+      expect(result.data).toEqual({
+        folders: 1,
+        dashboards: 5,
+        library_elements: 0,
+        alertrules: 0,
+      });
+      expect(result.data && Object.values(result.data).every(Number.isFinite)).toBe(true);
+    });
   });
 
   // RTK Query logs a console.error for void queryFn returning { data: undefined }.
