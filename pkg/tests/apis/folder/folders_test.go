@@ -818,9 +818,13 @@ func TestIntegrationFolderCreatePermissionsK8S(t *testing.T) {
 			},
 		},
 		{
-			description:  "subfolder creation succeeds with folders:write scoped to the parent (legacy permission)",
+			// folders:write alone no longer grants create access via the k8s API.
+			// The legacy EvalAny(folders:write, folders:create) fallback lived in the
+			// Folder Service Create method and has been removed; the unified storage
+			// server only checks the "create" verb (folders:create).
+			description:  "subfolder creation fails with only folders:write scoped to the parent",
 			parentUID:    "parent",
-			expectedCode: http.StatusCreated,
+			expectedCode: http.StatusForbidden,
 			permissions: []resourcepermissions.SetResourcePermissionCommand{
 				{
 					Actions:           []string{"folders:write"},
