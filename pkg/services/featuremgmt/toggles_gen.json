@@ -434,10 +434,10 @@
     {
       "metadata": {
         "name": "alertingListViewV2PreviewToggle",
-        "resourceVersion": "1775152842792",
+        "resourceVersion": "1776254526995",
         "creationTimestamp": "2025-04-22T08:50:34Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-04-02 18:00:42.792501 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-04-15 12:02:06.995878 +0000 UTC"
         }
       },
       "spec": {
@@ -445,7 +445,7 @@
         "stage": "preview",
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
-        "expression": "true"
+        "expression": "false"
       }
     },
     {
@@ -4364,6 +4364,19 @@
       },
       "spec": {
         "description": "Enables profiles exemplars support in profiles drilldown",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "profilesHeatmap",
+        "resourceVersion": "1776332619529",
+        "creationTimestamp": "2026-04-16T09:43:39Z"
+      },
+      "spec": {
+        "description": "Enables heatmap visualization support for Pyroscope profiles",
         "stage": "experimental",
         "codeowner": "@grafana/observability-traces-and-profiling",
         "expression": "false"

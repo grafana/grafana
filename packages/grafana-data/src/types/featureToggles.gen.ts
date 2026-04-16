@@ -1112,7 +1112,7 @@ export interface FeatureToggles {
   pluginsAutoUpdate?: boolean;
   /**
   * Enables the alerting list view v2 preview toggle
-  * @default true
+  * @default false
   */
   alertingListViewV2PreviewToggle?: boolean;
   /**
@@ -1721,6 +1721,11 @@ export interface FeatureToggles {
   * @default false
   */
   queryFetchConfigFromSettingsService?: boolean;
+  /**
+  * Enables heatmap visualization support for Pyroscope profiles
+  * @default false
+  */
+  profilesHeatmap?: boolean;
   /**
   * Enables the query service to do query caching
   * @default false

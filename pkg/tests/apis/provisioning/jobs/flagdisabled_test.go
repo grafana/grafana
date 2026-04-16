@@ -19,12 +19,13 @@ func TestIntegrationProvisioning_FixFolderMetadataJobFlagDisabled(t *testing.T) 
 	const repo = "fixfoldermeta-flag-disabled"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Target:             "folder",
+		SyncTarget:         "folder",
+		Workflows:          []string{"write"},
 		Copies:             map[string]string{},
 		ExpectedDashboards: 0,
 		ExpectedFolders:    1,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	body := common.AsJSON(provisioning.JobSpec{
 		Action: provisioning.JobActionFixFolderMetadata,

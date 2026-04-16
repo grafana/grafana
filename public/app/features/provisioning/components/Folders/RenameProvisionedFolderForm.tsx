@@ -128,7 +128,6 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
       ref: branchRef,
       message: comment || t('browse-dashboards.rename-provisioned-folder-form.commit', 'Rename folder'),
       body: {
-        metadata: { name: folder.uid },
         spec: { title },
       },
     });

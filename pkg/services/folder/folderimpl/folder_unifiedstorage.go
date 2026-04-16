@@ -478,20 +478,11 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		}
 	}
 
-	if cmd.UID == folder.SharedWithMeFolderUID {
-		return nil, folder.ErrBadRequest.Errorf("cannot create folder with UID %s", folder.SharedWithMeFolderUID)
-	}
-
-	trimmedUID := strings.TrimSpace(cmd.UID)
-	if trimmedUID == accesscontrol.GeneralFolderUID {
-		return nil, folder.ErrInvalidUID
-	}
-
 	cmd = &folder.CreateFolderCommand{
 		// TODO: Today, if a UID isn't specified, the dashboard store
 		// generates a new UID. The new folder store will need to do this as
 		// well, but for now we take the UID from the newly created folder.
-		UID:          trimmedUID,
+		UID:          cmd.UID,
 		OrgID:        cmd.OrgID,
 		Title:        cmd.Title,
 		Description:  cmd.Description,
