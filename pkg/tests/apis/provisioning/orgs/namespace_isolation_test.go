@@ -78,7 +78,7 @@ func TestCrossNamespaceIsolation_FolderSync(t *testing.T) {
 	// Step 2: Sync both repositories and verify success
 	t.Run("sync repositories and verify success", func(t *testing.T) {
 		// Sync orgA repository
-		orgAHelper.SyncAndWait(t, orgARepoName, nil)
+		common.SyncAndWait(t, orgAHelper, common.Repo(orgARepoName), common.Succeeded())
 		t.Logf("✓ orgA repository synced successfully")
 
 		// Verify orgA has folders
@@ -88,7 +88,7 @@ func TestCrossNamespaceIsolation_FolderSync(t *testing.T) {
 		t.Logf("✓ orgA has %d folder(s) after sync", len(orgAFolders.Items))
 
 		// Sync orgB repository
-		orgBHelper.SyncAndWait(t, orgBRepoName, nil)
+		common.SyncAndWait(t, orgBHelper, common.Repo(orgBRepoName), common.Succeeded())
 		t.Logf("✓ orgB repository synced successfully")
 
 		// Verify orgB has folders
@@ -206,8 +206,8 @@ func TestCrossNamespaceIsolation_FolderSync(t *testing.T) {
 	// Step 6: Verify re-sync maintains isolation
 	t.Run("verify re-sync maintains isolation", func(t *testing.T) {
 		// Re-sync both repositories
-		orgAHelper.SyncAndWait(t, orgARepoName, nil)
-		orgBHelper.SyncAndWait(t, orgBRepoName, nil)
+		common.SyncAndWait(t, orgAHelper, common.Repo(orgARepoName), common.Succeeded())
+		common.SyncAndWait(t, orgBHelper, common.Repo(orgBRepoName), common.Succeeded())
 
 		// Verify folder counts remain correct
 		orgAFolders, err := orgAHelper.Folders.Resource.List(context.Background(), metav1.ListOptions{})
@@ -253,7 +253,7 @@ spec:
 		})
 
 		// Sync the repository
-		orgAHelper.SyncAndWait(t, repoName, nil)
+		common.SyncAndWait(t, orgAHelper, common.Repo(repoName), common.Succeeded())
 
 		// Verify the dashboard was created in orgA's namespace, NOT orgB's
 		dashboards, err := orgAHelper.DashboardsV2beta1.Resource.List(context.Background(), metav1.ListOptions{})
@@ -336,7 +336,7 @@ spec:
 		require.NoError(t, result.Error(), "files endpoint should accept the dashboard")
 
 		// Trigger sync to persist the changes
-		orgAHelper.SyncAndWait(t, repoName, nil)
+		common.SyncAndWait(t, orgAHelper, common.Repo(repoName), common.Succeeded())
 
 		// Verify the dashboard was created in orgA's namespace
 		dashboards, err := orgAHelper.DashboardsV2beta1.Resource.List(context.Background(), metav1.ListOptions{})

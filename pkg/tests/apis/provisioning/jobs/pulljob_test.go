@@ -139,7 +139,7 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		require.Equal(t, repo2, repo2Dashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "should be owned by repo2")
 
 		// Step 2: Pull repo1 (which doesn't manage repo2's resource) - should complete successfully
-		helper.SyncAndWait(t, repo1, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo1), common.Succeeded())
 
 		// Step 3: Verify that repo2's resource is still intact after repo1's pull
 		persistentRepo2Dashboard, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})

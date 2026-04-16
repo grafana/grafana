@@ -243,7 +243,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 			"myfolder/dash.json": common.DashboardJSON("warning-dash", "Warning Dashboard", 1),
 		})
 
-		helper.SyncAndWait(t, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		hashUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "myfolder")
 		require.NotEqual(t, "stable-uid", hashUID, "folder should start with a hash-based UID")
@@ -314,7 +314,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 			"myfolder/dash.json": common.DashboardJSON("my-dash", "My Dashboard", 1),
 		})
 
-		helper.SyncAndWait(t, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		oldUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "myfolder")
 		require.NotEqual(t, "stable-uid", oldUID, "folder should start with a hash-based UID")
@@ -347,7 +347,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 			"myfolder/child/dash.json": common.DashboardJSON("child-dash", "Child Dashboard", 1),
 		})
 
-		helper.SyncAndWait(t, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		oldUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "myfolder")
 		require.NotEqual(t, "stable-uid", oldUID, "folder should start with a hash-based UID")
@@ -385,7 +385,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 			"myfolder/dash.json": common.DashboardJSON("my-dash", "My Dashboard", 1),
 		})
 
-		helper.SyncAndWait(t, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		oldUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "myfolder")
 		require.NotEqual(t, "stable-uid", oldUID, "folder should start with a hash-based UID")
@@ -419,7 +419,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 			"parent/child/dash.json": common.DashboardJSON("nested-create-dash", "Nested Dashboard", 1),
 		})
 
-		helper.SyncAndWait(t, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		oldParentUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "parent")
 		oldChildUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "child")
@@ -903,7 +903,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 			"alpha/dash.json":    common.DashboardJSON("uid-dash-001", "Alpha Dashboard", 1),
 		})
 
-		helper.SyncAndWait(t, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "Alpha")
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
@@ -952,7 +952,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 			"parent/parent-dash.json":       common.DashboardJSON("uid-parent-001", "Parent Dashboard", 1),
 		})
 
-		helper.SyncAndWait(t, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "Parent")
 		common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "Child")
 
@@ -1004,7 +1004,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 			"team/dash.json":    common.DashboardJSON("uid-combo-001", "Original Dashboard", 1),
 		})
 
-		helper.SyncAndWait(t, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		require.NoError(t, local.UpdateFile("team/_folder.json", string(folderMetadataJSON(newUID, "Team Rebranded"))))
 		require.NoError(t, local.UpdateFile("team/dash.json", string(common.DashboardJSON("uid-combo-001", "Updated Dashboard", 2))))
@@ -1115,7 +1115,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		common.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
 
 		// A subsequent full sync should be idempotent — still exactly 1 folder
-		helper.SyncAndWait(t, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 		common.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
 
 		_, err = helper.Folders.Resource.Get(ctx, "cleanup-v2", metav1.GetOptions{})
@@ -1147,7 +1147,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 			"alpha/dash.json":    common.DashboardJSON("meta-del-001", "Alpha Dashboard", 1),
 		})
 
-		helper.SyncAndWait(t, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		// Verify folder exists with stable UID
 		_, err := helper.Folders.Resource.Get(ctx, stableUID, metav1.GetOptions{})
@@ -1199,7 +1199,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 			"parent/child/child-dash.json": common.DashboardJSON("nested-child-001", "Child Dashboard", 1),
 		})
 
-		helper.SyncAndWait(t, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"nested-parent-001": {Title: "Parent Dashboard", SourcePath: "parent/parent-dash.json", Folder: parentStableUID},
@@ -1257,7 +1257,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 			"team/sub/nested-dash.json": common.DashboardJSON("child-nested", "Nested Dashboard", 1),
 		})
 
-		helper.SyncAndWait(t, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		_, err := helper.Folders.Resource.Get(ctx, stableUID, metav1.GetOptions{})
 		require.NoError(t, err, "folder with stable UID should exist")
@@ -1322,7 +1322,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 			"team/dash.json":    common.DashboardJSON("combo-del-001", "Original Dashboard", 1),
 		})
 
-		helper.SyncAndWait(t, repoName)
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 		// Delete metadata and update dashboard in the same commit
 		_, err := local.Git("rm", "team/_folder.json")

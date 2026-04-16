@@ -32,7 +32,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		// Wait for quota condition to show unlimited
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaUnlimited)
@@ -92,7 +92,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		// Wait for quota condition to show within quota
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 
@@ -151,7 +151,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		// Wait for quota condition to show reached
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
@@ -210,12 +210,12 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 			SkipSync:               true,
 			SkipResourceAssertions: true,
 		})
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 1})
 		helper.TriggerRepositoryReconciliation(t, repo)
 		helper.WaitForResourceQuotaLimit(t, repo, 1)
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 		// Wait for quota condition to show exceeded
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaExceeded)
 

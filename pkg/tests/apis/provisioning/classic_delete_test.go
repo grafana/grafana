@@ -46,7 +46,7 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 		require.NoError(t, err, "should be able to delete file")
 
 		// Trigger sync - incremental sync should detect the deletion and remove the resource
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		// Verify the dashboard was deleted from Grafana
 		helper.RequireRepoDashboardCount(t, repo, 0)
@@ -87,7 +87,7 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 		require.NoError(t, err, "should be able to delete file")
 
 		// Trigger sync - this should succeed without "no object found" errors
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		// Verify the dashboard was removed
 		helper.RequireRepoDashboardCount(t, repo, 0)
@@ -206,7 +206,7 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 		require.NoError(t, err)
 
 		// Sync should handle both deletions
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		helper.RequireRepoDashboardCount(t, repo, 0)
 	})

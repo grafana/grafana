@@ -318,7 +318,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		helper.CopyToProvisioningPath(t, "testdata/text-options.json", "source-dir/text-options.json")
 
 		// Sync to ensure files are recognized
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		const sourceDir = "source-dir/"
 		const targetDir = "moved-dir/"

@@ -66,7 +66,7 @@ func TestIntegrationProvisioning_DeleteJobAuthorization(t *testing.T) {
 
 	t.Run("editor can create delete job", func(t *testing.T) {
 		helper.CopyToProvisioningPath(t, "../testdata/all-panels.json", "editor-dash.json")
-		helper.SyncAndWait(t, repo, nil)
+		common.SyncAndWait(t, helper, common.Repo(repo), common.Succeeded())
 
 		body := common.AsJSON(provisioning.JobSpec{
 			Action: provisioning.JobActionDelete,

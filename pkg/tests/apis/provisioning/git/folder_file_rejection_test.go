@@ -73,7 +73,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileCreateIsWarning(t *te
 		"dashboard.json": common.DashboardJSON("folder-create-dash", "Dashboard", 1),
 	})
 
-	helper.SyncAndWait(t, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 	common.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
 
 	require.NoError(t, local.CreateFile("new-folder.json", string(folderJSON("new-folder", "New Folder"))))
