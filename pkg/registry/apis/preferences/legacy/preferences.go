@@ -396,7 +396,7 @@ func asPreferencesResource(ns string, p *preferenceModel) preferences.Preference
 
 	// When help flags are configured, attach them to the user model
 	if owner.Owner == utils.UserResourceOwner && p.HelpFlags1.Int64 > 0 {
-		obj.Spec.HelpFlags1 = ptr.To(p.HelpFlags1.Int64)
+		obj.Spec.HelpFlags1 = ptr.To(uint64(p.HelpFlags1.Int64))
 	}
 
 	obj.UID = gapiutil.CalculateClusterWideUID(&obj)

@@ -40,7 +40,7 @@ preferencesV1alpha1: {
 
 			// Bitwise flags that will hide help modals in the UI
 			// NOTE: this property is only valid on user preferences 
-			helpFlags1?: int
+			helpFlags1?: uint64
 		}
 
 		#QueryHistoryPreference: {

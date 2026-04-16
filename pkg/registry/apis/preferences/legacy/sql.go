@@ -207,7 +207,7 @@ func (s *LegacySQL) getLegacyTeamID(ctx context.Context, orgId int64, team strin
 	return id, err
 }
 
-func (s *LegacySQL) updateHelpFlags(ctx context.Context, orgId int64, userUID string, flag int64) error {
+func (s *LegacySQL) updateHelpFlags(ctx context.Context, orgId int64, userUID string, flag uint64) error {
 	sql, err := s.db(ctx)
 	if err != nil {
 		return err

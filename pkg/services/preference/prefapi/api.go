@@ -5,12 +5,15 @@ import (
 	"context"
 	"net/http"
 
+	"k8s.io/utils/ptr"
+
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func UpdatePreferencesFor(ctx context.Context,
@@ -77,7 +80,9 @@ func UpdatePreferencesFor(ctx context.Context,
 }
 
 func GetPreferencesFor(ctx context.Context,
-	dashboardService dashboards.DashboardService, preferenceService pref.Service,
+	user *user.SignedInUser, // Only set this for the user preferences
+	dashboardService dashboards.DashboardService,
+	preferenceService pref.Service,
 	features featuremgmt.FeatureToggles, orgID, userID, teamID int64) response.Response {
 	prefsQuery := pref.GetPreferenceQuery{UserID: userID, OrgID: orgID, TeamID: teamID}
 
@@ -124,6 +129,10 @@ func GetPreferencesFor(ctx context.Context,
 				HomeTab: &preference.JSONData.QueryHistory.HomeTab,
 			}
 		}
+	}
+
+	if user != nil && user.HelpFlags1 > 0 {
+		dto.HelpFlags1 = ptr.To(uint64(user.HelpFlags1))
 	}
 
 	return response.JSON(http.StatusOK, &dto)

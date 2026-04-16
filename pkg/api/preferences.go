@@ -77,7 +77,7 @@ func (hs *HTTPServer) GetUserPreferences(c *contextmodel.ReqContext) response.Re
 		return response.Error(http.StatusUnauthorized, "Not a valid identity", err)
 	}
 
-	return prefapi.GetPreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), userID, 0)
+	return prefapi.GetPreferencesFor(c.Req.Context(), c.SignedInUser, hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), userID, 0)
 }
 
 // swagger:route PUT /user/preferences signed_in_user preferences updateUserPreferences
@@ -198,7 +198,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetOrgPreferences(c *contextmodel.ReqContext) response.Response {
-	return prefapi.GetPreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), 0, 0)
+	return prefapi.GetPreferencesFor(c.Req.Context(), nil, hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), 0, 0)
 }
 
 // swagger:route PUT /org/preferences org preferences updateOrgPreferences
