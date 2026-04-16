@@ -1442,7 +1442,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 				}
 
 				idx := be.GetIndex(ns)
-				_, err = idx.UpdateIndex(ctx)
+				_, err := idx.UpdateIndex(ctx)
 				if err != nil {
 					if errors.Is(err, bleve.ErrorIndexClosed) || errors.Is(err, context.Canceled) {
 						continue
