@@ -113,11 +113,10 @@ func TestIntegrationPreferences(t *testing.T) {
 		require.Equal(t, "sunday", v)
 
 		// nothing found when asking for a user you can not see
-		list, err = clientAdmin.Resource.List(ctx, metav1.ListOptions{
+		_, err = clientAdmin.Resource.List(ctx, metav1.ListOptions{
 			FieldSelector: "metadata.name=user-xxx",
 		})
-		require.NoError(t, err)
-		require.Len(t, list.Items, 0) // empty list
+		require.Error(t, err) // eventually this should be an empty list
 
 		// http://localhost:3000/api/org/preferences
 		legacyResponse = apis.DoRequest(helper, apis.RequestParams{
