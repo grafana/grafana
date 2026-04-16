@@ -13,13 +13,13 @@ import (
 	gapiutils "github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
-func roleDTOToV0GlobalRole(dto *accesscontrol.RoleDTO, startTime time.Time) *iamv0.GlobalRole {
+func roleDTOToV0GlobalRole(dto *accesscontrol.RoleDTO) *iamv0.GlobalRole {
 	r := &iamv0.GlobalRole{
 		TypeMeta: iamv0.GlobalRoleInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              dto.UID,
 			ResourceVersion:   fmt.Sprintf("%d", dto.Version),
-			CreationTimestamp: metav1.NewTime(startTime),
+			CreationTimestamp: metav1.NewTime(dto.Created),
 			Annotations: map[string]string{
 				accesscontrol.RoleNameAnnotation: dto.Name,
 			},
@@ -31,13 +31,11 @@ func roleDTOToV0GlobalRole(dto *accesscontrol.RoleDTO, startTime time.Time) *iam
 			Permissions: toV0Permissions(dto.Permissions),
 		},
 	}
-
+	r.SetUpdateTimestamp(dto.Updated)
+	r.Annotations[utils.AnnoKeyUpdatedTimestamp] = dto.Updated.Format(time.RFC3339)
 	if dto.Hidden {
 		r.Annotations[accesscontrol.RoleHiddenAnnotation] = strconv.FormatBool(dto.Hidden)
 	}
-
-	r.SetUpdateTimestamp(startTime)
-	r.Annotations[utils.AnnoKeyUpdatedTimestamp] = startTime.Format(time.RFC3339)
 	r.SetGeneration(dto.Version)
 	r.UID = gapiutils.CalculateClusterWideUID(r)
 

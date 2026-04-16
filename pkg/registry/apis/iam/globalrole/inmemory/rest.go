@@ -2,7 +2,6 @@ package inmemory
 
 import (
 	"context"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -24,13 +23,11 @@ var errReadOnly = apierrors.NewMethodNotSupported(
 // ReadOnlyGlobalRoleREST serves basic roles from memory via the accesscontrol.Service.
 type ReadOnlyGlobalRoleREST struct {
 	acService accesscontrol.Service
-	startTime time.Time
 }
 
 func NewReadOnlyGlobalRoleREST(acService accesscontrol.Service) *ReadOnlyGlobalRoleREST {
 	return &ReadOnlyGlobalRoleREST{
 		acService: acService,
-		startTime: time.Now(),
 	}
 }
 
@@ -56,7 +53,7 @@ func (r *ReadOnlyGlobalRoleREST) Get(ctx context.Context, name string, options *
 	roles := r.acService.GetStaticRoles(ctx)
 	for _, dto := range roles {
 		if dto.UID == name {
-			return roleDTOToV0GlobalRole(dto, r.startTime), nil
+			return roleDTOToV0GlobalRole(dto), nil
 		}
 	}
 	return nil, apierrors.NewNotFound(iamv0.GlobalRoleInfo.GroupResource(), name)
@@ -66,7 +63,7 @@ func (r *ReadOnlyGlobalRoleREST) List(ctx context.Context, options *internalvers
 	roles := r.acService.GetStaticRoles(ctx)
 	items := make([]iamv0.GlobalRole, 0, len(roles))
 	for _, dto := range roles {
-		items = append(items, *roleDTOToV0GlobalRole(dto, r.startTime))
+		items = append(items, *roleDTOToV0GlobalRole(dto))
 	}
 	return &iamv0.GlobalRoleList{Items: items}, nil
 }

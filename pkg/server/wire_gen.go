@@ -913,7 +913,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderPermissionsService, accessControl, acimplService, accessClient, registerer, resourceClient, zanzanaClient)
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
-	globalRoleApiInstaller := inmemory.ProvideInMemoryGlobalRoleApiInstaller(accessClient, acimplService)
+	globalRoleApiInstaller := inmemory.ProvideInMemoryGlobalRoleApiInstaller(acimplService)
 	teamLBACApiInstaller := iam.ProvideNoopTeamLBACApiInstaller()
 	externalGroupMappingApiInstaller := iam.ProvideNoopExternalGroupMappingApiInstaller()
 	storageBackendImpl := noopstorage.ProvideStorageBackend()
@@ -1613,7 +1613,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderPermissionsService, accessControl, acimplService, accessClient, registerer, resourceClient, zanzanaClient)
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
-	globalRoleApiInstaller := inmemory.ProvideInMemoryGlobalRoleApiInstaller(accessClient, acimplService)
+	globalRoleApiInstaller := inmemory.ProvideInMemoryGlobalRoleApiInstaller(acimplService)
 	teamLBACApiInstaller := iam.ProvideNoopTeamLBACApiInstaller()
 	externalGroupMappingApiInstaller := iam.ProvideNoopExternalGroupMappingApiInstaller()
 	storageBackendImpl := noopstorage.ProvideStorageBackend()

@@ -12,13 +12,13 @@ import (
 )
 
 // GlobalRoleIdentityWrapper wraps a grafanarest.Storage and switches the caller
-// identity to the app service identity for read operations (Get and List) only.
-// Write operations delegate to the inner storage with the original caller context.
+// identity to the app service identity for Get and List. Any other methods on
+// the inner storage are invoked unchanged via the embedded interface.
 //
-// This is needed because regular users cannot authenticate in the "*" (cluster)
-// namespace, but GlobalRoles are cluster-scoped. Authorization for reads is
-// already enforced by GetAuthorizer() at the k8s authorization layer before
-// storage is reached.
+// The swap is needed because regular users cannot authenticate in the "*"
+// (cluster) namespace, but GlobalRoles are cluster-scoped. Authorization for
+// reads is already enforced by GetAuthorizer() at the k8s authorization layer
+// before storage is reached.
 type GlobalRoleIdentityWrapper struct {
 	grafanarest.Storage
 }

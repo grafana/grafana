@@ -12,7 +12,7 @@ import (
 )
 
 func TestRoleDTOToV0GlobalRole(t *testing.T) {
-	startTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	testTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	tests := []struct {
 		name            string
@@ -34,6 +34,8 @@ func TestRoleDTOToV0GlobalRole(t *testing.T) {
 				Group:       "basic",
 				Version:     1,
 				Hidden:      false,
+				Created:     testTime,
+				Updated:     testTime,
 				Permissions: []accesscontrol.Permission{
 					{Action: "dashboards:read", Scope: "dashboards:uid:*"},
 				},
@@ -55,6 +57,8 @@ func TestRoleDTOToV0GlobalRole(t *testing.T) {
 				Group:       "basic",
 				Version:     2,
 				Hidden:      false,
+				Created:     testTime,
+				Updated:     testTime,
 			},
 			expectedName:    "basic_editor",
 			expectedTitle:   "Editor",
@@ -73,6 +77,8 @@ func TestRoleDTOToV0GlobalRole(t *testing.T) {
 				Group:       "basic",
 				Version:     1,
 				Hidden:      false,
+				Created:     testTime,
+				Updated:     testTime,
 			},
 			expectedName:    "basic_viewer",
 			expectedTitle:   "Viewer",
@@ -91,6 +97,8 @@ func TestRoleDTOToV0GlobalRole(t *testing.T) {
 				Group:       "basic",
 				Version:     3,
 				Hidden:      false,
+				Created:     testTime,
+				Updated:     testTime,
 			},
 			expectedName:    "basic_grafana_admin",
 			expectedTitle:   "Grafana Admin",
@@ -109,6 +117,8 @@ func TestRoleDTOToV0GlobalRole(t *testing.T) {
 				Group:       "basic",
 				Version:     1,
 				Hidden:      true,
+				Created:     testTime,
+				Updated:     testTime,
 			},
 			expectedName:    "basic_none",
 			expectedTitle:   "No basic role",
@@ -121,12 +131,12 @@ func TestRoleDTOToV0GlobalRole(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			result := roleDTOToV0GlobalRole(tc.dto, startTime)
+			result := roleDTOToV0GlobalRole(tc.dto)
 
 			// ObjectMeta.Name == UID
 			assert.Equal(t, tc.expectedName, result.Name)
 			assert.Equal(t, tc.expectedVersion, result.ResourceVersion)
-			assert.Equal(t, startTime, result.CreationTimestamp.Time)
+			assert.Equal(t, tc.dto.Created, result.CreationTimestamp.Time)
 
 			// Annotations
 			assert.Equal(t, tc.dto.Name, result.Annotations[accesscontrol.RoleNameAnnotation])
@@ -153,7 +163,7 @@ func TestRoleDTOToV0GlobalRole(t *testing.T) {
 			assert.Equal(t, tc.dto.Version, result.Generation)
 
 			// Updated timestamp annotation
-			assert.Equal(t, startTime.Format(time.RFC3339), result.Annotations[utils.AnnoKeyUpdatedTimestamp])
+			assert.Equal(t, tc.dto.Updated.Format(time.RFC3339), result.Annotations[utils.AnnoKeyUpdatedTimestamp])
 		})
 	}
 }
@@ -183,7 +193,7 @@ func TestToV0PermissionsEmpty(t *testing.T) {
 }
 
 func TestRoleDTOToV0GlobalRolePermissionsPopulated(t *testing.T) {
-	startTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	testTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
 	dto := &accesscontrol.RoleDTO{
 		UID:         "basic_admin",
 		Name:        "basic:admin",
@@ -191,6 +201,8 @@ func TestRoleDTOToV0GlobalRolePermissionsPopulated(t *testing.T) {
 		Description: "Admin role",
 		Group:       "basic",
 		Version:     1,
+		Created:     testTime,
+		Updated:     testTime,
 		Permissions: []accesscontrol.Permission{
 			{Action: "dashboards:read", Scope: "dashboards:uid:*"},
 			{Action: "dashboards:write", Scope: "dashboards:uid:*"},
@@ -198,7 +210,7 @@ func TestRoleDTOToV0GlobalRolePermissionsPopulated(t *testing.T) {
 		},
 	}
 
-	result := roleDTOToV0GlobalRole(dto, startTime)
+	result := roleDTOToV0GlobalRole(dto)
 	require.Len(t, result.Spec.Permissions, 3)
 	assert.Equal(t, "dashboards:read", result.Spec.Permissions[0].Action)
 	assert.Equal(t, "dashboards:uid:*", result.Spec.Permissions[0].Scope)
