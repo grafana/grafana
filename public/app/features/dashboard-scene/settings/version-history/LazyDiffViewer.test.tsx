@@ -23,12 +23,12 @@ describe('LazyDiffViewer', () => {
 
     render(<LazyDiffViewer oldValue={oldValue} newValue={newValue} />, { wrapper: TestProviders });
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(screen.getByText('Loading diff...')).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByText(oldValue)).toBeInTheDocument();
     });
     expect(screen.getByText(newValue)).toBeInTheDocument();
-    expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+    expect(screen.queryByText('Loading diff...')).not.toBeInTheDocument();
   });
 });
