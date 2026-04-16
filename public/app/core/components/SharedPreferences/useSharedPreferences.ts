@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import {
-  useGetPreferencesQuery,
+  useListPreferencesQuery,
   useUpdatePreferencesMutation,
   type PreferencesSpec,
 } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
@@ -10,7 +10,8 @@ import { type Props } from './utils';
 
 export const useSharedPreferences = (
   preferenceType: Props['preferenceType'],
-  preferencesName: Props['resourceUri']
+  preferencesName: Props['resourceUri'],
+  metadataName: string
 ) => {
   /**
    * TODO: change to use listPreferences with fieldSelector=metadata.name={name} instead of getPreferences
@@ -43,7 +44,7 @@ export const useSharedPreferences = (
    *
    */
 
-  const { data, isLoading, isError } = useGetPreferencesQuery({ name: preferencesName });
+  const { data, isLoading, isError } = useListPreferencesQuery({ fieldSelector: `metadata.name=${preferencesName}` });
   const [updatePreferences, { data: updateData, isLoading: isUpdating, isError: isUpdateError }] =
     useUpdatePreferencesMutation();
 
@@ -55,6 +56,12 @@ export const useSharedPreferences = (
   );
   return [
     updatePreferencesWrapped,
-    { preferences: updateData?.spec ?? data?.spec, isLoading, isError, isSubmitting: isUpdating, isUpdateError },
+    {
+      preferences: updateData?.spec ?? data?.items[0]?.spec,
+      isLoading,
+      isError,
+      isSubmitting: isUpdating,
+      isUpdateError,
+    },
   ] as const;
 };
