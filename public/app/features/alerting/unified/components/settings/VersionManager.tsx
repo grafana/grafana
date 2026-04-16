@@ -13,7 +13,6 @@ import {
   type Column,
   ConfirmModal,
   InteractiveTable,
-  LoadingPlaceholder,
   Stack,
   Text,
   useStyles2,
