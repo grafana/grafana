@@ -364,6 +364,19 @@ func applyChanges(
 		}
 	}
 
+	// Folder renames (FolderRenamed) are net-zero: each creates a new folder
+	// and deletes the old one in the cleanup phase. Temporarily raise the
+	// quota limit so the creations succeed before the deletions free the slots.
+	folderRenames := 0
+	for _, change := range folderCreations {
+		if change.FolderRenamed {
+			folderRenames++
+		}
+	}
+	if folderRenames > 0 {
+		quotaTracker.AllowOverLimit(folderRenames)
+	}
+
 	applyChangesSpan.SetAttributes(
 		attribute.Int("file_renames", len(fileRenames)),
 		attribute.Int("file_deletions", len(fileDeletions)),

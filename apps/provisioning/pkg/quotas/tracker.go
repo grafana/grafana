@@ -10,6 +10,9 @@ type QuotaTracker interface {
 	TryAcquire() bool
 	// Release decrements the resource counter, e.g. after a successful deletion.
 	Release()
+	// AllowOverLimit temporarily raises the quota limit by n. This is useful
+	// for situations where counting may be temporarily inaccurate.
+	AllowOverLimit(n int)
 }
 
 // inMemoryQuotaTracker provides best-effort, in-memory quota enforcement.
@@ -51,4 +54,13 @@ func (q *inMemoryQuotaTracker) Release() {
 	if q.current > 0 {
 		q.current--
 	}
+}
+
+func (q *inMemoryQuotaTracker) AllowOverLimit(n int) {
+	if q.limit == 0 || n <= 0 {
+		return
+	}
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	q.limit += int64(n)
 }
