@@ -278,6 +278,7 @@
   },
   "dependencies": {
     "@bsull/augurs": "^0.10.0",
+    "@codemirror/autocomplete": "^6.20.1",
     "@emotion/css": "11.13.5",
     "@emotion/react": "11.14.0",
     "@fingerprintjs/fingerprintjs": "^3.4.2",
