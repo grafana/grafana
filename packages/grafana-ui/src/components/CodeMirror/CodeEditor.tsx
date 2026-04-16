@@ -1,9 +1,9 @@
 import { loadLanguage, type LanguageName } from '@uiw/codemirror-extensions-langs';
 import { basicDark } from '@uiw/codemirror-theme-basic';
-import CodeMirror from '@uiw/react-codemirror';
-import { memo, useMemo, type ComponentProps } from 'react';
+import CodeMirror, { type Extension } from '@uiw/react-codemirror';
+import { memo, useMemo } from 'react';
 
-type CodeMirrorExtensions = NonNullable<ComponentProps<typeof CodeMirror>['extensions']>;
+type CodeMirrorExtensions = Extension[];
 type CodeEditorLanguage = LanguageName;
 
 export interface CodeEditorProps {
