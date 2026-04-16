@@ -65,6 +65,11 @@ type Config struct {
 	WriteBatchSize      int // Number of tuples to write in a single batch (0 = no batching)
 	QueueSize           int // Size of the buffered work queue for namespaces (default 1000)
 	ZanzanaReadPageSize int // Page size when reading tuples from Zanzana (default 100, max 100)
+	// GVRs is the set of namespaced resources the reconciler will translate
+	// from Unistore into Zanzana tuples. OSS and enterprise builds supply
+	// different lists via Wire so the reconciler never tries to list a resource
+	// that isn't served in this build.
+	GVRs []schema.GroupVersionResource
 }
 
 func (c Config) queueSize() int {
@@ -81,15 +86,19 @@ func (c Config) zanzanaReadPageSize() int32 {
 	return int32(c.ZanzanaReadPageSize)
 }
 
-// GVRs that need to be reconciled from Unistore to Zanzana (namespaced).
-var reconcileGVRs = []schema.GroupVersionResource{
-	folderv1.FolderResourceInfo.GroupVersionResource(),
-	iamv0.RoleInfo.GroupVersionResource(),
-	iamv0.RoleBindingInfo.GroupVersionResource(),
-	iamv0.ResourcePermissionInfo.GroupVersionResource(),
-	iamv0.TeamBindingResourceInfo.GroupVersionResource(),
-	iamv0.UserResourceInfo.GroupVersionResource(),
-	iamv0.ServiceAccountResourceInfo.GroupVersionResource(),
+// ReconcileGVRs returns the OSS list of namespaced GVRs the reconciler
+// translates into Zanzana tuples. Role/RoleBinding are noop-implemented in OSS
+// (pkg/registry/apis/iam/api_installer.go) so they are omitted — listing them
+// would fail the whole namespace reconcile. Enterprise rebinds the Wire
+// provider that wraps this to include its additional resources.
+func ReconcileGVRs() []schema.GroupVersionResource {
+	return []schema.GroupVersionResource{
+		folderv1.FolderResourceInfo.GroupVersionResource(),
+		iamv0.ResourcePermissionInfo.GroupVersionResource(),
+		iamv0.TeamBindingResourceInfo.GroupVersionResource(),
+		iamv0.UserResourceInfo.GroupVersionResource(),
+		iamv0.ServiceAccountResourceInfo.GroupVersionResource(),
+	}
 }
 
 // NewReconciler creates a new reconciler instance.

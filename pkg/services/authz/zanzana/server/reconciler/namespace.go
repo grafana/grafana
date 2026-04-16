@@ -133,7 +133,7 @@ func (r *Reconciler) fetchAndTranslateTuples(ctx context.Context, namespace stri
 	}
 
 	// Process each GVR type and insert translated tuples directly into the map
-	for _, gvr := range reconcileGVRs {
+	for _, gvr := range r.cfg.GVRs {
 		translator, ok := translators[gvr.Resource]
 		if !ok {
 			return nil, tracing.Errorf(span, "no translator found for resource type: %s", gvr.Resource)

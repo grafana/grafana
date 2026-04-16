@@ -119,6 +119,7 @@ func toTuple(tk *openfgav1.TupleKey) *openfgav1.Tuple {
 func newTestReconciler(pages [][]*openfgav1.Tuple) *Reconciler {
 	return &Reconciler{
 		server:  &mockServerInternal{fga: &mockOpenFGAServer{pages: pages}},
+		cfg:     Config{GVRs: ReconcileGVRs()},
 		logger:  log.NewNopLogger(),
 		tracer:  tracing.NewNoopTracerService(),
 		metrics: newReconcilerMetrics(prometheus.NewRegistry()),
