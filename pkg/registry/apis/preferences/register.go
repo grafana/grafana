@@ -13,12 +13,13 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-app-sdk/k8s"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -34,8 +35,9 @@ var (
 )
 
 type APIBuilder struct {
-	authorizer  authorizer.Authorizer
-	legacyPrefs rest.Storage
+	authorizer   authorizer.Authorizer
+	legacyPrefs  rest.Storage
+	clientGetter func(context.Context) (*preferences.PreferencesClient, error)
 
 	merger *merger // joins all preferences
 }
@@ -47,10 +49,24 @@ func RegisterAPIService(
 	prefs pref.Service,
 	users user.Service,
 	apiregistration builder.APIRegistrar,
+	restConfigProvider apiserver.RestConfigProvider,
 ) *APIBuilder {
+	getter := func(ctx context.Context) (*preferences.PreferencesClient, error) {
+		restConfig, err := restConfigProvider.GetRestConfig(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("error getting client: %w", err)
+		}
+		client, err := k8s.NewClientRegistry(*restConfig, k8s.DefaultClientConfig()).ClientFor(preferences.PreferencesKind())
+		if err != nil {
+			return nil, fmt.Errorf("unable to create example client: %w", err)
+		}
+		return preferences.NewPreferencesClient(client), nil
+	}
+
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
-		merger: newMerger(cfg, sql),
+		clientGetter: getter,
+		merger:       newMerger(cfg, sql),
 		authorizer: &utils.AuthorizeFromName{
 			OKNames: []string{"merged"},
 			Teams:   sql, // should be from the IAM service
@@ -61,6 +77,7 @@ func RegisterAPIService(
 					utils.UserResourceOwner,
 				},
 			},
+			OKResources: []string{"helpflags"}, // no auth required because it is based on who you are
 		},
 	}
 
@@ -117,11 +134,6 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return preferences.GetOpenAPIDefinitions
-}
-
-func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
-	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	return b.merger.GetAPIRoutes(defs)
 }
 
 // Validate validates that the preference object has valid theme and timezone (if specified)
