@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { DisplayValue, formattedValueToString } from '@grafana/data';
+import { DisplayValue, capitalize, formattedValueToString } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineList } from '../List/InlineList';
@@ -8,14 +8,6 @@ import { InlineList } from '../List/InlineList';
 interface Props {
   stats: DisplayValue[];
 }
-
-const capitalize = (value: string): string => {
-  if (!value) {
-    return value;
-  }
-
-  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
-};
 
 /**
  * @internal

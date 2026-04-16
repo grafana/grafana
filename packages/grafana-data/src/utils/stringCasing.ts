@@ -24,3 +24,25 @@ export const kebabCase = (value: string): string => {
     .toLowerCase()
     .replace(/\s+/g, '-');
 };
+
+/**
+ * Uppercases the first character of the string and leaves the rest untouched.
+ */
+export const upperFirst = (value: string): string => {
+  if (!value) {
+    return value;
+  }
+
+  return value.charAt(0).toUpperCase() + value.slice(1);
+};
+
+/**
+ * Uppercases the first character of the string and lowercases the rest.
+ */
+export const capitalize = (value: string): string => {
+  if (!value) {
+    return value;
+  }
+
+  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+};

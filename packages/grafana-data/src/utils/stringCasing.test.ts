@@ -1,4 +1,4 @@
-import { kebabCase, startCase } from './stringCasing';
+import { capitalize, kebabCase, startCase, upperFirst } from './stringCasing';
 
 describe('startCase', () => {
   it('converts simple words', () => {
@@ -60,5 +60,31 @@ describe('kebabCase', () => {
 
   it('handles single word', () => {
     expect(kebabCase('Tooltip')).toBe('tooltip');
+  });
+});
+
+describe('upperFirst', () => {
+  it('uppercases the first character', () => {
+    expect(upperFirst('hello')).toBe('Hello');
+  });
+
+  it('leaves the rest of the string untouched', () => {
+    expect(upperFirst('helloWorld')).toBe('HelloWorld');
+  });
+
+  it('handles empty string', () => {
+    expect(upperFirst('')).toBe('');
+  });
+});
+
+describe('capitalize', () => {
+  it('uppercases the first character and lowercases the rest', () => {
+    expect(capitalize('hello')).toBe('Hello');
+    expect(capitalize('HELLO')).toBe('Hello');
+    expect(capitalize('helloWorld')).toBe('Helloworld');
+  });
+
+  it('handles empty string', () => {
+    expect(capitalize('')).toBe('');
   });
 });
