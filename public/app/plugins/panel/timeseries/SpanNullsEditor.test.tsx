@@ -66,14 +66,14 @@ describe('SpanNullsEditor', () => {
       const onChange = jest.fn();
       render(<SpanNullsEditor value={true} onChange={onChange} context={mockContext} item={mockItem} />);
 
-      expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText('Never')).not.toBeInTheDocument();
     });
 
     it('should show threshold input when value is a number', () => {
       const onChange = jest.fn();
       render(<SpanNullsEditor value={3600000} onChange={onChange} context={mockContext} item={mockItem} />);
 
-      expect(screen.getByRole('textbox')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Never')).toBeInTheDocument();
     });
   });
 });

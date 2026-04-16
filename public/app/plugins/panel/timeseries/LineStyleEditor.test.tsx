@@ -65,7 +65,7 @@ describe('LineStyleEditor', () => {
       const onChange = jest.fn();
       render(<LineStyleEditor value={{ fill: 'solid' }} onChange={onChange} context={mockContext} item={mockItem} />);
 
-      expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+      expect(screen.queryByText('10, 10')).not.toBeInTheDocument();
     });
 
     it('should show segment selector when fill is dash', () => {
@@ -91,7 +91,7 @@ describe('LineStyleEditor', () => {
       expect(screen.getByText('10, 10')).toBeInTheDocument();
     });
 
-    it('should show current segments from a preset', () => {
+    it('should show current segments for a predefined dash option', () => {
       const onChange = jest.fn();
       render(
         <LineStyleEditor
@@ -105,7 +105,7 @@ describe('LineStyleEditor', () => {
       expect(screen.getByText('20, 10')).toBeInTheDocument();
     });
 
-    it('should display a custom value not in the preset list', () => {
+    it('should display a custom value not in the predefined options', () => {
       const onChange = jest.fn();
       render(
         <LineStyleEditor
