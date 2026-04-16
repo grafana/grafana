@@ -174,8 +174,6 @@ describe('handle location parsing', () => {
       mode: FrameGeometrySourceMode.Auto,
     });
     const geo = getGeometryField(frame, matchers).field!;
-    expect(geo.values.map((p) => toLonLat((p as Point).getCoordinates()))).toEqual(
-      EXPECTED_WGS84_FROM_GEOHASH_FIELDS
-    );
+    expect(geo.values.map((p) => toLonLat((p as Point).getCoordinates()))).toEqual(EXPECTED_WGS84_FROM_GEOHASH_FIELDS);
   });
 });

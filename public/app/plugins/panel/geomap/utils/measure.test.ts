@@ -31,11 +31,14 @@ describe('map measure tools (length / area units)', () => {
       measureValue: 'area',
       unitValues: ['m2', 'km2', 'ft2', 'mi2', 'acre2', 'hectare2'],
     },
-  ])('should expose $name geometry, measure id, and documented units', ({ measure, geometry, measureValue, unitValues }) => {
-    expect(measure.geometry).toBe(geometry);
-    expect(measure.value).toBe(measureValue);
-    expect(measure.units.map((u) => u.value)).toEqual(unitValues);
-  });
+  ])(
+    'should expose $name geometry, measure id, and documented units',
+    ({ measure, geometry, measureValue, unitValues }) => {
+      expect(measure.geometry).toBe(geometry);
+      expect(measure.value).toBe(measureValue);
+      expect(measure.units.map((u) => u.value)).toEqual(unitValues);
+    }
+  );
 
   it.each([
     { measureName: 'length', measure: length, code: 'ft' as const, expected: 'ft' as const },

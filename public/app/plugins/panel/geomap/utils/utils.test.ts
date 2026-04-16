@@ -88,9 +88,9 @@ describe('hasVariableDependencies', () => {
     },
   ])('$name', ({ variables, obj, expected }) => {
     const mockTemplateSrv = {
-      containsTemplate: jest.fn().mockImplementation((str: string) =>
-        variables.some((v) => str.includes(`$${v.name}`))
-      ),
+      containsTemplate: jest
+        .fn()
+        .mockImplementation((str: string) => variables.some((v) => str.includes(`$${v.name}`))),
       getVariables: jest.fn().mockReturnValue(variables),
     };
     (getTemplateSrv as jest.Mock).mockReturnValue(mockTemplateSrv);
