@@ -81,6 +81,15 @@ func RunJobController(deps server.OperatorDependencies) error {
 	} else {
 		startHistoryInformers = func() {}
 	}
+	// HistoryWriter can be either Loki or the API server
+	// TODO: Loki configuration and setup in the same way we do for the API server
+	// https://github.com/grafana/git-ui-sync-project/issues/508
+	// var jobHistoryWriter jobs.HistoryWriter
+	// if b.jobHistoryLoki != nil {
+	// 	jobHistoryWriter = b.jobHistoryLoki
+	// } else {
+	// 	jobHistoryWriter = jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
+	// }
 
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
 	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), 30*time.Second, deps.Registerer)
@@ -90,7 +99,7 @@ func RunJobController(deps server.OperatorDependencies) error {
 
 	var wg sync.WaitGroup
 
-	if controllerCfg.enabled {
+	if controllerCfg.jobProcessingEnabled {
 		jobController, err := controller.NewJobController(jobInformer)
 		if err != nil {
 			return fmt.Errorf("failed to create job controller: %w", err)
@@ -179,7 +188,7 @@ func RunJobController(deps server.OperatorDependencies) error {
 
 type jobsControllerConfig struct {
 	ControllerConfig
-	enabled              bool
+	jobProcessingEnabled bool
 	historyExpiration    time.Duration
 	cleanupInterval      time.Duration
 	maxJobTimeout        time.Duration
@@ -201,7 +210,7 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registe
 
 	return &jobsControllerConfig{
 		ControllerConfig:     *controllerCfg,
-		enabled:              operatorSec.Key("jobs_processing_enabled").MustBool(true),
+		jobProcessingEnabled: operatorSec.Key("jobs_processing_enabled").MustBool(true),
 		historyExpiration:    operatorSec.Key("history_expiration").MustDuration(0),
 		concurrentDrivers:    operatorSec.Key("concurrent_drivers").MustInt(3),
 		maxSyncWorkers:       operatorSec.Key("max_sync_workers").MustInt(10),
