@@ -172,13 +172,13 @@ Grafana marks missing series as [**stale**](ref:stale-alert-instances) after two
 
 If an alert instance becomes stale, you’ll find it in the [alert history](ref:alert-history) as `Normal (Missing Series)` before it disappears. This table shows the eviction process from the previous example:
 
-| Time  | region1               | region2                               | Alert triggered                                                          |
-| :---- | :-------------------- | :------------------------------------ | :----------------------------------------------------------------------- |
-| 00:00 | 1.5s 🟢               | 1s 🟢                                 | 🟢🟢 No Alerts                                                           |
-| 01:00 | 3s 🔴 <br> `Alerting` | 3s 🔴 <br> `Alerting`                 | 🔴🔴 Alert instances triggered for both regions                          |
+| Time  | region1               | region2                              | Alert triggered                                                          |
+| :---- | :-------------------- | :----------------------------------- | :----------------------------------------------------------------------- |
+| 00:00 | 1.5s 🟢               | 1s 🟢                                | 🟢🟢 No Alerts                                                           |
+| 01:00 | 3s 🔴 <br> `Alerting` | 3s 🔴 <br> `Alerting`                | 🔴🔴 Alert instances triggered for both regions                          |
 | 02:00 | 1.6s 🟢               | `(MissingSeries)`⚠️ <br> `Alerting` ️ | 🟢🔴 Region2 missing, state maintained.                                  |
-| 03:00 | 1.4s 🟢               | `(MissingSeries)` <br> `Normal`       | 🟢🟢 `region2` was resolved, 📩 notification sent, and instance evicted. |
-| 04:00 | 1.4s 🟢               | —                                     | 🟢 No Alerts. `region2` was evicted.                                     |
+| 03:00 | 1.4s 🟢               | `(MissingSeries)` <br> `Normal`      | 🟢🟢 `region2` was resolved, 📩 notification sent, and instance evicted. |
+| 04:00 | 1.4s 🟢               | —                                    | 🟢 No Alerts. `region2` was evicted.                                     |
 
 ### Why doesn’t MissingSeries match No Data behavior?
 
