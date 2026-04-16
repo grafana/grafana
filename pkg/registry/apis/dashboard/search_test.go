@@ -10,14 +10,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -102,6 +105,43 @@ func TestSearchHandler(t *testing.T) {
 		assert.Equal(t, len(mockResults), len(p.Hits))
 		assert.Equal(t, mockResults[2].Value, p.Hits[0].Title)
 		assert.Equal(t, mockResults[1].Value, p.Hits[3].Title)
+	})
+
+	t.Run("filters k6 technical folder from results for non-service accounts", func(t *testing.T) {
+		mockResponse := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: resource.SEARCH_FIELD_TITLE},
+				},
+				Rows: []*resourcepb.ResourceTableRow{},
+			},
+		}
+
+		mockClient := &MockClient{
+			MockResponses: []*resourcepb.ResourceSearchResponse{mockResponse},
+		}
+
+		searchHandler := SearchHandler{
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: featuremgmt.WithFeatures(),
+		}
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search", nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+
+		searchHandler.DoSearch(rr, req)
+		resp := rr.Result()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
+
+		assert.Equal(t, string(selection.NotIn), mockClient.MockCalls[0].Options.Fields[0].Operator)
+		assert.Equal(t, []string{"k6-app"}, mockClient.MockCalls[0].Options.Fields[0].Values)
 	})
 }
 
@@ -347,7 +387,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		allPermissions := make(map[int64]map[string][]string)
 		permissions := make(map[string][]string)
 		permissions[dashboards.ActionDashboardsRead] = []string{"dashboards:uid:dashboardinroot", "dashboards:uid:dashboardinprivatefolder", "dashboards:uid:dashboardinpublicfolder"}
-		permissions[dashboards.ActionFoldersRead] = []string{"folders:uid:sharedfolder"}
+		permissions[folder.ActionFoldersRead] = []string{"folders:uid:sharedfolder"}
 		allPermissions[1] = permissions
 		// "Permissions" is where we store the uid of dashboards shared with the user
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
@@ -358,7 +398,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 		// first call gets all dashboards user has permission for
 		firstCall := mockClient.MockCalls[0]
-		assert.Equal(t, firstCall.Options.Fields[0].Values, []string{"dashboardinroot", "dashboardinprivatefolder", "dashboardinpublicfolder", "sharedfolder"})
+		assert.Equal(t, []string{"dashboardinroot", "dashboardinprivatefolder", "dashboardinpublicfolder", "sharedfolder"}, firstCall.Options.Fields[0].Values)
 		// verify federated field is set to include folders
 		assert.NotNil(t, firstCall.Federated)
 		assert.Equal(t, 1, len(firstCall.Federated))
@@ -366,11 +406,11 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		assert.Equal(t, "folders", firstCall.Federated[0].Resource)
 		// second call gets folders associated with the previous dashboards
 		secondCall := mockClient.MockCalls[1]
-		assert.Equal(t, secondCall.Options.Fields[0].Values, []string{"privatefolder", "publicfolder"})
+		assert.Equal(t, []string{"privatefolder", "publicfolder"}, secondCall.Options.Fields[0].Values)
 		// lastly, search ONLY for dashboards and folders user has permission to read that are within folders the user does NOT have
 		// permission to read
 		thirdCall := mockClient.MockCalls[2]
-		assert.Equal(t, thirdCall.Options.Fields[0].Values, []string{"dashboardinprivatefolder", "sharedfolder"})
+		assert.Equal(t, []string{"dashboardinprivatefolder", "sharedfolder"}, thirdCall.Options.Fields[1].Values)
 
 		resp := rr.Result()
 		defer func() {
@@ -480,7 +520,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		permissions := make(map[string][]string)
 		permissions[dashboards.ActionDashboardsWrite] = []string{"dashboards:uid:dashboardinprivatefolder", "dashboards:uid:dashboardinpublicfolder"}
 		// user can view the private folder, but cannot edit it. This should still classify dashboards in it as "shared with me" for edit.
-		permissions[dashboards.ActionFoldersRead] = []string{"folders:uid:privatefolder"}
+		permissions[folder.ActionFoldersRead] = []string{"folders:uid:privatefolder"}
 		allPermissions[1] = permissions
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
 
@@ -498,7 +538,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 		thirdCall := mockClient.MockCalls[2]
 		assert.Equal(t, int64(dashboardaccess.PERMISSION_EDIT), thirdCall.Permission)
-		assert.Equal(t, []string{"dashboardinprivatefolder"}, thirdCall.Options.Fields[0].Values)
+		assert.Equal(t, []string{"dashboardinprivatefolder"}, thirdCall.Options.Fields[1].Values)
 
 		resp := rr.Result()
 		defer func() {
@@ -516,8 +556,9 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 	testUser := &user.SignedInUser{
-		Namespace: "test-namespace",
-		OrgID:     1,
+		Namespace:        "test-namespace",
+		OrgID:            1,
+		IsServiceAccount: true,
 	}
 
 	dashboardKey := &resourcepb.ResourceKey{
@@ -968,6 +1009,42 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+
+	t.Run("adds k6 exclusion for non-service accounts", func(t *testing.T) {
+		queryParams, err := url.ParseQuery("")
+		require.NoError(t, err)
+
+		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, &user.SignedInUser{
+			Namespace: "test-namespace",
+			OrgID:     1,
+		}, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
+			return nil, nil
+		})
+
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.Len(t, result.Options.Fields, 1)
+		assert.Equal(t, resource.SEARCH_FIELD_NAME, result.Options.Fields[0].Key)
+		assert.Equal(t, string(selection.NotIn), result.Options.Fields[0].Operator)
+		assert.Equal(t, []string{accesscontrol.K6FolderUID}, result.Options.Fields[0].Values)
+	})
+
+	t.Run("keeps k6 folder visible for service accounts", func(t *testing.T) {
+		queryParams, err := url.ParseQuery("")
+		require.NoError(t, err)
+
+		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, &user.SignedInUser{
+			Namespace:        "test-namespace",
+			OrgID:            1,
+			IsServiceAccount: true,
+		}, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
+			return nil, nil
+		})
+
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		assert.Empty(t, result.Options.Fields)
+	})
 }
 
 // MockClient implements the ResourceIndexClient interface for testing

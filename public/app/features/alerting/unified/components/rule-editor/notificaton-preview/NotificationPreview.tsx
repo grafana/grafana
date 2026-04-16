@@ -179,14 +179,14 @@ export const NotificationPreview = ({
  * We check for either:
  * - alert.notifications:read (legacy permission)
  * - alert.notifications.routes:read (new granular permission)
+ * - notifications.alerting.grafana.app/routingtrees:get (K8s managed routes permission)
  */
 function NotificationPreviewGrafanaPermissionCheck({ children }: React.PropsWithChildren) {
   const hasLegacyNotificationPermission = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead);
-  const hasNotificationPolicyTreePermission =
-    contextSrv.hasPermission(AccessControlAction.AlertingRoutesRead) ||
-    contextSrv.hasPermission(AccessControlAction.ActionAlertingManagedRoutesRead);
+  const hasNotificationPolicyTreePermission = contextSrv.hasPermission(AccessControlAction.AlertingRoutesRead);
+  const hasManagedRoutesPermission = contextSrv.hasPermission(AccessControlAction.ActionAlertingManagedRoutesRead);
 
-  if (hasLegacyNotificationPermission || hasNotificationPolicyTreePermission) {
+  if (hasLegacyNotificationPermission || hasNotificationPolicyTreePermission || hasManagedRoutesPermission) {
     return <>{children}</>;
   }
 

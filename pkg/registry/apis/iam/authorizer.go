@@ -26,6 +26,7 @@ func newIAMAuthorizer(
 	globalRoleApiInstaller GlobalRoleApiInstaller,
 	teamLbacApiInstaller TeamLBACApiInstaller,
 	externalGroupMappingApiInstaller ExternalGroupMappingApiInstaller,
+	roleBindingsApiInstaller RoleBindingApiInstaller,
 ) authorizer.Authorizer {
 	resourceAuthorizer := make(map[string]authorizer.Authorizer)
 
@@ -63,12 +64,28 @@ func newIAMAuthorizer(
 	legacyAuthorizer := gfauthorizer.NewResourceAuthorizer(legacyAccessClient)
 	resourceAuthorizer["display"] = legacyAuthorizer
 
+	// Temporary security fix: Block Watch on ResourcePermissions until proper filtering is implemented
+	blockWatchAuthorizer := authorizer.AuthorizerFunc(func(
+		ctx context.Context, attr authorizer.Attributes,
+	) (authorized authorizer.Decision, reason string, err error) {
+		if !attr.IsResourceRequest() {
+			return authorizer.DecisionNoOpinion, "", nil
+		}
+
+		// Block Watch requests
+		if attr.GetVerb() == "watch" {
+			return authorizer.DecisionDeny, "watch operation is disabled for ResourcePermissions", nil
+		}
+
+		// Allow all other operations (handled by storage layer authorization)
+		return authorizer.DecisionAllow, "", nil
+	})
+
 	// Access specific resources
-	authorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.RoleInfo.GetName()] = roleApiInstaller.GetAuthorizer()
 	resourceAuthorizer[iamv0.TeamLBACRuleInfo.GetName()] = teamLbacApiInstaller.GetAuthorizer()
-	resourceAuthorizer[iamv0.ResourcePermissionInfo.GetName()] = allowAuthorizer // Handled by the backend wrapper
-	resourceAuthorizer[iamv0.RoleBindingInfo.GetName()] = authorizer
+	resourceAuthorizer[iamv0.ResourcePermissionInfo.GetName()] = blockWatchAuthorizer // Block Watch, allow others (storage-layer handles authorization)
+	resourceAuthorizer[iamv0.RoleBindingInfo.GetName()] = roleBindingsApiInstaller.GetAuthorizer()
 	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = newServiceAccountAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = newUserAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.ExternalGroupMappingResourceInfo.GetName()] = externalGroupMappingApiInstaller.GetAuthorizer()

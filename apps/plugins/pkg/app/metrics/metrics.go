@@ -18,7 +18,7 @@ var (
 			Name:      "plugin_child_reconciliation_total",
 			Help:      "Total number of child plugin reconciliation operations",
 		},
-		[]string{"status"},
+		[]string{"status", "action", "plugin_id"},
 	)
 
 	ChildReconciliationDurationSeconds = prometheus.NewHistogram(
@@ -27,6 +27,15 @@ var (
 			Name:      "plugin_child_reconciliation_duration_seconds",
 			Help:      "Duration of child plugin reconciliation operations in seconds",
 			Buckets:   prometheus.DefBuckets,
+		},
+	)
+
+	ChildrenCountPerReconcile = prometheus.NewHistogram(
+		prometheus.HistogramOpts{
+			Namespace: namespace,
+			Name:      "plugin_children_count_per_reconcile",
+			Help:      "Number of child plugins found per reconciliation cycle.",
+			Buckets:   []float64{0, 1, 2, 3, 5, 7, 10},
 		},
 	)
 
@@ -87,6 +96,15 @@ var (
 		[]string{"provider", "status"}, // provider: "catalog", etc; status: "success", "error", "not_found"
 	)
 
+	MetaFetchErrorsTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Name:      "meta_fetch_errors_total",
+			Help:      "Total number of metadata fetch errors by provider and error type.",
+		},
+		[]string{"provider", "error_type"},
+	)
+
 	// Meta request metrics
 	MetaRequestsTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -102,12 +120,14 @@ func MustRegister(registerer prometheus.Registerer) {
 	metricsToRegister := []prometheus.Collector{
 		ChildReconciliationTotal,
 		ChildReconciliationDurationSeconds,
+		ChildrenCountPerReconcile,
 		RegistrationOperationsTotal,
 		RegistrationDurationSeconds,
 		MetaCacheLookupTotal,
 		MetaCacheSize,
 		MetaCacheEvictionsTotal,
 		MetaFetchDurationSeconds,
+		MetaFetchErrorsTotal,
 		MetaRequestsTotal,
 	}
 

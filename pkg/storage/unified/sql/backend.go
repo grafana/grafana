@@ -26,7 +26,6 @@ import (
 	"go.uber.org/atomic"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 
@@ -106,7 +105,6 @@ func NewStorageBackend(
 	db infraDB.DB,
 	reg prometheus.Registerer,
 	storageMetrics *resource.StorageMetrics,
-	tracer trace.Tracer,
 	disableStorageServices bool,
 ) (resource.StorageBackend, error) {
 	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
@@ -175,7 +173,6 @@ func NewStorageBackend(
 
 	kvBackendOpts := resource.KVBackendOptions{
 		KvStore:              sqlkv,
-		Tracer:               tracer,
 		Reg:                  reg,
 		UseChannelNotifier:   !isHA,
 		Log:                  log.New("storage-backend"),
@@ -684,11 +681,26 @@ func (b *backend) GetResourceStats(ctx context.Context, nsr resource.NamespacedR
 	return res, err
 }
 
+// toMicrosecondRV converts a snowflake RV to microsecond format if needed.
+// This ensures that RVs arriving at the SQL backend are in the native
+// microsecond format. No-op for values ≤ 0 or values already in microsecond format.
+func toMicrosecondRV(rv int64) int64 {
+	if rv > 0 && resource.IsSnowflake(rv) {
+		return rvmanager.RVFromSnowflake(rv)
+	}
+	return rv
+}
+
 func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
 	if b.disableStorageServices {
 		return 0, fmt.Errorf("storage backend is not enabled")
 	}
-	_, span := tracer.Start(ctx, "sql.backend.WriteEvent")
+	if err := event.Validate(); err != nil {
+		return 0, apierrors.NewBadRequest(err.Error())
+	}
+	event.PreviousRV = toMicrosecondRV(event.PreviousRV)
+
+	ctx, span := tracer.Start(ctx, "sql.backend.WriteEvent")
 	defer span.End()
 	// TODO: validate key ?
 	switch event.Type {
@@ -909,10 +921,6 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 }
 
 func (b *backend) checkConflict(res db.Result, key *resourcepb.ResourceKey, rv int64) error {
-	if rv == 0 {
-		return nil
-	}
-
 	// The RV is part of the update request, and it may no longer be the most recent
 	rows, err := res.RowsAffected()
 	if err != nil {
@@ -924,15 +932,14 @@ func (b *backend) checkConflict(res db.Result, key *resourcepb.ResourceKey, rv i
 	if rows > 0 {
 		return fmt.Errorf("multiple rows effected (%d)", rows)
 	}
-	return apierrors.NewConflict(schema.GroupResource{
-		Group:    key.Group,
-		Resource: key.Resource,
-	}, key.Name, fmt.Errorf("resource version does not match current value"))
+	return resource.NewConflictStatusError(key.Group, key.Resource, key.Name, "requested RV does not match current RV")
 }
 
 func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
 	_, span := tracer.Start(ctx, "sql.backend.ReadResource")
 	defer span.End()
+
+	req.ResourceVersion = toMicrosecondRV(req.ResourceVersion)
 
 	// TODO: validate key ?
 
@@ -967,6 +974,8 @@ func (b *backend) ListIterator(ctx context.Context, req *resourcepb.ListRequest,
 	ctx, span := tracer.Start(ctx, "sql.backend.ListIterator")
 	defer span.End()
 
+	req.ResourceVersion = toMicrosecondRV(req.ResourceVersion)
+
 	if err := resource.MigrateListRequestVersionMatch(req, b.log); err != nil {
 		return 0, err
 	}
@@ -989,6 +998,7 @@ func (b *backend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, 
 	ctx, span := tracer.Start(ctx, "sql.backend.ListHistory")
 	defer span.End()
 
+	req.ResourceVersion = toMicrosecondRV(req.ResourceVersion)
 	return b.getHistory(ctx, req, cb)
 }
 
@@ -1039,6 +1049,8 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 // ListModifiedSince will return all resources that have changed since the given resource version.
 // If a resource has changes, only the latest change will be returned.
 func (b *backend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+	sinceRv = toMicrosecondRV(sinceRv)
+
 	// We don't use an explicit transaction for fetching LatestRV and subsequent fetching of resources.
 	// To guarantee that we don't include events with RV > LatestRV, we include the check in SQL query.
 
@@ -1115,7 +1127,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListReques
 		if err != nil {
 			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
 		}
-		iter.listRV = continueToken.ResourceVersion
+		iter.listRV = toMicrosecondRV(continueToken.ResourceVersion)
 		iter.offset = continueToken.StartOffset
 
 		if req.ResourceVersion != 0 && req.ResourceVersion != iter.listRV {

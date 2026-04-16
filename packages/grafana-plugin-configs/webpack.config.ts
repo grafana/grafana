@@ -261,6 +261,7 @@ const config = async (env: Env): Promise<Configuration> => {
           { from: '**/*.html', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
           { from: 'img/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
           { from: 'libs/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
+          { from: 'schema/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
           { from: 'static/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
         ],
       }),

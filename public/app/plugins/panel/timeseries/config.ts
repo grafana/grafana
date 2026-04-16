@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import {
   FieldColorModeId,
   FieldConfigProperty,
@@ -25,7 +26,6 @@ import { InsertNullsEditor } from './InsertNullsEditor';
 import { LineStyleEditor } from './LineStyleEditor';
 import { SpanNullsEditor } from './SpanNullsEditor';
 import { ThresholdsStyleEditor } from './ThresholdsStyleEditor';
-
 export const defaultGraphConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
   lineInterpolation: LineInterpolation.Linear,

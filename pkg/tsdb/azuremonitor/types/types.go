@@ -70,6 +70,9 @@ type AzureMonitorQuery struct {
 	Dimensions   []dataquery.AzureMetricDimension
 	Resources    map[string]dataquery.AzureMonitorResource
 	Subscription string
+	// GrafanaSql is true when the query originated from Grafana SQL / dsabstraction; parseResponse
+	// renames frame fields to time/value for the schemads contract.
+	GrafanaSql bool
 }
 
 // AzureMonitorResponse is the json response from the Azure Monitor API

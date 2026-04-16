@@ -510,11 +510,11 @@ func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext
 			c.Permissions[orgID] = make(map[string][]string)
 		}
 
-		folderScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ns.UID)
-		if c.Permissions[orgID][dashboards.ActionFoldersRead] == nil {
-			c.Permissions[orgID][dashboards.ActionFoldersRead] = []string{}
+		folderScope := folder.ScopeFoldersProvider.GetResourceScopeUID(ns.UID)
+		if c.Permissions[orgID][folder.ActionFoldersRead] == nil {
+			c.Permissions[orgID][folder.ActionFoldersRead] = []string{}
 		}
-		c.Permissions[orgID][dashboards.ActionFoldersRead] = append(c.Permissions[orgID][dashboards.ActionFoldersRead], folderScope)
+		c.Permissions[orgID][folder.ActionFoldersRead] = append(c.Permissions[orgID][folder.ActionFoldersRead], folderScope)
 	}
 
 	logger.Debug("Using folder for the converted rules", "folder_uid", ns.UID)

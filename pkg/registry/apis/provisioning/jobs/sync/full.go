@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -75,6 +76,7 @@ func FullSync(
 	}
 
 	if folderMetadataEnabled && len(missingFolderMetadata) > 0 {
+		logging.FromContext(ctx).Info("missing folder metadata detected", "count", len(missingFolderMetadata))
 		changeActions := make(map[string]repository.FileAction, len(changes))
 		for _, c := range changes {
 			changeActions[c.Path] = c.Action
@@ -92,6 +94,7 @@ func FullSync(
 	}
 
 	if folderMetadataEnabled && len(invalidFolderMetadata) > 0 {
+		logging.FromContext(ctx).Info("invalid folder metadata detected", "count", len(invalidFolderMetadata))
 		for _, invalid := range invalidFolderMetadata {
 			action := invalid.Action
 			if action == "" {
@@ -221,6 +224,7 @@ func applyChange(
 			// full sync can recreate that folder at a new path when _folder.json
 			// preserves the UID.
 			if folderMetadataEnabled && safepath.IsDir(change.Path) {
+				logging.FromContext(deleteCtx).Debug("folder tree entry removed after delete", "path", change.Path, "uid", change.Existing.Name)
 				repositoryResources.RemoveFolderFromTree(change.Existing.Name)
 			}
 		}
@@ -235,13 +239,18 @@ func applyChange(
 		ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.ensure_folder_exists")
 		resultBuilder := jobs.NewFolderResult(change.Path).WithAction(change.Action)
 
-		// For updated folders, remove the old UID from the tree so EnsureFolderPathExist
-		// doesn't skip it. This handles both title changes (hash mismatch) and UID changes.
+		var ensureOpts []resources.EnsurePathOption
 		if change.Action == repository.FileActionUpdated && change.Existing != nil {
-			repositoryResources.RemoveFolderFromTree(change.Existing.Name)
+			// Force the full ancestor walk so parent-only changes are not skipped
+			// by the early-return optimisation, and mark the old UID as relocating
+			// so the ID conflict check is bypassed for it at the new path.
+			ensureOpts = append(ensureOpts,
+				resources.WithForceWalk(),
+				resources.WithRelocatingUIDs(change.Existing.Name),
+			)
 		}
 
-		folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path, currentRef)
+		folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path, currentRef, ensureOpts...)
 		if err != nil {
 			resultBuilder.WithError(fmt.Errorf("ensuring folder exists at path %s: %w", change.Path, err))
 			ensureFolderSpan.RecordError(err)
@@ -372,6 +381,9 @@ func applyChanges(
 	}
 
 	if len(folderCreations) > 0 {
+		// Process folder creations/updates shallowest-first so that parent folders are set up (and their old tree entries removed)
+		// before children are walked to ensure consistency in moves and renames.
+		safepath.SortByDepth(folderCreations, func(c ResourceFileChange) string { return c.Path }, true)
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderCreations, func() error {
 			return applyFoldersSerially(ctx, folderCreations, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
 		}, metrics); err != nil {
@@ -405,17 +417,19 @@ func applyChanges(
 
 	// Collect and delete old folders after all children have been re-parented.
 	type oldFolder struct {
-		Path string
-		UID  string
+		Path   string
+		UID    string
+		Reason string
 	}
 	var oldFolders []oldFolder
 	for _, change := range folderCreations {
 		if change.FolderRenamed {
-			oldFolders = append(oldFolders, oldFolder{Path: change.Path, UID: change.Existing.Name})
+			oldFolders = append(oldFolders, oldFolder{Path: change.Path, UID: change.Existing.Name, Reason: change.Reason})
 		}
 	}
 
 	if len(oldFolders) > 0 {
+		logging.FromContext(ctx).Info("folder rename cleanup", "count", len(oldFolders))
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseOldFolderCleanup, func() error {
 			safepath.SortByDepth(oldFolders, func(f oldFolder) string { return f.Path }, false)
 			for _, old := range oldFolders {
@@ -427,8 +441,8 @@ func applyChanges(
 					return err
 				}
 
-				// Skip if the replacement folder failed to be created.
-				if progress.HasDirPathFailedCreation(old.Path) {
+				// Skip if the replacement folder failed to be created or updated (e.g. UID conflict warning).
+				if progress.HasDirPathFailedCreation(old.Path) || progress.HasChildPathFailedUpdate(old.Path) {
 					skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_renamed_folder_deletion")
 					progress.Record(skipCtx, jobs.NewPathOnlyResult(old.Path).
 						WithError(fmt.Errorf("old folder was not deleted because the replacement folder could not be created")).
@@ -440,7 +454,8 @@ func applyChanges(
 
 				resultBuilder := jobs.NewFolderResult(old.Path).
 					WithAction(repository.FileActionDeleted).
-					WithName(old.UID)
+					WithName(old.UID).
+					WithReason(old.Reason)
 				if err := repositoryResources.RemoveFolder(ctx, old.UID); err != nil {
 					resultBuilder.WithError(fmt.Errorf("delete old folder %s after UID change: %w", old.UID, err))
 				}

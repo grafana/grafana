@@ -2,6 +2,7 @@ import { act, fireEvent, queryByLabelText, render, screen, waitFor } from '@test
 import userEvent from '@testing-library/user-event';
 
 import type { DataSourceApi } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import type { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
 import { type DataSourceRef, type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
@@ -213,7 +214,7 @@ describe('QueryEditorRows', () => {
     const {
       renderResult: { rerender },
     } = renderScenario();
-    expect(await screen.findAllByTestId('query-editor-row')).toHaveLength(2);
+    expect(await screen.findAllByTestId(selectors.components.QueryEditorRows.rows)).toHaveLength(2);
 
     rerender(
       <QueryEditorRows
@@ -227,12 +228,12 @@ describe('QueryEditorRows', () => {
       />
     );
 
-    expect(await screen.findAllByTestId('query-editor-row')).toHaveLength(1);
+    expect(await screen.findAllByTestId(selectors.components.QueryEditorRows.rows)).toHaveLength(1);
   });
 
   it('Should be able to expand and collapse queries', async () => {
     renderScenario();
-    const queryEditorRows = await screen.findAllByTestId('query-editor-row');
+    const queryEditorRows = await screen.findAllByTestId(selectors.components.QueryEditorRows.rows);
 
     for (const childQuery of queryEditorRows) {
       const toggleExpandButton = queryByLabelText(childQuery, 'Collapse query row') as HTMLElement;
@@ -249,7 +250,7 @@ describe('QueryEditorRows', () => {
   it('Should have proper keyboard navigation for expand/collapse buttons', async () => {
     const user = userEvent.setup();
     renderScenario();
-    const queryEditorRows = await screen.findAllByTestId('query-editor-row');
+    const queryEditorRows = await screen.findAllByTestId(selectors.components.QueryEditorRows.rows);
 
     for (const childQuery of queryEditorRows) {
       const toggleExpandButton = queryByLabelText(childQuery, 'Collapse query row') as HTMLElement;
@@ -271,7 +272,7 @@ describe('QueryEditorRows', () => {
     const onQueryCopied = jest.fn();
 
     renderScenario({ onAddQuery, onQueryCopied });
-    const queryEditorRows = await screen.findAllByTestId('query-editor-row');
+    const queryEditorRows = await screen.findAllByTestId(selectors.components.QueryEditorRows.rows);
     queryEditorRows.map(async (childQuery) => {
       const duplicateQueryButton = queryByLabelText(childQuery, 'Duplicate query') as HTMLElement;
 
@@ -289,7 +290,7 @@ describe('QueryEditorRows', () => {
     const onQueryRemoved = jest.fn();
     renderScenario({ onQueriesChange, onQueryRemoved });
 
-    const queryEditorRows = await screen.findAllByTestId('query-editor-row');
+    const queryEditorRows = await screen.findAllByTestId(selectors.components.QueryEditorRows.rows);
     queryEditorRows.map(async (childQuery) => {
       const deleteQueryButton = queryByLabelText(childQuery, 'Remove query') as HTMLElement;
 
