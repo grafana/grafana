@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
@@ -23,37 +22,53 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// WorkerSetupConfig holds the resolved dependencies needed to construct job workers.
-// Both the jobqueue and jobs operators populate this from their respective configs.
-type WorkerSetupConfig struct {
-	Clients               resources.ClientFactory
-	RepositoryResources   resources.RepositoryResourcesFactory
-	ResourceLister        resources.ResourceLister
-	Parsers               resources.ParserFactory
-	StatusPatcher         *controller.RepositoryStatusPatcher
-	Tracer                tracing.Tracer
-	Registry              prometheus.Registerer
-	MaxSyncWorkers        int
-	ExportEnabled         bool
-	FolderMetadataEnabled bool
-	FolderAPIVersion      string
-	URLProvider           func(ctx context.Context, namespace string) string
-}
-
-// setupWorkers constructs all job workers from resolved dependencies.
+// buildWorkers resolves all dependencies and constructs the job workers.
 // This is the single source of truth for worker construction used by both operators.
-func setupWorkers(cfg WorkerSetupConfig) ([]jobs.Worker, *jobs.JobMetrics, error) {
-	metrics := jobs.RegisterJobMetrics(cfg.Registry)
+func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry prometheus.Registerer, tracer tracing.Tracer, maxSyncWorkers int, folderAPIVersion string) ([]jobs.Worker, *jobs.JobMetrics, error) {
+	featureManager, err := featuremgmt.ProvideManagerService(cfg)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to provide feature manager: %w", err)
+	}
+	features := featuremgmt.ProvideToggles(featureManager)
+	exportEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport)                 //nolint:staticcheck
+	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 
-	syncer := jobsync.NewSyncer(jobsync.Compare, jobsync.FullSync, jobsync.IncrementalSync, cfg.Tracer, cfg.MaxSyncWorkers, metrics, cfg.FolderMetadataEnabled)
+	clients, err := controllerCfg.Clients()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get clients: %w", err)
+	}
+	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
+
+	unified, err := controllerCfg.UnifiedStorageClient()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get unified storage client: %w", err)
+	}
+	resourceLister := resources.NewResourceLister(unified)
+
+	provisioningClient, err := controllerCfg.ProvisioningClient()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create provisioning client: %w", err)
+	}
+
+	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled, folderAPIVersion)
+	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
+
+	urlProvider, err := controllerCfg.URLProvider()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get URL provider: %w", err)
+	}
+
+	metrics := jobs.RegisterJobMetrics(registry)
+
+	syncer := jobsync.NewSyncer(jobsync.Compare, jobsync.FullSync, jobsync.IncrementalSync, tracer, maxSyncWorkers, metrics, folderMetadataEnabled)
 	syncWorker := jobsync.NewSyncWorker(
-		cfg.Clients,
-		cfg.RepositoryResources,
-		cfg.StatusPatcher.Patch,
+		clients,
+		repositoryResources,
+		statusPatcher.Patch,
 		syncer,
 		metrics,
-		cfg.Tracer,
-		cfg.MaxSyncWorkers,
+		tracer,
+		maxSyncWorkers,
 	)
 
 	stageIfPossible := repository.WrapWithStageAndPushIfPossible
@@ -61,56 +76,56 @@ func setupWorkers(cfg WorkerSetupConfig) ([]jobs.Worker, *jobs.JobMetrics, error
 	// Standalone export generates new UIDs so exported files
 	// don't reference existing resource identifiers.
 	exportWorker := export.NewExportWorker(
-		cfg.Clients,
-		cfg.RepositoryResources,
-		cfg.ResourceLister,
+		clients,
+		repositoryResources,
+		resourceLister,
 		export.ExportAllWithNewUIDs,
 		stageIfPossible,
 		metrics,
-		cfg.ExportEnabled,
-		cfg.FolderAPIVersion,
+		exportEnabled,
+		folderAPIVersion,
 	)
 
 	// Migration export preserves original names so the takeover
 	// allowlist can correlate resources during the sync phase.
 	migrateExportWorker := export.NewExportWorker(
-		cfg.Clients,
-		cfg.RepositoryResources,
-		cfg.ResourceLister,
+		clients,
+		repositoryResources,
+		resourceLister,
 		export.ExportAll,
 		stageIfPossible,
 		metrics,
-		cfg.ExportEnabled,
-		cfg.FolderAPIVersion,
+		exportEnabled,
+		folderAPIVersion,
 	)
-	cleaner := migrate.NewNamespaceCleaner(cfg.Clients)
+	cleaner := migrate.NewNamespaceCleaner(clients)
 	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
 		cleaner,
 		migrateExportWorker,
 		syncWorker,
 	)
-	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator, cfg.ExportEnabled)
+	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator, exportEnabled)
 
 	// Delete
-	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, cfg.RepositoryResources, metrics)
+	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)
 
 	// Move
-	moveWorker := move.NewWorker(syncWorker, stageIfPossible, cfg.RepositoryResources, metrics)
+	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)
 
 	// Fix Metadata
-	fixMetadataWorker := fixfoldermetadata.NewWorker(resources.FolderGVKForVersion(cfg.FolderAPIVersion))
+	fixMetadataWorker := fixfoldermetadata.NewWorker(resources.FolderGVKForVersion(folderAPIVersion))
 
 	// Release Resources (orphan cleanup — removes ownership annotations)
-	releaseResourcesWorker := releaseresourcespkg.NewWorker(cfg.ResourceLister, cfg.Clients, 10)
+	releaseResourcesWorker := releaseresourcespkg.NewWorker(resourceLister, clients, 10)
 
 	// Delete Resources (orphan cleanup — deletes managed resources)
-	deleteResourcesWorker := deleteresourcespkg.NewWorker(cfg.ResourceLister, cfg.Clients, 10)
+	deleteResourcesWorker := deleteresourcespkg.NewWorker(resourceLister, clients, 10)
 
 	// PullRequest
 	renderer := pullrequest.NewNoOpRenderer()
-	evaluator := pullrequest.NewEvaluator(renderer, cfg.Parsers, cfg.URLProvider, cfg.Registry)
+	evaluator := pullrequest.NewEvaluator(renderer, parsers, urlProvider, registry)
 	commenter := pullrequest.NewCommenter(false)
-	prWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, cfg.Registry)
+	prWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, registry)
 
 	workers := []jobs.Worker{
 		syncWorker,
@@ -125,56 +140,4 @@ func setupWorkers(cfg WorkerSetupConfig) ([]jobs.Worker, *jobs.JobMetrics, error
 	}
 
 	return workers, &metrics, nil
-}
-
-// resolveWorkerDeps builds a WorkerSetupConfig from an operator's ControllerConfig.
-// Both operators use this to bridge their config into the shared SetupWorkers function.
-func resolveWorkerDeps(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry prometheus.Registerer, tracer tracing.Tracer, maxSyncWorkers int, folderAPIVersion string) (*WorkerSetupConfig, error) {
-	featureManager, err := featuremgmt.ProvideManagerService(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to provide feature manager: %w", err)
-	}
-	features := featuremgmt.ProvideToggles(featureManager)
-	exportEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport)                 //nolint:staticcheck
-	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
-
-	clients, err := controllerCfg.Clients()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get clients: %w", err)
-	}
-	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
-
-	unified, err := controllerCfg.UnifiedStorageClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get unified storage client: %w", err)
-	}
-	resourceLister := resources.NewResourceLister(unified)
-
-	provisioningClient, err := controllerCfg.ProvisioningClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
-	}
-
-	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled, folderAPIVersion)
-	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
-
-	urlProvider, err := controllerCfg.URLProvider()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get URL provider: %w", err)
-	}
-
-	return &WorkerSetupConfig{
-		Clients:               clients,
-		RepositoryResources:   repositoryResources,
-		ResourceLister:        resourceLister,
-		Parsers:               parsers,
-		StatusPatcher:         statusPatcher,
-		Tracer:                tracer,
-		Registry:              registry,
-		MaxSyncWorkers:        maxSyncWorkers,
-		ExportEnabled:         exportEnabled,
-		FolderMetadataEnabled: folderMetadataEnabled,
-		FolderAPIVersion:      folderAPIVersion,
-		URLProvider:           urlProvider,
-	}, nil
 }

@@ -79,13 +79,9 @@ func RunJobQueueController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	workerDeps, err := resolveWorkerDeps(deps.Config, &controllerCfg.ControllerConfig, deps.Registerer, tracer, controllerCfg.maxSyncWorkers, controllerCfg.folderAPIVersion)
+	workers, metrics, err := buildWorkers(deps.Config, &controllerCfg.ControllerConfig, deps.Registerer, tracer, controllerCfg.maxSyncWorkers, controllerCfg.folderAPIVersion)
 	if err != nil {
-		return fmt.Errorf("resolve worker dependencies: %w", err)
-	}
-	workers, metrics, err := setupWorkers(*workerDeps)
-	if err != nil {
-		return fmt.Errorf("setup workers: %w", err)
+		return fmt.Errorf("build workers: %w", err)
 	}
 
 	repoFactory, err := controllerCfg.RepositoryFactory()
