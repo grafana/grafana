@@ -7,6 +7,7 @@ import InfiniteLoader from 'react-window-infinite-loader';
 import { type Observable } from 'rxjs';
 
 import { type Field, type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
@@ -155,8 +156,15 @@ export const SearchResultsTable = React.memo(
         }
         const { key, ...rowProps } = row.getRowProps({ style });
 
+        const rowName = response.view.fields.name?.values[rowIndex];
+
         return (
-          <div key={key} {...rowProps} className={className}>
+          <div
+            key={key}
+            {...rowProps}
+            className={className}
+            data-testid={rowName ? selectors.pages.Search.table.row(rowName) : undefined}
+          >
             {row.cells.map((cell: Cell, index: number) => {
               const href = onClickItem ? url : undefined;
 
@@ -218,6 +226,7 @@ export const SearchResultsTable = React.memo(
         {...getTableProps()}
         aria-label={t('search.search-results-table.aria-label-search-results-table', 'Search results table')}
         role="table"
+        data-testid={selectors.pages.Search.table.body}
       >
         {headerGroups.map((headerGroup) => {
           const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps({

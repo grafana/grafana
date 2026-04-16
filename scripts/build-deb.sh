@@ -76,6 +76,11 @@ cp \
   "${SRC}/packaging/wrappers/grafana-server" \
   "${SRC}/packaging/wrappers/grafana-cli" \
   "${PKG}/usr/sbin/"
+# System files in /usr/sbin must have 0755 or less permissive.
+chmod 0755 \
+  "${PKG}/usr/sbin/grafana" \
+  "${PKG}/usr/sbin/grafana-server" \
+  "${PKG}/usr/sbin/grafana-cli"
 
 # Copy full grafana tree under /usr/share/grafana.
 cp -r "${SRC}" "${PKG}/usr/share/grafana"
@@ -84,6 +89,9 @@ cp -r "${SRC}" "${PKG}/usr/share/grafana"
 cp "${SRC}/packaging/deb/default/grafana-server"              "${PKG}/etc/default/grafana-server"
 cp "${SRC}/packaging/deb/init.d/grafana-server"               "${PKG}/etc/init.d/grafana-server"
 cp "${SRC}/packaging/deb/systemd/grafana-server.service"      "${PKG}/usr/lib/systemd/system/grafana-server.service"
+# Config files must have 0644 or less permissive; init.d scripts must have 0755 or less permissive.
+chmod 0755 "${PKG}/etc/init.d/grafana-server"
+chmod 0644 "${PKG}/etc/default/grafana-server"
 
 FILENAME="${DEB_PACKAGE_NAME}_${BUILD_VERSION}_${BUILD_NUMBER}_${OS}_${ARCH_LABEL}.deb"
 
