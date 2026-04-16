@@ -3,7 +3,16 @@ import { Suspense } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, ModalsController, CollapsableSection, useStyles2, Stack, Icon, Box } from '@grafana/ui';
+import {
+  Button,
+  ModalsController,
+  CollapsableSection,
+  useStyles2,
+  Stack,
+  Icon,
+  Box,
+  LoadingPlaceholder,
+} from '@grafana/ui';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 
 import { DiffGroup } from './DiffGroup';
@@ -82,7 +91,7 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
           isOpen={false}
           label={t('dashboard-scene.version-history-comparison.label-view-json-diff', 'View JSON diff')}
         >
-          <Suspense fallback={null}>
+          <Suspense fallback={<LoadingPlaceholder text={t('diff-viewer.loading', 'Loading diff...')} />}>
             <LazyDiffViewer
               oldValue={JSON.stringify(diffData.lhs, null, 2)}
               newValue={JSON.stringify(diffData.rhs, null, 2)}
