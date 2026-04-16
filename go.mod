@@ -16,8 +16,8 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.20.0 // @grafana/identity-access-team
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.1 // @grafana/grafana-backend-group
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.10.0 // @grafana/grafana-backend-group
-	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.4 // @grafana/grafana-search-and-storage
-	github.com/Azure/azure-storage-blob-go v0.15.0 // @grafana/grafana-backend-group
+	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.4 // @grafana/grafana-backend-group
+	github.com/Azure/azure-storage-blob-go v0.15.0 // @grafana/grafana-search-and-storage
 	github.com/Azure/go-autorest/autorest v0.11.30 // @grafana/grafana-backend-group
 	github.com/Azure/go-autorest/autorest/adal v0.9.24 // @grafana/grafana-backend-group
 	github.com/Bose/minisentinel v0.0.0-20200130220412-917c5a9223bb // @grafana/alerting-backend

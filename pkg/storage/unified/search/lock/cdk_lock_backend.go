@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -70,24 +71,13 @@ func NewCDKLockBackend(bucket resource.CDKBucket, opts CDKLockBackendOptions) *C
 	}
 }
 
-// validateObjectKey checks that a key contains only characters safe for all CDK blob
-// providers without triggering internal escaping. Uses the Azure character set (most
-// restrictive) as baseline: [a-zA-Z0-9\-_./] with no ".." segments, leading or trailing "/".
+// validObjectKey is a restrictive subset of CDK's safe character set for lock keys.
+// See https://github.com/google/go-cloud/blob/v0.45.0/internal/escape/escape.go
+var validObjectKey = regexp.MustCompile(`^[a-zA-Z0-9_./-]+$`)
+
 func validateObjectKey(key string) error {
-	if key == "" {
-		return fmt.Errorf("%w: must not be empty", ErrInvalidLockKey)
-	}
-	if strings.ContainsFunc(key, func(r rune) bool {
-		return !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' ||
-			r == '-' || r == '_' || r == '.' || r == '/')
-	}) {
-		return fmt.Errorf("%w: only [a-zA-Z0-9-_./] are allowed", ErrInvalidLockKey)
-	}
-	if strings.Contains(key, "..") {
-		return fmt.Errorf("%w: must not contain '..' segments", ErrInvalidLockKey)
-	}
-	if key[0] == '/' || key[len(key)-1] == '/' {
-		return fmt.Errorf("%w: must not start or end with '/'", ErrInvalidLockKey)
+	if !validObjectKey.MatchString(key) || strings.Contains(key, "..") || key[0] == '/' || key[len(key)-1] == '/' {
+		return fmt.Errorf("%w: %q", ErrInvalidLockKey, key)
 	}
 	return nil
 }
@@ -97,7 +87,7 @@ func (b *CDKLockBackend) validateKey(key string) error {
 }
 
 // Create atomically creates a lock if it does not exist.
-// If the lock exists but is expired (mtime + TTL < now), it attempts a conditional
+// If the lock exists but is expired (mtime + TTL + clockSkewAllowance < now), it attempts a conditional
 // takeover. Returns ErrLockHeld if the lock is live or if another instance wins the
 // takeover race.
 func (b *CDKLockBackend) Create(ctx context.Context, key string, info LockInfo) error {
