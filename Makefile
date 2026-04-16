@@ -61,7 +61,7 @@ endif
 GIT_BASE = remotes/origin/main
 
 CUE_VERSION = v0.16.0
-CUE = $(shell go env GOPATH)/bin/cue
+CUE = cue
 
 # GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
 XARGSR = $(shell xargs --version 2>&1 | grep -q GNU && echo xargs -r || echo xargs)
