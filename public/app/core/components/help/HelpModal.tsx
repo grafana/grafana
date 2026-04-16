@@ -17,7 +17,12 @@ export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
   const shortcuts = useShortcuts();
   return (
     <Modal title={t('help-modal.title', 'Shortcuts')} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
-      <Grid columns={{ xs: 1, sm: 2 }} gap={3} tabIndex={0}>
+      <Grid
+        columns={{ xs: 1, sm: 2 }}
+        gap={3}
+        tabIndex={0}
+        aria-label={t('help-modal.shortcuts-aria-label', 'List of keyboard shortcuts')}
+      >
         {Object.values(shortcuts).map(({ category, shortcuts }) => (
           <section key={category}>
             <table className={styles.table}>
@@ -303,7 +308,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'nowrap',
     }),
     shortcutTableKey: css({
-      display: 'inline-block',
       textAlign: 'center',
       marginRight: theme.spacing(0.5),
       padding: '3px 5px',

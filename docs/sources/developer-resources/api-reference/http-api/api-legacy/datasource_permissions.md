@@ -21,10 +21,11 @@ labels:
     - enterprise
     - oss
     - cloud
-title: Datasource Permissions HTTP API
+title: Data source permissions HTTP API
+menuTitle: Data source permissions HTTP API
 ---
 
-# Data Source Permissions API
+# Data source Permissions API
 
 {{< admonition type="caution" >}}
 
