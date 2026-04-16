@@ -232,6 +232,19 @@ func TestCDKLockBackend_Update(t *testing.T) {
 		require.ErrorIs(t, err, ErrLeaseExpired)
 	})
 
+	t.Run("rejects renewal at exact expiry boundary", func(t *testing.T) {
+		bucket := newConditionalBucket()
+		backend := newFakeBackend(bucket)
+		backend.clockSkewAllowance = 0
+		ctx := context.Background()
+
+		require.NoError(t, backend.Create(ctx, "lock-1", lockInfo("owner-1", time.Minute)))
+		backend.now = func() time.Time { return time.Now().Add(time.Minute) }
+
+		err := backend.Update(ctx, "lock-1", lockInfo("owner-1", time.Minute))
+		require.ErrorIs(t, err, ErrLeaseExpired)
+	})
+
 	t.Run("succeeds within TTL", func(t *testing.T) {
 		bucket := newConditionalBucket()
 		backend := newFakeBackend(bucket)

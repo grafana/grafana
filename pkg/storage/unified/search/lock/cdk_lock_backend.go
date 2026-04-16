@@ -194,7 +194,7 @@ func (b *CDKLockBackend) Update(ctx context.Context, key string, info LockInfo) 
 	}
 
 	// No clockSkewAllowance: holder should detect expiry before a takeover node does.
-	if b.now().After(attrs.ModTime.Add(existing.TTL)) {
+	if !b.now().Before(attrs.ModTime.Add(existing.TTL)) {
 		return ErrLeaseExpired
 	}
 
@@ -270,7 +270,7 @@ func (b *CDKLockBackend) Read(ctx context.Context, key string) (*LockInfo, error
 var validObjectKey = regexp.MustCompile(`^[a-zA-Z0-9_./-]+$`)
 
 func validateObjectKey(key string) error {
-	if !validObjectKey.MatchString(key) || strings.Contains(key, "..") || key[0] == '/' || key[len(key)-1] == '/' {
+	if len(key) == 0 || !validObjectKey.MatchString(key) || strings.Contains(key, "..") || key[0] == '/' || key[len(key)-1] == '/' {
 		return fmt.Errorf("%w: %q", ErrInvalidLockKey, key)
 	}
 	return nil

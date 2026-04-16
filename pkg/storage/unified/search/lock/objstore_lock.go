@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"sync"
 	"time"
 )
@@ -186,7 +185,8 @@ func (l *ObjectStorageLock) startHeartbeat() {
 		defer ticker.Stop()
 
 		// Tolerate transient failures up to the lease boundary.
-		maxFailures := int(math.Ceil(float64(l.ttl) / float64(l.heartbeatInterval)))
+		// Floor ensures loss is detected no later than TTL
+		maxFailures := int(l.ttl / l.heartbeatInterval)
 		consecutiveFailures := 0
 
 		for {
