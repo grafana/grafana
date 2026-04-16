@@ -3,6 +3,7 @@ package install
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -23,6 +24,7 @@ func TestChildPluginReconciler_ReconcileWithChildren(t *testing.T) {
 		action              operator.ReconcileAction
 		children            []string
 		version             string
+		storedChildren      []string
 		wantRegistered      int
 		wantUnregistered    int
 		wantRegisteredIDs   []string
@@ -48,7 +50,7 @@ func TestChildPluginReconciler_ReconcileWithChildren(t *testing.T) {
 			checkVersion:      "2.0.0",
 		},
 		{
-			name:              "Resynced with single child",
+			name:              "Resynced without stored state bootstraps from metadata",
 			action:            operator.ReconcileActionResynced,
 			children:          []string{"child-plugin-1"},
 			version:           "1.0.0",
@@ -57,10 +59,10 @@ func TestChildPluginReconciler_ReconcileWithChildren(t *testing.T) {
 			checkVersion:      "1.0.0",
 		},
 		{
-			name:                "Deleted with multiple children",
+			name:                "Deleted uses stored children",
 			action:              operator.ReconcileActionDeleted,
-			children:            []string{"child-plugin-1", "child-plugin-2"},
 			version:             "1.0.0",
+			storedChildren:      []string{"child-plugin-1", "child-plugin-2"},
 			wantUnregistered:    2,
 			wantUnregisteredIDs: []string{"child-plugin-1", "child-plugin-2"},
 		},
@@ -71,10 +73,8 @@ func TestChildPluginReconciler_ReconcileWithChildren(t *testing.T) {
 			mockProv := &mockMetaProvider{
 				getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
 					return &meta.Result{
-						Meta: pluginsv0alpha1.MetaSpec{
-							Children: tt.children,
-						},
-						TTL: 5 * time.Minute,
+						Meta: pluginsv0alpha1.MetaSpec{Children: tt.children},
+						TTL:  5 * time.Minute,
 					}, nil
 				},
 			}
@@ -83,15 +83,9 @@ func TestChildPluginReconciler_ReconcileWithChildren(t *testing.T) {
 			mockReg := newMockPluginRegistrar()
 			reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
 
-			plugin := &pluginsv0alpha1.Plugin{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-plugin",
-					Namespace: "default",
-				},
-				Spec: pluginsv0alpha1.PluginSpec{
-					Id:      "test-plugin",
-					Version: tt.version,
-				},
+			plugin := newTestPlugin("test-plugin", tt.version)
+			if len(tt.storedChildren) > 0 {
+				withStoredChildren(plugin, 1, pluginsv0alpha1.PluginStatusOperatorStateStateSuccess, tt.storedChildren)
 			}
 
 			req := operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]{
@@ -104,14 +98,11 @@ func TestChildPluginReconciler_ReconcileWithChildren(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, operator.ReconcileResult{}, result)
 
-			// Verify registered children
 			if tt.wantRegistered > 0 {
 				require.Len(t, mockReg.registered, tt.wantRegistered)
 				for _, id := range tt.wantRegisteredIDs {
 					require.Contains(t, mockReg.registered, id)
 				}
-
-				// Verify children have correct properties
 				for childID, install := range mockReg.registered {
 					require.Equal(t, "test-plugin", install.ParentID, "Child %s should have correct parent ID", childID)
 					require.Equal(t, tt.checkVersion, install.Version, "Child %s should have correct version", childID)
@@ -119,13 +110,11 @@ func TestChildPluginReconciler_ReconcileWithChildren(t *testing.T) {
 				}
 			}
 
-			// Verify unregistered children
 			if tt.wantUnregistered > 0 {
 				require.Len(t, mockReg.unregistered, tt.wantUnregistered)
 				for _, id := range tt.wantUnregisteredIDs {
 					require.True(t, mockReg.unregistered[id])
 				}
-				require.Empty(t, mockReg.registered)
 			}
 		})
 	}
@@ -136,30 +125,26 @@ func TestChildPluginReconciler_ReconcileSpecialCases(t *testing.T) {
 		name               string
 		children           []string
 		parentID           *string
-		shouldCallGetMeta  bool
 		wantRegistered     int
 		wantRegisteredIDs  []string
 		getMetaFatalOnCall bool
 	}{
 		{
-			name:              "No children",
-			children:          []string{},
-			shouldCallGetMeta: true,
-			wantRegistered:    0,
+			name:           "No children",
+			children:       []string{},
+			wantRegistered: 0,
 		},
 		{
 			name:               "ParentId already set",
 			children:           []string{"child-plugin-1"},
-			parentID:           func() *string { s := "parent-plugin"; return &s }(),
-			shouldCallGetMeta:  false,
+			parentID:           strPtr("parent-plugin"),
 			wantRegistered:     0,
 			getMetaFatalOnCall: true,
 		},
 		{
 			name:              "Empty ParentId allows reconciliation",
 			children:          []string{"child-plugin-1"},
-			parentID:          func() *string { s := ""; return &s }(),
-			shouldCallGetMeta: true,
+			parentID:          strPtr(""),
 			wantRegistered:    1,
 			wantRegisteredIDs: []string{"child-plugin-1"},
 		},
@@ -173,10 +158,8 @@ func TestChildPluginReconciler_ReconcileSpecialCases(t *testing.T) {
 						t.Fatal("GetMeta should not be called when parent ID is already set")
 					}
 					return &meta.Result{
-						Meta: pluginsv0alpha1.MetaSpec{
-							Children: tt.children,
-						},
-						TTL: 5 * time.Minute,
+						Meta: pluginsv0alpha1.MetaSpec{Children: tt.children},
+						TTL:  5 * time.Minute,
 					}, nil
 				},
 			}
@@ -185,17 +168,8 @@ func TestChildPluginReconciler_ReconcileSpecialCases(t *testing.T) {
 			mockReg := newMockPluginRegistrar()
 			reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
 
-			plugin := &pluginsv0alpha1.Plugin{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-plugin",
-					Namespace: "default",
-				},
-				Spec: pluginsv0alpha1.PluginSpec{
-					Id:       "test-plugin",
-					Version:  "1.0.0",
-					ParentId: tt.parentID,
-				},
-			}
+			plugin := newTestPlugin("test-plugin", "1.0.0")
+			plugin.Spec.ParentId = tt.parentID
 
 			req := operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]{
 				Action: operator.ReconcileActionCreated,
@@ -206,7 +180,6 @@ func TestChildPluginReconciler_ReconcileSpecialCases(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, operator.ReconcileResult{}, result)
-
 			require.Len(t, mockReg.registered, tt.wantRegistered)
 			for _, id := range tt.wantRegisteredIDs {
 				require.Contains(t, mockReg.registered, id)
@@ -217,19 +190,16 @@ func TestChildPluginReconciler_ReconcileSpecialCases(t *testing.T) {
 
 func TestChildPluginReconciler_ReconcileMetaErrors(t *testing.T) {
 	tests := []struct {
-		name             string
-		metaErr          error
-		wantRequeueAfter *time.Duration
+		name    string
+		metaErr error
 	}{
 		{
-			name:             "Meta not found",
-			metaErr:          meta.ErrMetaNotFound,
-			wantRequeueAfter: func() *time.Duration { d := 10 * time.Second; return &d }(),
+			name:    "Meta not found",
+			metaErr: meta.ErrMetaNotFound,
 		},
 		{
-			name:             "Provider error",
-			metaErr:          errors.New("provider error"),
-			wantRequeueAfter: func() *time.Duration { d := 10 * time.Second; return &d }(),
+			name:    "Provider error",
+			metaErr: errors.New("provider error"),
 		},
 	}
 
@@ -245,17 +215,7 @@ func TestChildPluginReconciler_ReconcileMetaErrors(t *testing.T) {
 			mockReg := newMockPluginRegistrar()
 			reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
 
-			plugin := &pluginsv0alpha1.Plugin{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-plugin",
-					Namespace: "default",
-				},
-				Spec: pluginsv0alpha1.PluginSpec{
-					Id:      "test-plugin",
-					Version: "1.0.0",
-				},
-			}
-
+			plugin := newTestPlugin("test-plugin", "1.0.0")
 			req := operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]{
 				Action: operator.ReconcileActionCreated,
 				Object: plugin,
@@ -263,12 +223,11 @@ func TestChildPluginReconciler_ReconcileMetaErrors(t *testing.T) {
 
 			result, err := reconciler.reconcile(context.Background(), req)
 
-			require.NoError(t, err)
-			require.NotNil(t, result.RequeueAfter)
-			require.Equal(t, *tt.wantRequeueAfter, *result.RequeueAfter)
-
-			// Verify no children were registered
+			require.ErrorIs(t, err, tt.metaErr)
+			require.Equal(t, operator.ReconcileResult{}, result)
 			require.Empty(t, mockReg.registered)
+			require.Len(t, mockReg.updatedStatuses, 1)
+			require.Equal(t, pluginsv0alpha1.PluginStatusOperatorStateStateFailed, mockReg.updatedStatuses[0].OperatorStates[childReconcilerStatusKey].State)
 		})
 	}
 }
@@ -278,9 +237,10 @@ func TestChildPluginReconciler_PartialFailures(t *testing.T) {
 		name                string
 		action              operator.ReconcileAction
 		children            []string
+		storedChildren      []string
 		failOnPlugin        string
 		failureErr          error
-		wantRequeueAfter    *time.Duration
+		wantErr             bool
 		wantRegistered      []string
 		wantUnregistered    []string
 		wantNotRegistered   []string
@@ -292,27 +252,27 @@ func TestChildPluginReconciler_PartialFailures(t *testing.T) {
 			children:          []string{"child-plugin-1", "child-plugin-2", "child-plugin-3"},
 			failOnPlugin:      "child-plugin-2",
 			failureErr:        errors.New("registration failed"),
-			wantRequeueAfter:  func() *time.Duration { d := 10 * time.Second; return &d }(),
+			wantErr:           true,
 			wantRegistered:    []string{"child-plugin-1", "child-plugin-3"},
 			wantNotRegistered: []string{"child-plugin-2"},
 		},
 		{
 			name:                "Unregister children partial failure",
 			action:              operator.ReconcileActionDeleted,
-			children:            []string{"child-plugin-1", "child-plugin-2", "child-plugin-3"},
+			storedChildren:      []string{"child-plugin-1", "child-plugin-2", "child-plugin-3"},
 			failOnPlugin:        "child-plugin-2",
 			failureErr:          errors.New("unregistration failed"),
-			wantRequeueAfter:    func() *time.Duration { d := 10 * time.Second; return &d }(),
+			wantErr:             true,
 			wantUnregistered:    []string{"child-plugin-1", "child-plugin-3"},
 			wantNotUnregistered: []string{"child-plugin-2"},
 		},
 		{
 			name:             "Unregister children NotFound ignored",
 			action:           operator.ReconcileActionDeleted,
-			children:         []string{"child-plugin-1", "child-plugin-2"},
+			storedChildren:   []string{"child-plugin-1", "child-plugin-2"},
 			failOnPlugin:     "child-plugin-1",
 			failureErr:       apierrors.NewNotFound(schema.GroupResource{}, "child-plugin-1"),
-			wantRequeueAfter: nil,
+			wantErr:          false,
 			wantUnregistered: []string{"child-plugin-2"},
 		},
 	}
@@ -322,18 +282,14 @@ func TestChildPluginReconciler_PartialFailures(t *testing.T) {
 			mockProv := &mockMetaProvider{
 				getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
 					return &meta.Result{
-						Meta: pluginsv0alpha1.MetaSpec{
-							Children: tt.children,
-						},
-						TTL: 5 * time.Minute,
+						Meta: pluginsv0alpha1.MetaSpec{Children: tt.children},
+						TTL:  5 * time.Minute,
 					}, nil
 				},
 			}
 			metaManager := meta.NewProviderManager(mockProv)
 
 			mockReg := newMockPluginRegistrar()
-
-			// Setup register function for register tests
 			if tt.action == operator.ReconcileActionCreated {
 				mockReg.registerFunc = func(ctx context.Context, namespace string, install *PluginInstall) error {
 					if install.ID == tt.failOnPlugin {
@@ -343,8 +299,6 @@ func TestChildPluginReconciler_PartialFailures(t *testing.T) {
 					return nil
 				}
 			}
-
-			// Setup unregister function for unregister tests
 			if tt.action == operator.ReconcileActionDeleted {
 				mockReg.unregisterFunc = func(ctx context.Context, namespace string, name string, source Source) error {
 					if name == tt.failOnPlugin {
@@ -357,16 +311,8 @@ func TestChildPluginReconciler_PartialFailures(t *testing.T) {
 
 			reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
 
-			plugin := &pluginsv0alpha1.Plugin{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-plugin",
-					Namespace: "default",
-				},
-				Spec: pluginsv0alpha1.PluginSpec{
-					Id:      "test-plugin",
-					Version: "1.0.0",
-				},
-			}
+			plugin := newTestPlugin("test-plugin", "1.0.0")
+			withStoredChildren(plugin, 1, pluginsv0alpha1.PluginStatusOperatorStateStateSuccess, tt.storedChildren)
 
 			req := operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]{
 				Action: tt.action,
@@ -375,15 +321,13 @@ func TestChildPluginReconciler_PartialFailures(t *testing.T) {
 
 			result, err := reconciler.reconcile(context.Background(), req)
 
-			require.NoError(t, err)
-			if tt.wantRequeueAfter != nil {
-				require.NotNil(t, result.RequeueAfter)
-				require.Equal(t, *tt.wantRequeueAfter, *result.RequeueAfter)
+			if tt.wantErr {
+				require.Error(t, err)
 			} else {
-				require.Nil(t, result.RequeueAfter)
+				require.NoError(t, err)
 			}
+			require.Equal(t, operator.ReconcileResult{}, result)
 
-			// Verify registered children
 			if len(tt.wantRegistered) > 0 {
 				require.Len(t, mockReg.registered, len(tt.wantRegistered))
 				for _, id := range tt.wantRegistered {
@@ -394,7 +338,6 @@ func TestChildPluginReconciler_PartialFailures(t *testing.T) {
 				require.NotContains(t, mockReg.registered, id)
 			}
 
-			// Verify unregistered children
 			if len(tt.wantUnregistered) > 0 {
 				require.Len(t, mockReg.unregistered, len(tt.wantUnregistered))
 				for _, id := range tt.wantUnregistered {
@@ -408,14 +351,54 @@ func TestChildPluginReconciler_PartialFailures(t *testing.T) {
 	}
 }
 
+func TestChildPluginReconciler_ContextCancellation(t *testing.T) {
+	children := buildChildList(10)
+
+	mockProv := &mockMetaProvider{
+		getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
+			return &meta.Result{
+				Meta: pluginsv0alpha1.MetaSpec{Children: children},
+				TTL:  5 * time.Minute,
+			}, nil
+		},
+	}
+	metaManager := meta.NewProviderManager(mockProv)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	callCount := 0
+	cancelAfter := 3
+
+	mockReg := newMockPluginRegistrar()
+	mockReg.registerFunc = func(_ context.Context, namespace string, install *PluginInstall) error {
+		callCount++
+		if callCount == cancelAfter {
+			cancel()
+		}
+		mockReg.registered[install.ID] = install
+		return nil
+	}
+
+	reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
+
+	plugin := newTestPlugin("test-plugin", "1.0.0")
+	req := operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]{
+		Action: operator.ReconcileActionCreated,
+		Object: plugin,
+	}
+
+	result, err := reconciler.reconcile(ctx, req)
+
+	require.ErrorIs(t, err, context.Canceled)
+	require.Equal(t, operator.ReconcileResult{}, result)
+	require.LessOrEqual(t, len(mockReg.registered), cancelAfter)
+}
+
 func TestChildPluginReconciler_ReconcileInvalidAction(t *testing.T) {
 	mockProv := &mockMetaProvider{
 		getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
 			return &meta.Result{
-				Meta: pluginsv0alpha1.MetaSpec{
-					Children: []string{"child-plugin-1"},
-				},
-				TTL: 5 * time.Minute,
+				Meta: pluginsv0alpha1.MetaSpec{Children: []string{"child-plugin-1"}},
+				TTL:  5 * time.Minute,
 			}, nil
 		},
 	}
@@ -424,18 +407,7 @@ func TestChildPluginReconciler_ReconcileInvalidAction(t *testing.T) {
 	mockReg := newMockPluginRegistrar()
 	reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
 
-	plugin := &pluginsv0alpha1.Plugin{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-plugin",
-			Namespace: "default",
-		},
-		Spec: pluginsv0alpha1.PluginSpec{
-			Id:      "test-plugin",
-			Version: "1.0.0",
-		},
-	}
-
-	// Use an invalid action value
+	plugin := newTestPlugin("test-plugin", "1.0.0")
 	req := operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]{
 		Action: operator.ReconcileAction(999),
 		Object: plugin,
@@ -443,10 +415,165 @@ func TestChildPluginReconciler_ReconcileInvalidAction(t *testing.T) {
 
 	result, err := reconciler.reconcile(context.Background(), req)
 
-	// Should return error for invalid action
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "invalid action")
 	require.Equal(t, operator.ReconcileResult{}, result)
+}
+
+func TestChildPluginReconciler_UpdateRemovesStaleChildren(t *testing.T) {
+	mockProv := &mockMetaProvider{
+		getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
+			return &meta.Result{
+				Meta: pluginsv0alpha1.MetaSpec{Children: []string{"child-plugin-1"}},
+				TTL:  5 * time.Minute,
+			}, nil
+		},
+	}
+	metaManager := meta.NewProviderManager(mockProv)
+
+	mockReg := newMockPluginRegistrar()
+	reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
+
+	plugin := newTestPlugin("test-plugin", "2.0.0")
+	plugin.Generation = 7
+	withStoredChildren(plugin, 6, pluginsv0alpha1.PluginStatusOperatorStateStateSuccess, []string{"child-plugin-1", "child-plugin-2"})
+
+	req := operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]{
+		Action: operator.ReconcileActionUpdated,
+		Object: plugin,
+	}
+
+	result, err := reconciler.reconcile(context.Background(), req)
+
+	require.NoError(t, err)
+	require.Equal(t, operator.ReconcileResult{}, result)
+	require.Contains(t, mockReg.unregistered, "child-plugin-2")
+	require.Contains(t, mockReg.registered, "child-plugin-1")
+	require.Len(t, mockReg.updatedStatuses, 1)
+
+	state := mockReg.updatedStatuses[0].OperatorStates[childReconcilerStatusKey]
+	require.Equal(t, pluginsv0alpha1.PluginStatusOperatorStateStateSuccess, state.State)
+	require.Nil(t, state.Details)
+	require.Equal(t, []string{"child-plugin-1"}, mockReg.updatedStatuses[0].ChildAppliedChildren)
+	require.NotNil(t, mockReg.updatedStatuses[0].ChildObservedGeneration)
+	require.Equal(t, int64(7), *mockReg.updatedStatuses[0].ChildObservedGeneration)
+}
+
+func TestChildPluginReconciler_DeleteUsesStoredState(t *testing.T) {
+	mockProv := &mockMetaProvider{
+		getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
+			t.Fatal("GetMeta should not be called for delete when stored state exists")
+			return nil, nil
+		},
+	}
+	metaManager := meta.NewProviderManager(mockProv)
+
+	mockReg := newMockPluginRegistrar()
+	reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
+
+	plugin := newTestPlugin("test-plugin", "1.0.0")
+	withStoredChildren(plugin, 3, pluginsv0alpha1.PluginStatusOperatorStateStateSuccess, []string{"child-plugin-1", "child-plugin-2"})
+
+	req := operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]{
+		Action: operator.ReconcileActionDeleted,
+		Object: plugin,
+	}
+
+	result, err := reconciler.reconcile(context.Background(), req)
+
+	require.NoError(t, err)
+	require.Equal(t, operator.ReconcileResult{}, result)
+	require.True(t, mockReg.unregistered["child-plugin-1"])
+	require.True(t, mockReg.unregistered["child-plugin-2"])
+	require.Empty(t, mockReg.updatedStatuses)
+}
+
+func TestChildPluginReconciler_ResyncUsesStoredState(t *testing.T) {
+	mockProv := &mockMetaProvider{
+		getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
+			t.Fatal("GetMeta should not be called for maintenance resync when stored state exists")
+			return nil, nil
+		},
+	}
+	metaManager := meta.NewProviderManager(mockProv)
+
+	mockReg := newMockPluginRegistrar()
+	reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
+
+	plugin := newTestPlugin("test-plugin", "1.0.0")
+	withStoredChildren(plugin, 4, pluginsv0alpha1.PluginStatusOperatorStateStateSuccess, []string{"child-plugin-1"})
+
+	req := operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]{
+		Action: operator.ReconcileActionResynced,
+		Object: plugin,
+	}
+
+	result, err := reconciler.reconcile(context.Background(), req)
+
+	require.NoError(t, err)
+	require.Equal(t, operator.ReconcileResult{}, result)
+	require.Contains(t, mockReg.registered, "child-plugin-1")
+	require.Empty(t, mockReg.updatedStatuses)
+}
+
+func TestChildPluginReconciler_UpdatedSkipsAlreadyReconciledGeneration(t *testing.T) {
+	mockProv := &mockMetaProvider{
+		getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
+			t.Fatal("GetMeta should not be called for status-only updates")
+			return nil, nil
+		},
+	}
+	metaManager := meta.NewProviderManager(mockProv)
+
+	mockReg := newMockPluginRegistrar()
+	reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
+
+	plugin := newTestPlugin("test-plugin", "1.0.0")
+	plugin.Generation = 5
+	withStoredChildren(plugin, 5, pluginsv0alpha1.PluginStatusOperatorStateStateSuccess, []string{"child-plugin-1"})
+
+	req := operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]{
+		Action: operator.ReconcileActionUpdated,
+		Object: plugin,
+	}
+
+	result, err := reconciler.reconcile(context.Background(), req)
+
+	require.NoError(t, err)
+	require.Equal(t, operator.ReconcileResult{}, result)
+	require.Empty(t, mockReg.registered)
+	require.Empty(t, mockReg.unregistered)
+	require.Empty(t, mockReg.updatedStatuses)
+}
+
+func TestChildPluginReconciler_UpdatedSkipsAlreadyReconciledGenerationFromLegacyDetails(t *testing.T) {
+	mockProv := &mockMetaProvider{
+		getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
+			t.Fatal("GetMeta should not be called for status-only updates")
+			return nil, nil
+		},
+	}
+	metaManager := meta.NewProviderManager(mockProv)
+
+	mockReg := newMockPluginRegistrar()
+	reconciler := NewChildPluginReconciler(&logging.NoOpLogger{}, metaManager, mockReg)
+
+	plugin := newTestPlugin("test-plugin", "1.0.0")
+	plugin.Generation = 5
+	withLegacyStoredChildren(plugin, 5, pluginsv0alpha1.PluginStatusOperatorStateStateSuccess, []string{"child-plugin-1"})
+
+	req := operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]{
+		Action: operator.ReconcileActionUpdated,
+		Object: plugin,
+	}
+
+	result, err := reconciler.reconcile(context.Background(), req)
+
+	require.NoError(t, err)
+	require.Equal(t, operator.ReconcileResult{}, result)
+	require.Empty(t, mockReg.registered)
+	require.Empty(t, mockReg.unregistered)
+	require.Empty(t, mockReg.updatedStatuses)
 }
 
 // mockMetaProvider implements meta.Provider for testing
@@ -467,10 +594,12 @@ func (m *mockMetaProvider) GetMeta(ctx context.Context, ref meta.PluginRef) (*me
 
 // mockPluginRegistrar implements Registrar for testing
 type mockPluginRegistrar struct {
-	registerFunc   func(ctx context.Context, namespace string, install *PluginInstall) error
-	unregisterFunc func(ctx context.Context, namespace string, name string, source Source) error
-	registered     map[string]*PluginInstall
-	unregistered   map[string]bool
+	registerFunc     func(ctx context.Context, namespace string, install *PluginInstall) error
+	unregisterFunc   func(ctx context.Context, namespace string, name string, source Source) error
+	updateStatusFunc func(ctx context.Context, plugin *pluginsv0alpha1.Plugin, status pluginsv0alpha1.PluginStatus) error
+	registered       map[string]*PluginInstall
+	unregistered     map[string]bool
+	updatedStatuses  []pluginsv0alpha1.PluginStatus
 }
 
 func newMockPluginRegistrar() *mockPluginRegistrar {
@@ -495,4 +624,67 @@ func (m *mockPluginRegistrar) Unregister(ctx context.Context, namespace string, 
 	m.unregistered[name] = true
 	delete(m.registered, name)
 	return nil
+}
+
+func (m *mockPluginRegistrar) UpdateStatus(ctx context.Context, plugin *pluginsv0alpha1.Plugin, status pluginsv0alpha1.PluginStatus) error {
+	if m.updateStatusFunc != nil {
+		return m.updateStatusFunc(ctx, plugin, status)
+	}
+	m.updatedStatuses = append(m.updatedStatuses, status)
+	return nil
+}
+
+func newTestPlugin(name, version string) *pluginsv0alpha1.Plugin {
+	return &pluginsv0alpha1.Plugin{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            name,
+			Namespace:       "default",
+			ResourceVersion: "1",
+		},
+		Spec: pluginsv0alpha1.PluginSpec{
+			Id:      name,
+			Version: version,
+		},
+	}
+}
+
+func withStoredChildren(plugin *pluginsv0alpha1.Plugin, generation int64, state pluginsv0alpha1.PluginStatusOperatorStateState, children []string) {
+	plugin.Status = pluginsv0alpha1.PluginStatus{
+		ChildAppliedChildren: normalizeChildren(children),
+		ChildObservedGeneration: func(v int64) *int64 {
+			return &v
+		}(generation),
+		OperatorStates: map[string]pluginsv0alpha1.PluginstatusOperatorState{
+			childReconcilerStatusKey: {
+				State: state,
+			},
+		},
+	}
+}
+
+func withLegacyStoredChildren(plugin *pluginsv0alpha1.Plugin, generation int64, state pluginsv0alpha1.PluginStatusOperatorStateState, children []string) {
+	plugin.Status = pluginsv0alpha1.PluginStatus{
+		OperatorStates: map[string]pluginsv0alpha1.PluginstatusOperatorState{
+			childReconcilerStatusKey: {
+				State: state,
+				Details: map[string]interface{}{
+					childStatusObservedGeneration: fmt.Sprintf("%d", generation),
+					childStatusAppliedChildren:    normalizeChildren(children),
+				},
+			},
+		},
+	}
+}
+
+func strPtr(v string) *string {
+	return &v
+}
+
+// buildChildList returns a slice of n child plugin IDs for use in tests.
+func buildChildList(n int) []string {
+	children := make([]string, n)
+	for i := range children {
+		children[i] = fmt.Sprintf("child-plugin-%d", i)
+	}
+	return children
 }
