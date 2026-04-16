@@ -1281,28 +1281,24 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 			// When QueryFields is set, search across each named field (only Name is
 			// used; Type and Boost are ignored because bleve wildcards don't support
 			// analyzers or meaningful relevance scoring).
-			// When QueryFields is empty, default to title.
+			// When QueryFields is empty, default to title + IAM identity fields
+			// (email, login) for backward compatibility with older clients that
+			// don't set QueryFields.
+			disjoin := bleve.NewDisjunctionQuery()
 			if len(req.QueryFields) > 0 {
-				disjoin := bleve.NewDisjunctionQuery()
 				for _, field := range req.QueryFields {
-					wq := bleve.NewWildcardQuery(req.Query)
-					wq.SetField(field.Name)
-					disjoin.AddQuery(wq)
+					addWildcardQueries(disjoin, req.Query, field.Name)
 				}
-				queries = append(queries, disjoin)
 			} else {
-				// Default: search both title (standard-analyzed, word tokens)
-				// and title_phrase (keyword-analyzed, full lowered title).
-				// title handles prefix wildcards like "hell*" (matches word "hello").
-				// title_phrase handles full-title wildcards like "*grafana dev overview*"
-				// sent by the legacy dashboard search service.
-				wTitle := bleve.NewWildcardQuery(req.Query)
-				wTitle.SetField(resource.SEARCH_FIELD_TITLE)
-				wPhrase := bleve.NewWildcardQuery(req.Query)
-				wPhrase.SetField(resource.SEARCH_FIELD_TITLE_PHRASE)
-
-				queries = append(queries, bleve.NewDisjunctionQuery(wTitle, wPhrase))
+				// Default: search title and IAM identity fields (email, login).
+				// IAM user search wraps queries as "*<query>*" — older clients
+				// may not set QueryFields, so we include email/login here for
+				// backward compatibility during the deployment gap.
+				addWildcardQueries(disjoin, req.Query, resource.SEARCH_FIELD_TITLE)
+				addWildcardQueries(disjoin, req.Query, resource.SEARCH_FIELD_PREFIX+"email")
+				addWildcardQueries(disjoin, req.Query, resource.SEARCH_FIELD_PREFIX+"login")
 			}
+			queries = append(queries, disjoin)
 		} else {
 			// When using a
 			searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
@@ -1750,6 +1746,22 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 	return nil, resource.NewBadRequestError(
 		fmt.Sprintf("unsupported query operation (%s %s %v)", req.Key, req.Operator, req.Values),
 	)
+}
+
+// addWildcardQueries adds wildcard queries for the given field to the disjunction.
+// When the field is "title", it adds queries for both "title" (standard-analyzed,
+// matches word-level wildcards like "hell*") and "title_phrase" (keyword-analyzed,
+// matches full-phrase wildcards like "*grafana dev overview*").
+func addWildcardQueries(disjoin *query.DisjunctionQuery, pattern string, field string) {
+	wq := bleve.NewWildcardQuery(pattern)
+	wq.SetField(field)
+	disjoin.AddQuery(wq)
+
+	if field == resource.SEARCH_FIELD_TITLE {
+		wPhrase := bleve.NewWildcardQuery(pattern)
+		wPhrase.SetField(resource.SEARCH_FIELD_TITLE_PHRASE)
+		disjoin.AddQuery(wPhrase)
+	}
 }
 
 // newQuery will create a query that will match the value or the tokens of the value

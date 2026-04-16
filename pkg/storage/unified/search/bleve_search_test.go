@@ -391,6 +391,50 @@ func TestWildcardQuery(t *testing.T) {
 		// Partial multi-word match
 		checkSearchQuery(t, index, newTestQuery("*dev overview*"), []string{"name1"})
 	})
+
+	t.Run("default wildcard searches email and login fields", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{
+			Items: []*resource.BulkIndexItem{
+				{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
+					RV: 1, Name: "user1", Title: "First User",
+					Key:    &resourcepb.ResourceKey{Name: "user1", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+					Fields: map[string]any{"email": "uniquemail", "login": "firstlogin"},
+				}},
+				{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
+					RV: 1, Name: "user2", Title: "Second User",
+					Key:    &resourcepb.ResourceKey{Name: "user2", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+					Fields: map[string]any{"email": "othermail", "login": "secondlogin"},
+				}},
+			},
+		}))
+
+		// Default wildcard (no QueryFields) should match email field.
+		// Values are distinct from titles to prove field matching works.
+		// Note: simple tokens because the test index uses the standard
+		// analyzer for dynamic fields (production uses keyword).
+		checkSearchQuery(t, index, newTestQuery("*uniquemail*"), []string{"user1"})
+		// Default wildcard should match login field
+		checkSearchQuery(t, index, newTestQuery("*secondlogin*"), []string{"user2"})
+	})
+
+	t.Run("QueryFields with title also searches title_phrase", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Grafana Dev Overview",
+			"name2": "Production Alerts",
+		})
+
+		// When QueryFields includes title, multi-word wildcards should still
+		// work because title is auto-expanded to title + title_phrase.
+		req := newTestQuery("*grafana dev overview*")
+		req.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
+			{Name: resource.SEARCH_FIELD_TITLE},
+		}
+		res, err := index.Search(context.Background(), nil, req, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), res.TotalHits)
+	})
 }
 
 func TestScoringHierarchy(t *testing.T) {
