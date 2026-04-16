@@ -207,6 +207,9 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
 
 function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<ConditionalRenderingGroup>) {
   const { condition, visibility, conditions } = model.useState();
+  // Start from the parent as the variable is defined inside the container. If the user selects a variable
+  // to trigger row hiding then the row would disappear along with variables making it impossible to
+  // make it visible again (apart from changing the URL)
   const variables = useUserDefinedVariables(model.parent || model);
 
   const objectType = useMemo(() => extractObjectType(model.parent), [model]);
