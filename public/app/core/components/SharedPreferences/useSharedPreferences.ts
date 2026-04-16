@@ -22,8 +22,6 @@ export const useSharedPreferences = (
     },
     [preferencesName, updatePreferences]
   );
-  console.log('update', updateData);
-  console.log('get', data);
   return [
     updatePreferencesWrapped,
     { preferences: updateData?.spec ?? data?.spec, isLoading, isError, isSubmitting: isUpdating, isUpdateError },
