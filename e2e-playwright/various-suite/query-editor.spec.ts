@@ -15,6 +15,10 @@ test.describe(
       await expect(dataSourcePicker).toBeVisible();
       await dataSourcePicker.click();
 
+      // Type to search — the virtualized list only renders visible items
+      const dataSourcePickerInput = page.getByTestId('data-testid Select a data source');
+      await dataSourcePickerInput.fill('gdev-prometheus');
+
       // Select the prometheus data source
       const prometheusOption = page.getByText('gdev-prometheus');
       await expect(prometheusOption).toBeVisible();

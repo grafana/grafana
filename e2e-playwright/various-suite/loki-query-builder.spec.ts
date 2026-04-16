@@ -48,6 +48,8 @@ test.describe(
       // Go to Explore and choose Loki data source
       await page.goto('/explore');
       await dashboardPage.getByGrafanaSelector(selectors.components.DataSourcePicker.container).click();
+      // Type to search — the virtualized list only renders visible items
+      await page.getByTestId(selectors.components.DataSourcePicker.inputV2).fill(dataSourceName);
       await page.getByRole('button', { name: dataSourceName }).click();
 
       // Start in builder mode, click and choose query pattern

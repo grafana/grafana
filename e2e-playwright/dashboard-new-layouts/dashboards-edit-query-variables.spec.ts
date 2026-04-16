@@ -48,6 +48,8 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.DataSourcePicker.container).click();
 
       const dataSource = 'gdev-cloudwatch';
+      // Type to search — the virtualized list only renders visible items
+      await page.getByTestId(selectors.components.DataSourcePicker.inputV2).fill(dataSource);
       // this will trigger an API call to get the query options
       await page.getByText(dataSource).click();
 

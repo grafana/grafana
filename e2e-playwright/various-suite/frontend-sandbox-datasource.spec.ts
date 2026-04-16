@@ -82,9 +82,12 @@ test.describe(
         await expect(dataSourcePicker).toBeVisible();
         await dataSourcePicker.click();
 
+        // Type to search — the virtualized list only renders visible items
+        const pickerInput1 = page.getByTestId(selectors.components.DataSourcePicker.inputV2);
+        await pickerInput1.fill(DATASOURCE_TYPED_NAME);
+
         const datasourceOption = page.locator(`text=${DATASOURCE_TYPED_NAME}`);
         await expect(datasourceOption).toBeVisible();
-        await datasourceOption.scrollIntoViewIfNeeded();
         await datasourceOption.click();
 
         // make sure the datasource was correctly selected and rendered
@@ -112,9 +115,12 @@ test.describe(
         await expect(dataSourcePicker).toBeVisible();
         await dataSourcePicker.click();
 
+        // Type to search — the virtualized list only renders visible items
+        const pickerInput2 = page.getByTestId(selectors.components.DataSourcePicker.inputV2);
+        await pickerInput2.fill(DATASOURCE_TYPED_NAME);
+
         const datasourceOption = page.locator(`text=${DATASOURCE_TYPED_NAME}`);
         await expect(datasourceOption).toBeVisible();
-        await datasourceOption.scrollIntoViewIfNeeded();
         await datasourceOption.click();
 
         // make sure the datasource was correctly selected and rendered
