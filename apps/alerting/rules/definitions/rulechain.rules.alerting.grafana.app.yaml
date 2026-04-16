@@ -19,6 +19,7 @@ spec:
                 items:
                   properties:
                     uid:
+                      pattern: ^[a-zA-Z0-9_-]+$
                       type: string
                   required:
                   - uid
@@ -33,6 +34,7 @@ spec:
                 items:
                   properties:
                     uid:
+                      pattern: ^[a-zA-Z0-9_-]+$
                       type: string
                   required:
                   - uid
@@ -41,6 +43,7 @@ spec:
               trigger:
                 properties:
                   interval:
+                    pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
                     type: string
                 required:
                 - interval
