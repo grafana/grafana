@@ -164,11 +164,12 @@ export function enrichDataFrameWithAssistantContentMapper(
         createAssistantContextItem('structured', {
           title: 'Analyze Flame Graph',
           data: {
-            start: request.range.from.valueOf(),
-            end: request.range.to.valueOf(),
+            start: request.range.from.toISOString(),
+            end: request.range.to.toISOString(),
             profile_type_id: query.profileTypeId,
             label_selector: query.labelSelector,
             operation: 'execute',
+            ...(query.profileIdSelector?.length ? { profile_id: query.profileIdSelector } : {}),
           },
         }),
       ];

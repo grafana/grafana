@@ -44,7 +44,6 @@ func NewLegacySQL(db legacysql.LegacyDatabaseProvider) *LegacySQL {
 func (s *LegacySQL) listPreferences(ctx context.Context,
 	ns string, orgId int64,
 	cb func(req *preferencesQuery) (bool, error),
-	access func(p *preferenceModel) bool,
 ) ([]preferences.Preferences, int64, error) {
 	var results []preferences.Preferences
 	var rv sql.NullTime
@@ -100,14 +99,12 @@ func (s *LegacySQL) listPreferences(ctx context.Context,
 		if pref.Updated.After(rv.Time) {
 			rv.Time = pref.Updated
 		}
-		if !access(&pref) {
-			continue // user does not have access
-		}
 		results = append(results, asPreferencesResource(ns, &pref))
 	}
 
 	if needsRV {
 		req.Reset()
+		req.All = true // Avoid validation error
 		q, err = sqltemplate.Execute(sqlPreferencesRV, req)
 		if err != nil {
 			return nil, 0, fmt.Errorf("execute template %q: %w", sqlPreferencesRV.Name(), err)
@@ -128,6 +125,7 @@ func (s *LegacySQL) listPreferences(ctx context.Context,
 	return results, rv.Time.UnixMilli(), err
 }
 
+// Note sending a null user will list all preferences in the namespace!
 func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user identity.Requester, needsRV bool) (*preferences.PreferencesList, error) {
 	if ns == "" {
 		return nil, fmt.Errorf("namespace is required")
@@ -138,7 +136,6 @@ func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user identit
 		return nil, err
 	}
 
-	// when the user is nil, it is actually admin and can see everything
 	var teams []string
 	found, rv, err := s.listPreferences(ctx, ns, info.OrgID,
 		func(req *preferencesQuery) (bool, error) {
@@ -149,20 +146,10 @@ func (s *LegacySQL) ListPreferences(ctx context.Context, ns string, user identit
 					UserUID: req.UserUID,
 				}, false)
 				req.UserTeams = teams
+			} else {
+				req.All = true
 			}
 			return needsRV, err
-		},
-		func(p *preferenceModel) bool {
-			if user == nil || user.GetIsGrafanaAdmin() {
-				return true
-			}
-			if p.UserUID.String != "" {
-				return user.GetIdentifier() == p.UserUID.String
-			}
-			if p.TeamUID.String != "" {
-				return slices.Contains(teams, p.TeamUID.String)
-			}
-			return true
 		},
 	)
 	if err != nil {
@@ -216,7 +203,7 @@ func (s *LegacySQL) getLegacyTeamID(ctx context.Context, orgId int64, team strin
 
 	var id int64
 	sess := sql.DB.GetSqlxSession()
-	err = sess.Select(ctx, &id, "SELECT id FROM "+sql.Table("team")+" WHERE org_id=? AND uid=?", orgId, team)
+	err = sess.Get(ctx, &id, "SELECT id FROM "+sql.Table("team")+" WHERE org_id=? AND uid=?", orgId, team)
 	return id, err
 }
 
