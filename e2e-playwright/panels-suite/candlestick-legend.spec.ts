@@ -25,7 +25,7 @@ test.describe('Panels test: Candlestick legend', { tag: ['@panels', '@candlestic
     // toggle visibility off and verify legend disappears
     await expect(legendVisibilitySwitch, 'legend is enabled by default').toBeChecked();
     await legendVisibilityClickableLabel.click();
-    await expect(legendVisibilitySwitch).not.toBeChecked();
+    await expect(legendVisibilitySwitch).not.toBeChecked({ timeout: 400 });
     await expect(legend, 'legend is no longer visible').not.toBeVisible();
   });
 
