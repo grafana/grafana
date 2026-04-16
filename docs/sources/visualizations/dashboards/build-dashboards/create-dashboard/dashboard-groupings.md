@@ -243,6 +243,5 @@ Panels in the grouping resolve grouping-level variables first, then fall back to
 The panel query editor is context-aware, so the autocomplete only shows the variables available to the panel you're editing.
 Also, grouping-level variables carry over when you convert between rows and tabs, change layouts, and work with repeating rows and tabs.
 
-Grouping-level variables are supported for all variable types.
-However, they aren't supported for the public preview **Filter and group by** feature, which replaces the **Filters** variable when the `dashboardUnifiedDrilldownControls` feature toggle is enabled.
+Grouping-level variables are supported for all variable types, including the public preview **Filter and group by** feature when the `dashboardUnifiedDrilldownControls` feature toggle is enabled.
 For more information on **Filter and group by**, refer to the [Dashboard controls documentation](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#filter-and-group-by).
