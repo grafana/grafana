@@ -393,29 +393,35 @@ func TestWildcardQuery(t *testing.T) {
 	})
 
 	t.Run("default wildcard searches email and login fields", func(t *testing.T) {
-		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		// Use an index with keyword-analyzed email/login fields (matching
+		// production IAM config) so wildcards match full email addresses.
+		index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
+			{Name: "email", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
+			{Name: "login", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
+		})
 		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
 					RV: 1, Name: "user1", Title: "First User",
 					Key:    &resourcepb.ResourceKey{Name: "user1", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
-					Fields: map[string]any{"email": "uniquemail", "login": "firstlogin"},
+					Fields: map[string]any{"email": "uniquemail@grafana.com", "login": "firstlogin"},
 				}},
 				{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
 					RV: 1, Name: "user2", Title: "Second User",
 					Key:    &resourcepb.ResourceKey{Name: "user2", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
-					Fields: map[string]any{"email": "othermail", "login": "secondlogin"},
+					Fields: map[string]any{"email": "othermail@grafana.com", "login": "secondlogin"},
 				}},
 			},
 		}))
 
-		// Default wildcard (no QueryFields) should match email field.
-		// Values are distinct from titles to prove field matching works.
-		// Note: simple tokens because the test index uses the standard
-		// analyzer for dynamic fields (production uses keyword).
-		checkSearchQuery(t, index, newTestQuery("*uniquemail*"), []string{"user1"})
+		// Default wildcard (no QueryFields) should match email field
+		checkSearchQuery(t, index, newTestQuery("*uniquemail@grafana.com*"), []string{"user1"})
 		// Default wildcard should match login field
 		checkSearchQuery(t, index, newTestQuery("*secondlogin*"), []string{"user2"})
+		// Wildcard matching domain across both users (order is non-deterministic)
+		res, err := index.Search(context.Background(), nil, newTestQuery("*grafana.com*"), nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(2), res.TotalHits)
 	})
 
 	t.Run("QueryFields with title also searches title_phrase", func(t *testing.T) {
@@ -627,6 +633,25 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 	}, size, info.Fields, "test", writer, nil, false, time.Time{})
 	require.NoError(t, err)
 
+	return index
+}
+
+// newTestIndexWithFields creates a test index with custom searchable fields
+// (e.g. keyword-analyzed email/login for IAM-like tests).
+func newTestIndexWithFields(t testing.TB, key resource.NamespacedResource, columns []*resourcepb.ResourceTableColumnDefinition) resource.ResourceIndex {
+	backend, err := search.NewBleveBackend(search.BleveOptions{
+		Root:          t.TempDir(),
+		FileThreshold: threshold,
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
+	fields, err := resource.NewSearchableDocumentFields(columns)
+	require.NoError(t, err)
+
+	index, err := backend.BuildIndex(ctx, key, 2, fields, "test", noop, nil, false, time.Time{})
+	require.NoError(t, err)
 	return index
 }
 

@@ -1294,6 +1294,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 				// IAM user search wraps queries as "*<query>*" — older clients
 				// may not set QueryFields, so we include email/login here for
 				// backward compatibility during the deployment gap.
+				// TODO: remove email and login fields once IAM only sends requests with QueryFields.
 				addWildcardQueries(disjoin, req.Query, resource.SEARCH_FIELD_TITLE)
 				addWildcardQueries(disjoin, req.Query, resource.SEARCH_FIELD_PREFIX+"email")
 				addWildcardQueries(disjoin, req.Query, resource.SEARCH_FIELD_PREFIX+"login")
