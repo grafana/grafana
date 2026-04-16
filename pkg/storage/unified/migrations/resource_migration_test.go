@@ -76,8 +76,8 @@ func testDef(gr schema.GroupResource, lockTables, renameTables []string) Migrati
 func newRunner(t *testing.T, locker MigrationTableLocker, renamer MigrationTableRenamer, def MigrationDefinition) (*MigrationRunner, *MockUnifiedMigrator) {
 	t.Helper()
 	m := NewMockUnifiedMigrator(t)
-	m.EXPECT().Migrate(mock.Anything, mock.Anything).Return(&resourcepb.BulkResponse{}, nil)
-	m.EXPECT().RebuildIndexes(mock.Anything, mock.Anything).Return(nil)
+	m.EXPECT().Migrate(mock.Anything, mock.Anything).Return(&resourcepb.BulkResponse{}, nil).Maybe()
+	m.EXPECT().RebuildIndexes(mock.Anything, mock.Anything).Return(nil).Maybe()
 	return NewMigrationRunner(m, locker, renamer, setting.NewCfg(), def, nil), m
 }
 
@@ -757,8 +757,10 @@ func TestIntegrationIsAlreadyOnUnifiedStorage(t *testing.T) {
 		t.Helper()
 		cfg := setting.NewCfg()
 		cfg.DataPath = dataPath
-		fake := &fakeUnifiedMigrator{migrateResponse: &resourcepb.BulkResponse{}}
-		return NewMigrationRunner(fake, noopLocker(), &transactionalTableRenamer{log: logger}, cfg, def, nil)
+		m := NewMockUnifiedMigrator(t)
+		m.EXPECT().Migrate(mock.Anything, mock.Anything).Return(&resourcepb.BulkResponse{}, nil).Maybe()
+		m.EXPECT().RebuildIndexes(mock.Anything, mock.Anything).Return(nil).Maybe()
+		return NewMigrationRunner(m, noopLocker(), &transactionalTableRenamer{log: logger}, cfg, def, nil)
 	}
 
 	runner, _ := newRunner(t, noopLocker(), &transactionalTableRenamer{log: logger}, def)
@@ -902,13 +904,13 @@ func TestIntegrationIsAlreadyOnUnifiedStorage(t *testing.T) {
 		insertKVState(t, configKey, migratedStatus)
 		runner2, fake := newRunner(t, noopLocker(), &transactionalTableRenamer{log: logger}, def)
 		runMigration(t, env.engine, runner2, migrator.SQLite)
-		require.Equal(t, 0, fake.migrateCalled, "Migrate should not be called when already on unified storage")
+		fake.AssertNotCalled(t, "Migrate", mock.Anything, mock.Anything)
 	})
 
 	t.Run("Run proceeds with migration when not on unified storage", func(t *testing.T) {
 		insertKVState(t, configKey, dualwriteStorageStatus{ReadUnified: false, WriteUnified: false, Migrated: 0})
 		runner2, fake := newRunner(t, noopLocker(), &transactionalTableRenamer{log: logger}, def)
 		runMigration(t, env.engine, runner2, migrator.SQLite)
-		require.Equal(t, 1, fake.migrateCalled, "Migrate should be called when not on unified storage")
+		fake.AssertNumberOfCalls(t, "Migrate", 1)
 	})
 }
