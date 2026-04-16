@@ -3,7 +3,16 @@ import { Suspense } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, ModalsController, CollapsableSection, useStyles2, Stack, Icon, Box, LoadingPlaceholder } from '@grafana/ui';
+import {
+  Button,
+  ModalsController,
+  CollapsableSection,
+  useStyles2,
+  Stack,
+  Icon,
+  Box,
+  LoadingPlaceholder,
+} from '@grafana/ui';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
 import LazyDiffViewer from 'app/features/dashboard-scene/settings/version-history/LazyDiffViewer';
