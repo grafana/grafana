@@ -1,4 +1,5 @@
 import { loadLanguage, type LanguageName } from '@uiw/codemirror-extensions-langs';
+import { basicDark } from '@uiw/codemirror-theme-basic';
 import CodeMirror from '@uiw/react-codemirror';
 import { memo, useMemo, type ComponentProps } from 'react';
 
@@ -25,6 +26,12 @@ export const CodeEditor = memo(function CodeEditor({ value, language, height = '
   const extensions = useMemo(() => getLanguageExtensions(language), [language]);
 
   return (
-    <CodeMirror value={value} height={height} extensions={extensions} onChange={(nextValue) => onChange(nextValue)} />
+    <CodeMirror
+      theme={basicDark}
+      value={value}
+      height={height}
+      extensions={extensions}
+      onChange={(nextValue) => onChange(nextValue)}
+    />
   );
 });
