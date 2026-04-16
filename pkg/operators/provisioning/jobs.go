@@ -40,9 +40,9 @@ type WorkerSetupConfig struct {
 	URLProvider           func(ctx context.Context, namespace string) string
 }
 
-// SetupWorkers constructs all job workers from resolved dependencies.
+// setupWorkers constructs all job workers from resolved dependencies.
 // This is the single source of truth for worker construction used by both operators.
-func SetupWorkers(cfg WorkerSetupConfig) ([]jobs.Worker, *jobs.JobMetrics, error) {
+func setupWorkers(cfg WorkerSetupConfig) ([]jobs.Worker, *jobs.JobMetrics, error) {
 	metrics := jobs.RegisterJobMetrics(cfg.Registry)
 
 	syncer := jobsync.NewSyncer(jobsync.Compare, jobsync.FullSync, jobsync.IncrementalSync, cfg.Tracer, cfg.MaxSyncWorkers, metrics, cfg.FolderMetadataEnabled)
@@ -91,14 +91,22 @@ func SetupWorkers(cfg WorkerSetupConfig) ([]jobs.Worker, *jobs.JobMetrics, error
 	)
 	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator, cfg.ExportEnabled)
 
+	// Delete
 	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, cfg.RepositoryResources, metrics)
+
+	// Move
 	moveWorker := move.NewWorker(syncWorker, stageIfPossible, cfg.RepositoryResources, metrics)
+
+	// Fix Metadata
 	fixMetadataWorker := fixfoldermetadata.NewWorker(resources.FolderGVKForVersion(cfg.FolderAPIVersion))
 
-	// Orphan cleanup workers
+	// Release Resources (orphan cleanup — removes ownership annotations)
 	releaseResourcesWorker := releaseresourcespkg.NewWorker(cfg.ResourceLister, cfg.Clients, 10)
+
+	// Delete Resources (orphan cleanup — deletes managed resources)
 	deleteResourcesWorker := deleteresourcespkg.NewWorker(cfg.ResourceLister, cfg.Clients, 10)
 
+	// PullRequest
 	renderer := pullrequest.NewNoOpRenderer()
 	evaluator := pullrequest.NewEvaluator(renderer, cfg.Parsers, cfg.URLProvider, cfg.Registry)
 	commenter := pullrequest.NewCommenter(false)

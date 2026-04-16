@@ -49,6 +49,14 @@ func RunJobController(deps server.OperatorDependencies) error {
 		cancel()
 	}()
 
+	if !controllerCfg.enabled {
+		logger.Info("jobs controller is disabled via operator config (jobs_enabled=false), idling")
+		deps.HealthNotifier.SetReady()
+		<-ctx.Done()
+		deps.HealthNotifier.SetNotReady()
+		return nil
+	}
+
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
@@ -97,7 +105,7 @@ func RunJobController(deps server.OperatorDependencies) error {
 	if err != nil {
 		return fmt.Errorf("resolve worker dependencies: %w", err)
 	}
-	workers, metrics, err := SetupWorkers(*workerDeps)
+	workers, metrics, err := setupWorkers(*workerDeps)
 	if err != nil {
 		return fmt.Errorf("setup workers: %w", err)
 	}
@@ -190,6 +198,7 @@ func RunJobController(deps server.OperatorDependencies) error {
 
 type jobsControllerConfig struct {
 	ControllerConfig
+	enabled              bool
 	historyExpiration    time.Duration
 	cleanupInterval      time.Duration
 	maxJobTimeout        time.Duration
@@ -211,6 +220,7 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registe
 
 	return &jobsControllerConfig{
 		ControllerConfig:     *controllerCfg,
+		enabled:              operatorSec.Key("jobs_enabled").MustBool(true),
 		historyExpiration:    operatorSec.Key("history_expiration").MustDuration(0),
 		concurrentDrivers:    operatorSec.Key("concurrent_drivers").MustInt(3),
 		maxSyncWorkers:       operatorSec.Key("max_sync_workers").MustInt(10),
