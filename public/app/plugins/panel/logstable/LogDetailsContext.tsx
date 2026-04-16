@@ -1,13 +1,14 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
-import { type LogRowModel } from '@grafana/data';
+import { type LogListModel } from 'app/features/logs/components/panel/processing';
 
 export interface LogDetailsContextData {
-  currentLog: LogRowModel | undefined;
+  currentLog: LogListModel | undefined;
   closeDetails: () => void;
   detailsDisplayed: (rowIndex: number) => boolean;
   enableLogDetails: boolean;
-  showDetails: LogRowModel[];
+  logs: LogListModel[];
+  showDetails: LogListModel[];
   toggleDetails: (rowIndex: number) => void;
 }
 
@@ -16,6 +17,7 @@ export const emptyContextData: LogDetailsContextData = {
   closeDetails: () => {},
   detailsDisplayed: () => false,
   enableLogDetails: false,
+  logs: [],
   showDetails: [],
   toggleDetails: () => {},
 };
@@ -33,12 +35,12 @@ export const useLogDetailsContext = (): LogDetailsContextData => {
 export interface Props {
   children?: ReactNode;
   enableLogDetails: boolean;
-  logs: LogRowModel[];
+  logs: LogListModel[];
 }
 
 export const LogDetailsContextProvider = ({ children, enableLogDetails, logs }: Props) => {
-  const [showDetails, setShowDetails] = useState<LogRowModel[]>([]);
-  const [currentLog, setCurrentLog] = useState<LogRowModel | undefined>(undefined);
+  const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
+  const [currentLog, setCurrentLog] = useState<LogListModel | undefined>(undefined);
 
   // Sync show details
   useEffect(() => {
@@ -102,6 +104,7 @@ export const LogDetailsContextProvider = ({ children, enableLogDetails, logs }: 
         currentLog,
         detailsDisplayed,
         enableLogDetails,
+        logs,
         showDetails,
         toggleDetails,
       }}
