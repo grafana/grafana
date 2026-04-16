@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"gocloud.dev/blob"
+	"gocloud.dev/gcerrors"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -32,20 +33,25 @@ func (t bucketTarget) objectKey(key string) string {
 	return t.prefix + key
 }
 
-// CDKLockOptionsFromBucket detects and returns CDKLockBackendOptions for the *blob.Bucket specific provider.
-// Returns zero-value options (no conditional locks) if the provider is not s3, gcs, or azureblob.
-//
-// The bucket URL is parsed for both the bucket name and an optional ?prefix= parameter.
-// gocloud.dev/blob applies the prefix automatically for operations routed through it
-// (Create/Update/Read/Attributes), but the conditional delete functions call native
-// provider SDKs directly, so they must apply the prefix themselves.
+// CDKLockOptionsFromBucket detects the provider behind bucket and returns matching
+// CDKLockBackendOptions. Returns an error for unsupported providers.
+// The bucketURL is parsed for the bucket name and an optional ?prefix= parameter.
 func CDKLockOptionsFromBucket(bucket *blob.Bucket, bucketURL string) (CDKLockBackendOptions, error) {
 	target, err := bucketTargetFromURL(bucketURL)
 	if err != nil {
 		return CDKLockBackendOptions{}, fmt.Errorf("parse bucket URL: %w", err)
 	}
+	if target.prefix != "" {
+		// Validate prefix early: append a safe probe char to form a full key.
+		if err := validateObjectKey(target.prefix + "probe"); err != nil {
+			return CDKLockBackendOptions{}, fmt.Errorf("unsafe bucket prefix: %w", err)
+		}
+	}
 	optsFn := func(w ConditionalWriteFunc, d ConditionalDeleteFunc) (CDKLockBackendOptions, error) {
-		return CDKLockBackendOptions{ConditionalWrite: w, ConditionalDelete: d}, nil
+		return CDKLockBackendOptions{
+			ConditionalWrite:  w,
+			ConditionalDelete: d,
+		}, nil
 	}
 	var s3Client *s3.Client
 	var gcsClient *gcsstorage.Client
@@ -58,7 +64,7 @@ func CDKLockOptionsFromBucket(bucket *blob.Bucket, bucketURL string) (CDKLockBac
 	case bucket.As(&containerClient):
 		return optsFn(azureConditionalWrite, azureConditionalDelete(containerClient, target))
 	default:
-		return CDKLockBackendOptions{}, nil // unconditional locks
+		return CDKLockBackendOptions{}, fmt.Errorf("unsupported blob provider: conditional writes required for distributed locking")
 	}
 }
 
@@ -79,6 +85,18 @@ func bucketTargetFromURL(bucketURL string) (bucketTarget, error) {
 		name:   name,
 		prefix: u.Query().Get("prefix"),
 	}, nil
+}
+
+// isObjectExistsErr returns true if the error indicates the object already exists.
+// Checks gcerrors.FailedPrecondition (GCS, Azure, S3-412) and smithy HTTP 409
+// (S3 ConditionalRequestConflict from If-None-Match: * races, which gocloud.dev
+// maps to gcerrors.Unknown instead of FailedPrecondition).
+func isObjectExistsErr(err error) bool {
+	if gcerrors.Code(err) == gcerrors.FailedPrecondition {
+		return true
+	}
+	var respErr *smithyhttp.ResponseError
+	return errors.As(err, &respErr) && respErr.HTTPStatusCode() == 409
 }
 
 // --- S3 ---
@@ -106,7 +124,7 @@ func s3ConditionalDelete(client *s3.Client, target bucketTarget) ConditionalDele
 			if errors.As(err, &respErr) {
 				switch respErr.HTTPStatusCode() {
 				case 412:
-					return fmt.Errorf("%w: %w", ErrPreconditionFailed, err)
+					return fmt.Errorf("%w: %w", errPreconditionFailed, err)
 				case 404:
 					return fmt.Errorf("%w: %w", ErrLockNotFound, err)
 				}
@@ -153,7 +171,7 @@ func gcsConditionalDelete(client *gcsstorage.Client, target bucketTarget) Condit
 			if errors.As(err, &apiErr) {
 				switch apiErr.Code {
 				case 412:
-					return fmt.Errorf("%w: %w", ErrPreconditionFailed, err)
+					return fmt.Errorf("%w: %w", errPreconditionFailed, err)
 				case 404:
 					return fmt.Errorf("%w: %w", ErrLockNotFound, err)
 				}
@@ -161,7 +179,7 @@ func gcsConditionalDelete(client *gcsstorage.Client, target bucketTarget) Condit
 			if s, ok := status.FromError(err); ok {
 				switch s.Code() { //nolint:exhaustive
 				case codes.FailedPrecondition:
-					return fmt.Errorf("%w: %w", ErrPreconditionFailed, err)
+					return fmt.Errorf("%w: %w", errPreconditionFailed, err)
 				case codes.NotFound:
 					return fmt.Errorf("%w: %w", ErrLockNotFound, err)
 				}
@@ -205,7 +223,7 @@ func azureConditionalDelete(containerClient *container.Client, target bucketTarg
 			if errors.As(err, &respErr) {
 				switch respErr.StatusCode {
 				case 412:
-					return fmt.Errorf("%w: %w", ErrPreconditionFailed, err)
+					return fmt.Errorf("%w: %w", errPreconditionFailed, err)
 				case 404:
 					return fmt.Errorf("%w: %w", ErrLockNotFound, err)
 				}

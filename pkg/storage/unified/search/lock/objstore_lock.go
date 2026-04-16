@@ -4,32 +4,23 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"sync"
 	"time"
 )
 
 // LockInfo contains the metadata for a distributed lock.
-// Expiry is NOT determined from fields in this struct. Backends must use
-// the object's server-side last-modified timestamp (mtime) to decide whether
-// a lock has expired, avoiding clock-skew issues between Grafana instances.
 type LockInfo struct {
 	Owner     string        `json:"owner"`
 	TTL       time.Duration `json:"ttl"`
-	Heartbeat time.Time     `json:"heartbeat"` // informational: when the owner last wrote; expiry uses mtime, not this field
+	Heartbeat time.Time     `json:"heartbeat"` // informational: when the owner last renewed the lock
 }
 
-// LockBackend abstracts conditional storage operations for distributed locking.
-// Production implementations use ETag-based conditional writes on S3/GCS/Azure.
-// Test implementations use an in-memory mutex-guarded map.
-//
-// Expiry: backends must determine lock expiry from the object's server-side
-// last-modified timestamp (mtime), NOT from any client-supplied timestamp.
-// This avoids clock-skew problems between Grafana instances. A lock is expired
-// when mtime + TTL < now (using the storage service's clock).
+// LockBackend is the storage primitive for distributed locking.
+// Implementations provide atomic create, conditional update, conditional delete, and read operations.
 type LockBackend interface {
 	// Create atomically creates a lock if it does not exist.
-	// Returns ErrLockHeld if lock already exists and is not expired.
-	// Expiry must be computed from the object's server-side mtime + TTL.
+	// Returns ErrLockHeld if the lock already exists and has not expired.
 	Create(ctx context.Context, key string, info LockInfo) error
 
 	// Update atomically updates an existing lock, verifying ownership.
@@ -50,10 +41,11 @@ var ErrLockHeld = errors.New("lock is held by another owner")
 // ErrLockNotFound is returned when a lock operation targets a non-existent lock.
 var ErrLockNotFound = errors.New("lock not found")
 
-// ErrPreconditionFailed indicates a conditional operation failed because the object
-// was modified concurrently. ConditionalDeleteFunc implementations must return this
-// (via fmt.Errorf wrapping) so CDKLockBackend can distinguish races from other errors.
-var ErrPreconditionFailed = errors.New("precondition failed")
+// ErrLeaseExpired is returned when a lock owner attempts to renew a lease that has already expired.
+var ErrLeaseExpired = errors.New("lease expired")
+
+// ErrInvalidLockKey is returned when a lock key contains characters unsafe for object storage providers.
+var ErrInvalidLockKey = errors.New("invalid lock key")
 
 // ObjectStorageLock provides distributed locking via conditional object storage writes.
 type ObjectStorageLock struct {
@@ -81,17 +73,29 @@ type ObjectStorageLockConfig struct {
 }
 
 // NewObjectStorageLock creates a new distributed lock.
-// Panics if HeartbeatInterval >= TTL, since the lease would expire before
-// the first heartbeat renewal.
-func NewObjectStorageLock(cfg ObjectStorageLockConfig) *ObjectStorageLock {
+// Returns an error if TTL < 2*HeartbeatInterval. This guarantees at least one
+// full heartbeat interval of margin between loss detection and lease expiry.
+func NewObjectStorageLock(cfg ObjectStorageLockConfig) (*ObjectStorageLock, error) {
 	if cfg.TTL == 0 {
 		cfg.TTL = 180 * time.Second
 	}
 	if cfg.HeartbeatInterval == 0 {
 		cfg.HeartbeatInterval = 60 * time.Second
 	}
-	if cfg.HeartbeatInterval >= cfg.TTL {
-		panic(fmt.Sprintf("HeartbeatInterval (%s) must be less than TTL (%s)", cfg.HeartbeatInterval, cfg.TTL))
+	if cfg.Backend == nil {
+		return nil, fmt.Errorf("backend must not be nil")
+	}
+	if cfg.Owner == "" {
+		return nil, fmt.Errorf("owner must not be empty")
+	}
+	if cfg.TTL <= 0 {
+		return nil, fmt.Errorf("TTL must be positive, got %s", cfg.TTL)
+	}
+	if cfg.HeartbeatInterval <= 0 {
+		return nil, fmt.Errorf("HeartbeatInterval must be positive, got %s", cfg.HeartbeatInterval)
+	}
+	if cfg.TTL < 2*cfg.HeartbeatInterval {
+		return nil, fmt.Errorf("TTL (%s) must be at least 2x HeartbeatInterval (%s)", cfg.TTL, cfg.HeartbeatInterval)
 	}
 	return &ObjectStorageLock{
 		backend:           cfg.Backend,
@@ -100,7 +104,7 @@ func NewObjectStorageLock(cfg ObjectStorageLockConfig) *ObjectStorageLock {
 		ttl:               cfg.TTL,
 		heartbeatInterval: cfg.HeartbeatInterval,
 		lostCh:            make(chan struct{}),
-	}
+	}, nil
 }
 
 // Lost returns a channel that is closed if the lock is lost due to a heartbeat failure.
@@ -159,7 +163,11 @@ func (l *ObjectStorageLock) Release(ctx context.Context) error {
 		<-hbDone
 	}
 
-	err := l.backend.Delete(ctx, l.key, l.owner)
+	// Use a fresh context for the delete so a canceled caller context
+	// (e.g. request-scoped) doesn't leave the lock object behind.
+	deleteCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	err := l.backend.Delete(deleteCtx, l.key, l.owner)
 
 	l.mu.Lock()
 	l.cancelHB = nil
@@ -186,13 +194,9 @@ func (l *ObjectStorageLock) startHeartbeat() {
 		ticker := time.NewTicker(l.heartbeatInterval)
 		defer ticker.Stop()
 
-		// Allow consecutive transient failures before declaring loss.
-		// With 60s heartbeat and 180s TTL, maxFailures=2 means we tolerate
-		// up to 120s of outage while still having TTL margin.
-		maxFailures := int(l.ttl/l.heartbeatInterval) - 1
-		if maxFailures < 1 {
-			maxFailures = 1
-		}
+		// Tolerate transient failures up to the lease boundary. Genuine expiry
+		// is caught by Update returning ErrLeaseExpired (definitive loss).
+		maxFailures := int(math.Ceil(float64(l.ttl) / float64(l.heartbeatInterval)))
 		consecutiveFailures := 0
 
 		for {
@@ -205,15 +209,16 @@ func (l *ObjectStorageLock) startHeartbeat() {
 					TTL:       l.ttl,
 					Heartbeat: time.Now(),
 				}
-				if err := l.backend.Update(ctx, l.key, info); err != nil {
-					// Release() cancels our context; if the ticker fires at
-					// the same instant, Update sees context.Canceled. That is
-					// a graceful shutdown, not lock loss — let ctx.Done() win.
+				updateCtx, updateCancel := context.WithTimeout(context.Background(), 30*time.Second)
+				err := l.backend.Update(updateCtx, l.key, info)
+				updateCancel()
+				if err != nil {
+					// Release() cancels our loop context — check if we should stop.
 					if ctx.Err() != nil {
 						return
 					}
-					// Definitive loss: another owner took the lock or it was deleted.
-					if errors.Is(err, ErrLockHeld) || errors.Is(err, ErrLockNotFound) {
+					// Definitive loss: another owner took the lock, it was deleted, or our lease expired.
+					if errors.Is(err, ErrLockHeld) || errors.Is(err, ErrLockNotFound) || errors.Is(err, ErrLeaseExpired) {
 						l.mu.Lock()
 						close(l.lostCh)
 						l.mu.Unlock()
