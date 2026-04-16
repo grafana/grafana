@@ -39,7 +39,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagKubernetesCorrelations,
 			featuremgmt.FlagKubernetesAlertingHistorian,
 			featuremgmt.FlagKubernetesLogsDrilldown,
-			featuremgmt.FlagKubernetesUnifiedStorageQuotas,
 			featuremgmt.FlagKubernetesTeamsApi,
 			featuremgmt.FlagKubernetesUsersApi,
 			featuremgmt.FlagKubernetesServiceAccountsApi,
