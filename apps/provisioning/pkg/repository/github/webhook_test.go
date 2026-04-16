@@ -1827,31 +1827,24 @@ func TestGitHubRepository_RotateWebhookSecret(t *testing.T) {
 		require.True(t, webhookStatus.LastRotated > 0)
 	})
 
-	t.Run("webhook not found on remote re-creates it", func(t *testing.T) {
+	t.Run("webhook not found on remote skips rotation", func(t *testing.T) {
 		mockGH := NewMockClient(t)
 		mockGH.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
 			Return(WebhookConfig{}, repo.ErrFileNotFound)
-		mockGH.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.Anything).
-			Return(WebhookConfig{ID: 456, URL: "https://example.com/hook", Events: []string{"push"}, Secret: "new-secret"}, nil)
 
-		repo := &githubWebhookRepository{
-			gh:         mockGH,
-			owner:      "grafana",
-			repo:       "grafana",
-			webhookURL: "https://example.com/hook",
+		r := &githubWebhookRepository{
+			gh:    mockGH,
+			owner: "grafana",
+			repo:  "grafana",
 			config: &provisioning.Repository{
 				Spec:   provisioning.RepositorySpec{GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"}},
 				Status: provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{ID: 123}},
 			},
 		}
 
-		ops, err := repo.RotateWebhookSecret(context.Background())
+		ops, err := r.RotateWebhookSecret(context.Background())
 		require.NoError(t, err)
-		require.Len(t, ops, 2)
-
-		webhookStatus := ops[0]["value"].(*provisioning.WebhookStatus)
-		require.Equal(t, int64(456), webhookStatus.ID)
-		require.True(t, webhookStatus.LastRotated > 0)
+		require.Nil(t, ops)
 	})
 
 	t.Run("get webhook error returns error", func(t *testing.T) {
