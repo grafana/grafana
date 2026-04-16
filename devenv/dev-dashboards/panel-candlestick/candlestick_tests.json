@@ -142,7 +142,7 @@
                 "headers": [["Content-Type", "application/json"]],
                 "method": "GET",
                 "queryParams": [],
-                "url": "/api/health"
+                "url": "https://grafana.com"
               },
               "title": "Example Action",
               "type": "fetch"
