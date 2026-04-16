@@ -58,7 +58,7 @@ export const SaveDashboardDiff = ({
       showDiffs: count < 15, // overwhelming if too many changes
       jsonView: (
         <Suspense fallback={null}>
-          <LazyDiffViewer newValue={oldJSON} oldValue={newJSON} />
+          <LazyDiffViewer oldValue={oldJSON} newValue={newJSON} />
         </Suspense>
       ),
     };
