@@ -1251,11 +1251,6 @@ export interface FeatureToggles {
   */
   alertingNotificationHistory?: boolean;
   /**
-  * Enable dual reader for unified storage search
-  * @default false
-  */
-  unifiedStorageSearchDualReaderEnabled?: boolean;
-  /**
   * Supports __from and __to macros that always use the dashboard level time range
   * @default false
   */

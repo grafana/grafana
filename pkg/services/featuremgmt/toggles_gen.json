@@ -5563,7 +5563,8 @@
       "metadata": {
         "name": "unifiedStorageSearchDualReaderEnabled",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-07-18T12:43:56Z"
+        "creationTimestamp": "2025-07-18T12:43:56Z",
+        "deletionTimestamp": "2026-04-16T15:44:59Z"
       },
       "spec": {
         "description": "Enable dual reader for unified storage search",
