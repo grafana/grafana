@@ -25,6 +25,8 @@ export const mockAmdModule = `define([], function() {
 const mockTranslation = (value: string) =>
   `System.register([],function(e){return{execute:function(){e("default",{"testKey":"${value}"})}}})`;
 
+const mockTranslationWithPlurals = `System.register([],function(e){return{execute:function(){e("default",{"title":"Test","item_one":"1 item","item_other":"{{count}} items"})}}})`;
+
 const mockTranslationWithNoDefaultExport = `System.register([],function(e){return{execute:function(){e({"testKey":"unknown"})}}})`;
 
 const server = setupServer(
@@ -86,6 +88,15 @@ const server = setupServer(
     '/public/plugins/test-panel/locales/pt-BR/no-default-export.json',
     () =>
       new HttpResponse(mockTranslationWithNoDefaultExport, {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
+  ),
+  http.get(
+    '/public/plugins/test-panel/locales/en-US/test-panel-plurals.json',
+    () =>
+      new HttpResponse(mockTranslationWithPlurals, {
         headers: {
           'Content-Type': 'text/javascript',
         },

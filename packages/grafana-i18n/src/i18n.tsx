@@ -7,6 +7,7 @@ import { initReactI18next, setDefaults, setI18n, Trans as I18NextTrans, getI18n 
 import { DEFAULT_LANGUAGE, PSEUDO_LOCALE } from './constants';
 import { initRegionalFormat } from './dates';
 import { LANGUAGES } from './languages';
+import { filterPluralKeys } from './plurals';
 import { type ResourceLoader, type Resources, type TFunction, type TransProps, type TransType } from './types';
 
 let tFunc: I18NextTFunction<string[], undefined> | undefined;
@@ -38,17 +39,15 @@ export async function loadNamespacedResources(namespace: string, language: strin
 
   const resolvedLanguage = language === PSEUDO_LOCALE ? DEFAULT_LANGUAGE : language;
 
-  // Don't load resources for the default language as they are already embedded in the source code.
-  // Pseudo-locale still needs the default-language resources loaded for post-processing.
-  if (language === DEFAULT_LANGUAGE) {
-    return;
-  }
+  // For the default language, only load plural keys since singular forms are already embedded in source code.
+  // Pseudo-locale still needs all default-language resources loaded for post-processing.
+  const shouldFilterPluralKeys = language === DEFAULT_LANGUAGE;
 
   return Promise.all(
     loaders.map(async (loader) => {
       try {
         const resources = await loader(resolvedLanguage);
-        addResourceBundle(resolvedLanguage, namespace, resources);
+        addResourceBundle(resolvedLanguage, namespace, shouldFilterPluralKeys ? filterPluralKeys(resources) : resources);
       } catch (error) {
         console.error(`Error loading resources for namespace ${namespace} and language: ${resolvedLanguage}`, error);
       }

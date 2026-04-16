@@ -70,18 +70,40 @@ describe('i18n', () => {
       expect(addResourceBundleSpy).toHaveBeenCalledWith('en-US', 'test', { hello: 'Hi' }, true, false);
     });
 
-    it('should not load resources for the default language', async () => {
+    it('should load only plural keys for the default language', async () => {
       const loaders: ResourceLoader[] = [
-        jest.fn(() => Promise.resolve({ hello: 'Hi' })),
-        jest.fn(() => Promise.resolve({ i18n: 'i18n' })),
+        jest.fn(() =>
+          Promise.resolve({
+            hello: 'Hi',
+            item_one: '1 item',
+            item_other: '{{count}} items',
+          })
+        ),
       ];
       const addResourceBundleSpy = jest.spyOn(i18n, 'addResourceBundle');
 
       await loadNamespacedResources('test', 'en-US', loaders);
 
-      expect(loaders[0]).not.toHaveBeenCalled();
-      expect(loaders[1]).not.toHaveBeenCalled();
-      expect(addResourceBundleSpy).not.toHaveBeenCalled();
+      expect(loaders[0]).toHaveBeenCalledWith('en-US');
+      expect(addResourceBundleSpy).toHaveBeenCalledTimes(1);
+      expect(addResourceBundleSpy).toHaveBeenCalledWith(
+        'en-US',
+        'test',
+        { item_one: '1 item', item_other: '{{count}} items' },
+        true,
+        false
+      );
+    });
+
+    it('should not add resource bundle if no plural keys exist for the default language', async () => {
+      const loaders: ResourceLoader[] = [jest.fn(() => Promise.resolve({ hello: 'Hi', world: 'World' }))];
+      const addResourceBundleSpy = jest.spyOn(i18n, 'addResourceBundle');
+
+      await loadNamespacedResources('test', 'en-US', loaders);
+
+      expect(loaders[0]).toHaveBeenCalledWith('en-US');
+      expect(addResourceBundleSpy).toHaveBeenCalledTimes(1);
+      expect(addResourceBundleSpy).toHaveBeenCalledWith('en-US', 'test', {}, true, false);
     });
   });
 
@@ -191,9 +213,9 @@ describe('i18n', () => {
       expect(addResourceBundleSpy).toHaveBeenNthCalledWith(2, 'fr-FR', 'test', { i18n: 'i18n' }, true, false);
     });
 
-    it('should not load resources when language is the default language', async () => {
+    it('should load only plural keys when language is the default language', async () => {
       const loaders: ResourceLoader[] = [
-        jest.fn(() => Promise.resolve({ hello: 'Hi' })),
+        jest.fn(() => Promise.resolve({ hello: 'Hi', item_one: '1 item', item_other: '{{count}} items' })),
         jest.fn(() => Promise.resolve({ i18n: 'i18n' })),
       ];
       const addResourceBundleSpy = jest.spyOn(i18n, 'addResourceBundle');
@@ -203,9 +225,18 @@ describe('i18n', () => {
       const { language } = await initPluginTranslations('test', loaders);
 
       expect(language).toBe('en-US');
-      expect(loaders[0]).not.toHaveBeenCalled();
-      expect(loaders[1]).not.toHaveBeenCalled();
-      expect(addResourceBundleSpy).not.toHaveBeenCalled();
+      expect(loaders[0]).toHaveBeenCalledWith('en-US');
+      expect(loaders[1]).toHaveBeenCalledWith('en-US');
+      expect(addResourceBundleSpy).toHaveBeenCalledTimes(2);
+      expect(addResourceBundleSpy).toHaveBeenNthCalledWith(
+        1,
+        'en-US',
+        'test',
+        { item_one: '1 item', item_other: '{{count}} items' },
+        true,
+        false
+      );
+      expect(addResourceBundleSpy).toHaveBeenNthCalledWith(2, 'en-US', 'test', {}, true, false);
     });
   });
 });

@@ -1,5 +1,5 @@
 import { DEFAULT_LANGUAGE } from '@grafana/i18n';
-import { addResourceBundle } from '@grafana/i18n/internal';
+import { addResourceBundle, filterPluralKeys } from '@grafana/i18n/internal';
 
 import { SystemJS } from '../loader/systemjs';
 import { resolveModulePath } from '../loader/utils';
@@ -17,38 +17,42 @@ export async function addTranslationsToI18n({
   pluginId,
   translations,
 }: AddTranslationsToI18nOptions): Promise<void> {
-  if (resolvedLanguage === DEFAULT_LANGUAGE) {
-    return;
-  }
-
   const resolvedPath = translations[resolvedLanguage];
   const fallbackPath = translations[fallbackLanguage];
   const path = resolvedPath ?? fallbackPath;
 
   if (!path) {
-    console.warn(`Could not find any translation for plugin ${pluginId}`, { resolvedLanguage, fallbackLanguage });
+    if (resolvedLanguage !== DEFAULT_LANGUAGE) {
+      console.warn(`Could not find any translation for plugin ${pluginId}`, { resolvedLanguage, fallbackLanguage });
+    }
     return;
   }
 
   try {
     const module = await SystemJS.import(resolveModulePath(path));
     if (!module.default) {
-      console.warn(`Could not find default export for plugin ${pluginId}`, {
-        resolvedLanguage,
-        fallbackLanguage,
-        path,
-      });
+      if (resolvedLanguage !== DEFAULT_LANGUAGE) {
+        console.warn(`Could not find default export for plugin ${pluginId}`, {
+          resolvedLanguage,
+          fallbackLanguage,
+          path,
+        });
+      }
       return;
     }
 
     const language = resolvedPath ? resolvedLanguage : fallbackLanguage;
-    addResourceBundle(language, pluginId, module.default);
+    // For the default language, only load plural keys since singular forms are already embedded in source code.
+    const resources = resolvedLanguage === DEFAULT_LANGUAGE ? filterPluralKeys(module.default) : module.default;
+    addResourceBundle(language, pluginId, resources);
   } catch (error) {
-    console.warn(`Could not load translation for plugin ${pluginId}`, {
-      resolvedLanguage,
-      fallbackLanguage,
-      error,
-      path,
-    });
+    if (resolvedLanguage !== DEFAULT_LANGUAGE) {
+      console.warn(`Could not load translation for plugin ${pluginId}`, {
+        resolvedLanguage,
+        fallbackLanguage,
+        error,
+        path,
+      });
+    }
   }
 }

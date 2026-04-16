@@ -19,3 +19,5 @@ export {
   initializeI18n,
   loadNamespacedResources,
 } from '../i18n';
+
+export { filterPluralKeys } from '../plurals';

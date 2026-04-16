@@ -40,7 +40,7 @@ describe('addTranslationsToI18n', () => {
     server.close();
   });
 
-  it('should not load translations when resolved language matches fallback language', async () => {
+  it('should load only plural keys when resolved language is en-US with no plural keys', async () => {
     await addTranslationsToI18n({
       resolvedLanguage: 'en-US',
       fallbackLanguage: 'en-US',
@@ -50,7 +50,25 @@ describe('addTranslationsToI18n', () => {
       },
     });
 
-    expect(addResourceBundleSpy).not.toHaveBeenCalled();
+    expect(addResourceBundleSpy).toHaveBeenCalledTimes(1);
+    expect(addResourceBundleSpy).toHaveBeenCalledWith('en-US', 'test-panel', {});
+  });
+
+  it('should load only plural keys when resolved language is en-US with plural keys', async () => {
+    await addTranslationsToI18n({
+      resolvedLanguage: 'en-US',
+      fallbackLanguage: 'en-US',
+      pluginId: 'test-panel',
+      translations: {
+        'en-US': '/public/plugins/test-panel/locales/en-US/test-panel-plurals.json',
+      },
+    });
+
+    expect(addResourceBundleSpy).toHaveBeenCalledTimes(1);
+    expect(addResourceBundleSpy).toHaveBeenCalledWith('en-US', 'test-panel', {
+      item_one: '1 item',
+      item_other: '{{count}} items',
+    });
   });
 
   it('should add translations that match the resolved language first', async () => {
