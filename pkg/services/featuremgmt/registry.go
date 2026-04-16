@@ -2947,6 +2947,14 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:        "profilesHeatmap",
+			Description: "Enables heatmap visualization support for Pyroscope profiles",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityTracesAndProfilingSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:        "queryServiceQueryCaching",
 			Description: "Enables the query service to do query caching",
 			Stage:       FeatureStageExperimental,
