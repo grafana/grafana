@@ -1274,6 +1274,13 @@ func TestTeamK8sService_GetTeamIDsByUser(t *testing.T) {
 			expectIDs:      []int64{10},
 		},
 		{
+			name:           "returns all team IDs when user is in multiple teams",
+			requesterOrgID: 1,
+			query:          &team.GetTeamIDsByUserQuery{OrgID: 1, UserID: 42},
+			serverResponse: multiMembershipServerHandler(t),
+			expectIDs:      []int64{10, 20},
+		},
+		{
 			name:           "returns empty list when user has no bindings",
 			requesterOrgID: 1,
 			query:          &team.GetTeamIDsByUserQuery{OrgID: 1, UserID: 42},
@@ -1322,7 +1329,7 @@ func TestTeamK8sService_GetTeamIDsByUser(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, tt.expectIDs, result)
+			assert.ElementsMatch(t, tt.expectIDs, result)
 		})
 	}
 }
@@ -1529,6 +1536,23 @@ func TestTeamK8sService_GetUserTeamMemberships(t *testing.T) {
 			},
 		},
 		{
+			name:           "returns all memberships when user is in multiple teams",
+			orgID:          1,
+			userID:         42,
+			serverResponse: multiMembershipServerHandler(t),
+			expectMembers:  2,
+			validate: func(t *testing.T, result []*team.TeamMemberDTO) {
+				byTeamUID := map[string]*team.TeamMemberDTO{}
+				for _, m := range result {
+					byTeamUID[m.TeamUID] = m
+				}
+				require.Contains(t, byTeamUID, "team-uid-1")
+				require.Contains(t, byTeamUID, "team-uid-2")
+				assert.Equal(t, int64(10), byTeamUID["team-uid-1"].TeamID)
+				assert.Equal(t, int64(20), byTeamUID["team-uid-2"].TeamID)
+			},
+		},
+		{
 			name:           "returns empty list when user has no bindings",
 			orgID:          1,
 			userID:         42,
@@ -1621,6 +1645,25 @@ func TestTeamK8sService_GetTeamMembers(t *testing.T) {
 			validate: func(t *testing.T, result []*team.TeamMemberDTO) {
 				assert.Equal(t, int64(10), result[0].TeamID)
 				assert.Equal(t, "team-uid-1", result[0].TeamUID)
+			},
+		},
+		{
+			name:           "returns all members when team has multiple members",
+			requesterOrgID: 1,
+			query:          &team.GetTeamMembersQuery{OrgID: 1, TeamUID: "team-uid-1"},
+			serverResponse: multiMembershipServerHandler(t),
+			expectMembers:  2,
+			validate: func(t *testing.T, result []*team.TeamMemberDTO) {
+				byUserUID := map[string]*team.TeamMemberDTO{}
+				for _, m := range result {
+					byUserUID[m.UserUID] = m
+				}
+				require.Contains(t, byUserUID, "user-uid-42")
+				require.Contains(t, byUserUID, "user-uid-99")
+				assert.Equal(t, int64(42), byUserUID["user-uid-42"].UserID)
+				assert.Equal(t, "user42@example.com", byUserUID["user-uid-42"].Email)
+				assert.Equal(t, int64(99), byUserUID["user-uid-99"].UserID)
+				assert.Equal(t, "user99@example.com", byUserUID["user-uid-99"].Email)
 			},
 		},
 		{
@@ -1834,6 +1877,122 @@ func membershipServerHandlerWithEmptyBindings(t *testing.T) func(w http.Response
 		case r.Method == http.MethodGet && strings.Contains(path, "/searchTeams"):
 			_ = json.NewEncoder(w).Encode(iamv0alpha1.GetSearchTeamsResponse{
 				GetSearchTeamsBody: iamv0alpha1.GetSearchTeamsBody{TotalHits: 0, Hits: []iamv0alpha1.GetSearchTeamsTeamHit{}},
+			})
+		default:
+			w.WriteHeader(http.StatusNotFound)
+			_ = json.NewEncoder(w).Encode(metav1.Status{Status: metav1.StatusFailure, Code: 404})
+		}
+	}
+}
+
+func multiMembershipServerHandler(t *testing.T) func(w http.ResponseWriter, r *http.Request) {
+	t.Helper()
+
+	user42 := iamv0alpha1.User{
+		TypeMeta: metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "User"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "user-uid-42",
+			Namespace: "org-1",
+			Labels:    map[string]string{"grafana.app/deprecatedInternalID": "42"},
+		},
+		Spec: iamv0alpha1.UserSpec{Login: "user42", Email: "user42@example.com", Title: "User 42"},
+	}
+	user99 := iamv0alpha1.User{
+		TypeMeta: metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "User"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "user-uid-99",
+			Namespace: "org-1",
+			Labels:    map[string]string{"grafana.app/deprecatedInternalID": "99"},
+		},
+		Spec: iamv0alpha1.UserSpec{Login: "user99", Email: "user99@example.com", Title: "User 99"},
+	}
+	team1 := iamv0alpha1.Team{
+		TypeMeta: metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "Team"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "team-uid-1",
+			Namespace: "org-1",
+			Labels:    map[string]string{"grafana.app/deprecatedInternalID": "10"},
+		},
+		Spec: iamv0alpha1.TeamSpec{Title: "Team One", Email: "team1@example.com"},
+	}
+	team2 := iamv0alpha1.Team{
+		TypeMeta: metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "Team"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "team-uid-2",
+			Namespace: "org-1",
+			Labels:    map[string]string{"grafana.app/deprecatedInternalID": "20"},
+		},
+		Spec: iamv0alpha1.TeamSpec{Title: "Team Two", Email: "team2@example.com"},
+	}
+	binding42To1 := iamv0alpha1.TeamBinding{
+		TypeMeta:   metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "TeamBinding"},
+		ObjectMeta: metav1.ObjectMeta{Name: "binding-42-to-1", Namespace: "org-1"},
+		Spec: iamv0alpha1.TeamBindingSpec{
+			Subject:    iamv0alpha1.TeamBindingspecSubject{Kind: "User", Name: "user-uid-42"},
+			TeamRef:    iamv0alpha1.TeamBindingTeamRef{Name: "team-uid-1"},
+			Permission: iamv0alpha1.TeamBindingTeamPermissionAdmin,
+		},
+	}
+	binding42To2 := iamv0alpha1.TeamBinding{
+		TypeMeta:   metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "TeamBinding"},
+		ObjectMeta: metav1.ObjectMeta{Name: "binding-42-to-2", Namespace: "org-1"},
+		Spec: iamv0alpha1.TeamBindingSpec{
+			Subject:    iamv0alpha1.TeamBindingspecSubject{Kind: "User", Name: "user-uid-42"},
+			TeamRef:    iamv0alpha1.TeamBindingTeamRef{Name: "team-uid-2"},
+			Permission: iamv0alpha1.TeamBindingTeamPermissionMember,
+		},
+	}
+	binding99To1 := iamv0alpha1.TeamBinding{
+		TypeMeta:   metav1.TypeMeta{APIVersion: iamv0alpha1.GroupVersion.Identifier(), Kind: "TeamBinding"},
+		ObjectMeta: metav1.ObjectMeta{Name: "binding-99-to-1", Namespace: "org-1"},
+		Spec: iamv0alpha1.TeamBindingSpec{
+			Subject:    iamv0alpha1.TeamBindingspecSubject{Kind: "User", Name: "user-uid-99"},
+			TeamRef:    iamv0alpha1.TeamBindingTeamRef{Name: "team-uid-1"},
+			Permission: iamv0alpha1.TeamBindingTeamPermissionMember,
+		},
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		path := r.URL.Path
+		fieldSelector := r.URL.Query().Get("fieldSelector")
+
+		switch {
+		case r.Method == http.MethodGet && strings.Contains(path, "/users") && !strings.Contains(path, "/users/"):
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+				"kind":       "UserList",
+				"metadata":   map[string]any{"resourceVersion": "1"},
+				"items":      []any{mustToUnstructured(t, &user42)},
+			})
+		case r.Method == http.MethodGet && strings.Contains(path, "/users/user-uid-42"):
+			_ = json.NewEncoder(w).Encode(mustToUnstructured(t, &user42))
+		case r.Method == http.MethodGet && strings.Contains(path, "/users/user-uid-99"):
+			_ = json.NewEncoder(w).Encode(mustToUnstructured(t, &user99))
+		case r.Method == http.MethodGet && strings.Contains(path, "/teams/team-uid-1"):
+			_ = json.NewEncoder(w).Encode(mustToUnstructured(t, &team1))
+		case r.Method == http.MethodGet && strings.Contains(path, "/teams/team-uid-2"):
+			_ = json.NewEncoder(w).Encode(mustToUnstructured(t, &team2))
+		case r.Method == http.MethodGet && strings.Contains(path, "/teams") && !strings.Contains(path, "/teams/") && r.URL.Query().Get("labelSelector") != "":
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+				"kind":       "TeamList",
+				"metadata":   map[string]any{"resourceVersion": "1"},
+				"items":      []any{mustToUnstructured(t, &team1)},
+			})
+		case r.Method == http.MethodGet && strings.Contains(path, "/teambindings") && !strings.Contains(path, "/teambindings/"):
+			items := []any{}
+			switch {
+			case strings.Contains(fieldSelector, "spec.subject.name=user-uid-42"):
+				items = []any{mustToUnstructured(t, &binding42To1), mustToUnstructured(t, &binding42To2)}
+			case strings.Contains(fieldSelector, "spec.teamRef.name=team-uid-1"):
+				items = []any{mustToUnstructured(t, &binding42To1), mustToUnstructured(t, &binding99To1)}
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"apiVersion": iamv0alpha1.GroupVersion.Identifier(),
+				"kind":       "TeamBindingList",
+				"metadata":   map[string]any{"resourceVersion": "1"},
+				"items":      items,
 			})
 		default:
 			w.WriteHeader(http.StatusNotFound)

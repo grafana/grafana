@@ -10,6 +10,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/errgroup"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	iamteam "github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -149,25 +151,35 @@ func (s *TeamK8sService) listTeamsByUIDs(ctx context.Context, namespace string, 
 		return nil, err
 	}
 
-	selectors := make([]fields.Selector, 0, len(uids))
-	for _, uid := range uids {
-		selectors = append(selectors, fields.OneTermEqualSelector("metadata.name", uid))
+	results := make([]*unstructured.Unstructured, len(uids))
+	var g errgroup.Group
+	g.SetLimit(10)
+	for i, uid := range uids {
+		g.Go(func() error {
+			obj, err := client.Get(ctx, uid, metav1.GetOptions{})
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					return nil
+				}
+				return err
+			}
+			results[i] = obj
+			return nil
+		})
 	}
-	fieldSelector := fields.AndSelectors(selectors...).String()
-
-	result, err := client.List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
-	if err != nil {
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
-	teams := make(map[string]*unstructured.Unstructured, len(result.Items))
-	for i := range result.Items {
-		teams[result.Items[i].GetName()] = &result.Items[i]
+	teams := make(map[string]*unstructured.Unstructured, len(uids))
+	for _, obj := range results {
+		if obj != nil {
+			teams[obj.GetName()] = obj
+		}
 	}
 	return teams, nil
 }
 
-// listUsersByUIDs fetches multiple users in a single List call using metadata.name field selectors.
 func (s *TeamK8sService) listUsersByUIDs(ctx context.Context, namespace string, uids []string) (map[string]*iamv0alpha1.User, error) {
 	if len(uids) == 0 {
 		return nil, nil
@@ -178,24 +190,35 @@ func (s *TeamK8sService) listUsersByUIDs(ctx context.Context, namespace string, 
 		return nil, err
 	}
 
-	selectors := make([]fields.Selector, 0, len(uids))
-	for _, uid := range uids {
-		selectors = append(selectors, fields.OneTermEqualSelector("metadata.name", uid))
+	results := make([]*iamv0alpha1.User, len(uids))
+	var g errgroup.Group
+	g.SetLimit(10)
+	for i, uid := range uids {
+		g.Go(func() error {
+			obj, err := client.Get(ctx, uid, metav1.GetOptions{})
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					return nil
+				}
+				return err
+			}
+			var user iamv0alpha1.User
+			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &user); err != nil {
+				return err
+			}
+			results[i] = &user
+			return nil
+		})
 	}
-	fieldSelector := fields.AndSelectors(selectors...).String()
-
-	result, err := client.List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
-	if err != nil {
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
-	users := make(map[string]*iamv0alpha1.User, len(result.Items))
-	for _, item := range result.Items {
-		var user iamv0alpha1.User
-		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &user); err != nil {
-			return nil, err
+	users := make(map[string]*iamv0alpha1.User, len(uids))
+	for _, u := range results {
+		if u != nil {
+			users[u.GetName()] = u
 		}
-		users[user.GetName()] = &user
 	}
 	return users, nil
 }
@@ -206,18 +229,27 @@ func (s *TeamK8sService) listTeamBindings(ctx context.Context, namespace string,
 		return nil, err
 	}
 
-	result, err := client.List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
-	if err != nil {
-		return nil, err
+	var bindings []iamv0alpha1.TeamBinding
+	listOpts := metav1.ListOptions{
+		FieldSelector: fieldSelector,
+		Limit:         common.DefaultListLimit,
 	}
-
-	bindings := make([]iamv0alpha1.TeamBinding, 0, len(result.Items))
-	for _, item := range result.Items {
-		var binding iamv0alpha1.TeamBinding
-		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &binding); err != nil {
+	for {
+		result, err := client.List(ctx, listOpts)
+		if err != nil {
 			return nil, err
 		}
-		bindings = append(bindings, binding)
+		for _, item := range result.Items {
+			var binding iamv0alpha1.TeamBinding
+			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &binding); err != nil {
+				return nil, err
+			}
+			bindings = append(bindings, binding)
+		}
+		if result.GetContinue() == "" {
+			break
+		}
+		listOpts.Continue = result.GetContinue()
 	}
 	return bindings, nil
 }
@@ -714,9 +746,25 @@ func (s *TeamK8sService) GetTeamIDsByUser(ctx context.Context, query *team.GetTe
 		return nil, err
 	}
 
-	ids := make([]int64, 0, len(bindings))
+	if len(bindings) == 0 {
+		return []int64{}, nil
+	}
+
+	teamUIDs := make([]string, 0, len(bindings))
 	for _, b := range bindings {
-		if id := deprecatedInternalID(&b); id != 0 {
+		teamUIDs = append(teamUIDs, b.Spec.TeamRef.Name)
+	}
+
+	teamsMap, err := s.listTeamsByUIDs(ctx, namespace, teamUIDs)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	ids := make([]int64, 0, len(teamsMap))
+	for _, t := range teamsMap {
+		if id := deprecatedInternalID(t); id != 0 {
 			ids = append(ids, id)
 		}
 	}
@@ -858,7 +906,9 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 	if len(bindings) > 0 {
 		k8sUser, err = s.getUserByUID(ctx, namespace, userUID)
 		if err != nil {
-			s.logger.Warn("Failed to fetch user details for team membership", "userUID", userUID, "error", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return nil, err
 		}
 	}
 
@@ -934,11 +984,18 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 		}
 		teamUID = resolved.GetName()
 	} else if teamID == 0 {
-		if teamResult, err := client.Get(ctx, teamUID, metav1.GetOptions{}); err == nil {
-			teamID = deprecatedInternalID(teamResult)
-		} else {
-			s.logger.Warn("Failed to resolve team ID from UID", "teamUID", teamUID, "error", err)
+		teamResult, err := client.Get(ctx, teamUID, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				span.RecordError(team.ErrTeamNotFound)
+				span.SetStatus(codes.Error, team.ErrTeamNotFound.Error())
+				return nil, team.ErrTeamNotFound
+			}
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return nil, err
 		}
+		teamID = deprecatedInternalID(teamResult)
 	}
 
 	selectors := []fields.Selector{
