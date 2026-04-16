@@ -472,7 +472,7 @@ Individual `panel_operation` measurements are sent in real-time as each operatio
 
 ```typescript
 {
-  duration: number              // Duration of the individual operation (ms)
+  duration: number; // Duration of the individual operation (ms)
 }
 ```
 
@@ -493,12 +493,12 @@ Individual `panel_operation` measurements are sent in real-time as each operatio
 
 **Operation types**:
 
-| operationType | When sent |
-| --- | --- |
-| `query` | One per query executed by the panel |
-| `transform` | One per transformation applied |
-| `render` | One per render cycle |
-| `fieldConfig` | One per field config application |
+| operationType | When sent                               |
+| ------------- | --------------------------------------- |
+| `query`       | One per query executed by the panel     |
+| `transform`   | One per transformation applied          |
+| `render`      | One per render cycle                    |
+| `fieldConfig` | One per field config application        |
 | `plugin-load` | One measurement if plugin load time > 0 |
 
 ## Debugging and Development
