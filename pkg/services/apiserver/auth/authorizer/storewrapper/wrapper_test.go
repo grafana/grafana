@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 )
 
 type testSetup struct {
@@ -422,6 +423,91 @@ func TestWrapper_WithPreserveIdentity(t *testing.T) {
 	})
 }
 
+func TestWrapper_Watch(t *testing.T) {
+	t.Run("success - authorized user can watch", func(t *testing.T) {
+		mockWatchInterface := &fakeWatchInterface{}
+		filteredWatchInterface := &fakeWatchInterface{}
+		mockStore := &fakeWatcherStore{
+			watchInterface: mockWatchInterface,
+			watchError:     nil,
+		}
+		mockAuth := &FakeAuthorizer{}
+		wrapper := New(mockStore, mockAuth)
+
+		ctx := identity.WithRequester(
+			context.Background(),
+			&identity.StaticRequester{UserUID: "u001", Type: types.TypeUser},
+		)
+
+		watchOpts := &internalversion.ListOptions{}
+
+		// Verify FilterWatch is called with the watch interface from inner store
+		// and returns a filtered watch interface
+		mockAuth.On("FilterWatch", mock.MatchedBy(matchesOriginalUser()), mockWatchInterface, mock.Anything).Return(filteredWatchInterface, nil)
+
+		result, err := wrapper.Watch(ctx, watchOpts)
+
+		require.NoError(t, err)
+		assert.Equal(t, filteredWatchInterface, result)
+
+		// Assert expectations
+		mockAuth.AssertExpectations(t)
+	})
+
+	t.Run("unauthorized - watch is blocked", func(t *testing.T) {
+		mockWatchInterface := &fakeWatchInterface{}
+		mockStore := &fakeWatcherStore{
+			watchInterface: mockWatchInterface,
+			watchError:     nil,
+		}
+		mockAuth := &FakeAuthorizer{}
+		wrapper := New(mockStore, mockAuth)
+
+		ctx := identity.WithRequester(
+			context.Background(),
+			&identity.StaticRequester{UserUID: "u001", Type: types.TypeUser},
+		)
+
+		watchOpts := &internalversion.ListOptions{}
+
+		// Simulate unauthorized error from FilterWatch authorizer
+		mockAuth.On("FilterWatch", mock.MatchedBy(matchesOriginalUser()), mockWatchInterface, mock.Anything).Return(nil, ErrUnauthorized)
+
+		result, err := wrapper.Watch(ctx, watchOpts)
+
+		require.Error(t, err)
+		assert.Nil(t, result)
+		assert.Equal(t, ErrUnauthorized, err)
+
+		// Assert expectations
+		mockAuth.AssertExpectations(t)
+	})
+
+	t.Run("error - watch not supported by inner store", func(t *testing.T) {
+		// Create a wrapper with a store that doesn't implement Watcher
+		mockStore := &fakeNonWatcherStore{}
+		mockAuth := &FakeAuthorizer{}
+		wrapper := New(mockStore, mockAuth)
+
+		ctx := identity.WithRequester(
+			context.Background(),
+			&identity.StaticRequester{UserUID: "u001", Type: types.TypeUser},
+		)
+
+		watchOpts := &internalversion.ListOptions{}
+
+		// No FilterWatch call expected because inner store doesn't support watch
+		result, err := wrapper.Watch(ctx, watchOpts)
+
+		require.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), "watch is not supported")
+
+		// Assert expectations. FilterWatch should not be called.
+		mockAuth.AssertExpectations(t)
+	})
+}
+
 // -----
 // Fakes
 // -----
@@ -459,6 +545,15 @@ func (f *FakeAuthorizer) FilterList(ctx context.Context, list runtime.Object) (r
 	return res, args.Error(1)
 }
 
+func (f *FakeAuthorizer) FilterWatch(ctx context.Context, w watch.Interface, listObj runtime.Object) (watch.Interface, error) {
+	args := f.Called(ctx, w, listObj)
+	var res watch.Interface
+	if args.Get(0) != nil {
+		res = args.Get(0).(watch.Interface)
+	}
+	return res, args.Error(1)
+}
+
 type fakeObject struct {
 	metaV1.TypeMeta
 	metaV1.ObjectMeta
@@ -468,6 +563,19 @@ func (f *fakeObject) DeepCopyObject() runtime.Object {
 	return &fakeObject{
 		TypeMeta:   f.TypeMeta,
 		ObjectMeta: f.ObjectMeta,
+	}
+}
+
+// fakeListObject implements runtime.Object for list type testing
+type fakeListObject struct {
+	metaV1.TypeMeta
+	metaV1.ListMeta
+}
+
+func (f *fakeListObject) DeepCopyObject() runtime.Object {
+	return &fakeListObject{
+		TypeMeta: f.TypeMeta,
+		ListMeta: f.ListMeta,
 	}
 }
 
@@ -482,4 +590,34 @@ func (f *fakeUpdatedObjectInfo) Preconditions() *metaV1.Preconditions {
 
 func (f *fakeUpdatedObjectInfo) UpdatedObject(ctx context.Context, oldObj runtime.Object) (runtime.Object, error) {
 	return f.obj, nil
+}
+
+// fakeWatchInterface implements watch.Interface for testing
+type fakeWatchInterface struct{}
+
+func (f *fakeWatchInterface) Stop() {}
+
+func (f *fakeWatchInterface) ResultChan() <-chan watch.Event {
+	return make(chan watch.Event)
+}
+
+// fakeWatcherStore is a mock store that implements the Watcher interface
+type fakeWatcherStore struct {
+	rest.MockStorage
+	watchInterface watch.Interface
+	watchError     error
+}
+
+func (f *fakeWatcherStore) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
+	return f.watchInterface, f.watchError
+}
+
+func (f *fakeWatcherStore) NewList() runtime.Object {
+	// Return a simple empty list object for testing
+	return &fakeListObject{}
+}
+
+// fakeNonWatcherStore implements K8sStorage but NOT k8srest.Watcher
+type fakeNonWatcherStore struct {
+	rest.MockStorage
 }

@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/grafana/authlib/types"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/watch"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -294,4 +296,63 @@ func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list run
 	default:
 		return nil, k8serrors.NewBadRequest(fmt.Sprintf("expected ResourcePermissionList, got %T", l))
 	}
+}
+
+// FilterWatch implements ResourceStorageAuthorizer.
+// Watch events are filtered based on the user's permissions to view each ResourcePermission.
+func (r *ResourcePermissionsAuthorizer) FilterWatch(ctx context.Context, w watch.Interface, listObj runtime.Object) (watch.Interface, error) {
+	authInfo, ok := types.AuthInfoFrom(ctx)
+	if !ok {
+		w.Stop()
+		return nil, storewrapper.ErrUnauthenticated
+	}
+
+	if isAccessPolicy(authInfo) {
+		return w, nil
+	}
+
+	// Filter events based on user's access to the target resource
+	filterFunc := func(events []watch.Event) ([]bool, error) {
+		results := make([]bool, len(events))
+
+		// collect valid ResourcePermission objects and remember their positions
+		var batch []iamv0.ResourcePermission
+		var batchIndices []int
+		for i, event := range events {
+			rp, ok := event.Object.(*iamv0.ResourcePermission)
+			if !ok {
+				continue
+			}
+			batch = append(batch, *rp)
+			batchIndices = append(batchIndices, i)
+		}
+
+		if len(batch) == 0 {
+			return results, nil
+		}
+
+		// single BatchCheck RPC for the entire flush
+		allowed, err := CanViewTargets(r, ctx, authInfo, batch, func(i int) (string, string, string, string, bool) {
+			target := batch[i].Spec.Resource
+			return batch[i].Namespace, target.ApiGroup, target.Resource, target.Name, true
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		// map allowed items back to original event positions by name
+		allowedSet := make(map[string]struct{}, len(allowed))
+		for _, rp := range allowed {
+			allowedSet[rp.Name] = struct{}{}
+		}
+		for j, origIdx := range batchIndices {
+			if _, ok := allowedSet[batch[j].Name]; ok {
+				results[origIdx] = true
+			}
+		}
+
+		return results, nil
+	}
+
+	return storewrapper.NewFilteredWatch(ctx, w, filterFunc, 50*time.Millisecond), nil
 }

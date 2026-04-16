@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -154,4 +155,12 @@ func (r *TeamBindingAuthorizer) FilterList(ctx context.Context, list runtime.Obj
 
 	l.Items = filteredItems
 	return l, nil
+}
+
+// FilterWatch implements ResourceStorageAuthorizer.
+// TODO: Implement proper authorization for Watch
+func (r *TeamBindingAuthorizer) FilterWatch(ctx context.Context, w watch.Interface, listObj runtime.Object) (watch.Interface, error) {
+	// Deny by default until proper authorization is implemented
+	w.Stop()
+	return nil, storewrapper.ErrUnauthorized
 }
