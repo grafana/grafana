@@ -806,7 +806,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /tools/ @grafana/frontend-ops
 /lefthook.yml @grafana/frontend-ops
 /lefthook.rc @grafana/frontend-ops
-/.husky/pre-commit @grafana/frontend-ops
 /cypress.config.js @grafana/grafana-frontend-platform
 /.levignore.js @grafana/grafana-frontend-platform
 playwright.config.ts @grafana/plugins-platform-frontend
@@ -1105,7 +1104,6 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/trigger_docker_build.sh @grafana/grafana-developer-enablement-squad
 /scripts/trigger_grafana_packer.sh @grafana/grafana-developer-enablement-squad
 /scripts/trigger_windows_build.sh @grafana/grafana-developer-enablement-squad
-/scripts/cleanup-husky.sh @grafana/frontend-ops
 /scripts/verify-repo-update/ @grafana/grafana-developer-enablement-squad
 /scripts/generate-alerting-rtk-apis.ts @grafana/alerting-frontend
 /scripts/levitate-parse-json-report.js @grafana/grafana-frontend-platform
