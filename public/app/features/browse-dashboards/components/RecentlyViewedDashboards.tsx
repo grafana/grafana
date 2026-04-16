@@ -59,7 +59,7 @@ export function RecentlyViewedDashboards() {
       headerDataTestId="browseDashboardsRecentlyViewedTitle"
       label={
         <Stack direction="row" justifyContent="space-between" alignItems="baseline" width="100%">
-          <Text variant="h5" element="h3" onClick={handleSectionToggle}>
+          <Text variant="h5" element="h3">
             <Trans i18nKey="browse-dashboards.recently-viewed.title">Recently viewed</Trans>
           </Text>
           <Button
@@ -77,7 +77,7 @@ export function RecentlyViewedDashboards() {
         </Stack>
       }
       isOpen={isOpen}
-      onToggle={() => {}}
+      onToggle={handleSectionToggle}
       className={styles.title}
       contentClassName={styles.content}
     >
