@@ -249,7 +249,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-03,foldersAppPlatformAPI,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2025-07-16,otelLogsFormatting,experimental,@grafana/observability-logs,false,false,true
 2025-07-17,alertingNotificationHistory,experimental,@grafana/alerting-squad,false,false,false
-2025-07-18,unifiedStorageSearchDualReaderEnabled,experimental,@grafana/search-and-storage,false,false,false
 2025-07-31,dashboardLevelTimeMacros,experimental,@grafana/dashboards-squad,false,false,true
 2025-07-25,alertmanagerRemoteSecondaryWithRemoteState,experimental,@grafana/alerting-squad,false,false,false
 2025-07-31,restrictedPluginApis,GA,@grafana/plugins-platform-backend,false,false,true
@@ -280,6 +279,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-10-17,pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
 2025-11-12,newPanelPadding,preview,@grafana/dashboards-squad,false,false,true
 2025-10-20,onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
+2026-04-15,onlyStoreServiceAccountActionSets,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,excludeRedundantManagedPermissions,experimental,@grafana/identity-access-team,false,false,false
 2025-12-16,pluginInsights,experimental,@grafana/plugins-platform-backend,false,false,true
 2025-10-29,panelTimeSettings,preview,@grafana/dashboards-squad,false,false,false
