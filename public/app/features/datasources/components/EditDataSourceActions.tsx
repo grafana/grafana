@@ -100,50 +100,52 @@ const DefaultButton = ({ uid }: { uid: string }) => {
 
   return (
     <Field invalid={!!errorMessage} error={errorMessage} validationMessageHorizontalOverflow noMargin>
-      {dataSource.isDefault ? (
-        <Badge
-          text={
-            <Stack direction="row" alignItems="center" gap={1}>
-              <Tooltip
-                content={t(
-                  'datasources.edit-data-source-actions.default-tooltip',
-                  'The default data source is preselected in new panels.'
+      <>
+        {dataSource.isDefault ? (
+          <Badge
+            text={
+              <Stack direction="row" alignItems="center" gap={1}>
+                <Tooltip
+                  content={t(
+                    'datasources.edit-data-source-actions.default-tooltip',
+                    'The default data source is preselected in new panels.'
+                  )}
+                >
+                  <span>
+                    <Trans i18nKey="datasources.edit-data-source-actions.default-label">Default</Trans>
+                  </span>
+                </Tooltip>
+                {editable && (
+                  <IconButton
+                    name={loading ? 'spinner' : 'times'}
+                    size="xs"
+                    variant="secondary"
+                    onClick={() => onChangeDefault(false)}
+                    disabled={loading}
+                    tooltip={t('datasources.edit-data-source-actions.default-remove', 'Remove default')}
+                  />
                 )}
-              >
-                <span>
-                  <Trans i18nKey="datasources.edit-data-source-actions.default-label">Default</Trans>
-                </span>
-              </Tooltip>
-              {editable && (
-                <IconButton
-                  name={loading ? 'spinner' : 'times'}
-                  size="xs"
-                  variant="secondary"
-                  onClick={() => onChangeDefault(false)}
-                  disabled={loading}
-                  tooltip={t('datasources.edit-data-source-actions.default-remove', 'Remove default')}
-                />
-              )}
-            </Stack>
-          }
-          color="blue"
-        />
-      ) : (
-        <Button
-          variant="secondary"
-          size="sm"
-          tooltip={t(
-            'datasources.edit-data-source-actions.default-tooltip',
-            'The default data source is preselected in new panels.'
-          )}
-          onClick={editable ? () => onChangeDefault(true) : undefined}
-          icon={loading ? 'spinner' : undefined}
-          iconPlacement="right"
-          disabled={!editable || loading}
-        >
-          <Trans i18nKey="datasources.edit-data-source-actions.default-button">Make default</Trans>
-        </Button>
-      )}
+              </Stack>
+            }
+            color="blue"
+          />
+        ) : (
+          <Button
+            variant="secondary"
+            size="sm"
+            tooltip={t(
+              'datasources.edit-data-source-actions.default-tooltip',
+              'The default data source is preselected in new panels.'
+            )}
+            onClick={editable ? () => onChangeDefault(true) : undefined}
+            icon={loading ? 'spinner' : undefined}
+            iconPlacement="right"
+            disabled={!editable || loading}
+          >
+            <Trans i18nKey="datasources.edit-data-source-actions.default-button">Make default</Trans>
+          </Button>
+        )}
+      </>
     </Field>
   );
 };
