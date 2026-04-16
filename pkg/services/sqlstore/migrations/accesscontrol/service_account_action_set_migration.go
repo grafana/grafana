@@ -41,7 +41,7 @@ func (m *saActionSetMigrator) addSAActionSetActions() error {
 	sql := `
 	SELECT permission.role_id, permission.action, permission.scope FROM permission
 		LEFT JOIN role ON permission.role_id = role.id
-		WHERE permission.action IN ('serviceaccounts:read', 'serviceaccounts:write', 'serviceaccounts:delete', 'serviceaccounts:edit', 'serviceaccounts:admin')
+		WHERE permission.action IN ('serviceaccounts:write', 'serviceaccounts:delete', 'serviceaccounts:edit', 'serviceaccounts:admin')
 		AND permission.scope LIKE 'serviceaccounts:id:%'
 		AND role.name LIKE 'managed:%'
 `
@@ -85,7 +85,6 @@ func (m *saActionSetMigrator) addSAActionSetActions() error {
 				groupedPermissions[result.RoleID][result.Scope] = "edit"
 			}
 		}
-		// serviceaccounts:read alone does not map to any action set level (no "view" for SAs).
 	}
 
 	toAdd := make([]accesscontrol.Permission, 0, len(groupedPermissions))
@@ -93,11 +92,6 @@ func (m *saActionSetMigrator) addSAActionSetActions() error {
 
 	for roleID, permissions := range groupedPermissions {
 		for scope, level := range permissions {
-			if level == "" {
-				// Only serviceaccounts:read was present — no action set token exists for this level.
-				continue
-			}
-
 			kind, attr, identifier := accesscontrol.SplitScope(scope)
 			toAdd = append(toAdd, accesscontrol.Permission{
 				RoleID:     roleID,
