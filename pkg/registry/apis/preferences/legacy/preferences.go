@@ -158,6 +158,7 @@ func (s *preferenceStorage) Get(ctx context.Context, name string, options *metav
 			req.TeamUID = owner.Identifier
 			return false, nil
 		case utils.NamespaceResourceOwner:
+			req.Namespace = true
 			return false, nil
 		default:
 			return false, fmt.Errorf("unsupported name")
