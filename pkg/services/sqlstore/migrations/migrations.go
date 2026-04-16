@@ -128,8 +128,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	accesscontrol.AddActionSetPermissionsMigrator(mg)
 
-	accesscontrol.AddSAActionSetPermissionsMigrator(mg)
-
 	externalsession.AddMigration(mg)
 
 	accesscontrol.AddReceiverCreateScopeMigration(mg)
