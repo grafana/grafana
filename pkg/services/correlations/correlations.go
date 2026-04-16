@@ -257,11 +257,47 @@ func (s *CorrelationsK8sService) GetCorrelation(ctx context.Context, cmd GetCorr
 }
 
 func (s *CorrelationsK8sService) GetCorrelationsBySourceUID(ctx context.Context, cmd GetCorrelationsBySourceUIDQuery) ([]Correlation, error) {
-	return []Correlation{}, nil
+			client, err := s.getK8sClient()
+	if err != nil {
+		return  []Correlation, err
+	}
+    /*const labelSelectString = `correlations.grafana.app/sourceDS-ref in (${labelStr})`;
+    const { data } = await dispatch(
+      correlationsAPIv0alpha1.endpoints.listCorrelation.initiate({
+        labelSelector: labelSelectString,
+      })*/
+	appPlatformCorrs, err := client.List(ctx, authlib.OrgNamespaceFormatter(cmd.OrgId), resource.ListOptions{LabelFilters: ["correlations.grafana.app/sourceDS-ref in (" + cmd.SourceUID + ")"] })
+
+	correlations := make([]Correlation, len(appPlatformCorrs.Items))
+
+	for i, val := range appPlatformCorrs.Items {
+		legacyCorr, _ := ToCorrelation(&val) //TODO error handling here?
+		correlations[i] = *legacyCorr
+	}
+
+	// TODO pagination
+	return []Correlation,nil
 }
 
 func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) (GetCorrelationsResponseBody, error) {
-	return GetCorrelationsResponseBody{}, nil
+		client, err := s.getK8sClient()
+	if err != nil {
+		return  GetCorrelationsResponseBody{}, err
+	}
+
+	appPlatformCorrs, err := client.List(ctx, authlib.OrgNamespaceFormatter(cmd.OrgId), resource.ListOptions{})
+
+	correlations := make([]Correlation, len(appPlatformCorrs.Items))
+
+	for i, val := range appPlatformCorrs.Items {
+		legacyCorr, _ := ToCorrelation(&val) //TODO error handling here?
+		correlations[i] = *legacyCorr
+	}
+
+	// TODO pagination
+	return GetCorrelationsResponseBody{
+		Correlations: correlations,
+	}, nil
 }
 
 func (s *CorrelationsK8sService) DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
