@@ -103,6 +103,22 @@ func TestIntegrationPreferences(t *testing.T) {
 		v, _, _ = unstructured.NestedString(out.Object, "spec", "weekStart")
 		require.Equal(t, "sunday", v)
 
+		// Fetch it again using list
+		list, err := clientAdmin.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "metadata.name=team-" + helper.Org1.Staff.UID,
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		v, _, _ = unstructured.NestedString(list.Items[0].Object, "spec", "weekStart")
+		require.Equal(t, "sunday", v)
+
+		// nothing found when asking for a user you can not see
+		list, err = clientAdmin.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "metadata.name=user-xxx",
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 0) // empty list
+
 		// http://localhost:3000/api/org/preferences
 		legacyResponse = apis.DoRequest(helper, apis.RequestParams{
 			User:   clientAdmin.Args.User,
