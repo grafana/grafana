@@ -35,7 +35,7 @@ func TestObjectStorageLock_AcquireRelease(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "instance-1", info.Owner)
 
-	require.NoError(t, lock.Release(ctx))
+	require.NoError(t, lock.Release())
 
 	_, err = backend.Read(ctx, key)
 	require.ErrorIs(t, err, ErrLockNotFound)
@@ -68,10 +68,10 @@ func TestObjectStorageLock_Contention(t *testing.T) {
 	err = lock2.Acquire(ctx)
 	require.ErrorIs(t, err, ErrLockHeld)
 
-	require.NoError(t, lock1.Release(ctx))
+	require.NoError(t, lock1.Release())
 
 	require.NoError(t, lock2.Acquire(ctx))
-	require.NoError(t, lock2.Release(ctx))
+	require.NoError(t, lock2.Release())
 }
 
 func TestObjectStorageLock_Heartbeat(t *testing.T) {
@@ -110,7 +110,7 @@ func TestObjectStorageLock_Heartbeat(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "instance-1", info.Owner)
 
-	require.NoError(t, lock.Release(ctx))
+	require.NoError(t, lock.Release())
 }
 
 func TestObjectStorageLock_LostChannel(t *testing.T) {
@@ -174,7 +174,7 @@ func TestObjectStorageLock_ReleaseAfterHeartbeatLoss(t *testing.T) {
 		t.Fatal("expected lock loss")
 	}
 
-	err = lock.Release(ctx)
+	err = lock.Release()
 	require.NoError(t, err)
 
 	_, err = backend.Read(ctx, "test-lock")
@@ -213,7 +213,7 @@ func TestObjectStorageLock_TransientHeartbeatRecovery(t *testing.T) {
 	case <-time.After(200 * time.Millisecond):
 	}
 
-	require.NoError(t, lock.Release(ctx))
+	require.NoError(t, lock.Release())
 }
 
 func TestObjectStorageLock_ImmediateLossOnOwnershipError(t *testing.T) {

@@ -23,7 +23,74 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// --- conditionalBucket wraps a real memblob bucket with ETag-based conditional writes ---
+// --- test backend setup ---
+//
+// Uses conditionalBucket (fake ETag tracking) by default.
+// Set CDK_TEST_BUCKET_URL to run against a real provider:
+//
+//	CDK_TEST_BUCKET_URL=s3://bucket?region=us-east-1 go test ./pkg/storage/unified/search/lock/... -v
+//	CDK_TEST_BUCKET_URL=gs://bucket go test ./pkg/storage/unified/search/lock/... -v
+//	CDK_TEST_BUCKET_URL=azblob://container go test ./pkg/storage/unified/search/lock/... -v
+
+func testBackend(t *testing.T, opts ...func(*CDKLockBackendOptions)) *CDKLockBackend {
+	t.Helper()
+	var bucket resource.CDKBucket
+	var backendOpts CDKLockBackendOptions
+
+	if bucketURL := os.Getenv("CDK_TEST_BUCKET_URL"); bucketURL != "" {
+		ctx := context.Background()
+		rb, err := blob.OpenBucket(ctx, bucketURL)
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = rb.Close() })
+		backendOpts, err = CDKLockOptionsFromBucket(rb, bucketURL)
+		require.NoError(t, err)
+		bucket = rb
+	} else {
+		cb := newConditionalBucket()
+		backendOpts = CDKLockBackendOptions{
+			ConditionalWrite:  fakeConditionalWrite,
+			ConditionalDelete: fakeConditionalDeleteFor(cb),
+		}
+		bucket = cb
+	}
+	for _, fn := range opts {
+		fn(&backendOpts)
+	}
+	return NewCDKLockBackend(bucket, backendOpts)
+}
+
+// testKey returns a unique lock key for the current test, safe for real providers.
+func testKey(t *testing.T, suffix ...string) string {
+	t.Helper()
+	name := strings.ReplaceAll(t.Name(), "/", "-")
+	if len(suffix) > 0 {
+		name += "-" + suffix[0]
+	}
+	return "test-locks/" + name
+}
+
+func newFakeBackend(bucket *conditionalBucket) *CDKLockBackend {
+	return NewCDKLockBackend(bucket, CDKLockBackendOptions{
+		ConditionalWrite:  fakeConditionalWrite,
+		ConditionalDelete: fakeConditionalDeleteFor(bucket),
+	})
+}
+
+func lockInfo(owner string, ttl time.Duration) LockInfo {
+	return LockInfo{Owner: owner, TTL: ttl, Heartbeat: time.Now()}
+}
+
+// --- conditionalBucket: fake ETag tracking for memblob ---
+
+// errPrecondition is a real gcerrors.FailedPrecondition error generated once from memblob.
+// gcerrors doesn't expose a public constructor, so we trigger a real one via IfNotExist.
+var errPrecondition = func() error {
+	b := memblob.OpenBucket(nil)
+	defer b.Close()
+	ctx := context.Background()
+	_ = b.WriteAll(ctx, "x", []byte("x"), nil)
+	return b.WriteAll(ctx, "x", []byte("x"), &blob.WriterOptions{IfNotExist: true})
+}()
 
 // conditionalBucket wraps a CDKBucket (backed by memblob) and adds ETag tracking
 // to simulate conditional write semantics for testing CDKLockBackend.
@@ -43,7 +110,7 @@ func newConditionalBucket() *conditionalBucket {
 
 func (c *conditionalBucket) nextETag() string {
 	c.seq++
-	return "etag-" + string(rune('0'+c.seq%10)) + string(rune('0'+c.seq/10))
+	return fmt.Sprintf("etag-%d", c.seq)
 }
 
 func (c *conditionalBucket) WriteAll(ctx context.Context, key string, data []byte, opts *blob.WriterOptions) error {
@@ -74,13 +141,7 @@ func (c *conditionalBucket) WriteAll(ctx context.Context, key string, data []byt
 		}
 		// Check ETag match.
 		if req != nil && exists && req.ETag != c.etags[key] {
-			_ = c.CDKBucket.WriteAll(ctx, key+"__etag_check", []byte("x"), nil)
-			err := c.CDKBucket.WriteAll(ctx, key+"__etag_check", []byte("x"), &blob.WriterOptions{IfNotExist: true})
-			_ = c.CDKBucket.Delete(ctx, key+"__etag_check")
-			if err != nil {
-				return err
-			}
-			return nil
+			return errPrecondition
 		}
 	}
 
@@ -141,70 +202,10 @@ func fakeConditionalDeleteFor(bucket *conditionalBucket) ConditionalDeleteFunc {
 			return bucket.CDKBucket.Delete(ctx, key)
 		}
 		if currentETag != attrs.ETag {
-			_ = bucket.CDKBucket.WriteAll(ctx, key+"__del_check", []byte("x"), nil)
-			err := bucket.CDKBucket.WriteAll(ctx, key+"__del_check", []byte("x"), &blob.WriterOptions{IfNotExist: true})
-			_ = bucket.CDKBucket.Delete(ctx, key+"__del_check")
-			return err
+			return errPrecondition
 		}
 		return bucket.Delete(ctx, key)
 	}
-}
-
-// --- test backend setup ---
-//
-// Uses conditionalBucket (fake ETag tracking) by default.
-// Set CDK_TEST_BUCKET_URL to run against a real provider:
-//
-//	CDK_TEST_BUCKET_URL=s3://bucket?region=us-east-1 go test ./pkg/storage/unified/search/lock/... -v
-//	CDK_TEST_BUCKET_URL=gs://bucket go test ./pkg/storage/unified/search/lock/... -v
-//	CDK_TEST_BUCKET_URL=azblob://container go test ./pkg/storage/unified/search/lock/... -v
-
-func testBackend(t *testing.T, opts ...func(*CDKLockBackendOptions)) *CDKLockBackend {
-	t.Helper()
-	var bucket resource.CDKBucket
-	var backendOpts CDKLockBackendOptions
-
-	if bucketURL := os.Getenv("CDK_TEST_BUCKET_URL"); bucketURL != "" {
-		ctx := context.Background()
-		rb, err := blob.OpenBucket(ctx, bucketURL)
-		require.NoError(t, err)
-		t.Cleanup(func() { _ = rb.Close() })
-		backendOpts, err = CDKLockOptionsFromBucket(rb, bucketURL)
-		require.NoError(t, err)
-		bucket = rb
-	} else {
-		cb := newConditionalBucket()
-		backendOpts = CDKLockBackendOptions{
-			ConditionalWrite:  fakeConditionalWrite,
-			ConditionalDelete: fakeConditionalDeleteFor(cb),
-		}
-		bucket = cb
-	}
-	for _, fn := range opts {
-		fn(&backendOpts)
-	}
-	return NewCDKLockBackend(bucket, backendOpts)
-}
-
-// testKey returns a unique lock key for the current test, safe for real providers.
-func testKey(t *testing.T, suffix ...string) string {
-	t.Helper()
-	name := strings.ReplaceAll(t.Name(), "/", "-")
-	if len(suffix) > 0 {
-		name += "-" + suffix[0]
-	}
-	return "test-locks/" + name
-}
-
-func newFakeBackend(bucket *conditionalBucket) *CDKLockBackend {
-	return NewCDKLockBackend(bucket, CDKLockBackendOptions{
-		ConditionalWrite:  fakeConditionalWrite,
-		ConditionalDelete: fakeConditionalDeleteFor(bucket),
-	})
-}
-
-func lockInfo(owner string, ttl time.Duration) LockInfo {
-	return LockInfo{Owner: owner, TTL: ttl, Heartbeat: time.Now()}
 }
 
 // --- CDKLockBackend tests ---

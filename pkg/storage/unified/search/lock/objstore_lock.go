@@ -49,18 +49,19 @@ var ErrInvalidLockKey = errors.New("invalid lock key")
 
 // ObjectStorageLock provides distributed locking via conditional object storage writes.
 type ObjectStorageLock struct {
+	// Immutable after construction.
 	backend           LockBackend
 	key               string
 	owner             string
 	ttl               time.Duration
 	heartbeatInterval time.Duration
 
+	// mu protects held, cancelHB, hbDone, and lostCh.
 	mu       sync.Mutex
 	held     bool
 	cancelHB context.CancelFunc
 	hbDone   chan struct{}
-
-	lostCh chan struct{}
+	lostCh   chan struct{}
 }
 
 // ObjectStorageLockConfig holds configuration for creating an ObjectStorageLock.
@@ -143,42 +144,34 @@ func (l *ObjectStorageLock) Acquire(ctx context.Context) error {
 }
 
 // Release releases the distributed lock and stops the heartbeat goroutine.
-func (l *ObjectStorageLock) Release(ctx context.Context) error {
+func (l *ObjectStorageLock) Release() error {
 	l.mu.Lock()
 	if !l.held {
 		l.mu.Unlock()
 		return nil
 	}
-	// Cancel heartbeat context first, then drop the mutex so the goroutine
-	// can acquire it if needed during its shutdown path.
-	if l.cancelHB != nil {
-		l.cancelHB()
-	}
+	l.cancelHB()
 	// Capture hbDone under the lock to avoid a data race.
 	hbDone := l.hbDone
 	l.mu.Unlock()
 
 	// Wait for heartbeat goroutine outside the lock to avoid deadlock.
-	if hbDone != nil {
-		<-hbDone
-	}
+	<-hbDone
 
-	// Use a fresh context for the delete so a canceled caller context
-	// (e.g. request-scoped) doesn't leave the lock object behind.
 	deleteCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	err := l.backend.Delete(deleteCtx, l.key, l.owner)
 
 	l.mu.Lock()
-	l.cancelHB = nil
-	l.hbDone = nil
 	if err == nil || errors.Is(err, ErrLockNotFound) || errors.Is(err, ErrLockHeld) {
-		// Clear held on success, or when the lock is already gone / taken by
-		// another owner. In those cases this instance no longer owns anything,
-		// and keeping held=true would block future Acquire calls.
+		// Clear everything on success, or when the lock is already gone / taken
+		// by another owner. In those cases this instance no longer owns anything.
+		l.cancelHB = nil
+		l.hbDone = nil
 		l.held = false
 	}
-	// On transient storage errors, keep held=true so the caller can retry Release.
+	// On transient storage errors, keep held/cancelHB/hbDone intact so the
+	// caller can retry Release without deadlocking on <-hbDone.
 	l.mu.Unlock()
 
 	return err

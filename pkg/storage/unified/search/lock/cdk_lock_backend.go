@@ -1,6 +1,7 @@
 package lock
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -17,6 +18,28 @@ import (
 )
 
 var errPreconditionFailed = errors.New("precondition failed")
+
+// maxLockDataSize is the maximum serialized size of a lock object.
+// Enforced on both writes (Create/Update) and reads (readLockData).
+const maxLockDataSize = 4096
+
+// readLockData downloads and unmarshals the lock object with a size limit,
+// preventing oversized objects from consuming excessive memory.
+func readLockData(ctx context.Context, bucket resource.CDKBucket, key string) (LockInfo, error) {
+	var buf bytes.Buffer
+	lw := &resource.LimitedWriter{W: &buf, N: maxLockDataSize}
+	if err := bucket.Download(ctx, key, lw, nil); err != nil {
+		if errors.Is(err, resource.ErrWriteLimitExceeded) {
+			return LockInfo{}, fmt.Errorf("lock data exceeds %d bytes", maxLockDataSize)
+		}
+		return LockInfo{}, err
+	}
+	var info LockInfo
+	if err := json.Unmarshal(buf.Bytes(), &info); err != nil {
+		return LockInfo{}, fmt.Errorf("unmarshal lock info: %w", err)
+	}
+	return info, nil
+}
 
 // ConditionalWriteFunc performs a conditional write using If-Match / ifGenerationMatch
 //
@@ -98,6 +121,9 @@ func (b *CDKLockBackend) Create(ctx context.Context, key string, info LockInfo) 
 	if err != nil {
 		return fmt.Errorf("marshal lock info: %w", err)
 	}
+	if len(data) > maxLockDataSize {
+		return fmt.Errorf("lock data too large: %d bytes (max %d)", len(data), maxLockDataSize)
+	}
 
 	// Attempt atomic create (If-None-Match: * / ifGenerationMatch: 0).
 	err = b.bucket.WriteAll(ctx, key, data, &blob.WriterOptions{
@@ -115,20 +141,6 @@ func (b *CDKLockBackend) Create(ctx context.Context, key string, info LockInfo) 
 	return b.tryTakeover(ctx, key, data)
 }
 
-// retryCreate retries an atomic create after the lock object disappeared.
-// If another instance recreates the lock before this retry, FailedPrecondition
-// is mapped to ErrLockHeld so callers see normal contention, not a storage error.
-func (b *CDKLockBackend) retryCreate(ctx context.Context, key string, data []byte) error {
-	err := b.bucket.WriteAll(ctx, key, data, &blob.WriterOptions{
-		ContentType: "application/json",
-		IfNotExist:  true,
-	})
-	if err != nil && isObjectExistsErr(err) {
-		return ErrLockHeld
-	}
-	return err
-}
-
 // tryTakeover reads the existing lock and, if expired, attempts a conditional overwrite.
 func (b *CDKLockBackend) tryTakeover(ctx context.Context, key string, newData []byte) error {
 	attrs, err := b.bucket.Attributes(ctx, key)
@@ -140,17 +152,12 @@ func (b *CDKLockBackend) tryTakeover(ctx context.Context, key string, newData []
 		return fmt.Errorf("read lock attributes: %w", err)
 	}
 
-	existingData, err := b.bucket.ReadAll(ctx, key)
+	existing, err := readLockData(ctx, b.bucket, key)
 	if err != nil {
 		if gcerrors.Code(err) == gcerrors.NotFound {
 			return b.retryCreate(ctx, key, newData)
 		}
-		return fmt.Errorf("read lock data: %w", err)
-	}
-
-	var existing LockInfo
-	if err := json.Unmarshal(existingData, &existing); err != nil {
-		return fmt.Errorf("unmarshal existing lock: %w", err)
+		return err
 	}
 
 	expiresAt := attrs.ModTime.Add(existing.TTL + b.clockSkewAllowance)
@@ -164,6 +171,20 @@ func (b *CDKLockBackend) tryTakeover(ctx context.Context, key string, newData []
 	if errors.Is(err, ErrLockNotFound) {
 		// Lock was deleted between our read and conditional write — retry create.
 		return b.retryCreate(ctx, key, newData)
+	}
+	return err
+}
+
+// retryCreate retries an atomic create after the lock object disappeared.
+// If another instance recreates the lock before this retry, FailedPrecondition
+// is mapped to ErrLockHeld so callers see normal contention, not a storage error.
+func (b *CDKLockBackend) retryCreate(ctx context.Context, key string, data []byte) error {
+	err := b.bucket.WriteAll(ctx, key, data, &blob.WriterOptions{
+		ContentType: "application/json",
+		IfNotExist:  true,
+	})
+	if err != nil && isObjectExistsErr(err) {
+		return ErrLockHeld
 	}
 	return err
 }
@@ -201,17 +222,12 @@ func (b *CDKLockBackend) Update(ctx context.Context, key string, info LockInfo) 
 		return fmt.Errorf("read lock attributes: %w", err)
 	}
 
-	existingData, err := b.bucket.ReadAll(ctx, key)
+	existing, err := readLockData(ctx, b.bucket, key)
 	if err != nil {
 		if gcerrors.Code(err) == gcerrors.NotFound {
 			return ErrLockNotFound
 		}
-		return fmt.Errorf("read lock data: %w", err)
-	}
-
-	var existing LockInfo
-	if err := json.Unmarshal(existingData, &existing); err != nil {
-		return fmt.Errorf("unmarshal existing lock: %w", err)
+		return err
 	}
 	if existing.Owner != info.Owner {
 		return ErrLockHeld
@@ -225,6 +241,9 @@ func (b *CDKLockBackend) Update(ctx context.Context, key string, info LockInfo) 
 	data, err := json.Marshal(info)
 	if err != nil {
 		return fmt.Errorf("marshal lock info: %w", err)
+	}
+	if len(data) > maxLockDataSize {
+		return fmt.Errorf("lock data too large: %d bytes (max %d)", len(data), maxLockDataSize)
 	}
 
 	return b.conditionalWrite(ctx, key, data, attrs)
@@ -243,17 +262,12 @@ func (b *CDKLockBackend) Delete(ctx context.Context, key string, owner string) e
 		return fmt.Errorf("read lock attributes: %w", err)
 	}
 
-	existingData, err := b.bucket.ReadAll(ctx, key)
+	existing, err := readLockData(ctx, b.bucket, key)
 	if err != nil {
 		if gcerrors.Code(err) == gcerrors.NotFound {
 			return ErrLockNotFound
 		}
-		return fmt.Errorf("read lock data: %w", err)
-	}
-
-	var existing LockInfo
-	if err := json.Unmarshal(existingData, &existing); err != nil {
-		return fmt.Errorf("unmarshal existing lock: %w", err)
+		return err
 	}
 	if existing.Owner != owner {
 		return ErrLockHeld
@@ -263,15 +277,13 @@ func (b *CDKLockBackend) Delete(ctx context.Context, key string, owner string) e
 		err = b.conditionalDeleteFn(ctx, key, attrs)
 	} else {
 		err = b.bucket.Delete(ctx, key)
+		if err != nil && gcerrors.Code(err) == gcerrors.NotFound {
+			return ErrLockNotFound
+		}
 	}
 	if err != nil {
-		// ConditionalDeleteFunc returns native SDK errors (not gcerrors-wrapped),
-		// so check wrapped sentinel errors which providers must set.
 		if errors.Is(err, errPreconditionFailed) || gcerrors.Code(err) == gcerrors.FailedPrecondition {
 			return fmt.Errorf("lock was modified during delete: %w", ErrLockHeld)
-		}
-		if errors.Is(err, ErrLockNotFound) || gcerrors.Code(err) == gcerrors.NotFound {
-			return ErrLockNotFound
 		}
 		return err
 	}
@@ -283,17 +295,12 @@ func (b *CDKLockBackend) Read(ctx context.Context, key string) (*LockInfo, error
 	if err := b.validateKey(key); err != nil {
 		return nil, err
 	}
-	data, err := b.bucket.ReadAll(ctx, key)
+	info, err := readLockData(ctx, b.bucket, key)
 	if err != nil {
 		if gcerrors.Code(err) == gcerrors.NotFound {
 			return nil, ErrLockNotFound
 		}
-		return nil, fmt.Errorf("read lock data: %w", err)
-	}
-
-	var info LockInfo
-	if err := json.Unmarshal(data, &info); err != nil {
-		return nil, fmt.Errorf("unmarshal lock info: %w", err)
+		return nil, err
 	}
 	return &info, nil
 }
