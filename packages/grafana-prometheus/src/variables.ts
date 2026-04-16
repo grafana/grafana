@@ -52,7 +52,9 @@ export class PrometheusVariableSupport extends CustomVariableSupport<PrometheusD
 
     const interpolated = this.templateSrv.replace(query, scopedVars, this.datasource.interpolateQueryExpr);
 
-    const requestHeaders: Record<string, string> = {};
+    const requestHeaders: Record<string, string> = {
+      'X-Datasource-Uid': this.datasource.uid,
+    };
     if (request.dashboardUID) {
       requestHeaders['X-Dashboard-Uid'] = request.dashboardUID;
     }
