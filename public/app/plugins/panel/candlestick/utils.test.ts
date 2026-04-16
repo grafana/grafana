@@ -87,12 +87,7 @@ describe('drawMarkers', () => {
       ['Candle Style: CandleStyle.OHLCBars', { candleStyle: CandleStyle.OHLCBars }],
     ] satisfies TestCase[])(
       '%s',
-      (
-        describeName,
-        drawOverrides: Partial<Parameters<typeof drawMarkers>[0]>,
-        dataOverrides: AlignedData,
-        seriesOverrides: uPlot.Series[]
-      ) => {
+      (_describeName, drawOverrides?: DrawOverrides, dataOverrides?: AlignedData, seriesOverrides?: uPlot.Series[]) => {
         it.each([
           ['events', (u) => u.ctx.__getEvents()],
           ['path', (u) => u.ctx.__getPath()],
@@ -140,35 +135,21 @@ describe('drawMarkers', () => {
       volumeAlpha: 0.5,
       flatAsUp: true,
     };
-    it('events', async () => {
-      const u = await getPlot(volumeAlignedData, volumeSeries);
-      expect(() => getDraw(volumeOpts)(u)).not.toThrow();
-      const events = u.ctx.__getEvents();
-      expect(events.length).toBeGreaterThan(0);
-      expect(scrubOutput(events)).toMatchSnapshot();
-    });
 
-    it('path', async () => {
+    it.each([
+      ['events', (u) => u.ctx.__getEvents()],
+      ['path', (u) => u.ctx.__getPath()],
+      ['draw', (u) => u.ctx.__getDrawCalls()],
+      ['clipping region', (u) => u.ctx.__getClippingRegion()],
+    ] satisfies Array<[string, (u: uPlot) => unknown]>)('%s', async (testName, setup) => {
       const u = await getPlot(volumeAlignedData, volumeSeries);
+      const canvasEvents = setup(u);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
-      const path = u.ctx.__getPath();
-      expect(path.length).toBeGreaterThan(0);
-      expect(scrubOutput(path)).toMatchSnapshot();
-    });
-
-    it('draw', async () => {
-      const u = await getPlot(volumeAlignedData, volumeSeries);
-      expect(() => getDraw(volumeOpts)(u)).not.toThrow();
-      const calls = u.ctx.__getDrawCalls();
-      expect(calls.length).toBeGreaterThan(0);
-      expect(scrubOutput(calls)).toMatchSnapshot();
-    });
-
-    it('clipping region', async () => {
-      const u = await getPlot(volumeAlignedData, volumeSeries);
-      expect(() => getDraw(volumeOpts)(u)).not.toThrow();
-      const clippingRegion = u.ctx.__getClippingRegion();
-      expect(scrubOutput(clippingRegion)).toEqual([]);
+      if (testName === 'clipping region') {
+        expect(canvasEvents).toEqual([]);
+      } else {
+        expect(scrubOutput(setup(u))).toMatchSnapshot();
+      }
     });
   });
 
@@ -203,35 +184,20 @@ describe('drawMarkers', () => {
       volumeAlpha: 0.5,
       flatAsUp: true,
     };
-    it('events', async () => {
+    it.each([
+      ['events', (u) => u.ctx.__getEvents()],
+      ['path', (u) => u.ctx.__getPath()],
+      ['draw', (u) => u.ctx.__getDrawCalls()],
+      ['clipping region', (u) => u.ctx.__getClippingRegion()],
+    ] satisfies Array<[string, (u: uPlot) => unknown]>)('%s', async (testName, setup) => {
       const u = await getPlot(volumeAlignedData, volumeSeries);
+      const canvasEvents = setup(u);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
-      const events = u.ctx.__getEvents();
-      expect(events.length).toBeGreaterThan(0);
-      expect(scrubOutput(events)).toMatchSnapshot();
-    });
-
-    it('path', async () => {
-      const u = await getPlot(volumeAlignedData, volumeSeries);
-      expect(() => getDraw(volumeOpts)(u)).not.toThrow();
-      const path = u.ctx.__getPath();
-      expect(path.length).toBeGreaterThan(0);
-      expect(scrubOutput(path)).toMatchSnapshot();
-    });
-
-    it('draw', async () => {
-      const u = await getPlot(volumeAlignedData, volumeSeries);
-      expect(() => getDraw(volumeOpts)(u)).not.toThrow();
-      const calls = u.ctx.__getDrawCalls();
-      expect(calls.length).toBeGreaterThan(0);
-      expect(scrubOutput(calls)).toMatchSnapshot();
-    });
-
-    it('clipping region', async () => {
-      const u = await getPlot(volumeAlignedData, volumeSeries);
-      expect(() => getDraw(volumeOpts)(u)).not.toThrow();
-      const clippingRegion = u.ctx.__getClippingRegion();
-      expect(scrubOutput(clippingRegion)).toEqual([]);
+      if (testName === 'clipping region') {
+        expect(canvasEvents).toEqual([]);
+      } else {
+        expect(scrubOutput(setup(u))).toMatchSnapshot();
+      }
     });
   });
 });
