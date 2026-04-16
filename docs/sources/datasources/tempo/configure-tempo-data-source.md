@@ -134,6 +134,12 @@ You can configure a custom query where you can use a [template language](https:/
 1. Switch on **Use custom query**.
 1. Specify a custom query to be used to query the logs. You can use various variables to make that query relevant for current span. The link will only be shown only if all the variables are interpolated with non-empty values to prevent creating an invalid query.
 
+   If a tag like `pod` is stored as Loki [structured metadata](https://grafana.com/docs/loki/latest/get-started/labels/structured-metadata/) instead of an indexed label, it can't appear in the stream selector `{}`. Move it to a pipeline filter instead:
+
+   ```logql
+   {${__tags}} | pod=`${__span.tags["k8s.pod.name"]}` |= `${__trace.traceId}`
+   ```
+
 ### Configure trace to logs
 
 The following table describes the ways in which you can configure your trace to logs settings:
