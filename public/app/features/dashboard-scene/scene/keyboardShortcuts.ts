@@ -20,6 +20,7 @@ import { DashboardScene } from './DashboardScene';
 import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
+import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
@@ -269,31 +270,29 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         }
       }),
     });
-
-    // collapse all rows
-    keybindings.addBinding({
-      key: 'd shift+c',
-      onTrigger: () => {
-        if (scene.state.body instanceof DefaultGridLayoutManager) {
-          scene.state.body.collapseAllRows();
-        } else if (scene.state.body instanceof RowsLayoutManager) {
-          scene.state.body.collapseAllRows();
-        }
-      },
-    });
-
-    // expand all rows
-    keybindings.addBinding({
-      key: 'd shift+e',
-      onTrigger: () => {
-        if (scene.state.body instanceof DefaultGridLayoutManager) {
-          scene.state.body.expandAllRows();
-        } else if (scene.state.body instanceof RowsLayoutManager) {
-          scene.state.body.expandAllRows();
-        }
-      },
-    });
   }
+
+  // collapse all rows
+  keybindings.addBinding({
+    key: 'd shift+c',
+    onTrigger: () => {
+      const layout = getRowCollapseTarget(scene);
+      if (layout) {
+        layout.collapseAllRows();
+      }
+    },
+  });
+
+  // expand all rows
+  keybindings.addBinding({
+    key: 'd shift+e',
+    onTrigger: () => {
+      const layout = getRowCollapseTarget(scene);
+      if (layout) {
+        layout.expandAllRows();
+      }
+    },
+  });
 
   // toggle all panel legends (TODO)
   // toggle all exemplars (TODO)
@@ -302,6 +301,23 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.removeAll();
     panelAttentionSubscription.unsubscribe();
   };
+}
+
+function getRowCollapseTarget(scene: DashboardScene): DefaultGridLayoutManager | RowsLayoutManager | undefined {
+  const body = scene.state.body;
+
+  if (body instanceof DefaultGridLayoutManager || body instanceof RowsLayoutManager) {
+    return body;
+  }
+
+  if (body instanceof TabsLayoutManager) {
+    const tabLayout = body.getCurrentTab()?.getLayout();
+    if (tabLayout instanceof DefaultGridLayoutManager || tabLayout instanceof RowsLayoutManager) {
+      return tabLayout;
+    }
+  }
+
+  return undefined;
 }
 
 function handleZoom(scene: DashboardScene, scale: number) {

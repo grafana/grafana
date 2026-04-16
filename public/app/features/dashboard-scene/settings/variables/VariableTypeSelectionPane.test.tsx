@@ -1,19 +1,13 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type ReactNode, useMemo } from 'react';
+import { type ReactNode } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
-import {
-  CustomVariable,
-  SceneGridLayout,
-  SceneTimeRange,
-  SceneVariableSet,
-  useSceneObjectState,
-} from '@grafana/scenes';
+import { CustomVariable, SceneGridLayout, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 import { Sidebar, useSidebar } from '@grafana/ui';
 
-import { ElementEditPane } from '../../edit-pane/ElementEditPane';
+import { DashboardEditPaneRenderer } from '../../edit-pane/DashboardEditPaneRenderer';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
@@ -21,12 +15,7 @@ import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { DashboardInteractions } from '../../utils/interactions';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
-import {
-  collectDescendantVariables,
-  VariableAdd,
-  VariableTypeSelection,
-  VariableTypeChange,
-} from './VariableTypeSelectionPane';
+import { VariableAddPane, VariableTypeChangePane } from './VariableTypeSelectionPane';
 
 const defaultDsSettings = {
   name: 'TestDataSource',
@@ -57,62 +46,64 @@ function buildTestScene() {
   return testScene;
 }
 
-function buildTestSceneWithRowSectionVariable(sectionVarName: string) {
-  const sectionVar = new CustomVariable({ name: sectionVarName, query: 'a,b,c' });
+function buildTestSceneWithExistingVar(varName: string) {
+  const existingVar = new CustomVariable({ name: varName, query: 'a,b,c' });
   const testScene = new DashboardScene({
-    $variables: new SceneVariableSet({ variables: [] }),
+    $variables: new SceneVariableSet({ variables: [existingVar] }),
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     isEditing: true,
     body: new RowsLayoutManager({
-      rows: [
-        new RowItem({
-          title: 'Row 1',
-          $variables: new SceneVariableSet({ variables: [sectionVar] }),
-        }),
-      ],
+      rows: [],
     }),
   });
   activateFullSceneTree(testScene);
   return testScene;
 }
 
-function renderTestScene() {
-  const dashboard = buildTestScene();
-  const variableAdd = new VariableAdd({ dashboardRef: dashboard.getRef() });
-  return render(<VariableTypeSelection variableAdd={variableAdd} />);
-}
-
-describe('VariableAddEditableElement', () => {
+describe('VariableAddPane', () => {
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
   it('calls DashboardInteractions.variableTypeSelected when a variable type is clicked', () => {
     const variableTypeSelectedSpy = jest.spyOn(DashboardInteractions, 'variableTypeSelected');
+    const dashboard = buildTestScene();
+    const pane = new VariableAddPane({ sectionOwner: dashboard.getRef() });
+    dashboard.state.editPane.openPane(pane);
 
-    const { getByRole } = renderTestScene();
+    const { getByRole } = render(
+      <WrapSidebar>
+        <pane.Component model={pane} />
+      </WrapSidebar>
+    );
 
     getByRole('button', { name: /query/i }).click();
 
     expect(variableTypeSelectedSpy).toHaveBeenCalledWith({ type: 'query' });
   });
 
-  it('generates a non-conflicting name when a section variable of the same type already exists', () => {
-    const dashboard = buildTestSceneWithRowSectionVariable('custom0');
-    const variableAdd = new VariableAdd({ dashboardRef: dashboard.getRef() });
-    const { getByRole } = render(<VariableTypeSelection variableAdd={variableAdd} />);
+  it('generates a non-conflicting name when an existing variable already exists', () => {
+    const dashboard = buildTestSceneWithExistingVar('custom0');
+    const pane = new VariableAddPane({ sectionOwner: dashboard.getRef() });
+    dashboard.state.editPane.openPane(pane);
+
+    const { getByRole } = render(
+      <WrapSidebar>
+        <pane.Component model={pane} />
+      </WrapSidebar>
+    );
 
     getByRole('button', { name: /custom/i }).click();
 
     const dashboardVars = dashboard.state.$variables;
     expect(dashboardVars).toBeInstanceOf(SceneVariableSet);
     const vars = (dashboardVars as SceneVariableSet).state.variables;
-    expect(vars).toHaveLength(1);
-    expect(vars[0].state.name).toBe('custom1');
+    expect(vars).toHaveLength(2);
+    expect(vars[1].state.name).toBe('custom1');
   });
 });
 
-describe('VariableTypeChangeEditableElement', () => {
+describe('VariableTypeChangePane', () => {
   it('switches a dashboard variable type and preserves name and label', async () => {
     const { dashboard, variableSet } = buildDashboardVariableScene();
     const variable = variableSet.state.variables[0];
@@ -121,7 +112,6 @@ describe('VariableTypeChangeEditableElement', () => {
     renderVariableEditPane(dashboard);
 
     await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
-    expect(dashboard.state.editPane.getSelection()).toBeInstanceOf(VariableTypeChange);
 
     await user.click(
       within(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableType('constant'))).getByRole(
@@ -136,7 +126,7 @@ describe('VariableTypeChangeEditableElement', () => {
     expect(updatedVariable.state.type).toBe('constant');
     expect(updatedVariable.state.name).toBe('service');
     expect(updatedVariable.state.label).toBe('Service');
-    expect(dashboard.state.editPane.getSelection()).toBe(updatedVariable);
+    expect(dashboard.state.editPane.getSelectedObject()).toBe(updatedVariable);
     expect(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableNameInput)).toHaveValue(
       'service'
     );
@@ -153,7 +143,7 @@ describe('VariableTypeChangeEditableElement', () => {
     renderVariableEditPane(dashboard);
 
     await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
-    expect(dashboard.state.editPane.getSelection()).toBeInstanceOf(VariableTypeChange);
+    expect(dashboard.state.editPane.state.openPane).toBeInstanceOf(VariableTypeChangePane);
 
     await user.click(
       within(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableType('textbox'))).getByRole(
@@ -169,73 +159,9 @@ describe('VariableTypeChangeEditableElement', () => {
     expect(updatedVariable.state.name).toBe('shared');
     expect(updatedVariable.state.label).toBe('Section variable');
     expect(dashboardVariable.state.name).toBe('shared');
-    expect(dashboard.state.editPane.getSelection()).toBe(updatedVariable);
+    expect(dashboard.state.editPane.getSelectedObject()).toBe(updatedVariable);
   });
 });
-
-describe('collectDescendantVariables', () => {
-  it('returns an empty array when there are no descendant variable sets', () => {
-    const dashboard = buildTestScene();
-    expect(collectDescendantVariables(dashboard)).toEqual([]);
-  });
-
-  it('collects variables from row section variable sets', () => {
-    const dashboard = buildTestSceneWithRowSectionVariable('custom0');
-    const result = collectDescendantVariables(dashboard);
-    expect(result).toHaveLength(1);
-    expect(result[0].state.name).toBe('custom0');
-  });
-
-  it('collects variables from multiple rows', () => {
-    const sectionVar1 = new CustomVariable({ name: 'custom0', query: 'a,b' });
-    const sectionVar2 = new CustomVariable({ name: 'custom1', query: 'c,d' });
-    const dashboard = new DashboardScene({
-      $variables: new SceneVariableSet({ variables: [] }),
-      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
-      isEditing: true,
-      body: new RowsLayoutManager({
-        rows: [
-          new RowItem({
-            title: 'Row 1',
-            $variables: new SceneVariableSet({ variables: [sectionVar1] }),
-          }),
-          new RowItem({
-            title: 'Row 2',
-            $variables: new SceneVariableSet({ variables: [sectionVar2] }),
-          }),
-        ],
-      }),
-    });
-    activateFullSceneTree(dashboard);
-
-    const result = collectDescendantVariables(dashboard);
-    expect(result).toHaveLength(2);
-    expect(result.map((v) => v.state.name)).toEqual(expect.arrayContaining(['custom0', 'custom1']));
-  });
-});
-
-function VariableEditPaneHarness({ dashboard }: { dashboard: DashboardScene }) {
-  const editPane = dashboard.state.editPane;
-  const { selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
-  const selectedObject = selection?.getFirstObject();
-  const editableElement = useMemo(() => selection?.createSelectionElement(), [selection]);
-  const isNewElement = selection?.isNewElement() ?? false;
-
-  if (!editableElement) {
-    return null;
-  }
-
-  return (
-    <Sidebar.OpenPane>
-      <ElementEditPane
-        key={selectedObject?.state.key}
-        editPane={editPane}
-        element={editableElement}
-        isNewElement={isNewElement}
-      />
-    </Sidebar.OpenPane>
-  );
-}
 
 function WrapSidebar({ children }: { children: ReactNode }) {
   const sidebarContext = useSidebar({});
@@ -244,10 +170,12 @@ function WrapSidebar({ children }: { children: ReactNode }) {
 }
 
 function renderVariableEditPane(dashboard: DashboardScene) {
+  const editPane = dashboard.state.editPane;
+
   render(
     <TestProvider>
       <WrapSidebar>
-        <VariableEditPaneHarness dashboard={dashboard} />
+        <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
       </WrapSidebar>
     </TestProvider>
   );
@@ -274,7 +202,7 @@ function buildDashboardVariableScene() {
   });
 
   activateFullSceneTree(dashboard);
-  dashboard.state.editPane.selectObject(variable, variable.state.key!, { force: true });
+  dashboard.state.editPane.selectObject(variable, { force: true });
 
   return { dashboard, variableSet };
 }
@@ -304,7 +232,7 @@ function buildSectionVariableScene() {
   });
 
   activateFullSceneTree(dashboard);
-  dashboard.state.editPane.selectObject(sectionVariable, sectionVariable.state.key!, { force: true });
+  dashboard.state.editPane.selectObject(sectionVariable, { force: true });
 
   return { dashboard, dashboardVariable, sectionVariableSet };
 }

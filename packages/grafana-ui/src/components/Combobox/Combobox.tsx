@@ -416,6 +416,13 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
           placeholder,
           'data-testid': dataTestId,
+          onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
+            // Stop Escape from propagating to parent overlays (e.g. Modals, Drawers)
+            // so that only the dropdown menu closes, not the parent.
+            if (event.key === 'Escape' && isOpen) {
+              event.stopPropagation();
+            }
+          },
         })}
       />
       <Portal root={portalContainer}>

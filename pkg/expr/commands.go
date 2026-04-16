@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/metrics"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Command is an interface for all expression commands.
@@ -29,11 +30,12 @@ type MathCommand struct {
 	RawExpression string
 	Expression    *mathexp.Expr
 	refID         string
+	memoryLimit   int64 // maximum estimated output bytes for a binary operation; 0 disables
 }
 
 // NewMathCommand creates a new MathCommand. It will return an error
 // if there is an error parsing expr.
-func NewMathCommand(refID, expr string) (*MathCommand, error) {
+func NewMathCommand(refID, expr string, memoryLimit int64) (*MathCommand, error) {
 	parsedExpr, err := mathexp.New(expr)
 	if err != nil {
 		return nil, err
@@ -42,11 +44,12 @@ func NewMathCommand(refID, expr string) (*MathCommand, error) {
 		RawExpression: expr,
 		Expression:    parsedExpr,
 		refID:         refID,
+		memoryLimit:   memoryLimit,
 	}, nil
 }
 
 // UnmarshalMathCommand creates a MathCommand from Grafana's frontend query.
-func UnmarshalMathCommand(rn *rawNode) (*MathCommand, error) {
+func UnmarshalMathCommand(rn *rawNode, cfg *setting.Cfg) (*MathCommand, error) {
 	rawExpr, ok := rn.Query["expression"]
 	if !ok {
 		return nil, errors.New("command is missing an expression")
@@ -56,7 +59,7 @@ func UnmarshalMathCommand(rn *rawNode) (*MathCommand, error) {
 		return nil, fmt.Errorf("math expression is expected to be a string, got %T", rawExpr)
 	}
 
-	gm, err := NewMathCommand(rn.RefID, exprString)
+	gm, err := NewMathCommand(rn.RefID, exprString, cfg.MathExpressionMemoryLimit)
 	if err != nil {
 		return nil, fmt.Errorf("invalid math command: %w", err)
 	}
@@ -75,7 +78,7 @@ func (gm *MathCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.Va
 	_, span := tracer.Start(ctx, "SSE.ExecuteMath")
 	span.SetAttributes(attribute.String("expression", gm.RawExpression))
 	defer span.End()
-	return gm.Expression.Execute(gm.refID, vars, tracer)
+	return gm.Expression.Execute(gm.refID, vars, tracer, mathexp.WithMemoryLimit(gm.memoryLimit))
 }
 
 func (gm *MathCommand) Type() string {

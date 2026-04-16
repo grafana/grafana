@@ -623,3 +623,33 @@ func TestV1ToV2alpha1(t *testing.T) {
 		})
 	}
 }
+
+// TestV1ToV2alpha1_TimezoneEmptyString verifies that timezone: "" from V1 is left unset in V2
+// so that the user-profile-preference fallback continues to work.
+func TestV1ToV2alpha1_TimezoneEmptyString(t *testing.T) {
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
+
+	scheme := runtime.NewScheme()
+	err := RegisterConversions(scheme, dsProvider, leProvider)
+	require.NoError(t, err)
+
+	v1Dash := &dashv1.Dashboard{
+		Spec: dashv1.DashboardSpec{
+			Object: map[string]interface{}{
+				"title":    "Test Dashboard",
+				"timezone": "",
+			},
+		},
+	}
+
+	var v2alpha1Dash dashv2alpha1.Dashboard
+	err = scheme.Convert(v1Dash, &v2alpha1Dash, nil)
+	require.NoError(t, err)
+
+	// timezone: "" in V1 means "use user preference". In V2 this is represented by
+	// leaving Timezone unset (nil), so the serving layer can apply the fallback.
+	assert.Nil(t, v2alpha1Dash.Spec.TimeSettings.Timezone,
+		"timezone: '' from V1 should produce nil Timezone in V2, not 'browser'")
+}

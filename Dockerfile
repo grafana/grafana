@@ -15,7 +15,7 @@ ARG JS_SRC=js-builder
 # By using FROM instructions we can delegate dependency updates to dependabot
 FROM alpine:3.23.3 AS alpine-base
 FROM ubuntu:24.04 AS ubuntu-base
-FROM golang:1.26.1-alpine AS go-builder-base
+FROM golang:1.25.9-alpine AS go-builder-base
 FROM --platform=${JS_PLATFORM} node:24-alpine AS js-builder-base
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
@@ -236,7 +236,7 @@ RUN if [ ! "$(getent group "$GF_GID")" ]; then \
   fi && \
   GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
   mkdir -p "$GF_PATHS_HOME/.aws" && \
-  useradd --system --uid $GF_UID --gid "$GF_GID_NAME" --no-create-home grafana && \
+  useradd --system --uid $GF_UID --gid "$GF_GID_NAME" --create-home grafana && \
   mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
   "$GF_PATHS_PROVISIONING/dashboards" \
   "$GF_PATHS_PROVISIONING/notifiers" \

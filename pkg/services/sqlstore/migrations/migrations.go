@@ -74,8 +74,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	addCorrelationsMigrations(mg)
 
-	addEntityEventsTableMigration(mg)
-
 	addPublicDashboardMigration(mg)
 	addDbFileStorageMigration(mg)
 
@@ -129,6 +127,8 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddOrphanedMigrations(mg)
 
 	accesscontrol.AddActionSetPermissionsMigrator(mg)
+
+	accesscontrol.AddSAActionSetPermissionsMigrator(mg)
 
 	externalsession.AddMigration(mg)
 

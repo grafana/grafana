@@ -1,9 +1,11 @@
 name: PR Checks
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 concurrency:
   group: pr-checks-${{ github.event.number }}-new
+  cancel-in-progress: true
 
 permissions:
   statuses: write
@@ -18,7 +20,7 @@ jobs:
     if: github.event.pull_request.draft == false
     steps:
       - name: Run PR Checks
-        uses: grafana/grafana-github-actions/pr-checks@jh/pr-checks-refactor
+        uses: grafana/grafana-github-actions/pr-checks@main
         with:
           token: ${{secrets.GITHUB_TOKEN}}
           configPath: pr-checks
