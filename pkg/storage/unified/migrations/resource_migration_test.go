@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -684,5 +685,96 @@ func TestIntegrationBuildRenamePairs(t *testing.T) {
 		_, err := buildRenamePairs(logger, mg, []string{table})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "unexpected state")
+	})
+}
+
+func TestIntegrationIsAlreadyOnUnifiedStorage(t *testing.T) {
+	env := newTestEnv(t)
+
+	gr := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+	def := MigrationDefinition{
+		ID: "test-unified-check", MigrationID: "test-unified-check-migration",
+		Resources: []ResourceInfo{{GroupResource: gr}},
+		Migrators: map[schema.GroupResource]MigratorFunc{
+			gr: func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error { return nil },
+		},
+	}
+
+	insertKVState := func(t *testing.T, key string, readUnified bool, migrated int64) {
+		t.Helper()
+		orgID := int64(0)
+		ns := dualwriteKVNamespace
+		value := fmt.Sprintf(`{"read_unified":%v,"migrated":%d}`, readUnified, migrated)
+		item := kvstore.Item{
+			OrgId:     &orgID,
+			Namespace: &ns,
+			Key:       &key,
+		}
+		sess := env.engine.NewSession()
+		defer sess.Close()
+		// delete any existing entry first
+		_, _ = sess.Delete(&item)
+		now := time.Now()
+		item.Value = value
+		item.Created = now
+		item.Updated = now
+		_, err := sess.Insert(&item)
+		require.NoError(t, err)
+	}
+
+	newSession := func() *xorm.Session {
+		return env.engine.NewSession()
+	}
+
+	runner, _ := newRunner(t, noopLocker(), &transactionalTableRenamer{log: logger}, def)
+	configKey := def.ConfigResources()[0] // "dashboards.dashboard.grafana.app"
+
+	t.Run("returns false when no kv_store entry exists", func(t *testing.T) {
+		sess := newSession()
+		defer sess.Close()
+		got, err := runner.isAlreadyOnUnifiedStorage(sess)
+		require.NoError(t, err)
+		require.False(t, got)
+	})
+
+	t.Run("returns false when read_unified is false", func(t *testing.T) {
+		insertKVState(t, configKey, false, 1234)
+		sess := newSession()
+		defer sess.Close()
+		got, err := runner.isAlreadyOnUnifiedStorage(sess)
+		require.NoError(t, err)
+		require.False(t, got)
+	})
+
+	t.Run("returns false when migrated is zero", func(t *testing.T) {
+		insertKVState(t, configKey, true, 0)
+		sess := newSession()
+		defer sess.Close()
+		got, err := runner.isAlreadyOnUnifiedStorage(sess)
+		require.NoError(t, err)
+		require.False(t, got)
+	})
+
+	t.Run("returns true when read_unified and migrated are set", func(t *testing.T) {
+		insertKVState(t, configKey, true, 1776363974703)
+		sess := newSession()
+		defer sess.Close()
+		got, err := runner.isAlreadyOnUnifiedStorage(sess)
+		require.NoError(t, err)
+		require.True(t, got)
+	})
+
+	t.Run("Run skips migration when already on unified storage", func(t *testing.T) {
+		insertKVState(t, configKey, true, 1776363974703)
+		runner2, fake := newRunner(t, noopLocker(), &transactionalTableRenamer{log: logger}, def)
+		runMigration(t, env.engine, runner2, migrator.SQLite)
+		require.Equal(t, 0, fake.migrateCalled, "Migrate should not be called when already on unified storage")
+	})
+
+	t.Run("Run proceeds with migration when not on unified storage", func(t *testing.T) {
+		insertKVState(t, configKey, false, 0)
+		runner2, fake := newRunner(t, noopLocker(), &transactionalTableRenamer{log: logger}, def)
+		runMigration(t, env.engine, runner2, migrator.SQLite)
+		require.Equal(t, 1, fake.migrateCalled, "Migrate should be called when not on unified storage")
 	})
 }

@@ -2,6 +2,7 @@ package migrations
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -70,6 +72,21 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 	}
 
 	r.log.Info("Starting migration for all organizations", "org_count", len(orgs), "resources", r.resources)
+
+	// Skip migration if all resources are already on unified storage
+	// this handles earlier instances that were writing directly to unistore and never
+	// migrated through the legacy path. without this check, the migration would wip
+	// unistore and repopulate from sql, resulting in data loss
+	alreadyMigrated, err := r.isAlreadyOnUnifiedStorage(sess)
+	if err != nil {
+		r.log.Error("failed to check dualwrite state, aborting migration", "error", err)
+		return fmt.Errorf("failed to check dualwrite state: %w", err)
+	}
+	if alreadyMigrated {
+		r.log.Debug("skipping migration: resources already on unified storage per dualwrite state",
+			"resources", r.definition.ConfigResources())
+		return nil
+	}
 
 	if opts.DriverName == migrator.SQLite {
 		// reuse transaction in SQLite to avoid "database is locked" errors
@@ -321,4 +338,57 @@ func ParseOrgIDFromNamespace(namespace string) (int64, error) {
 type orgInfo struct {
 	ID   int64  `xorm:"id"`
 	Name string `xorm:"name"`
+}
+
+// dualwriteKVNamespace was used in older verisons of grafana to keep track of dual writer state.
+// it is no longer used, other than for backwards compatibility
+const dualwriteKVNamespace = "unified.dualwrite"
+
+// dualwriteStorageStatus holds info to determine whether a resource was already migrated to unified storage
+type dualwriteStorageStatus struct {
+	ReadUnified  bool  `json:"read_unified"`
+	WriteUnified bool  `json:"write_unified"`
+	WriteLegacy  bool  `json:"write_legacy"`
+	Migrated     int64 `json:"migrated"`
+}
+
+// isAlreadyOnUnifiedStorage checks the kv_store for dualwrite state used by G12.
+// Returns true when all resources in the definition were already migrated to unified storage
+// (read_unified=true, write_unified=true, write_legacy=false, and migrated>0)
+// This is to prevent data loss, as otherwise it will be wiped and repopulated from sql,
+// destroying resources that only exist in unified storage.
+func (r *MigrationRunner) isAlreadyOnUnifiedStorage(sess *xorm.Session) (bool, error) {
+	configResources := r.definition.ConfigResources()
+	if len(configResources) == 0 {
+		return false, nil
+	}
+
+	for _, key := range configResources {
+		orgID := int64(0)
+		ns := dualwriteKVNamespace
+		k := key
+		item := kvstore.Item{
+			OrgId:     &orgID,
+			Namespace: &ns,
+			Key:       &k,
+		}
+		found, err := sess.Get(&item)
+		if err != nil {
+			return false, fmt.Errorf("failed to query dualwrite state for %s: %w", key, err)
+		}
+		if !found {
+			return false, nil
+		}
+
+		var status dualwriteStorageStatus
+		if err := json.Unmarshal([]byte(item.Value), &status); err != nil {
+			return false, fmt.Errorf("failed to parse dualwrite state for %s: %w", key, err)
+		}
+
+		if !status.ReadUnified || !status.WriteUnified || status.WriteLegacy || status.Migrated == 0 {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
