@@ -8144,6 +8144,11 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Add to favorites",
+      "default-button": "Make default",
+      "default-error": "An unknown error occurred",
+      "default-label": "Default",
+      "default-remove": "Remove default",
+      "default-tooltip": "The default data source is preselected in new panels.",
       "explore-data": "Explore data",
       "open-in-explore": "Open in Explore View",
       "remove-favorite": "Remove from favorites"

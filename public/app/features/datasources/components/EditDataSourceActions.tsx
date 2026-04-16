@@ -1,11 +1,23 @@
+import { useState } from 'react';
+
 import { PluginExtensionPoints } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, usePluginLinks, useFavoriteDatasources, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { Button, Dropdown, LinkButton, Menu, Icon, IconButton } from '@grafana/ui';
+import {
+  config,
+  usePluginLinks,
+  useFavoriteDatasources,
+  getDataSourceSrv,
+  reportInteraction,
+  isFetchError,
+} from '@grafana/runtime';
+import { Button, Dropdown, LinkButton, Menu, Icon, IconButton, Field, Badge, Stack, Tooltip } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { useDispatch } from 'app/types/store';
 
+import * as api from '../api';
 import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
-import { useDataSource } from '../state/hooks';
+import { useDataSource, useDataSourceRights } from '../state/hooks';
+import { setIsDefault } from '../state/reducers';
 import { trackDsConfigClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
@@ -48,6 +60,91 @@ const FavoriteButton = ({ uid }: { uid: string }) => {
         data-testid="favorite-button"
       />
     )
+  );
+};
+
+const DefaultButton = ({ uid }: { uid: string }) => {
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>();
+
+  const dataSource = useDataSource(uid);
+  const rights = useDataSourceRights(uid);
+  const editable = rights.hasWriteRights && !rights.readOnly;
+
+  const dispatch = useDispatch();
+
+  const onChangeDefault = async (value: boolean) => {
+    if (loading) {
+      return;
+    }
+    setLoading(true);
+    setErrorMessage(undefined);
+
+    try {
+      // Make manual API calls to avoid pre-emptively saving other changes from the EditDataSource form
+      const ds = await api.getDataSourceByUid(uid);
+      await api.updateDataSource({ ...ds, isDefault: value });
+      dispatch(setIsDefault(value));
+    } catch (error) {
+      if (isFetchError(error)) {
+        setErrorMessage(error.data.message);
+      } else if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage(t('datasources.edit-data-source-actions.default-error', 'An unknown error occurred'));
+      }
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <Field invalid={!!errorMessage} error={errorMessage} validationMessageHorizontalOverflow noMargin>
+      {dataSource.isDefault ? (
+        <Badge
+          text={
+            <Stack direction="row" alignItems="center" gap={1}>
+              <Tooltip
+                content={t(
+                  'datasources.edit-data-source-actions.default-tooltip',
+                  'The default data source is preselected in new panels.'
+                )}
+              >
+                <span>
+                  <Trans i18nKey="datasources.edit-data-source-actions.default-label">Default</Trans>
+                </span>
+              </Tooltip>
+              {editable && (
+                <IconButton
+                  name={loading ? 'spinner' : 'times'}
+                  size="xs"
+                  variant="secondary"
+                  onClick={() => onChangeDefault(false)}
+                  disabled={loading}
+                  tooltip={t('datasources.edit-data-source-actions.default-remove', 'Remove default')}
+                />
+              )}
+            </Stack>
+          }
+          color="blue"
+        />
+      ) : (
+        <Button
+          variant="secondary"
+          size="sm"
+          tooltip={t(
+            'datasources.edit-data-source-actions.default-tooltip',
+            'The default data source is preselected in new panels.'
+          )}
+          onClick={editable ? () => onChangeDefault(true) : undefined}
+          icon={loading ? 'spinner' : undefined}
+          iconPlacement="right"
+          disabled={!editable || loading}
+        >
+          <Trans i18nKey="datasources.edit-data-source-actions.default-button">Make default</Trans>
+        </Button>
+      )}
+    </Field>
   );
 };
 
@@ -105,6 +202,7 @@ export function EditDataSourceActions({ uid }: Props) {
   return (
     <>
       <FavoriteButton uid={uid} />
+      <DefaultButton uid={uid} />
       {hasExploreRights && (
         <>
           {!hasActions ? (
