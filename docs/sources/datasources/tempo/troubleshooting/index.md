@@ -403,7 +403,8 @@ These issues relate to the correlation features that link traces to other teleme
 
 1. Adjust the **Span start time shift** and **Span end time shift** to widen the time range.
 1. Verify that log or metric labels match the span attributes.
-1. Check that the tag mappings correctly translate attribute names between data sources. Span attributes use dots (for example, `service.name`) but Loki labels use underscores (for example, `service_name`). Ensure tag mappings account for this difference. Refer to [Trace to logs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-logs/) for tag mapping configuration.
+1. Check that the tag mappings correctly translate attribute names between data sources. Span attributes use dots (for example, `service.name`) but Loki labels use underscores (for example, `service_name`). Ensure tag mappings account for this difference. Refer to [Trace to logs](ref:trace-to-logs) for tag mapping configuration.
+1. If a tag like `pod` is stored as Loki [structured metadata](https://grafana.com/docs/loki/latest/get-started/labels/structured-metadata/) rather than an indexed label, the auto-generated stream selector `{pod="..."}` returns no results. Enable **Use custom query** and move the tag to a pipeline filter. Refer to [Trace to logs](ref:trace-to-logs) for a custom query example.
 1. Run the generated query directly in the target data source's Explore view to confirm it returns data outside of the trace context.
 1. Use the Query Inspector to view the generated query and verify it's correct.
 

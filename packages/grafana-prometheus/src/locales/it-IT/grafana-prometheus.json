@@ -206,7 +206,7 @@
         "description-auto": "Include solo etichette univoche",
         "description-custom": "Fornisci un modello di denominazione",
         "description-verbose": "Tutti i nomi e i valori delle etichette",
-        "label-auto": "Automatica",
+        "label-auto": "Automatico",
         "label-custom": "Personalizzazione",
         "label-verbose": "Dettagliata"
       }

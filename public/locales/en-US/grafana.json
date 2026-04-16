@@ -3585,11 +3585,13 @@
       },
       "instance-details-drawer": {
         "alert-instance-label": "Alert Instance",
+        "back": "Back",
         "declare-incident": "Declare incident",
         "declare-incident-no-permission": "You do not have permission to access Incident",
         "instance-details": "Instance details",
         "silence-button": "Silence",
-        "silence-no-permission": "You do not have permission to create silences"
+        "silence-no-permission": "You do not have permission to create silences",
+        "silence-title-with-name": "Silence {{name}}"
       },
       "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
@@ -4321,15 +4323,18 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rule",
+      "alertRule_other": "{{count}} alert rules",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboard",
+      "dashboard_other": "{{count}} dashboards",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folder",
+      "folder_other": "{{count}} folders",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panel",
+      "libraryPanel_other": "{{count}} library panels",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} item"
+      "total_other": "{{count}} items"
+    },
+    "create-new": {
+      "dashboard-group": "Dashboard"
     },
     "dashboards-tree": {
       "checkbox": {
@@ -5466,6 +5471,9 @@
       "cancel-loading-dashboard": "Cancel loading dashboard"
     },
     "dashboard-page-error": {
+      "back-to-dashboards": "Back to dashboards",
+      "provisioning-message": "Dashboard preview could not be loaded",
+      "provisioning-title": "Dashboard preview",
       "text": {
         "not-found": "Not found"
       }
@@ -5625,7 +5633,6 @@
         "panels": "Panels",
         "row": "Row",
         "rows": "Rows",
-        "section-variable": "Section Variables",
         "tab": "Tab",
         "tabs": "Tabs",
         "variable": "{{type}} variable",
@@ -5690,6 +5697,7 @@
       },
       "variables": {
         "add-variable": "Add variable",
+        "change-type": "Change variable type",
         "reorder": "Drag to reorder",
         "select-type": "Choose variable type",
         "select-type-card-tooltip": "Click to select type",
@@ -6294,6 +6302,8 @@
       "export": {
         "title": "Export"
       },
+      "filters": "Filters",
+      "open": "Filters overview",
       "outline": {
         "title": "Outline",
         "tooltip": "Content outline"
@@ -6503,6 +6513,10 @@
       "sql-expressions-title": "SQL Expressions",
       "title-add-another-transformation": "Add another transformation",
       "view-all": "View all"
+    },
+    "transformation-type-picker": {
+      "sql-cta-button": "Add SQL expression",
+      "sql-cta-description": "Prefer SQL? Add a SQL expression to your queries instead."
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "By deleting all transformations, you will go back to the main selection screen."
@@ -7892,8 +7906,7 @@
   "dashboards": {
     "filters-overview": {
       "all-filters": "All filters",
-      "filters": "Filters",
-      "open": "Open filters overview pane"
+      "open": "Filters overview"
     },
     "panel-queries": {
       "add-from-saved-queries": "Add from saved queries"
@@ -8142,8 +8155,10 @@
     },
     "use-data-source-info": {
       "badge-text-not-supported": "Not supported",
+      "badge-text-success": "Success",
       "badge-text-supported": "Supported",
       "label": {
+        "advisor": "Advisor",
         "alerting": "Alerting",
         "type": "Type"
       }
@@ -8173,6 +8188,9 @@
       "current-value": "Current value: {{currentValue}} ",
       "label-state-name": "State name"
     }
+  },
+  "diff-viewer": {
+    "loading": "Loading diff..."
   },
   "dimensions": {
     "background-size-editor": {
@@ -8799,6 +8817,9 @@
     "show-all-spans": "Show all spans",
     "span-bar": {
       "tooltip-critical-path": "A segment on the <1>critical path</1> of the overall trace / request / workflow."
+    },
+    "span-bar-row": {
+      "tooltip-adaptive-traces-restored": "Recovered by Adaptive Traces."
     },
     "span-bar-section": {
       "description-link": "Add additional info next to the service and operation on a span bar row in the trace view.",
@@ -9753,6 +9774,7 @@
         },
         "length": {
           "formats": {
+            "name-centimeter": "centimeter (cm)",
             "name-feet": "feet (ft)",
             "name-inch": "inch (in)",
             "name-kilometer": "kilometer (km)",
@@ -10700,6 +10722,7 @@
       "description": "Description",
       "keys": "Keys"
     },
+    "shortcuts-aria-label": "List of keyboard shortcuts",
     "shortcuts-category": {
       "dashboard": "Dashboard",
       "focused-panel": "Focused panel",
@@ -12227,7 +12250,7 @@
     },
     "quick-add": {
       "aria-label": "New",
-      "new-template-dashboard-button": "From template"
+      "new-template-dashboard-button": "Use template"
     },
     "rss-button": "Latest from the blog"
   },
@@ -12362,7 +12385,7 @@
         "description-no-value": "What to show when there is no value",
         "description-value-mappings": "Modify the display text based on input value",
         "name-actions": "Actions",
-        "name-ad-hoc": "Ad-hoc filterable",
+        "name-ad-hoc": "Filterable",
         "name-color-scheme": "Color scheme",
         "name-data-links": "Data links",
         "name-decimals": "Decimals",
@@ -12430,7 +12453,13 @@
   },
   "page": {
     "editable-title": {
-      "edit-tooltip": "Edit title"
+      "cancel-tooltip": "Cancel",
+      "edit-tooltip": "Edit title",
+      "error": "An unknown error occurred",
+      "label": "Name",
+      "placeholder": "Name",
+      "required": "Please enter a title",
+      "save-tooltip": "Save"
     }
   },
   "panel": {
@@ -12821,6 +12850,7 @@
       "title-button-disabled": "The plugin isn't usable yet, it may take some time to complete the installation."
     },
     "install-controls": {
+      "contact-us": "Contact us",
       "install": "Install",
       "installing": "Installing",
       "update": "Update",
@@ -14316,11 +14346,11 @@
       "view-as-list": "View as list"
     },
     "dashboard-actions": {
-      "import": "Import",
+      "import": "Import dashboard",
       "new": "New",
       "new-dashboard": "New dashboard",
       "new-folder": "New folder",
-      "new-template-dashboard": "Dashboard from template"
+      "new-template-dashboard": "Use template"
     },
     "generate-columns": {
       "score": "Score"
@@ -15285,11 +15315,12 @@
     },
     "range-content": {
       "apply-button": "Apply time range",
-      "default-error": "Please enter a past date or \"{{now}}\"",
+      "default-error": "Enter a date ({{dateExample}}) or relative time ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
       "fiscal-year": "Fiscal year: {{from}} - {{to}}",
       "from-input": "From",
       "open-input-calendar": "Open calendar",
-      "range-error": "\"From\" can't be after \"To\"",
+      "range-error": "\"From\" date must be before \"To\" date",
+      "required-error": "This field is required",
       "to-input": "To"
     },
     "range-picker": {

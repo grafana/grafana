@@ -217,7 +217,15 @@ func (s *Service) toDataFrames(response *http.Response, refId string) (frames da
 		tags := make(map[string]string)
 		for name, value := range series.Tags {
 			if name == "name" {
-				value = series.Target
+				// Metrictank sets tags["name"] to the full internal series key
+				// (e.g. "cpu.usage;env=prod;host=web01") rather than just the
+				// base metric name. Strip everything from the first ';' so that
+				// transformations like joinByLabels(value:'name') work correctly.
+				target := series.Target
+				if idx := strings.IndexByte(target, ';'); idx != -1 {
+					target = target[:idx]
+				}
+				value = target
 			}
 			switch value := value.(type) {
 			case string:

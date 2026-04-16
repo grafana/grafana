@@ -166,7 +166,7 @@ To check the status, select Explore in the menu, select your Tempo data source, 
 
 ### Troubleshoot streaming
 
-If streaming isn't working, refer to [Streaming issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/troubleshoot/#streaming-issues) in the troubleshooting guide.
+If streaming isn't working, refer to [Streaming issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/troubleshooting/#streaming-issues) in the troubleshooting guide.
 
 ## Connect traces to other signals
 
