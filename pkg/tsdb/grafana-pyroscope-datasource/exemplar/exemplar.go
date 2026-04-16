@@ -2,6 +2,7 @@ package exemplar
 
 import (
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -38,13 +39,15 @@ func CreateExemplarFrame(labels map[string]string, exemplars []*Exemplar, exempl
 	uniqLabelNames := make(map[string]struct{})
 	for _, e := range exemplars {
 		for name := range e.Labels {
+			if strings.HasPrefix(name, "__") {
+				continue
+			}
 			uniqLabelNames[name] = struct{}{}
 		}
 	}
 	for name := range labels {
 		uniqLabelNames[name] = struct{}{}
 	}
-
 	sortedLabelNames := make([]string, 0, len(uniqLabelNames))
 	for name := range uniqLabelNames {
 		sortedLabelNames = append(sortedLabelNames, name)

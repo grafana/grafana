@@ -78,7 +78,7 @@ func TestCreateExemplarFrame_SpanType(t *testing.T) {
 	require.Equal(t, "span-abc123", row[2]) // Should use SpanId for span type
 }
 
-func TestCreateExemplarFrame_AllLabelsIncluded(t *testing.T) {
+func TestCreateExemplarFrame_FiltersPrivateLabels(t *testing.T) {
 	exemplars := []*Exemplar{
 		{
 			ProfileId: "profile-1",
@@ -97,7 +97,7 @@ func TestCreateExemplarFrame_AllLabelsIncluded(t *testing.T) {
 	}
 	frame := CreateExemplarFrame(labels, exemplars, ExemplarTypeSpan, "count")
 
-	// Verify all fields are created (including private labels)
+	// Verify non-private fields are created, and private (__) labels are excluded
 	fieldNames := make([]string, 0, len(frame.Fields))
 	for _, field := range frame.Fields {
 		fieldNames = append(fieldNames, field.Name)
@@ -108,8 +108,8 @@ func TestCreateExemplarFrame_AllLabelsIncluded(t *testing.T) {
 	require.Contains(t, fieldNames, "Id")
 	require.Contains(t, fieldNames, "service")
 	require.Contains(t, fieldNames, "pod")
-	require.Contains(t, fieldNames, "__profile_type__")
-	require.Contains(t, fieldNames, "__name__")
+	require.NotContains(t, fieldNames, "__profile_type__")
+	require.NotContains(t, fieldNames, "__name__")
 }
 
 func TestCreateExemplarFrame_NoDuplicateFields(t *testing.T) {
