@@ -58,6 +58,68 @@ test.describe('Panels test: TimeSeries', { tag: ['@panels', '@timeseries'] }, ()
     await timeseriesUplot.hover({ position: { x: 100, y: 50 } });
     await expect(tooltip, 'tooltip is not shown when disabled').toBeHidden();
   });
+
+  test('timeseries options are accessible in edit mode', async ({ gotoDashboardPage, selectors }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '47' }),
+    });
+
+    const fieldLabel = (label: string) =>
+      dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel(label));
+
+    await expect(fieldLabel('Graph styles Style'), 'Style option is visible').toBeVisible();
+    await expect(fieldLabel('Graph styles Line interpolation'), 'Line interpolation is visible').toBeVisible();
+    await expect(fieldLabel('Graph styles Line width'), 'Line width is visible').toBeVisible();
+    await expect(fieldLabel('Graph styles Fill opacity'), 'Fill opacity is visible').toBeVisible();
+    await expect(fieldLabel('Graph styles Gradient mode'), 'Gradient mode is visible').toBeVisible();
+    await expect(fieldLabel('Graph styles Show points'), 'Show points is visible').toBeVisible();
+  });
+
+  test('draw style change updates available options', async ({ gotoDashboardPage, selectors }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '47' }),
+    });
+
+    const fieldLabel = (label: string) =>
+      dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel(label));
+
+    await expect(
+      fieldLabel('Graph styles Line interpolation'),
+      'Line interpolation visible for Line style'
+    ).toBeVisible();
+
+    await fieldLabel('Graph styles Style').getByLabel('Bars').click();
+
+    await expect(
+      fieldLabel('Graph styles Line interpolation'),
+      'Line interpolation hidden for Bars style'
+    ).toBeHidden();
+    await expect(fieldLabel('Graph styles Bar alignment'), 'Bar alignment visible for Bars style').toBeVisible();
+    await expect(fieldLabel('Graph styles Bar width factor'), 'Bar width factor visible for Bars style').toBeVisible();
+  });
+
+  test('legend toggle shows legend items', async ({ gotoDashboardPage, selectors }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '47' }),
+    });
+
+    const legendItem = dashboardPage.getByGrafanaSelector(selectors.components.VizLegend.seriesName('A-series'));
+    await expect(legendItem, 'legend is initially hidden').toBeHidden();
+
+    const legendVisibility = dashboardPage.getByGrafanaSelector(
+      selectors.components.PanelEditor.OptionsPane.fieldLabel('Legend Visibility')
+    );
+    await legendVisibility.getByRole('switch').click();
+
+    await expect(legendItem, 'A-series legend item is visible').toBeVisible();
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.VizLegend.seriesName('B-series')),
+      'B-series legend item is visible'
+    ).toBeVisible();
+  });
 });
 
 test.use({
