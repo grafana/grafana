@@ -75,6 +75,27 @@ func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error
 }
 
 func (s *Service) GetByID(ctx context.Context, cmd *user.GetUserByIDQuery) (*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.wrapper.GetByID", trace.WithAttributes(
+		attribute.Int64("userID", cmd.ID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	if s.isKubernetesUserServiceEnabled(ctx) {
+		if hasOrgID(ctx) {
+			result, err := s.k8sService.GetByID(ctx, cmd)
+			if err == nil {
+				span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
+				return result, nil
+			}
+			ctxLogger.Warn("k8s GetByID failed, falling back to legacy", "userID", cmd.ID, "err", err)
+		} else {
+			ctxLogger.Warn("no orgID in context, falling back to legacy", "method", "GetByID")
+		}
+	}
+
+	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.GetByID(ctx, cmd)
 }
 
@@ -102,8 +123,8 @@ func (s *Service) GetByLogin(ctx context.Context, cmd *user.GetUserByLoginQuery)
 			return s.k8sService.GetByLogin(ctx, cmd)
 		}
 
-		err := errors.New("kubernetesUsersRedirect is enabled but no orgID found in context")
-		s.logger.Warn(err.Error())
+		err := errors.New("no orgID in context")
+		s.logger.Warn("no orgID in context, falling back to legacy", "method", "GetByLogin")
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 	}
@@ -122,8 +143,8 @@ func (s *Service) GetByEmail(ctx context.Context, cmd *user.GetUserByEmailQuery)
 			return s.k8sService.GetByEmail(ctx, cmd)
 		}
 
-		err := errors.New("kubernetesUsersRedirect is enabled but no orgID found in context")
-		s.logger.Warn(err.Error())
+		err := errors.New("no orgID in context")
+		s.logger.Warn("no orgID in context, falling back to legacy", "method", "GetByEmail")
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 	}
@@ -168,7 +189,7 @@ func (s *Service) GetSignedInUser(ctx context.Context, cmd *user.GetSignedInUser
 			// -  When there is no request context (e.g. calls from the k8s API server handler).
 			ctxLogger.Warn("k8s GetSignedInUser failed, falling back to legacy", "userID", cmd.UserID, "err", err)
 		} else {
-			ctxLogger.Warn("kubernetesUsersRedirect is enabled but no orgID found in context, falling back to legacy")
+			ctxLogger.Warn("no orgID in context, falling back to legacy", "method", "GetSignedInUser")
 		}
 	}
 
