@@ -7,7 +7,6 @@ import {
   type JSX,
   type Key,
   type ReactNode,
-  lazy,
   Suspense,
   useCallback,
   useEffect,
