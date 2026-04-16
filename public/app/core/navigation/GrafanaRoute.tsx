@@ -40,7 +40,8 @@ export function GrafanaRoute(props: Props) {
     cleanupDOM();
     reportPageview();
     navigationLogger('GrafanaRoute', false, 'Updated', props);
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.location.pathname, props.location.search, props.location.hash]);
 
   navigationLogger('GrafanaRoute', false, 'Rendered', props.route);
 
