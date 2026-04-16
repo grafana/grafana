@@ -5,6 +5,7 @@ import { appEvents } from 'app/core/app_events';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import * as folderHooks from '../../../api/clients/folder/v1beta1/hooks';
 import { mockFolderDTO } from '../fixtures/folder.fixture';
 import * as permissions from '../permissions';
 
@@ -150,6 +151,53 @@ describe('browse-dashboards FolderActionsButton', () => {
           component: DeleteModal,
         })
       )
+    );
+  });
+
+  it('shows backend delete error message when folder deletion fails', async () => {
+    const backendMessage = 'Folder cannot be deleted: folder is not empty';
+    const mockDeleteFolder = jest.fn().mockResolvedValue({
+      error: { status: 400, data: { message: backendMessage } },
+    });
+    jest.spyOn(folderHooks, 'useDeleteFolderMutationFacade').mockReturnValue(mockDeleteFolder as never);
+    const publishSpy = jest.spyOn(appEvents, 'publish');
+
+    render(<FolderActionsButton folder={mockFolder} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: deleteMenuItemLabel }));
+
+    const showModalEvent = publishSpy.mock.calls[0][0] as ShowModalReactEvent;
+    await showModalEvent.payload.props.onConfirm();
+
+    expect(publishSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'alert-error',
+        payload: [backendMessage],
+      })
+    );
+  });
+
+  it('falls back to generic delete error message when backend message is missing', async () => {
+    const mockDeleteFolder = jest.fn().mockResolvedValue({
+      error: { status: 500 },
+    });
+    jest.spyOn(folderHooks, 'useDeleteFolderMutationFacade').mockReturnValue(mockDeleteFolder as never);
+    const publishSpy = jest.spyOn(appEvents, 'publish');
+
+    render(<FolderActionsButton folder={mockFolder} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: deleteMenuItemLabel }));
+
+    const showModalEvent = publishSpy.mock.calls[0][0] as ShowModalReactEvent;
+    await showModalEvent.payload.props.onConfirm();
+
+    expect(publishSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'alert-error',
+        payload: ['Error deleting folder. Please try again later.'],
+      })
     );
   });
 

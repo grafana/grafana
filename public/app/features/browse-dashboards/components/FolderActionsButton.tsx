@@ -31,6 +31,25 @@ interface Props {
   repoType?: RepoType;
 }
 
+const getDeleteFolderErrorMessage = (error: unknown) => {
+  if (!error || typeof error !== 'object') {
+    return undefined;
+  }
+
+  if ('data' in error && error.data && typeof error.data === 'object' && 'message' in error.data) {
+    const { message } = error.data as { message?: unknown };
+    if (typeof message === 'string' && message.length > 0) {
+      return message;
+    }
+  }
+
+  if ('message' in error && typeof error.message === 'string' && error.message.length > 0) {
+    return error.message;
+  }
+
+  return undefined;
+};
+
 export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
@@ -73,14 +92,14 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
     const result = await deleteFolder(folder);
 
     if (result.error) {
+      const fallbackMessage = t(
+        'browse-dashboards.folder-actions-button.delete-folder-error',
+        'Error deleting folder. Please try again later.'
+      );
+
       appEvents.publish({
         type: AppEvents.alertError.name,
-        payload: [
-          t(
-            'browse-dashboards.folder-actions-button.delete-folder-error',
-            'Error deleting folder. Please try again later.'
-          ),
-        ],
+        payload: [getDeleteFolderErrorMessage(result.error) ?? fallbackMessage],
       });
       return;
     }
