@@ -419,7 +419,9 @@ jobs:
       - build-deb-rpm
     permissions:
       contents: read
+      id-token: write
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
