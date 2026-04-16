@@ -15,36 +15,6 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 )
 
-// ProvideService is the wire provider that switches based on feature flag
-/*func ProvideService(
-    cfg *setting.Cfg,
-    features featuremgmt.FeatureToggles,
-    // ... other dependencies both implementations need
-) (Service, error) {
-    // Check if the feature flag is enabled
-    if features.IsEnabledGlobally(featuremgmt.FlagYourFeatureName) {
-        // Return app platform version
-        return &AppPlatformService{
-            // ... initialize with dependencies
-        }, nil
-    }
-
-    // Return legacy version
-    return &LegacyService{
-        // ... initialize with dependencies
-    }, nil
-} */
-
-/*
-	RouteRegister     routing.RouteRegister
-	log               log.Logger
-	AccessControl     accesscontrol.AccessControl
-	QuotaService      quota.Service
-	clientGen         resource.ClientGenerator
-	xk8sClient         *v0alpha1.CorrelationClient
-	xk8sClientInitErr  error
-*/
-
 func ProvideService(ctx context.Context, sqlStore db.DB, routeRegister routing.RouteRegister, ds datasources.DataSourceService, ac accesscontrol.AccessControl, bus bus.Bus, qs quota.Service, cfg *setting.Cfg, clientGen resource.ClientGenerator,
 ) (Service, error) {
 	client := openfeature.NewDefaultClient()
@@ -105,7 +75,8 @@ func ProvideService(ctx context.Context, sqlStore db.DB, routeRegister routing.R
 	}
 }
 
-// this is available if we need to call the legacy service directly
+// this is for K8s to use if the dual write mode requires writing to legacy
+// all endpoints, quotas, etc is handled from the K8s service called in the first place, so it's not needed here
 func ProvideLegacyService(
 	sqlStore db.DB,
 	routeRegister routing.RouteRegister,
@@ -121,8 +92,5 @@ func ProvideLegacyService(
 		AccessControl:     ac,
 		QuotaService:      qs,
 	}
-	// NOTE: Do NOT register HTTP endpoints - those are handled by ProvideService
-	// NOTE: Do NOT register event listeners - only the main service should listen
-	// NOTE: Do NOT register quota - the main service handles quota reporting
 	return s, nil
 }
