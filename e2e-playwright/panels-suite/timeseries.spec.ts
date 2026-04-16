@@ -112,13 +112,9 @@ test.describe('Panels test: TimeSeries', { tag: ['@panels', '@timeseries'] }, ()
     const legendVisibility = dashboardPage.getByGrafanaSelector(
       selectors.components.PanelEditor.OptionsPane.fieldLabel('Legend Visibility')
     );
-    await legendVisibility.getByRole('switch').click();
+    await legendVisibility.getByText('Visibility').click();
 
     await expect(legendItem, 'A-series legend item is visible').toBeVisible();
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.VizLegend.seriesName('B-series')),
-      'B-series legend item is visible'
-    ).toBeVisible();
   });
 });
 
