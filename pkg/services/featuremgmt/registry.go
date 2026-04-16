@@ -464,14 +464,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "scanRowInvalidDashboardParseFallbackEnabled",
-			Description: "Enable fallback parsing behavior when scan row encounters invalid dashboard JSON",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "datasources.queryTypes",
 			Description:     "Load Query types from spec.{version}.query.{yaml|json}",
 			Stage:           FeatureStageExperimental,
@@ -1390,15 +1382,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "managedDualWriter",
-			Description:  "Pick the dual write mode from database configs",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "pluginsSriChecks",
 			Description: "Enables SRI checks for plugin assets",
 			Stage:       FeatureStageGeneralAvailability,
@@ -2160,15 +2143,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "unifiedStorageSearchDualReaderEnabled",
-			Description:  "Enable dual reader for unified storage search",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "dashboardLevelTimeMacros",
 			Description: "Supports __from and __to macros that always use the dashboard level time range",
 			Stage:       FeatureStageExperimental,
@@ -2414,6 +2388,15 @@ var (
 			HideFromDocs: true,
 			Owner:        identityAccessTeam,
 			Expression:   "true",
+		},
+		{
+			Name:         "onlyStoreServiceAccountActionSets",
+			Description:  "When storing service account resource permissions, only store action sets and not the full list of underlying permissions",
+			Stage:        FeatureStageExperimental,
+			Generate:     Generate{LegacyGo: true},
+			HideFromDocs: true,
+			Owner:        identityAccessTeam,
+			Expression:   "false",
 		},
 		{
 			Name:         "excludeRedundantManagedPermissions",

@@ -167,7 +167,7 @@ func TestIntegrationProvisioning_RepositoryPendingDeleteAdmission(t *testing.T) 
 		common.SetPendingDeleteLabel(t, helper.Repositories.Resource, repoName)
 
 		// Always re-Get to avoid stale resourceVersion conflicts from concurrent status updates.
-		err := common.RetryOnConflict(func() error {
+		err := common.RetryOnConflict(t, func() error {
 			obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 			if err != nil {
 				return err
@@ -189,7 +189,7 @@ func TestIntegrationProvisioning_RepositoryPendingDeleteAdmission(t *testing.T) 
 		// Echo back the current object via UpdateStatus. The admission webhook must
 		// pass status-subresource requests through without a Forbidden rejection,
 		// regardless of whether the pending-delete label is set.
-		err := common.RetryOnConflict(func() error {
+		err := common.RetryOnConflict(t, func() error {
 			obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 			if err != nil {
 				return err
@@ -206,7 +206,7 @@ func TestIntegrationProvisioning_RepositoryPendingDeleteAdmission(t *testing.T) 
 		common.SetPendingDeleteLabel(t, helper.Repositories.Resource, repoName)
 
 		// Always re-Get to avoid stale resourceVersion conflicts from concurrent status updates.
-		err := common.RetryOnConflict(func() error {
+		err := common.RetryOnConflict(t, func() error {
 			obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 			if err != nil {
 				return err

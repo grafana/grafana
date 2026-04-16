@@ -202,6 +202,6 @@ func (s *LegacySQL) getLegacyTeamID(ctx context.Context, orgId int64, team strin
 
 	var id int64
 	sess := sql.DB.GetSqlxSession()
-	err = sess.Select(ctx, &id, "SELECT id FROM team WHERE org_id=? AND uid=?", orgId, team)
+	err = sess.Get(ctx, &id, "SELECT id FROM team WHERE org_id=? AND uid=?", orgId, team)
 	return id, err
 }
