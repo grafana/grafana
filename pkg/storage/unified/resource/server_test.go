@@ -1275,9 +1275,9 @@ func TestPeriodicBookmarks(t *testing.T) {
 		defer cancel()
 
 		mock := newMockWatchServer(ctx)
-		watchDone := make(chan error, 1)
-		go func() {
-			watchDone <- srv.Watch(&resourcepb.WatchRequest{
+		var eg errgroup.Group
+		eg.Go(func() error {
+			return srv.Watch(&resourcepb.WatchRequest{
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{
 						Group:    group,
@@ -1287,27 +1287,13 @@ func TestPeriodicBookmarks(t *testing.T) {
 				SendInitialEvents:   true,
 				AllowWatchBookmarks: false,
 			}, mock)
-		}()
+		})
 
-		// Wait longer than the bookmark frequency — we should see zero bookmarks.
-		time.Sleep(200 * time.Millisecond)
+		// Collect all bookmarks for the next 1s.
+		_, bookmarks := waitForBookmarks(t, mock, 0)
 		cancel()
-		<-watchDone
+		require.NoError(t, eg.Wait())
 
-		// Drain events and check for bookmarks.
-		var bookmarkCount int
-	drain:
-		for {
-			select {
-			case evt := <-mock.events:
-				if evt.Type == resourcepb.WatchEvent_BOOKMARK {
-					bookmarkCount++
-				}
-			default:
-				break drain
-			}
-		}
-
-		require.Equal(t, 0, bookmarkCount, "expected no bookmarks when AllowWatchBookmarks is false")
+		require.Empty(t, bookmarks)
 	})
 }
