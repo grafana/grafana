@@ -7,7 +7,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,47 +17,33 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
-	// Create two repositories with folder targets and separate paths to avoid file conflicts
 	const repo1 = "pulljob-repo-1"
 	const repo2 = "pulljob-repo-2"
 
-	// create both repos concurrently to reduce duration of this test
-	var wg sync.WaitGroup
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo1,
-			Path:   path.Join(helper.ProvisioningPath, "repo1"),
-			Target: "folder",
-			Copies: map[string]string{
-				"../testdata/all-panels.json": "dashboard1.json",
-			},
-			SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
-		})
-	}()
-	go func() {
-		defer wg.Done()
-		helper.CreateRepo(t, common.TestRepo{
-			Name:   repo2,
-			Path:   path.Join(helper.ProvisioningPath, "repo2"),
-			Target: "folder",
-			Copies: map[string]string{
-				"../testdata/timeline-demo.json": "dashboard2.json",
-			},
-			SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
-		})
-	}()
-	wg.Wait()
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo1,
+		LocalPath:  path.Join(helper.ProvisioningPath, "repo1"),
+		SyncTarget: "folder",
+		Copies: map[string]string{
+			"../testdata/all-panels.json": "dashboard1.json",
+		},
+		SkipResourceAssertions: true, // will check both at the same time below
+	})
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo2,
+		LocalPath:  path.Join(helper.ProvisioningPath, "repo2"),
+		SyncTarget: "folder",
+		Copies: map[string]string{
+			"../testdata/timeline-demo.json": "dashboard2.json",
+		},
+		SkipResourceAssertions: true, // will check both at the same time below
+	})
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})

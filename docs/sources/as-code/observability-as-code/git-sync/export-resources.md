@@ -23,15 +23,15 @@ aliases:
 
 {{< admonition type="caution" >}}
 
-Git Sync is available in [public preview](https://grafana.com/docs/release-life-cycle/) for Grafana Cloud, and is an [experimental feature](https://grafana.com/docs/release-life-cycle/) in Grafana v12 for open source and Enterprise editions. Documentation and support is available based on the different tiers but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided.
+**Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
 
-**Git Sync is under development.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) for more information. [Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
+[Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
 
 {{< /admonition >}}
 
-Git Sync is under development, and traditional operations like moving or copying a dashboard to a provisioned folder are not fully supported for resources already existing in Grafana. Git Sync doesn't offer any built-in functionality to easily export resources from Grafana in bulk. However, the following options are available:
+Traditional operations such as moving or copying a dashboard to a provisioned folder or bulk export are gradually being incorporated into Git Sync. In the meantime the following options are available:
 
-- [Export an existing dashboard from the Grafana UI as a copy](#provision-an-existing-dashboard-from-the-grafana-ui)
+- [Export an existing dashboard from the Grafana UI as a copy](#add-an-existing-dashboard-from-the-grafana-ui)
 - [Export the dashboard with Grafana CLI](#add-a-dashboard-with-grafana-cli)
 - [Copy the dashboard as JSON and commit to the repository](#add-a-dashboard-via-json-export)
 
@@ -93,7 +93,7 @@ To export a dashboard as a JSON file it must follow this CRD structure:
 
 ```yaml
 {
-  'apiVersion': 'dashboard.grafana.app/v1beta1',
+  'apiVersion': 'dashboard.grafana.app/v1',
   'kind': 'Dashboard',
   'metadata': { 'name': 'dcf2lve9akj8xsd' },
   'spec': { /* Original dashboard JSON goes here */ },
@@ -102,7 +102,7 @@ To export a dashboard as a JSON file it must follow this CRD structure:
 
 The structure includes:
 
-- `apiVersion`: Specifies the API version (currently `v1beta1`)
+- `apiVersion`: Specifies the API version (currently `v1`)
 - `kind`: Identifies the resource type (Dashboard)
 - `metadata`: Contains the dashboard identifier `uid`. You can find the identifier in the dahsboard's URL or in the exported JSON
 - `spec`: Wraps your original dashboard JSON

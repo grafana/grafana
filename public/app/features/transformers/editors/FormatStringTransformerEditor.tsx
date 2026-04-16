@@ -2,17 +2,17 @@ import { useCallback } from 'react';
 
 import {
   DataTransformerID,
-  SelectableValue,
+  type SelectableValue,
   standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerRegistryItem,
+  type TransformerUIProps,
   PluginState,
   FieldType,
-  StandardEditorsRegistryItem,
-  FieldNamePickerConfigSettings,
+  type StandardEditorsRegistryItem,
+  type FieldNamePickerConfigSettings,
   TransformerCategory,
 } from '@grafana/data';
-import { FormatStringOutput, FormatStringTransformerOptions } from '@grafana/data/internal';
+import { FormatStringOutput, type FormatStringTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';

@@ -16,15 +16,16 @@ import { css, keyframes } from '@emotion/css';
 import cx from 'classnames';
 import * as React from 'react';
 
-import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
+import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
-import { Icon, stylesFactory, withTheme2 } from '@grafana/ui';
+import { Icon, stylesFactory, Tooltip, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
-import { SpanBarOptions } from '../settings/SpanBarSettings';
-import TNil from '../types/TNil';
-import { SpanLinkFunc } from '../types/links';
-import { TraceSpan, CriticalPathSection } from '../types/trace';
+import { type SpanBarOptions } from '../settings/SpanBarSettings';
+import type TNil from '../types/TNil';
+import { type SpanLinkFunc } from '../types/links';
+import { type TraceSpan, type CriticalPathSection } from '../types/trace';
 import { formatDuration } from '../utils/date';
 import { getServiceDisplayName } from '../utils/service-name';
 
@@ -33,7 +34,24 @@ import { SpanLinksMenu } from './SpanLinks';
 import SpanTreeOffset from './SpanTreeOffset';
 import Ticks from './Ticks';
 import TimelineRow from './TimelineRow';
-import { ViewedBoundsFunctionType } from './utils';
+import { type ViewedBoundsFunctionType } from './utils';
+
+const GRAFANA_ADAPTIVE_TRACES_RESTORED_TAG_KEY = 'grafana.adaptivetraces.restored';
+
+function spanHasAdaptiveTraceRestoredTag(tags: TraceKeyValuePair[]): boolean {
+  const tag = tags.find((kv) => kv.key === GRAFANA_ADAPTIVE_TRACES_RESTORED_TAG_KEY);
+  if (!tag) {
+    return false;
+  }
+  const v = tag.value;
+  if (typeof v === 'boolean') {
+    return v;
+  }
+  if (typeof v === 'string') {
+    return v.toLowerCase() === 'true';
+  }
+  return false;
+}
 
 const spanBarClassName = 'spanBar';
 const spanBarLabelClassName = 'spanBarLabel';
@@ -287,6 +305,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       marginRight: '0.25rem',
       padding: '1px',
     }),
+    adaptiveTracesRestoredIconWrap: css({
+      label: 'adaptiveTracesRestoredIconWrap',
+      alignItems: 'center',
+      color: theme.colors.text.secondary,
+      display: 'inline-flex',
+      flexShrink: 0,
+      padding: '4px',
+      '&:hover': {
+        color: `#fff`,
+      },
+    }),
     rpcColorMarker: css({
       label: 'rpcColorMarker',
       borderRadius: theme.shape.radius.md,
@@ -390,6 +419,7 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
   const { duration, hasChildren: isParent, operationName, process } = span;
   const serviceDisplayName = getServiceDisplayName(process);
   const label = formatDuration(duration);
+  const showAdaptiveTracesRestoredHint = spanHasAdaptiveTraceRestoredTag(span.tags ?? []);
 
   const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
   const viewStart = viewBounds.start;
@@ -524,6 +554,19 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
             <span className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</span>
             <span className={styles.endpointName}> {getSpanBarLabel(span, spanBarOptions, label)}</span>
           </button>
+          {showAdaptiveTracesRestoredHint && (
+            <Tooltip
+              placement="top"
+              content={t('explore.span-bar-row.tooltip-adaptive-traces-restored', 'Recovered by Adaptive Traces.')}
+            >
+              <span
+                className={cx(styles.adaptiveTracesRestoredIconWrap, 'icon-wrapper')}
+                data-testid="SpanBarRow-adaptiveTracesRestored"
+              >
+                <Icon name="info-circle" />
+              </span>
+            </Tooltip>
+          )}
           {createSpanLink &&
             (() => {
               const links = createSpanLink(span);

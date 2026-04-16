@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { DisplayValue, capitalize, formattedValueToString } from '@grafana/data';
+import { type DisplayValue, capitalize, formattedValueToString } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineList } from '../List/InlineList';

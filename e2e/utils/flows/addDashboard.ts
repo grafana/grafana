@@ -4,7 +4,7 @@ import { e2e } from '../index';
 import { getDashboardUid } from '../support/url';
 
 import { selectOption } from './selectOption';
-import { setDashboardTimeRange, TimeRangeConfig } from './setDashboardTimeRange';
+import { setDashboardTimeRange, type TimeRangeConfig } from './setDashboardTimeRange';
 
 export interface AddAnnotationConfig {
   dataSource: string;
@@ -207,7 +207,7 @@ export const VARIABLE_HIDE_LABEL = 'Label';
 export const VARIABLE_HIDE_NOTHING = '';
 export const VARIABLE_HIDE_VARIABLE = 'Variable';
 
-export const VARIABLE_TYPE_AD_HOC_FILTERS = 'Ad hoc filters';
+export const VARIABLE_TYPE_AD_HOC_FILTERS = 'Filters';
 export const VARIABLE_TYPE_CONSTANT = 'Constant';
 export const VARIABLE_TYPE_DATASOURCE = 'Datasource';
 export const VARIABLE_TYPE_QUERY = 'Query';

@@ -1,16 +1,21 @@
 import { capitalize } from 'lodash';
 import { useId, useMemo } from 'react';
 import { useObservable } from 'react-use';
-import { Observable, of } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 
-import { FieldConfigPropertyItem, StandardEditorProps, StandardEditorsRegistryItem, FrameMatcher } from '@grafana/data';
+import {
+  type FieldConfigPropertyItem,
+  type StandardEditorProps,
+  type StandardEditorsRegistryItem,
+  type FrameMatcher,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
-  ScaleDimensionConfig,
-  ResourceDimensionConfig,
-  ColorDimensionConfig,
-  TextDimensionConfig,
-  ScalarDimensionConfig,
+  type ScaleDimensionConfig,
+  type ResourceDimensionConfig,
+  type ColorDimensionConfig,
+  type TextDimensionConfig,
+  type ScalarDimensionConfig,
 } from '@grafana/schema';
 import { ColorPicker, Field, Stack, InlineField, InlineFieldRow, InlineLabel, RadioButtonGroup } from '@grafana/ui';
 import { NumberValueEditor } from 'app/core/components/OptionsUI/number';
@@ -27,12 +32,12 @@ import {
   VerticalAlign,
   defaultStyleConfig,
   GeometryTypeId,
-  StyleConfig,
+  type StyleConfig,
   TextAlignment,
   TextBaseline,
 } from '../style/types';
 import { styleUsesText } from '../style/utils';
-import { LayerContentInfo } from '../utils/getFeatures';
+import { type LayerContentInfo } from '../utils/getFeatures';
 
 export interface StyleEditorOptions {
   layerInfo?: Observable<LayerContentInfo>;

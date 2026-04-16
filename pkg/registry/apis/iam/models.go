@@ -12,6 +12,7 @@ import (
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -35,10 +37,6 @@ var _ builder.APIGroupMutation = (*IdentityAccessManagementAPIBuilder)(nil)
 // RoleStorageBackend uses the resource.StorageBackend interface to provide storage for custom roles.
 // Used by wire to identify the storage backend for custom roles.
 type RoleStorageBackend interface{ resource.StorageBackend }
-
-// RoleBindingStorageBackend uses the resource.StorageBackend interface to provide storage for role bindings.
-// Used by wire to identify the storage backend for role bindings.
-type RoleBindingStorageBackend interface{ resource.StorageBackend }
 
 // ExternalGroupMappingStorageBackend uses the resource.StorageBackend interface to provide storage for external group mappings.
 // Used by wire to identify the storage backend for external group mappings.
@@ -59,7 +57,8 @@ type IdentityAccessManagementAPIBuilder struct {
 	teamLBACApiInstaller             TeamLBACApiInstaller
 	externalGroupMappingApiInstaller ExternalGroupMappingApiInstaller
 	resourcePermissionsStorage       resource.StorageBackend
-	roleBindingsStorage              RoleBindingStorageBackend
+	mappers                          *resourcepermission.MappersRegistry
+	roleBindingsApiInstaller         RoleBindingApiInstaller
 
 	// Required for resource permissions authorization
 	// fetches resources parent folders
@@ -87,6 +86,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	userSearchClient                  resourcepb.ResourceIndexClient
 	userSearchHandler                 *user.SearchHandler
 	teamSearch                        *TeamSearchHandler
+	resourcePermissionsSearchHandler  *resourcepermission.ResourcePermissionsSearchHandler
 	externalGroupMappingSearchHandler externalgroupmapping.SearchHandler
 
 	teamGroupsHandler externalgroupmapping.TeamGroupsHandler
@@ -98,10 +98,6 @@ type IdentityAccessManagementAPIBuilder struct {
 	// nil where only k8s-mapped permissions are supported.
 	ac accesscontrol.AccessControl
 
-	// roleConfigProvider provides the REST config for a dynamic client that fetches
-	// roles referenced by role bindings
-	roleConfigProvider iamauthorizer.ConfigProvider
-
 	// Not set for multi-tenant deployment for now
 	sso ssosettings.Service
 
@@ -110,7 +106,8 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	tracing tracing.Tracer
 
-	cfgProvider configprovider.ConfigProvider
+	cfgProvider    configprovider.ConfigProvider
+	settingService settingsvc.Service
 
 	apiConfig Config
 }

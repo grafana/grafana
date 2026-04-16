@@ -1,22 +1,22 @@
 import { lastValueFrom } from 'rxjs';
 
-import { VizPanel } from '@grafana/scenes';
-import { LibraryPanel, defaultDashboard } from '@grafana/schema';
+import { type VizPanel } from '@grafana/scenes';
+import { type LibraryPanel, defaultDashboard } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { AutoGridItem } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from 'app/features/dashboard-scene/scene/layout-default/DashboardGridItem';
 import { vizPanelToPanel } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModel';
 import { getLibraryPanelBehavior } from 'app/features/dashboard-scene/utils/utils';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { DashboardQueryResult } from 'app/features/search/service/types';
+import { type DashboardQueryResult } from 'app/features/search/service/types';
 
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import {
-  LibraryElementConnectionDTO,
-  LibraryElementDTO,
+  type LibraryElementConnectionDTO,
+  type LibraryElementDTO,
   LibraryElementKind,
-  LibraryElementsSearchResult,
-  PanelModelWithLibraryPanel,
+  type LibraryElementsSearchResult,
+  type PanelModelWithLibraryPanel,
 } from '../types';
 
 export interface GetLibraryPanelsOptions {
@@ -105,13 +105,15 @@ export async function getLibraryPanelByName(name: string): Promise<LibraryElemen
 
 export async function addLibraryPanel(
   panelSaveModel: PanelModelWithLibraryPanel,
-  folderUid: string
+  folderUid: string,
+  uid?: string
 ): Promise<LibraryElementDTO> {
   const { result } = await getBackendSrv().post(`/api/library-elements`, {
     folderUid,
     name: panelSaveModel.libraryPanel.name,
     model: panelSaveModel,
     kind: LibraryElementKind.Panel,
+    ...(uid ? { uid } : {}),
   });
   return result;
 }

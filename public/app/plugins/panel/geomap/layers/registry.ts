@@ -1,12 +1,12 @@
-import OpenLayersMap from 'ol/Map';
+import type OpenLayersMap from 'ol/Map';
 
 import {
-  MapLayerRegistryItem,
+  type MapLayerRegistryItem,
   Registry,
-  MapLayerOptions,
-  GrafanaTheme2,
-  EventBus,
-  SelectableValue,
+  type MapLayerOptions,
+  type GrafanaTheme2,
+  type EventBus,
+  type SelectableValue,
   PluginState,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';

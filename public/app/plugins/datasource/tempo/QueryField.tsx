@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 
-import { CoreApp, QueryEditorProps, SelectableValue } from '@grafana/data';
+import { QueryWithAssistantButton } from '@grafana/assistant';
+import { CoreApp, type QueryEditorProps, type SelectableValue } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
   Button,
@@ -11,16 +12,16 @@ import {
   InlineFieldRow,
   Modal,
   RadioButtonGroup,
-  Themeable2,
+  type Themeable2,
   withTheme2,
 } from '@grafana/ui';
 
 import TraceQLSearch from './SearchTraceQLEditor/TraceQLSearch';
 import { ServiceGraphSection } from './ServiceGraphSection';
-import { TempoQueryType } from './dataquery.gen';
-import { TempoDatasource } from './datasource';
+import { type TempoQueryType } from './dataquery.gen';
+import { type TempoDatasource } from './datasource';
 import { QueryEditor } from './traceql/QueryEditor';
-import { TempoQuery } from './types';
+import { type TempoQuery } from './types';
 import { migrateFromSearchToTraceQLSearch } from './utils';
 
 interface Props extends QueryEditorProps<TempoDatasource, TempoQuery>, Themeable2 {
@@ -127,6 +128,12 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
       onChange(migrateFromSearchToTraceQLSearch(query));
     }
 
+    // only show query with assistant button if:
+    // feature toggle is enabled
+    // app is Explore, Dashboard, or PanelEditor
+    const showAssistant =
+      config.featureToggles.queryWithAssistant &&
+      (app === CoreApp.Explore || app === CoreApp.Dashboard || app === CoreApp.PanelEditor);
     return (
       <>
         <Modal
@@ -152,6 +159,17 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
             />
           </div>
         </Modal>
+        {!isAlerting && showAssistant && (
+          <InlineFieldRow className={css({ marginBottom: this.props.theme.spacing(1) })}>
+            <QueryWithAssistantButton
+              currentQuery={query}
+              queries={[query]}
+              dataSourceInstanceSettings={datasource.instanceSettings}
+              datasourceApi={null}
+              app={app}
+            />
+          </InlineFieldRow>
+        )}
         {!isAlerting && (
           <InlineFieldRow>
             <InlineField label="Query type" grow={true}>

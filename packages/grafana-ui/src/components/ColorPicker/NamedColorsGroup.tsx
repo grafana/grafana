@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { Property } from 'csstype';
+import { type Property } from 'csstype';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2, ThemeVizHue, upperFirst } from '@grafana/data';
+import { type GrafanaTheme2, type ThemeVizHue, upperFirst } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 

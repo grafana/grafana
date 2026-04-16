@@ -1,0 +1,2099 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2beta1",
+  "kind": "DashboardWithAccessInfo",
+  "metadata": {
+    "name": "section-level-variables-dev"
+  },
+  "spec": {
+    "title": "Section-Level Variables \u2014 Test Dashboard",
+    "description": "Covers all variable types, layouts, shadowing, repeating, and edge cases for section-level variables (requires dashboardSectionVariables feature toggle).",
+    "cursorSync": "Off",
+    "preload": false,
+    "editable": true,
+    "tags": ["gdev", "section-variables", "variables"],
+    "links": [],
+    "annotations": [],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-1h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h"],
+      "quickRanges": [
+        {
+          "display": "Last 5 minutes",
+          "from": "now-5m",
+          "to": "now"
+        },
+        {
+          "display": "Last 1 hour",
+          "from": "now-1h",
+          "to": "now"
+        },
+        {
+          "display": "Last 6 hours",
+          "from": "now-6h",
+          "to": "now"
+        },
+        {
+          "display": "Last 24 hours",
+          "from": "now-24h",
+          "to": "now"
+        },
+        {
+          "display": "Last 7 days",
+          "from": "now-7d",
+          "to": "now"
+        }
+      ],
+      "hideTimepicker": false,
+      "weekStart": "monday",
+      "fiscalYearStartMonth": 0
+    },
+    "variables": [
+      {
+        "kind": "CustomVariable",
+        "spec": {
+          "name": "global_env",
+          "label": "Global Env",
+          "description": "Dashboard-level env variable \u2014 used to test shadowing by section vars",
+          "query": "global-dev,global-staging,global-prod",
+          "current": {
+            "text": "global-dev",
+            "value": "global-dev"
+          },
+          "options": [],
+          "multi": false,
+          "includeAll": false,
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "allowCustomValue": false
+        }
+      },
+      {
+        "kind": "CustomVariable",
+        "spec": {
+          "name": "repeat_var",
+          "label": "Repeat Variable",
+          "description": "Multi-value variable used for row and tab repeat",
+          "query": "alpha,beta,gamma",
+          "current": {
+            "text": ["alpha", "beta", "gamma"],
+            "value": ["alpha", "beta", "gamma"]
+          },
+          "options": [],
+          "multi": true,
+          "includeAll": true,
+          "allValue": "",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "allowCustomValue": false
+        }
+      }
+    ],
+    "elements": {
+      "all_types_panel": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "All types: custom=$sec_custom, text=$sec_textbox, const=$sec_constant, interval=$sec_interval, switch=$sec_switch, query=$sec_query",
+          "description": "One row with every variable type as section variables",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "alias": "custom=$sec_custom interval=$sec_interval query=$sec_query"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "all_types_info": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Variable Values",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "",
+            "spec": {
+              "options": {
+                "mode": "markdown",
+                "content": "| Type | Name | Value |\n|---|---|---|\n| Custom | `sec_custom` | $sec_custom |\n| Textbox | `sec_textbox` | $sec_textbox |\n| Constant | `sec_constant` | $sec_constant |\n| Interval | `sec_interval` | $sec_interval |\n| Datasource | `sec_datasource` | $sec_datasource |\n| Switch | `sec_switch` | $sec_switch |\n| Query | `sec_query` | $sec_query |\n| Ad Hoc | `sec_adhoc` | (filter bar) |\n| Group By | `sec_groupby` | (group bar) |"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "shadow_panel": {
+        "kind": "Panel",
+        "spec": {
+          "id": 10,
+          "title": "Inside shadowing row: global_env=$global_env",
+          "description": "Section var named global_env overrides the dashboard-level one. Expected: section-override",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "",
+            "spec": {
+              "options": {
+                "mode": "markdown",
+                "content": "## Shadowing Test\n\n`global_env` inside this row = **$global_env**\n\nExpected: `section-override` (not the dashboard-level value)"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "repeat_row_panel": {
+        "kind": "Panel",
+        "spec": {
+          "id": 20,
+          "title": "Repeated row ($repeat_var) \u2014 sec_var=$repeated_sec",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "alias": "$repeat_var \u2014 $repeated_sec"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "collapsed_panel": {
+        "kind": "Panel",
+        "spec": {
+          "id": 30,
+          "title": "Collapsed row var: $collapsed_var",
+          "description": "Expand the row to see this. Section var should resolve.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "alias": "collapsed_var=$collapsed_var"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "nested_panel": {
+        "kind": "Panel",
+        "spec": {
+          "id": 40,
+          "title": "Nested: row_var=$nested_row_var, tab_var=$nested_tab_var",
+          "description": "Panel inside a tab inside a row. Should resolve both levels.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "alias": "row=$nested_row_var tab=$nested_tab_var"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "nested_inherit_panel": {
+        "kind": "Panel",
+        "spec": {
+          "id": 41,
+          "title": "Tab inherits row_var=$nested_row_var",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "",
+            "spec": {
+              "options": {
+                "mode": "markdown",
+                "content": "This tab has **no section vars** of its own.\n\nIt inherits `nested_row_var` = **$nested_row_var** from the parent row via ancestry walk."
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "edge_panel": {
+        "kind": "Panel",
+        "spec": {
+          "id": 50,
+          "title": "Edge: hidden=$edge_hidden, skipUrl=$edge_skipurl, multi=$edge_multi",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "alias": "hidden=$edge_hidden multi=$edge_multi"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "sibling_a_panel": {
+        "kind": "Panel",
+        "spec": {
+          "id": 60,
+          "title": "Sibling A: shared_name=$shared_name",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "",
+            "spec": {
+              "options": {
+                "mode": "markdown",
+                "content": "**Row A** \u2014 `shared_name` = **$shared_name**\n\nExpected: `from-sibling-A`"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "sibling_b_panel": {
+        "kind": "Panel",
+        "spec": {
+          "id": 61,
+          "title": "Sibling B: shared_name=$shared_name",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "",
+            "spec": {
+              "options": {
+                "mode": "markdown",
+                "content": "**Row B** \u2014 `shared_name` = **$shared_name**\n\nExpected: `from-sibling-B`"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "tab_all_types_panel": {
+        "kind": "Panel",
+        "spec": {
+          "id": 100,
+          "title": "Tab vars: custom=$tab_custom, text=$tab_textbox, interval=$tab_interval, switch=$tab_switch",
+          "description": "Tab-scoped variables of various types",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "alias": "custom=$tab_custom interval=$tab_interval"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "tab_all_types_info": {
+        "kind": "Panel",
+        "spec": {
+          "id": 101,
+          "title": "Tab Variable Values",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "",
+            "spec": {
+              "options": {
+                "mode": "markdown",
+                "content": "| Type | Name | Value |\n|---|---|---|\n| Custom | `tab_custom` | $tab_custom |\n| Textbox | `tab_textbox` | $tab_textbox |\n| Interval | `tab_interval` | $tab_interval |\n| Switch | `tab_switch` | $tab_switch |\n| Query | `tab_query` | $tab_query |\n| Datasource | `tab_datasource` | $tab_datasource |"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "tab_shadow_panel": {
+        "kind": "Panel",
+        "spec": {
+          "id": 102,
+          "title": "Tab shadowing: global_env=$global_env",
+          "description": "Tab-level var overrides dashboard-level global_env",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "",
+            "spec": {
+              "options": {
+                "mode": "markdown",
+                "content": "## Tab Shadowing Test\n\n`global_env` = **$global_env**\n\nExpected: `tab-override` (not dashboard-level value)"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "tab_no_vars_panel": {
+        "kind": "Panel",
+        "spec": {
+          "id": 103,
+          "title": "Tab without vars \u2014 global_env=$global_env",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "",
+            "spec": {
+              "options": {
+                "mode": "markdown",
+                "content": "This tab has **no section variables**.\n\n`global_env` = **$global_env** (should show dashboard-level value)\n\n`tab_custom` should **not** resolve here: $tab_custom"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "sec_var_repeat_panel": {
+        "kind": "Panel",
+        "spec": {
+          "id": 70,
+          "title": "Tab repeat=$tab_repeat_driver, Row var=$row_in_repeated",
+          "description": "Row repeated by parent tab's section variable (tab_repeat_driver). Also has its own section var (row_in_repeated).",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "alias": "region=$tab_repeat_driver replica=$row_in_repeated"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "ancestor_row_repeat_panel": {
+        "kind": "Panel",
+        "spec": {
+          "id": 71,
+          "title": "Ancestor row var=$nested_row_var",
+          "description": "Row nested inside a tab inside another row, repeated by grandparent row's section variable (nested_row_var).",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "alias": "ancestor_row=$nested_row_var"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "tab_repeat_panel": {
+        "kind": "Panel",
+        "spec": {
+          "id": 104,
+          "title": "Repeated tab ($repeat_var) \u2014 tab_sec=$tab_repeated_sec",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "alias": "$repeat_var \u2014 $tab_repeated_sec"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel_repeat_by_sec_var": {
+        "kind": "Panel",
+        "spec": {
+          "id": 72,
+          "title": "Panel repeated by section var: $sec_panel_repeat_source",
+          "description": "This panel repeats by sec_panel_repeat_source, a multi-value section variable on the parent row. Tests DashboardGridItem.performRepeat with ancestor-walked section variables.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "alias": "service=$sec_panel_repeat_source"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "single"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "TabsLayout",
+      "spec": {
+        "tabs": [
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "title": "Row-Scoped Variables",
+              "variables": [
+                {
+                  "kind": "CustomVariable",
+                  "spec": {
+                    "name": "tab_repeat_driver",
+                    "label": "Tab Repeat Driver",
+                    "description": "Multi-value variable on the tab, used to repeat a child row by ancestor section variable",
+                    "query": "east,west,central",
+                    "current": {
+                      "text": ["east", "west", "central"],
+                      "value": ["east", "west", "central"]
+                    },
+                    "options": [],
+                    "multi": true,
+                    "includeAll": true,
+                    "allValue": "",
+                    "hide": "dontHide",
+                    "skipUrlSync": false,
+                    "allowCustomValue": false
+                  }
+                }
+              ],
+              "layout": {
+                "kind": "RowsLayout",
+                "spec": {
+                  "rows": [
+                    {
+                      "kind": "RowsLayoutRow",
+                      "spec": {
+                        "title": "1. All Variable Types",
+                        "collapse": false,
+                        "layout": {
+                          "kind": "GridLayout",
+                          "spec": {
+                            "items": [
+                              {
+                                "kind": "GridLayoutItem",
+                                "spec": {
+                                  "x": 0,
+                                  "y": 0,
+                                  "width": 16,
+                                  "height": 8,
+                                  "element": {
+                                    "kind": "ElementReference",
+                                    "name": "all_types_panel"
+                                  }
+                                }
+                              },
+                              {
+                                "kind": "GridLayoutItem",
+                                "spec": {
+                                  "x": 16,
+                                  "y": 0,
+                                  "width": 8,
+                                  "height": 8,
+                                  "element": {
+                                    "kind": "ElementReference",
+                                    "name": "all_types_info"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "variables": [
+                          {
+                            "kind": "CustomVariable",
+                            "spec": {
+                              "name": "sec_custom",
+                              "label": "Custom",
+                              "query": "web,api,worker,scheduler",
+                              "current": {
+                                "text": "web",
+                                "value": "web"
+                              },
+                              "options": [],
+                              "multi": false,
+                              "includeAll": false,
+                              "hide": "dontHide",
+                              "skipUrlSync": false,
+                              "allowCustomValue": true
+                            }
+                          },
+                          {
+                            "kind": "TextVariable",
+                            "spec": {
+                              "name": "sec_textbox",
+                              "label": "Textbox",
+                              "query": "hello-world",
+                              "current": {
+                                "text": "hello-world",
+                                "value": "hello-world"
+                              },
+                              "hide": "dontHide",
+                              "skipUrlSync": false
+                            }
+                          },
+                          {
+                            "kind": "ConstantVariable",
+                            "spec": {
+                              "name": "sec_constant",
+                              "label": "Constant",
+                              "query": "v2.5.0-beta",
+                              "current": {
+                                "text": "v2.5.0-beta",
+                                "value": "v2.5.0-beta"
+                              },
+                              "hide": "dontHide",
+                              "skipUrlSync": true
+                            }
+                          },
+                          {
+                            "kind": "IntervalVariable",
+                            "spec": {
+                              "name": "sec_interval",
+                              "label": "Interval",
+                              "query": "10s,30s,1m,5m,15m,1h",
+                              "current": {
+                                "text": "1m",
+                                "value": "1m"
+                              },
+                              "options": [
+                                {
+                                  "text": "10s",
+                                  "value": "10s"
+                                },
+                                {
+                                  "text": "30s",
+                                  "value": "30s"
+                                },
+                                {
+                                  "text": "1m",
+                                  "value": "1m",
+                                  "selected": true
+                                },
+                                {
+                                  "text": "5m",
+                                  "value": "5m"
+                                },
+                                {
+                                  "text": "15m",
+                                  "value": "15m"
+                                },
+                                {
+                                  "text": "1h",
+                                  "value": "1h"
+                                }
+                              ],
+                              "auto": false,
+                              "auto_count": 10,
+                              "auto_min": "10s",
+                              "refresh": "onTimeRangeChanged",
+                              "hide": "dontHide",
+                              "skipUrlSync": false
+                            }
+                          },
+                          {
+                            "kind": "DatasourceVariable",
+                            "spec": {
+                              "name": "sec_datasource",
+                              "label": "Datasource",
+                              "pluginId": "grafana-testdata-datasource",
+                              "regex": "",
+                              "refresh": "onDashboardLoad",
+                              "current": {
+                                "text": "",
+                                "value": ""
+                              },
+                              "options": [],
+                              "multi": false,
+                              "includeAll": false,
+                              "hide": "dontHide",
+                              "skipUrlSync": false,
+                              "allowCustomValue": false
+                            }
+                          },
+                          {
+                            "kind": "SwitchVariable",
+                            "spec": {
+                              "name": "sec_switch",
+                              "label": "Switch",
+                              "current": "enabled",
+                              "enabledValue": "enabled",
+                              "disabledValue": "disabled",
+                              "hide": "dontHide",
+                              "skipUrlSync": false
+                            }
+                          },
+                          {
+                            "kind": "QueryVariable",
+                            "spec": {
+                              "name": "sec_query",
+                              "label": "Query",
+                              "query": {
+                                "kind": "DataQuery",
+                                "version": "v0",
+                                "group": "grafana-testdata-datasource",
+                                "spec": {
+                                  "scenarioId": "variables-query",
+                                  "stringInput": "us-east-1,us-west-2,eu-west-1,ap-southeast-1"
+                                }
+                              },
+                              "regex": "",
+                              "sort": "alphabeticalAsc",
+                              "refresh": "onDashboardLoad",
+                              "current": {
+                                "text": "us-east-1",
+                                "value": "us-east-1"
+                              },
+                              "options": [],
+                              "multi": false,
+                              "includeAll": false,
+                              "hide": "dontHide",
+                              "skipUrlSync": false,
+                              "allowCustomValue": false
+                            }
+                          },
+                          {
+                            "kind": "AdhocVariable",
+                            "group": "grafana-testdata-datasource",
+                            "spec": {
+                              "name": "sec_adhoc",
+                              "label": "Ad Hoc",
+                              "baseFilters": [],
+                              "filters": [],
+                              "defaultKeys": [],
+                              "hide": "dontHide",
+                              "skipUrlSync": false,
+                              "allowCustomValue": true
+                            }
+                          },
+                          {
+                            "kind": "GroupByVariable",
+                            "group": "grafana-testdata-datasource",
+                            "spec": {
+                              "name": "sec_groupby",
+                              "label": "Group By",
+                              "current": {
+                                "text": "",
+                                "value": ""
+                              },
+                              "options": [],
+                              "multi": true,
+                              "hide": "dontHide",
+                              "skipUrlSync": false
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "kind": "RowsLayoutRow",
+                      "spec": {
+                        "title": "2. Shadowing \u2014 section overrides global_env",
+                        "collapse": false,
+                        "layout": {
+                          "kind": "GridLayout",
+                          "spec": {
+                            "items": [
+                              {
+                                "kind": "GridLayoutItem",
+                                "spec": {
+                                  "x": 0,
+                                  "y": 0,
+                                  "width": 24,
+                                  "height": 6,
+                                  "element": {
+                                    "kind": "ElementReference",
+                                    "name": "shadow_panel"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "variables": [
+                          {
+                            "kind": "CustomVariable",
+                            "spec": {
+                              "name": "global_env",
+                              "label": "Shadowed Env",
+                              "query": "section-override,section-alt",
+                              "current": {
+                                "text": "section-override",
+                                "value": "section-override"
+                              },
+                              "options": [],
+                              "multi": false,
+                              "includeAll": false,
+                              "hide": "dontHide",
+                              "skipUrlSync": false,
+                              "allowCustomValue": false
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "kind": "RowsLayoutRow",
+                      "spec": {
+                        "title": "3. Repeated Row ($repeat_var) with section var",
+                        "collapse": false,
+                        "repeat": {
+                          "mode": "variable",
+                          "value": "repeat_var"
+                        },
+                        "layout": {
+                          "kind": "GridLayout",
+                          "spec": {
+                            "items": [
+                              {
+                                "kind": "GridLayoutItem",
+                                "spec": {
+                                  "x": 0,
+                                  "y": 0,
+                                  "width": 24,
+                                  "height": 8,
+                                  "element": {
+                                    "kind": "ElementReference",
+                                    "name": "repeat_row_panel"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "variables": [
+                          {
+                            "kind": "CustomVariable",
+                            "spec": {
+                              "name": "repeated_sec",
+                              "label": "Repeated Section Var",
+                              "query": "hot,warm,cold",
+                              "current": {
+                                "text": "hot",
+                                "value": "hot"
+                              },
+                              "options": [],
+                              "multi": false,
+                              "includeAll": false,
+                              "hide": "dontHide",
+                              "skipUrlSync": false,
+                              "allowCustomValue": false
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "kind": "RowsLayoutRow",
+                      "spec": {
+                        "title": "4. Collapsed Row with section var",
+                        "collapse": true,
+                        "layout": {
+                          "kind": "GridLayout",
+                          "spec": {
+                            "items": [
+                              {
+                                "kind": "GridLayoutItem",
+                                "spec": {
+                                  "x": 0,
+                                  "y": 0,
+                                  "width": 24,
+                                  "height": 8,
+                                  "element": {
+                                    "kind": "ElementReference",
+                                    "name": "collapsed_panel"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "variables": [
+                          {
+                            "kind": "CustomVariable",
+                            "spec": {
+                              "name": "collapsed_var",
+                              "label": "Collapsed Row Var",
+                              "query": "expand-me,to-see-me",
+                              "current": {
+                                "text": "expand-me",
+                                "value": "expand-me"
+                              },
+                              "options": [],
+                              "multi": false,
+                              "includeAll": false,
+                              "hide": "dontHide",
+                              "skipUrlSync": false,
+                              "allowCustomValue": false
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "kind": "RowsLayoutRow",
+                      "spec": {
+                        "title": "5. Nested \u2014 Row with Tabs (both levels have vars)",
+                        "collapse": false,
+                        "layout": {
+                          "kind": "TabsLayout",
+                          "spec": {
+                            "tabs": [
+                              {
+                                "kind": "TabsLayoutTab",
+                                "spec": {
+                                  "title": "Tab with own var + row var",
+                                  "layout": {
+                                    "kind": "GridLayout",
+                                    "spec": {
+                                      "items": [
+                                        {
+                                          "kind": "GridLayoutItem",
+                                          "spec": {
+                                            "x": 0,
+                                            "y": 0,
+                                            "width": 24,
+                                            "height": 8,
+                                            "element": {
+                                              "kind": "ElementReference",
+                                              "name": "nested_panel"
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "variables": [
+                                    {
+                                      "kind": "CustomVariable",
+                                      "spec": {
+                                        "name": "nested_tab_var",
+                                        "label": "Nested Tab Var",
+                                        "query": "tab-val-A,tab-val-B,tab-val-C",
+                                        "current": {
+                                          "text": "tab-val-A",
+                                          "value": "tab-val-A"
+                                        },
+                                        "options": [],
+                                        "multi": false,
+                                        "includeAll": false,
+                                        "hide": "dontHide",
+                                        "skipUrlSync": false,
+                                        "allowCustomValue": false
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "kind": "TabsLayoutTab",
+                                "spec": {
+                                  "title": "Tab without own var (inherits row var)",
+                                  "layout": {
+                                    "kind": "GridLayout",
+                                    "spec": {
+                                      "items": [
+                                        {
+                                          "kind": "GridLayoutItem",
+                                          "spec": {
+                                            "x": 0,
+                                            "y": 0,
+                                            "width": 24,
+                                            "height": 8,
+                                            "element": {
+                                              "kind": "ElementReference",
+                                              "name": "nested_inherit_panel"
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                }
+                              },
+                              {
+                                "kind": "TabsLayoutTab",
+                                "spec": {
+                                  "title": "Repeat by Ancestor Row Var ($nested_row_var)",
+                                  "layout": {
+                                    "kind": "RowsLayout",
+                                    "spec": {
+                                      "rows": [
+                                        {
+                                          "kind": "RowsLayoutRow",
+                                          "spec": {
+                                            "title": "Repeated by ancestor nested_row_var ($nested_row_var)",
+                                            "collapse": false,
+                                            "repeat": {
+                                              "mode": "variable",
+                                              "value": "nested_row_var"
+                                            },
+                                            "layout": {
+                                              "kind": "GridLayout",
+                                              "spec": {
+                                                "items": [
+                                                  {
+                                                    "kind": "GridLayoutItem",
+                                                    "spec": {
+                                                      "x": 0,
+                                                      "y": 0,
+                                                      "width": 24,
+                                                      "height": 8,
+                                                      "element": {
+                                                        "kind": "ElementReference",
+                                                        "name": "ancestor_row_repeat_panel"
+                                                      }
+                                                    }
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "variables": [
+                          {
+                            "kind": "CustomVariable",
+                            "spec": {
+                              "name": "nested_row_var",
+                              "label": "Nested Row Var",
+                              "query": "row-val-X,row-val-Y,row-val-Z",
+                              "current": {
+                                "text": ["row-val-X", "row-val-Y", "row-val-Z"],
+                                "value": ["row-val-X", "row-val-Y", "row-val-Z"]
+                              },
+                              "options": [],
+                              "multi": true,
+                              "includeAll": true,
+                              "allValue": "",
+                              "hide": "dontHide",
+                              "skipUrlSync": false,
+                              "allowCustomValue": false
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "kind": "RowsLayoutRow",
+                      "spec": {
+                        "title": "6. Edge Cases \u2014 Hidden, skipUrlSync, Multi-value",
+                        "collapse": false,
+                        "layout": {
+                          "kind": "GridLayout",
+                          "spec": {
+                            "items": [
+                              {
+                                "kind": "GridLayoutItem",
+                                "spec": {
+                                  "x": 0,
+                                  "y": 0,
+                                  "width": 24,
+                                  "height": 8,
+                                  "element": {
+                                    "kind": "ElementReference",
+                                    "name": "edge_panel"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "variables": [
+                          {
+                            "kind": "CustomVariable",
+                            "spec": {
+                              "name": "edge_hidden",
+                              "label": "Hidden Var",
+                              "query": "hidden-val-1,hidden-val-2",
+                              "current": {
+                                "text": "hidden-val-1",
+                                "value": "hidden-val-1"
+                              },
+                              "options": [],
+                              "multi": false,
+                              "includeAll": false,
+                              "hide": "hideVariable",
+                              "skipUrlSync": false,
+                              "allowCustomValue": false
+                            }
+                          },
+                          {
+                            "kind": "CustomVariable",
+                            "spec": {
+                              "name": "edge_skipurl",
+                              "label": "Skip URL Sync",
+                              "query": "no-url-1,no-url-2",
+                              "current": {
+                                "text": "no-url-1",
+                                "value": "no-url-1"
+                              },
+                              "options": [],
+                              "multi": false,
+                              "includeAll": false,
+                              "hide": "dontHide",
+                              "skipUrlSync": true,
+                              "allowCustomValue": false
+                            }
+                          },
+                          {
+                            "kind": "CustomVariable",
+                            "spec": {
+                              "name": "edge_multi",
+                              "label": "Multi-Value",
+                              "query": "val-a,val-b,val-c,val-d",
+                              "current": {
+                                "text": ["val-a", "val-b"],
+                                "value": ["val-a", "val-b"]
+                              },
+                              "options": [],
+                              "multi": true,
+                              "includeAll": true,
+                              "allValue": "",
+                              "hide": "dontHide",
+                              "skipUrlSync": false,
+                              "allowCustomValue": false
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "kind": "RowsLayoutRow",
+                      "spec": {
+                        "title": "7a. Sibling Isolation \u2014 Row A",
+                        "collapse": false,
+                        "layout": {
+                          "kind": "GridLayout",
+                          "spec": {
+                            "items": [
+                              {
+                                "kind": "GridLayoutItem",
+                                "spec": {
+                                  "x": 0,
+                                  "y": 0,
+                                  "width": 24,
+                                  "height": 5,
+                                  "element": {
+                                    "kind": "ElementReference",
+                                    "name": "sibling_a_panel"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "variables": [
+                          {
+                            "kind": "CustomVariable",
+                            "spec": {
+                              "name": "shared_name",
+                              "label": "Shared Name (A)",
+                              "query": "from-sibling-A",
+                              "current": {
+                                "text": "from-sibling-A",
+                                "value": "from-sibling-A"
+                              },
+                              "options": [],
+                              "multi": false,
+                              "includeAll": false,
+                              "hide": "dontHide",
+                              "skipUrlSync": false,
+                              "allowCustomValue": false
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "kind": "RowsLayoutRow",
+                      "spec": {
+                        "title": "7b. Sibling Isolation \u2014 Row B",
+                        "collapse": false,
+                        "layout": {
+                          "kind": "GridLayout",
+                          "spec": {
+                            "items": [
+                              {
+                                "kind": "GridLayoutItem",
+                                "spec": {
+                                  "x": 0,
+                                  "y": 0,
+                                  "width": 24,
+                                  "height": 5,
+                                  "element": {
+                                    "kind": "ElementReference",
+                                    "name": "sibling_b_panel"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "variables": [
+                          {
+                            "kind": "CustomVariable",
+                            "spec": {
+                              "name": "shared_name",
+                              "label": "Shared Name (B)",
+                              "query": "from-sibling-B",
+                              "current": {
+                                "text": "from-sibling-B",
+                                "value": "from-sibling-B"
+                              },
+                              "options": [],
+                              "multi": false,
+                              "includeAll": false,
+                              "hide": "dontHide",
+                              "skipUrlSync": false,
+                              "allowCustomValue": false
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "kind": "RowsLayoutRow",
+                      "spec": {
+                        "title": "8. Repeat Row by Ancestor Section Variable ($tab_repeat_driver)",
+                        "collapse": false,
+                        "repeat": {
+                          "mode": "variable",
+                          "value": "tab_repeat_driver"
+                        },
+                        "layout": {
+                          "kind": "GridLayout",
+                          "spec": {
+                            "items": [
+                              {
+                                "kind": "GridLayoutItem",
+                                "spec": {
+                                  "x": 0,
+                                  "y": 0,
+                                  "width": 24,
+                                  "height": 8,
+                                  "element": {
+                                    "kind": "ElementReference",
+                                    "name": "sec_var_repeat_panel"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "variables": [
+                          {
+                            "kind": "CustomVariable",
+                            "spec": {
+                              "name": "row_in_repeated",
+                              "label": "Row In Repeated",
+                              "query": "primary,replica",
+                              "current": {
+                                "text": "primary",
+                                "value": "primary"
+                              },
+                              "options": [],
+                              "multi": false,
+                              "includeAll": false,
+                              "hide": "dontHide",
+                              "skipUrlSync": false,
+                              "allowCustomValue": false
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "kind": "RowsLayoutRow",
+                      "spec": {
+                        "title": "9. Panel Repeat by Section Variable",
+                        "collapse": false,
+                        "layout": {
+                          "kind": "GridLayout",
+                          "spec": {
+                            "items": [
+                              {
+                                "kind": "GridLayoutItem",
+                                "spec": {
+                                  "x": 0,
+                                  "y": 0,
+                                  "width": 12,
+                                  "height": 8,
+                                  "repeat": {
+                                    "mode": "variable",
+                                    "value": "sec_panel_repeat_source",
+                                    "direction": "horizontal",
+                                    "maxPerRow": 4
+                                  },
+                                  "element": {
+                                    "kind": "ElementReference",
+                                    "name": "panel_repeat_by_sec_var"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "variables": [
+                          {
+                            "kind": "CustomVariable",
+                            "spec": {
+                              "name": "sec_panel_repeat_source",
+                              "label": "Services (panel repeat source)",
+                              "description": "Multi-value section variable used as the repeat source for panels inside this row",
+                              "query": "auth,gateway,billing,notify,search",
+                              "current": {
+                                "text": ["auth", "gateway", "billing", "notify", "search"],
+                                "value": ["auth", "gateway", "billing", "notify", "search"]
+                              },
+                              "options": [],
+                              "multi": true,
+                              "includeAll": true,
+                              "allValue": "",
+                              "hide": "dontHide",
+                              "skipUrlSync": false,
+                              "allowCustomValue": false
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "title": "Tab-Scoped Variables",
+              "layout": {
+                "kind": "TabsLayout",
+                "spec": {
+                  "tabs": [
+                    {
+                      "kind": "TabsLayoutTab",
+                      "spec": {
+                        "title": "All Variable Types",
+                        "layout": {
+                          "kind": "GridLayout",
+                          "spec": {
+                            "items": [
+                              {
+                                "kind": "GridLayoutItem",
+                                "spec": {
+                                  "x": 0,
+                                  "y": 0,
+                                  "width": 16,
+                                  "height": 8,
+                                  "element": {
+                                    "kind": "ElementReference",
+                                    "name": "tab_all_types_panel"
+                                  }
+                                }
+                              },
+                              {
+                                "kind": "GridLayoutItem",
+                                "spec": {
+                                  "x": 16,
+                                  "y": 0,
+                                  "width": 8,
+                                  "height": 8,
+                                  "element": {
+                                    "kind": "ElementReference",
+                                    "name": "tab_all_types_info"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "variables": [
+                          {
+                            "kind": "CustomVariable",
+                            "spec": {
+                              "name": "tab_custom",
+                              "label": "Custom",
+                              "query": "redis,memcached,postgres,mysql",
+                              "current": {
+                                "text": "redis",
+                                "value": "redis"
+                              },
+                              "options": [],
+                              "multi": false,
+                              "includeAll": false,
+                              "hide": "dontHide",
+                              "skipUrlSync": false,
+                              "allowCustomValue": true
+                            }
+                          },
+                          {
+                            "kind": "TextVariable",
+                            "spec": {
+                              "name": "tab_textbox",
+                              "label": "Textbox",
+                              "query": "type-here",
+                              "current": {
+                                "text": "type-here",
+                                "value": "type-here"
+                              },
+                              "hide": "dontHide",
+                              "skipUrlSync": false
+                            }
+                          },
+                          {
+                            "kind": "IntervalVariable",
+                            "spec": {
+                              "name": "tab_interval",
+                              "label": "Interval",
+                              "query": "1s,5s,10s,30s,1m",
+                              "current": {
+                                "text": "10s",
+                                "value": "10s"
+                              },
+                              "options": [
+                                {
+                                  "text": "1s",
+                                  "value": "1s"
+                                },
+                                {
+                                  "text": "5s",
+                                  "value": "5s"
+                                },
+                                {
+                                  "text": "10s",
+                                  "value": "10s",
+                                  "selected": true
+                                },
+                                {
+                                  "text": "30s",
+                                  "value": "30s"
+                                },
+                                {
+                                  "text": "1m",
+                                  "value": "1m"
+                                }
+                              ],
+                              "auto": false,
+                              "auto_count": 10,
+                              "auto_min": "1s",
+                              "refresh": "onTimeRangeChanged",
+                              "hide": "dontHide",
+                              "skipUrlSync": false
+                            }
+                          },
+                          {
+                            "kind": "SwitchVariable",
+                            "spec": {
+                              "name": "tab_switch",
+                              "label": "Switch",
+                              "current": "on",
+                              "enabledValue": "on",
+                              "disabledValue": "off",
+                              "hide": "dontHide",
+                              "skipUrlSync": false
+                            }
+                          },
+                          {
+                            "kind": "QueryVariable",
+                            "spec": {
+                              "name": "tab_query",
+                              "label": "Query",
+                              "query": {
+                                "kind": "DataQuery",
+                                "version": "v0",
+                                "group": "grafana-testdata-datasource",
+                                "spec": {
+                                  "scenarioId": "variables-query",
+                                  "stringInput": "svc-auth,svc-gateway,svc-billing,svc-notify"
+                                }
+                              },
+                              "regex": "",
+                              "sort": "alphabeticalAsc",
+                              "refresh": "onDashboardLoad",
+                              "current": {
+                                "text": "svc-auth",
+                                "value": "svc-auth"
+                              },
+                              "options": [],
+                              "multi": false,
+                              "includeAll": false,
+                              "hide": "dontHide",
+                              "skipUrlSync": false,
+                              "allowCustomValue": false
+                            }
+                          },
+                          {
+                            "kind": "DatasourceVariable",
+                            "spec": {
+                              "name": "tab_datasource",
+                              "label": "Datasource",
+                              "pluginId": "grafana-testdata-datasource",
+                              "regex": "",
+                              "refresh": "onDashboardLoad",
+                              "current": {
+                                "text": "",
+                                "value": ""
+                              },
+                              "options": [],
+                              "multi": false,
+                              "includeAll": false,
+                              "hide": "dontHide",
+                              "skipUrlSync": false,
+                              "allowCustomValue": false
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "kind": "TabsLayoutTab",
+                      "spec": {
+                        "title": "Tab Shadowing",
+                        "layout": {
+                          "kind": "GridLayout",
+                          "spec": {
+                            "items": [
+                              {
+                                "kind": "GridLayoutItem",
+                                "spec": {
+                                  "x": 0,
+                                  "y": 0,
+                                  "width": 24,
+                                  "height": 8,
+                                  "element": {
+                                    "kind": "ElementReference",
+                                    "name": "tab_shadow_panel"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "variables": [
+                          {
+                            "kind": "CustomVariable",
+                            "spec": {
+                              "name": "global_env",
+                              "label": "Tab Shadow",
+                              "query": "tab-override,tab-alt",
+                              "current": {
+                                "text": "tab-override",
+                                "value": "tab-override"
+                              },
+                              "options": [],
+                              "multi": false,
+                              "includeAll": false,
+                              "hide": "dontHide",
+                              "skipUrlSync": false,
+                              "allowCustomValue": false
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "kind": "TabsLayoutTab",
+                      "spec": {
+                        "title": "Tab without vars",
+                        "layout": {
+                          "kind": "GridLayout",
+                          "spec": {
+                            "items": [
+                              {
+                                "kind": "GridLayoutItem",
+                                "spec": {
+                                  "x": 0,
+                                  "y": 0,
+                                  "width": 24,
+                                  "height": 8,
+                                  "element": {
+                                    "kind": "ElementReference",
+                                    "name": "tab_no_vars_panel"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "kind": "TabsLayoutTab",
+                      "spec": {
+                        "title": "Repeated Tab ($repeat_var)",
+                        "repeat": {
+                          "mode": "variable",
+                          "value": "repeat_var"
+                        },
+                        "layout": {
+                          "kind": "GridLayout",
+                          "spec": {
+                            "items": [
+                              {
+                                "kind": "GridLayoutItem",
+                                "spec": {
+                                  "x": 0,
+                                  "y": 0,
+                                  "width": 24,
+                                  "height": 8,
+                                  "element": {
+                                    "kind": "ElementReference",
+                                    "name": "tab_repeat_panel"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "variables": [
+                          {
+                            "kind": "CustomVariable",
+                            "spec": {
+                              "name": "tab_repeated_sec",
+                              "label": "Repeated Tab Var",
+                              "query": "ssd,hdd,nvme",
+                              "current": {
+                                "text": "ssd",
+                                "value": "ssd"
+                              },
+                              "options": [],
+                              "multi": false,
+                              "includeAll": false,
+                              "hide": "dontHide",
+                              "skipUrlSync": false,
+                              "allowCustomValue": false
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

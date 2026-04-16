@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"maps"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,8 +67,7 @@ func RegisterAPIService(
 	pluginSources sources.Registry,
 ) (*DataSourceAPIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) &&
-		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) {
 		return nil, nil
 	}
 
@@ -107,7 +105,7 @@ func RegisterAPIService(
 			accessControl,
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			DataSourceAPIBuilderConfig{
-				LoadQueryTypes:         features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
+				LoadQueryTypes:         features.IsEnabledGlobally(featuremgmt.FlagDatasourcesQueryTypes),
 				UseDualWriter:          features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
 				EnableResourceEndpoint: features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint),
 				EnableHealthEndpoint:   features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint),
@@ -250,18 +248,12 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	storage[ds.StoragePath("query")] = &subQueryREST{builder: b}
 
 	if b.cfg.EnableResourceEndpoint {
-		storage[ds.StoragePath("resource")] = &subResourceREST{builder: b}
+		storage[ds.StoragePath("resources")] = &subResourceREST{builder: b}
 	}
 
 	if b.cfg.EnableHealthEndpoint {
 		storage[ds.StoragePath("health")] = &subHealthREST{builder: b}
 	}
-
-	// FIXME: temporarily register both "datasources" and "connections" query paths
-	// This lets us deploy both datasources/{uid}/query and connections/{uid}/query
-	// while we transition requests to the new path
-	storage["connections"] = &noopREST{}                            // hidden from openapi
-	storage["connections/query"] = storage[ds.StoragePath("query")] // deprecated in openapi
 
 	if b.cfg.UseDualWriter {
 		legacyStore := &legacyStorage{
@@ -316,9 +308,7 @@ func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string)
 
 func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {
 	return func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
-		defs := datasourceV0.GetOpenAPIDefinitions(ref) // required when running standalone
-		maps.Copy(defs, datasourceV0.GetOpenAPIDefinitions(ref))
-		return defs
+		return datasourceV0.GetOpenAPIDefinitions(ref)
 	}
 }
 

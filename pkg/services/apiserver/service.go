@@ -289,6 +289,13 @@ func (s *service) start(ctx context.Context) error {
 	}
 	groupVersions = append(groupVersions, additionalGroupVersions...)
 
+	// reorder so the preferred version, if set in the config.ini, is first in the slice.
+	// this will impact what version is stored in unified storage.
+	groupVersions, err = ReorderGroupVersionsForLegacyCodec(s.log, s.cfg, s.scheme, groupVersions)
+	if err != nil {
+		return fmt.Errorf("preferred_api_version: %w", err)
+	}
+
 	o := grafanaapiserveroptions.NewOptions(s.codecs.LegacyCodec(groupVersions...))
 
 	// Register authorizers from app installers
@@ -323,6 +330,10 @@ func (s *service) start(ctx context.Context) error {
 	apiResourceConfig.EnableVersions(groupVersions...)
 
 	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, apiResourceConfig, s.scheme); err != nil {
+		return err
+	}
+
+	if err := applyPreferredAPIVersions(s.log, s.cfg, s.scheme, apiResourceConfig); err != nil {
 		return err
 	}
 
@@ -462,7 +473,7 @@ func (s *service) start(ctx context.Context) error {
 			if !isDataplaneAggregatorEnabled {
 				runningServer, err = s.aggregatorRunner.Run(ctx, transport, s.stoppedCh)
 				if err != nil {
-					s.log.Error("aggregator runner failed to run", "error", err)
+					s.log.Error("aggregator runner failed to run", "err", err)
 					return err
 				}
 			} else {

@@ -87,13 +87,15 @@ describe('new receiver', () => {
     await user.click(ui.saveContactButton.get());
 
     const requests = await capture;
-    const testRequest = requests.find((r) => r.url.endsWith('/config/api/v1/receivers/test'));
+    const testRequest = requests.find(
+      (r) => r.url.includes('/apis/notifications.alerting.grafana.app/') && r.url.endsWith('/test')
+    );
     const saveRequest = requests.find((r) => r.url.endsWith('/receivers') && r.method === 'POST');
 
-    const testBody = await testRequest?.json();
-    const saveBody = await saveRequest?.json();
+    expect(testRequest).toBeDefined();
+    expect(testRequest?.url).toContain('/receivers/-/test');
 
-    expect([testBody]).toMatchSnapshot();
+    const saveBody = await saveRequest?.clone().json();
     expect([saveBody]).toMatchSnapshot();
   });
 

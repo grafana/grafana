@@ -1,7 +1,7 @@
 {
   "name": "@grafana/eslint-plugin",
   "description": "ESLint rules for use within the Grafana repo. Not suitable (or supported) for external use.",
-  "version": "13.0.0-pre",
+  "version": "13.1.0-pre",
   "type": "module",
   "main": "./index.cjs",
   "author": "Grafana Labs",
@@ -16,7 +16,8 @@
     "directory": "packages/grafana-eslint-rules"
   },
   "dependencies": {
-    "@typescript-eslint/utils": "^8.9.0"
+    "@typescript-eslint/utils": "^8.9.0",
+    "eslint-no-restricted": "^0.1.1"
   },
   "devDependencies": {
     "@typescript-eslint/types": "^8.54.0",

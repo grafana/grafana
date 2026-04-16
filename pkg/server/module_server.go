@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/authz"
+	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/frontend"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -51,8 +52,9 @@ func NewModule(opts Options,
 	moduleRegisterer ModuleRegisterer,
 	storageBackend resource.StorageBackend, // Ensures unified storage backend is initialized
 	hooksService *hooks.HooksService,
+	storeProvider zStore.StoreProvider,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService, storeProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +78,7 @@ func newModuleServer(opts Options,
 	moduleRegisterer ModuleRegisterer,
 	storageBackend resource.StorageBackend,
 	hooksService *hooks.HooksService,
+	storeProvider zStore.StoreProvider,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
@@ -108,6 +111,7 @@ func newModuleServer(opts Options,
 		hooksService:     hooksService,
 		searchClient:     searchClient,
 		healthNotifier:   NewHealthNotifier(),
+		storeProvider:    storeProvider,
 	}
 
 	return s, nil
@@ -154,6 +158,9 @@ type ModuleServer struct {
 	// moduleRegisterer allows registration of modules provided by other builds (e.g. enterprise).
 	moduleRegisterer ModuleRegisterer
 	hooksService     *hooks.HooksService
+
+	// storeProvider creates OpenFGA datastores for the Zanzana server.
+	storeProvider zStore.StoreProvider
 
 	// healthNotifier is shared between the InstrumentationServer and the OperatorServer
 	// so that operators can signal readiness to the /readyz endpoint.
@@ -217,7 +224,7 @@ func (s *ModuleServer) Run() error {
 		if s.storageBackend == nil {
 			// If storage server not being used, disable GC, pruner, and RV manager
 			disableStorageServices := !m.IsModuleEnabled(modules.StorageServer)
-			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, otel.Tracer("unified-backend"), disableStorageServices)
+			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, disableStorageServices)
 			if err != nil {
 				return nil, err
 			}
@@ -324,7 +331,7 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
-		return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer)
+		return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer, s.storeProvider)
 	})
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {

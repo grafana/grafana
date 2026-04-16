@@ -20,6 +20,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
@@ -77,10 +78,11 @@ type RepositoryController struct {
 	minSyncInterval time.Duration
 	drainTimeout    time.Duration
 
-	registry     prometheus.Registerer
-	tracer       tracing.Tracer
-	quotaGetter  quotas.QuotaGetter
-	tokenMetrics *repositoryTokenMetrics
+	registry              prometheus.Registerer
+	tracer                tracing.Tracer
+	quotaGetter           quotas.QuotaGetter
+	tokenMetrics          *repositoryTokenMetrics
+	folderMetadataEnabled bool
 }
 
 // NewRepositoryController creates new RepositoryController.
@@ -104,6 +106,7 @@ func NewRepositoryController(
 	minSyncInterval time.Duration,
 	drainTimeout time.Duration,
 	quotaGetter quotas.QuotaGetter,
+	folderMetadataEnabled bool,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
@@ -129,15 +132,16 @@ func NewRepositoryController(
 			metrics:       &finalizerMetrics,
 			maxWorkers:    parallelOperations,
 		},
-		jobs:            jobs,
-		logger:          logging.DefaultLogger.With("logger", loggerName),
-		registry:        registry,
-		tracer:          tracer,
-		resyncInterval:  resyncInterval,
-		minSyncInterval: minSyncInterval,
-		drainTimeout:    drainTimeout,
-		quotaGetter:     quotaGetter,
-		tokenMetrics:    repoTokenMetrics,
+		jobs:                  jobs,
+		logger:                logging.DefaultLogger.With("logger", loggerName),
+		registry:              registry,
+		tracer:                tracer,
+		resyncInterval:        resyncInterval,
+		minSyncInterval:       minSyncInterval,
+		drainTimeout:          drainTimeout,
+		quotaGetter:           quotaGetter,
+		tokenMetrics:          repoTokenMetrics,
+		folderMetadataEnabled: folderMetadataEnabled,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -454,7 +458,7 @@ func (rc *RepositoryController) determineSyncStrategy(
 		// Whenever possible, we try to keep it as an incremental sync to keep things performant.
 		// However, if there are any .keep file deletions inside a folder with no other deletions, we need
 		// to do a full sync to see if the folder was deleted as well in git.
-		incremental, err := shouldUseIncrementalSync(ctx, versioned, obj, latestRef)
+		incremental, err := shouldUseIncrementalSync(ctx, versioned, obj, latestRef, rc.folderMetadataEnabled)
 		if err != nil {
 			logger.Warn("unable to compare files for incremental sync, doing full sync", "error", err)
 			return &provisioning.SyncJobOptions{}
@@ -467,7 +471,7 @@ func (rc *RepositoryController) determineSyncStrategy(
 	}
 }
 
-func shouldUseIncrementalSync(ctx context.Context, versioned repository.Versioned, obj *provisioning.Repository, latestRef string) (bool, error) {
+func shouldUseIncrementalSync(ctx context.Context, versioned repository.Versioned, obj *provisioning.Repository, latestRef string, folderMetadataEnabled bool) (bool, error) {
 	changes, err := versioned.CompareFiles(ctx, obj.Status.Sync.LastRef, latestRef)
 	if err != nil {
 		return false, err
@@ -479,7 +483,7 @@ func shouldUseIncrementalSync(ctx context.Context, versioned repository.Versione
 		}
 	}
 
-	return repository.CanUseIncrementalSync(deletedPaths), nil
+	return repository.CanUseIncrementalSync(deletedPaths, folderMetadataEnabled), nil
 }
 
 func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions) error {
@@ -591,6 +595,12 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return rc.handleDelete(ctx, obj)
 	}
 
+	// Skip reconciliation for resources whose namespace is being soft-deleted.
+	if appcontroller.IsPendingDelete(obj.Labels) {
+		logger.Info("skipping reconciliation: namespace is pending deletion")
+		return nil
+	}
+
 	// Check quota state early - before trigger evaluation
 	// This allows blocked repos to check if they can unblock even without other triggers
 	newQuota, err := rc.quotaGetter.GetQuotaStatus(ctx, namespace)
@@ -639,6 +649,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		logger.Info("repository token needs to be generated", "connection", obj.Spec.Connection.Name)
 	case hasQuotaChanged:
 		logger.Info("quota changed", "quota", newQuota)
+	case len(obj.Spec.Workflows) > 0 && (obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0):
+		logger.Info("webhook missing, reconciling")
 	default:
 		logger.Info("skipping as conditions are not met", "status", obj.Status, "generation", obj.Generation, "sync_spec", obj.Spec.Sync)
 		return nil
@@ -794,7 +806,10 @@ func (rc *RepositoryController) process(item *queueItem) error {
 // processHooks handles hook execution with intelligent retry logic
 // Returns hook operations, whether processing should continue, and any error
 func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, bool, error) {
-	shouldRunHooks := obj.Generation != obj.Status.ObservedGeneration
+	webhookMissing := len(obj.Spec.Workflows) > 0 &&
+		(obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0)
+
+	shouldRunHooks := (obj.Generation != obj.Status.ObservedGeneration) || webhookMissing
 
 	// Skip hooks if status already indicates recent hook failure to avoid infinite retry
 	if shouldRunHooks && rc.healthChecker.HasRecentFailure(obj.Status.Health, provisioning.HealthFailureHook) {

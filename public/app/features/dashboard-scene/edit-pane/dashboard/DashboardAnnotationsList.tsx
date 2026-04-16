@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
-import { DragDropContext, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { SceneDataLayerProvider } from '@grafana/scenes';
+import { type SceneDataLayerProvider } from '@grafana/scenes';
 import { Box, Button, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
-import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
+import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { useBuildAddAnnotation } from '../add-new/AddAnnotationQuery';
 import { dashboardEditActions } from '../shared';
@@ -36,7 +36,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
 
   const onClickAnnotation = useCallback((a: DashboardAnnotationsDataLayer) => {
     const { editPane } = getDashboardSceneFor(a).state;
-    editPane.selectObject(a, a.state.key!);
+    editPane.selectObject(a);
   }, []);
 
   const onDragEnd = useCallback(
@@ -106,9 +106,8 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
             'Above dashboard ({{count}})',
             { count: visible.length }
           )}
-          dataTestId={`${ID_VISIBLE_LIST}-annotation-name`}
           onClickItem={onClickAnnotation}
-          renderItemLabel={(a) => <AnnotationName annotation={a} />}
+          renderItemLabel={renderItemLabel}
         />
         <DraggableList
           items={controlsMenu}
@@ -120,9 +119,8 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
               count: controlsMenu.length,
             }
           )}
-          dataTestId={`${ID_CONTROLS_MENU_LIST}-annotation-name`}
           onClickItem={onClickAnnotation}
-          renderItemLabel={(a) => <AnnotationName annotation={a} />}
+          renderItemLabel={renderItemLabel}
         />
         <DraggableList
           items={hidden}
@@ -130,15 +128,16 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
           title={t('dashboard-scene.dashboard-annotations-list.title-hidden-count', 'Hidden ({{count}})', {
             count: hidden.length,
           })}
-          dataTestId={`${ID_HIDDEN_LIST}-annotation-name`}
           onClickItem={onClickAnnotation}
-          renderItemLabel={(a) => <AnnotationName annotation={a} />}
+          renderItemLabel={renderItemLabel}
         />
       </DragDropContext>
       <AddAnnotationButton dataLayerSet={dataLayerSet} />
     </>
   );
 }
+
+const renderItemLabel = (a: DashboardAnnotationsDataLayer) => <AnnotationName annotation={a} />;
 
 function AnnotationName({ annotation }: { annotation: DashboardAnnotationsDataLayer }) {
   const theme = useTheme2();
@@ -168,15 +167,15 @@ function AnnotationName({ annotation }: { annotation: DashboardAnnotationsDataLa
   }, [annoName, query.builtIn, query.enable, styles.muted]);
 
   return (
-    <div>
+    <>
       <span
         className={styles.color}
         style={{
           backgroundColor: theme.visualization.getColorByName(query.iconColor),
         }}
       />
-      {name}
-    </div>
+      <span data-testid="annotation-name">{name}</span>
+    </>
   );
 }
 

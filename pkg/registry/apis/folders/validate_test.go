@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -57,10 +57,19 @@ func TestValidateCreate(t *testing.T) {
 			},
 		},
 		{
-			name: "reserved name",
+			name: "reserved name - general",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "general", // can not name something with general
+					Name: folder.GeneralFolderUID,
+				},
+			},
+			expectedErr: "invalid uid for folder provided",
+		},
+		{
+			name: "reserved name - sharedwithme",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: folder.SharedWithMeFolderUID,
 				},
 			},
 			expectedErr: "invalid uid for folder provided",

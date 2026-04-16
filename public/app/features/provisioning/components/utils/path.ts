@@ -1,3 +1,5 @@
+import kbn from 'app/core/utils/kbn';
+
 /**
  * Parameters for generating a dashboard path
  */
@@ -25,9 +27,9 @@ export function generatePath({ timestamp, pathFromAnnotation, slug, folderPath =
   const pathSlug = slug || `new-dashboard-${timestamp}`;
   path = `${pathSlug}.json`;
 
-  // Add folder path if it exists
+  // Add folder path if it exists (folder annotations may use trailing slashes; avoid "//" in repo paths)
   if (folderPath) {
-    return `${folderPath}/${path}`;
+    return joinPath(folderPath, path);
   }
 
   return path;
@@ -55,4 +57,29 @@ export function joinPath(directory: string, filename: string): string {
   const cleanDir = directory.replace(/\/+$/, '');
   const cleanFile = filename.replace(/^\/+/, '');
   return cleanDir ? `${cleanDir}/${cleanFile}` : cleanFile;
+}
+
+/**
+ * Converts a dashboard title into a filesystem-safe filename slug.
+ * Delegates to kbn.slugifyForUrl and strips leading/trailing dashes
+ * that slugifyForUrl can leave behind (e.g. titles starting with special chars).
+ */
+export function slugifyForFilename(title: string): string {
+  return kbn.slugifyForUrl(title).replace(/^-+|-+$/g, '');
+}
+
+/**
+ * Ensures a non-empty folder path ends with a trailing slash.
+ * The backend's IsPathSupported() uses the trailing slash to distinguish
+ * folder paths from file paths; without it, folder paths fail validation
+ * with "unsupported file extension".
+ */
+export function ensureFolderPathTrailingSlash(path: string) {
+  if (!path) {
+    return '';
+  }
+  if (path.endsWith('/')) {
+    return path;
+  }
+  return `${path}/`;
 }

@@ -102,6 +102,15 @@ type Authorizer interface {
 	// folder. For instance-scoped repositories the check runs against the root folder.
 	AuthorizeCreateAllSupported(ctx context.Context) error
 
+	// AuthorizeUpdateFolder checks if the current user has permission to update
+	// the folder at the specified path. This checks folders:update permission using
+	// the folder's own ID as the authorization context.
+	//
+	// Example:
+	//   - User wants to rename "team-a/" → checks update permission on "team-a"
+	//   - If user is Editor or Admin on "team-a", the operation is allowed
+	AuthorizeUpdateFolder(ctx context.Context, path string) error
+
 	// AuthorizeWrite checks if writes are allowed to the specified ref.
 	// This ensures operations on the configured branch are properly authorized.
 	AuthorizeWrite(ctx context.Context, ref string) error
@@ -287,6 +296,13 @@ func (a *ProvisioningAuthorizer) authorizeFolder(ctx context.Context, path, verb
 // Example:
 //   - Creating "team-a/new-project/" requires create permission on "team-a"
 //   - Creating "top-level-folder/" requires create permission on root
+func (a *ProvisioningAuthorizer) AuthorizeUpdateFolder(ctx context.Context, path string) error {
+	if path == "" {
+		return fmt.Errorf("path cannot be empty")
+	}
+	return a.authorizeFolder(ctx, path, utils.VerbUpdate)
+}
+
 func (a *ProvisioningAuthorizer) AuthorizeCreateFolder(ctx context.Context, path string) error {
 	// For create operations, check permission on the parent folder
 	if path == "" {

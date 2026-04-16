@@ -4,7 +4,7 @@
  * Update a tab's metadata (title) by path.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 
@@ -22,6 +22,7 @@ export const updateTabCommand: MutationCommand<UpdateTabPayload> = {
 
   payloadSchema: payloads.updateTab,
   permission: requiresNewDashboardLayouts,
+  readOnly: false,
 
   handler: async (payload, context) => {
     const { scene } = context;
@@ -49,9 +50,12 @@ export const updateTabCommand: MutationCommand<UpdateTabPayload> = {
         tab.onChangeRepeat(spec.repeat?.value || undefined);
       }
 
+      const currentSpec = { title: tab.state.title };
+
       return {
         success: true,
-        changes: [{ path, previousValue, newValue: updates }],
+        data: { path, tab: { kind: 'TabsLayoutTab', spec: currentSpec } },
+        changes: [{ path, previousValue, newValue: currentSpec }],
       };
     } catch (error) {
       return {

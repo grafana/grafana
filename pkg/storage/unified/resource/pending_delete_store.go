@@ -16,10 +16,20 @@ const (
 )
 
 // PendingDeleteRecord is the JSON blob stored in the KV store for a tenant
-// that has been marked as pending deletion. The existence of a record implies
-// that all the tenant's resources have been labelled.
+// that has been marked as pending deletion. The record is created before
+// labelling begins so that cleanup can proceed even after partial failures.
+//
+// When Orphaned is true, the record cannot be removed by the tenant watcher.
+// This is used for manually-seeded records that clean up orphaned tenants
+// which the tenant API considers active but are actually deleted in GCOM.
 type PendingDeleteRecord struct {
-	DeleteAfter string `json:"deleteAfter"`
+	DeleteAfter      string `json:"deleteAfter"`
+	LabelingComplete bool   `json:"labelingComplete"`
+	Orphaned         bool   `json:"orphaned,omitempty"`
+	// DeletedAt is set to an RFC3339 timestamp after all tenant data has been
+	// successfully deleted. Records with this field set are skipped by the
+	// tenant deleter.
+	DeletedAt string `json:"deletedAt,omitempty"`
 }
 
 // PendingDeleteStore manages pending-delete records in the KV store and keeps

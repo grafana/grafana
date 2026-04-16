@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { getFocusStyles } from '../../themes/mixins';
 import { getInputStyles } from '../Input/Input';
@@ -49,7 +49,7 @@ export const getMultiComboboxStyles = (
       background: 'transparent',
       flexGrow: 1,
       maxWidth: '100%',
-      minWidth: 40, // This is a bit arbitrary, but is used to leave some space for clicking. This will override the minWidth property
+      minWidth: 20, // This is a bit arbitrary, but is used to leave some space for clicking. This will override the minWidth property
       '&::placeholder': {
         color: theme.colors.text.disabled,
       },

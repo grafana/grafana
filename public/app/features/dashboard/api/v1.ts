@@ -1,7 +1,7 @@
-import { locationUtil, UrlQueryMap } from '@grafana/data';
+import { locationUtil, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Dashboard } from '@grafana/schema';
-import { Status } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Dashboard } from '@grafana/schema';
+import { type Status } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
@@ -15,37 +15,42 @@ import {
   AnnoReloadOnParamsChange,
   DeprecatedInternalId,
   ManagerKind,
-  Resource,
-  ResourceClient,
-  ResourceForCreate,
+  type Resource,
+  type ResourceClient,
+  type ResourceForCreate,
+  type ResourceList,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
-import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
+import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { buildSourceLink, removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
-import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO, type DashboardDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
-import { SaveDashboardCommand } from '../components/SaveDashboard/types';
+import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
+import { VERSIONS_FETCH_LIMIT } from '../types/revisionModels';
 
+import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
 import {
-  DashboardAPI,
+  type DashboardAPI,
   DashboardVersionError,
-  DashboardWithAccessInfo,
-  ListDashboardHistoryOptions,
-  ListDeletedDashboardsOptions,
+  type DashboardWithAccessInfo,
+  type ListDashboardHistoryOptions,
+  type ListDeletedDashboardsOptions,
 } from './types';
-import { isV2StoredVersion } from './utils';
+import { buildRestorePayload, isV2StoredVersion } from './utils';
 
-export const K8S_V1_DASHBOARD_API_CONFIG = {
-  group: 'dashboard.grafana.app',
-  version: 'v1beta1',
-  resource: 'dashboards',
-};
+export function getK8sV1DashboardApiConfig() {
+  return {
+    group: 'dashboard.grafana.app',
+    version: dashboardAPIVersionResolver.getV1(),
+    resource: 'dashboards',
+  };
+}
 
 export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   private client: ResourceClient<DashboardDataDTO, Status>;
 
   constructor() {
-    this.client = new ScopedResourceClient<DashboardDataDTO>(K8S_V1_DASHBOARD_API_CONFIG);
+    this.client = new ScopedResourceClient<DashboardDataDTO>(getK8sV1DashboardApiConfig());
   }
 
   saveDashboard(options: SaveDashboardCommand<Dashboard>): Promise<SaveDashboardResponseDTO> {
@@ -81,6 +86,11 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     // and the api server will throw an error
     delete obj.metadata.resourceVersion;
 
+    obj.metadata.annotations = {
+      ...obj.metadata.annotations,
+      [AnnoKeyGrantPermissions]: 'default',
+    };
+
     // for v1 in g12, we will ignore the schema version validation from all default clients,
     // as we implement the necessary backend conversions, we will drop this query param
     if (dashboard.uid) {
@@ -89,10 +99,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
       return this.client.update(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
     }
-    obj.metadata.annotations = {
-      ...obj.metadata.annotations,
-      [AnnoKeyGrantPermissions]: 'default',
-    };
+
     // non-scene dashboard will have obj.metadata.name when trying to save a dashboard copy
     delete obj.metadata.name;
     // on create, always clear the id to prevent duplicate ids
@@ -227,13 +234,28 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     }
   }
 
-  async listDashboardHistory(uid: string, options?: ListDashboardHistoryOptions) {
-    return this.client.list({
-      labelSelector: 'grafana.app/get-history=true',
-      fieldSelector: `metadata.name=${uid}`,
-      limit: options?.limit ?? 10,
-      continue: options?.continueToken,
-    });
+  async listDashboardHistory(
+    uid: string,
+    options?: ListDashboardHistoryOptions
+  ): Promise<ResourceList<DashboardDataDTO>> {
+    const limit = options?.limit ?? VERSIONS_FETCH_LIMIT;
+    let continueToken = options?.continueToken;
+    const items: Array<Resource<DashboardDataDTO>> = [];
+
+    let lastPage: ResourceList<DashboardDataDTO> | undefined;
+
+    do {
+      lastPage = await this.client.list({
+        labelSelector: 'grafana.app/get-history=true',
+        fieldSelector: `metadata.name=${uid}`,
+        limit: limit - items.length,
+        continue: continueToken,
+      });
+      items.push(...lastPage.items);
+      continueToken = lastPage.metadata.continue;
+    } while (items.length < limit && continueToken);
+
+    return { ...lastPage!, metadata: { ...lastPage!.metadata, continue: continueToken }, items };
   }
 
   async getDashboardHistoryVersions(uid: string, versions: number[]) {
@@ -262,7 +284,11 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
   async restoreDashboardVersion(uid: string, version: number): Promise<SaveDashboardResponseDTO> {
     // get version to restore to, and save as new one
-    const [historicalVersion] = await this.getDashboardHistoryVersions(uid, [version]);
+    // fetch current dashboard in parallel to preserve its folder location
+    const [historicalVersion, currentDashboard] = await Promise.all([
+      this.getDashboardHistoryVersions(uid, [version]).then((v) => v[0]),
+      this.client.get(uid),
+    ]);
     return await this.saveDashboard({
       dashboard: {
         ...historicalVersion.spec,
@@ -272,7 +298,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
         name: uid,
       },
       message: `Restored from version ${version}`,
-      folderUid: historicalVersion.metadata?.annotations?.[AnnoKeyFolder],
+      folderUid: currentDashboard.metadata?.annotations?.[AnnoKeyFolder],
     });
   }
 
@@ -281,8 +307,6 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   }
 
   restoreDashboard(dashboard: Resource<DashboardDataDTO>) {
-    // reset the resource version to create a new resource
-    dashboard.metadata.resourceVersion = '';
-    return this.client.create(dashboard);
+    return this.client.create(buildRestorePayload(dashboard));
   }
 }
