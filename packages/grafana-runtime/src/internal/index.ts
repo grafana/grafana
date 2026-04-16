@@ -35,7 +35,6 @@ export { getAppPluginMeta, getAppPluginMetas, setAppPluginMetas } from '../servi
 export {
   getDatasourcePluginMeta,
   getDatasourcePluginMetas,
-  getDatasourcePluginMetasMap,
   setDatasourcePluginMetas,
   refetchDatasourcePluginMetas,
 } from '../services/pluginMeta/datasources';

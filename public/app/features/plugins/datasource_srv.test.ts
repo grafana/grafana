@@ -60,11 +60,22 @@ class TestRuntimeDataSource extends RuntimeDataSource {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const importDataSourceMock = jest.fn((_meta?: any) => Promise.resolve(new DataSourcePlugin(TestDataSource as any)));
+
 jest.mock('./importer/pluginImporter', () => ({
   pluginImporter: {
-    importDataSource: () => Promise.resolve(new DataSourcePlugin(TestDataSource as any)),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    importDataSource: (meta: any) => importDataSourceMock(meta),
   },
 }));
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getDatasourcePluginMeta: jest.fn().mockResolvedValue(null),
+}));
+
+const { getDatasourcePluginMeta } = jest.requireMock('@grafana/runtime/internal');
 
 const getBackendSrvGetMock = jest.fn();
 
@@ -176,11 +187,13 @@ describe('datasource_srv', () => {
     });
 
     beforeEach(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       dataSourceSrv.init(dataSourceInit as any, 'BBB');
     });
 
     describe('when getting data source class instance', () => {
       it('should load plugin and create instance and set meta', async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const ds = (await dataSourceSrv.get('mmm')) as any;
         expect(ds.meta).toBe(dataSourceInit.mmm.meta);
         expect(ds.instanceSettings).toBe(dataSourceInit.mmm);
@@ -333,6 +346,31 @@ describe('datasource_srv', () => {
       it('should load by name', async () => {
         let api = await dataSourceSrv.loadDatasource('ZZZ');
         expect(api.meta).toBe(dataSourceInit.ZZZ.meta);
+      });
+
+      it('should use meta from getDatasourcePluginMeta when available', async () => {
+        const freshSrv = new DatasourceSrv(templateSrv);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        freshSrv.init(dataSourceInit as any, 'BBB');
+        const apiMeta = { id: 'test-db', metrics: true, fromApi: true };
+        getDatasourcePluginMeta.mockResolvedValueOnce(apiMeta);
+
+        await freshSrv.loadDatasource('ZZZ');
+
+        expect(getDatasourcePluginMeta).toHaveBeenCalledWith('test-db');
+        expect(importDataSourceMock).toHaveBeenCalledWith(apiMeta);
+      });
+
+      it('should fall back to instanceSettings.meta when getDatasourcePluginMeta returns null', async () => {
+        const freshSrv = new DatasourceSrv(templateSrv);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        freshSrv.init(dataSourceInit as any, 'BBB');
+        getDatasourcePluginMeta.mockResolvedValueOnce(null);
+
+        await freshSrv.loadDatasource('ZZZ');
+
+        expect(getDatasourcePluginMeta).toHaveBeenCalledWith('test-db');
+        expect(importDataSourceMock).toHaveBeenCalledWith(dataSourceInit.ZZZ.meta);
       });
     });
 

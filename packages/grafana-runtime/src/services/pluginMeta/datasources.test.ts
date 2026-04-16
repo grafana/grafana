@@ -5,7 +5,6 @@ import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import {
   getDatasourcePluginMeta,
   getDatasourcePluginMetas,
-  getDatasourcePluginMetasMap,
   refetchDatasourcePluginMetas,
   setDatasourcePluginMetas,
 } from './datasources';
@@ -21,9 +20,9 @@ jest.mock('./plugins', () => ({
 const initPluginMetasMock = jest.mocked(initPluginMetas);
 const refetchPluginMetasMock = jest.mocked(refetchPluginMetas);
 
-describe('when enableDatasourceMetaApiPluginLoading flag is enabled', () => {
+describe('when useMTPlugins flag is enabled', () => {
   beforeAll(() => {
-    setTestFlags({ enableDatasourceMetaApiPluginLoading: true });
+    setTestFlags({ useMTPlugins: true });
   });
 
   afterAll(() => {
@@ -51,13 +50,6 @@ describe('when enableDatasourceMetaApiPluginLoading flag is enabled', () => {
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
     });
 
-    it('getDatasourcePluginMetasMap should call initPluginMetas and return correct result', async () => {
-      const result = await getDatasourcePluginMetasMap();
-
-      expect(result).toEqual({});
-      expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
-    });
-
     it('getDatasourcePluginMeta should call initPluginMetas and return correct result', async () => {
       const result = await getDatasourcePluginMeta('prometheus');
 
@@ -76,13 +68,6 @@ describe('when enableDatasourceMetaApiPluginLoading flag is enabled', () => {
       const result = await getDatasourcePluginMetas();
 
       expect(result).toEqual([prometheusMeta]);
-      expect(initPluginMetasMock).not.toHaveBeenCalled();
-    });
-
-    it('getDatasourcePluginMetasMap should not call initPluginMetas and return correct result', async () => {
-      const result = await getDatasourcePluginMetasMap();
-
-      expect(result).toEqual({ prometheus: prometheusMeta });
       expect(initPluginMetasMock).not.toHaveBeenCalled();
     });
 
@@ -158,9 +143,9 @@ describe('when enableDatasourceMetaApiPluginLoading flag is enabled', () => {
   });
 });
 
-describe('when enableDatasourceMetaApiPluginLoading flag is disabled', () => {
+describe('when useMTPlugins flag is disabled', () => {
   beforeAll(() => {
-    setTestFlags({ enableDatasourceMetaApiPluginLoading: false });
+    setTestFlags({ useMTPlugins: false });
   });
 
   afterAll(() => {
@@ -177,13 +162,6 @@ describe('when enableDatasourceMetaApiPluginLoading flag is disabled', () => {
       const result = await getDatasourcePluginMetas();
 
       expect(result).toEqual([]);
-      expect(initPluginMetasMock).not.toHaveBeenCalled();
-    });
-
-    it('getDatasourcePluginMetasMap should not call initPluginMetas and return correct result', async () => {
-      const result = await getDatasourcePluginMetasMap();
-
-      expect(result).toEqual({});
       expect(initPluginMetasMock).not.toHaveBeenCalled();
     });
 
@@ -205,13 +183,6 @@ describe('when enableDatasourceMetaApiPluginLoading flag is disabled', () => {
       const result = await getDatasourcePluginMetas();
 
       expect(result).toEqual([prometheusMeta]);
-      expect(initPluginMetasMock).not.toHaveBeenCalled();
-    });
-
-    it('getDatasourcePluginMetasMap should not call initPluginMetas and return correct result', async () => {
-      const result = await getDatasourcePluginMetasMap();
-
-      expect(result).toEqual({ prometheus: prometheusMeta });
       expect(initPluginMetasMock).not.toHaveBeenCalled();
     });
 
@@ -289,17 +260,6 @@ describe('immutability', () => {
 
     const result = await getDatasourcePluginMetas();
     expect(result[0].info.author.name).toEqual('Grafana Labs');
-  });
-
-  it('getDatasourcePluginMetasMap should return a deep clone', async () => {
-    const mutated = await getDatasourcePluginMetasMap();
-
-    expect(mutated['prometheus'].info.author.name).toEqual('Grafana Labs');
-
-    mutated['prometheus'].info.author.name = '';
-
-    const result = await getDatasourcePluginMetasMap();
-    expect(result['prometheus'].info.author.name).toEqual('Grafana Labs');
   });
 
   it('getDatasourcePluginMeta should return a deep clone', async () => {

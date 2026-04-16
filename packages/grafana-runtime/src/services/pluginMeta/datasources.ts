@@ -47,7 +47,7 @@ function setMetas(metas: PluginMetasResponse) {
 }
 
 async function initDatasourcePluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue('enableDatasourceMetaApiPluginLoading', false)) {
+  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
     // eslint-disable-next-line no-restricted-syntax
     setDatasources(extractFromConfig(config.datasources));
     return;
@@ -63,14 +63,6 @@ export async function getDatasourcePluginMetas(): Promise<DataSourcePluginMeta[]
   }
 
   return Object.values(structuredClone(datasources));
-}
-
-export async function getDatasourcePluginMetasMap(): Promise<DatasourcePluginMetas> {
-  if (!initialized()) {
-    await initDatasourcePluginMetas();
-  }
-
-  return structuredClone(datasources);
 }
 
 export async function getDatasourcePluginMeta(pluginId: string): Promise<DataSourcePluginMeta | null> {
@@ -95,7 +87,7 @@ export function setDatasourcePluginMetas(override: DatasourcePluginMetas): void 
 }
 
 export async function refetchDatasourcePluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue('enableDatasourceMetaApiPluginLoading', false)) {
+  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
     const settings = await getBackendSrv().get('/api/frontend/settings');
     setDatasources(extractFromConfig(settings.datasources));
     return;

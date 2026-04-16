@@ -2946,14 +2946,6 @@ var (
 			HideFromDocs: true,
 		},
 		{
-			Name:        "enableDatasourceMetaApiPluginLoading",
-			Description: "Enables loading datasource plugins from the MetaAPI instead of bootData settings",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendPlatformSquad,
-			Generate:    Generate{LegacyFrontend: true},
-			Expression:  "false",
-		},
-		{
 			Name:        "enableColorblindSafePanelOptions",
 			Description: "Enables new colorblind safe palette and line fill patterns for panels",
 			Stage:       FeatureStageExperimental,

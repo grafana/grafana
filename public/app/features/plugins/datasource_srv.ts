@@ -18,7 +18,12 @@ import {
   type TemplateSrv,
   isExpressionReference,
 } from '@grafana/runtime';
-import { ExpressionDatasourceRef, refetchDatasourcePluginMetas, UserStorage } from '@grafana/runtime/internal';
+import {
+  ExpressionDatasourceRef,
+  getDatasourcePluginMeta,
+  refetchDatasourcePluginMetas,
+  UserStorage,
+} from '@grafana/runtime/internal';
 import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import config from 'app/core/config';
@@ -216,7 +221,8 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     try {
-      const dsPlugin = await pluginImporter.importDataSource(instanceSettings.meta);
+      const meta = (await getDatasourcePluginMeta(instanceSettings.type)) ?? instanceSettings.meta;
+      const dsPlugin = await pluginImporter.importDataSource(meta);
       // check if its in cache now
       if (this.datasources[key]) {
         return this.datasources[key];
