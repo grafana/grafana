@@ -27,6 +27,9 @@ export const loadTranslations: BackendModule = {
         return callback(null, {});
       }
       const messages = await namespaceLoader();
+      if (typeof messages === 'string') {
+        return callback(null, messages);
+      }
       return callback(null, filterPluralKeys(messages));
     }
 

@@ -47,7 +47,11 @@ export async function loadNamespacedResources(namespace: string, language: strin
     loaders.map(async (loader) => {
       try {
         const resources = await loader(resolvedLanguage);
-        addResourceBundle(resolvedLanguage, namespace, shouldFilterPluralKeys ? filterPluralKeys(resources) : resources);
+        addResourceBundle(
+          resolvedLanguage,
+          namespace,
+          shouldFilterPluralKeys ? filterPluralKeys(resources) : resources
+        );
       } catch (error) {
         console.error(`Error loading resources for namespace ${namespace} and language: ${resolvedLanguage}`, error);
       }
