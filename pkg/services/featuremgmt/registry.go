@@ -2160,15 +2160,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "unifiedStorageSearchDualReaderEnabled",
-			Description:  "Enable dual reader for unified storage search",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "dashboardLevelTimeMacros",
 			Description: "Supports __from and __to macros that always use the dashboard level time range",
 			Stage:       FeatureStageExperimental,

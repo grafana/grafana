@@ -251,7 +251,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-03,foldersAppPlatformAPI,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2025-07-16,otelLogsFormatting,experimental,@grafana/observability-logs,false,false,true
 2025-07-17,alertingNotificationHistory,experimental,@grafana/alerting-squad,false,false,false
-2025-07-18,unifiedStorageSearchDualReaderEnabled,experimental,@grafana/search-and-storage,false,false,false
 2025-07-31,dashboardLevelTimeMacros,experimental,@grafana/dashboards-squad,false,false,true
 2025-07-25,alertmanagerRemoteSecondaryWithRemoteState,experimental,@grafana/alerting-squad,false,false,false
 2025-07-31,restrictedPluginApis,GA,@grafana/plugins-platform-backend,false,false,true
