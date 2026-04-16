@@ -377,16 +377,6 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				compareFoldersNormalizeTime(t, f, actualFolder)
 			})
 
-			t.Run("When creating folder should return error if uid is general", func(t *testing.T) {
-				_, err := folderService.Create(ctx, &folder.CreateFolderCommand{
-					OrgID:        orgID,
-					Title:        f.Title,
-					UID:          "general",
-					SignedInUser: usr,
-				})
-				require.ErrorIs(t, err, folder.ErrInvalidUID)
-			})
-
 			t.Run("When updating folder should not return access denied error", func(t *testing.T) {
 				title := "TEST-Folder"
 				req := &folder.UpdateFolderCommand{

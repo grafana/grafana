@@ -86,7 +86,7 @@
         "tooltip-label": "Vrátí seznam hodnot štítků pro název štítku ve všech metrikách, pokud není metrika zadána.",
         "tooltip-metric-regex": "Vrátí seznam názvů štítků, volitelně filtrování podle zadaného metrického regulárního výrazu.",
         "tooltip-query": "Vrátí seznam výsledků dotazu Prometheus pro daný dotaz. To může zahrnovat funkce Prometheus, tj. {{exampleQuery}}.",
-        "tooltip-query-type": "Zásuvný modul zdroje dat Prometheus poskytuje následující typy dotazů pro proměnné šablony.",
+        "tooltip-query-type": "Plugin zdroje dat Prometheus poskytuje následující typy dotazů pro proměnné šablony.",
         "tooltip-series-query": "Zadejte metriku se štítky, pouze metriku nebo pouze štítky, tj. {{example1}}, {{example2}} nebo {{example3}}. Vrátí seznam časových řad spojených se zadanými daty."
       },
       "selector-actions": {
@@ -113,7 +113,7 @@
         "label-allow-as-recording-rules-target": "Povolit jako cíl pravidel nahrávání",
         "label-manage-alerts-via-alerting-ui": "Spravovat výstrahy prostřednictvím uživatelského rozhraní upozorňování",
         "title-alerting": "Výstrahy",
-        "tooltip-allow-as-recording-rules-target": "Povolit výběr tohoto zdroje dat jako cíle pro zápis pravidel záznamu.",
+        "tooltip-allow-as-recording-rules-target": "Povolit výběr tohoto zdroje dat jako cíle pro zápis pravidel nahrávání.",
         "tooltip-manage-alerts-via-alerting-ui": "Spravovat pravidla výstrah pro tento zdroj dat. Chcete-li spravovat další zdroje Alerting, přidejte zdroj dat Alertmanager."
       },
       "config-editor": {
@@ -139,12 +139,12 @@
         "label-url-label": "Štítek adresy URL",
         "placeholder-go-to-examplecom": "Přejít na example.com",
         "placeholder-httpsexamplecomvalueraw": "https://example.com/${__value.raw}",
-        "placeholder-trace-id": "ID sledování",
+        "placeholder-trace-id": "traceID",
         "title-remove-exemplar-link": "Odebrat příklad odkazu",
         "tooltip-data-source": "Zdroj dat, na který bude exemplář odkazovat.",
         "tooltip-internal-link": "Tuto možnost povolte, pokud máte interní odkaz. Pokud je tato možnost povolena, zobrazí se výběr zdroje dat. Vyberte úložiště dat pro sledování backendu pro vaše vzorová data.",
-        "tooltip-label-name": "Název pole v objektu štítků, které by mělo být použito k získání ID sledování.",
-        "tooltip-url": "Adresa URL backendu trasování pro uživatele za účelem trasování",
+        "tooltip-label-name": "Název pole v objektu štítků, které by mělo být použito k získání traceID.",
+        "tooltip-url": "Adresa URL backendu stopy pro uživatele za účelem trasování",
         "tooltip-url-label": "Použijte k přepsání štítku tlačítka v poli traceID exempláře."
       },
       "exemplars-settings": {
@@ -189,7 +189,7 @@
         "tooltip-http-method": "K dotazu na zdroj dat Prometheus můžete použít metodu POST nebo GET HTTP. Doporučenou metodou je POST, protože umožňuje větší dotazy. Změňte na GET, pokud máte verzi Prometheus starší než 2.1 nebo pokud jsou požadavky POST ve vaší síti omezeny.",
         "tooltip-incremental-querying-beta": "Tato funkce změní výchozí chování relativních dotazů tak, aby vždy požadovaly aktuální data z instance Prometheus. Místo toho budou výsledky dotazů uloženy do vyrovnávací paměti a budou požadovány pouze nové záznamy. Povolte tuto možnost pro snížení zatížení databáze a sítě.",
         "tooltip-prom-type-version": "Tímto nastavíte verzi své instance {{promType}}, pokud není automaticky nakonfigurována.",
-        "tooltip-prometheus-type": "Nastavte hodnotu na typ databáze Prometheus, např. Prometheus, Cortex, Mimir nebo Thanos. Změna tohoto pole uloží aktuální nastavení. Některé typy Prometheus podporují nebo nepodporují různá rozhraní API. Některé typy například podporují shodu regex pro dotazy na štítky za účelem zlepšení výkonu. Některé typy mají API pro metadata. Pokud toto nastavíte nesprávně, při dotazování na metriky a štítky můžete zaznamenat neobvyklé chování. Zkontrolujte dokumentaci Prometheus a ujistěte se, že zadáváte správný typ.",
+        "tooltip-prometheus-type": "Nastavte hodnotu na typ databáze Prometheus, např. Prometheus, Cortex, Mimir nebo Thanos. Změna tohoto pole uloží aktuální nastavení. Některé typy Prometheus podporují nebo nepodporují různá rozhraní API. Některé typy například podporují shodu regulérního výrazu pro dotazy na štítky za účelem zlepšení výkonu. Některé typy mají API pro metadata. Pokud toto nastavíte nesprávně, při dotazování na metriky a štítky můžete zaznamenat neobvyklé chování. Zkontrolujte dokumentaci Prometheus a ujistěte se, že zadáváte správný typ.",
         "tooltip-query-overlap-window": "Nastavte dobu trvání, například {{example1}} nebo {{example2}} nebo {{example3}}. Výchozí hodnota: {{default}}. Tato doba trvání bude přidána k době trvání každého přírůstkového požadavku.",
         "tooltip-query-timeout": "Nastavte časový limit dotazu Prometheus.",
         "tooltip-scrape-interval": "Tento interval udává, jak často Prometheus shromažďuje cíle. Nastavte hodnotu na typický interval shromažďování a vyhodnocování nakonfigurovaný v konfiguračním souboru Prometheus. Pokud nastavíte hodnotu vyšší než interval konfiguračního souboru Prometheus, Grafana vyhodnotí data podle tohoto intervalu a uvidíte méně datových bodů. Výchozí nastavení je {{default}}.",
@@ -198,7 +198,7 @@
       }
     },
     "metrics-browser": {
-      "disabled-label": "(Deaktivováno)",
+      "disabled-label": "(zakázáno)",
       "enabled-label": "Prohlížeč metrik"
     },
     "prom-query-legend-editor": {
@@ -263,7 +263,7 @@
         "documentation-info": "Vrátí nejnovější podrobnosti a metadata o skupině metrik, jako jsou jejich štítky a aktuální hodnoty, bez provádění jakýchkoli výpočtů",
         "documentation-irate": "Vypočítá okamžitou rychlost nárůstu časové řady ve vektoru rozsahu za sekundu. Vychází z posledních dvou datových bodů. Přerušení monotónnosti (například resetování počítadla v důsledku restartu cíle) se automaticky upravují.",
         "documentation-label-join": "Pro každou časovou řadu v části „v“ spojí všechny hodnoty všech „src_labels“ pomocí „separator“ a vrátí časové řady se štítkem „dst_label“ obsahujícím spojenou hodnotu. V této funkci může být libovolný počet „src_labels“.",
-        "documentation-label-replace": "Pro každou časovou řadu v části „v“ porovná „label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)“ regulární výraz „regex“ se štítkem „src_label“. Pokud se shoduje, pak se vrátí časová řada se štítkem „dst_label“ nahrazeným rozšířením „replacement“. „$1“ se nahradí první odpovídající podskupinou, „$2“ druhou atd. Pokud se regulární výraz neshoduje, pak se časová řada vrátí beze změny.",
+        "documentation-label-replace": "Pro každou časovou řadu v části „v“ porovná „label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)“ regulární výraz „regulérní výraz“ se štítkem „src_label“. Pokud se shoduje, pak se vrátí časová řada se štítkem „dst_label“ nahrazeným rozšířením „replacement“. „$1“ se nahradí první odpovídající podskupinou, „$2“ druhou atd. Pokud se regulární výraz neshoduje, pak se časová řada vrátí beze změny.",
         "documentation-last-over-time": "Nejnovější bodová hodnota v zadaném intervalu.",
         "documentation-ln": "Vypočítá přirozený logaritmus pro všechny prvky v části „v“.\nZvláštní případy jsou:\n * „ln(+Inf) = +Inf“\n * „ln(0) = -Inf“\n * „ln(x < 0) = NaN“\n * „ln(NaN) = NaN“",
         "documentation-log10": "Vypočítá desetinný logaritmus pro všechny prvky v části „v“. Zvláštní případy jsou ekvivalentní těm v „ln“.",
@@ -338,7 +338,7 @@
         "label-native-histogram": "Nativní histogram",
         "label-no-type": "Žádný typ",
         "label-summary": "Shrnutí",
-        "label-unknown": "Neznámý"
+        "label-unknown": "Neznámé"
       },
       "handle-function": {
         "text": {

@@ -10,6 +10,7 @@ import (
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers"
+	"github.com/grafana/alerting/receivers/schema"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/modern-go/reflect2"
 
@@ -231,13 +232,14 @@ func ContactPointToContactPointExport(cp definitions.ContactPoint) (notify.APIRe
 
 // marshallIntegration converts the API model integration to the storage model that contains settings in the JSON format.
 // The secret fields are not encrypted.
-func marshallIntegration(json jsoniter.API, integrationType string, integration interface{}, disableResolveMessage *bool) (*alertingModels.IntegrationConfig, error) {
+func marshallIntegration(json jsoniter.API, integrationType schema.IntegrationType, integration interface{}, disableResolveMessage *bool) (*alertingModels.IntegrationConfig, error) {
 	data, err := json.Marshal(integration)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshall integration '%s' to JSON: %w", integrationType, err)
 	}
 	e := &alertingModels.IntegrationConfig{
 		Type:     integrationType,
+		Version:  schema.V1,
 		Settings: data,
 	}
 	if disableResolveMessage != nil {

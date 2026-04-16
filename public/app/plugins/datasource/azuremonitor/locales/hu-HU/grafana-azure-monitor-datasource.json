@@ -34,24 +34,24 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
-      "aria-label-client-certificate": "",
+      "aria-label-client-certificate": "Klienstanúsítvány",
       "aria-label-client-id": "Kliensazonosító",
-      "aria-label-client-secret": "Klienstitok",
-      "aria-label-private-key": "",
-      "aria-label-private-key-password": "",
-      "aria-label-symbol-client-secret": "Klienstitok",
+      "aria-label-client-secret": "Titkos klienskulcs",
+      "aria-label-private-key": "Privát kulcs",
+      "aria-label-private-key-password": "Tanúsítványjelszó",
+      "aria-label-symbol-client-secret": "Titkos klienskulcs",
       "aria-label-tenant-id": "Bérlőazonosító",
-      "description-certificate-format": "",
+      "description-certificate-format": "Válassza ki a tanúsítvány formátumát (a PEM-tanúsítványoknak egyszerű szöveges PEM-formátumban, a PFX-tanúsítványoknak Base64-kódolású PFX-formátumban kell lenniük)",
       "label-azure-cloud": "Azure Cloud",
-      "label-certificate-format": "",
-      "label-client-certificate": "",
+      "label-certificate-format": "Formátum",
+      "label-client-certificate": "Klienstanúsítvány",
       "label-client-id": "Alkalmazás (kliens) azonosítója",
-      "label-client-secret": "Klienstitok",
-      "label-private-key": "",
-      "label-symbol-client-secret": "Klienstitok",
-      "label-symbol-private-key-password": "",
+      "label-client-secret": "Titkos klienskulcs",
+      "label-private-key": "Privát kulcs",
+      "label-symbol-client-secret": "Titkos klienskulcs",
+      "label-symbol-private-key-password": "Tanúsítványjelszó",
       "label-tenant-id": "Címtár (bérlő) azonosítója",
-      "placeholder-symbol-client-secret": "konfigurált",
+      "placeholder-symbol-client-secret": "konfigurálva",
       "reset-symbol-client-secret": "Visszaállítás"
     },
     "azure-cheat-sheet": {
@@ -71,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Válassza ki az Azure-szolgáltatások hitelesítési típusát",
-      "label-authentication": "",
+      "label-authentication": "Hitelesítés típusa",
       "title-authentication": "Hitelesítés"
     },
     "basic-logs-toggle": {
@@ -84,8 +84,8 @@
       "title-additional-settings": "További beállítások"
     },
     "current-user-fallback-credentials": {
-      "alert-fallback-credentials-disabled": "Az alapértelmezett hitelesítő adatok le lettek tiltva. Mivel a felhasználóalapú hitelesítés eredendően csak a hatókörben felhasználót tartalmazó kéréseket támogatja, az olyan funkciók, mint a riasztás, a rögzített lekérdezések vagy a jelentéskészítés, nem fognak az elvárt módon működni. További részletekért tekintse át a <2>dokumentációt</2>.",
-      "body-service-credentials": "A felhasználóalapú hitelesítés nem támogatja eredendően azokat a Grafana-funkciókat, amelyek anélkül küldenek kéréseket az adatforrásnak, hogy a felhasználói adatok elérhetők lennének a kéréshez. Erre példa a riasztás. Ha biztosítani szeretné, hogy a kérés kontextusában felhasználó nélküli funkciók továbbra is működjenek, adja meg az alábbi alapértelmezett hitelesítő adatokat.",
+      "alert-fallback-credentials-disabled": "Az alapértelmezett hitelesítő adatok le lettek tiltva. Mivel a felhasználóalapú hitelesítés eredendően csak a hatókörben felhasználót tartalmazó kéréseket támogatja, az olyan funkciók, mint a riasztás, a rögzített lekérdezések vagy a jelentéskészítés nem fognak az elvárt módon működni. További részletekért tekintse át a <2>dokumentációt</2>.",
+      "body-service-credentials": "A felhasználóalapú hitelesítés nem támogatja eredendően azokat a Grafana-funkciókat, amelyek anélkül küldenek kéréseket az adatforrásnak, hogy a felhasználói adatok elérhetők lennének a kéréshez. Erre példa a riasztás. Ha biztosítani szeretné, hogy a kérés kontextusában a felhasználó nélküli funkciók továbbra is működjenek, adja meg az alábbi alapértelmezett hitelesítő adatokat.",
       "description-authentication": "Válassza ki az Azure-szolgáltatások hitelesítési típusát",
       "description-service-credentials": "Válassza ki, hogy az alapértelmezett szolgáltatási hitelesítő adatok engedélyezettek vagy letiltottak legyenek ennél az adatforrásnál",
       "label-authentication": "Hitelesítés",
@@ -285,7 +285,7 @@
       "tooltip-time-range": "<0>Meghatározza a lekérdezéshez használt időtartományt. A <1>Lekérdezés</1> opció csak a lekérdezésben megadott időtartományokat használja. Az <3>Irányítópult</3> csak a Grafana-időtartományt használja.</0>"
     },
     "top-field": {
-      "label-top": "Felső"
+      "label-top": "Felül"
     },
     "trace-type-field": {
       "label-event-type": "Esemény típusa",

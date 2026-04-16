@@ -284,11 +284,6 @@ export interface FeatureToggles {
   */
   scanRowInvalidDashboardParseFallbackEnabled?: boolean;
   /**
-  * Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
-  * @default false
-  */
-  datasourceQueryTypes?: boolean;
-  /**
   * Register legacy datasource apis that use the numeric id
   * @default false
   */
@@ -729,6 +724,11 @@ export interface FeatureToggles {
   */
   zanzanaNoLegacyClient?: boolean;
   /**
+  * Search users permissions using Zanzana.
+  * @default false
+  */
+  zanzanaSearchUsersPermissions?: boolean;
+  /**
   * Enables reload of dashboards on scopes, time range and variables changes
   * @default false
   */
@@ -1112,7 +1112,7 @@ export interface FeatureToggles {
   pluginsAutoUpdate?: boolean;
   /**
   * Enables the alerting list view v2 preview toggle
-  * @default true
+  * @default false
   */
   alertingListViewV2PreviewToggle?: boolean;
   /**
@@ -1721,6 +1721,11 @@ export interface FeatureToggles {
   * @default false
   */
   queryFetchConfigFromSettingsService?: boolean;
+  /**
+  * Enables heatmap visualization support for Pyroscope profiles
+  * @default false
+  */
+  profilesHeatmap?: boolean;
   /**
   * Enables the query service to do query caching
   * @default false
