@@ -1,5 +1,6 @@
 import { render, screen, userEvent } from 'test/test-utils';
 
+import { AppEvents } from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { ManagerKind } from 'app/features/apiserver/types';
@@ -172,7 +173,7 @@ describe('browse-dashboards FolderActionsButton', () => {
 
     expect(publishSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        type: 'alert-error',
+        type: AppEvents.alertError.name,
         payload: [backendMessage],
       })
     );
@@ -195,7 +196,7 @@ describe('browse-dashboards FolderActionsButton', () => {
 
     expect(publishSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        type: 'alert-error',
+        type: AppEvents.alertError.name,
         payload: ['Error deleting folder. Please try again later.'],
       })
     );

@@ -18,6 +18,7 @@ import { ShowModalReactEvent } from 'app/types/events';
 import { type FolderDTO } from 'app/types/folders';
 
 import { useDeleteFolderMutationFacade, useMoveFolderMutationFacade } from '../../../api/clients/folder/v1beta1/hooks';
+import { extractErrorMessage } from '../../../api/utils';
 import { ManagerKind } from '../../apiserver/types';
 import { getFolderPermissions } from '../permissions';
 
@@ -30,25 +31,6 @@ interface Props {
   isReadOnlyRepo?: boolean;
   repoType?: RepoType;
 }
-
-const getDeleteFolderErrorMessage = (error: unknown) => {
-  if (!error || typeof error !== 'object') {
-    return undefined;
-  }
-
-  if ('data' in error && error.data && typeof error.data === 'object' && 'message' in error.data) {
-    const { message } = error.data as { message?: unknown };
-    if (typeof message === 'string' && message.length > 0) {
-      return message;
-    }
-  }
-
-  if ('message' in error && typeof error.message === 'string' && error.message.length > 0) {
-    return error.message;
-  }
-
-  return undefined;
-};
 
 export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props) {
   const [isOpen, setIsOpen] = useState(false);
@@ -99,7 +81,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
 
       appEvents.publish({
         type: AppEvents.alertError.name,
-        payload: [getDeleteFolderErrorMessage(result.error) ?? fallbackMessage],
+        payload: [extractErrorMessage(result.error, fallbackMessage)],
       });
       return;
     }
