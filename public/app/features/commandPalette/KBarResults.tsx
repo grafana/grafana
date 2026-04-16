@@ -209,7 +209,6 @@ export const KBarResults = (props: KBarResultsProps) => {
                   id: getListboxItemId(virtualRow.index),
                   role: 'option',
                   'aria-selected': active,
-                  ...(groupLabel ? { 'aria-label': `${groupLabel}: ${item.name}` } : undefined),
                 }),
             style: {
               position: 'absolute',
@@ -241,6 +240,7 @@ export const KBarResults = (props: KBarResultsProps) => {
                 ref={active ? (activeRef as React.RefObject<HTMLAnchorElement>) : null}
                 {...childProps}
               >
+                {groupLabel ? <span className="sr-only">{groupLabel}: </span> : null}
                 {renderedItem}
               </a>
             );
@@ -253,6 +253,7 @@ export const KBarResults = (props: KBarResultsProps) => {
               ref={active ? (activeRef as React.RefObject<HTMLDivElement>) : null}
               {...childProps}
             >
+              {groupLabel ? <span className="sr-only">{groupLabel}: </span> : null}
               {renderedItem}
             </div>
           );
