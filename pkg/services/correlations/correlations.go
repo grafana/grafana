@@ -41,17 +41,6 @@ type CorrelationsService struct {
 	QuotaService      quota.Service
 }
 
-type CorrelationsK8sService struct {
-	RouteRegister     routing.RouteRegister
-	log               log.Logger
-	AccessControl     accesscontrol.AccessControl
-	QuotaService      quota.Service
-	k8sClientInitOnce sync.Once
-	clientGen         resource.ClientGenerator
-	k8sClient         *v0alpha1.CorrelationClient
-	k8sClientInitErr  error
-}
-
 func (s CorrelationsService) CreateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (Correlation, error) {
 	quotaReached, err := s.QuotaService.CheckQuotaReached(ctx, QuotaTargetSrv, nil)
 	if err != nil {
@@ -65,36 +54,105 @@ func (s CorrelationsService) CreateCorrelation(ctx context.Context, cmd CreateCo
 	return s.createCorrelation(ctx, cmd)
 }
 
-func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (Correlation, error) {
-	return Correlation{}, nil
-}
-
 func (s CorrelationsService) CreateOrUpdateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) error {
 	return s.createOrUpdateCorrelation(ctx, cmd)
-}
-
-func (s *CorrelationsK8sService) CreateOrUpdateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) error {
-	return nil
 }
 
 func (s CorrelationsService) DeleteCorrelation(ctx context.Context, cmd DeleteCorrelationCommand) error {
 	return s.deleteCorrelation(ctx, cmd)
 }
 
-func (s *CorrelationsK8sService) DeleteCorrelation(ctx context.Context, cmd DeleteCorrelationCommand) error {
-	return nil
-}
-
 func (s CorrelationsService) UpdateCorrelation(ctx context.Context, cmd UpdateCorrelationCommand) (Correlation, error) {
 	return s.updateCorrelation(ctx, cmd)
 }
 
-func (s *CorrelationsK8sService) UpdateCorrelation(ctx context.Context, cmd UpdateCorrelationCommand) (Correlation, error) {
+func (s CorrelationsService) GetCorrelation(ctx context.Context, cmd GetCorrelationQuery) (Correlation, error) {
+	return s.getCorrelation(ctx, cmd)
+}
+
+func (s CorrelationsService) GetCorrelationsBySourceUID(ctx context.Context, cmd GetCorrelationsBySourceUIDQuery) ([]Correlation, error) {
+	return s.getCorrelationsBySourceUID(ctx, cmd)
+}
+
+func (s CorrelationsService) GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) (GetCorrelationsResponseBody, error) {
+	return s.getCorrelations(ctx, cmd)
+}
+
+func (s CorrelationsService) DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
+	return s.deleteCorrelationsBySourceUID(ctx, cmd)
+}
+
+func (s CorrelationsService) DeleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error {
+	return s.deleteCorrelationsByTargetUID(ctx, cmd)
+}
+
+func (s CorrelationsService) handleDatasourceDeletion(ctx context.Context, event *events.DataSourceDeleted) error {
+	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
+		if err := s.deleteCorrelationsBySourceUID(ctx, DeleteCorrelationsBySourceUIDCommand{
+			SourceUID: event.UID,
+			OrgId:     event.OrgID,
+		}); err != nil {
+			return err
+		}
+
+		if err := s.deleteCorrelationsByTargetUID(ctx, DeleteCorrelationsByTargetUIDCommand{
+			TargetUID: event.UID,
+			OrgId:     event.OrgID,
+		}); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func (s *CorrelationsService) Usage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
+	return s.CountCorrelations(ctx)
+}
+
+func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+	limits := &quota.Map{}
+
+	if cfg == nil {
+		return limits, nil
+	}
+
+	globalQuotaTag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
+	if err != nil {
+		return limits, err
+	}
+
+	limits.Set(globalQuotaTag, cfg.Quota.Global.Correlations)
+	return limits, nil
+}
+
+// app platform service functions
+
+type CorrelationsK8sService struct {
+	RouteRegister     routing.RouteRegister
+	log               log.Logger
+	AccessControl     accesscontrol.AccessControl
+	QuotaService      quota.Service
+	k8sClientInitOnce sync.Once
+	clientGen         resource.ClientGenerator
+	k8sClient         *v0alpha1.CorrelationClient
+	k8sClientInitErr  error
+}
+
+func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (Correlation, error) {
 	return Correlation{}, nil
 }
 
-func (s CorrelationsService) GetCorrelation(ctx context.Context, cmd GetCorrelationQuery) (Correlation, error) {
-	return s.getCorrelation(ctx, cmd)
+func (s *CorrelationsK8sService) CreateOrUpdateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) error {
+	return nil
+}
+
+func (s *CorrelationsK8sService) DeleteCorrelation(ctx context.Context, cmd DeleteCorrelationCommand) error {
+	return nil
+}
+
+func (s *CorrelationsK8sService) UpdateCorrelation(ctx context.Context, cmd UpdateCorrelationCommand) (Correlation, error) {
+	return Correlation{}, nil
 }
 
 func (s *CorrelationsK8sService) GetCorrelation(ctx context.Context, cmd GetCorrelationQuery) (Correlation, error) {
@@ -121,56 +179,20 @@ func (s *CorrelationsK8sService) GetCorrelation(ctx context.Context, cmd GetCorr
 	return *legacyCorr, nil
 }
 
-func (s CorrelationsService) GetCorrelationsBySourceUID(ctx context.Context, cmd GetCorrelationsBySourceUIDQuery) ([]Correlation, error) {
-	return s.getCorrelationsBySourceUID(ctx, cmd)
-}
-
 func (s *CorrelationsK8sService) GetCorrelationsBySourceUID(ctx context.Context, cmd GetCorrelationsBySourceUIDQuery) ([]Correlation, error) {
 	return []Correlation{}, nil
-}
-
-func (s CorrelationsService) GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) (GetCorrelationsResponseBody, error) {
-	return s.getCorrelations(ctx, cmd)
 }
 
 func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) (GetCorrelationsResponseBody, error) {
 	return GetCorrelationsResponseBody{}, nil
 }
 
-func (s CorrelationsService) DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
-	return s.deleteCorrelationsBySourceUID(ctx, cmd)
-}
-
 func (s *CorrelationsK8sService) DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
 	return nil
 }
 
-func (s CorrelationsService) DeleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error {
-	return s.deleteCorrelationsByTargetUID(ctx, cmd)
-}
-
 func (s *CorrelationsK8sService) DeleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error {
 	return nil
-}
-
-func (s CorrelationsService) handleDatasourceDeletion(ctx context.Context, event *events.DataSourceDeleted) error {
-	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
-		if err := s.deleteCorrelationsBySourceUID(ctx, DeleteCorrelationsBySourceUIDCommand{
-			SourceUID: event.UID,
-			OrgId:     event.OrgID,
-		}); err != nil {
-			return err
-		}
-
-		if err := s.deleteCorrelationsByTargetUID(ctx, DeleteCorrelationsByTargetUIDCommand{
-			TargetUID: event.UID,
-			OrgId:     event.OrgID,
-		}); err != nil {
-			return err
-		}
-
-		return nil
-	})
 }
 
 func (s *CorrelationsK8sService) handleDatasourceDeletion(ctx context.Context, event *events.DataSourceDeleted) error {
@@ -178,29 +200,9 @@ func (s *CorrelationsK8sService) handleDatasourceDeletion(ctx context.Context, e
 	return nil
 }
 
-func (s *CorrelationsService) Usage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
-	return s.CountCorrelations(ctx)
-}
-
 func (s *CorrelationsK8sService) Usage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
 	// TODO
 	return &quota.Map{}, nil
-}
-
-func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
-	limits := &quota.Map{}
-
-	if cfg == nil {
-		return limits, nil
-	}
-
-	globalQuotaTag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
-	if err != nil {
-		return limits, err
-	}
-
-	limits.Set(globalQuotaTag, cfg.Quota.Global.Correlations)
-	return limits, nil
 }
 
 /*

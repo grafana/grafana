@@ -31,24 +31,6 @@ func (s *CorrelationsService) registerAPIEndpoints() {
 	}, middleware.ReqSignedIn)
 }
 
-func (s *CorrelationsK8sService) registerAPIEndpoints() {
-	uidScope := datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":uid"))
-	authorize := ac.Middleware(s.AccessControl)
-
-	s.RouteRegister.Get("/api/datasources/correlations", middleware.ReqSignedIn, authorize(ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationsHandler))
-
-	s.RouteRegister.Group("/api/datasources/uid/:uid/correlations", func(entities routing.RouteRegister) {
-		entities.Get("/", authorize(ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationsBySourceUIDHandler))
-		entities.Post("/", authorize(ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.createHandler))
-
-		entities.Group("/:correlationUID", func(entities routing.RouteRegister) {
-			entities.Get("/", authorize(ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationHandler))
-			entities.Delete("/", authorize(ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.deleteHandler))
-			entities.Patch("/", authorize(ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.updateHandler))
-		})
-	}, middleware.ReqSignedIn)
-}
-
 // swagger:route POST /datasources/uid/{sourceUID}/correlations datasources correlations createCorrelation
 //
 // Add correlation.
@@ -61,25 +43,6 @@ func (s *CorrelationsK8sService) registerAPIEndpoints() {
 // 404: notFoundError
 // 500: internalServerError
 func (s *CorrelationsService) createHandler(c *contextmodel.ReqContext) response.Response {
-	cmd := CreateCorrelationCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	cmd.SourceUID = web.Params(c.Req)[":uid"]
-	cmd.OrgId = c.GetOrgID()
-
-	correlation, err := s.CreateCorrelation(c.Req.Context(), cmd)
-	if err != nil {
-		if errors.Is(err, ErrSourceDataSourceDoesNotExists) || errors.Is(err, ErrTargetDataSourceDoesNotExists) {
-			return response.Error(http.StatusNotFound, "Data source not found", err)
-		}
-		return response.Error(http.StatusInternalServerError, "Failed to add correlation", err)
-	}
-
-	return response.JSON(http.StatusOK, CreateCorrelationResponseBody{Result: correlation, Message: "Correlation created"})
-}
-
-func (s *CorrelationsK8sService) createHandler(c *contextmodel.ReqContext) response.Response {
 	cmd := CreateCorrelationCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -125,33 +88,6 @@ type CreateCorrelationResponse struct {
 // 404: notFoundError
 // 500: internalServerError
 func (s *CorrelationsService) deleteHandler(c *contextmodel.ReqContext) response.Response {
-	cmd := DeleteCorrelationCommand{
-		UID:       web.Params(c.Req)[":correlationUID"],
-		SourceUID: web.Params(c.Req)[":uid"],
-		OrgId:     c.GetOrgID(),
-	}
-
-	err := s.DeleteCorrelation(c.Req.Context(), cmd)
-	if err != nil {
-		if errors.Is(err, ErrSourceDataSourceDoesNotExists) {
-			return response.Error(http.StatusNotFound, "Data source not found", err)
-		}
-
-		if errors.Is(err, ErrCorrelationNotFound) {
-			return response.Error(http.StatusNotFound, "Correlation not found", err)
-		}
-
-		if errors.Is(err, ErrCorrelationReadOnly) {
-			return response.Error(http.StatusForbidden, "Correlation can only be edited via provisioning", err)
-		}
-
-		return response.Error(http.StatusInternalServerError, "Failed to delete correlation", err)
-	}
-
-	return response.JSON(http.StatusOK, DeleteCorrelationResponseBody{Message: "Correlation deleted"})
-}
-
-func (s *CorrelationsK8sService) deleteHandler(c *contextmodel.ReqContext) response.Response {
 	cmd := DeleteCorrelationCommand{
 		UID:       web.Params(c.Req)[":correlationUID"],
 		SourceUID: web.Params(c.Req)[":uid"],
@@ -239,40 +175,6 @@ func (s *CorrelationsService) updateHandler(c *contextmodel.ReqContext) response
 	return response.JSON(http.StatusOK, UpdateCorrelationResponseBody{Message: "Correlation updated", Result: correlation})
 }
 
-func (s *CorrelationsK8sService) updateHandler(c *contextmodel.ReqContext) response.Response {
-	cmd := UpdateCorrelationCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		if errors.Is(err, ErrUpdateCorrelationEmptyParams) {
-			return response.Error(http.StatusBadRequest, "At least one of label, description or config is required", err)
-		}
-
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-
-	cmd.UID = web.Params(c.Req)[":correlationUID"]
-	cmd.SourceUID = web.Params(c.Req)[":uid"]
-	cmd.OrgId = c.GetOrgID()
-
-	correlation, err := s.UpdateCorrelation(c.Req.Context(), cmd)
-	if err != nil {
-		if errors.Is(err, ErrSourceDataSourceDoesNotExists) {
-			return response.Error(http.StatusNotFound, "Data source not found", err)
-		}
-
-		if errors.Is(err, ErrCorrelationNotFound) {
-			return response.Error(http.StatusNotFound, "Correlation not found", err)
-		}
-
-		if errors.Is(err, ErrCorrelationReadOnly) {
-			return response.Error(http.StatusForbidden, "Correlation can only be edited via provisioning", err)
-		}
-
-		return response.Error(http.StatusInternalServerError, "Failed to update correlation", err)
-	}
-
-	return response.JSON(http.StatusOK, UpdateCorrelationResponseBody{Message: "Correlation updated", Result: correlation})
-}
-
 // swagger:parameters updateCorrelation
 type UpdateCorrelationParams struct {
 	// in:path
@@ -322,28 +224,6 @@ func (s *CorrelationsService) getCorrelationHandler(c *contextmodel.ReqContext) 
 	return response.JSON(http.StatusOK, correlation)
 }
 
-func (s *CorrelationsK8sService) getCorrelationHandler(c *contextmodel.ReqContext) response.Response {
-	query := GetCorrelationQuery{
-		UID:       web.Params(c.Req)[":correlationUID"],
-		SourceUID: web.Params(c.Req)[":uid"],
-		OrgId:     c.GetOrgID(),
-	}
-
-	correlation, err := s.GetCorrelation(c.Req.Context(), query)
-	if err != nil {
-		if errors.Is(err, ErrCorrelationNotFound) {
-			return response.Error(http.StatusNotFound, "Correlation not found", err)
-		}
-		if errors.Is(err, ErrSourceDataSourceDoesNotExists) {
-			return response.Error(http.StatusNotFound, "Source data source not found", err)
-		}
-
-		return response.Error(http.StatusInternalServerError, "Failed to get correlation", err)
-	}
-
-	return response.JSON(http.StatusOK, correlation)
-}
-
 // swagger:parameters getCorrelation
 type GetCorrelationParams struct {
 	// in:path
@@ -370,27 +250,6 @@ type GetCorrelationResponse struct {
 // 404: notFoundError
 // 500: internalServerError
 func (s *CorrelationsService) getCorrelationsBySourceUIDHandler(c *contextmodel.ReqContext) response.Response {
-	query := GetCorrelationsBySourceUIDQuery{
-		SourceUID: web.Params(c.Req)[":uid"],
-		OrgId:     c.GetOrgID(),
-	}
-
-	correlations, err := s.GetCorrelationsBySourceUID(c.Req.Context(), query)
-	if err != nil {
-		if errors.Is(err, ErrCorrelationNotFound) {
-			return response.Error(http.StatusNotFound, "No correlation found", err)
-		}
-		if errors.Is(err, ErrSourceDataSourceDoesNotExists) {
-			return response.Error(http.StatusNotFound, "Source data source not found", err)
-		}
-
-		return response.Error(http.StatusInternalServerError, "Failed to get correlations", err)
-	}
-
-	return response.JSON(http.StatusOK, correlations)
-}
-
-func (s *CorrelationsK8sService) getCorrelationsBySourceUIDHandler(c *contextmodel.ReqContext) response.Response {
 	query := GetCorrelationsBySourceUIDQuery{
 		SourceUID: web.Params(c.Req)[":uid"],
 		OrgId:     c.GetOrgID(),
@@ -467,6 +326,176 @@ func (s *CorrelationsService) getCorrelationsHandler(c *contextmodel.ReqContext)
 	return response.JSON(http.StatusOK, correlations)
 }
 
+// swagger:parameters getCorrelations
+type GetCorrelationsParams struct {
+	// Limit the maximum number of correlations to return per page
+	// in:query
+	// required:false
+	// default:100
+	// maximum: 1000
+	Limit int64 `json:"limit"`
+	// Page index for starting fetching correlations
+	// in:query
+	// required:false
+	// default:1
+	Page int64 `json:"page"`
+	// Source datasource UID filter to be applied to correlations
+	// in:query
+	// type: array
+	// collectionFormat: multi
+	// required:false
+	SourceUIDs []string `json:"sourceUID"`
+}
+
+//swagger:response getCorrelationsResponse
+type GetCorrelationsResponse struct {
+	// in: body
+	Body []Correlation `json:"body"`
+}
+
+// app platform service handlers - this is copied directly from the above
+
+func (s *CorrelationsK8sService) registerAPIEndpoints() {
+	uidScope := datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":uid"))
+	authorize := ac.Middleware(s.AccessControl)
+
+	s.RouteRegister.Get("/api/datasources/correlations", middleware.ReqSignedIn, authorize(ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationsHandler))
+
+	s.RouteRegister.Group("/api/datasources/uid/:uid/correlations", func(entities routing.RouteRegister) {
+		entities.Get("/", authorize(ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationsBySourceUIDHandler))
+		entities.Post("/", authorize(ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.createHandler))
+
+		entities.Group("/:correlationUID", func(entities routing.RouteRegister) {
+			entities.Get("/", authorize(ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationHandler))
+			entities.Delete("/", authorize(ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.deleteHandler))
+			entities.Patch("/", authorize(ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.updateHandler))
+		})
+	}, middleware.ReqSignedIn)
+}
+
+func (s *CorrelationsK8sService) createHandler(c *contextmodel.ReqContext) response.Response {
+	cmd := CreateCorrelationCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	cmd.SourceUID = web.Params(c.Req)[":uid"]
+	cmd.OrgId = c.GetOrgID()
+
+	correlation, err := s.CreateCorrelation(c.Req.Context(), cmd)
+	if err != nil {
+		if errors.Is(err, ErrSourceDataSourceDoesNotExists) || errors.Is(err, ErrTargetDataSourceDoesNotExists) {
+			return response.Error(http.StatusNotFound, "Data source not found", err)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to add correlation", err)
+	}
+
+	return response.JSON(http.StatusOK, CreateCorrelationResponseBody{Result: correlation, Message: "Correlation created"})
+}
+
+func (s *CorrelationsK8sService) deleteHandler(c *contextmodel.ReqContext) response.Response {
+	cmd := DeleteCorrelationCommand{
+		UID:       web.Params(c.Req)[":correlationUID"],
+		SourceUID: web.Params(c.Req)[":uid"],
+		OrgId:     c.GetOrgID(),
+	}
+
+	err := s.DeleteCorrelation(c.Req.Context(), cmd)
+	if err != nil {
+		if errors.Is(err, ErrSourceDataSourceDoesNotExists) {
+			return response.Error(http.StatusNotFound, "Data source not found", err)
+		}
+
+		if errors.Is(err, ErrCorrelationNotFound) {
+			return response.Error(http.StatusNotFound, "Correlation not found", err)
+		}
+
+		if errors.Is(err, ErrCorrelationReadOnly) {
+			return response.Error(http.StatusForbidden, "Correlation can only be edited via provisioning", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to delete correlation", err)
+	}
+
+	return response.JSON(http.StatusOK, DeleteCorrelationResponseBody{Message: "Correlation deleted"})
+}
+
+func (s *CorrelationsK8sService) updateHandler(c *contextmodel.ReqContext) response.Response {
+	cmd := UpdateCorrelationCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		if errors.Is(err, ErrUpdateCorrelationEmptyParams) {
+			return response.Error(http.StatusBadRequest, "At least one of label, description or config is required", err)
+		}
+
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	cmd.UID = web.Params(c.Req)[":correlationUID"]
+	cmd.SourceUID = web.Params(c.Req)[":uid"]
+	cmd.OrgId = c.GetOrgID()
+
+	correlation, err := s.UpdateCorrelation(c.Req.Context(), cmd)
+	if err != nil {
+		if errors.Is(err, ErrSourceDataSourceDoesNotExists) {
+			return response.Error(http.StatusNotFound, "Data source not found", err)
+		}
+
+		if errors.Is(err, ErrCorrelationNotFound) {
+			return response.Error(http.StatusNotFound, "Correlation not found", err)
+		}
+
+		if errors.Is(err, ErrCorrelationReadOnly) {
+			return response.Error(http.StatusForbidden, "Correlation can only be edited via provisioning", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to update correlation", err)
+	}
+
+	return response.JSON(http.StatusOK, UpdateCorrelationResponseBody{Message: "Correlation updated", Result: correlation})
+}
+
+func (s *CorrelationsK8sService) getCorrelationHandler(c *contextmodel.ReqContext) response.Response {
+	query := GetCorrelationQuery{
+		UID:       web.Params(c.Req)[":correlationUID"],
+		SourceUID: web.Params(c.Req)[":uid"],
+		OrgId:     c.GetOrgID(),
+	}
+
+	correlation, err := s.GetCorrelation(c.Req.Context(), query)
+	if err != nil {
+		if errors.Is(err, ErrCorrelationNotFound) {
+			return response.Error(http.StatusNotFound, "Correlation not found", err)
+		}
+		if errors.Is(err, ErrSourceDataSourceDoesNotExists) {
+			return response.Error(http.StatusNotFound, "Source data source not found", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to get correlation", err)
+	}
+
+	return response.JSON(http.StatusOK, correlation)
+}
+
+func (s *CorrelationsK8sService) getCorrelationsBySourceUIDHandler(c *contextmodel.ReqContext) response.Response {
+	query := GetCorrelationsBySourceUIDQuery{
+		SourceUID: web.Params(c.Req)[":uid"],
+		OrgId:     c.GetOrgID(),
+	}
+
+	correlations, err := s.GetCorrelationsBySourceUID(c.Req.Context(), query)
+	if err != nil {
+		if errors.Is(err, ErrCorrelationNotFound) {
+			return response.Error(http.StatusNotFound, "No correlation found", err)
+		}
+		if errors.Is(err, ErrSourceDataSourceDoesNotExists) {
+			return response.Error(http.StatusNotFound, "Source data source not found", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to get correlations", err)
+	}
+
+	return response.JSON(http.StatusOK, correlations)
+}
+
 func (s *CorrelationsK8sService) getCorrelationsHandler(c *contextmodel.ReqContext) response.Response {
 	limit := c.QueryInt64("limit")
 	if limit <= 0 {
@@ -499,31 +528,4 @@ func (s *CorrelationsK8sService) getCorrelationsHandler(c *contextmodel.ReqConte
 	}
 
 	return response.JSON(http.StatusOK, correlations)
-}
-
-// swagger:parameters getCorrelations
-type GetCorrelationsParams struct {
-	// Limit the maximum number of correlations to return per page
-	// in:query
-	// required:false
-	// default:100
-	// maximum: 1000
-	Limit int64 `json:"limit"`
-	// Page index for starting fetching correlations
-	// in:query
-	// required:false
-	// default:1
-	Page int64 `json:"page"`
-	// Source datasource UID filter to be applied to correlations
-	// in:query
-	// type: array
-	// collectionFormat: multi
-	// required:false
-	SourceUIDs []string `json:"sourceUID"`
-}
-
-//swagger:response getCorrelationsResponse
-type GetCorrelationsResponse struct {
-	// in: body
-	Body []Correlation `json:"body"`
 }
