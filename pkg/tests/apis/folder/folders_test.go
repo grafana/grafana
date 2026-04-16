@@ -818,10 +818,10 @@ func TestIntegrationFolderCreatePermissionsK8S(t *testing.T) {
 			},
 		},
 		{
-			// folders:write alone no longer grants create access via the k8s API.
-			// The legacy EvalAny(folders:write, folders:create) fallback lived in the
-			// Folder Service Create method and has been removed; the unified storage
-			// server only checks the "create" verb (folders:create).
+			// folders:write has never been sufficient to create a folder via the k8s API.
+			// The authz/rbac service maps VerbCreate → folders:create (with action sets
+			// folders:edit and folders:admin). folders:write is a separate granular action
+			// that is not in any of those sets, so it does not grant create access.
 			description:  "subfolder creation fails with only folders:write scoped to the parent",
 			parentUID:    "parent",
 			expectedCode: http.StatusForbidden,
