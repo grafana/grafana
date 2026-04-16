@@ -157,7 +157,7 @@ func populateDB(t *testing.T, db db.DB, cfg *setting.Cfg) org.Service {
 	)
 
 	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
-	correlationsSvc := correlationstest.New(db, cfg, bus)
+	correlationsSvc := correlationstest.New(context.Background(), db, cfg, bus)
 
 	c := make([]correlations.Correlation, 2)
 	for i := range c {
