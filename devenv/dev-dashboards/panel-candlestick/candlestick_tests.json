@@ -202,7 +202,7 @@
     }
   ],
   "schemaVersion": 36,
-  "tags": ["gdev", "panel-tests"],
+  "tags": ["gdev", "panel-tests", "candlestick"],
   "time": {
     "from": "2021-07-13T22:13:30.740Z",
     "to": "2021-07-13T22:46:18.921Z"
