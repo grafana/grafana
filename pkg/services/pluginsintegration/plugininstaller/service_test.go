@@ -70,6 +70,7 @@ func TestService_Run(t *testing.T) {
 		pluginsToInstallSync []setting.InstallPlugin
 		existingPlugins      []*plugins.Plugin
 		pluginsToFail        []string
+		pluginsCoreErr       []string
 		latestPlugin         *repo.PluginArchiveInfo
 	}{
 		{
@@ -117,6 +118,20 @@ func TestService_Run(t *testing.T) {
 			shouldThrowError:     true,
 			pluginsToInstallSync: []setting.InstallPlugin{{ID: "myplugin"}},
 			pluginsToFail:        []string{"myplugin"},
+		},
+		{
+			name:                 "when a core plugin is in sync install list, it should skip and not fail",
+			shouldInstall:        false,
+			shouldThrowError:     false,
+			pluginsToInstallSync: []setting.InstallPlugin{{ID: "coreplugin"}},
+			pluginsCoreErr:       []string{"coreplugin"},
+		},
+		{
+			name:             "when a core plugin is in async install list, it should skip and not fail",
+			shouldInstall:    false,
+			shouldThrowError: false,
+			pluginsToInstall: []setting.InstallPlugin{{ID: "coreplugin"}},
+			pluginsCoreErr:   []string{"coreplugin"},
 		},
 		{
 			name:             "Updates a plugin",
@@ -191,6 +206,11 @@ func TestService_Run(t *testing.T) {
 				store,
 				&pluginfakes.FakePluginInstaller{
 					AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.AddOpts) error {
+						for _, plugin := range tt.pluginsCoreErr {
+							if plugin == pluginID {
+								return plugins.ErrInstallCorePlugin
+							}
+						}
 						for _, plugin := range tt.pluginsToFail {
 							if plugin == pluginID {
 								return errors.New("Failed to install plugin")
