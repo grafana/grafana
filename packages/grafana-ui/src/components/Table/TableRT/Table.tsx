@@ -19,7 +19,7 @@ import { useTheme2 } from '../../../themes/ThemeContext';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../../Pagination/Pagination';
 import { TableCellInspector } from '../TableCellInspector';
-import { hasGeoCell } from '../hasGeoCell';
+import { hasGeoCell, LazyOpenLayersProvider } from '../geo';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from '../hooks';
 import { getInitialState, useTableStateReducer } from '../reducer';
 import { type FooterItem, type GrafanaTableState, type InspectCell, type TableRTProps as Props } from '../types';
@@ -40,9 +40,6 @@ import { useTableStyles } from './styles';
 const COLUMN_MIN_WIDTH = 150;
 const FOOTER_ROW_HEIGHT = 36;
 const NO_DATA_TEXT = 'No data';
-const LazyOpenLayersProvider = lazy(() =>
-  import('../OpenLayersProvider').then((module) => ({ default: module.OpenLayersProvider }))
-);
 
 /**
  * Used for displaying tabular data

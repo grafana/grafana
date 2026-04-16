@@ -47,7 +47,7 @@ import { Pagination } from '../../Pagination/Pagination';
 import { type PanelContext, usePanelContext } from '../../PanelChrome';
 import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
-import { hasGeoCell } from '../hasGeoCell';
+import { hasGeoCell, LazyOpenLayersProvider } from '../geo';
 import { TableCellDisplayMode } from '../types';
 import { type DataLinksActionsTooltipState } from '../utils';
 
@@ -118,9 +118,6 @@ import {
 } from './utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';
-const LazyOpenLayersProvider = lazy(() =>
-  import('../OpenLayersProvider').then((module) => ({ default: module.OpenLayersProvider }))
-);
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
 
 export function TableNG(props: TableNGProps) {

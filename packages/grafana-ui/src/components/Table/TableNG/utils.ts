@@ -29,6 +29,7 @@ import {
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellInspectorMode } from '../TableCellInspector';
+import { type OpenLayersContextValue, isGeometry } from '../geo';
 import { type TableCellOptions } from '../types';
 
 import { inferPills } from './Cells/PillCell';
@@ -1107,15 +1108,14 @@ function isPlainObject(value: unknown): value is object {
 export function buildInspectValue(
   value: unknown,
   field: Field,
-  // ol Geometry
-  formatGeometry?: (value: unknown) => string
+  formatGeometry?: OpenLayersContextValue['formatGeometry']
 ): [string, TableCellInspectorMode] {
   const cellOptions = getCellOptions(field);
 
   let inspectValue: string;
   let mode = TableCellInspectorMode.text;
 
-  if (field.type === FieldType.geo && typeof value === 'object' && value != null && 'intersectsCoordinate' in value) {
+  if (field.type === FieldType.geo && isGeometry(value)) {
     inspectValue = formatGeometry ? formatGeometry(value) : JSON.stringify(value, null, '  ');
     mode = TableCellInspectorMode.code;
   } else if (

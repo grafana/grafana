@@ -1,20 +1,13 @@
 import { css } from '@emotion/css';
 
-import { useOpenLayersContext } from '../../OpenLayersContext';
-import { type GeoCellProps, type TableCellStyles } from '../types';
+import { useOpenLayersContext, isGeometry } from '../../geo';
+import type { GeoCellProps, TableCellStyles } from '../types';
 
 export function GeoCell({ value }: GeoCellProps) {
   const { formatGeometry } = useOpenLayersContext();
   let disp = null;
 
-  if (
-    formatGeometry &&
-    // alternative to instanceof Geometry without importing the whole class from ol
-    typeof value === 'object' &&
-    value != null &&
-    'intersectsCoordinate' in value
-  ) {
-    // @ts-ignore
+  if (formatGeometry && isGeometry(value)) {
     disp = formatGeometry(value);
   } else if (value != null) {
     disp = `${value}`;
