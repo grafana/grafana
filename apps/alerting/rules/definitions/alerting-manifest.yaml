@@ -480,6 +480,9 @@ spec:
           - state
           type: object
         PromDuration:
+          not:
+            pattern: hmuµn
+          pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
           type: string
         RuleChain:
           properties:
@@ -498,6 +501,7 @@ spec:
           - uid
           type: object
         RuleUID:
+          pattern: ^[a-zA-Z0-9_-]+$
           type: string
         spec:
           additionalProperties: false
