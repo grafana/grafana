@@ -1291,9 +1291,17 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 				}
 				queries = append(queries, disjoin)
 			} else {
-				wildcard := bleve.NewWildcardQuery(req.Query)
-				wildcard.SetField(resource.SEARCH_FIELD_TITLE)
-				queries = append(queries, wildcard)
+				// Default: search both title (standard-analyzed, word tokens)
+				// and title_phrase (keyword-analyzed, full lowered title).
+				// title handles prefix wildcards like "hell*" (matches word "hello").
+				// title_phrase handles full-title wildcards like "*grafana dev overview*"
+				// sent by the legacy dashboard search service.
+				wTitle := bleve.NewWildcardQuery(req.Query)
+				wTitle.SetField(resource.SEARCH_FIELD_TITLE)
+				wPhrase := bleve.NewWildcardQuery(req.Query)
+				wPhrase.SetField(resource.SEARCH_FIELD_TITLE_PHRASE)
+
+				queries = append(queries, bleve.NewDisjunctionQuery(wTitle, wPhrase))
 			}
 		} else {
 			// When using a
