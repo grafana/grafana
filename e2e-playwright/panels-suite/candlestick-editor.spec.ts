@@ -52,9 +52,11 @@ test.describe('Panels test: Candlestick editor', { tag: ['@panels', '@candlestic
       queryParams: new URLSearchParams({ editPanel: '1' }),
     });
 
+    // wait for chart to render
     const candlestickUplot = page.locator('.uplot').first();
     await expect(candlestickUplot, 'uplot is rendered').toBeVisible();
 
+    // locate the mode radio option
     const modeOption = dashboardPage.getByGrafanaSelector(
       selectors.components.PanelEditor.OptionsPane.fieldLabel('Candlestick Mode')
     );
@@ -82,9 +84,11 @@ test.describe('Panels test: Candlestick editor', { tag: ['@panels', '@candlestic
       queryParams: new URLSearchParams({ editPanel: '1' }),
     });
 
+    // wait for chart to render
     const candlestickUplot = page.locator('.uplot').first();
     await expect(candlestickUplot, 'uplot is rendered').toBeVisible();
 
+    // locate the candle style radio option
     const styleOption = dashboardPage.getByGrafanaSelector(
       selectors.components.PanelEditor.OptionsPane.fieldLabel('Candlestick Candle style')
     );
@@ -108,9 +112,11 @@ test.describe('Panels test: Candlestick editor', { tag: ['@panels', '@candlestic
       queryParams: new URLSearchParams({ editPanel: '1' }),
     });
 
+    // wait for chart to render
     const candlestickUplot = page.locator('.uplot').first();
     await expect(candlestickUplot, 'uplot is rendered').toBeVisible();
 
+    // locate the color strategy radio option
     const colorOption = dashboardPage.getByGrafanaSelector(
       selectors.components.PanelEditor.OptionsPane.fieldLabel('Candlestick Color strategy')
     );

@@ -35,6 +35,7 @@ test.describe('Panels test: Candlestick legend', { tag: ['@panels', '@candlestic
       queryParams: new URLSearchParams({ editPanel: '1' }),
     });
 
+    // verify legend is visible before toggling options
     const legend = dashboardPage.getByGrafanaSelector(selectors.components.VizLayout.legend);
     await expect(legend, 'legend is rendered').toBeVisible();
 
