@@ -347,6 +347,10 @@ type orgInfo struct {
 // it is no longer used, other than for backwards compatibility
 const dualwriteKVNamespace = "unified.dualwrite"
 
+// FoldersDashboardsMigrationID is the definition ID of the folders/dashboards migration.
+// It is the only migration whose legacy dualwrite state we need to verify.
+const FoldersDashboardsMigrationID = "folders-dashboards"
+
 // dualwriteFileName is the name of the file used by G12.0.0 to persist dualwrite state
 // in the data directory. It contains a JSON-encoded map of resource keys
 // (e.g. "dashboards.dashboard.grafana.app") to dualwriteStorageStatus.
@@ -374,7 +378,14 @@ func (s dualwriteStorageStatus) migratedToUnified() bool {
 // Two historical locations are checked:
 //   - kv_store table with namespace "unified.dualwrite" (12.1.0+)
 //   - <data_path>/dualwrite.json file containing a map[string]StorageStatus (12.0.0)
+//
+// This legacy path was only ever exposed for folders/dashboards, so this check is skipped
+// for every other migration definition.
 func (r *MigrationRunner) isAlreadyOnUnifiedStorage(sess *xorm.Session) (bool, error) {
+	if r.definition.ID != FoldersDashboardsMigrationID {
+		return false, nil
+	}
+
 	configResources := r.definition.ConfigResources()
 	if len(configResources) == 0 {
 		return false, nil

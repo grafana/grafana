@@ -696,7 +696,7 @@ func TestIntegrationIsAlreadyOnUnifiedStorage(t *testing.T) {
 
 	gr := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
 	def := MigrationDefinition{
-		ID: "test-unified-check", MigrationID: "test-unified-check-migration",
+		ID: FoldersDashboardsMigrationID, MigrationID: "folders and dashboards migration",
 		Resources: []ResourceInfo{{GroupResource: gr}},
 		Migrators: map[schema.GroupResource]MigratorFunc{
 			gr: func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error { return nil },
@@ -775,6 +775,23 @@ func TestIntegrationIsAlreadyOnUnifiedStorage(t *testing.T) {
 		sess := newSession()
 		defer sess.Close()
 		got, err := runner.isAlreadyOnUnifiedStorage(sess)
+		require.NoError(t, err)
+		require.False(t, got)
+	})
+
+	t.Run("returns false for non-folders-dashboards definitions even when kv_store shows migrated", func(t *testing.T) {
+		insertKVState(t, configKey, migratedStatus)
+		otherDef := MigrationDefinition{
+			ID: "shorturls", MigrationID: "shorturls migration",
+			Resources: []ResourceInfo{{GroupResource: gr}},
+			Migrators: map[schema.GroupResource]MigratorFunc{
+				gr: func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error { return nil },
+			},
+		}
+		otherRunner, _ := newRunner(t, noopLocker(), &transactionalTableRenamer{log: logger}, otherDef)
+		sess := newSession()
+		defer sess.Close()
+		got, err := otherRunner.isAlreadyOnUnifiedStorage(sess)
 		require.NoError(t, err)
 		require.False(t, got)
 	})
