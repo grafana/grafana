@@ -189,7 +189,7 @@ test.describe(
       });
 
       test.afterAll(async ({ request }) => {
-        // Clean up dashboards (may 404 if already trashed/deleted)
+        // Clean up dashboards (may 404 if already deleted)
         for (const uid of [dashA1Uid, dashA2Uid, dashB1Uid]) {
           if (uid) {
             await request.delete(`${V1_API}/${uid}`);
@@ -234,7 +234,7 @@ test.describe(
         // Navigate to Recently Deleted
         await page.getByRole('link', { name: 'Recently deleted' }).click();
 
-        // Verify all trashed dashboards appear (use .first() for virtualized list)
+        // Verify all deleted dashboards appear (use .first() for virtualized list)
         await expect(page.getByTestId(selectors.pages.Search.table.row(dashA1Name)).first()).toBeVisible();
         await expect(page.getByTestId(selectors.pages.Search.table.row(dashA2Name)).first()).toBeVisible();
         await expect(page.getByTestId(selectors.pages.Search.table.row(dashB1Name)).first()).toBeVisible();
