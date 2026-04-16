@@ -200,8 +200,8 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFie
 	// Disable bleve's internal "_all" composite field. By default bleve merges
 	// terms from all fields with IncludeInAll:true into a synthetic "_all"
 	// field. We never query it (all searches target explicit fields). Disabling
-	// it significantly reduces index size (see mapping/index.go:366-371 in
-	// blevesearch/bleve).
+	// it significantly reduces index size.
+	// https://github.com/blevesearch/bleve/blob/v2.5.7/mapping/index.go#L366-L371
 	mapper.AddSubDocumentMapping("_all", bleve.NewDocumentDisabledMapping())
 
 	selectableFieldsMapper := bleve.NewDocumentStaticMapping()
