@@ -2,8 +2,11 @@ package resourcepermissions
 
 import (
 	"context"
+	"sync"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -27,6 +30,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+var openfeatureTestMutex sync.Mutex
 
 type setUserPermissionTest struct {
 	desc     string
@@ -658,11 +663,8 @@ func TestMapPermission_ServiceAccount(t *testing.T) {
 	}
 
 	t.Run("flag off: emits action set token AND granular actions", func(t *testing.T) {
-		svc := &Service{
-			options:  saOpts,
-			features: featuremgmt.WithFeatures(),
-		}
-		actions, err := svc.mapPermission("Edit")
+		svc := &Service{options: saOpts}
+		actions, err := svc.mapPermission(context.Background(), "Edit")
 		require.NoError(t, err)
 		assert.Contains(t, actions, saOpts.GetActionSetName("Edit"), "should include action set token")
 		assert.Contains(t, actions, serviceaccounts.ActionRead, "should include granular read action")
@@ -670,11 +672,20 @@ func TestMapPermission_ServiceAccount(t *testing.T) {
 	})
 
 	t.Run("flag on: emits only action set token", func(t *testing.T) {
-		svc := &Service{
-			options:  saOpts,
-			features: featuremgmt.WithFeatures(featuremgmt.FlagOnlyStoreServiceAccountActionSets),
-		}
-		actions, err := svc.mapPermission("Edit")
+		openfeatureTestMutex.Lock()
+		defer func() {
+			_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+			openfeatureTestMutex.Unlock()
+		}()
+
+		provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+			featuremgmt.FlagOnlyStoreServiceAccountActionSets: setting.NewInMemoryFlag(featuremgmt.FlagOnlyStoreServiceAccountActionSets, true),
+		})
+		require.NoError(t, err)
+		require.NoError(t, openfeature.SetProviderAndWait(provider))
+
+		svc := &Service{options: saOpts}
+		actions, err := svc.mapPermission(context.Background(), "Edit")
 		require.NoError(t, err)
 		require.Len(t, actions, 1)
 		assert.Equal(t, saOpts.GetActionSetName("Edit"), actions[0])

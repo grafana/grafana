@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -214,7 +216,7 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetUserPermission")
 	defer span.End()
 
-	actions, err := s.mapPermission(permission)
+	actions, err := s.mapPermission(ctx, permission)
 	if err != nil {
 		return nil, err
 	}
@@ -248,7 +250,7 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetTeamPermission")
 	defer span.End()
 
-	actions, err := s.mapPermission(permission)
+	actions, err := s.mapPermission(ctx, permission)
 	if err != nil {
 		return nil, err
 	}
@@ -282,7 +284,7 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetBuiltInRolePermission")
 	defer span.End()
 
-	actions, err := s.mapPermission(permission)
+	actions, err := s.mapPermission(ctx, permission)
 	if err != nil {
 		return nil, err
 	}
@@ -346,7 +348,7 @@ func (s *Service) SetPermissions(
 			}
 		}
 
-		actions, err := s.mapPermission(cmd.Permission)
+		actions, err := s.mapPermission(ctx, cmd.Permission)
 		if err != nil {
 			return nil, err
 		}
@@ -390,7 +392,7 @@ func (s *Service) DeleteResourcePermissions(ctx context.Context, orgID int64, re
 	})
 }
 
-func (s *Service) mapPermission(permission string) ([]string, error) {
+func (s *Service) mapPermission(ctx context.Context, permission string) ([]string, error) {
 	if permission == "" {
 		return []string{}, nil
 	}
@@ -413,8 +415,8 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 	if s.options.Resource == serviceaccounts.ScopeServiceAccountRoot {
 		actions = append(actions, s.options.GetActionSetName(permission))
 
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if s.features.IsEnabledGlobally(featuremgmt.FlagOnlyStoreServiceAccountActionSets) {
+		onlyActionSets, _ := openfeature.NewDefaultClient().BooleanValue(ctx, featuremgmt.FlagOnlyStoreServiceAccountActionSets, false, openfeature.TransactionContext(ctx))
+		if onlyActionSets {
 			return actions, nil
 		}
 	}
