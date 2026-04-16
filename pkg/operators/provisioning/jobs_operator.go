@@ -216,7 +216,7 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registe
 
 	return &jobsControllerConfig{
 		ControllerConfig:     *controllerCfg,
-		enabled:              operatorSec.Key("jobs_enabled").MustBool(true),
+		enabled:              operatorSec.Key("jobs_processing_enabled").MustBool(true),
 		historyExpiration:    operatorSec.Key("history_expiration").MustDuration(0),
 		concurrentDrivers:    operatorSec.Key("concurrent_drivers").MustInt(3),
 		maxSyncWorkers:       operatorSec.Key("max_sync_workers").MustInt(10),
