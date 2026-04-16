@@ -38,11 +38,11 @@ export function RecentlyViewedDashboards() {
     retry();
   };
 
-  const handleSectionToggle = () => {
+  const handleSectionToggle = (open: boolean) => {
     reportInteraction('grafana_recently_viewed_dashboards_toggle_section', {
-      expanded: !isOpen,
+      expanded: open,
     });
-    setIsOpen(prev => !prev);
+    setIsOpen(open);
   };
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export function RecentlyViewedDashboards() {
       headerDataTestId="browseDashboardsRecentlyViewedTitle"
       label={
         <Stack direction="row" justifyContent="space-between" alignItems="baseline" width="100%">
-          <Text variant="h5" element="h3" onClick={handleSectionToggle}>
+          <Text variant="h5" element="h3">
             <Trans i18nKey="browse-dashboards.recently-viewed.title">Recently viewed</Trans>
           </Text>
           <Button icon="times" size="xs" variant="secondary" fill="text" onClick={(e) => {
@@ -71,7 +71,7 @@ export function RecentlyViewedDashboards() {
         </Stack>
       }
       isOpen={isOpen}
-      onToggle={() => {}}
+      onToggle={handleSectionToggle}
       className={styles.title}
       contentClassName={styles.content}
     >
