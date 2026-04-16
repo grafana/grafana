@@ -89,6 +89,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
   const { rightColumnWidth } = useWorkbenchContext();
   const [viewStack, setViewStack] = useState<DrawerView[]>([{ type: 'instance-details' }]);
   const closeDrilldownTimerRef = useRef<number | undefined>(undefined);
+  const overlayContentRef = useRef<HTMLDivElement | null>(null);
   const [isClosingDrilldownDrawer, setIsClosingDrilldownDrawer] = useState(false);
 
   const drawerWidth = calculateDrawerWidth(rightColumnWidth);
@@ -137,25 +138,24 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     return isDrawerRangeShorterThanQuery(rule.grafana_alert, timeRange);
   }, [rule, timeRange]);
 
-  const getTopDrawerContentWrapper = useCallback(() => {
-    const wrappers = document.querySelectorAll<HTMLElement>('.main-view .rc-drawer-content-wrapper');
-    return wrappers.item(wrappers.length - 1) ?? null;
+  const getOverlayDrawerContentWrapper = useCallback(() => {
+    return overlayContentRef.current?.closest<HTMLElement>('.rc-drawer-content-wrapper') ?? null;
   }, []);
 
-  const resetTopDrawerPanelStyles = useCallback(() => {
-    const el = getTopDrawerContentWrapper();
+  const resetOverlayDrawerStyles = useCallback(() => {
+    const el = getOverlayDrawerContentWrapper();
     if (el) {
       el.style.removeProperty('transition');
       el.style.removeProperty('transform');
     }
-  }, [getTopDrawerContentWrapper]);
+  }, [getOverlayDrawerContentWrapper]);
 
   const handleDrawerClose = () => {
     if (closeDrilldownTimerRef.current !== undefined) {
       window.clearTimeout(closeDrilldownTimerRef.current);
       closeDrilldownTimerRef.current = undefined;
     }
-    resetTopDrawerPanelStyles();
+    resetOverlayDrawerStyles();
     setIsClosingDrilldownDrawer(false);
     setViewStack([{ type: 'instance-details' }]);
     onClose();
@@ -166,9 +166,9 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
       if (closeDrilldownTimerRef.current !== undefined) {
         window.clearTimeout(closeDrilldownTimerRef.current);
       }
-      resetTopDrawerPanelStyles();
+      resetOverlayDrawerStyles();
     };
-  }, [resetTopDrawerPanelStyles]);
+  }, [resetOverlayDrawerStyles]);
 
   const popTopView = () => {
     setViewStack((current) => {
@@ -184,7 +184,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
       return;
     }
 
-    const el = getTopDrawerContentWrapper();
+    const el = getOverlayDrawerContentWrapper();
     if (el) {
       el.style.transition = `transform ${drilldownDrawerCloseAnimationMs}ms ease-in`;
       requestAnimationFrame(() => {
@@ -196,16 +196,16 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
 
     setIsClosingDrilldownDrawer(true);
     closeDrilldownTimerRef.current = window.setTimeout(() => {
-      resetTopDrawerPanelStyles();
+      resetOverlayDrawerStyles();
       popTopView();
       setIsClosingDrilldownDrawer(false);
       closeDrilldownTimerRef.current = undefined;
     }, drilldownDrawerCloseAnimationMs);
   }, [
-    getTopDrawerContentWrapper,
+    getOverlayDrawerContentWrapper,
     isClosingDrilldownDrawer,
     drilldownDrawerCloseAnimationMs,
-    resetTopDrawerPanelStyles,
+    resetOverlayDrawerStyles,
   ]);
 
   const handleBack = () => {
@@ -373,7 +373,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
           onClose={handleDrawerClose}
           width={drawerWidth}
         >
-          {overlayBody}
+          <div ref={overlayContentRef}>{overlayBody}</div>
         </Drawer>
       </>
     );
