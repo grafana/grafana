@@ -64,6 +64,11 @@ describe('drawMarkers', () => {
     // uPlot does some async work after construction, let's wait until that is complete
     await new Promise((resolve) => setTimeout(resolve, 0));
 
+    // Clear out uPlot scaffolding canvas changes, we'll only assert on the changes introduced from invoking `drawMarkers`
+    u.ctx.__clearDrawCalls();
+    u.ctx.__clearEvents();
+    u.ctx.__clearPath();
+
     return u;
   };
 
@@ -73,6 +78,7 @@ describe('drawMarkers', () => {
         const u = await getPlot();
         expect(() => getDraw()(u)).not.toThrow();
         const events = u.ctx.__getEvents();
+        expect(events.length).toBeGreaterThan(0);
         expect(events).toMatchSnapshot();
       });
 
@@ -80,6 +86,7 @@ describe('drawMarkers', () => {
         const u = await getPlot();
         expect(() => getDraw()(u)).not.toThrow();
         const path = u.ctx.__getPath();
+        expect(path.length).toBeGreaterThan(0);
         expect(path).toMatchSnapshot();
       });
 
@@ -87,6 +94,7 @@ describe('drawMarkers', () => {
         const u = await getPlot();
         expect(() => getDraw()(u)).not.toThrow();
         const calls = u.ctx.__getDrawCalls();
+        expect(calls.length).toBeGreaterThan(0);
         expect(calls).toMatchSnapshot();
       });
 
@@ -94,7 +102,7 @@ describe('drawMarkers', () => {
         const u = await getPlot();
         expect(() => getDraw()(u)).not.toThrow();
         const clippingRegion = u.ctx.__getClippingRegion();
-        expect(clippingRegion).toMatchSnapshot();
+        expect(clippingRegion).toEqual([]);
       });
     });
 
@@ -103,6 +111,7 @@ describe('drawMarkers', () => {
         const u = await getPlot();
         expect(() => getDraw({ colorStrategy: ColorStrategy.CloseClose })(u)).not.toThrow();
         const events = u.ctx.__getEvents();
+        expect(events.length).toBeGreaterThan(0);
         expect(events).toMatchSnapshot();
       });
 
@@ -110,14 +119,15 @@ describe('drawMarkers', () => {
         const u = await getPlot();
         expect(() => getDraw({ colorStrategy: ColorStrategy.CloseClose })(u)).not.toThrow();
         const path = u.ctx.__getPath();
+        expect(path.length).toBeGreaterThan(0);
         expect(path).toMatchSnapshot();
       });
 
       it('draw', async () => {
-        // HERE
         const u = await getPlot();
         expect(() => getDraw({ colorStrategy: ColorStrategy.CloseClose })(u)).not.toThrow();
         const calls = u.ctx.__getDrawCalls();
+        expect(calls.length).toBeGreaterThan(0);
         expect(calls).toMatchSnapshot();
       });
 
@@ -125,7 +135,7 @@ describe('drawMarkers', () => {
         const u = await getPlot();
         expect(() => getDraw({ colorStrategy: ColorStrategy.CloseClose })(u)).not.toThrow();
         const clippingRegion = u.ctx.__getClippingRegion();
-        expect(clippingRegion).toMatchSnapshot();
+        expect(clippingRegion).toEqual([]);
       });
     });
 
@@ -134,6 +144,7 @@ describe('drawMarkers', () => {
         const u = await getPlot();
         expect(() => getDraw({ candleStyle: CandleStyle.OHLCBars })(u)).not.toThrow();
         const events = u.ctx.__getEvents();
+        expect(events.length).toBeGreaterThan(0);
         expect(events).toMatchSnapshot();
       });
 
@@ -141,14 +152,15 @@ describe('drawMarkers', () => {
         const u = await getPlot();
         expect(() => getDraw({ candleStyle: CandleStyle.OHLCBars })(u)).not.toThrow();
         const path = u.ctx.__getPath();
+        expect(path.length).toBeGreaterThan(0);
         expect(path).toMatchSnapshot();
       });
 
       it('draw', async () => {
-        // HERE
         const u = await getPlot();
         expect(() => getDraw({ candleStyle: CandleStyle.OHLCBars })(u)).not.toThrow();
         const calls = u.ctx.__getDrawCalls();
+        expect(calls.length).toBeGreaterThan(0);
         expect(calls).toMatchSnapshot();
       });
 
@@ -156,7 +168,7 @@ describe('drawMarkers', () => {
         const u = await getPlot();
         expect(() => getDraw({ candleStyle: CandleStyle.OHLCBars })(u)).not.toThrow();
         const clippingRegion = u.ctx.__getClippingRegion();
-        expect(clippingRegion).toMatchSnapshot();
+        expect(clippingRegion).toEqual([]);
       });
     });
   });
@@ -193,6 +205,7 @@ describe('drawMarkers', () => {
       const u = await getPlot(volumeAlignedData, volumeSeries);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const events = u.ctx.__getEvents();
+      expect(events.length).toBeGreaterThan(0);
       expect(events).toMatchSnapshot();
     });
 
@@ -200,6 +213,7 @@ describe('drawMarkers', () => {
       const u = await getPlot(volumeAlignedData, volumeSeries);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const path = u.ctx.__getPath();
+      expect(path.length).toBeGreaterThan(0);
       expect(path).toMatchSnapshot();
     });
 
@@ -207,6 +221,7 @@ describe('drawMarkers', () => {
       const u = await getPlot(volumeAlignedData, volumeSeries);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const calls = u.ctx.__getDrawCalls();
+      expect(calls.length).toBeGreaterThan(0);
       expect(calls).toMatchSnapshot();
     });
 
@@ -214,7 +229,7 @@ describe('drawMarkers', () => {
       const u = await getPlot(volumeAlignedData, volumeSeries);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const clippingRegion = u.ctx.__getClippingRegion();
-      expect(clippingRegion).toMatchSnapshot();
+      expect(clippingRegion).toEqual([]);
     });
   });
 
@@ -253,6 +268,7 @@ describe('drawMarkers', () => {
       const u = await getPlot(volumeAlignedData, volumeSeries);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const events = u.ctx.__getEvents();
+      expect(events.length).toBeGreaterThan(0);
       expect(events).toMatchSnapshot();
     });
 
@@ -260,6 +276,7 @@ describe('drawMarkers', () => {
       const u = await getPlot(volumeAlignedData, volumeSeries);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const path = u.ctx.__getPath();
+      expect(path.length).toBeGreaterThan(0);
       expect(path).toMatchSnapshot();
     });
 
@@ -267,6 +284,7 @@ describe('drawMarkers', () => {
       const u = await getPlot(volumeAlignedData, volumeSeries);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const calls = u.ctx.__getDrawCalls();
+      expect(calls.length).toBeGreaterThan(0);
       expect(calls).toMatchSnapshot();
     });
 
@@ -274,7 +292,7 @@ describe('drawMarkers', () => {
       const u = await getPlot(volumeAlignedData, volumeSeries);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const clippingRegion = u.ctx.__getClippingRegion();
-      expect(clippingRegion).toMatchSnapshot();
+      expect(clippingRegion).toEqual([]);
     });
   });
 });
