@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"time"
 
 	gcsstorage "cloud.google.com/go/storage"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -20,6 +21,27 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+var errPreconditionFailed = errors.New("precondition failed")
+
+// conditionalWriteFunc performs a conditional write using If-Match / ifGenerationMatch.
+// ETag or Generation can be extracted from attrs and used to construct provider-specific options.
+// When nil, the backend falls back to non-conditional writes.
+type conditionalWriteFunc func(attrs *blob.Attributes) func(asFunc func(any) bool) error
+
+// conditionalDeleteFunc performs a conditional delete (If-Match / ifGenerationMatch)
+// using provider-specific APIs.
+// Implementations must wrap errPreconditionFailed to signal concurrent modification.
+// When nil, the backend falls back to CDKBucket.Delete() (unconditional).
+type conditionalDeleteFunc func(ctx context.Context, key string, attrs *blob.Attributes) error
+
+// CDKLockBackendOptions holds optional configuration for CDKLockBackend.
+type CDKLockBackendOptions struct {
+	conditionalWrite  conditionalWriteFunc
+	conditionalDelete conditionalDeleteFunc
+	// clockSkewAllowance accounts for clock skew between instances when checking lock expiry (30s default)
+	clockSkewAllowance time.Duration
+}
 
 // bucketTarget holds the parsed bucket/container name and optional key prefix
 // from a gocloud blob URL (e.g. s3://my-bucket?prefix=locks/).

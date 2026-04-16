@@ -199,7 +199,7 @@ func (l *ObjectStorageLock) startHeartbeat() {
 					TTL:       l.ttl,
 					Heartbeat: time.Now(),
 				}
-				updateCtx, updateCancel := context.WithTimeout(context.Background(), 30*time.Second)
+				updateCtx, updateCancel := context.WithTimeout(ctx, 30*time.Second)
 				err := l.backend.Update(updateCtx, l.key, info)
 				updateCancel()
 				if err != nil {

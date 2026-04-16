@@ -17,32 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-var errPreconditionFailed = errors.New("precondition failed")
-
-// conditionalWriteFunc performs a conditional write using If-Match / ifGenerationMatch
-//
-// ETag or Generation can be extracted from attrs and used to construct provider-specific options.
-//
-// When nil, the backend falls back to non-conditional writes.
-type conditionalWriteFunc func(attrs *blob.Attributes) func(asFunc func(any) bool) error
-
-// conditionalDeleteFunc performs a conditional delete (If-Match / ifGenerationMatch)
-// using provider-specific APIs.
-//
-// ETag or Generation can be extracted from attrs and used to construct provider-specific options.
-// Implementations must wrap "errPreconditionFailed" to signal concurrent modification.
-//
-// When nil, the backend falls back to CDKBucket.Delete() (unconditional)
-type conditionalDeleteFunc func(ctx context.Context, key string, attrs *blob.Attributes) error
-
-// CDKLockBackendOptions holds optional configuration for CDKLockBackend.
-type CDKLockBackendOptions struct {
-	conditionalWrite  conditionalWriteFunc
-	conditionalDelete conditionalDeleteFunc
-	// clockSkewAllowance accounts for clock skew between instances when checking lock expiry (30s default)
-	clockSkewAllowance time.Duration
-}
-
 // CDKLockBackend implements LockBackend using gocloud.dev/blob with conditional writes.
 // Lock expiry is determined from the object's server-side ModTime + TTL + clock skew allowance.
 type CDKLockBackend struct {
