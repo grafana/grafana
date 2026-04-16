@@ -113,7 +113,7 @@ echo '{
     }
   }
 }' > resources/Check/check-manual.json
-gcx push checks/check-manual
+gcx resources push -p ./resources/Check
 ```
 
 Next, wait for the check to run and the results to be available:
