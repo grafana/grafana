@@ -282,7 +282,7 @@ function CompareVersions({ left, right, disabled = false, onCancel, onConfirm }:
           we're hiding the line numbers because the historical snapshots will have certain parts of the config hidden (ex. auto-generated policies)
           so the line numbers will not match up with what you can see in the JSON modal tab
         */}
-        <Suspense fallback={null}>
+        <Suspense fallback={<LoadingPlaceholder text={'Loading...'} />}>
           <LazyDiffViewer newValue={left} oldValue={right} hideLineNumbers={true} />
         </Suspense>
       </div>
