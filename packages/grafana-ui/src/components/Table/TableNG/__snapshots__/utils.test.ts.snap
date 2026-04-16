@@ -32,6 +32,43 @@ exports[`TableNG utils buildInspectValue should handle geo 1`] = `
 ]
 `;
 
+exports[`TableNG utils buildInspectValue should handle geo w/ invalid format 1`] = `
+[
+  "6y4h9b",
+  "text",
+]
+`;
+
+exports[`TableNG utils buildInspectValue should handle geo w/out formatGeometry 1`] = `
+[
+  "{
+  "disposed": false,
+  "pendingRemovals_": null,
+  "dispatching_": null,
+  "listeners_": null,
+  "revision_": 1,
+  "ol_uid": "1",
+  "values_": null,
+  "extent_": [
+    null,
+    null,
+    null,
+    null
+  ],
+  "extentRevision_": -1,
+  "simplifiedGeometryMaxMinSquaredTolerance": 0,
+  "simplifiedGeometryRevision": 0,
+  "layout": "XY",
+  "stride": 2,
+  "flatCoordinates": [
+    0,
+    -74.1
+  ]
+}",
+  "code",
+]
+`;
+
 exports[`TableNG utils buildInspectValue should handle null 1`] = `
 [
   "",
