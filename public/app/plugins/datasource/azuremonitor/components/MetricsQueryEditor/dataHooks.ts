@@ -186,9 +186,13 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
       );
 
     const currentAllowedTimeGrainsMs = query.azureMonitor?.allowedTimeGrainsMs ?? [];
+    // Only consider the time grains changed when we have actual metadata with non-empty time grains.
+    // An empty list means either metadata hasn't loaded yet or the metric has no grains reported —
+    // in either case we should not overwrite existing allowedTimeGrainsMs.
     const allowedTimeGrainsChanged =
-      newAllowedTimeGrainsMs.length !== currentAllowedTimeGrainsMs.length ||
-      newAllowedTimeGrainsMs.some((v, i) => v !== currentAllowedTimeGrainsMs[i]);
+      newAllowedTimeGrainsMs.length > 0 &&
+      (newAllowedTimeGrainsMs.length !== currentAllowedTimeGrainsMs.length ||
+        newAllowedTimeGrainsMs.some((v, i) => v !== currentAllowedTimeGrainsMs[i]));
 
     if (newAggregation !== aggregation || newTimeGrain !== timeGrain || allowedTimeGrainsChanged) {
       onChange({
