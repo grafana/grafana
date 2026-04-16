@@ -226,8 +226,7 @@ describe('v1 dashboard API', () => {
     });
 
     describe('saving a existing dashboard', () => {
-      // TODO: unskip once slug implemented in response
-      it.skip('should provide dashboard URL', async () => {
+      it('should provide dashboard URL', async () => {
         const api = new K8sDashboardAPI();
         const result = await api.saveDashboard({
           dashboard: {
@@ -245,8 +244,7 @@ describe('v1 dashboard API', () => {
         expect(result.version).toBe(1);
         expect(result.url).toBe('/d/adh59cn/new-dashboard-saved');
       });
-      // TODO: unskip once slug implemented in response
-      it.skip('should provide dashboard URL with app sub url configured', async () => {
+      it('should provide dashboard URL with app sub url configured', async () => {
         const api = new K8sDashboardAPI();
 
         locationUtil.initialize({
@@ -260,7 +258,6 @@ describe('v1 dashboard API', () => {
         const result = await api.saveDashboard({
           dashboard: {
             title: 'Existing dashboard',
-            uid: 'adh59cn',
             schemaVersion: 0,
           },
           message: 'test',
@@ -268,15 +265,14 @@ describe('v1 dashboard API', () => {
           folderUid: 'test',
         });
 
-        expect(result.slug).toBe('new-dashboard-saved');
         expect(result.uid).toBe('adh59cn');
+        expect(result.slug).toBe('new-dashboard-saved');
         expect(result.version).toBe(1);
         expect(result.url).toBe('/grafana/d/adh59cn/new-dashboard-saved');
       });
     });
     describe('saving a new dashboard', () => {
-      // TODO: unskip once slug implemented in response
-      it.skip('should provide dashboard URL', async () => {
+      it('should provide dashboard URL', async () => {
         const api = new K8sDashboardAPI();
         const result = await api.saveDashboard({
           dashboard: {
@@ -294,8 +290,7 @@ describe('v1 dashboard API', () => {
         expect(result.url).toBe('/d/adh59cn/new-dashboard-saved');
       });
 
-      // TODO: unskip once slug implemented in response
-      it.skip('should provide dashboard URL with app sub url configured', async () => {
+      it('should provide dashboard URL with app sub url configured', async () => {
         const api = new K8sDashboardAPI();
 
         locationUtil.initialize({

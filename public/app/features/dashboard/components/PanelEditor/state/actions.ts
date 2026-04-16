@@ -5,6 +5,7 @@ import { removePanel } from 'app/features/dashboard/utils/panel';
 import { cleanUpPanelState } from 'app/features/panel/state/actions';
 import { panelModelAndPluginReady } from 'app/features/panel/state/reducers';
 import { ThunkResult } from 'app/types/store';
+import { RenderEvent } from 'app/types/events';
 
 import { DashboardModel } from '../../../state/DashboardModel';
 import { PanelModel } from '../../../state/PanelModel';
@@ -124,6 +125,11 @@ export function exitPanelEditor(): ThunkResult<void> {
 
       sourcePanel.restoreModel(modifiedSaveModel);
       sourcePanel.configRev++; // force check the configs
+
+      // // Immediately render the panel with updated config so it shows new state
+      // // as soon as the dashboard grid becomes visible (without waiting for the
+      // // 20ms setTimeout below which was causing a stale-data flash on return).
+      sourcePanel.events.publish(new RenderEvent());
 
       if (panelTypeChanged) {
         // Loaded plugin is not included in the persisted properties so is not handled by restoreModel

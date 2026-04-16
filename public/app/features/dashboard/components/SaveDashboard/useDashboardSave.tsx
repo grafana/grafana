@@ -72,7 +72,18 @@ export const useDashboardSave = (isCopy = false) => {
         const newUrl = locationUtil.stripBaseFromUrl(result.url);
 
         if (newUrl !== currentPath && result.url) {
-          setTimeout(() => locationService.replace(newUrl));
+          // Preserve variable search params (?var-*=) so that current variable selections
+          // are not lost when the URL changes after save (e.g. when saving a copy or renaming the title).
+          const currentSearch = locationService.getLocation().search;
+          const allParams = new URLSearchParams(currentSearch);
+          const varParams = new URLSearchParams();
+          for (const [key, value] of allParams.entries()) {
+            if (key.startsWith('var-')) {
+              varParams.append(key, value);
+            }
+          }
+          const varSearchString = varParams.toString();
+          setTimeout(() => locationService.replace(newUrl + (varSearchString ? `?${varSearchString}` : '')));
         }
         if (dashboard.meta.isStarred) {
           dispatch(
