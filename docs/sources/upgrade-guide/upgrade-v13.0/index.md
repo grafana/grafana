@@ -28,7 +28,7 @@ This bug only affects self-managed instances that enabled the GitSync feature fl
 
 Grafana v13.0.0 was removed from distribution and a fix is included in Grafana v13.0.1.
 
-If you are affected, recovery might require restoring from backup or resyncing from Git, depending on whether your instance used mixed local and GitSync content or full-instance sync. 
+If you are affected, recovery might require restoring from backup or resyncing from Git, depending on whether your instance used mixed local and GitSync content or full-instance sync.
 
 We recommend using your database backup to restore and then upgrading to v13.0.1.
 {{< /admonition >}}
