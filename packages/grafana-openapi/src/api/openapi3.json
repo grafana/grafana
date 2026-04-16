@@ -8756,7 +8756,7 @@
         "properties": {
           "helpFlags1": {
             "description": "Bitwise flags that will hide help modals in the UI\nNOTE: this property is only valid on user preferences",
-            "format": "int64",
+            "format": "uint64",
             "type": "integer"
           },
           "homeDashboardUID": {
