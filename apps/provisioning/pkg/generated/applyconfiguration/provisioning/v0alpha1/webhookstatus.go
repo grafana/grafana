@@ -11,6 +11,7 @@ type WebhookStatusApplyConfiguration struct {
 	URL              *string  `json:"url,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 	LastEvent        *int64   `json:"lastEvent,omitempty"`
+	LastRotated      *int64   `json:"lastRotated,omitempty"`
 }
 
 // WebhookStatusApplyConfiguration constructs a declarative configuration of the WebhookStatus type for use with
@@ -50,5 +51,13 @@ func (b *WebhookStatusApplyConfiguration) WithSubscribedEvents(values ...string)
 // If called multiple times, the LastEvent field is set to the value of the last call.
 func (b *WebhookStatusApplyConfiguration) WithLastEvent(value int64) *WebhookStatusApplyConfiguration {
 	b.LastEvent = &value
+	return b
+}
+
+// WithLastRotated sets the LastRotated field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the LastRotated field is set to the value of the last call.
+func (b *WebhookStatusApplyConfiguration) WithLastRotated(value int64) *WebhookStatusApplyConfiguration {
+	b.LastRotated = &value
 	return b
 }
