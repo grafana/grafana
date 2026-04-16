@@ -8,12 +8,13 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// foldersAndDashboardsTestCase tests the "folders-dashboards" ResourceMigration
+// foldersAndDashboardsTestCase tests the folders-dashboards ResourceMigration.
 type foldersAndDashboardsTestCase struct {
 	parentFolderUID   string
 	childFolderUID    string
@@ -33,7 +34,7 @@ func NewFoldersAndDashboardsTestCase() ResourceMigratorTestCase {
 }
 
 func (tc *foldersAndDashboardsTestCase) Name() string {
-	return "folders-dashboards"
+	return migrations.FoldersDashboardsMigrationID
 }
 
 func (tc *foldersAndDashboardsTestCase) Resources() []schema.GroupVersionResource {
