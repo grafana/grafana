@@ -1,3 +1,4 @@
+import { waitFor } from '@testing-library/react';
 import { type CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
 import uPlot from 'uplot';
 
@@ -56,7 +57,7 @@ describe('drawMarkers', () => {
     );
 
     // uPlot does some async work after construction, let's wait until that is complete
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await waitFor(() => expect(u.status).toBe(1));
 
     // Clear out uPlot scaffolding canvas changes, we'll only assert on the changes introduced from invoking `drawMarkers`
     u.ctx.__clearDrawCalls();
