@@ -496,7 +496,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	publicDashboardServiceWrapperImpl := service4.ProvideServiceWrapper(publicDashboardStoreImpl)
 	contextHandler := grpccontext.ProvideContextHandler(tracingService)
 	authenticator := interceptors.ProvideAuthenticator(apikeyService, userimplService, acimplService, contextHandler)
-	grpcserverProvider, err := grpcserver.ProvideService(cfg, featureToggles, authenticator, tracer, registerer)
+	grpcserverProvider, err := grpcserver.ProvideService(cfg, authenticator, tracer, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -1194,7 +1194,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	publicDashboardServiceWrapperImpl := service4.ProvideServiceWrapper(publicDashboardStoreImpl)
 	contextHandler := grpccontext.ProvideContextHandler(tracingService)
 	authenticator := interceptors.ProvideAuthenticator(apikeyService, userimplService, acimplService, contextHandler)
-	grpcserverProvider, err := grpcserver.ProvideService(cfg, featureToggles, authenticator, tracer, registerer)
+	grpcserverProvider, err := grpcserver.ProvideService(cfg, authenticator, tracer, registerer)
 	if err != nil {
 		return nil, err
 	}

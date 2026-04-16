@@ -2604,7 +2604,8 @@
       "metadata": {
         "name": "grpcServer",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2022-09-26T20:25:34Z"
+        "creationTimestamp": "2022-09-26T20:25:34Z",
+        "deletionTimestamp": "2026-04-16T20:17:36Z"
       },
       "spec": {
         "description": "Run the GRPC server",
