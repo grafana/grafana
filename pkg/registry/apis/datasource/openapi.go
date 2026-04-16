@@ -11,6 +11,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -19,6 +20,15 @@ import (
 )
 
 func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	var queryExamples *data.QueryExamples
+	var schema *pluginschema.PluginSchema
+	if b.schemas != nil {
+		schema = b.schemas[b.GetGroupVersion().Version]
+		if schema != nil {
+			queryExamples = schema.QueryExamples
+		}
+	}
+
 	// The plugin description
 	oas.Info.Description = b.pluginJSON.Info.Description
 
@@ -38,13 +48,15 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	root := "/apis/" + b.datasourceResourceInfo.GroupVersion().String() + "/"
 
 	// Add queries to the request properties
+
 	if err := queryschema.AddQueriesToOpenAPI(queryschema.OASQueryOptions{
-		Swagger:          oas,
-		PluginJSON:       &b.pluginJSON,
-		QueryTypes:       b.queryTypes,
-		Root:             root,
-		QueryPath:        "namespaces/{namespace}/datasources/{name}/query",
-		QueryDescription: fmt.Sprintf("Query the %s datasources", b.pluginJSON.Name),
+		Swagger:             oas,
+		PluginJSON:          &b.pluginJSON,
+		QueryTypes:          b.queryTypes,
+		QueryExamplesConfig: queryExamples,
+		Root:                root,
+		QueryPath:           "namespaces/{namespace}/datasources/{name}/query",
+		QueryDescription:    fmt.Sprintf("Query the %s datasources", b.pluginJSON.Name),
 	}); err != nil {
 		return nil, err
 	}
@@ -108,21 +120,24 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	ds.Properties["apiVersion"] = *spec.StringProperty().WithEnum(b.GetGroupVersion().String())
 	ds.Properties["kind"] = *spec.StringProperty().WithEnum("DataSource")
 
-	if b.schemaProvider == nil || !b.cfg.LoadOpenAPISpec {
+	if b.queryTypes == nil || !b.cfg.LoadOpenAPISpec || schema == nil {
 		return oas, nil
 	}
 
 	return transformOpenAPI(PluginSpecTransformOptions{
+		schema:      schema,
 		oas:         oas,
 		cfg:         ds,
 		cfgSpecName: "DataSourceSpec",
 		cfgPath:     root + "namespaces/{namespace}/datasources",
 		routePrefix: root + "namespaces/{namespace}/datasources/{name}",
-		schemas:     b.schemaProvider,
-	}, b.GetGroupVersion().Version)
+	})
 }
 
 type PluginSpecTransformOptions struct {
+	schema *pluginschema.PluginSchema
+
+	// The incoming schema
 	oas *spec3.OpenAPI
 
 	// The full resource config (spec and secure are children)
@@ -137,25 +152,18 @@ type PluginSpecTransformOptions struct {
 
 	// Path where routes should be applied
 	routePrefix string
-
-	// Extensions
-	schemas pluginschema.SchemaProvider
 }
 
 // nolint:gocyclo
-func transformOpenAPI(p PluginSpecTransformOptions, apiVersion string) (*spec3.OpenAPI, error) {
-	if p.schemas == nil {
+func transformOpenAPI(p PluginSpecTransformOptions) (*spec3.OpenAPI, error) {
+	if p.schema == nil {
 		return p.oas, nil // nothing special
-	}
-
-	settings, err := p.schemas.GetSettings(apiVersion)
-	if err != nil {
-		return nil, err
 	}
 
 	oas := p.oas
 
 	// Replace the generic DataSourceSpec with the explicit one
+	settings := p.schema.SettingsSchema
 	if settings != nil && settings.Spec != nil {
 		oas.Components.Schemas[p.cfgSpecName] = settings.Spec
 		p.cfg.Properties["spec"] = spec.Schema{
@@ -199,11 +207,7 @@ func transformOpenAPI(p PluginSpecTransformOptions, apiVersion string) (*spec3.O
 			}
 		}
 
-		// Add examples to the POST request
-		examples, err := p.schemas.GetSettingsExamples(apiVersion)
-		if err != nil {
-			return nil, err
-		}
+		examples := p.schema.SettingsExamples
 		if examples != nil && len(examples.Examples) > 0 {
 			cfg := oas.Paths.Paths[p.cfgPath]
 			if cfg == nil {
@@ -218,9 +222,9 @@ func transformOpenAPI(p PluginSpecTransformOptions, apiVersion string) (*spec3.O
 		}
 	}
 
-	routes, err := p.schemas.GetRoutes(apiVersion)
-	if err != nil || routes == nil {
-		return oas, err
+	routes := p.schema.Routes
+	if routes == nil {
+		return oas, nil
 	}
 
 	// Add custom schemas
@@ -228,7 +232,7 @@ func transformOpenAPI(p PluginSpecTransformOptions, apiVersion string) (*spec3.O
 		copyComponents(routes.Components, p.oas.Components)
 	}
 
-	if err = routes.AssertPrefixes("/resources", "/proxy"); err != nil {
+	if err := routes.AssertPrefixes("/resources", "/proxy"); err != nil {
 		return oas, err
 	}
 

@@ -50,7 +50,7 @@ type DataSourceAPIBuilder struct {
 	datasources            PluginDatasourceProvider
 	contextProvider        PluginContextWrapper
 	accessControl          accesscontrol.AccessControl
-	schemaProvider         pluginschema.SchemaProvider
+	schemas                map[string]*pluginschema.PluginSchema
 	queryTypes             *datasourceV0.QueryTypeDefinitionList
 	cfg                    DataSourceAPIBuilderConfig
 	dataSourceCRUDMetric   *prometheus.HistogramVec
@@ -120,7 +120,16 @@ func RegisterAPIService(
 
 		// Loaded from the plugin FS (single tenant only for now)
 		if builder.cfg.LoadQueryTypes || builder.cfg.LoadOpenAPISpec {
-			builder.schemaProvider = pluginInfo.Schemas
+			apiVersion := "v0alpha1" // hardcoded for now
+			schema, err := pluginInfo.Schemas.Get(apiVersion)
+			if err != nil {
+				return nil, err
+			}
+			if schema != nil {
+				builder.schemas = map[string]*pluginschema.PluginSchema{
+					apiVersion: schema,
+				}
+			}
 		}
 
 		apiRegistrar.RegisterAPI(builder)
@@ -266,16 +275,26 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		storage[ds.StoragePath("proxy")] = &subProxyREST{pluginJSON: b.pluginJSON}
 	}
 
-	// Register query types
-	if b.cfg.LoadQueryTypes && b.schemaProvider != nil {
-		qt := &datasourceV0.QueryTypeDefinitionList{}
-		found, err := b.schemaProvider.GetQueryTypes(ds.GroupVersion().Version, qt)
-		if err != nil {
-			return fmt.Errorf("error loading query types (%v): %w", ds.GroupVersion(), err)
-		}
-		if found {
-			b.queryTypes = qt
-			if err = queryschema.RegisterQueryTypes(b.queryTypes, storage); err != nil {
+	// Register query types (convert to real k8s type first)
+	if b.cfg.LoadQueryTypes && b.schemas != nil {
+		found := b.schemas[ds.GroupVersion().Version]
+		if found != nil && found.QueryTypes != nil {
+			b.queryTypes = &datasourceV0.QueryTypeDefinitionList{
+				ListMeta: metav1.ListMeta{
+					ResourceVersion: found.QueryTypes.ResourceVersion,
+				},
+				Items: make([]datasourceV0.QueryTypeDefinition, 0, len(found.QueryTypes.Items)),
+			}
+			for _, qt := range found.QueryTypes.Items {
+				b.queryTypes.Items = append(b.queryTypes.Items, datasourceV0.QueryTypeDefinition{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            qt.Name,
+						ResourceVersion: qt.ResourceVersion,
+					},
+					Spec: qt.Spec,
+				})
+			}
+			if err := queryschema.RegisterQueryTypes(b.queryTypes, storage); err != nil {
 				return err
 			}
 		}

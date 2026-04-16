@@ -1,12 +1,8 @@
 package kinds
 
 import (
-	"os"
-	"path"
-	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
@@ -15,79 +11,15 @@ import (
 
 const pluginDirectory = "../../../../public/app/plugins/datasource/grafana-testdata-datasource/"
 
-func TestStaticSchemas(t *testing.T) {
-	settings := Settings()
-	examples := SettingsExamples()
-	routes := Routes()
-	require.NotNil(t, settings)
-	require.NotNil(t, examples)
-	require.NotNil(t, routes)
-
-	// Make sure the plugin folder is accurate
-	data, err := os.ReadFile(path.Join(pluginDirectory, "plugin.json"))
-	require.NoError(t, err)
-	require.NotEmpty(t, data, "expecting a plugin.json in the same directory")
-	provider := pluginschema.NewSchemaProvider(os.DirFS(pluginDirectory), "schema/")
-	apiVersion := "v0alpha1"
-
-	write := func(obj any, apiVersion, fname string) {
-		raw, err := pluginschema.ToYAML(obj)
-		require.NoError(t, err)
-		fpath := path.Join(pluginDirectory, "schema", apiVersion, fname)
-		err = os.MkdirAll(filepath.Dir(fpath), 0750)
-		require.NoError(t, err)
-		err = os.WriteFile(fpath, raw, 0600)
-		require.NoError(t, err)
-		t.Logf("updated schema file: %s", fpath)
+func TestUpdateSchema(t *testing.T) {
+	schema := &pluginschema.PluginSchema{
+		APIVersion:       "v0alpha1",
+		SettingsSchema:   Settings(),
+		SettingsExamples: SettingsExamples(),
+		Routes:           Routes(),
 	}
 
-	t.Run("settings", func(t *testing.T) {
-		ok := true
-		snapshot, err := provider.GetSettings(apiVersion)
-		require.NoError(t, err)
-		if snapshot == nil {
-			t.Errorf("settings do not exist")
-			ok = false
-		} else if diff := pluginschema.Diff(settings, snapshot); diff != "" {
-			t.Errorf("settings changed (-want +got):\n%s", diff)
-			ok = false
-		}
-		if !ok {
-			write(settings, apiVersion, "settings.yaml")
-		}
-	})
-
-	t.Run("settings.examples", func(t *testing.T) {
-		ok := true
-		snapshot, err := provider.GetSettingsExamples(apiVersion)
-		require.NoError(t, err)
-		if snapshot == nil {
-			t.Errorf("examples do not exist")
-			ok = false
-		} else if diff := pluginschema.Diff(examples, snapshot); diff != "" {
-			t.Errorf("examples changed (-want +got):\n%s", diff)
-			ok = false
-		}
-		if !ok {
-			write(examples, apiVersion, "settings.examples.yaml")
-		}
-	})
-
-	t.Run("routes", func(t *testing.T) {
-		ok := true
-		snapshot, err := provider.GetRoutes(apiVersion)
-		require.NoError(t, err)
-		if snapshot == nil {
-			t.Errorf("routes do not exist")
-			ok = false
-		} else if diff := pluginschema.Diff(routes, snapshot); diff != "" {
-			t.Errorf("routes changed (-want +got):\n%s", diff)
-			ok = false
-		}
-		if !ok {
-			write(routes, apiVersion, "routes.yaml")
-		}
-	})
+	pluginschema.UpdateSchema(t, schema, pluginDirectory+"schema")
 }
 
 func Settings() *pluginschema.Settings {

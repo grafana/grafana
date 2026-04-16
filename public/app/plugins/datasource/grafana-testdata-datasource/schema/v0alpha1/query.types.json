@@ -2,14 +2,14 @@
   "kind": "QueryTypeDefinitionList",
   "apiVersion": "datasource.grafana.app/v0alpha1",
   "metadata": {
-    "resourceVersion": "1776273114349"
+    "resourceVersion": "1776353848140"
   },
   "items": [
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1776273114349",
-        "creationTimestamp": "2026-04-15T17:11:54Z"
+        "resourceVersion": "1776353848140",
+        "creationTimestamp": "2026-04-16T15:37:28Z"
       },
       "spec": {
         "schema": {
@@ -109,6 +109,7 @@
             },
             "points": {
               "items": {
+                "items": null,
                 "type": "array"
               },
               "type": "array"
@@ -281,36 +282,7 @@
             }
           },
           "type": "object"
-        },
-        "examples": [
-          {
-            "name": "simple random walk",
-            "saveModel": {
-              "scenarioId": "random_walk"
-            }
-          },
-          {
-            "name": "pulse wave example",
-            "saveModel": {
-              "pulseWave": {
-                "offCount": 20,
-                "offValue": 1.23,
-                "onCount": 10,
-                "onValue": 4.56,
-                "timeStep": 1000
-              },
-              "scenarioId": "predictable_pulse"
-            }
-          },
-          {
-            "name": "multiple series",
-            "saveModel": {
-              "scenarioId": "random_walk",
-              "seriesCount": 10,
-              "spread": 0.2
-            }
-          }
-        ]
+        }
       }
     }
   ]
