@@ -36,8 +36,9 @@ test.describe('Panels test: Candlestick data links', { tag: ['@panels', '@candle
 
     // pin tooltip on a data point
     await candlestickUplot.hover({ position: center, force: true });
+    await expect(tooltip, 'tooltip shown on hover').toBeVisible();
     await candlestickUplot.click({ position: center, force: true });
-    await expect(tooltip, 'tooltip pinned on click').toBeVisible();
+    await expect(page.getByTestId(selectors.components.Portal.container).getByRole('button', { name: 'Close' }), 'tooltip pinned on click').toBeVisible();
 
     // pinned tooltip should contain the configured data link
     await expect(tooltip.getByText('Example Data Link'), 'data link visible in tooltip').toBeVisible();
