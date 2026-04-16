@@ -49,14 +49,6 @@ func RunJobController(deps server.OperatorDependencies) error {
 		cancel()
 	}()
 
-	if !controllerCfg.enabled {
-		logger.Info("jobs controller is disabled via operator config (jobs_enabled=false), idling")
-		deps.HealthNotifier.SetReady()
-		<-ctx.Done()
-		deps.HealthNotifier.SetNotReady()
-		return nil
-	}
-
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
@@ -68,10 +60,6 @@ func RunJobController(deps server.OperatorDependencies) error {
 		controllerCfg.ResyncInterval(),
 	)
 	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
-	jobController, err := controller.NewJobController(jobInformer)
-	if err != nil {
-		return fmt.Errorf("failed to create job controller: %w", err)
-	}
 
 	var startHistoryInformers func()
 	if controllerCfg.historyExpiration > 0 {
@@ -101,49 +89,58 @@ func RunJobController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	workers, metrics, err := buildWorkers(deps.Config, &controllerCfg.ControllerConfig, deps.Registerer, tracer, controllerCfg.maxSyncWorkers, controllerCfg.folderAPIVersion)
-	if err != nil {
-		return fmt.Errorf("build workers: %w", err)
-	}
-
-	repoFactory, err := controllerCfg.RepositoryFactory()
-	if err != nil {
-		return fmt.Errorf("failed to get repository factory: %w", err)
-	}
-
-	repoGetter := resources.NewRepositoryGetter(
-		repoFactory,
-		provisioningClient.ProvisioningV0alpha1(),
-	)
-
-	driver, err := jobs.NewConcurrentJobDriver(
-		controllerCfg.concurrentDrivers,
-		controllerCfg.maxJobTimeout,
-		controllerCfg.jobInterval,
-		controllerCfg.leaseRenewalInterval,
-		jobStore,
-		repoGetter,
-		jobHistoryWriter,
-		jobController.InsertNotifications(),
-		deps.Registerer,
-		metrics,
-		workers...,
-	)
-	if err != nil {
-		return fmt.Errorf("create concurrent job driver: %w", err)
-	}
-
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		logger.Info("jobs controller started")
-		if err := driver.Run(ctx); err != nil {
-			logger.Error("job driver failed", "error", err)
+	if controllerCfg.enabled {
+		jobController, err := controller.NewJobController(jobInformer)
+		if err != nil {
+			return fmt.Errorf("failed to create job controller: %w", err)
 		}
-		logger.Info("job driver stopped")
-	}()
+
+		workers, metrics, err := buildWorkers(deps.Config, &controllerCfg.ControllerConfig, deps.Registerer, tracer, controllerCfg.maxSyncWorkers, controllerCfg.folderAPIVersion)
+		if err != nil {
+			return fmt.Errorf("build workers: %w", err)
+		}
+
+		repoFactory, err := controllerCfg.RepositoryFactory()
+		if err != nil {
+			return fmt.Errorf("failed to get repository factory: %w", err)
+		}
+
+		repoGetter := resources.NewRepositoryGetter(
+			repoFactory,
+			provisioningClient.ProvisioningV0alpha1(),
+		)
+
+		driver, err := jobs.NewConcurrentJobDriver(
+			controllerCfg.concurrentDrivers,
+			controllerCfg.maxJobTimeout,
+			controllerCfg.jobInterval,
+			controllerCfg.leaseRenewalInterval,
+			jobStore,
+			repoGetter,
+			jobHistoryWriter,
+			jobController.InsertNotifications(),
+			deps.Registerer,
+			metrics,
+			workers...,
+		)
+		if err != nil {
+			return fmt.Errorf("create concurrent job driver: %w", err)
+		}
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			logger.Info("jobs controller started")
+			if err := driver.Run(ctx); err != nil {
+				logger.Error("job driver failed", "error", err)
+			}
+			logger.Info("job driver stopped")
+		}()
+	} else {
+		logger.Info("job driver disabled via operator config (jobs_processing_enabled=false)")
+	}
 
 	wg.Add(1)
 	go func() {

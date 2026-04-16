@@ -49,14 +49,6 @@ func RunJobQueueController(deps server.OperatorDependencies) error {
 		cancel()
 	}()
 
-	if !controllerCfg.enabled {
-		logger.Info("job queue controller is disabled via operator config (jobqueue_enabled=false), idling")
-		deps.HealthNotifier.SetReady()
-		<-ctx.Done()
-		deps.HealthNotifier.SetNotReady()
-		return nil
-	}
-
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
@@ -156,7 +148,6 @@ func RunJobQueueController(deps server.OperatorDependencies) error {
 
 type jobQueueControllerConfig struct {
 	ControllerConfig
-	enabled              bool
 	maxJobTimeout        time.Duration
 	jobInterval          time.Duration
 	leaseRenewalInterval time.Duration
@@ -176,7 +167,6 @@ func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Reg
 
 	return &jobQueueControllerConfig{
 		ControllerConfig:     *controllerCfg,
-		enabled:              operatorSec.Key("jobqueue_enabled").MustBool(true),
 		concurrentDrivers:    operatorSec.Key("concurrent_drivers").MustInt(3),
 		maxSyncWorkers:       operatorSec.Key("max_sync_workers").MustInt(10),
 		maxJobTimeout:        operatorSec.Key("max_job_timeout").MustDuration(20 * time.Minute),
