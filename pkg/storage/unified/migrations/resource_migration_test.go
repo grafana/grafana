@@ -742,10 +742,10 @@ func TestIntegrationIsAlreadyOnUnifiedStorage(t *testing.T) {
 
 	writeDualwriteFile := func(t *testing.T, dataPath string, statuses map[string]dualwriteStorageStatus) {
 		t.Helper()
-		require.NoError(t, os.MkdirAll(dataPath, 0755))
+		require.NoError(t, os.MkdirAll(dataPath, 0750))
 		data, err := json.Marshal(statuses)
 		require.NoError(t, err)
-		require.NoError(t, os.WriteFile(filepath.Join(dataPath, dualwriteFileName), data, 0644))
+		require.NoError(t, os.WriteFile(filepath.Join(dataPath, dualwriteFileName), data, 0600))
 	}
 
 	newSession := func() *xorm.Session {

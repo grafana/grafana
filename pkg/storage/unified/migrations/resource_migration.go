@@ -343,7 +343,7 @@ type orgInfo struct {
 	Name string `xorm:"name"`
 }
 
-// dualwriteKVNamespace was used in older verisons of grafana to keep track of dual writer state.
+// dualwriteKVNamespace was used in older versions of grafana to keep track of dual writer state.
 // it is no longer used, other than for backwards compatibility
 const dualwriteKVNamespace = "unified.dualwrite"
 
@@ -437,8 +437,8 @@ func (r *MigrationRunner) readDualwriteFile() (map[string]dualwriteStorageStatus
 		return nil, nil
 	}
 
-	path := filepath.Join(r.cfg.DataPath, dualwriteFileName)
-	data, err := os.ReadFile(path)
+	path := filepath.Clean(filepath.Join(r.cfg.DataPath, dualwriteFileName))
+	data, err := os.ReadFile(path) // #nosec G304 -- path is derived from trusted config
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil, nil
