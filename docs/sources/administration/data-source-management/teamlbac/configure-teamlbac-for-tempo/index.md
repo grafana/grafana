@@ -146,7 +146,7 @@ Non-matching spans are included in the response but have their attributes and in
 - `timestamps`
 - `status`
 
-You can extend the set of always-visible fields by configuring `allowed_attributes` — a list of scoped attributes and intrinsics such as `span:name`, `resource.service.name`, `event:name`, or `scope.version` that are never redacted, even from non-matching spans. Contact Grafana Support to configure `allowed_attributes` for your organization.
+You can extend the set of always-visible fields by configuring `allowed_attributes`, which sets a list of scoped attributes and intrinsics that are never redacted, For example, you can set `span:name`, `resource.service.name`, `event:name`, or `scope.version` so they are never redacted, even from non-matching spans. Contact Grafana Support to configure `allowed_attributes` for your organization.
 
 ### Spans mode
 
