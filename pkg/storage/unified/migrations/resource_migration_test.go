@@ -2,7 +2,10 @@ package migrations
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -10,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -72,8 +76,8 @@ func testDef(gr schema.GroupResource, lockTables, renameTables []string) Migrati
 func newRunner(t *testing.T, locker MigrationTableLocker, renamer MigrationTableRenamer, def MigrationDefinition) (*MigrationRunner, *MockUnifiedMigrator) {
 	t.Helper()
 	m := NewMockUnifiedMigrator(t)
-	m.EXPECT().Migrate(mock.Anything, mock.Anything).Return(&resourcepb.BulkResponse{}, nil)
-	m.EXPECT().RebuildIndexes(mock.Anything, mock.Anything).Return(nil)
+	m.EXPECT().Migrate(mock.Anything, mock.Anything).Return(&resourcepb.BulkResponse{}, nil).Maybe()
+	m.EXPECT().RebuildIndexes(mock.Anything, mock.Anything).Return(nil).Maybe()
 	return NewMigrationRunner(m, locker, renamer, setting.NewCfg(), def, nil), m
 }
 
@@ -685,5 +689,228 @@ func TestIntegrationBuildRenamePairs(t *testing.T) {
 		_, err := buildRenamePairs(logger, mg, []string{table})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "unexpected state")
+	})
+}
+
+func TestIntegrationIsAlreadyOnUnifiedStorage(t *testing.T) {
+	env := newTestEnv(t)
+
+	gr := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+	def := MigrationDefinition{
+		ID: FoldersDashboardsMigrationID, MigrationID: "folders and dashboards migration",
+		Resources: []ResourceInfo{{GroupResource: gr}},
+		Migrators: map[schema.GroupResource]MigratorFunc{
+			gr: func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error { return nil },
+		},
+	}
+
+	insertKVState := func(t *testing.T, key string, status dualwriteStorageStatus) {
+		t.Helper()
+		orgID := int64(0)
+		ns := dualwriteKVNamespace
+		value, err := json.Marshal(status)
+		require.NoError(t, err)
+		item := kvstore.Item{
+			OrgId:     &orgID,
+			Namespace: &ns,
+			Key:       &key,
+		}
+		sess := env.engine.NewSession()
+		defer sess.Close()
+		// delete any existing entry first
+		_, _ = sess.Delete(&item)
+		now := time.Now()
+		item.Value = string(value)
+		item.Created = now
+		item.Updated = now
+		_, err = sess.Insert(&item)
+		require.NoError(t, err)
+	}
+
+	deleteKVState := func(t *testing.T, key string) {
+		t.Helper()
+		orgID := int64(0)
+		ns := dualwriteKVNamespace
+		item := kvstore.Item{
+			OrgId:     &orgID,
+			Namespace: &ns,
+			Key:       &key,
+		}
+		sess := env.engine.NewSession()
+		defer sess.Close()
+		_, _ = sess.Delete(&item)
+	}
+
+	writeDualwriteFile := func(t *testing.T, dataPath string, statuses map[string]dualwriteStorageStatus) {
+		t.Helper()
+		require.NoError(t, os.MkdirAll(dataPath, 0750))
+		data, err := json.Marshal(statuses)
+		require.NoError(t, err)
+		require.NoError(t, os.WriteFile(filepath.Join(dataPath, dualwriteFileName), data, 0600))
+	}
+
+	newSession := func() *xorm.Session {
+		return env.engine.NewSession()
+	}
+
+	newRunnerWithDataPath := func(t *testing.T, dataPath string) *MigrationRunner {
+		t.Helper()
+		cfg := setting.NewCfg()
+		cfg.DataPath = dataPath
+		m := NewMockUnifiedMigrator(t)
+		m.EXPECT().Migrate(mock.Anything, mock.Anything).Return(&resourcepb.BulkResponse{}, nil).Maybe()
+		m.EXPECT().RebuildIndexes(mock.Anything, mock.Anything).Return(nil).Maybe()
+		return NewMigrationRunner(m, noopLocker(), &transactionalTableRenamer{log: logger}, cfg, def, nil)
+	}
+
+	runner, _ := newRunner(t, noopLocker(), &transactionalTableRenamer{log: logger}, def)
+	configKey := def.ConfigResources()[0] // "dashboards.dashboard.grafana.app"
+
+	migratedStatus := dualwriteStorageStatus{
+		ReadUnified:  true,
+		WriteUnified: true,
+		WriteLegacy:  false,
+		Migrated:     1776363974703,
+	}
+
+	t.Run("returns false when no kv_store entry exists", func(t *testing.T) {
+		deleteKVState(t, configKey)
+		sess := newSession()
+		defer sess.Close()
+		got, err := runner.isAlreadyOnUnifiedStorage(sess)
+		require.NoError(t, err)
+		require.False(t, got)
+	})
+
+	t.Run("returns false for non-folders-dashboards definitions even when kv_store shows migrated", func(t *testing.T) {
+		insertKVState(t, configKey, migratedStatus)
+		otherDef := MigrationDefinition{
+			ID: "shorturls", MigrationID: "shorturls migration",
+			Resources: []ResourceInfo{{GroupResource: gr}},
+			Migrators: map[schema.GroupResource]MigratorFunc{
+				gr: func(context.Context, int64, MigrateOptions, resourcepb.BulkStore_BulkProcessClient) error { return nil },
+			},
+		}
+		otherRunner, _ := newRunner(t, noopLocker(), &transactionalTableRenamer{log: logger}, otherDef)
+		sess := newSession()
+		defer sess.Close()
+		got, err := otherRunner.isAlreadyOnUnifiedStorage(sess)
+		require.NoError(t, err)
+		require.False(t, got)
+	})
+
+	t.Run("returns false when read_unified is false", func(t *testing.T) {
+		insertKVState(t, configKey, dualwriteStorageStatus{ReadUnified: false, WriteUnified: true, Migrated: 1234})
+		sess := newSession()
+		defer sess.Close()
+		got, err := runner.isAlreadyOnUnifiedStorage(sess)
+		require.NoError(t, err)
+		require.False(t, got)
+	})
+
+	t.Run("returns false when migrated is zero", func(t *testing.T) {
+		insertKVState(t, configKey, dualwriteStorageStatus{ReadUnified: true, WriteUnified: true, Migrated: 0})
+		sess := newSession()
+		defer sess.Close()
+		got, err := runner.isAlreadyOnUnifiedStorage(sess)
+		require.NoError(t, err)
+		require.False(t, got)
+	})
+
+	t.Run("returns false when write_legacy is true", func(t *testing.T) {
+		insertKVState(t, configKey, dualwriteStorageStatus{ReadUnified: true, WriteUnified: true, WriteLegacy: true, Migrated: 1234})
+		sess := newSession()
+		defer sess.Close()
+		got, err := runner.isAlreadyOnUnifiedStorage(sess)
+		require.NoError(t, err)
+		require.False(t, got)
+	})
+
+	t.Run("returns true when kv_store status shows migration complete", func(t *testing.T) {
+		insertKVState(t, configKey, migratedStatus)
+		sess := newSession()
+		defer sess.Close()
+		got, err := runner.isAlreadyOnUnifiedStorage(sess)
+		require.NoError(t, err)
+		require.True(t, got)
+	})
+
+	t.Run("returns true when dualwrite.json file shows migration complete", func(t *testing.T) {
+		deleteKVState(t, configKey)
+		dataPath := t.TempDir()
+		writeDualwriteFile(t, dataPath, map[string]dualwriteStorageStatus{configKey: migratedStatus})
+		r := newRunnerWithDataPath(t, dataPath)
+		sess := newSession()
+		defer sess.Close()
+		got, err := r.isAlreadyOnUnifiedStorage(sess)
+		require.NoError(t, err)
+		require.True(t, got)
+	})
+
+	t.Run("returns false when dualwrite.json shows migration not complete", func(t *testing.T) {
+		deleteKVState(t, configKey)
+		dataPath := t.TempDir()
+		writeDualwriteFile(t, dataPath, map[string]dualwriteStorageStatus{
+			configKey: {ReadUnified: false, WriteUnified: true, WriteLegacy: true, Migrated: 0},
+		})
+		r := newRunnerWithDataPath(t, dataPath)
+		sess := newSession()
+		defer sess.Close()
+		got, err := r.isAlreadyOnUnifiedStorage(sess)
+		require.NoError(t, err)
+		require.False(t, got)
+	})
+
+	t.Run("dualwrite.json takes precedence over kv_store for the same key", func(t *testing.T) {
+		insertKVState(t, configKey, migratedStatus)
+		dataPath := t.TempDir()
+		writeDualwriteFile(t, dataPath, map[string]dualwriteStorageStatus{
+			configKey: {ReadUnified: false, WriteUnified: true, WriteLegacy: true, Migrated: 0},
+		})
+		r := newRunnerWithDataPath(t, dataPath)
+		sess := newSession()
+		defer sess.Close()
+		got, err := r.isAlreadyOnUnifiedStorage(sess)
+		require.NoError(t, err)
+		require.False(t, got)
+	})
+
+	t.Run("falls back to kv_store when key is missing from dualwrite.json", func(t *testing.T) {
+		insertKVState(t, configKey, migratedStatus)
+		dataPath := t.TempDir()
+		writeDualwriteFile(t, dataPath, map[string]dualwriteStorageStatus{
+			"something.else": {ReadUnified: true, WriteUnified: true, Migrated: 1},
+		})
+		r := newRunnerWithDataPath(t, dataPath)
+		sess := newSession()
+		defer sess.Close()
+		got, err := r.isAlreadyOnUnifiedStorage(sess)
+		require.NoError(t, err)
+		require.True(t, got)
+	})
+
+	t.Run("returns false when dualwrite.json does not exist and no kv_store entry", func(t *testing.T) {
+		deleteKVState(t, configKey)
+		dataPath := t.TempDir() // directory exists but no dualwrite.json in it
+		r := newRunnerWithDataPath(t, dataPath)
+		sess := newSession()
+		defer sess.Close()
+		got, err := r.isAlreadyOnUnifiedStorage(sess)
+		require.NoError(t, err)
+		require.False(t, got)
+	})
+
+	t.Run("Run skips migration when already on unified storage", func(t *testing.T) {
+		insertKVState(t, configKey, migratedStatus)
+		runner2, fake := newRunner(t, noopLocker(), &transactionalTableRenamer{log: logger}, def)
+		runMigration(t, env.engine, runner2, migrator.SQLite)
+		fake.AssertNotCalled(t, "Migrate", mock.Anything, mock.Anything)
+	})
+
+	t.Run("Run proceeds with migration when not on unified storage", func(t *testing.T) {
+		insertKVState(t, configKey, dualwriteStorageStatus{ReadUnified: false, WriteUnified: false, Migrated: 0})
+		runner2, fake := newRunner(t, noopLocker(), &transactionalTableRenamer{log: logger}, def)
+		runMigration(t, env.engine, runner2, migrator.SQLite)
+		fake.AssertNumberOfCalls(t, "Migrate", 1)
 	})
 }
