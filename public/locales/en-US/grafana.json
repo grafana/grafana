@@ -8189,6 +8189,9 @@
       "label-state-name": "State name"
     }
   },
+  "diff-viewer": {
+    "loading": "Loading diff..."
+  },
   "dimensions": {
     "background-size-editor": {
       "options": {
