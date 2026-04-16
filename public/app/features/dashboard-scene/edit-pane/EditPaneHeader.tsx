@@ -36,7 +36,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
   };
 
   return (
-    <Sidebar.PaneHeader title={elementInfo.typeName}>
+    <Sidebar.PaneHeader title={elementInfo.typeName} onGoBack={editPane.getOnGetBackCallback()}>
       <Stack direction="row" gap={1} grow={1} justifyContent={'flex-end'}>
         {element.renderActions && element.renderActions()}
         {(onCopy || onDuplicate) && (

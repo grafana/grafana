@@ -30,10 +30,10 @@ export interface DashboardEditPaneState extends SceneObjectState {
   undoStack: DashboardEditActionEventPayload[];
   redoStack: DashboardEditActionEventPayload[];
   openPane?: DashboardSidebarPane;
-  /**
-   * Temp hack for Link and LinkSet that are not part of the scene but need to be selected for now
-   */
+  /** Temp hack for Link and LinkSet that are not part of the scene but need to be selected for now  */
   selectedDisconnectedObject?: SceneObject;
+  /** Previous state */
+  previousState?: DashboardEditPaneState;
   /** True when a new element is being added and selected */
   isNewElement: boolean;
   isDocked?: boolean;
@@ -261,13 +261,9 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       return;
     }
 
+    let selectedDisconnectedObject: SceneObject | undefined;
     if (obj.getRoot() !== this.getRoot() || obj.parent === this) {
-      this.setState({
-        selectedDisconnectedObject: obj,
-        selectionContext: { ...this.state.selectionContext, selected: [{ id: obj.state.key! }] },
-        openPane: new ElementEditPane({}),
-      });
-      return;
+      selectedDisconnectedObject = obj;
     }
 
     // If current open pane is not showing selected element, then we should maintain selection (force = true) which disables selection toggling
@@ -279,21 +275,37 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       if (hasItem) {
         // Remove item unless force is true
         if (!force) {
-          this.updateSelection(this.state.selectionContext.selected.filter((i) => i.id !== id));
+          this.updateSelection(
+            this.state.selectionContext.selected.filter((i) => i.id !== id),
+            selectedDisconnectedObject
+          );
         }
       } else {
-        this.updateSelection([...this.state.selectionContext.selected, { id }]);
+        this.updateSelection([...this.state.selectionContext.selected, { id }], selectedDisconnectedObject);
       }
     } else {
       if (hasItem && !force) {
-        this.updateSelection([]);
+        this.updateSelection([], selectedDisconnectedObject);
       } else {
-        this.updateSelection([{ id }]);
+        this.updateSelection([{ id }], selectedDisconnectedObject);
       }
     }
   }
 
-  private updateSelection(selected: ElementSelectionContextItem[]) {
+  public goBackToPrevious() {
+    if (!this.state.previousState) {
+      return;
+    }
+
+    this.setState({
+      selectionContext: this.state.previousState.selectionContext,
+      openPane: this.state.previousState.openPane,
+      selectedDisconnectedObject: this.state.previousState.selectedDisconnectedObject,
+      previousState: this.state.previousState.previousState,
+    });
+  }
+
+  private updateSelection(selected: ElementSelectionContextItem[], selectedDisconnectedObject?: SceneObject) {
     // onBlur events are not fired on unmount and some edit pane inputs have important onBlur events
     // This make sure they fire before unmounting
     if (document.activeElement instanceof HTMLElement) {
@@ -304,7 +316,8 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       selectionContext: { ...this.state.selectionContext, selected },
       openPane: selected.length ? new ElementEditPane({}) : undefined,
       isNewElement: false,
-      selectedDisconnectedObject: undefined,
+      selectedDisconnectedObject,
+      previousState: this.state,
     });
   }
 
@@ -356,19 +369,12 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
   }
 
   public openPane(openPane: DashboardSidebarPane) {
-    const dashboard = getDashboardSceneFor(this);
-
-    // Some special logic for dashboard as it's the only sidebar pane toggle button that uses element selection
-    if (this.getSelectedObject() === dashboard) {
-      this.clearSelection(true);
-    }
-
     if (this.state.openPane?.getId() === openPane.getId()) {
       this.setState({ openPane: undefined });
       return;
     }
 
-    this.setState({ openPane });
+    this.setState({ openPane, previousState: this.state });
   }
 
   public closePane() {
@@ -379,6 +385,10 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     if (this.state.openPane) {
       this.setState({ openPane: undefined });
     }
+  }
+
+  public getOnGetBackCallback() {
+    return this.state.previousState ? () => this.goBackToPrevious() : undefined;
   }
 
   private newObjectAddedToCanvas(obj: SceneObject) {

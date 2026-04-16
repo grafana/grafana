@@ -48,9 +48,10 @@ export class VariableAddPane extends SceneObjectBase<VariableAddPaneState> {
 }
 
 export function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableAddPane>) {
+  const dashboard = getDashboardSceneFor(model);
+
   const onAddVariable = useCallback(
     (type: EditableVariableType) => {
-      const dashboard = getDashboardSceneFor(model);
       const sectionOwner = model.state.sectionOwner.resolve();
       const existing = sectionOwner.state.$variables;
       const variablesSet = existing instanceof SceneVariableSet ? existing : new SceneVariableSet({ variables: [] });
@@ -71,12 +72,15 @@ export function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableA
         DashboardInteractions.sectionVariableTypeSelected({ type });
       }
     },
-    [model]
+    [model, dashboard]
   );
 
   return (
     <>
-      <Sidebar.PaneHeader title={t('dashboard.edit-pane.variables.select-type', 'Choose variable type')} />
+      <Sidebar.PaneHeader
+        title={t('dashboard.edit-pane.variables.select-type', 'Choose variable type')}
+        onGoBack={dashboard.state.editPane.getOnGetBackCallback()}
+      />
       <Box padding={2}>
         <VariableTypeSelectionUI onSelectType={onAddVariable} />
       </Box>

@@ -84,7 +84,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               title={t('dashboard.sidebar.dashboard-options.title', 'Options')}
               tooltip={t('dashboard.sidebar.dashboard-options.tooltip', 'Dashboard options')}
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
-              active={selectedObject === dashboard ? true : false}
+              active={selectedObject === dashboard && openPane?.getId() === 'element' ? true : false}
             />
             {config.featureToggles.feedbackButton && (
               <Sidebar.Button
