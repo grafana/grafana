@@ -72,8 +72,6 @@ func connectionBody(name, apiVersion string) map[string]interface{} {
 // of which version was used for creation. Covers GET, LIST, CREATE, UPDATE, and
 // DELETE across both Repository and Connection resources.
 func TestIntegrationVersionConsistency(t *testing.T) {
-	t.Skip("skip flaky test")
-
 	helper := sharedHelper(t)
 
 	type resourceDef struct {
