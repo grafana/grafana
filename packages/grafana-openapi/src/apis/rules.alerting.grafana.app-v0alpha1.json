@@ -2086,47 +2086,37 @@
           }
         ]
       },
+      "AlertRuleNamedRoutingTree": {
+        "type": "object",
+        "required": ["type", "routingTree"],
+        "properties": {
+          "routingTree": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/AlertRuleNotificationSettingsType"
+          }
+        },
+        "additionalProperties": false
+      },
       "AlertRuleNoDataState": {
         "type": "string",
         "enum": ["NoData", "Ok", "Alerting", "KeepLast"]
       },
       "AlertRuleNotificationSettings": {
         "description": "TODO(@moustafab): this should be imported from the notifications package",
-        "type": "object",
-        "required": ["receiver"],
-        "properties": {
-          "activeTimeIntervals": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AlertRuleTimeIntervalRef"
-            }
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/AlertRuleSimplifiedRouting"
           },
-          "groupBy": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "groupInterval": {
-            "$ref": "#/components/schemas/AlertRulePromDuration"
-          },
-          "groupWait": {
-            "$ref": "#/components/schemas/AlertRulePromDuration"
-          },
-          "muteTimeIntervals": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AlertRuleTimeIntervalRef"
-            }
-          },
-          "receiver": {
-            "type": "string"
-          },
-          "repeatInterval": {
-            "$ref": "#/components/schemas/AlertRulePromDuration"
+          {
+            "$ref": "#/components/schemas/AlertRuleNamedRoutingTree"
           }
-        },
-        "additionalProperties": false
+        ]
+      },
+      "AlertRuleNotificationSettingsType": {
+        "type": "string",
+        "enum": ["SimplifiedRouting", "NamedRoutingTree"]
       },
       "AlertRuleOperatorState": {
         "type": "object",
@@ -2189,6 +2179,46 @@
           },
           "to": {
             "$ref": "#/components/schemas/AlertRulePromDurationWMillis"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AlertRuleSimplifiedRouting": {
+        "type": "object",
+        "required": ["type", "receiver"],
+        "properties": {
+          "activeTimeIntervals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertRuleTimeIntervalRef"
+            }
+          },
+          "groupBy": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "groupInterval": {
+            "$ref": "#/components/schemas/AlertRulePromDuration"
+          },
+          "groupWait": {
+            "$ref": "#/components/schemas/AlertRulePromDuration"
+          },
+          "muteTimeIntervals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertRuleTimeIntervalRef"
+            }
+          },
+          "receiver": {
+            "type": "string"
+          },
+          "repeatInterval": {
+            "$ref": "#/components/schemas/AlertRulePromDuration"
+          },
+          "type": {
+            "$ref": "#/components/schemas/AlertRuleNotificationSettingsType"
           }
         },
         "additionalProperties": false

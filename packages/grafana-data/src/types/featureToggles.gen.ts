@@ -284,11 +284,6 @@ export interface FeatureToggles {
   */
   scanRowInvalidDashboardParseFallbackEnabled?: boolean;
   /**
-  * Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
-  * @default false
-  */
-  datasourceQueryTypes?: boolean;
-  /**
   * Register legacy datasource apis that use the numeric id
   * @default false
   */
@@ -1117,7 +1112,7 @@ export interface FeatureToggles {
   pluginsAutoUpdate?: boolean;
   /**
   * Enables the alerting list view v2 preview toggle
-  * @default true
+  * @default false
   */
   alertingListViewV2PreviewToggle?: boolean;
   /**

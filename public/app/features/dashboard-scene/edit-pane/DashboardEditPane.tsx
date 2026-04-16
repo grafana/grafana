@@ -11,6 +11,7 @@ import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '../utils/utils';
 
+import { ElementEditPane } from './ElementEditPane';
 import {
   ConditionalRenderingChangedEvent,
   DashboardEditActionEvent,
@@ -21,24 +22,22 @@ import {
   ObjectsReorderedOnCanvasEvent,
   RepeatsUpdatedEvent,
 } from './shared';
-import { type EditPaneSelectionActions } from './types';
+import { type DashboardSidebarPane, type EditPaneSelectionActions } from './types';
 
 export interface DashboardEditPaneState extends SceneObjectState {
   selectionContext: ElementSelectionContextState;
 
   undoStack: DashboardEditActionEventPayload[];
   redoStack: DashboardEditActionEventPayload[];
-  openPane?: DashboardSidebarPaneName;
+  openPane?: DashboardSidebarPane;
   /**
-   * Temp hack to open pane using element selection
+   * Temp hack for Link and LinkSet that are not part of the scene but need to be selected for now
    */
-  openPaneTempHack?: SceneObject;
+  selectedDisconnectedObject?: SceneObject;
   /** True when a new element is being added and selected */
   isNewElement: boolean;
   isDocked?: boolean;
 }
-
-export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters' | 'add' | 'code';
 
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> implements EditPaneSelectionActions {
   public constructor() {
@@ -264,11 +263,16 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
 
     if (obj.getRoot() !== this.getRoot() || obj.parent === this) {
       this.setState({
-        openPaneTempHack: obj,
+        selectedDisconnectedObject: obj,
         selectionContext: { ...this.state.selectionContext, selected: [{ id: obj.state.key! }] },
-        openPane: 'element',
+        openPane: new ElementEditPane({}),
       });
       return;
+    }
+
+    // If current open pane is not showing selected element, then we should maintain selection (force = true) which disables selection toggling
+    if (this.state.openPane?.getId() !== 'element') {
+      force = true;
     }
 
     if (multi) {
@@ -298,9 +302,9 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
 
     this.setState({
       selectionContext: { ...this.state.selectionContext, selected },
-      openPane: selected.length === 0 ? undefined : 'element',
+      openPane: selected.length ? new ElementEditPane({}) : undefined,
       isNewElement: false,
-      openPaneTempHack: undefined,
+      selectedDisconnectedObject: undefined,
     });
   }
 
@@ -309,22 +313,24 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
    * @param key of the object
    * @returns
    */
-  public getSelectedObject(key?: string): SceneObject | null {
+  public getSelectedObject(key?: string): SceneObject | undefined {
     if (key) {
       // Not using findByKey here as it requires try catch in case object is not found
-      return sceneGraph.findObject(this, (obj) => obj.state.key === key);
+      return sceneGraph.findObject(this, (obj) => obj.state.key === key) ?? undefined;
     }
 
-    if (this.state.openPaneTempHack) {
-      return this.state.openPaneTempHack;
+    if (this.state.selectedDisconnectedObject) {
+      return this.state.selectedDisconnectedObject;
     }
 
     if (this.state.selectionContext.selected.length === 0) {
-      return null;
+      return undefined;
     }
 
     // Not using findByKey here as it requires try catch in case object is not found
-    return sceneGraph.findObject(this, (obj) => obj.state.key === this.state.selectionContext.selected[0].id);
+    return (
+      sceneGraph.findObject(this, (obj) => obj.state.key === this.state.selectionContext.selected[0].id) ?? undefined
+    );
   }
 
   /**
@@ -349,16 +355,20 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     this.updateSelection([]);
   }
 
-  public openPane(openPane: DashboardSidebarPaneName) {
-    if (this.state.selectionContext.selected.length) {
+  public openPane(openPane: DashboardSidebarPane) {
+    const dashboard = getDashboardSceneFor(this);
+
+    // Some special logic for dashboard as it's the only sidebar pane toggle button that uses element selection
+    if (this.getSelectedObject() === dashboard) {
       this.clearSelection(true);
     }
 
-    if (openPane === this.state.openPane) {
+    if (this.state.openPane?.getId() === openPane.getId()) {
       this.setState({ openPane: undefined });
-    } else {
-      this.setState({ openPane });
+      return;
     }
+
+    this.setState({ openPane });
   }
 
   public closePane() {
@@ -376,27 +386,31 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     this.setState({ isNewElement: true });
   }
 
-  public addNewPanel(targetElement?: SceneObject) {
+  public addNewPanel(target: SceneObject | undefined) {
     const panel = getDefaultVizPanel();
     const dashboard = getDashboardSceneFor(this);
-    if (targetElement) {
-      const layout = getLayoutForObject(targetElement) ?? dashboard;
+
+    if (target) {
+      const layout = getLayoutForObject(target) ?? dashboard;
       layout.addPanel(panel);
     } else {
       dashboard.addPanel(panel);
     }
-    DashboardInteractions.trackAddPanelClick('sidebar', getLayoutType(targetElement));
+
+    DashboardInteractions.trackAddPanelClick('sidebar', getLayoutType(target));
   }
 
-  public pastePanel(targetElement?: SceneObject, source: 'sidebar' | 'editPaneHeader' = 'sidebar') {
+  public pastePanel(target: SceneObject | undefined, source: 'sidebar' | 'editPaneHeader' = 'sidebar') {
     const dashboard = getDashboardSceneFor(this);
-    if (targetElement) {
-      const layout = getLayoutForObject(targetElement) ?? dashboard;
+
+    if (target) {
+      const layout = getLayoutForObject(target) ?? dashboard;
       layout.pastePanel();
     } else {
       dashboard.pastePanel();
     }
-    DashboardInteractions.trackPastePanelClick(source, getLayoutType(targetElement), 'click');
+
+    DashboardInteractions.trackPastePanelClick(source, getLayoutType(target), 'click');
   }
 }
 

@@ -405,7 +405,7 @@ To use filters on data from an unsupported data source, follow these steps:
 1. In the query configuration section, make the following selections:
    - **Source panel** - Choose the panel with the source data.
    - **Data** - Select **All Data** to use the data of the panel, and not just the annotations. This is the default selection.
-   - **AdHoc Filters** - Toggle on the switch to make the data from the referenced panel filterable.
+   - **Filters** - Toggle on the switch to make the data from the referenced panel filterable.
 
    {{< admonition type="note">}}
    If you're referencing multiple panels in a dashboard with the Dashboard data source, you can only use one of those source panels at a time for filtering.

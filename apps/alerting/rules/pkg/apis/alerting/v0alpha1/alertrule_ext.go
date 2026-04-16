@@ -94,19 +94,19 @@ func (spec *AlertRuleSpec) ClampDurations() error {
 		}
 		spec.KeepFiringFor = &clamped
 	}
-	if spec.NotificationSettings != nil {
-		if spec.NotificationSettings.GroupWait != nil {
-			if err := spec.NotificationSettings.GroupWait.Clamp(); err != nil {
+	if spec.NotificationSettings != nil && spec.NotificationSettings.SimplifiedRouting != nil {
+		if spec.NotificationSettings.SimplifiedRouting.GroupWait != nil {
+			if err := spec.NotificationSettings.SimplifiedRouting.GroupWait.Clamp(); err != nil {
 				return err
 			}
 		}
-		if spec.NotificationSettings.GroupInterval != nil {
-			if err := spec.NotificationSettings.GroupInterval.Clamp(); err != nil {
+		if spec.NotificationSettings.SimplifiedRouting.GroupInterval != nil {
+			if err := spec.NotificationSettings.SimplifiedRouting.GroupInterval.Clamp(); err != nil {
 				return err
 			}
 		}
-		if spec.NotificationSettings.RepeatInterval != nil {
-			if err := spec.NotificationSettings.RepeatInterval.Clamp(); err != nil {
+		if spec.NotificationSettings.SimplifiedRouting.RepeatInterval != nil {
+			if err := spec.NotificationSettings.SimplifiedRouting.RepeatInterval.Clamp(); err != nil {
 				return err
 			}
 		}

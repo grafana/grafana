@@ -155,6 +155,55 @@ func TestGenerateComment(t *testing.T) {
 				},
 			},
 		}},
+		{"single dashboard with stripped metadata", changeInfo{
+			GrafanaBaseURL: "http://host/",
+			Changes: []fileChangeInfo{
+				{
+					Parsed: &resources.ParsedResource{
+						Info: &repository.FileInfo{
+							Path: "dashboard.json",
+						},
+						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+						Action: v0alpha1.ResourceActionUpdate,
+					},
+					Title:              "My Dashboard",
+					GrafanaURL:         "http://grafana/d/uid",
+					PreviewURL:         "http://grafana/admin/preview",
+					HasRemovedMetadata: true,
+				},
+			},
+		}},
+		{"multiple files with stripped metadata", changeInfo{
+			GrafanaBaseURL:  "http://host/",
+			RepositoryName:  "my-repo",
+			RepositoryTitle: "My Repo",
+			Changes: []fileChangeInfo{
+				{
+					Parsed: &resources.ParsedResource{
+						Info: &repository.FileInfo{
+							Path: "good.json",
+						},
+						Action: v0alpha1.ResourceActionCreate,
+						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+					},
+					Title:      "Dashboard A",
+					PreviewURL: "http://grafana/admin/preview",
+				},
+				{
+					Parsed: &resources.ParsedResource{
+						Info: &repository.FileInfo{
+							Path: "stripped.json",
+						},
+						Action: v0alpha1.ResourceActionUpdate,
+						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+					},
+					Title:              "Dashboard B",
+					GrafanaURL:         "http://grafana/d/bbb",
+					PreviewURL:         "http://grafana/admin/preview",
+					HasRemovedMetadata: true,
+				},
+			},
+		}},
 		{"multiple files with errors", changeInfo{
 			GrafanaBaseURL: "http://host/",
 			Changes: []fileChangeInfo{
@@ -218,6 +267,118 @@ func TestGenerateComment(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+func TestGenerateComment_NilParsedDeletedInTableTemplate(t *testing.T) {
+	repo := NewMockPullRequestRepo(t)
+
+	var capturedComment string
+	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
+		capturedComment = comment
+		return true
+	})).Return(nil)
+
+	info := changeInfo{
+		GrafanaBaseURL: "http://host/",
+		Changes: []fileChangeInfo{
+			{
+				Parsed: &resources.ParsedResource{
+					Info: &repository.FileInfo{
+						Path: "valid.json",
+					},
+					Action: v0alpha1.ResourceActionCreate,
+					GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+				},
+				Title:      "Valid Dashboard",
+				PreviewURL: "http://grafana/admin/preview",
+			},
+			{
+				Change: repository.VersionedFileChange{
+					Action: repository.FileActionDeleted,
+					Path:   "deleted-file.json",
+				},
+			},
+		},
+	}
+
+	commenter := NewCommenter(false)
+	err := commenter.Comment(context.Background(), repo, 1, info)
+	require.NoError(t, err)
+	require.Contains(t, capturedComment, "2 changes")
+	require.Contains(t, capturedComment, "deleted")
+	require.Contains(t, capturedComment, ".json")
+}
+
+func TestGenerateComment_SingleChangeNilParsed(t *testing.T) {
+	repo := NewMockPullRequestRepo(t)
+
+	var capturedComment string
+	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
+		capturedComment = comment
+		return true
+	})).Return(nil)
+
+	info := changeInfo{
+		GrafanaBaseURL: "http://host/",
+		Changes: []fileChangeInfo{
+			{
+				Change: repository.VersionedFileChange{
+					Action: repository.FileActionCreated,
+					Path:   "unparseable-file.json",
+				},
+				Error: "parse error",
+			},
+		},
+	}
+
+	commenter := NewCommenter(false)
+	err := commenter.Comment(context.Background(), repo, 1, info)
+	require.NoError(t, err)
+	require.Contains(t, capturedComment, "1 changes")
+	require.Contains(t, capturedComment, "created")
+}
+
+func TestGenerateComment_ParseFailureErrorSurfaced(t *testing.T) {
+	repo := NewMockPullRequestRepo(t)
+
+	var capturedComment string
+	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
+		capturedComment = comment
+		return true
+	})).Return(nil)
+
+	info := changeInfo{
+		GrafanaBaseURL: "http://host/",
+		Changes: []fileChangeInfo{
+			{
+				Parsed: &resources.ParsedResource{
+					Info: &repository.FileInfo{
+						Path: "valid.json",
+					},
+					Action: v0alpha1.ResourceActionCreate,
+					GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+				},
+				Title:      "Valid Dashboard",
+				PreviewURL: "http://grafana/admin/preview",
+			},
+			{
+				Change: repository.VersionedFileChange{
+					Action: repository.FileActionCreated,
+					Path:   "broken.json",
+				},
+				Error: "unable to parse resource",
+			},
+		},
+	}
+
+	commenter := NewCommenter(false)
+	err := commenter.Comment(context.Background(), repo, 1, info)
+	require.NoError(t, err)
+	require.Contains(t, capturedComment, "2 changes")
+	require.Contains(t, capturedComment, "1 with issues")
+	require.Contains(t, capturedComment, "Validation Issues")
+	require.Contains(t, capturedComment, "broken.json")
+	require.Contains(t, capturedComment, "unable to parse resource")
 }
 
 func TestCommenter_ShowImageRendererNote(t *testing.T) {

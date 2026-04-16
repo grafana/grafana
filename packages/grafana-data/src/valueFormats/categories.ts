@@ -1112,6 +1112,11 @@ export const getCategories = (): ValueFormatCategory[] => [
         fn: SIPrefix('m', -1),
       },
       {
+        name: t('grafana-data.valueFormats.categories.length.formats.name-centimeter', 'centimeter (cm)'),
+        id: 'lengthcm',
+        fn: toFixedUnit('cm'),
+      },
+      {
         name: t('grafana-data.valueFormats.categories.length.formats.name-inch', 'inch (in)'),
         id: 'lengthin',
         fn: toFixedUnit('in'),

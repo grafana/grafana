@@ -23,18 +23,20 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 	originalName := "original-repo"
 	originalRepo := common.TestRepo{
 		Name:               originalName,
-		Target:             "instance",
+		SyncTarget:         "instance",
 		Copies:             map[string]string{},
 		ExpectedDashboards: 0,
 		ExpectedFolders:    0,
 	}
-	helper.CreateRepo(t, originalRepo)
+	helper.CreateLocalRepo(t, originalRepo)
 
 	t.Run("folder sync is rejected when instance sync exists", func(t *testing.T) {
-		folderRepo := helper.RenderObject(t, "../testdata/local-write.json.tmpl", map[string]any{
-			"Name":        "folder-blocked-by-instance",
-			"SyncEnabled": true,
-			"SyncTarget":  "folder",
+		folderRepo := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
+			"Name":          "folder-blocked-by-instance",
+			"SyncEnabled":   true,
+			"SyncTarget":    "folder",
+			"Path":          helper.ProvisioningPath,
+			"WorkflowsJSON": `["write"]`,
 		})
 
 		_, err := helper.Repositories.Resource.Create(ctx, folderRepo, metav1.CreateOptions{FieldValidation: "Strict"})
@@ -74,10 +76,12 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 	})
 
 	t.Run("instance sync rejected when any other repository exists", func(t *testing.T) {
-		instanceRepo := helper.RenderObject(t, "../testdata/local-write.json.tmpl", map[string]any{
-			"Name":        "instance-repo-blocked",
-			"SyncEnabled": true,
-			"SyncTarget":  "instance",
+		instanceRepo := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
+			"Name":          "instance-repo-blocked",
+			"SyncEnabled":   true,
+			"SyncTarget":    "instance",
+			"Path":          helper.ProvisioningPath,
+			"WorkflowsJSON": `["write"]`,
 		})
 
 		_, err := helper.Repositories.Resource.Create(ctx, instanceRepo, metav1.CreateOptions{FieldValidation: "Strict"})
@@ -109,19 +113,21 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 			repoName := fmt.Sprintf("limit-test-repo-%d", i)
 			limitTestRepo := common.TestRepo{
 				Name:               repoName,
-				Target:             "folder",
+				SyncTarget:         "folder",
 				Copies:             map[string]string{},
 				ExpectedDashboards: 0,
 				ExpectedFolders:    i,
 			}
-			helper.CreateRepo(t, limitTestRepo)
+			helper.CreateLocalRepo(t, limitTestRepo)
 		}
 
 		eleventhRepoName := "limit-test-repo-11"
-		eleventhRepo := helper.RenderObject(t, "../testdata/local-write.json.tmpl", map[string]any{
-			"Name":        eleventhRepoName,
-			"SyncEnabled": true,
-			"SyncTarget":  "folder",
+		eleventhRepo := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
+			"Name":          eleventhRepoName,
+			"SyncEnabled":   true,
+			"SyncTarget":    "folder",
+			"Path":          helper.ProvisioningPath,
+			"WorkflowsJSON": `["write"]`,
 		})
 
 		_, createErr := helper.Repositories.Resource.Create(ctx, eleventhRepo, metav1.CreateOptions{FieldValidation: "Strict"})
