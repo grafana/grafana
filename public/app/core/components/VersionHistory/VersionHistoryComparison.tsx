@@ -1,11 +1,11 @@
 import { identity } from 'lodash';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 
 import { dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Box, Button, Divider, EmptyState, Icon, Stack, Text } from '@grafana/ui';
 import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
-import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
+import LazyDiffViewer from 'app/features/dashboard-scene/settings/version-history/LazyDiffViewer';
 import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
 
 /** Meta information about a version of an entity */
@@ -114,7 +114,12 @@ export const VersionHistoryComparison = <T extends DiffArgument>({
         )}
       </Stack>
       {showJsonDiff && (
-        <DiffViewer oldValue={JSON.stringify(oldVersion, null, 2)} newValue={JSON.stringify(newVersion, null, 2)} />
+        <Suspense fallback={null}>
+          <LazyDiffViewer
+            oldValue={JSON.stringify(oldVersion, null, 2)}
+            newValue={JSON.stringify(newVersion, null, 2)}
+          />
+        </Suspense>
       )}
     </Stack>
   );

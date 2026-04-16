@@ -4,6 +4,7 @@ import tinycolor from 'tinycolor2';
 
 import { useTheme2 } from '@grafana/ui';
 
+// NOTE: Use LazyDiffViewer with <Suspense> instead!
 export const DiffViewer = ({ oldValue, newValue, ...diffProps }: ReactDiffViewerProps) => {
   const theme = useTheme2();
 
