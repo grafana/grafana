@@ -45,13 +45,13 @@ func KeyLabel(providerID ProviderID) string {
 // Per AppSec, data keys in this cache must be encrypted at-rest.
 type DataKeyCache interface {
 	// The implementation of Set must ensure the key is retrievable by both key and label
-	Set(namespace string, entry DataKeyCacheEntry)
+	Set(ctx context.Context, namespace string, entry DataKeyCacheEntry)
 
-	GetById(namespace, id string) (DataKeyCacheEntry, bool)
-	GetByLabel(namespace, label string) (DataKeyCacheEntry, bool)
+	GetById(ctx context.Context, namespace, id string) (DataKeyCacheEntry, bool)
+	GetByLabel(ctx context.Context, namespace, label string) (DataKeyCacheEntry, bool)
 
-	RemoveExpired()
-	Flush(namespace string)
+	RemoveExpired(ctx context.Context)
+	Flush(ctx context.Context, namespace string)
 }
 
 type DataKeyCacheEntry struct {

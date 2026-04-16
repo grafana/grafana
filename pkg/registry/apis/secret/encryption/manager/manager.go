@@ -196,7 +196,7 @@ func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace xkube.
 func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label string, skipCache bool) (string, []byte, error) {
 	// 0. Get data key from in-memory cache (stored encrypted).
 	if !skipCache {
-		if entry, exists := s.dataKeyCache.GetByLabel(namespace, label); exists && entry.Active {
+		if entry, exists := s.dataKeyCache.GetByLabel(ctx, namespace, label); exists && entry.Active {
 			// Decrypt the cached data key before returning.
 			decrypted, err := s.decryptCachedDataKey(ctx, entry.EncryptedDataKey)
 			if err != nil {
@@ -350,7 +350,7 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 
 	// 0. Get data key from in-memory cache (stored encrypted).
 	if !skipCache {
-		if entry, exists := s.dataKeyCache.GetById(namespace, id); exists && entry.Active {
+		if entry, exists := s.dataKeyCache.GetById(ctx, namespace, id); exists && entry.Active {
 			// Decrypt the cached data key before returning.
 			decrypted, err := s.decryptCachedDataKey(ctx, entry.EncryptedDataKey)
 			if err != nil {
@@ -441,7 +441,7 @@ func (s *EncryptionManager) ConsolidateNamespace(ctx context.Context, namespace 
 		results[i] = &contracts.EncryptedPayload{DataKeyID: newKeyID, EncryptedData: encrypted}
 	}
 
-	s.dataKeyCache.Flush(namespace.String())
+	s.dataKeyCache.Flush(ctx, namespace.String())
 	// TODO: Decide later if the cache should be primed with the new DEK here
 
 	return results, nil
@@ -454,7 +454,7 @@ func (s *EncryptionManager) Run(ctx context.Context) error {
 		select {
 		case <-gc.C:
 			s.log.Debug("Removing expired data keys from cache...")
-			s.dataKeyCache.RemoveExpired()
+			s.dataKeyCache.RemoveExpired(ctx)
 			s.log.Debug("Removing expired data keys from cache finished successfully")
 		case <-ctx.Done():
 			s.log.Debug("Grafana is shutting down; stopping...")
@@ -483,7 +483,7 @@ func (s *EncryptionManager) cacheDataKey(ctx context.Context, namespace string, 
 		EncryptedDataKey: encryptedForCache,
 		Active:           dataKey.Active,
 	}
-	s.dataKeyCache.Set(namespace, entry)
+	s.dataKeyCache.Set(ctx, namespace, entry)
 }
 
 // decryptCachedDataKey decrypts a data key retrieved from the cache.
