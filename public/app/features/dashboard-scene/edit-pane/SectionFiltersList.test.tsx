@@ -13,12 +13,6 @@ jest.mock('./add-new/AddFilters', () => ({
   openAddFilterForm: jest.fn(),
 }));
 
-jest.mock('../utils/interactions', () => ({
-  DashboardInteractions: {
-    addFilterButtonClicked: jest.fn(),
-  },
-}));
-
 describe('SectionFiltersList', () => {
   it('renders only adhoc filter variables', () => {
     const row = buildRow({ includeFilter: true, includeCustom: true });
