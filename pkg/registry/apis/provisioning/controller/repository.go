@@ -78,11 +78,12 @@ type RepositoryController struct {
 	minSyncInterval time.Duration
 	drainTimeout    time.Duration
 
-	registry              prometheus.Registerer
-	tracer                tracing.Tracer
-	quotaGetter           quotas.QuotaGetter
-	tokenMetrics          *repositoryTokenMetrics
-	folderMetadataEnabled bool
+	registry                      prometheus.Registerer
+	tracer                        tracing.Tracer
+	quotaGetter                   quotas.QuotaGetter
+	tokenMetrics                  *repositoryTokenMetrics
+	folderMetadataEnabled         bool
+	webhookSecretRotationInterval time.Duration
 }
 
 // NewRepositoryController creates new RepositoryController.
@@ -107,6 +108,7 @@ func NewRepositoryController(
 	drainTimeout time.Duration,
 	quotaGetter quotas.QuotaGetter,
 	folderMetadataEnabled bool,
+	webhookSecretRotationInterval time.Duration,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
@@ -132,16 +134,17 @@ func NewRepositoryController(
 			metrics:       &finalizerMetrics,
 			maxWorkers:    parallelOperations,
 		},
-		jobs:                  jobs,
-		logger:                logging.DefaultLogger.With("logger", loggerName),
-		registry:              registry,
-		tracer:                tracer,
-		resyncInterval:        resyncInterval,
-		minSyncInterval:       minSyncInterval,
-		drainTimeout:          drainTimeout,
-		quotaGetter:           quotaGetter,
-		tokenMetrics:          repoTokenMetrics,
-		folderMetadataEnabled: folderMetadataEnabled,
+		jobs:                          jobs,
+		logger:                        logging.DefaultLogger.With("logger", loggerName),
+		registry:                      registry,
+		tracer:                        tracer,
+		resyncInterval:                resyncInterval,
+		minSyncInterval:               minSyncInterval,
+		drainTimeout:                  drainTimeout,
+		quotaGetter:                   quotaGetter,
+		tokenMetrics:                  repoTokenMetrics,
+		folderMetadataEnabled:         folderMetadataEnabled,
+		webhookSecretRotationInterval: webhookSecretRotationInterval,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -630,6 +633,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		shouldGenerateToken = rc.shouldGenerateTokenFromConnection(obj)
 	}
 
+	shouldRotateWebhookSecret := rc.shouldRotateWebhookSecret(obj)
+
 	// Determine the main triggering condition
 	switch {
 	// First, we check if the repository is blocked
@@ -651,6 +656,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		logger.Info("quota changed", "quota", newQuota)
 	case len(obj.Spec.Workflows) > 0 && (obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0):
 		logger.Info("webhook missing, reconciling")
+	case shouldRotateWebhookSecret:
+		logger.Info("webhook secret rotation due")
 	default:
 		logger.Info("skipping as conditions are not met", "status", obj.Status, "generation", obj.Generation, "sync_spec", obj.Spec.Sync)
 		return nil
@@ -712,6 +719,17 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 	if len(hookOps) > 0 {
 		patchOperations = append(patchOperations, hookOps...)
+	}
+
+	// Rotate webhook secret if due.
+	if rotator, ok := repo.(repository.WebhookSecretRotator); ok && shouldRotateWebhookSecret {
+		rotateOps, err := rotator.RotateWebhookSecret(ctx)
+		if err != nil {
+			logger.Warn("webhook secret rotation failed", "error", err)
+		}
+		if len(rotateOps) > 0 {
+			patchOperations = append(patchOperations, rotateOps...)
+		}
 	}
 
 	// If branch is empty, fetch and set the default branch before running health check
@@ -830,6 +848,25 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	}
 
 	return hookOps, true, nil
+}
+
+// shouldRotateWebhookSecret returns true when a repository has an active webhook
+// whose secret is due for rotation based on the configured interval.
+func (rc *RepositoryController) shouldRotateWebhookSecret(obj *provisioning.Repository) bool {
+	if rc.webhookSecretRotationInterval <= 0 {
+		return false
+	}
+	if len(obj.Spec.Workflows) == 0 {
+		return false
+	}
+	if obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0 {
+		return false
+	}
+	if obj.Status.Webhook.LastRotated == 0 {
+		return true
+	}
+	age := time.Since(time.UnixMilli(obj.Status.Webhook.LastRotated))
+	return age >= rc.webhookSecretRotationInterval
 }
 
 // HACK: we need a proper way of doing this check by adding Conditions

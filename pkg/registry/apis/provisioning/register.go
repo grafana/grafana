@@ -135,11 +135,12 @@ type APIBuilder struct {
 	extras       []Extra
 	extraWorkers []jobs.Worker
 
-	restConfigGetter      func(context.Context) (*clientrest.Config, error)
-	registry              prometheus.Registerer
-	quotaGetter           quotas.QuotaGetter
-	folderMetadataEnabled bool
-	folderAPIVersion      string
+	restConfigGetter              func(context.Context) (*clientrest.Config, error)
+	registry                      prometheus.Registerer
+	quotaGetter                   quotas.QuotaGetter
+	folderMetadataEnabled         bool
+	folderAPIVersion              string
+	webhookSecretRotationInterval time.Duration
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -346,6 +347,7 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, err
 	}
+	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -382,8 +384,9 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, err
 	}
-
+	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	apiregistration.RegisterAPI(v1beta1Builder)
+
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
 	return builder, nil
 }
@@ -1001,6 +1004,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				}
 			}()
 
+			webhookSecretRotationInterval := b.webhookSecretRotationInterval
+			if webhookSecretRotationInterval <= 0 {
+				// If webhookSecretRotationInterval is not set, use the default value
+				webhookSecretRotationInterval = 30 * 24 * time.Hour
+			}
+
 			repoController, err := controller.NewRepositoryController(
 				b.GetClient(),
 				repoInformer,
@@ -1019,6 +1028,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				30*time.Second,
 				b.quotaGetter,
 				b.folderMetadataEnabled,
+				webhookSecretRotationInterval,
 			)
 			if err != nil {
 				return err

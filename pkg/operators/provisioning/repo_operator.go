@@ -123,6 +123,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		controllerCfg.DrainTimeout(),
 		quotaGetter,
 		resources.IsFolderMetadataEnabled(controllerCfg.Settings),
+		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30*24*time.Hour),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create repository controller: %w", err)
