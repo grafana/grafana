@@ -135,7 +135,7 @@ Team B → `{ resource.service.name="frontend" }`
 
 ## How LBAC affects returned data
 
-Grafana Cloud Traces supports three redaction modes that control how unauthorized spans are handled in trace by ID search responses. The active mode is configured per tenant. To change the mode for your organization, contact Grafana Support.
+Cloud Traces supports three redaction modes that control how unauthorized spans are handled in trace by ID search responses. The active mode is configured per tenant. To change the mode for your organization, contact Grafana Support.
 
 ### Attributes mode (default)
 
