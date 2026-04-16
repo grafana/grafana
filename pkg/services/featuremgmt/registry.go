@@ -464,14 +464,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "scanRowInvalidDashboardParseFallbackEnabled",
-			Description: "Enable fallback parsing behavior when scan row encounters invalid dashboard JSON",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "datasources.queryTypes",
 			Description:     "Load Query types from spec.{version}.query.{yaml|json}",
 			Stage:           FeatureStageExperimental,
@@ -1388,15 +1380,6 @@ var (
 			Owner:       identityAccessTeam,
 			Expression:  "false",
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:         "managedDualWriter",
-			Description:  "Pick the dual write mode from database configs",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:        "pluginsSriChecks",
