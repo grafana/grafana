@@ -8,8 +8,9 @@ export interface LogDetailsContextData {
   detailsDisplayed: (rowIndex: number) => boolean;
   enableLogDetails: boolean;
   logs: LogListModel[];
+  setCurrentLog(log: LogListModel): void;
   showDetails: LogListModel[];
-  toggleDetails: (rowIndex: number) => void;
+  toggleDetails: (log: number | LogListModel) => void;
 }
 
 export const emptyContextData: LogDetailsContextData = {
@@ -18,6 +19,7 @@ export const emptyContextData: LogDetailsContextData = {
   detailsDisplayed: () => false,
   enableLogDetails: false,
   logs: [],
+  setCurrentLog: () => {},
   showDetails: [],
   toggleDetails: () => {},
 };
@@ -72,13 +74,13 @@ export const LogDetailsContextProvider = ({ children, enableLogDetails, logs }: 
   );
 
   const toggleDetails = useCallback(
-    (rowIndex: number) => {
+    (logRef: number | LogListModel) => {
       if (!enableLogDetails) {
         return;
       }
-      const log = logs.at(rowIndex);
+      const log = typeof logRef === 'number' ? logs.at(logRef) : logRef;
       if (!log) {
-        console.error(`LogDetailsContext: undefined log at rowIndex ${rowIndex}`);
+        console.error(`LogDetailsContext: undefined log with reference ${logRef}`);
         return;
       }
       const found = showDetails.find((stateLog) => stateLog.uid === log.uid);
@@ -105,6 +107,7 @@ export const LogDetailsContextProvider = ({ children, enableLogDetails, logs }: 
         detailsDisplayed,
         enableLogDetails,
         logs,
+        setCurrentLog,
         showDetails,
         toggleDetails,
       }}
