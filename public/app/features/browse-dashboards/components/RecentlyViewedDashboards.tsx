@@ -77,7 +77,7 @@ export function RecentlyViewedDashboards() {
         </Stack>
       }
       isOpen={isOpen}
-      onToggle={handleSectionToggle}
+      onToggle={() => {}}
       className={styles.title}
       contentClassName={styles.content}
     >
