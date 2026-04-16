@@ -2915,6 +2915,42 @@ func SharedHelper(t *testing.T, env *SharedEnv) *ProvisioningTestHelper {
 	return helper
 }
 
+// RESTDo performs a REST request against the provisioning API and returns the
+// response as an unstructured map. The subpath is appended to
+// /apis/provisioning.grafana.app/<version>/namespaces/<namespace>/.
+func (h *ProvisioningTestHelper) RESTDo(method, version, subpath string, body ...map[string]interface{}) (map[string]interface{}, error) {
+	ns := h.Namespace
+	if ns == "" {
+		ns = "default"
+	}
+	absPath := fmt.Sprintf("/apis/provisioning.grafana.app/%s/namespaces/%s/%s", version, ns, subpath)
+
+	req := h.AdminREST.Verb(method).AbsPath(absPath)
+	if len(body) > 0 && body[0] != nil {
+		bodyBytes, err := json.Marshal(body[0])
+		if err != nil {
+			return nil, err
+		}
+		req = req.Body(bodyBytes).SetHeader("Content-Type", "application/json")
+	}
+
+	result := req.Do(context.Background())
+	if err := result.Error(); err != nil {
+		return nil, err
+	}
+
+	raw, err := result.Raw()
+	if err != nil {
+		return nil, err
+	}
+
+	var obj map[string]interface{}
+	if err := json.Unmarshal(raw, &obj); err != nil {
+		return nil, err
+	}
+	return obj, nil
+}
+
 // LabelPendingDelete is the label key written by the tenant watcher to mark
 // resources whose namespace is pending deletion.
 const LabelPendingDelete = "cloud.grafana.com/pending-delete"
@@ -2923,7 +2959,7 @@ const LabelPendingDelete = "cloud.grafana.com/pending-delete"
 // It retries on 409 Conflict to handle concurrent status updates from the controller.
 func SetPendingDeleteLabel(t *testing.T, resource dynamic.ResourceInterface, name string) {
 	t.Helper()
-	err := RetryOnConflict(func() error {
+	err := RetryOnConflict(t, func() error {
 		obj, err := resource.Get(t.Context(), name, metav1.GetOptions{})
 		if err != nil {
 			return err
@@ -2940,15 +2976,16 @@ func SetPendingDeleteLabel(t *testing.T, resource dynamic.ResourceInterface, nam
 	require.NoError(t, err, "setting the pending-delete label on %q should be allowed", name)
 }
 
-// RetryOnConflict retries fn on 409 Conflict up to 5 times, returning the last
-// error (or nil on success).
-func RetryOnConflict(fn func() error) error {
-	var err error
-	for range 10 {
-		err = fn()
-		if !apierrors.IsConflict(err) {
-			return err
+// RetryOnConflict retries fn while it returns a 409 Conflict, using
+// EventuallyWithT so the retry window is time-bounded.
+func RetryOnConflict(t *testing.T, fn func() error) error {
+	t.Helper()
+	var lastErr error
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		lastErr = fn()
+		if apierrors.IsConflict(lastErr) {
+			c.Errorf("conflict error, retrying: %v", lastErr)
 		}
-	}
-	return err
+	}, WaitTimeoutDefault, 200*time.Millisecond, "operation failed with persistent 409 Conflict")
+	return lastErr
 }

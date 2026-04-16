@@ -224,7 +224,7 @@ func (s *ModuleServer) Run() error {
 		if s.storageBackend == nil {
 			// If storage server not being used, disable GC, pruner, and RV manager
 			disableStorageServices := !m.IsModuleEnabled(modules.StorageServer)
-			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, otel.Tracer("unified-backend"), disableStorageServices)
+			s.storageBackend, err = sql.NewStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, disableStorageServices)
 			if err != nil {
 				return nil, err
 			}
