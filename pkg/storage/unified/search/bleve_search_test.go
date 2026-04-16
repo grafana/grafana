@@ -339,6 +339,31 @@ func TestWildcardQuery(t *testing.T) {
 		checkSearchQuery(t, index, newTestQuery("Hell*"), []string{"name1"})
 	})
 
+	t.Run("wildcard query with QueryFields searches specified fields", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Hello World",
+			"name2": "Goodbye Moon",
+		})
+
+		req := newTestQuery("hell*")
+		req.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
+			{Name: resource.SEARCH_FIELD_TITLE},
+		}
+		res, err := index.Search(context.Background(), nil, req, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), res.TotalHits)
+
+		// QueryFields pointing at a non-matching field should return no results
+		req2 := newTestQuery("hell*")
+		req2.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
+			{Name: resource.SEARCH_FIELD_FOLDER},
+		}
+		res2, err := index.Search(context.Background(), nil, req2, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(0), res2.TotalHits)
+	})
+
 	t.Run("wildcard query matches multiple documents", func(t *testing.T) {
 		index := newTestDashboardsIndex(t, threshold, 2, noop)
 		indexDocumentsWithTitles(t, index, key, map[string]string{

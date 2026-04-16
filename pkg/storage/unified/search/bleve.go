@@ -1277,10 +1277,24 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 
 	if len(req.Query) > 1 {
 		if strings.Contains(req.Query, "*") {
-			// wildcard query is expensive - should be used with caution
-			wildcard := bleve.NewWildcardQuery(req.Query)
-			wildcard.SetField(resource.SEARCH_FIELD_TITLE)
-			queries = append(queries, wildcard)
+			// Wildcard query is expensive, should be used with caution.
+			// When QueryFields is set, search across each named field (only Name is
+			// used; Type and Boost are ignored because bleve wildcards don't support
+			// analyzers or meaningful relevance scoring).
+			// When QueryFields is empty, default to title.
+			if len(req.QueryFields) > 0 {
+				disjoin := bleve.NewDisjunctionQuery()
+				for _, field := range req.QueryFields {
+					wq := bleve.NewWildcardQuery(req.Query)
+					wq.SetField(field.Name)
+					disjoin.AddQuery(wq)
+				}
+				queries = append(queries, disjoin)
+			} else {
+				wildcard := bleve.NewWildcardQuery(req.Query)
+				wildcard.SetField(resource.SEARCH_FIELD_TITLE)
+				queries = append(queries, wildcard)
+			}
 		} else {
 			// When using a
 			searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
