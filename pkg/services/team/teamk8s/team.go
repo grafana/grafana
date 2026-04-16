@@ -161,7 +161,7 @@ func (s *TeamK8sService) listTeamsByUIDs(ctx context.Context, namespace string, 
 				if apierrors.IsNotFound(err) {
 					return nil
 				}
-				return err
+				return fmt.Errorf("failed to get team %s: %w", uid, err)
 			}
 			results[i] = obj
 			return nil
@@ -200,11 +200,11 @@ func (s *TeamK8sService) listUsersByUIDs(ctx context.Context, namespace string, 
 				if apierrors.IsNotFound(err) {
 					return nil
 				}
-				return err
+				return fmt.Errorf("failed to get user %s: %w", uid, err)
 			}
 			var user iamv0alpha1.User
 			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &user); err != nil {
-				return err
+				return fmt.Errorf("failed to decode user %s: %w", uid, err)
 			}
 			results[i] = &user
 			return nil
