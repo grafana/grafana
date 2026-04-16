@@ -2915,6 +2915,35 @@ func SharedHelper(t *testing.T, env *SharedEnv) *ProvisioningTestHelper {
 	return helper
 }
 
+// RESTDo performs a REST request against the provisioning API and returns the
+// response as an unstructured map. The subpath is appended to
+// /apis/provisioning.grafana.app/<version>/namespaces/<namespace>/.
+func (h *ProvisioningTestHelper) RESTDo(t *testing.T, method, version, subpath string, body ...map[string]interface{}) map[string]interface{} {
+	t.Helper()
+	ns := h.Namespace
+	if ns == "" {
+		ns = "default"
+	}
+	absPath := fmt.Sprintf("/apis/provisioning.grafana.app/%s/namespaces/%s/%s", version, ns, subpath)
+
+	req := h.AdminREST.Verb(method).AbsPath(absPath)
+	if len(body) > 0 && body[0] != nil {
+		bodyBytes, err := json.Marshal(body[0])
+		require.NoError(t, err)
+		req = req.Body(bodyBytes).SetHeader("Content-Type", "application/json")
+	}
+
+	result := req.Do(context.Background())
+	require.NoError(t, result.Error())
+
+	raw, err := result.Raw()
+	require.NoError(t, err)
+
+	var obj map[string]interface{}
+	require.NoError(t, json.Unmarshal(raw, &obj))
+	return obj
+}
+
 // LabelPendingDelete is the label key written by the tenant watcher to mark
 // resources whose namespace is pending deletion.
 const LabelPendingDelete = "cloud.grafana.com/pending-delete"

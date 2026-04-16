@@ -1869,7 +1869,7 @@ var (
 		{
 			Name:        "metricsFromProfiles",
 			Description: "Enables creating metrics from profiles and storing them as recording rules",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePrivatePreview,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 			Generate:    Generate{LegacyFrontend: true},
 			Expression:  "false",
@@ -2563,7 +2563,7 @@ var (
 		{
 			Name:        "profilesExemplars",
 			Description: "Enables profiles exemplars support in profiles drilldown",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Expression:  "false",
