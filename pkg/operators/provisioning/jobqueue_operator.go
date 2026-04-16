@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
@@ -71,36 +70,25 @@ func RunJobQueueController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	workers, metrics, err := buildWorkers(deps.Config, &controllerCfg.ControllerConfig, deps.Registerer, tracer, controllerCfg.maxSyncWorkers, controllerCfg.folderAPIVersion)
-	if err != nil {
-		return fmt.Errorf("build workers: %w", err)
-	}
-
-	repoFactory, err := controllerCfg.RepositoryFactory()
-	if err != nil {
-		return fmt.Errorf("failed to get repository factory: %w", err)
-	}
-
-	repoGetter := resources.NewRepositoryGetter(
-		repoFactory,
-		provisioningClient.ProvisioningV0alpha1(),
-	)
-
-	driver, err := jobs.NewConcurrentJobDriver(
-		controllerCfg.concurrentDrivers,
-		controllerCfg.maxJobTimeout,
-		controllerCfg.jobInterval,
-		controllerCfg.leaseRenewalInterval,
+	driver, err := buildDriver(
+		deps.Config,
+		&controllerCfg.ControllerConfig,
+		deps.Registerer,
+		tracer,
+		driverConfig{
+			concurrentDrivers:    controllerCfg.concurrentDrivers,
+			maxJobTimeout:        controllerCfg.maxJobTimeout,
+			jobInterval:          controllerCfg.jobInterval,
+			leaseRenewalInterval: controllerCfg.leaseRenewalInterval,
+			maxSyncWorkers:       controllerCfg.maxSyncWorkers,
+			folderAPIVersion:     controllerCfg.folderAPIVersion,
+		},
 		jobStore,
-		repoGetter,
 		jobHistoryWriter,
 		jobController.InsertNotifications(),
-		deps.Registerer,
-		metrics,
-		workers...,
 	)
 	if err != nil {
-		return fmt.Errorf("create concurrent job driver: %w", err)
+		return fmt.Errorf("build driver: %w", err)
 	}
 
 	var wg sync.WaitGroup

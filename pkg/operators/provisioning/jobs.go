@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -22,8 +23,62 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// buildWorkers resolves all dependencies and constructs the job workers.
-// This is the single source of truth for worker construction used by both operators.
+type driverConfig struct {
+	concurrentDrivers    int
+	maxJobTimeout        time.Duration
+	jobInterval          time.Duration
+	leaseRenewalInterval time.Duration
+	maxSyncWorkers       int
+	folderAPIVersion     string
+}
+
+// buildDriver constructs the full ConcurrentJobDriver including all workers.
+// This is the single source of truth for driver construction used by both operators.
+func buildDriver(
+	cfg *setting.Cfg,
+	controllerCfg *ControllerConfig,
+	registry prometheus.Registerer,
+	tracer tracing.Tracer,
+	dc driverConfig,
+	jobStore jobs.Store,
+	jobHistoryWriter jobs.HistoryWriter,
+	notifications chan struct{},
+) (*jobs.ConcurrentJobDriver, error) {
+	workers, metrics, err := buildWorkers(cfg, controllerCfg, registry, tracer, dc.maxSyncWorkers, dc.folderAPIVersion)
+	if err != nil {
+		return nil, fmt.Errorf("build workers: %w", err)
+	}
+
+	repoFactory, err := controllerCfg.RepositoryFactory()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get repository factory: %w", err)
+	}
+
+	provisioningClient, err := controllerCfg.ProvisioningClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
+	}
+
+	repoGetter := resources.NewRepositoryGetter(
+		repoFactory,
+		provisioningClient.ProvisioningV0alpha1(),
+	)
+
+	return jobs.NewConcurrentJobDriver(
+		dc.concurrentDrivers,
+		dc.maxJobTimeout,
+		dc.jobInterval,
+		dc.leaseRenewalInterval,
+		jobStore,
+		repoGetter,
+		jobHistoryWriter,
+		notifications,
+		registry,
+		metrics,
+		workers...,
+	)
+}
+
 func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry prometheus.Registerer, tracer tracing.Tracer, maxSyncWorkers int, folderAPIVersion string) ([]jobs.Worker, *jobs.JobMetrics, error) {
 	featureManager, err := featuremgmt.ProvideManagerService(cfg)
 	if err != nil {
