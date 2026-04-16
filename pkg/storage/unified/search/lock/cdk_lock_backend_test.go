@@ -547,9 +547,9 @@ func (b *notFoundOnWriteBucket) WriteAll(ctx context.Context, key string, data [
 		b.tripped = true
 		b.mu.Unlock()
 		// Delete the object so a subsequent IfNotExist write succeeds.
-		_ = b.CDKBucket.Delete(ctx, key)
+		_ = b.Delete(ctx, key)
 		// Produce a real gcerrors.NotFound by reading a non-existent key.
-		_, err := b.CDKBucket.ReadAll(ctx, "__nonexistent__")
+		_, err := b.ReadAll(ctx, "__nonexistent__")
 		return err
 	}
 	b.mu.Unlock()
@@ -638,7 +638,7 @@ func TestValidateObjectKey(t *testing.T) {
 
 func TestCDKLockOptionsFromBucket_RejectsUnsupportedProvider(t *testing.T) {
 	bucket := memblob.OpenBucket(nil)
-	defer bucket.Close()
+	defer func() { _ = bucket.Close() }()
 
 	_, err := CDKLockOptionsFromBucket(bucket, "mem://test-bucket")
 	require.Error(t, err)
@@ -758,7 +758,7 @@ func lockInfo(owner string, ttl time.Duration) LockInfo {
 // gcerrors doesn't expose a public constructor, so we trigger a real one via IfNotExist.
 var errPrecondition = func() error {
 	b := memblob.OpenBucket(nil)
-	defer b.Close()
+	defer func() { _ = b.Close() }()
 	ctx := context.Background()
 	_ = b.WriteAll(ctx, "x", []byte("x"), nil)
 	return b.WriteAll(ctx, "x", []byte("x"), &blob.WriterOptions{IfNotExist: true})
