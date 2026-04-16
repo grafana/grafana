@@ -957,4 +957,8 @@ const (
 	// FlagClickHouseConfigValidation
 	// Enables validation on the ClickHouse data source configuration page
 	FlagClickHouseConfigValidation = "clickHouseConfigValidation"
+
+	// FlagGrafanaCorrelationsSkipLegacy
+	// Route any calls to legacy correlations endpoints to call through to app platform
+	FlagGrafanaCorrelationsSkipLegacy = "grafana.correlationsSkipLegacy"
 )
