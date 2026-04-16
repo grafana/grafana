@@ -64,11 +64,19 @@ test.describe('Panels test: Candlestick tooltips', { tag: ['@panels', '@candlest
     await page.keyboard.press('Escape');
     await expect(tooltip, 'tooltip closed on Escape').toBeHidden();
 
-    // disable tooltips via options pane
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Tooltip Tooltip mode'))
-      .getByLabel('Hidden')
-      .click();
+    // switch to All mode — tooltip should still appear
+    const tooltipModeOption = dashboardPage.getByGrafanaSelector(
+      selectors.components.PanelEditor.OptionsPane.fieldLabel('Tooltip Tooltip mode')
+    );
+    await tooltipModeOption.getByLabel('All').click();
+    await candlestickUplot.hover({ position: center, force: true });
+    await expect(tooltip, 'tooltip appears in All mode').toBeVisible();
+
+    // dismiss tooltip before switching mode
+    await page.keyboard.press('Escape');
+
+    // switch to Hidden — tooltip should not appear
+    await tooltipModeOption.getByLabel('Hidden').click();
     await candlestickUplot.hover({ position: center, force: true });
     await expect(tooltip, 'tooltip not shown when disabled').toBeHidden();
   });
