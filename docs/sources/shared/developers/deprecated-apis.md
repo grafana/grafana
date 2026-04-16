@@ -4,7 +4,7 @@ comments: |
   This file is used in legacy APIs.
 ---
 
-{{< admonition type="caution" >}}
+{{< admonition type="note" >}}
 
 Starting in Grafana 13, `/api` endpoints are being deprecated in favor of the `apis` route. To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
 
