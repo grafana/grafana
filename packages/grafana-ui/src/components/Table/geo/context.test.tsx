@@ -16,6 +16,8 @@ describe('OpenLayersContext', () => {
     return <div>{formatGeometry(new Point(fromLonLat([-74.0445, 40.6892])))}</div>;
   };
 
+  const textOutput = 'POINT(-74.0445 40.68919999999997)';
+
   it('should provide a formatGeometry function that converts a Geometry to WKT', () => {
     render(
       <OpenLayersProvider>
@@ -23,7 +25,7 @@ describe('OpenLayersContext', () => {
       </OpenLayersProvider>
     );
 
-    expect(screen.getByText('POINT(-74.0445 40.68919999999997)')).toBeInTheDocument();
+    expect(screen.getByText(textOutput)).toBeInTheDocument();
   });
 
   it('should lazy load the OpenLayersProvider', async () => {
@@ -34,8 +36,8 @@ describe('OpenLayersContext', () => {
     );
 
     // Wait for the lazy component to load and render
-    expect(screen.queryByText('POINT(-74.0445 40.68919999999997)')).not.toBeInTheDocument();
-    const resolvedComponent = await screen.findByText('POINT(-74.0445 40.68919999999997)');
+    expect(screen.queryByText(textOutput)).not.toBeInTheDocument();
+    const resolvedComponent = await screen.findByText(textOutput);
     expect(resolvedComponent).toBeInTheDocument();
   });
 
