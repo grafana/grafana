@@ -181,9 +181,7 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
     const newTimeGrain = timeGrain || 'auto';
     const newAllowedTimeGrainsMs = metricMetadata.timeGrains
       .filter((timeGrain) => timeGrain.value !== 'auto')
-      .map((timeGrain) =>
-        rangeUtil.intervalToMs(TimegrainConverter.createKbnUnitFromISO8601Duration(timeGrain.value))
-      );
+      .map((timeGrain) => rangeUtil.intervalToMs(TimegrainConverter.createKbnUnitFromISO8601Duration(timeGrain.value)));
 
     const currentAllowedTimeGrainsMs = query.azureMonitor?.allowedTimeGrainsMs ?? [];
     // Only consider the time grains changed when we have actual metadata with non-empty time grains.
