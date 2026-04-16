@@ -120,7 +120,10 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
         return ConditionalRenderingTimeRangeSize.createEmpty();
 
       case 'variable':
-        return ConditionalRenderingVariable.createEmpty(getUserDefinedVariables(this.parent || this)[0].state.name);
+        const variables = getUserDefinedVariables(this.parent || this);
+        // The code should not be hit when variables.length === 0 because we grey out the form if there are no variables
+        // but was added to avoid potential runtime errors if the UX changes and the section is not disabled.
+        return ConditionalRenderingVariable.createEmpty(variables.length ? variables[0].state.name : '');
     }
   }
 
