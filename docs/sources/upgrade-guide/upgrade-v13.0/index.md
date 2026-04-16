@@ -88,7 +88,7 @@ To move a folder, set the `grafana.app/folder` annotation to the parent folder U
 
 The annotations API deprecation is in progress. The new annotations API isn't available yet, and the migration path will be announced when it's ready.
 
-- **Resource-based API:** Annotation operations will move to a new endpoint following the pattern `/apis/annotation.grafana.app/{apiVersion}/namespaces/{namespace}/annotations`. The endpoint mapping will be published ahead of the removal deadline.
+- **Resource-based API:** Annotation operations will move to a new endpoint following the pattern `/apis/annotation.grafana.app/{apiVersion}/namespaces/{namespace}/annotations`. The endpoint mapping will be published when the new API is available.
 - **Mass delete:** `POST /api/annotations/mass-delete` isn't supported in the new API and has no equivalent UI feature. Use the new TTL (time to live) configuration to define how long annotations are retained instead of performing bulk deletes.
 - **Tags:** `GET /api/annotations/tags` is preserved through a dedicated `/tags` route with the same prefix-based filtering.
 
@@ -109,19 +109,9 @@ Query history APIs won't be migrated to the Grafana App Platform. Instead, Grafa
 | Star a query | `POST /api/query-history/star/{id}` | Deprecated, no replacement planned. |
 | Unstar a query | `DELETE /api/query-history/star/{id}` | Deprecated, no replacement planned. |
 
-If you consume the query history APIs directly, adopt a local on-device storage approach. Grafana will provide a sample implementation in v13.1 that you can use as a reference.
+If you consume the query history APIs directly, adopt a local on-device storage approach. A sample implementation will be provided in a future Grafana release that you can use as a reference.
 
-#### Migration timeline
-
-| Milestone | Target |
-| --- | --- |
-| Dashboards and folders deprecated | Grafana v13.0 (now) |
-| Query history deprecated | Grafana v13.0 (now) |
-| Local on-device query history implementation available | Grafana v13.1 |
-| Annotations deprecated | TBD |
-| Legacy `/api` endpoints removed | Future major release (TBD) |
-
-The legacy endpoints continue to work until removal. No immediate action is required, but early migration is recommended.
+The legacy endpoints continue to work for now. No immediate action is required, but early migration is recommended.
 
 ### Deprecated data source APIs disabled
 
