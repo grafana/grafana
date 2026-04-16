@@ -134,6 +134,19 @@
               "title": "Example Data Link",
               "url": "https://example.com"
             }
+          ],
+          "actions": [
+            {
+              "fetch": {
+                "body": "{}",
+                "headers": [["Content-Type", "application/json"]],
+                "method": "GET",
+                "queryParams": [],
+                "url": "/api/health"
+              },
+              "title": "Example Action",
+              "type": "fetch"
+            }
           ]
         },
         "overrides": []

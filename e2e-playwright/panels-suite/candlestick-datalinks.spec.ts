@@ -41,5 +41,11 @@ test.describe('Panels test: Candlestick data links', { tag: ['@panels', '@candle
 
     // pinned tooltip should contain the configured data link
     await expect(tooltip.getByText('Example Data Link'), 'data link visible in tooltip').toBeVisible();
+
+    // pinned tooltip should contain the configured action button
+    await expect(
+      tooltip.getByRole('button', { name: 'Example Action' }),
+      'action button visible in tooltip'
+    ).toBeVisible();
   });
 });
