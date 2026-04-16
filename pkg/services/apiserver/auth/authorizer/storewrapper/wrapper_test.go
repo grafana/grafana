@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 )
 
 type testSetup struct {
@@ -422,6 +423,198 @@ func TestWrapper_WithPreserveIdentity(t *testing.T) {
 	})
 }
 
+func TestWrapper_Watch(t *testing.T) {
+	t.Run("returns error when inner store does not support Watch", func(t *testing.T) {
+		setup := newTestSetup(t)
+		// MockStorage does not implement k8srest.Watcher, so Watch should fail.
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(AllowAllWatchFilter, nil)
+		_, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.Error(t, err)
+	})
+
+	t.Run("filters out unauthorized events and forwards authorized ones", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		allowedObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "allowed"}}
+		deniedObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "denied"}}
+
+		allowedEvent := watch.Event{Type: watch.Added, Object: allowedObj}
+		deniedEvent := watch.Event{Type: watch.Added, Object: deniedObj}
+
+		fakeWatcher := watch.NewFake()
+		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
+		setup.wrapper.inner = watcherStore
+
+		// Filter: allow "allowed", deny "denied".
+		filter := WatchEventFilter(func(events []watch.Event) ([]bool, error) {
+			results := make([]bool, len(events))
+			for i, e := range events {
+				obj, ok := e.Object.(*fakeObject)
+				results[i] = ok && obj.Name == "allowed"
+			}
+			return results, nil
+		})
+		setup.mockAuth.On("WatchFilter", mock.MatchedBy(matchesOriginalUser())).Return(filter, nil)
+
+		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+		defer w.Stop()
+
+		fakeWatcher.Add(allowedObj)
+		fakeWatcher.Add(deniedObj)
+
+		event := <-w.ResultChan()
+		assert.Equal(t, allowedEvent, event)
+
+		// The denied event must not appear; close the watcher and drain to confirm.
+		fakeWatcher.Stop()
+		for range w.ResultChan() {
+		}
+
+		_ = deniedEvent // referenced to confirm it is not received
+		setup.mockAuth.AssertExpectations(t)
+	})
+
+	t.Run("nil filter is fail-closed and rejects all events", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}}
+
+		fakeWatcher := watch.NewFake()
+		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
+		setup.wrapper.inner = watcherStore
+
+		// Returning nil from WatchFilter is treated as RejectAllWatchFilter (fail-closed).
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(WatchEventFilter(nil), nil)
+
+		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+		defer w.Stop()
+
+		fakeWatcher.Add(obj)
+		fakeWatcher.Stop()
+
+		events := make([]watch.Event, 0, len(w.ResultChan()))
+		for e := range w.ResultChan() {
+			events = append(events, e)
+		}
+		require.Empty(t, events, "nil filter must reject all data events (fail-closed)")
+	})
+
+	t.Run("AllowAllWatchFilter forwards all events", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}}
+
+		fakeWatcher := watch.NewFake()
+		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
+		setup.wrapper.inner = watcherStore
+
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(AllowAllWatchFilter, nil)
+
+		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+		defer w.Stop()
+
+		fakeWatcher.Add(obj)
+		fakeWatcher.Stop()
+
+		events := make([]watch.Event, 0, len(w.ResultChan()))
+		for e := range w.ResultChan() {
+			events = append(events, e)
+		}
+		require.Len(t, events, 1)
+		assert.Equal(t, watch.Added, events[0].Type)
+	})
+
+	t.Run("always forwards Bookmark events without filtering", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		bookmarkObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{ResourceVersion: "42"}}
+
+		fakeWatcher := watch.NewFake()
+		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
+		setup.wrapper.inner = watcherStore
+
+		// Filter that rejects everything — Bookmark must still get through.
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(RejectAllWatchFilter, nil)
+
+		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+		defer w.Stop()
+
+		fakeWatcher.Action(watch.Bookmark, bookmarkObj)
+		fakeWatcher.Stop()
+
+		events := make([]watch.Event, 0, len(w.ResultChan()))
+		for e := range w.ResultChan() {
+			events = append(events, e)
+		}
+
+		require.Len(t, events, 1)
+		assert.Equal(t, watch.Bookmark, events[0].Type)
+	})
+
+	t.Run("always forwards Error events without filtering", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		errObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "err"}}
+
+		fakeWatcher := watch.NewFake()
+		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
+		setup.wrapper.inner = watcherStore
+
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(RejectAllWatchFilter, nil)
+
+		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+		defer w.Stop()
+
+		fakeWatcher.Action(watch.Error, errObj)
+		fakeWatcher.Stop()
+
+		events := make([]watch.Event, 0, len(w.ResultChan()))
+		for e := range w.ResultChan() {
+			events = append(events, e)
+		}
+
+		require.Len(t, events, 1)
+		assert.Equal(t, watch.Error, events[0].Type)
+	})
+
+	t.Run("uses service identity for inner Watch call", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		fakeWatcher := watch.NewFake()
+		watcherStore := &fakeWatcherStorage{
+			K8sStorage: setup.mockStore,
+			watcher:    fakeWatcher,
+			assertCtx:  matchesServiceIdentity(),
+		}
+		setup.wrapper.inner = watcherStore
+
+		setup.mockAuth.On("WatchFilter", mock.MatchedBy(matchesOriginalUser())).Return(AllowAllWatchFilter, nil)
+
+		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.NoError(t, err)
+		assert.True(t, watcherStore.ctxOk, "inner Watch should receive service identity context")
+		w.Stop()
+	})
+
+	t.Run("WatchFilter error is returned from Watch", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		fakeWatcher := watch.NewFake()
+		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
+		setup.wrapper.inner = watcherStore
+
+		setup.mockAuth.On("WatchFilter", mock.Anything).Return(AllowAllWatchFilter, ErrUnauthorized)
+
+		_, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+		require.ErrorIs(t, err, ErrUnauthorized)
+	})
+}
+
 // -----
 // Fakes
 // -----
@@ -459,6 +652,15 @@ func (f *FakeAuthorizer) FilterList(ctx context.Context, list runtime.Object) (r
 	return res, args.Error(1)
 }
 
+func (f *FakeAuthorizer) WatchFilter(ctx context.Context) (WatchEventFilter, error) {
+	args := f.Called(ctx)
+	var filter WatchEventFilter
+	if v := args.Get(0); v != nil {
+		filter = v.(WatchEventFilter)
+	}
+	return filter, args.Error(1)
+}
+
 type fakeObject struct {
 	metaV1.TypeMeta
 	metaV1.ObjectMeta
@@ -482,4 +684,19 @@ func (f *fakeUpdatedObjectInfo) Preconditions() *metaV1.Preconditions {
 
 func (f *fakeUpdatedObjectInfo) UpdatedObject(ctx context.Context, oldObj runtime.Object) (runtime.Object, error) {
 	return f.obj, nil
+}
+
+// fakeWatcherStorage wraps K8sStorage and adds Watch support for testing.
+type fakeWatcherStorage struct {
+	K8sStorage
+	watcher   *watch.FakeWatcher
+	assertCtx func(context.Context) bool
+	ctxOk     bool
+}
+
+func (f *fakeWatcherStorage) Watch(ctx context.Context, _ *internalversion.ListOptions) (watch.Interface, error) {
+	if f.assertCtx != nil {
+		f.ctxOk = f.assertCtx(ctx)
+	}
+	return f.watcher, nil
 }

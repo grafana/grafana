@@ -31,6 +31,10 @@ func (a *RoleBindingAuthorizer) AfterGet(_ context.Context, _ runtime.Object) er
 func (a *RoleBindingAuthorizer) FilterList(_ context.Context, list runtime.Object) (runtime.Object, error) {
 	return list, nil
 }
+
+func (a *RoleBindingAuthorizer) WatchFilter(_ context.Context) (storewrapper.WatchEventFilter, error) {
+	return storewrapper.AllowAllWatchFilter, nil
+}
 func (a *RoleBindingAuthorizer) BeforeDelete(_ context.Context, _ runtime.Object) error { return nil }
 
 // creates & updates need to check the role permissions
@@ -88,6 +92,11 @@ func (d *DenyCustomRoleRefsAuthorizer) AfterGet(_ context.Context, _ runtime.Obj
 func (d *DenyCustomRoleRefsAuthorizer) FilterList(_ context.Context, list runtime.Object) (runtime.Object, error) {
 	return list, nil
 }
+
+func (d *DenyCustomRoleRefsAuthorizer) WatchFilter(_ context.Context) (storewrapper.WatchEventFilter, error) {
+	return storewrapper.AllowAllWatchFilter, nil
+}
+
 func (d *DenyCustomRoleRefsAuthorizer) BeforeDelete(_ context.Context, _ runtime.Object) error {
 	return nil
 }

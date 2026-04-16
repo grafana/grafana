@@ -273,6 +273,12 @@ func (r *ResourcePermissionsAuthorizer) BeforeUpdate(ctx context.Context, oldObj
 	return r.beforeWrite(ctx, obj)
 }
 
+// WatchFilter implements ResourceStorageAuthorizer.
+// TODO: implement proper watch filtering using hasUsersPermissionsRead + BatchCheck.
+func (r *ResourcePermissionsAuthorizer) WatchFilter(_ context.Context) (storewrapper.WatchEventFilter, error) {
+	return storewrapper.RejectAllWatchFilter, nil
+}
+
 // FilterList implements ResourceStorageAuthorizer.
 func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
 	authInfo, ok := types.AuthInfoFrom(ctx)
