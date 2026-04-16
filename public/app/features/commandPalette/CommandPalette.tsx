@@ -66,9 +66,12 @@ function CommandPaletteContents() {
 
   const { dialogProps } = useDialog({}, ref);
 
-  // Report interaction when opened
+  // Report interaction when opened/closed
   useEffect(() => {
     reportInteraction('command_palette_opened');
+    return () => {
+      reportInteraction('command_palette_closed', undefined, { silent: true });
+    };
   }, []);
 
   return (

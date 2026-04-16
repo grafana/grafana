@@ -41,6 +41,8 @@ import {
   setCorrelationsService,
   setPluginFunctionsHook,
   setMegaMenuOpenHook,
+  setJourneyTracker,
+  setJourneyRegistry,
 } from '@grafana/runtime';
 import {
   getPanelPluginMetas,
@@ -82,6 +84,9 @@ import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsCheck
 import { backendSrv } from './core/services/backend_srv';
 import { contextSrv, RedirectToUrlKey } from './core/services/context_srv';
 import { initEchoSrv } from './core/services/echo/init';
+import { JourneyTrackerImpl } from './core/services/JourneyTrackerImpl';
+import { JourneyRegistryImpl } from './core/services/JourneyRegistryImpl';
+import { JOURNEY_REGISTRY } from './core/services/journeyRegistry';
 import { KeybindingSrv } from './core/services/keybindingSrv';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initAlerting } from './features/alerting/unified/initAlerting';
@@ -179,6 +184,29 @@ export class GrafanaApp {
       await initEchoSrv();
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
+
+      if (config.featureToggles.cujTracking) {
+        setJourneyTracker(new JourneyTrackerImpl());
+
+        // Initialize the journey registry (metadata + split triggers)
+        const registry = new JourneyRegistryImpl();
+        registry.init(JOURNEY_REGISTRY);
+        setJourneyRegistry(registry);
+
+        // Eagerly import journey wirings - these only use onInteraction,
+        // no heavy feature-level imports
+        await Promise.all([
+          import('./core/journeys/searchToResource'),
+          import('./core/journeys/browseToResource'),
+          import('./core/journeys/dashboardEdit'),
+          import('./core/journeys/panelEdit'),
+          import('./core/journeys/datasourceConfigure'),
+          import('./core/journeys/exploreToDashboard'),
+        ]);
+
+        // Warn about registry entries that have no start trigger wired up
+        registry.warnUnregistered();
+      }
 
       setLocale(config.regionalFormat);
       setWeekStart(contextSrv.user.weekStart);

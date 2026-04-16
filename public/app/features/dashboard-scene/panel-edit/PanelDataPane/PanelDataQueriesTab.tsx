@@ -4,6 +4,7 @@ import { CoreApp, type DataSourceApi, type DataSourceInstanceSettings, getDataSo
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { trackAddQuery } from '../PanelEditNext/tracking';
 import {
   SafeSerializableSceneObject,
   type SceneComponentProps,
@@ -305,6 +306,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
   public addQueryClick = () => {
     const queries = this.getQueries();
+    trackAddQuery('new_query', 'legacy', { silent: true });
     this.onQueriesChange(addQuery(queries, this.newQuery()));
   };
 

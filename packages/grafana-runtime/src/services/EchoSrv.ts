@@ -117,6 +117,13 @@ export interface EchoSrv {
    * @param meta - Object that will extend/override the default meta object.
    */
   addEvent<T extends EchoEvent>(event: Omit<T, 'meta'>, meta?: {}): void;
+  /**
+   * Subscribe to interaction events by name. The callback fires synchronously
+   * every time a matching interaction is reported via {@link reportInteraction}.
+   *
+   * Returns an unsubscribe function.
+   */
+  onInteraction(name: string, callback: (properties: Record<string, unknown>) => void): () => void;
 }
 
 let singletonInstance: EchoSrv;
@@ -164,6 +171,7 @@ export const registerEchoBackend = (backend: EchoBackend) => {
 
 export class FakeEchoSrv implements EchoSrv {
   buffer: Array<{ event: Omit<EchoEvent, 'meta'>; meta?: {} | undefined }> = [];
+  private interactionSubscribers = new Map<string, Set<(properties: Record<string, unknown>) => void>>();
 
   flush(): void {
     this.buffer = [];
@@ -173,5 +181,34 @@ export class FakeEchoSrv implements EchoSrv {
 
   addEvent<T extends EchoEvent>(event: Omit<T, 'meta'>, meta?: {} | undefined): void {
     this.buffer.push({ event, meta });
+
+    // Dispatch to interaction subscribers
+    if (event.type === EchoEventType.Interaction) {
+      const payload = event.payload as { interactionName?: string; properties?: Record<string, unknown> };
+      if (payload.interactionName) {
+        const subscribers = this.interactionSubscribers.get(payload.interactionName);
+        if (subscribers) {
+          for (const cb of subscribers) {
+            cb(payload.properties ?? {});
+          }
+        }
+      }
+    }
+  }
+
+  onInteraction(name: string, callback: (properties: Record<string, unknown>) => void): () => void {
+    let subscribers = this.interactionSubscribers.get(name);
+    if (!subscribers) {
+      subscribers = new Set();
+      this.interactionSubscribers.set(name, subscribers);
+    }
+    subscribers.add(callback);
+
+    return () => {
+      subscribers!.delete(callback);
+      if (subscribers!.size === 0) {
+        this.interactionSubscribers.delete(name);
+      }
+    };
   }
 }

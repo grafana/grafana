@@ -1,5 +1,5 @@
 import { type AnyAction } from '@reduxjs/toolkit';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import * as React from 'react';
 
 import {
@@ -10,7 +10,7 @@ import {
   type PluginExtensionDataSourceConfigContext,
   DataSourceUpdatedSuccessfully,
 } from '@grafana/data';
-import { getDataSourceSrv, usePluginComponents, type UsePluginComponentsResult } from '@grafana/runtime';
+import { getDataSourceSrv, reportInteraction, usePluginComponents, type UsePluginComponentsResult } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type DataSourceSettingsState } from 'app/types/datasources';
@@ -62,6 +62,13 @@ export function EditDataSource({ uid, pageId }: Props) {
   const onDelete = useDeleteLoadedDataSource();
   const onTest = useTestDataSource(uid);
   const onUpdate = useUpdateDatasource();
+
+  // CUJ signal: fires when user leaves the datasource config page
+  useEffect(() => {
+    return () => {
+      reportInteraction('connections_datasource_config_page_left', {}, { silent: true });
+    };
+  }, []);
   const onDefaultChange = (value: boolean) => dispatch(setIsDefault(value));
   const onNameChange = (name: string) => dispatch(setDataSourceName(name));
   const onOptionsChange = (ds: DataSourceSettingsType) => dispatch(dataSourceLoaded(ds));

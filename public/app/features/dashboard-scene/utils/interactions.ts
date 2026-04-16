@@ -74,6 +74,12 @@ export const DashboardInteractions = {
     reportDashboardInteraction('exit_edit_button_clicked');
   },
 
+  // grafana_dashboards_edit_discarded
+  // when a user discards changes by confirming exit from edit mode without saving
+  dashboardEditDiscarded: () => {
+    reportDashboardInteraction('edit_discarded');
+  },
+
   // grafana_dashboards_outline_clicked
   // when a user opens the outline view
   dashboardOutlineClicked: () => {
