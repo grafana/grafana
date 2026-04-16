@@ -1,6 +1,6 @@
 import { waitFor } from '@testing-library/react';
 import { type CanvasRenderingContext2DEvent } from 'jest-canvas-mock';
-import uPlot from 'uplot';
+import uPlot, { type AlignedData } from 'uplot';
 
 import { CandleStyle, ColorStrategy, VizDisplayMode } from './panelcfg.gen';
 import { drawMarkers } from './utils';
@@ -11,6 +11,10 @@ import { drawMarkers } from './utils';
  *
  * @todo replace with screenshot regression testing
  */
+
+type DrawOverrides = Partial<Parameters<typeof drawMarkers>[0]>;
+type TestCase = [string, DrawOverrides?, uPlot.AlignedData?, uPlot.Series[]?];
+
 describe('drawMarkers', () => {
   const height = 400;
   const width = 800;
@@ -77,104 +81,35 @@ describe('drawMarkers', () => {
   }
 
   describe('options', () => {
-    describe('Color strategy: OpenOpen', () => {
-      it('events', async () => {
-        const u = await getPlot();
-        expect(() => getDraw()(u)).not.toThrow();
-        const events = u.ctx.__getEvents();
-        expect(events.length).toBeGreaterThan(0);
-        expect(scrubOutput(events)).toMatchSnapshot();
-      });
-
-      it('path', async () => {
-        const u = await getPlot();
-        expect(() => getDraw()(u)).not.toThrow();
-        const path = u.ctx.__getPath();
-        expect(path.length).toBeGreaterThan(0);
-        expect(scrubOutput(path)).toMatchSnapshot();
-      });
-
-      it('draw', async () => {
-        const u = await getPlot();
-        expect(() => getDraw()(u)).not.toThrow();
-        const calls = u.ctx.__getDrawCalls();
-        expect(calls.length).toBeGreaterThan(0);
-        expect(scrubOutput(calls)).toMatchSnapshot();
-      });
-
-      it('clipping region', async () => {
-        const u = await getPlot();
-        expect(() => getDraw()(u)).not.toThrow();
-        const clippingRegion = u.ctx.__getClippingRegion();
-        expect(scrubOutput(clippingRegion)).toEqual([]);
-      });
-    });
-
-    describe('Color strategy: CloseClose', () => {
-      it('events', async () => {
-        const u = await getPlot();
-        expect(() => getDraw({ colorStrategy: ColorStrategy.CloseClose })(u)).not.toThrow();
-        const events = u.ctx.__getEvents();
-        expect(events.length).toBeGreaterThan(0);
-        expect(scrubOutput(events)).toMatchSnapshot();
-      });
-
-      it('path', async () => {
-        const u = await getPlot();
-        expect(() => getDraw({ colorStrategy: ColorStrategy.CloseClose })(u)).not.toThrow();
-        const path = u.ctx.__getPath();
-        expect(path.length).toBeGreaterThan(0);
-        expect(scrubOutput(path)).toMatchSnapshot();
-      });
-
-      it('draw', async () => {
-        const u = await getPlot();
-        expect(() => getDraw({ colorStrategy: ColorStrategy.CloseClose })(u)).not.toThrow();
-        const calls = u.ctx.__getDrawCalls();
-        expect(calls.length).toBeGreaterThan(0);
-        expect(scrubOutput(calls)).toMatchSnapshot();
-      });
-
-      it('clipping region', async () => {
-        const u = await getPlot();
-        expect(() => getDraw({ colorStrategy: ColorStrategy.CloseClose })(u)).not.toThrow();
-        const clippingRegion = u.ctx.__getClippingRegion();
-        expect(scrubOutput(clippingRegion)).toEqual([]);
-      });
-    });
-
-    describe('Candle Style: CandleStyle.OHLCBars', () => {
-      it('events', async () => {
-        const u = await getPlot();
-        expect(() => getDraw({ candleStyle: CandleStyle.OHLCBars })(u)).not.toThrow();
-        const events = u.ctx.__getEvents();
-        expect(events.length).toBeGreaterThan(0);
-        expect(scrubOutput(events)).toMatchSnapshot();
-      });
-
-      it('path', async () => {
-        const u = await getPlot();
-        expect(() => getDraw({ candleStyle: CandleStyle.OHLCBars })(u)).not.toThrow();
-        const path = u.ctx.__getPath();
-        expect(path.length).toBeGreaterThan(0);
-        expect(scrubOutput(path)).toMatchSnapshot();
-      });
-
-      it('draw', async () => {
-        const u = await getPlot();
-        expect(() => getDraw({ candleStyle: CandleStyle.OHLCBars })(u)).not.toThrow();
-        const calls = u.ctx.__getDrawCalls();
-        expect(calls.length).toBeGreaterThan(0);
-        expect(scrubOutput(calls)).toMatchSnapshot();
-      });
-
-      it('clipping region', async () => {
-        const u = await getPlot();
-        expect(() => getDraw({ candleStyle: CandleStyle.OHLCBars })(u)).not.toThrow();
-        const clippingRegion = u.ctx.__getClippingRegion();
-        expect(scrubOutput(clippingRegion)).toEqual([]);
-      });
-    });
+    describe.each([
+      ['Color strategy: OpenOpen'],
+      ['Color strategy: CloseClose', { colorStrategy: ColorStrategy.CloseClose }],
+      ['Candle Style: CandleStyle.OHLCBars', { candleStyle: CandleStyle.OHLCBars }],
+    ] satisfies TestCase[])(
+      '%s',
+      (
+        describeName,
+        drawOverrides: Partial<Parameters<typeof drawMarkers>[0]>,
+        dataOverrides: AlignedData,
+        seriesOverrides: uPlot.Series[]
+      ) => {
+        it.each([
+          ['events', (u) => u.ctx.__getEvents()],
+          ['path', (u) => u.ctx.__getPath()],
+          ['draw', (u) => u.ctx.__getDrawCalls()],
+          ['clipping region', (u) => u.ctx.__getClippingRegion()],
+        ] satisfies Array<[string, (u: uPlot) => unknown]>)('%s', async (testName, setup) => {
+          const u = await getPlot(dataOverrides, seriesOverrides);
+          const canvasEvents = setup(u);
+          expect(() => getDraw(drawOverrides)(u)).not.toThrow();
+          if (testName === 'clipping region') {
+            expect(canvasEvents).toEqual([]);
+          } else {
+            expect(scrubOutput(setup(u))).toMatchSnapshot();
+          }
+        });
+      }
+    );
   });
 
   describe('candle with volume', () => {
