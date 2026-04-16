@@ -7,7 +7,7 @@ test.use({
 });
 
 test.describe('Panels test: Candlestick no data', { tag: ['@panels', '@candlestick'] }, () => {
-  test('handles no data', async ({ gotoDashboardPage, selectors, page }) => {
+  test('handles no data', async ({ gotoDashboardPage, selectors }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '6' }),
