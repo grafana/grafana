@@ -245,6 +245,9 @@ test.describe(
         await page.getByRole('button', { name: 'Restore' }).click();
 
         // Restore button should be disabled — folder no longer exists, no pre-selection
+        // Assert: folder picker shows "Select folder" — deleted folder must not be pre-selected
+        await expect(page.getByRole('button', { name: 'Select folder' })).toBeVisible();
+
         const restoreButton = page.getByTestId(selectors.pages.ConfirmModal.delete);
         await expect(restoreButton).toBeDisabled();
 
