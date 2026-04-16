@@ -10,7 +10,7 @@ import { type DashboardScene } from '../../scene/DashboardScene';
 import { isAdHocVariable } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
-import { openAddFilterPane } from '../add-new/AddFilters';
+import { openAddFilterForm } from '../add-new/AddFilters';
 
 import { partitionVariablesByDisplay } from './DashboardVariablesList';
 import { DraggableList } from './DraggableList';
@@ -89,7 +89,7 @@ const renderItemLabel = (v: SceneVariable) => <span data-testid="filter-name">{v
 
 export function AddFilterButton({ dashboard }: { dashboard: DashboardScene }) {
   const onAddFilter = useCallback(() => {
-    openAddFilterPane(dashboard);
+    openAddFilterForm(dashboard, dashboard);
     DashboardInteractions.addFilterButtonClicked({ source: 'edit_pane' });
   }, [dashboard]);
 

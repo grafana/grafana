@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
-import { sceneGraph, SceneVariableSet } from '@grafana/scenes';
+import { type SceneObject, SceneVariableSet } from '@grafana/scenes';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
 import {
@@ -15,25 +15,26 @@ import { dashboardEditActions } from '../shared';
 
 import { AddButton } from './AddButton';
 
-export function openAddFilterPane(dashboard: DashboardScene) {
-  const variablesSet = sceneGraph.getVariables(dashboard);
+export function openAddFilterForm(dashboard: DashboardScene, sectionOwner: SceneObject) {
+  const existing = sectionOwner.state.$variables;
+  const variablesSet = existing instanceof SceneVariableSet ? existing : new SceneVariableSet({ variables: [] });
 
-  if (!(variablesSet instanceof SceneVariableSet)) {
-    return;
+  if (!existing) {
+    sectionOwner.setState({ $variables: variablesSet });
   }
 
   const name = getVariableNamePrefix(ADHOC_VARIABLE_TYPE);
   const newVar = getVariableScene(ADHOC_VARIABLE_TYPE, {
     name: getNextAvailableId(name, variablesSet.state.variables ?? []),
   });
+
   dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
   dashboard.state.editPane.selectObject(newVar, { force: true, multi: false });
-  DashboardInteractions.variableTypeSelected({ type: ADHOC_VARIABLE_TYPE });
 }
 
 export function AddFilters({ dashboardScene }: { dashboardScene: DashboardScene }) {
   const onAddFiltersClick = useCallback(() => {
-    openAddFilterPane(dashboardScene);
+    openAddFilterForm(dashboardScene, dashboardScene);
     DashboardInteractions.addFilterButtonClicked({ source: 'edit_pane' });
   }, [dashboardScene]);
 

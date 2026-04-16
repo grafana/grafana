@@ -10,7 +10,7 @@ import { activateFullSceneTree } from '../../utils/test-utils';
 import { DashboardFiltersList } from './DashboardFiltersList';
 
 jest.mock('../add-new/AddFilters', () => ({
-  openAddFilterPane: jest.fn(),
+  openAddFilterForm: jest.fn(),
 }));
 
 jest.mock('../../utils/interactions', () => ({
