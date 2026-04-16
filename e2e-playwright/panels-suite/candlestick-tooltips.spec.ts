@@ -6,13 +6,6 @@ test.use({
   viewport: { width: 1280, height: 2000 },
 });
 
-// timeRangePan is required for uPlot to process hover events in headless Chromium
-test.use({
-  featureToggles: {
-    timeRangePan: true,
-  },
-});
-
 test.describe('Panels test: Candlestick tooltips', { tag: ['@panels', '@candlestick'] }, () => {
   test('tooltip interactions', async ({ gotoDashboardPage, page, selectors }) => {
     const dashboardPage = await gotoDashboardPage({
