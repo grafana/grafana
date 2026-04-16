@@ -74,8 +74,6 @@ type ObjectStorageLockConfig struct {
 }
 
 // NewObjectStorageLock creates a new distributed lock.
-// Returns an error if TTL < 2*HeartbeatInterval. This guarantees at least one
-// full heartbeat interval of margin between loss detection and lease expiry.
 func NewObjectStorageLock(cfg ObjectStorageLockConfig) (*ObjectStorageLock, error) {
 	if cfg.TTL == 0 {
 		cfg.TTL = 180 * time.Second
@@ -187,8 +185,7 @@ func (l *ObjectStorageLock) startHeartbeat() {
 		ticker := time.NewTicker(l.heartbeatInterval)
 		defer ticker.Stop()
 
-		// Tolerate transient failures up to the lease boundary. Genuine expiry
-		// is caught by Update returning ErrLeaseExpired (definitive loss).
+		// Tolerate transient failures up to the lease boundary.
 		maxFailures := int(math.Ceil(float64(l.ttl) / float64(l.heartbeatInterval)))
 		consecutiveFailures := 0
 

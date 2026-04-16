@@ -47,10 +47,10 @@ func CDKLockOptionsFromBucket(bucket *blob.Bucket, bucketURL string) (CDKLockBac
 			return CDKLockBackendOptions{}, fmt.Errorf("unsafe bucket prefix: %w", err)
 		}
 	}
-	optsFn := func(w ConditionalWriteFunc, d ConditionalDeleteFunc) (CDKLockBackendOptions, error) {
+	optsFn := func(w conditionalWriteFunc, d conditionalDeleteFunc) (CDKLockBackendOptions, error) {
 		return CDKLockBackendOptions{
-			ConditionalWrite:  w,
-			ConditionalDelete: d,
+			conditionalWrite:  w,
+			conditionalDelete: d,
 		}, nil
 	}
 	var s3Client *s3.Client
@@ -89,8 +89,7 @@ func bucketTargetFromURL(bucketURL string) (bucketTarget, error) {
 
 // isObjectExistsErr returns true if the error indicates the object already exists.
 // Checks gcerrors.FailedPrecondition (GCS, Azure, S3-412) and smithy HTTP 409
-// (S3 ConditionalRequestConflict from If-None-Match: * races, which gocloud.dev
-// maps to gcerrors.Unknown instead of FailedPrecondition).
+// (gocloud.dev maps S3 ConditionalRequestConflict to gcerrors.Unknown instead of FailedPrecondition)
 func isObjectExistsErr(err error) bool {
 	if gcerrors.Code(err) == gcerrors.FailedPrecondition {
 		return true
@@ -112,7 +111,7 @@ func s3ConditionalWrite(attrs *blob.Attributes) func(asFunc func(any) bool) erro
 	}
 }
 
-func s3ConditionalDelete(client *s3.Client, target bucketTarget) ConditionalDeleteFunc {
+func s3ConditionalDelete(client *s3.Client, target bucketTarget) conditionalDeleteFunc {
 	return func(ctx context.Context, key string, attrs *blob.Attributes) error {
 		_, err := client.DeleteObject(ctx, &s3.DeleteObjectInput{
 			Bucket:  aws.String(target.name),
@@ -155,7 +154,7 @@ func gcsConditionalWrite(attrs *blob.Attributes) func(asFunc func(any) bool) err
 	}
 }
 
-func gcsConditionalDelete(client *gcsstorage.Client, target bucketTarget) ConditionalDeleteFunc {
+func gcsConditionalDelete(client *gcsstorage.Client, target bucketTarget) conditionalDeleteFunc {
 	return func(ctx context.Context, key string, attrs *blob.Attributes) error {
 		var gcsAttrs gcsstorage.ObjectAttrs
 		if !attrs.As(&gcsAttrs) {
@@ -207,7 +206,7 @@ func azureConditionalWrite(attrs *blob.Attributes) func(asFunc func(any) bool) e
 	}
 }
 
-func azureConditionalDelete(containerClient *container.Client, target bucketTarget) ConditionalDeleteFunc {
+func azureConditionalDelete(containerClient *container.Client, target bucketTarget) conditionalDeleteFunc {
 	return func(ctx context.Context, key string, attrs *blob.Attributes) error {
 		etag := azcore.ETag(attrs.ETag)
 		blobClient := containerClient.NewBlobClient(target.objectKey(key))

@@ -19,60 +19,36 @@ import (
 
 var errPreconditionFailed = errors.New("precondition failed")
 
-// maxLockDataSize is the maximum serialized size of a lock object.
-// Enforced on both writes (Create/Update) and reads (readLockData).
-const maxLockDataSize = 4096
-
-// readLockData downloads and unmarshals the lock object with a size limit,
-// preventing oversized objects from consuming excessive memory.
-func readLockData(ctx context.Context, bucket resource.CDKBucket, key string) (LockInfo, error) {
-	var buf bytes.Buffer
-	lw := &resource.LimitedWriter{W: &buf, N: maxLockDataSize}
-	if err := bucket.Download(ctx, key, lw, nil); err != nil {
-		if errors.Is(err, resource.ErrWriteLimitExceeded) {
-			return LockInfo{}, fmt.Errorf("lock data exceeds %d bytes", maxLockDataSize)
-		}
-		return LockInfo{}, err
-	}
-	var info LockInfo
-	if err := json.Unmarshal(buf.Bytes(), &info); err != nil {
-		return LockInfo{}, fmt.Errorf("unmarshal lock info: %w", err)
-	}
-	return info, nil
-}
-
-// ConditionalWriteFunc performs a conditional write using If-Match / ifGenerationMatch
+// conditionalWriteFunc performs a conditional write using If-Match / ifGenerationMatch
 //
 // ETag or Generation can be extracted from attrs and used to construct provider-specific options.
 //
 // When nil, the backend falls back to non-conditional writes.
-type ConditionalWriteFunc func(attrs *blob.Attributes) func(asFunc func(any) bool) error
+type conditionalWriteFunc func(attrs *blob.Attributes) func(asFunc func(any) bool) error
 
-// ConditionalDeleteFunc performs a conditional delete (If-Match / ifGenerationMatch)
+// conditionalDeleteFunc performs a conditional delete (If-Match / ifGenerationMatch)
 // using provider-specific APIs.
 //
 // ETag or Generation can be extracted from attrs and used to construct provider-specific options.
-// Implementations must wrap errPreconditionFailed to signal concurrent modification.
+// Implementations must wrap "errPreconditionFailed" to signal concurrent modification.
 //
 // When nil, the backend falls back to CDKBucket.Delete() (unconditional)
-type ConditionalDeleteFunc func(ctx context.Context, key string, attrs *blob.Attributes) error
+type conditionalDeleteFunc func(ctx context.Context, key string, attrs *blob.Attributes) error
 
 // CDKLockBackendOptions holds optional configuration for CDKLockBackend.
 type CDKLockBackendOptions struct {
-	ConditionalWrite  ConditionalWriteFunc
-	ConditionalDelete ConditionalDeleteFunc
-	// ClockSkewAllowance is added to TTL when checking lock expiry, accounting for
-	// clock skew between the storage service (which sets ModTime) and the local clock.
-	// Default: 30s. Larger values make recovery slower but tolerate more skew.
-	ClockSkewAllowance time.Duration
+	conditionalWrite  conditionalWriteFunc
+	conditionalDelete conditionalDeleteFunc
+	// clockSkewAllowance accounts for clock skew between instances when checking lock expiry (30s default)
+	clockSkewAllowance time.Duration
 }
 
 // CDKLockBackend implements LockBackend using gocloud.dev/blob with conditional writes.
 // Lock expiry is determined from the object's server-side ModTime + TTL + clock skew allowance.
 type CDKLockBackend struct {
 	bucket              resource.CDKBucket
-	conditionalWriteFn  ConditionalWriteFunc
-	conditionalDeleteFn ConditionalDeleteFunc
+	conditionalWriteFn  conditionalWriteFunc
+	conditionalDeleteFn conditionalDeleteFunc
 	clockSkewAllowance  time.Duration
 	log                 log.Logger
 	now                 func() time.Time
@@ -80,33 +56,18 @@ type CDKLockBackend struct {
 
 // NewCDKLockBackend creates a new CDKLockBackend.
 func NewCDKLockBackend(bucket resource.CDKBucket, opts CDKLockBackendOptions) *CDKLockBackend {
-	clockSkew := opts.ClockSkewAllowance
+	clockSkew := opts.clockSkewAllowance
 	if clockSkew == 0 {
 		clockSkew = 30 * time.Second
 	}
 	return &CDKLockBackend{
 		bucket:              bucket,
-		conditionalWriteFn:  opts.ConditionalWrite,
-		conditionalDeleteFn: opts.ConditionalDelete,
+		conditionalWriteFn:  opts.conditionalWrite,
+		conditionalDeleteFn: opts.conditionalDelete,
 		clockSkewAllowance:  clockSkew,
 		log:                 log.New("cdk-lock-backend"),
 		now:                 time.Now,
 	}
-}
-
-// validObjectKey is a restrictive subset of CDK's safe character set for lock keys.
-// See https://github.com/google/go-cloud/blob/v0.45.0/internal/escape/escape.go
-var validObjectKey = regexp.MustCompile(`^[a-zA-Z0-9_./-]+$`)
-
-func validateObjectKey(key string) error {
-	if !validObjectKey.MatchString(key) || strings.Contains(key, "..") || key[0] == '/' || key[len(key)-1] == '/' {
-		return fmt.Errorf("%w: %q", ErrInvalidLockKey, key)
-	}
-	return nil
-}
-
-func (b *CDKLockBackend) validateKey(key string) error {
-	return validateObjectKey(key)
 }
 
 // Create atomically creates a lock if it does not exist.
@@ -114,7 +75,7 @@ func (b *CDKLockBackend) validateKey(key string) error {
 // takeover. Returns ErrLockHeld if the lock is live or if another instance wins the
 // takeover race.
 func (b *CDKLockBackend) Create(ctx context.Context, key string, info LockInfo) error {
-	if err := b.validateKey(key); err != nil {
+	if err := validateObjectKey(key); err != nil {
 		return err
 	}
 	data, err := json.Marshal(info)
@@ -176,8 +137,7 @@ func (b *CDKLockBackend) tryTakeover(ctx context.Context, key string, newData []
 }
 
 // retryCreate retries an atomic create after the lock object disappeared.
-// If another instance recreates the lock before this retry, FailedPrecondition
-// is mapped to ErrLockHeld so callers see normal contention, not a storage error.
+// Returns ErrLockHeld if an object already exists.
 func (b *CDKLockBackend) retryCreate(ctx context.Context, key string, data []byte) error {
 	err := b.bucket.WriteAll(ctx, key, data, &blob.WriterOptions{
 		ContentType: "application/json",
@@ -189,7 +149,7 @@ func (b *CDKLockBackend) retryCreate(ctx context.Context, key string, data []byt
 	return err
 }
 
-// conditionalWrite performs a write with optional conditional (If-Match) semantics.
+// conditionalWrite writes with optional conditional (If-Match) semantics.
 func (b *CDKLockBackend) conditionalWrite(ctx context.Context, key string, data []byte, attrs *blob.Attributes) error {
 	opts := &blob.WriterOptions{ContentType: "application/json"}
 	if b.conditionalWriteFn != nil && attrs != nil {
@@ -211,7 +171,7 @@ func (b *CDKLockBackend) conditionalWrite(ctx context.Context, key string, data 
 
 // Update atomically updates an existing lock, verifying ownership via conditional write.
 func (b *CDKLockBackend) Update(ctx context.Context, key string, info LockInfo) error {
-	if err := b.validateKey(key); err != nil {
+	if err := validateObjectKey(key); err != nil {
 		return err
 	}
 	attrs, err := b.bucket.Attributes(ctx, key)
@@ -251,7 +211,7 @@ func (b *CDKLockBackend) Update(ctx context.Context, key string, info LockInfo) 
 
 // Delete atomically deletes a lock, verifying ownership.
 func (b *CDKLockBackend) Delete(ctx context.Context, key string, owner string) error {
-	if err := b.validateKey(key); err != nil {
+	if err := validateObjectKey(key); err != nil {
 		return err
 	}
 	attrs, err := b.bucket.Attributes(ctx, key)
@@ -292,7 +252,7 @@ func (b *CDKLockBackend) Delete(ctx context.Context, key string, owner string) e
 
 // Read returns the current lock info, or ErrLockNotFound if no lock exists.
 func (b *CDKLockBackend) Read(ctx context.Context, key string) (*LockInfo, error) {
-	if err := b.validateKey(key); err != nil {
+	if err := validateObjectKey(key); err != nil {
 		return nil, err
 	}
 	info, err := readLockData(ctx, b.bucket, key)
@@ -303,4 +263,35 @@ func (b *CDKLockBackend) Read(ctx context.Context, key string) (*LockInfo, error
 		return nil, err
 	}
 	return &info, nil
+}
+
+// validObjectKey is a restrictive subset of CDK's safe character set for lock keys.
+// See https://github.com/google/go-cloud/blob/v0.45.0/internal/escape/escape.go
+var validObjectKey = regexp.MustCompile(`^[a-zA-Z0-9_./-]+$`)
+
+func validateObjectKey(key string) error {
+	if !validObjectKey.MatchString(key) || strings.Contains(key, "..") || key[0] == '/' || key[len(key)-1] == '/' {
+		return fmt.Errorf("%w: %q", ErrInvalidLockKey, key)
+	}
+	return nil
+}
+
+// maxLockDataSize is the maximum serialized size of a lock object.
+const maxLockDataSize = 4096
+
+// readLockData downloads and unmarshals the lock object with maxLockDataSize size limit
+func readLockData(ctx context.Context, bucket resource.CDKBucket, key string) (LockInfo, error) {
+	var buf bytes.Buffer
+	lw := &resource.LimitedWriter{W: &buf, N: maxLockDataSize}
+	if err := bucket.Download(ctx, key, lw, nil); err != nil {
+		if errors.Is(err, resource.ErrWriteLimitExceeded) {
+			return LockInfo{}, fmt.Errorf("lock data exceeds %d bytes", maxLockDataSize)
+		}
+		return LockInfo{}, err
+	}
+	var info LockInfo
+	if err := json.Unmarshal(buf.Bytes(), &info); err != nil {
+		return LockInfo{}, fmt.Errorf("unmarshal lock info: %w", err)
+	}
+	return info, nil
 }
