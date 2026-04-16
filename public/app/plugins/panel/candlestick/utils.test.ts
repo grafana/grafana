@@ -3,13 +3,7 @@ import uPlot from 'uplot';
 
 import { CandleStyle, ColorStrategy, VizDisplayMode } from './panelcfg.gen';
 import { drawMarkers } from './utils';
-
-// @ts-ignore jest-canvas-mock import fixes type errors in IDE
-let unused = {} as unknown as CanvasRenderingContext2DEvent;
-
 /**
- * These snapshot tests might need to be updated whenever uPlot is updated if that impacts how the candlestick panel is drawn in the canvas,
- * but should be good at catching unintentional regression in the drawMarkers method.
  * Since this method only has outputs in the canvas, I'm not sure how it can be tested otherwise without mocks that are probably more wedded to implementation
  * TL;DR if this test is failing after updating uPlot, delete the __snapshot__/utils.test.ts.snap and re-run the tests and commit the output
  * If this test is failing after making changes to drawMarkers, verify that you intended to change the canvas and then do the same.
@@ -72,6 +66,15 @@ describe('drawMarkers', () => {
     return u;
   };
 
+  function scrubOutput(
+    events: CanvasRenderingContext2DEvent[]
+  ): Array<Omit<CanvasRenderingContext2DEvent, 'transform'>> {
+    // pull out the duplicated identity matrix
+    return events.map(({ transform, ...event }) =>
+      event.props.path ? { ...event, props: { ...event.props, path: scrubOutput(event.props.path) } } : event
+    );
+  }
+
   describe('options', () => {
     describe('Color strategy: OpenOpen', () => {
       it('events', async () => {
@@ -79,7 +82,7 @@ describe('drawMarkers', () => {
         expect(() => getDraw()(u)).not.toThrow();
         const events = u.ctx.__getEvents();
         expect(events.length).toBeGreaterThan(0);
-        expect(events).toMatchSnapshot();
+        expect(scrubOutput(events)).toMatchSnapshot();
       });
 
       it('path', async () => {
@@ -87,7 +90,7 @@ describe('drawMarkers', () => {
         expect(() => getDraw()(u)).not.toThrow();
         const path = u.ctx.__getPath();
         expect(path.length).toBeGreaterThan(0);
-        expect(path).toMatchSnapshot();
+        expect(scrubOutput(path)).toMatchSnapshot();
       });
 
       it('draw', async () => {
@@ -95,14 +98,14 @@ describe('drawMarkers', () => {
         expect(() => getDraw()(u)).not.toThrow();
         const calls = u.ctx.__getDrawCalls();
         expect(calls.length).toBeGreaterThan(0);
-        expect(calls).toMatchSnapshot();
+        expect(scrubOutput(calls)).toMatchSnapshot();
       });
 
       it('clipping region', async () => {
         const u = await getPlot();
         expect(() => getDraw()(u)).not.toThrow();
         const clippingRegion = u.ctx.__getClippingRegion();
-        expect(clippingRegion).toEqual([]);
+        expect(scrubOutput(clippingRegion)).toEqual([]);
       });
     });
 
@@ -112,7 +115,7 @@ describe('drawMarkers', () => {
         expect(() => getDraw({ colorStrategy: ColorStrategy.CloseClose })(u)).not.toThrow();
         const events = u.ctx.__getEvents();
         expect(events.length).toBeGreaterThan(0);
-        expect(events).toMatchSnapshot();
+        expect(scrubOutput(events)).toMatchSnapshot();
       });
 
       it('path', async () => {
@@ -120,7 +123,7 @@ describe('drawMarkers', () => {
         expect(() => getDraw({ colorStrategy: ColorStrategy.CloseClose })(u)).not.toThrow();
         const path = u.ctx.__getPath();
         expect(path.length).toBeGreaterThan(0);
-        expect(path).toMatchSnapshot();
+        expect(scrubOutput(path)).toMatchSnapshot();
       });
 
       it('draw', async () => {
@@ -128,14 +131,14 @@ describe('drawMarkers', () => {
         expect(() => getDraw({ colorStrategy: ColorStrategy.CloseClose })(u)).not.toThrow();
         const calls = u.ctx.__getDrawCalls();
         expect(calls.length).toBeGreaterThan(0);
-        expect(calls).toMatchSnapshot();
+        expect(scrubOutput(calls)).toMatchSnapshot();
       });
 
       it('clipping region', async () => {
         const u = await getPlot();
         expect(() => getDraw({ colorStrategy: ColorStrategy.CloseClose })(u)).not.toThrow();
         const clippingRegion = u.ctx.__getClippingRegion();
-        expect(clippingRegion).toEqual([]);
+        expect(scrubOutput(clippingRegion)).toEqual([]);
       });
     });
 
@@ -145,7 +148,7 @@ describe('drawMarkers', () => {
         expect(() => getDraw({ candleStyle: CandleStyle.OHLCBars })(u)).not.toThrow();
         const events = u.ctx.__getEvents();
         expect(events.length).toBeGreaterThan(0);
-        expect(events).toMatchSnapshot();
+        expect(scrubOutput(events)).toMatchSnapshot();
       });
 
       it('path', async () => {
@@ -153,7 +156,7 @@ describe('drawMarkers', () => {
         expect(() => getDraw({ candleStyle: CandleStyle.OHLCBars })(u)).not.toThrow();
         const path = u.ctx.__getPath();
         expect(path.length).toBeGreaterThan(0);
-        expect(path).toMatchSnapshot();
+        expect(scrubOutput(path)).toMatchSnapshot();
       });
 
       it('draw', async () => {
@@ -161,14 +164,14 @@ describe('drawMarkers', () => {
         expect(() => getDraw({ candleStyle: CandleStyle.OHLCBars })(u)).not.toThrow();
         const calls = u.ctx.__getDrawCalls();
         expect(calls.length).toBeGreaterThan(0);
-        expect(calls).toMatchSnapshot();
+        expect(scrubOutput(calls)).toMatchSnapshot();
       });
 
       it('clipping region', async () => {
         const u = await getPlot();
         expect(() => getDraw({ candleStyle: CandleStyle.OHLCBars })(u)).not.toThrow();
         const clippingRegion = u.ctx.__getClippingRegion();
-        expect(clippingRegion).toEqual([]);
+        expect(scrubOutput(clippingRegion)).toEqual([]);
       });
     });
   });
@@ -206,7 +209,7 @@ describe('drawMarkers', () => {
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const events = u.ctx.__getEvents();
       expect(events.length).toBeGreaterThan(0);
-      expect(events).toMatchSnapshot();
+      expect(scrubOutput(events)).toMatchSnapshot();
     });
 
     it('path', async () => {
@@ -214,7 +217,7 @@ describe('drawMarkers', () => {
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const path = u.ctx.__getPath();
       expect(path.length).toBeGreaterThan(0);
-      expect(path).toMatchSnapshot();
+      expect(scrubOutput(path)).toMatchSnapshot();
     });
 
     it('draw', async () => {
@@ -222,14 +225,14 @@ describe('drawMarkers', () => {
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const calls = u.ctx.__getDrawCalls();
       expect(calls.length).toBeGreaterThan(0);
-      expect(calls).toMatchSnapshot();
+      expect(scrubOutput(calls)).toMatchSnapshot();
     });
 
     it('clipping region', async () => {
       const u = await getPlot(volumeAlignedData, volumeSeries);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const clippingRegion = u.ctx.__getClippingRegion();
-      expect(clippingRegion).toEqual([]);
+      expect(scrubOutput(clippingRegion)).toEqual([]);
     });
   });
 
@@ -269,7 +272,7 @@ describe('drawMarkers', () => {
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const events = u.ctx.__getEvents();
       expect(events.length).toBeGreaterThan(0);
-      expect(events).toMatchSnapshot();
+      expect(scrubOutput(events)).toMatchSnapshot();
     });
 
     it('path', async () => {
@@ -277,7 +280,7 @@ describe('drawMarkers', () => {
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const path = u.ctx.__getPath();
       expect(path.length).toBeGreaterThan(0);
-      expect(path).toMatchSnapshot();
+      expect(scrubOutput(path)).toMatchSnapshot();
     });
 
     it('draw', async () => {
@@ -285,14 +288,14 @@ describe('drawMarkers', () => {
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const calls = u.ctx.__getDrawCalls();
       expect(calls.length).toBeGreaterThan(0);
-      expect(calls).toMatchSnapshot();
+      expect(scrubOutput(calls)).toMatchSnapshot();
     });
 
     it('clipping region', async () => {
       const u = await getPlot(volumeAlignedData, volumeSeries);
       expect(() => getDraw(volumeOpts)(u)).not.toThrow();
       const clippingRegion = u.ctx.__getClippingRegion();
-      expect(clippingRegion).toEqual([]);
+      expect(scrubOutput(clippingRegion)).toEqual([]);
     });
   });
 });

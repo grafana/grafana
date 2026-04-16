@@ -13,14 +13,6 @@ exports[`drawMarkers candle with volume & regions draw 1`] = `
             "x": -167,
             "y": 322,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -30,26 +22,10 @@ exports[`drawMarkers candle with volume & regions draw 1`] = `
             "x": 558,
             "y": 45,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -57,14 +33,6 @@ exports[`drawMarkers candle with volume & regions draw 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -72,14 +40,6 @@ exports[`drawMarkers candle with volume & regions draw 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -93,14 +53,6 @@ exports[`drawMarkers candle with volume & regions draw 1`] = `
             "x": 49,
             "y": 84,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -110,14 +62,6 @@ exports[`drawMarkers candle with volume & regions draw 1`] = `
             "x": -167,
             "y": 150,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -127,14 +71,6 @@ exports[`drawMarkers candle with volume & regions draw 1`] = `
             "x": 774,
             "y": 61,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -144,26 +80,10 @@ exports[`drawMarkers candle with volume & regions draw 1`] = `
             "x": 558,
             "y": 128,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -171,14 +91,6 @@ exports[`drawMarkers candle with volume & regions draw 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -186,14 +98,6 @@ exports[`drawMarkers candle with volume & regions draw 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -201,14 +105,6 @@ exports[`drawMarkers candle with volume & regions draw 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
 ]
@@ -218,14 +114,6 @@ exports[`drawMarkers candle with volume & regions events 1`] = `
 [
   {
     "props": {},
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "save",
   },
   {
@@ -235,14 +123,6 @@ exports[`drawMarkers candle with volume & regions events 1`] = `
       "x": 50,
       "y": 17,
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "rect",
   },
   {
@@ -251,14 +131,6 @@ exports[`drawMarkers candle with volume & regions events 1`] = `
       "path": [
         {
           "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "beginPath",
         },
         {
@@ -268,40 +140,16 @@ exports[`drawMarkers candle with volume & regions events 1`] = `
             "x": 50,
             "y": 17,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "clip",
   },
   {
     "props": {
       "value": "rgba(0, 255, 0, 0.5)",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -315,14 +163,6 @@ exports[`drawMarkers candle with volume & regions events 1`] = `
             "x": -167,
             "y": 322,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -332,40 +172,16 @@ exports[`drawMarkers candle with volume & regions events 1`] = `
             "x": 558,
             "y": 45,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "rgba(255, 0, 0, 0.5)",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -373,28 +189,12 @@ exports[`drawMarkers candle with volume & regions events 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "rgba(136, 136, 136, 0.5)",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -402,28 +202,12 @@ exports[`drawMarkers candle with volume & regions events 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "#00ff00",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -437,14 +221,6 @@ exports[`drawMarkers candle with volume & regions events 1`] = `
             "x": 49,
             "y": 84,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -454,14 +230,6 @@ exports[`drawMarkers candle with volume & regions events 1`] = `
             "x": -167,
             "y": 150,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -471,14 +239,6 @@ exports[`drawMarkers candle with volume & regions events 1`] = `
             "x": 774,
             "y": 61,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -488,40 +248,16 @@ exports[`drawMarkers candle with volume & regions events 1`] = `
             "x": 558,
             "y": 128,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "#ff0000",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -529,28 +265,12 @@ exports[`drawMarkers candle with volume & regions events 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "#888888",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -558,28 +278,12 @@ exports[`drawMarkers candle with volume & regions events 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "destination-out",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "globalCompositeOperation",
   },
   {
@@ -587,26 +291,10 @@ exports[`drawMarkers candle with volume & regions events 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {},
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "restore",
   },
 ]
@@ -616,14 +304,6 @@ exports[`drawMarkers candle with volume & regions path 1`] = `
 [
   {
     "props": {},
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "beginPath",
   },
   {
@@ -633,14 +313,6 @@ exports[`drawMarkers candle with volume & regions path 1`] = `
       "x": 50,
       "y": 17,
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "rect",
   },
   {
@@ -649,14 +321,6 @@ exports[`drawMarkers candle with volume & regions path 1`] = `
       "path": [
         {
           "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "beginPath",
         },
         {
@@ -666,26 +330,10 @@ exports[`drawMarkers candle with volume & regions path 1`] = `
             "x": 50,
             "y": 17,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "clip",
   },
 ]
@@ -704,14 +352,6 @@ exports[`drawMarkers candle with volume draw 1`] = `
             "x": -167,
             "y": 123,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -721,26 +361,10 @@ exports[`drawMarkers candle with volume draw 1`] = `
             "x": 558,
             "y": 47,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -748,14 +372,6 @@ exports[`drawMarkers candle with volume draw 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -763,14 +379,6 @@ exports[`drawMarkers candle with volume draw 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -784,14 +392,6 @@ exports[`drawMarkers candle with volume draw 1`] = `
             "x": 49,
             "y": 350,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -801,14 +401,6 @@ exports[`drawMarkers candle with volume draw 1`] = `
             "x": -167,
             "y": 350,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -818,14 +410,6 @@ exports[`drawMarkers candle with volume draw 1`] = `
             "x": 774,
             "y": 350,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -835,26 +419,10 @@ exports[`drawMarkers candle with volume draw 1`] = `
             "x": 558,
             "y": 350,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -862,14 +430,6 @@ exports[`drawMarkers candle with volume draw 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -877,14 +437,6 @@ exports[`drawMarkers candle with volume draw 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -892,14 +444,6 @@ exports[`drawMarkers candle with volume draw 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
 ]
@@ -909,14 +453,6 @@ exports[`drawMarkers candle with volume events 1`] = `
 [
   {
     "props": {},
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "save",
   },
   {
@@ -926,14 +462,6 @@ exports[`drawMarkers candle with volume events 1`] = `
       "x": 50,
       "y": 17,
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "rect",
   },
   {
@@ -942,14 +470,6 @@ exports[`drawMarkers candle with volume events 1`] = `
       "path": [
         {
           "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "beginPath",
         },
         {
@@ -959,40 +479,16 @@ exports[`drawMarkers candle with volume events 1`] = `
             "x": 50,
             "y": 17,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "clip",
   },
   {
     "props": {
       "value": "rgba(0, 255, 0, 0.5)",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -1006,14 +502,6 @@ exports[`drawMarkers candle with volume events 1`] = `
             "x": -167,
             "y": 123,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -1023,40 +511,16 @@ exports[`drawMarkers candle with volume events 1`] = `
             "x": 558,
             "y": 47,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "rgba(255, 0, 0, 0.5)",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -1064,28 +528,12 @@ exports[`drawMarkers candle with volume events 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "rgba(136, 136, 136, 0.5)",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -1093,28 +541,12 @@ exports[`drawMarkers candle with volume events 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "#00ff00",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -1128,14 +560,6 @@ exports[`drawMarkers candle with volume events 1`] = `
             "x": 49,
             "y": 350,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -1145,14 +569,6 @@ exports[`drawMarkers candle with volume events 1`] = `
             "x": -167,
             "y": 350,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -1162,14 +578,6 @@ exports[`drawMarkers candle with volume events 1`] = `
             "x": 774,
             "y": 350,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -1179,40 +587,16 @@ exports[`drawMarkers candle with volume events 1`] = `
             "x": 558,
             "y": 350,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "#ff0000",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -1220,28 +604,12 @@ exports[`drawMarkers candle with volume events 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "#888888",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -1249,28 +617,12 @@ exports[`drawMarkers candle with volume events 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "destination-out",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "globalCompositeOperation",
   },
   {
@@ -1278,26 +630,10 @@ exports[`drawMarkers candle with volume events 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {},
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "restore",
   },
 ]
@@ -1307,14 +643,6 @@ exports[`drawMarkers candle with volume path 1`] = `
 [
   {
     "props": {},
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "beginPath",
   },
   {
@@ -1324,14 +652,6 @@ exports[`drawMarkers candle with volume path 1`] = `
       "x": 50,
       "y": 17,
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "rect",
   },
   {
@@ -1340,14 +660,6 @@ exports[`drawMarkers candle with volume path 1`] = `
       "path": [
         {
           "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "beginPath",
         },
         {
@@ -1357,26 +669,10 @@ exports[`drawMarkers candle with volume path 1`] = `
             "x": 50,
             "y": 17,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "clip",
   },
 ]
@@ -1395,14 +691,6 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars draw 1`] = `
             "x": 49,
             "y": 199,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -1412,14 +700,6 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars draw 1`] = `
             "x": -167,
             "y": 335,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -1429,14 +709,6 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars draw 1`] = `
             "x": 50,
             "y": 305,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -1446,14 +718,6 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars draw 1`] = `
             "x": 774,
             "y": 47,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -1463,14 +727,6 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars draw 1`] = `
             "x": 558,
             "y": 320,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -1480,26 +736,10 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars draw 1`] = `
             "x": 775,
             "y": 259,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -1507,14 +747,6 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars draw 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -1522,14 +754,6 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars draw 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -1537,14 +761,6 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars draw 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
 ]
@@ -1554,14 +770,6 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
 [
   {
     "props": {},
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "save",
   },
   {
@@ -1571,14 +779,6 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
       "x": 50,
       "y": 17,
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "rect",
   },
   {
@@ -1587,14 +787,6 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
       "path": [
         {
           "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "beginPath",
         },
         {
@@ -1604,40 +796,16 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
             "x": 50,
             "y": 17,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "clip",
   },
   {
     "props": {
       "value": "#00ff00",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -1651,14 +819,6 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
             "x": 49,
             "y": 199,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -1668,14 +828,6 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
             "x": -167,
             "y": 335,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -1685,14 +837,6 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
             "x": 50,
             "y": 305,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -1702,14 +846,6 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
             "x": 774,
             "y": 47,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -1719,14 +855,6 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
             "x": 558,
             "y": 320,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -1736,40 +864,16 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
             "x": 775,
             "y": 259,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "#ff0000",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -1777,28 +881,12 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "#888888",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -1806,28 +894,12 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "destination-out",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "globalCompositeOperation",
   },
   {
@@ -1835,26 +907,10 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars events 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {},
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "restore",
   },
 ]
@@ -1864,14 +920,6 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars path 1`] = `
 [
   {
     "props": {},
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "beginPath",
   },
   {
@@ -1881,14 +929,6 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars path 1`] = `
       "x": 50,
       "y": 17,
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "rect",
   },
   {
@@ -1897,14 +937,6 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars path 1`] = `
       "path": [
         {
           "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "beginPath",
         },
         {
@@ -1914,26 +946,10 @@ exports[`drawMarkers options Candle Style: CandleStyle.OHLCBars path 1`] = `
             "x": 50,
             "y": 17,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "clip",
   },
 ]
@@ -1952,14 +968,6 @@ exports[`drawMarkers options Color strategy: CloseClose draw 1`] = `
             "x": 774,
             "y": 47,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -1969,26 +977,10 @@ exports[`drawMarkers options Color strategy: CloseClose draw 1`] = `
             "x": 558,
             "y": 259,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -1996,14 +988,6 @@ exports[`drawMarkers options Color strategy: CloseClose draw 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -2017,14 +1001,6 @@ exports[`drawMarkers options Color strategy: CloseClose draw 1`] = `
             "x": 49,
             "y": 199,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -2034,26 +1010,10 @@ exports[`drawMarkers options Color strategy: CloseClose draw 1`] = `
             "x": -167,
             "y": 305,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -2067,14 +1027,6 @@ exports[`drawMarkers options Color strategy: CloseClose draw 1`] = `
             "x": -165,
             "y": 307,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -2084,26 +1036,10 @@ exports[`drawMarkers options Color strategy: CloseClose draw 1`] = `
             "x": 560,
             "y": 261,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
 ]
@@ -2113,14 +1049,6 @@ exports[`drawMarkers options Color strategy: CloseClose events 1`] = `
 [
   {
     "props": {},
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "save",
   },
   {
@@ -2130,14 +1058,6 @@ exports[`drawMarkers options Color strategy: CloseClose events 1`] = `
       "x": 50,
       "y": 17,
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "rect",
   },
   {
@@ -2146,14 +1066,6 @@ exports[`drawMarkers options Color strategy: CloseClose events 1`] = `
       "path": [
         {
           "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "beginPath",
         },
         {
@@ -2163,40 +1075,16 @@ exports[`drawMarkers options Color strategy: CloseClose events 1`] = `
             "x": 50,
             "y": 17,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "clip",
   },
   {
     "props": {
       "value": "#00ff00",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -2210,14 +1098,6 @@ exports[`drawMarkers options Color strategy: CloseClose events 1`] = `
             "x": 774,
             "y": 47,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -2227,40 +1107,16 @@ exports[`drawMarkers options Color strategy: CloseClose events 1`] = `
             "x": 558,
             "y": 259,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "#ff0000",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -2268,28 +1124,12 @@ exports[`drawMarkers options Color strategy: CloseClose events 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "#888888",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -2303,14 +1143,6 @@ exports[`drawMarkers options Color strategy: CloseClose events 1`] = `
             "x": 49,
             "y": 199,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -2320,40 +1152,16 @@ exports[`drawMarkers options Color strategy: CloseClose events 1`] = `
             "x": -167,
             "y": 305,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "destination-out",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "globalCompositeOperation",
   },
   {
@@ -2367,14 +1175,6 @@ exports[`drawMarkers options Color strategy: CloseClose events 1`] = `
             "x": -165,
             "y": 307,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -2384,38 +1184,14 @@ exports[`drawMarkers options Color strategy: CloseClose events 1`] = `
             "x": 560,
             "y": 261,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {},
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "restore",
   },
 ]
@@ -2425,14 +1201,6 @@ exports[`drawMarkers options Color strategy: CloseClose path 1`] = `
 [
   {
     "props": {},
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "beginPath",
   },
   {
@@ -2442,14 +1210,6 @@ exports[`drawMarkers options Color strategy: CloseClose path 1`] = `
       "x": 50,
       "y": 17,
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "rect",
   },
   {
@@ -2458,14 +1218,6 @@ exports[`drawMarkers options Color strategy: CloseClose path 1`] = `
       "path": [
         {
           "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "beginPath",
         },
         {
@@ -2475,26 +1227,10 @@ exports[`drawMarkers options Color strategy: CloseClose path 1`] = `
             "x": 50,
             "y": 17,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "clip",
   },
 ]
@@ -2513,14 +1249,6 @@ exports[`drawMarkers options Color strategy: OpenOpen draw 1`] = `
             "x": 49,
             "y": 199,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -2530,14 +1258,6 @@ exports[`drawMarkers options Color strategy: OpenOpen draw 1`] = `
             "x": -167,
             "y": 305,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -2547,14 +1267,6 @@ exports[`drawMarkers options Color strategy: OpenOpen draw 1`] = `
             "x": 774,
             "y": 47,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -2564,26 +1276,10 @@ exports[`drawMarkers options Color strategy: OpenOpen draw 1`] = `
             "x": 558,
             "y": 259,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -2591,14 +1287,6 @@ exports[`drawMarkers options Color strategy: OpenOpen draw 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -2606,14 +1294,6 @@ exports[`drawMarkers options Color strategy: OpenOpen draw 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
@@ -2621,14 +1301,6 @@ exports[`drawMarkers options Color strategy: OpenOpen draw 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
 ]
@@ -2638,14 +1310,6 @@ exports[`drawMarkers options Color strategy: OpenOpen events 1`] = `
 [
   {
     "props": {},
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "save",
   },
   {
@@ -2655,14 +1319,6 @@ exports[`drawMarkers options Color strategy: OpenOpen events 1`] = `
       "x": 50,
       "y": 17,
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "rect",
   },
   {
@@ -2671,14 +1327,6 @@ exports[`drawMarkers options Color strategy: OpenOpen events 1`] = `
       "path": [
         {
           "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "beginPath",
         },
         {
@@ -2688,40 +1336,16 @@ exports[`drawMarkers options Color strategy: OpenOpen events 1`] = `
             "x": 50,
             "y": 17,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "clip",
   },
   {
     "props": {
       "value": "#00ff00",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -2735,14 +1359,6 @@ exports[`drawMarkers options Color strategy: OpenOpen events 1`] = `
             "x": 49,
             "y": 199,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -2752,14 +1368,6 @@ exports[`drawMarkers options Color strategy: OpenOpen events 1`] = `
             "x": -167,
             "y": 305,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -2769,14 +1377,6 @@ exports[`drawMarkers options Color strategy: OpenOpen events 1`] = `
             "x": 774,
             "y": 47,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
         {
@@ -2786,40 +1386,16 @@ exports[`drawMarkers options Color strategy: OpenOpen events 1`] = `
             "x": 558,
             "y": 259,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "#ff0000",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -2827,28 +1403,12 @@ exports[`drawMarkers options Color strategy: OpenOpen events 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "#888888",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fillStyle",
   },
   {
@@ -2856,28 +1416,12 @@ exports[`drawMarkers options Color strategy: OpenOpen events 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {
       "value": "destination-out",
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "globalCompositeOperation",
   },
   {
@@ -2885,26 +1429,10 @@ exports[`drawMarkers options Color strategy: OpenOpen events 1`] = `
       "fillRule": "nonzero",
       "path": [],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "fill",
   },
   {
     "props": {},
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "restore",
   },
 ]
@@ -2914,14 +1442,6 @@ exports[`drawMarkers options Color strategy: OpenOpen path 1`] = `
 [
   {
     "props": {},
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "beginPath",
   },
   {
@@ -2931,14 +1451,6 @@ exports[`drawMarkers options Color strategy: OpenOpen path 1`] = `
       "x": 50,
       "y": 17,
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "rect",
   },
   {
@@ -2947,14 +1459,6 @@ exports[`drawMarkers options Color strategy: OpenOpen path 1`] = `
       "path": [
         {
           "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "beginPath",
         },
         {
@@ -2964,26 +1468,10 @@ exports[`drawMarkers options Color strategy: OpenOpen path 1`] = `
             "x": 50,
             "y": 17,
           },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
           "type": "rect",
         },
       ],
     },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
     "type": "clip",
   },
 ]
