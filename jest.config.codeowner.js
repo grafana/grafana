@@ -54,7 +54,8 @@ const sourceFiles = teamFiles.filter((file) => {
     // and scripts directory
     !file.startsWith('scripts/') &&
     // and jest config files
-    !path.matchesGlob(file, '**/jest.config*.js')
+    !path.matchesGlob(file, '**/jest.config*.js') &&
+    !file.endsWith('/module.tsx')
   );
 });
 
