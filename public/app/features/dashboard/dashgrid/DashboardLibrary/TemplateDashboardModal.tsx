@@ -1,26 +1,26 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Box, Grid, Modal, Text, useStyles2 } from '@grafana/ui';
 
-import { DASHBOARD_LIBRARY_ROUTES } from '../types';
-
 import { DashboardCard } from './DashboardCard';
+import { NewTemplateDashboardInteractions } from './analytics/main';
 import {
   CONTENT_KINDS,
-  CREATION_ORIGINS,
-  DashboardLibraryInteractions,
   DISCOVERY_METHODS,
   EVENT_LOCATIONS,
-  SourceEntryPoint,
+  type SourceEntryPoint,
   TemplateDashboardSourceEntryPoint,
-} from './interactions';
-import { GnetDashboard, GnetDashboardsResponse, Link } from './types';
+} from './constants';
+import { TemplateDashboardInteractions } from './interactions';
+import { type GnetDashboard, type GnetDashboardsResponse, type Link } from './types';
+import { getTemplateDashboardUrl } from './utils/templateDashboardHelpers';
 
 const SourceEntryPointMap: Record<string, SourceEntryPoint> = {
   quickAdd: TemplateDashboardSourceEntryPoint.QUICK_ADD_BUTTON,
@@ -32,6 +32,12 @@ export const TemplateDashboardModal = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const isOpen = searchParams.get('templateDashboards') === 'true';
   const entryPoint = searchParams.get('source') || '';
+  const isDashboardTemplatesAssistantButtonEnabled = useBooleanFlagValue('dashboardTemplatesAssistantButton', false);
+  const isDashboardTemplatesAssistantToolEnabled = useBooleanFlagValue(
+    'assistant.frontend.tools.dashboardTemplates',
+    false
+  );
+  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
 
   const testDataSource = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' })[0];
 
@@ -42,31 +48,35 @@ export const TemplateDashboardModal = () => {
     setSearchParams(searchParams);
   };
 
-  const onPreviewDashboardClick = async (dashboard: GnetDashboard) => {
+  const onPreviewDashboardClick = async (dashboard: GnetDashboard, customizeWithAssistant = false) => {
     const sourceEntryPoint = SourceEntryPointMap[entryPoint] || 'unknown';
-    DashboardLibraryInteractions.itemClicked({
-      contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
-      datasourceTypes: [String(testDataSource?.type)],
-      libraryItemId: String(dashboard.id),
-      libraryItemTitle: dashboard.name,
-      sourceEntryPoint,
-      eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
-      discoveryMethod: DISCOVERY_METHODS.BROWSE,
-    });
+    isAnalyticsFrameworkEnabled
+      ? NewTemplateDashboardInteractions.itemClicked({
+          contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+          datasourceTypes: [String(testDataSource?.type)],
+          libraryItemId: String(dashboard.id),
+          libraryItemTitle: dashboard.name,
+          sourceEntryPoint,
+          eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
+          discoveryMethod: DISCOVERY_METHODS.BROWSE,
+          action: customizeWithAssistant ? 'assistant' : 'view_template',
+        })
+      : TemplateDashboardInteractions.itemClicked({
+          contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+          datasourceTypes: [String(testDataSource?.type)],
+          libraryItemId: String(dashboard.id),
+          libraryItemTitle: dashboard.name,
+          sourceEntryPoint,
+          eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
+          discoveryMethod: DISCOVERY_METHODS.BROWSE,
+          action: customizeWithAssistant ? 'assistant' : 'view_template',
+        });
 
-    const params = new URLSearchParams({
-      datasource: testDataSource?.uid || '',
-      title: dashboard.name,
-      pluginId: String(testDataSource?.type) || '',
-      gnetId: String(dashboard.id),
-      // tracking event purpose values
+    const templateUrl = getTemplateDashboardUrl(
+      dashboard,
       sourceEntryPoint,
-      libraryItemId: String(dashboard.id),
-      creationOrigin: CREATION_ORIGINS.DASHBOARD_LIBRARY_TEMPLATE_DASHBOARD,
-      contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
-    });
-
-    const templateUrl = `${DASHBOARD_LIBRARY_ROUTES.Template}?${params.toString()}`;
+      customizeWithAssistant ? TemplateDashboardSourceEntryPoint.ASSISTANT_BUTTON : undefined
+    );
     locationService.push(templateUrl);
   };
 
@@ -94,15 +104,23 @@ export const TemplateDashboardModal = () => {
 
   useEffect(() => {
     if (isOpen && !loading && dashboards.length > 0) {
-      DashboardLibraryInteractions.loaded({
-        numberOfItems: dashboards.length,
-        contentKinds: [CONTENT_KINDS.TEMPLATE_DASHBOARD],
-        datasourceTypes: [String(testDataSource?.type)],
-        sourceEntryPoint: SourceEntryPointMap[entryPoint] || 'unknown',
-        eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
-      });
+      isAnalyticsFrameworkEnabled
+        ? NewTemplateDashboardInteractions.loaded({
+            numberOfItems: dashboards.length,
+            contentKinds: [CONTENT_KINDS.TEMPLATE_DASHBOARD],
+            datasourceTypes: [String(testDataSource?.type)],
+            sourceEntryPoint: SourceEntryPointMap[entryPoint] || 'unknown',
+            eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
+          })
+        : TemplateDashboardInteractions.loaded({
+            numberOfItems: dashboards.length,
+            contentKinds: [CONTENT_KINDS.TEMPLATE_DASHBOARD],
+            datasourceTypes: [String(testDataSource?.type)],
+            sourceEntryPoint: SourceEntryPointMap[entryPoint] || 'unknown',
+            eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
+          });
     }
-  }, [isOpen, dashboards, entryPoint, testDataSource?.type, loading]);
+  }, [isOpen, dashboards, entryPoint, testDataSource?.type, loading, isAnalyticsFrameworkEnabled]);
 
   if (!testDataSource || (dashboards.length === 0 && !loading)) {
     return null;
@@ -143,9 +161,15 @@ export const TemplateDashboardModal = () => {
                     key={dashboard.id}
                     title={dashboard.name}
                     imageUrl={thumbnailUrl}
-                    onClick={() => onPreviewDashboardClick(dashboard)}
+                    onClick={(customizeWithAssistant?: boolean) =>
+                      onPreviewDashboardClick(dashboard, customizeWithAssistant)
+                    }
+                    onClose={onClose}
                     dashboard={dashboard}
                     kind="template_dashboard"
+                    showAssistantButton={
+                      isDashboardTemplatesAssistantButtonEnabled && isDashboardTemplatesAssistantToolEnabled
+                    }
                   />
                 );
               })}

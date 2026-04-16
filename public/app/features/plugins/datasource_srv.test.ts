@@ -1,15 +1,15 @@
-import { Observable, of } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 
 import {
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
   DataSourceApi,
-  DataSourceInstanceSettings,
+  type DataSourceInstanceSettings,
   DataSourcePlugin,
-  ScopedVars,
+  type ScopedVars,
 } from '@grafana/data';
-import { RuntimeDataSource, TemplateSrv } from '@grafana/runtime';
+import { RuntimeDataSource, type TemplateSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { DatasourceSrv, getNameOrUid } from 'app/features/plugins/datasource_srv';
 

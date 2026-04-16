@@ -1,14 +1,21 @@
-import { DataFrame } from '@grafana/data';
-import { MenuItem, MenuGroup, ContextMenu, IconName } from '@grafana/ui';
+import { type DataFrame } from '@grafana/data';
+import { MenuItem, MenuGroup, ContextMenu, type IconName } from '@grafana/ui';
 
-import { ClickedItemData, SelectedView } from '../types';
+import { type ClickedItemData, type PaneView, type SelectedView, type ViewMode } from '../types';
 
-import { CollapseConfig, FlameGraphDataContainer } from './dataTransform';
+import { type CollapseConfig, type FlameGraphDataContainer } from './dataTransform';
 
 export type GetExtraContextMenuButtonsFunction = (
   clickedItemData: ClickedItemData,
   data: DataFrame,
-  state: { selectedView: SelectedView; isDiff: boolean; search: string; collapseConfig?: CollapseConfig }
+  state: {
+    selectedView?: SelectedView;
+    viewMode?: ViewMode;
+    paneView?: PaneView;
+    isDiff: boolean;
+    search: string;
+    collapseConfig?: CollapseConfig;
+  }
 ) => ExtraContextMenuButton[];
 
 export type ExtraContextMenuButton = {
@@ -32,7 +39,9 @@ type Props = {
   collapsing?: boolean;
   allGroupsCollapsed?: boolean;
   allGroupsExpanded?: boolean;
-  selectedView: SelectedView;
+  selectedView?: SelectedView;
+  viewMode?: ViewMode;
+  paneView?: PaneView;
   search: string;
 };
 
@@ -52,12 +61,16 @@ const FlameGraphContextMenu = ({
   allGroupsExpanded,
   allGroupsCollapsed,
   selectedView,
+  viewMode,
+  paneView,
   search,
 }: Props) => {
   function renderItems() {
     const extraButtons =
       getExtraContextMenuButtons?.(itemData, data.data, {
         selectedView,
+        viewMode,
+        paneView,
         isDiff: data.isDiffFlamegraph(),
         search,
         collapseConfig,

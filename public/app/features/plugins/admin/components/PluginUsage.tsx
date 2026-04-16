@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
 
-import { GrafanaTheme2, PluginMeta, PluginType } from '@grafana/data';
+import { type GrafanaTheme2, type PluginMeta, PluginType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Spinner, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { SearchQuery } from 'app/features/search/service/types';
+import { type SearchQuery } from 'app/features/search/service/types';
 
 type Props = {
   plugin: PluginMeta;
@@ -52,7 +52,7 @@ export function PluginUsage({ plugin }: Props) {
           </Trans>
         </div>
         <AutoSizer>
-          {({ width, height }) => {
+          {({ width, height }: Size) => {
             return (
               <SearchResultsTable
                 response={found}

@@ -1,18 +1,31 @@
 import { isNumber, isString } from 'lodash';
 
-import { DataFrame, Field, AppEvents, getFieldDisplayName, PluginState, SelectableValue } from '@grafana/data';
+import {
+  type DataFrame,
+  type Field,
+  AppEvents,
+  getFieldDisplayName,
+  PluginState,
+  type SelectableValue,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { ConnectionDirection } from '@grafana/schema';
+import { type ConnectionDirection } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { hasAlphaPanels } from 'app/core/config';
-import { CanvasConnection, CanvasElementItem, CanvasElementOptions } from 'app/features/canvas/element';
+import { type CanvasConnection, type CanvasElementItem, type CanvasElementOptions } from 'app/features/canvas/element';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { advancedElementItems, canvasElementRegistry, defaultElementItems } from 'app/features/canvas/registry';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
-import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';
+import { type Scene, type SelectionParams } from 'app/features/canvas/runtime/scene';
 
-import { AnchorPoint, ConnectionState, LineStyle, StrokeDasharray } from './types';
+import {
+  type AnchorPoint,
+  type ConnectionState,
+  type ElementTransformAndDimensions,
+  LineStyle,
+  StrokeDasharray,
+} from './types';
 
 export function doSelect(scene: Scene, element: ElementState | FrameState) {
   try {
@@ -41,7 +54,7 @@ export function getElementTypes(shouldShowAdvancedTypes: boolean | undefined, cu
   return getElementTypesOptions([...defaultElementItems], current);
 }
 
-interface RegistrySelectInfo {
+export interface RegistrySelectInfo {
   options: Array<SelectableValue<string>>;
   current: Array<SelectableValue<string>>;
 }
@@ -218,7 +231,7 @@ export const calculateCoordinates2 = (source: ElementState, target: ElementState
   return { x1, y1, x2, y2 };
 };
 
-export const getElementTransformAndDimensions = (element: Element) => {
+export const getElementTransformAndDimensions = (element: Element): ElementTransformAndDimensions => {
   const style = window.getComputedStyle(element);
 
   const transform = style.transform;
@@ -240,10 +253,8 @@ export const getElementTransformAndDimensions = (element: Element) => {
     rotation = -Math.atan2(matrix.m21, matrix.m11) * (180 / Math.PI);
   }
 
-  // Get the width and height of the element
-  // TODO: there sould be a better way than parseFloat
-  const width = parseFloat(style.width);
-  const height = parseFloat(style.height);
+  const width: number = parseFloat(style.width);
+  const height: number = parseFloat(style.height);
 
   return { left: x, top: y, width, height, x, y, rotation };
 };
@@ -414,6 +425,7 @@ export function applyStyles(styles: React.CSSProperties, target: HTMLDivElement)
 
 export function removeStyles(styles: React.CSSProperties, target: HTMLDivElement) {
   for (const key in styles) {
+    // TypeScript can't verify key is valid CSSStyleDeclaration property at compile time
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
     target.style[key as any] = '';
   }

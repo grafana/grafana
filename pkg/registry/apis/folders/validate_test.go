@@ -9,10 +9,11 @@ import (
 	"google.golang.org/grpc"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -56,10 +57,19 @@ func TestValidateCreate(t *testing.T) {
 			},
 		},
 		{
-			name: "reserved name",
+			name: "reserved name - general",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "general", // can not name something with general
+					Name: folder.GeneralFolderUID,
+				},
+			},
+			expectedErr: "invalid uid for folder provided",
+		},
+		{
+			name: "reserved name - sharedwithme",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: folder.SharedWithMeFolderUID,
 				},
 			},
 			expectedErr: "invalid uid for folder provided",
@@ -194,7 +204,7 @@ func TestValidateCreate(t *testing.T) {
 					},
 				},
 			},
-			maxDepth: folder.MaxNestedFolderDepth,
+			maxDepth: setting.NewCfg().MaxNestedFolderDepth,
 		},
 		{
 			name: "cannot create a circular reference",
@@ -356,7 +366,7 @@ func TestValidateUpdate(t *testing.T) {
 					{Name: folder.GeneralFolderUID},
 				},
 			},
-			maxDepth: folder.MaxNestedFolderDepth,
+			maxDepth: 4,
 		},
 		{
 			name: "error when moving exceeds max depth",
@@ -387,7 +397,7 @@ func TestValidateUpdate(t *testing.T) {
 					{Name: folder.GeneralFolderUID},
 				},
 			},
-			maxDepth:    folder.MaxNestedFolderDepth,
+			maxDepth:    4,
 			expectedErr: "[folder.maximum-depth-reached]",
 		},
 		{

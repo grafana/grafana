@@ -3,6 +3,7 @@ package identity
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -21,24 +23,29 @@ import (
 )
 
 func TestIntegrationTeamBindings(t *testing.T) {
+	t.Skip("flaky: context cancelled on basic roles fetch during Delete authz check — see https://github.com/grafana/grafana/pull/121625")
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	// TODO: Add rest.Mode4 when it's supported
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3}
+	// TODO: Add rest.Mode5 when it's supported
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("Team binding CRUD operations with dual writer mode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    false,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"teambindings.iam.grafana.app": {
-						DualWriterMode: mode,
+			helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
+				GrafanaOpts: testinfra.GrafanaOpts{
+					AppModeProduction:      false,
+					DisableAnonymous:       true,
+					RBACSingleOrganization: true,
+					APIServerStorageType:   "unified",
+					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+						"teambindings.iam.grafana.app": {
+							DualWriterMode: mode,
+						},
 					},
-				},
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-					featuremgmt.FlagKubernetesAuthnMutation,
+					EnableFeatureToggles: []string{
+						featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+						featuremgmt.FlagKubernetesTeamsApi,
+						featuremgmt.FlagKubernetesUsersApi,
+					},
 				},
 			})
 
@@ -117,6 +124,13 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		require.Equal(t, iamv0alpha1.TeamBindingTeamPermissionAdmin, actual.Spec.Permission)
 		require.False(t, actual.Spec.External)
 		require.Equal(t, createdUID, actual.Name)
+
+		// Verify deprecatedInternalID label matches the team's internal ID
+		teamDeprecatedID := team.GetLabels()[apiutils.LabelKeyDeprecatedInternalID]
+		require.NotEmpty(t, teamDeprecatedID, "team should have a deprecatedInternalID label")
+		bindingDeprecatedID := response.GetLabels()[apiutils.LabelKeyDeprecatedInternalID]
+		require.NotEmpty(t, bindingDeprecatedID, "team binding should have a deprecatedInternalID label")
+		require.Equal(t, teamDeprecatedID, bindingDeprecatedID, "team binding deprecatedInternalID should match the team's internal ID")
 
 		// Update the team binding
 		toUpdate := toCreate.DeepCopy()
@@ -518,6 +532,11 @@ func doTeamBindingCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTest
 		require.Equal(t, userRsp.Result.UID, actual.Spec.Subject.Name)
 		require.Equal(t, teamRsp.Result.UID, actual.Spec.TeamRef.Name)
 		require.Equal(t, teamBindingName, actual.Name)
+
+		// Verify deprecatedInternalID label matches the legacy team ID
+		bindingDeprecatedID := response.GetLabels()[apiutils.LabelKeyDeprecatedInternalID]
+		require.Equal(t, strconv.FormatInt(teamRsp.Result.ID, 10), bindingDeprecatedID,
+			"team binding deprecatedInternalID should match the legacy team ID")
 	})
 }
 

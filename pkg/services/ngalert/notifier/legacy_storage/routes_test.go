@@ -2,9 +2,9 @@ package legacy_storage
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
@@ -16,6 +16,7 @@ import (
 	policy_exports "github.com/grafana/grafana/pkg/services/ngalert/api/test-data/policy-exports"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -254,10 +255,46 @@ func TestConfigRevision_CreateManagedRoute(t *testing.T) {
 		Receiver: origRev.Config.AlertmanagerConfig.Receivers[0].Name,
 	}
 
-	t.Run("rejects empty name", func(t *testing.T) {
-		_, err := testConfig().CreateManagedRoute("", subtree)
-		assert.ErrorContains(t, err, "name")
-		assert.ErrorContains(t, err, "required")
+	t.Run("validates name", func(t *testing.T) {
+		testCases := []struct {
+			name        string
+			routeName   string
+			expectErr   bool
+			errContains string
+		}{
+			// Empty / blank.
+			{name: "empty string", routeName: "", expectErr: true, errContains: "required"},
+			{name: "whitespace-only", routeName: "   ", expectErr: true, errContains: "required"},
+			// Length
+			{name: "too long", routeName: strings.Repeat("a", ualert.UIDMaxLength+1), expectErr: true, errContains: "cannot be longer"},
+			// Colon is rejected before DNS1123 check.
+			{name: "contains colon", routeName: "my:route", expectErr: true, errContains: ":"},
+			{name: "colon only", routeName: ":", expectErr: true, errContains: ":"},
+			// DNS1123 subdomain violations.
+			{name: "uppercase letter", routeName: "MyRoute", expectErr: true, errContains: "DNS subdomain"},
+			{name: "space in name", routeName: "my route", expectErr: true, errContains: "DNS subdomain"},
+			{name: "underscore", routeName: "my_route", expectErr: true, errContains: "DNS subdomain"},
+			{name: "leading hyphen", routeName: "-myroute", expectErr: true, errContains: "DNS subdomain"},
+			{name: "trailing hyphen", routeName: "myroute-", expectErr: true, errContains: "DNS subdomain"},
+			// Valid names.
+			{name: "simple lowercase", routeName: "myroute", expectErr: false},
+			{name: "with hyphens", routeName: "my-route-1", expectErr: false},
+			{name: "with dots", routeName: "my.route.name", expectErr: false},
+			{name: "max length (253 chars)", routeName: strings.Repeat("a", ualert.UIDMaxLength), expectErr: false},
+		}
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				_, err := testConfig().CreateManagedRoute(tc.routeName, subtree)
+				if tc.expectErr {
+					assert.ErrorIs(t, err, models.ErrRouteInvalidFormat)
+					if tc.errContains != "" {
+						assert.ErrorContains(t, err, tc.errContains)
+					}
+				} else {
+					assert.NoError(t, err)
+				}
+			})
+		}
 	})
 
 	t.Run("rejects reserved name", func(t *testing.T) {
@@ -376,7 +413,7 @@ func TestConfigRevision_ResetUserDefinedRoute(t *testing.T) {
 			},
 			Receivers: []*definition.PostableApiReceiver{
 				{
-					Receiver: config.Receiver{
+					Receiver: definitions.Receiver{
 						Name: name,
 					},
 				},

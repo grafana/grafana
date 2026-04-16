@@ -3302,6 +3302,7 @@
                   "summary": "Pull (incremental)",
                   "description": "look for changes since the last sync",
                   "value": {
+                    "action": "",
                     "pull": {
                       "incremental": true
                     }
@@ -3311,6 +3312,7 @@
                   "summary": "Pull from repository",
                   "description": "pull all files",
                   "value": {
+                    "action": "",
                     "pull": {
                       "incremental": false
                     }
@@ -4592,6 +4594,15 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.FixFolderMetadataJobOptions": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "description": "Ref to the branch to create the commit on (uses repository's default branch if not specified)",
+            "type": "string"
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitHubConnectionConfig": {
         "type": "object",
         "required": [
@@ -4677,7 +4688,7 @@
             "type": "string"
           },
           "url": {
-            "description": "The repository URL (e.g. `https://github.com/example/test.git`).",
+            "description": "The repository URL (e.g. `https://github.com/example/test`).",
             "type": "string"
           }
         }
@@ -5022,17 +5033,24 @@
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobSpec": {
         "type": "object",
+        "required": [
+          "action"
+        ],
         "properties": {
           "action": {
-            "description": "Possible enum values:\n - `\"delete\"` deletes files in the remote repository\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"move\"` moves files in the remote repository\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.",
+            "description": "Possible enum values:\n - `\"delete\"` deletes files in the remote repository\n - `\"deleteResources\"` deletes all resources managed by a repository that no longer exists or is stuck in Terminating state. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set.\n - `\"fixFolderMetadata\"` is a placeholder job that will eventually regenerate folder metadata files. Currently a no-op to unblock frontend development.\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"move\"` moves files in the remote repository\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.\n - `\"releaseResources\"` removes ownership annotations from all resources managed by a repository that no longer exists or is stuck in Terminating state. Resources remain in Grafana but become unmanaged. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set.",
             "type": "string",
+            "default": "",
             "enum": [
               "delete",
+              "deleteResources",
+              "fixFolderMetadata",
               "migrate",
               "move",
               "pr",
               "pull",
-              "push"
+              "push",
+              "releaseResources"
             ]
           },
           "delete": {
@@ -5040,6 +5058,14 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.DeleteJobOptions"
+              }
+            ]
+          },
+          "fixFolderMetadata": {
+            "description": "Options when the action is `fix-folder-metadata`",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.FixFolderMetadataJobOptions"
               }
             ]
           },
@@ -5281,6 +5307,10 @@
             "type": "string",
             "default": ""
           },
+          "protected": {
+            "description": "Whether this ref is protected (e.g. branch protection rules)",
+            "type": "boolean"
+          },
           "refURL": {
             "description": "The URL to the reference (branch or tag)",
             "type": "string"
@@ -5511,6 +5541,14 @@
               "github",
               "gitlab",
               "local"
+            ]
+          },
+          "webhook": {
+            "description": "Webhook settings for the repository. When specified, the base URL overrides the auto-detected Grafana public URL used to register webhooks with the external Git provider.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.WebhookConfig"
+              }
             ]
           },
           "workflows": {
@@ -6359,6 +6397,15 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.WebhookConfig": {
+        "type": "object",
+        "properties": {
+          "baseUrl": {
+            "description": "Base URL of the Grafana instance used to construct the webhook endpoint registered with the external Git provider. Only the base URL should be provided (e.g. `https://grafana.example.com`); the API path, namespace, and resource name are appended automatically. Trailing slashes are stripped. Must be a valid HTTP or HTTPS URL.",
+            "type": "string"
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.WebhookResponse": {
         "type": "object",
         "properties": {
@@ -6444,6 +6491,10 @@
             "type": "string",
             "maxLength": 24576,
             "minLength": 1
+          },
+          "description": {
+            "description": "Optionally when creating a secure value, you can pass a custom description.",
+            "type": "string"
           },
           "name": {
             "description": "Name in the secret service (reference)",

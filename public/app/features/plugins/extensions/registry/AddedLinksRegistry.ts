@@ -1,13 +1,13 @@
-import { ReplaySubject } from 'rxjs';
+import { type ReplaySubject } from 'rxjs';
 
-import { AppPluginConfig, IconName, PluginExtensionAddedLinkConfig } from '@grafana/data';
-import { PluginAddedLinksConfigureFunc, PluginExtensionEventHelpers } from '@grafana/data/internal';
+import { type AppPluginConfig, type IconName, type PluginExtensionAddedLinkConfig } from '@grafana/data';
+import { type PluginAddedLinksConfigureFunc, type PluginExtensionEventHelpers } from '@grafana/data/internal';
 
 import * as errors from '../errors';
 import { isGrafanaDevMode } from '../utils';
 import { isAddedLinkMetaInfoMissing, isConfigureFnValid } from '../validators';
 
-import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
+import { type PluginExtensionConfigs, Registry, type RegistryType } from './Registry';
 
 const logPrefix = 'Could not register link extension. Reason:';
 
@@ -21,6 +21,7 @@ export type AddedLinkRegistryItem<Context extends object = object> = {
   configure?: PluginAddedLinksConfigureFunc<Context>;
   icon?: IconName;
   category?: string;
+  group?: { name: string; icon?: IconName };
   openInNewTab?: boolean;
 };
 
@@ -80,12 +81,14 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
       for (const extensionPointId of extensionPointIds) {
         const pointIdLog = configLog.child({ extensionPointId });
         const { targets, ...registryItem } = config;
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        const { category, group, ...rest } = registryItem as PluginExtensionAddedLinkConfig;
 
         pointIdLog.debug('Added link extension successfully registered');
 
         // Creating a new array instead of pushing to get a new references
         const slice = registry[extensionPointId] ?? [];
-        const result = { ...registryItem, pluginId, extensionPointId };
+        const result = { ...rest, category, group, pluginId, extensionPointId };
         registry[extensionPointId] = slice.concat(result);
       }
     }

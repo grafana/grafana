@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -75,6 +75,10 @@ func convertToK8sResource(
 	}
 
 	r := &model.Receiver{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: kind.GroupVersionKind().GroupVersion().String(),
+			Kind:       kind.Kind(),
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			UID:             types.UID(receiver.GetUID()), // This is needed to make PATCH work
 			Name:            receiver.GetUID(),
@@ -119,12 +123,16 @@ var permissionMapper = map[ngmodels.ReceiverPermission]string{
 }
 
 func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[string][]string, error) {
+	prov, err := ngmodels.ProvenanceFromString(receiver.GetProvenanceStatus())
+	if err != nil {
+		return nil, nil, ngmodels.ErrReceiverInvalid(err)
+	}
 	domain := &ngmodels.Receiver{
 		UID:          receiver.Name,
 		Name:         receiver.Spec.Title,
 		Integrations: make([]*ngmodels.Integration, 0, len(receiver.Spec.Integrations)),
 		Version:      receiver.ResourceVersion,
-		Provenance:   ngmodels.ProvenanceNone,
+		Provenance:   prov,
 		Origin:       ngmodels.ResourceOriginGrafana, // Set to Grafana by default.
 	}
 	storedSecureFields := make(map[string][]string, len(receiver.Spec.Integrations))

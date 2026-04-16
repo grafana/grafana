@@ -1,16 +1,17 @@
 import {
-  DataFrame,
-  Field,
+  type DataFrame,
+  type Field,
   FieldCache,
   FieldColorModeId,
-  FieldConfig,
+  type FieldConfig,
   FieldType,
   MutableDataFrame,
   NodeGraphDataFrameFieldNames,
 } from '@grafana/data';
 
 import { nodeR } from './Node';
-import { EdgeDatum, GraphFrame, NodeDatum, NodeDatumFromEdge, NodeGraphOptions } from './types';
+import { type Options as NodeGraphOptions } from './panelcfg.gen';
+import { type EdgeDatum, type GraphFrame, type NodeDatum, type NodeDatumFromEdge } from './types';
 
 type Line = { x1: number; y1: number; x2: number; y2: number };
 

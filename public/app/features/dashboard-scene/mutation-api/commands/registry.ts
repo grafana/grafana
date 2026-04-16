@@ -2,14 +2,30 @@
  * Command Registry
  *
  * Imports all command definitions and provides lookup helpers.
- * The MutationExecutor iterates over ALL_COMMANDS generically.
+ * The DashboardMutationClient iterates over ALL_COMMANDS generically.
  */
 
+import { addPanelCommand } from './addPanel';
+import { addRowCommand } from './addRow';
+import { addTabCommand } from './addTab';
 import { addVariableCommand } from './addVariable';
 import { enterEditModeCommand } from './enterEditMode';
+import { getDashboardInfoCommand } from './getDashboardInfo';
+import { getLayoutCommand } from './getLayout';
+import { listPanelsCommand } from './listPanels';
 import { listVariablesCommand } from './listVariables';
+import { movePanelCommand } from './movePanel';
+import { moveRowCommand } from './moveRow';
+import { moveTabCommand } from './moveTab';
+import { removePanelCommand } from './removePanel';
+import { removeRowCommand } from './removeRow';
+import { removeTabCommand } from './removeTab';
 import { removeVariableCommand } from './removeVariable';
 import type { MutationCommand } from './types';
+import { updateLayoutCommand } from './updateLayout';
+import { updatePanelCommand } from './updatePanel';
+import { updateRowCommand } from './updateRow';
+import { updateTabCommand } from './updateTab';
 import { updateVariableCommand } from './updateVariable';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- each command is typed internally; the array is heterogeneous
@@ -19,6 +35,22 @@ export const ALL_COMMANDS: Array<MutationCommand<any>> = [
   updateVariableCommand,
   listVariablesCommand,
   enterEditModeCommand,
+  getLayoutCommand,
+  addRowCommand,
+  removeRowCommand,
+  updateRowCommand,
+  moveRowCommand,
+  addTabCommand,
+  removeTabCommand,
+  updateTabCommand,
+  moveTabCommand,
+  movePanelCommand,
+  updateLayoutCommand,
+  addPanelCommand,
+  updatePanelCommand,
+  removePanelCommand,
+  listPanelsCommand,
+  getDashboardInfoCommand,
 ];
 
 /** All valid command names. */

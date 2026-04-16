@@ -613,7 +613,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 			// (created within a rolled-back transaction) is no longer in memory.
 			// Without flushing, the test would pass trivially because the phantom key
 			// would still be in the cache.
-			svc.FlushCache(namespace)
+			svc.(*EncryptionManager).dataKeyCache.Flush(ctx, namespace.String())
 
 			// Therefore, the data encrypted after this point, become unrecoverable after a restart.
 			// So, the different test cases here are there to prevent that from happening again
@@ -669,21 +669,21 @@ type stubCache struct {
 	setCalled        bool
 }
 
-func (c *stubCache) GetByLabel(namespace, label string) (encryption.DataKeyCacheEntry, bool) {
+func (c *stubCache) GetByLabel(_ context.Context, namespace, label string) (encryption.DataKeyCacheEntry, bool) {
 	c.getByLabelCalled = true
 	return encryption.DataKeyCacheEntry{}, false
 }
 
-func (c *stubCache) GetById(namespace, id string) (encryption.DataKeyCacheEntry, bool) {
+func (c *stubCache) GetById(_ context.Context, namespace, id string) (encryption.DataKeyCacheEntry, bool) {
 	c.getByIdCalled = true
 	return encryption.DataKeyCacheEntry{}, false
 }
 
-func (c *stubCache) Set(namespace string, entry encryption.DataKeyCacheEntry) {
+func (c *stubCache) Set(_ context.Context, namespace string, entry encryption.DataKeyCacheEntry) {
 	c.setCalled = true
 }
-func (c *stubCache) Flush(namespace string) {}
-func (c *stubCache) RemoveExpired()         {}
+func (c *stubCache) Flush(_ context.Context, namespace string) {}
+func (c *stubCache) RemoveExpired(_ context.Context)           {}
 
 func TestEncryptionService_WithSkipCache(t *testing.T) {
 	ctx := context.Background()
@@ -825,20 +825,20 @@ func TestEncryptionService_FlushCache(t *testing.T) {
 
 	// Verify the key is in the cache by checking both by ID and by label
 	label := encryption.KeyLabel(svc.providerConfig.CurrentProvider)
-	_, existsById := dekCache.GetById(namespace.String(), dataKeyID)
+	_, existsById := dekCache.GetById(ctx, namespace.String(), dataKeyID)
 	assert.True(t, existsById, "DEK should be cached by ID before flush")
 
-	_, existsByLabel := dekCache.GetByLabel(namespace.String(), label)
+	_, existsByLabel := dekCache.GetByLabel(ctx, namespace.String(), label)
 	assert.True(t, existsByLabel, "DEK should be cached by label before flush")
 
 	// Flush the cache for this namespace
-	svc.FlushCache(namespace)
+	svc.dataKeyCache.Flush(ctx, namespace.String())
 
 	// Verify the cache is empty for this namespace
-	_, existsById = dekCache.GetById(namespace.String(), dataKeyID)
+	_, existsById = dekCache.GetById(ctx, namespace.String(), dataKeyID)
 	assert.False(t, existsById, "DEK should not be in cache by ID after flush")
 
-	_, existsByLabel = dekCache.GetByLabel(namespace.String(), label)
+	_, existsByLabel = dekCache.GetByLabel(ctx, namespace.String(), label)
 	assert.False(t, existsByLabel, "DEK should not be in cache by label after flush")
 
 	// Verify we can still decrypt - this should fetch from DB and re-cache
@@ -847,6 +847,6 @@ func TestEncryptionService_FlushCache(t *testing.T) {
 	assert.Equal(t, plaintext, decrypted)
 
 	// Verify the key is back in the cache after the decrypt operation
-	_, existsById = dekCache.GetById(namespace.String(), dataKeyID)
+	_, existsById = dekCache.GetById(ctx, namespace.String(), dataKeyID)
 	assert.True(t, existsById, "DEK should be re-cached by ID after decrypt")
 }

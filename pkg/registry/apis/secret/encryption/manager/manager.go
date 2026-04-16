@@ -196,7 +196,7 @@ func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace xkube.
 func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label string, skipCache bool) (string, []byte, error) {
 	// 0. Get data key from in-memory cache (stored encrypted).
 	if !skipCache {
-		if entry, exists := s.dataKeyCache.GetByLabel(namespace, label); exists && entry.Active {
+		if entry, exists := s.dataKeyCache.GetByLabel(ctx, namespace, label); exists && entry.Active {
 			// Decrypt the cached data key before returning.
 			decrypted, err := s.decryptCachedDataKey(ctx, entry.EncryptedDataKey)
 			if err != nil {
@@ -350,7 +350,7 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 
 	// 0. Get data key from in-memory cache (stored encrypted).
 	if !skipCache {
-		if entry, exists := s.dataKeyCache.GetById(namespace, id); exists && entry.Active {
+		if entry, exists := s.dataKeyCache.GetById(ctx, namespace, id); exists && entry.Active {
 			// Decrypt the cached data key before returning.
 			decrypted, err := s.decryptCachedDataKey(ctx, entry.EncryptedDataKey)
 			if err != nil {
@@ -392,11 +392,59 @@ func (s *EncryptionManager) GetProviders() encryption.ProviderConfig {
 	return s.providerConfig
 }
 
-// TODO: This is called repeatedly during consolidation and could perform poorly due to the mutex lock contention.
-// We may want to consider an approach where we temporarily disable the cache during consolidation then flush it all at once.
-// Do some benchmarking and revisit.
-func (s *EncryptionManager) FlushCache(namespace xkube.Namespace) {
-	s.dataKeyCache.Flush(namespace.String())
+// ConsolidateNamespace re-encrypts all values for a single namespace using one new DEK held in memory. It avoids unnecessary cache lookups by leveraging the cipher directly.
+// For each value, it resolves the old DEK by id, decrypts with it, and re-encrypts using the new in-memory key.
+func (s *EncryptionManager) ConsolidateNamespace(ctx context.Context, namespace xkube.Namespace, values []*contracts.EncryptedValue) ([]*contracts.EncryptedPayload, error) {
+	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.ConsolidateNamespace", trace.WithAttributes(
+		attribute.String("namespace", namespace.String()),
+		attribute.Int("values_count", len(values)),
+	))
+	defer span.End()
+
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	label := encryption.KeyLabel(s.providerConfig.CurrentProvider)
+	newKeyID, newKeyDecrypted, err := s.currentDataKey(ctx, namespace, label, false)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		span.RecordError(err)
+		return nil, fmt.Errorf("ensuring current data key for namespace %s: %w", namespace.String(), err)
+	}
+
+	ns := namespace.String()
+	results := make([]*contracts.EncryptedPayload, len(values))
+
+	for i, ev := range values {
+		oldKey, err := s.dataKeyById(ctx, ns, ev.DataKeyID, false)
+		if err != nil {
+			s.log.FromContext(ctx).Error("Failed to resolve data key during consolidation", "namespace", ev.Namespace, "name", ev.Name, "error", err)
+			results[i] = nil
+			continue
+		}
+
+		plaintext, err := s.cipher.Decrypt(ctx, ev.EncryptedData, string(oldKey))
+		if err != nil {
+			s.log.FromContext(ctx).Error("Failed to decrypt value during consolidation", "namespace", ev.Namespace, "name", ev.Name, "error", err)
+			results[i] = nil
+			continue
+		}
+
+		encrypted, err := s.cipher.Encrypt(ctx, plaintext, string(newKeyDecrypted))
+		if err != nil {
+			s.log.FromContext(ctx).Error("Failed to re-encrypt value during consolidation", "namespace", ev.Namespace, "name", ev.Name, "error", err)
+			results[i] = nil
+			continue
+		}
+
+		results[i] = &contracts.EncryptedPayload{DataKeyID: newKeyID, EncryptedData: encrypted}
+	}
+
+	s.dataKeyCache.Flush(ctx, namespace.String())
+	// TODO: Decide later if the cache should be primed with the new DEK here
+
+	return results, nil
 }
 
 func (s *EncryptionManager) Run(ctx context.Context) error {
@@ -406,7 +454,7 @@ func (s *EncryptionManager) Run(ctx context.Context) error {
 		select {
 		case <-gc.C:
 			s.log.Debug("Removing expired data keys from cache...")
-			s.dataKeyCache.RemoveExpired()
+			s.dataKeyCache.RemoveExpired(ctx)
 			s.log.Debug("Removing expired data keys from cache finished successfully")
 		case <-ctx.Done():
 			s.log.Debug("Grafana is shutting down; stopping...")
@@ -435,7 +483,7 @@ func (s *EncryptionManager) cacheDataKey(ctx context.Context, namespace string, 
 		EncryptedDataKey: encryptedForCache,
 		Active:           dataKey.Active,
 	}
-	s.dataKeyCache.Set(namespace, entry)
+	s.dataKeyCache.Set(ctx, namespace, entry)
 }
 
 // decryptCachedDataKey decrypts a data key retrieved from the cache.

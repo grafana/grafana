@@ -1,21 +1,21 @@
 import { createAction } from '@reduxjs/toolkit';
 import { isEqual } from 'lodash';
-import { AnyAction } from 'redux';
+import { type AnyAction } from 'redux';
 
-import { SplitOpenOptions, TimeRange, EventBusSrv, locationUtil } from '@grafana/data';
+import { type SplitOpenOptions, type TimeRange, EventBusSrv, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { generateExploreId, type GetExploreUrlArguments } from 'app/core/utils/explore';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
-import { CorrelationEditorDetailsUpdate, ExploreItemState, ExploreState } from 'app/types/explore';
-import { createAsyncThunk, ThunkResult } from 'app/types/store';
+import { type CorrelationEditorDetailsUpdate, type ExploreItemState, type ExploreState } from 'app/types/explore';
+import { createAsyncThunk, type ThunkResult } from 'app/types/store';
 
-import { RichHistoryResults } from '../../../core/history/RichHistoryStorage';
-import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
+import { type RichHistoryResults } from '../../../core/history/RichHistoryStorage';
+import { type RichHistorySearchFilters, type RichHistorySettings } from '../../../core/utils/richHistoryTypes';
 import { withUniqueRefIds } from '../utils/queries';
 
 import { DEFAULT_RANGE } from './constants';
-import { initializeExplore, InitializeExploreOptions, paneReducer } from './explorePane';
+import { initializeExplore, type InitializeExploreOptions, paneReducer } from './explorePane';
 import { makeExplorePaneState } from './utils';
 
 //
@@ -136,7 +136,7 @@ export const navigateToExplore = (
   panel: PanelModel,
   dependencies: NavigateToExploreDependencies
 ): ThunkResult<void> => {
-  return async (dispatch) => {
+  return async () => {
     const { timeRange, getExploreUrl, openInNewWindow } = dependencies;
 
     const path = await getExploreUrl({

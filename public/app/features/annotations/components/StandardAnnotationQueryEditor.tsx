@@ -1,25 +1,25 @@
-import { PureComponent, ReactElement } from 'react';
+import { PureComponent, type ReactElement } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import {
-  AnnotationEventMappings,
-  AnnotationQuery,
-  DataSourceApi,
-  DataSourceInstanceSettings,
+  type AnnotationEventMappings,
+  type AnnotationQuery,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
   LoadingState,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
-import { Alert, AlertVariant, Button, Space, Spinner } from '@grafana/ui';
+import { type DataQuery } from '@grafana/schema';
+import { Alert, type AlertVariant, Button, Space, Spinner } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { executeAnnotationQuery } from '../executeAnnotationQuery';
 import { shouldUseLegacyRunner, shouldUseMappingUI, standardAnnotationSupport } from '../standardAnnotationSupport';
-import { AnnotationQueryResponse } from '../types';
+import { type AnnotationQueryResponse } from '../types';
 import { updateAnnotationFromSavedQuery } from '../utils/savedQueryUtils';
 
 import { AnnotationQueryEditorActionsWrapper } from './AnnotationQueryEditorActionsWrapper';
@@ -37,7 +37,6 @@ interface State {
   running?: boolean;
   response?: AnnotationQueryResponse;
   skipNextVerification?: boolean;
-  showResults?: boolean;
 }
 
 export default class StandardAnnotationQueryEditor extends PureComponent<Props, State> {
@@ -50,10 +49,6 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   componentDidUpdate(oldProps: Props) {
     if (this.props.annotation !== oldProps.annotation && !shouldUseLegacyRunner(this.props.datasource)) {
       this.verifyDataSource();
-    }
-
-    if (this.props.datasource.uid !== oldProps.datasource.uid) {
-      this.setState({ response: undefined, showResults: false });
     }
   }
 
@@ -121,11 +116,6 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       running: false,
       response,
     });
-  };
-
-  onTestQuery = () => {
-    this.setState({ showResults: true });
-    this.onRunQuery();
   };
 
   onQueryChange = (target: DataQuery) => {
@@ -215,7 +205,11 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   }
 
   renderStatus() {
-    const { response, running, showResults } = this.state;
+    const { response, running } = this.state;
+
+    if (!response) {
+      return null;
+    }
 
     return (
       <>
@@ -228,7 +222,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
               data-testid={selectors.components.Annotations.editor.testButton}
               variant="secondary"
               size="xs"
-              onClick={this.onTestQuery}
+              onClick={this.onRunQuery}
             >
               <Trans i18nKey="annotations.standard-annotation-query-editor.test-annotation-query">
                 Test annotation query
@@ -237,16 +231,13 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
           )}
         </div>
         <Space v={2} layout="block" />
-        {showResults && response && (
-          <Alert
-            data-testid={selectors.components.Annotations.editor.resultContainer}
-            severity={this.getStatusSeverity(response)}
-            title={t('annotations.standard-annotation-query-editor.title-query-result', 'Query result')}
-            onRemove={() => this.setState({ showResults: false })}
-          >
-            {this.renderStatusText(response, running)}
-          </Alert>
-        )}
+        <Alert
+          data-testid={selectors.components.Annotations.editor.resultContainer}
+          severity={this.getStatusSeverity(response)}
+          title={t('annotations.standard-annotation-query-editor.title-query-result', 'Query result')}
+        >
+          {this.renderStatusText(response, running)}
+        </Alert>
       </>
     );
   }

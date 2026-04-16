@@ -1,5 +1,10 @@
 import { toDataFrame } from '../dataframe/processDataFrame';
-import { DataFrame, TIME_SERIES_TIME_FIELD_NAME, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../types/dataFrame';
+import {
+  type DataFrame,
+  TIME_SERIES_TIME_FIELD_NAME,
+  FieldType,
+  TIME_SERIES_VALUE_FIELD_NAME,
+} from '../types/dataFrame';
 
 import { decoupleHideFromState, getFieldDisplayName, getFrameDisplayName } from './fieldState';
 
@@ -53,6 +58,32 @@ describe('getFieldDisplayName', () => {
     expect(getFieldDisplayName(frame.fields[1], frame)).toBe('ServerA (comparison)');
     expect(getFieldDisplayName(frame.fields[2], frame)).toBe('ServerB (comparison)');
     expect(getFieldDisplayName(frame.fields[3], frame)).toBe('Value 3 (comparison)');
+  });
+
+  it('Should remove common labels', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: TIME_SERIES_TIME_FIELD_NAME, values: [1, 2, 3], type: FieldType.time },
+        {
+          name: 'Value 1',
+          values: [1, 2, 3],
+          type: FieldType.number,
+          labels: { __name__: 'up', varying: '1', common: 'common' },
+        },
+        {
+          name: 'Value 2',
+          values: [1, 2, 3],
+          type: FieldType.number,
+          labels: { __name__: 'up', varying: '2', common: 'common' },
+        },
+      ],
+    });
+    expect(getFieldDisplayName(frame.fields[1], frame, [frame], { __name__: 'up', common: 'common' })).toBe(
+      'Value 1 {varying="1"}'
+    );
+    expect(getFieldDisplayName(frame.fields[2], frame, [frame], { __name__: 'up', common: 'common' })).toBe(
+      'Value 2 {varying="2"}'
+    );
   });
 });
 

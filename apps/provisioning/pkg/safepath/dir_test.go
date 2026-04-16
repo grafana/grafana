@@ -161,6 +161,57 @@ func TestInDir(t *testing.T) {
 	}
 }
 
+func TestEnsureTrailingSlash(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+		want string
+	}{
+		{
+			name: "root path version 1",
+			path: "",
+			want: "",
+		},
+		{
+			name: "root path version 2",
+			path: ".",
+			want: "",
+		},
+		{
+			name: "root path version 3",
+			path: "/",
+			want: "",
+		},
+		{
+			name: "directory path with trailing slash",
+			path: "folder/",
+			want: "folder/",
+		},
+		{
+			name: "directory path without trailing slash",
+			path: "folder",
+			want: "folder/",
+		},
+		{
+			name: "nested directory path with trailing slash",
+			path: "folder/subfolder/",
+			want: "folder/subfolder/",
+		},
+		{
+			name: "nested directory path without trailing slash",
+			path: "folder/subfolder",
+			want: "folder/subfolder/",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := EnsureTrailingSlash(tt.path)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestRelativeTo(t *testing.T) {
 	tests := []struct {
 		name        string

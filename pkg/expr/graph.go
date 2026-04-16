@@ -5,15 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/exp/maps"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
+
+	"github.com/open-feature/go-sdk/openfeature"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/sql"
@@ -54,6 +56,7 @@ type Node interface {
 	NeedsVars() []string
 	SetInputTo(refID string)
 	IsInputTo() map[string]struct{}
+	DisabledErr() error
 }
 
 type ExecutableNode interface {
@@ -86,6 +89,20 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 	for _, node := range *dp {
 		if groupByDSFlag && node.NodeType() == TypeDatasourceNode {
 			continue // already executed via executeDSNodesGrouped
+		}
+
+		// Skip disabled nodes (e.g. missing dependency). Injecting the error
+		// into vars causes downstream dependents to fail via the existing
+		// dependency-error path — no separate transitive propagation needed.
+		if disabledErr := node.DisabledErr(); disabledErr != nil {
+			if node.NodeType() == TypeCMDNode && node.(*CMDNode).CMDType == TypeSQL {
+				var sqlErr *sql.ErrorWithCategory
+				if errors.As(disabledErr, &sqlErr) {
+					s.metrics.SqlCommandCount.WithLabelValues("error", sqlErr.Category()).Inc()
+				}
+			}
+			vars[node.RefID()] = mathexp.Results{Error: disabledErr}
+			continue
 		}
 
 		// Don't execute nodes that have dependent nodes that have failed
@@ -168,9 +185,7 @@ func (dp *DataPipeline) GetDatasourceTypes() []string {
 		}
 		m[name] = struct{}{}
 	}
-	result := maps.Keys(m)
-	slices.Sort(result)
-	return result
+	return slices.Sorted(maps.Keys(m))
 }
 
 // GetCommandTypes returns a sorted unique list of all server-side expression commands used in the pipeline.
@@ -192,13 +207,13 @@ func (dp *DataPipeline) GetCommandTypes() []string {
 		}
 		m[name] = struct{}{}
 	}
-	result := maps.Keys(m)
-	slices.Sort(result)
-	return result
+	return slices.Sorted(maps.Keys(m))
 }
 
-// BuildPipeline builds a graph of the nodes, and returns the nodes in an
-// executable order.
+// buildPipeline builds a graph of the nodes and returns them in executable
+// order. When the sseExpressionErrorIsolation feature toggle is enabled,
+// nodes with missing dependencies are marked as disabled on the node itself
+// rather than failing the entire pipeline.
 func (s *Service) buildPipeline(ctx context.Context, req *Request) (DataPipeline, error) {
 	if req != nil && len(req.Headers) == 0 {
 		req.Headers = map[string]string{}
@@ -224,7 +239,8 @@ func (s *Service) buildPipeline(ctx context.Context, req *Request) (DataPipeline
 		span.End()
 	}()
 
-	graph, err := s.buildDependencyGraph(ctx, req)
+	degraded := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagSseExpressionErrorIsolation, false, openfeature.TransactionContext(ctx))
+	graph, err := s.buildDependencyGraph(ctx, req, degraded)
 	if err != nil {
 		return nil, err
 	}
@@ -238,7 +254,9 @@ func (s *Service) buildPipeline(ctx context.Context, req *Request) (DataPipeline
 }
 
 // buildDependencyGraph returns a dependency graph for a set of queries.
-func (s *Service) buildDependencyGraph(ctx context.Context, req *Request) (*simple.DirectedGraph, error) {
+// When degraded is true, nodes with missing dependencies are marked as
+// disabled on the node itself rather than causing a hard error.
+func (s *Service) buildDependencyGraph(ctx context.Context, req *Request, degraded bool) (*simple.DirectedGraph, error) {
 	graph, err := s.buildGraph(ctx, req)
 	if err != nil {
 		return nil, err
@@ -246,7 +264,7 @@ func (s *Service) buildDependencyGraph(ctx context.Context, req *Request) (*simp
 
 	registry := buildNodeRegistry(graph)
 
-	if err := s.buildGraphEdges(graph, registry); err != nil {
+	if err := s.buildGraphEdges(graph, registry, degraded); err != nil {
 		return nil, err
 	}
 
@@ -356,9 +374,13 @@ func (s *Service) buildGraph(ctx context.Context, req *Request) (*simple.Directe
 }
 
 // buildGraphEdges generates graph edges based on each node's dependencies.
-func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
+// When degraded is true, nodes with missing dependencies are marked as
+// disabled (rather than causing a hard error) so that valid nodes can
+// still execute.
+func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node, degraded bool) error {
 	nodeIt := dp.Nodes()
 
+nextNode:
 	for nodeIt.Next() {
 		node := nodeIt.Node().(Node)
 
@@ -373,14 +395,20 @@ func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]
 		for _, neededVar := range cmdNode.Command.NeedsVars() {
 			neededNode, ok := registry[neededVar]
 			if !ok {
-				if cmdNode.CMDType == TypeSQL {
-					// With the current flow, the SQL expression won't be executed with
-					// this missing dependency. But we collection the metric as there was an
-					// attempt to execute a SQL expression.
-					e := sql.MakeTableNotFoundError(cmdNode.refID, neededVar)
-					return e
+				if degraded {
+					var nodeErr error
+					if cmdNode.CMDType == TypeSQL {
+						nodeErr = sql.MakeTableNotFoundError(cmdNode.refID, neededVar)
+					} else {
+						nodeErr = MakeMissingDependentNodeError(cmdNode.refID, neededVar)
+					}
+					cmdNode.Disable(nodeErr)
+					continue nextNode
 				}
-				return fmt.Errorf("unable to find dependent node '%v'", neededVar)
+				if cmdNode.CMDType == TypeSQL {
+					return sql.MakeTableNotFoundError(cmdNode.refID, neededVar)
+				}
+				return MakeMissingDependentNodeError(cmdNode.refID, neededVar)
 			}
 
 			// If the input is SQL, conversion is handled differently

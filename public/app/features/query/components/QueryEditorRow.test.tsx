@@ -1,12 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { PropsWithChildren } from 'react';
+import { type PropsWithChildren } from 'react';
 
-import { CoreApp, DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { CoreApp, type DataQueryRequest, dateTime, LoadingState, type PanelData, toDataFrame } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
-import { filterPanelDataToQuery, Props, QueryEditorRow } from './QueryEditorRow';
+import { filterPanelDataToQuery, type Props, QueryEditorRow } from './QueryEditorRow';
 
 const mockDS = mockDataSource({
   name: 'test',
@@ -32,6 +33,13 @@ jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
 jest.mock('@grafana/i18n', () => ({
   ...jest.requireActual('@grafana/i18n'),
   t: (key: string, defaultValue: string) => defaultValue,
+}));
+
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({ isAvailable: false }),
+  useProvidePageContext: jest.fn(),
+  OpenAssistantButton: () => null,
+  createAssistantContextItem: jest.fn(),
 }));
 
 jest.mock('@grafana/runtime', () => ({
@@ -451,7 +459,7 @@ describe('QueryEditorRow', () => {
       render(<QueryEditorRow {...props(testData)} />);
 
       await waitFor(() => {
-        expect(screen.getByTestId('query-editor-row')).toBeInTheDocument();
+        expect(screen.getByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument();
       });
 
       expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).not.toHaveBeenCalled();

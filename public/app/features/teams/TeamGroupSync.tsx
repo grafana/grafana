@@ -1,18 +1,18 @@
 import { css, cx } from '@emotion/css';
-import { FormEventHandler, useState } from 'react';
+import { type FormEventHandler, useState } from 'react';
 
 import {
-  TeamGroupDto,
+  type TeamGroupDto,
   useAddTeamGroupApiMutation,
   useGetTeamGroupsApiQuery,
   useRemoveTeamGroupApiQueryMutation,
-} from '@grafana/api-clients/rtkq/legacy';
+} from '@grafana/api-clients/internal/rtkq/legacy';
 import { Trans, t } from '@grafana/i18n';
 import { Input, Tooltip, Icon, Button, useTheme2, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { UpgradeBox, UpgradeContent, UpgradeContentProps } from 'app/core/components/Upgrade/UpgradeBox';
+import { UpgradeBox, UpgradeContent, type UpgradeContentProps } from 'app/core/components/Upgrade/UpgradeBox';
 import { highlightTrial } from 'app/features/admin/utils';
 
 interface Props {

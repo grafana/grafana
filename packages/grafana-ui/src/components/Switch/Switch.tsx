@@ -1,8 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { uniqueId } from 'lodash';
-import { forwardRef, HTMLProps, useRef } from 'react';
+import { forwardRef, type HTMLProps, useId } from 'react';
 
-import { GrafanaTheme2, deprecationWarning } from '@grafana/data';
+import { type GrafanaTheme2, deprecationWarning } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
@@ -26,7 +25,8 @@ export const Switch = forwardRef<HTMLInputElement, Props>(
     }
 
     const styles = useStyles2(getSwitchStyles);
-    const switchIdRef = useRef(id ? id : uniqueId('switch-'));
+    const generatedId = useId();
+    const switchId = id ? id : generatedId;
 
     return (
       <div className={cx(styles.switch, invalid && styles.invalid)}>
@@ -38,11 +38,12 @@ export const Switch = forwardRef<HTMLInputElement, Props>(
           onChange={(event) => {
             !disabled && onChange?.(event);
           }}
-          id={switchIdRef.current}
+          id={switchId}
+          aria-invalid={!!invalid}
           {...inputProps}
           ref={ref}
         />
-        <label htmlFor={switchIdRef.current} aria-label={label}>
+        <label htmlFor={switchId} aria-label={label}>
           <Icon name="check" size="xs" />
         </label>
       </div>

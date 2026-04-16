@@ -8,10 +8,8 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -33,6 +31,7 @@ type AuthService struct {
 	features                  featuremgmt.FeatureToggles
 	dashSvc                   dashboards.DashboardService
 	searchDashboardsPageLimit int64
+	maxDepth                  int
 }
 
 func NewAuthService(db db.DB, features featuremgmt.FeatureToggles, dashSvc dashboards.DashboardService, cfg *setting.Cfg) *AuthService {
@@ -44,6 +43,7 @@ func NewAuthService(db db.DB, features featuremgmt.FeatureToggles, dashSvc dashb
 		features:                  features,
 		dashSvc:                   dashSvc,
 		searchDashboardsPageLimit: searchDashboardsPageLimit,
+		maxDepth:                  cfg.MaxNestedFolderDepth,
 	}
 }
 
@@ -106,31 +106,17 @@ func (authz *AuthService) getAnnotationDashboard(ctx context.Context, query anno
 }
 
 func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, query annotations.ItemQuery) (map[string]int64, error) {
-	recursiveQueriesSupported, err := authz.db.RecursiveQueriesAreSupported()
-	if err != nil {
-		return nil, err
-	}
-
-	filters := []any{
-		permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, dashboardaccess.PERMISSION_VIEW, searchstore.TypeAnnotation, authz.features, recursiveQueriesSupported, authz.db.GetDialect()),
-		searchstore.OrgFilter{OrgId: query.OrgID},
-	}
-
 	var dashboardUIDs []string
 	if query.DashboardUID != "" {
-		dashboardUIDs = append(dashboardUIDs, query.DashboardUID)
-		filters = append(filters, searchstore.DashboardFilter{
-			UIDs: []string{query.DashboardUID},
-		})
+		dashboardUIDs = []string{query.DashboardUID}
 	}
 
 	dashs, err := authz.dashSvc.SearchDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
 		DashboardUIDs: dashboardUIDs,
 		OrgId:         query.SignedInUser.GetOrgID(),
-		Filters:       filters,
 		SignedInUser:  query.SignedInUser,
 		Page:          query.Page,
-		Type:          searchstore.TypeAnnotation,
+		Type:          model.TypeAnnotation,
 		Limit:         authz.searchDashboardsPageLimit,
 	})
 	if err != nil {
