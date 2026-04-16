@@ -410,7 +410,7 @@ export interface FeatureToggles {
   unlimitedLayoutsNesting?: boolean;
   /**
   * Enables CSV export using scenes dashboard architecture
-  * @default false
+  * @default true
   */
   sceneCsvExport?: boolean;
   /**

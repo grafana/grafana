@@ -3747,12 +3747,15 @@
     {
       "metadata": {
         "name": "metricsFromProfiles",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-09T10:55:28Z"
+        "resourceVersion": "1776334069903",
+        "creationTimestamp": "2025-04-09T10:55:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-16 10:07:49.903083 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables creating metrics from profiles and storing them as recording rules",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/observability-traces-and-profiling",
         "frontend": true,
         "expression": "false"
@@ -4359,12 +4362,15 @@
     {
       "metadata": {
         "name": "profilesExemplars",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-01-07T12:25:42Z"
+        "resourceVersion": "1776334069903",
+        "creationTimestamp": "2026-01-07T12:25:42Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-16 10:07:49.903083 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables profiles exemplars support in profiles drilldown",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/observability-traces-and-profiling",
         "expression": "false"
       }
@@ -5014,14 +5020,17 @@
     {
       "metadata": {
         "name": "sceneCsvExport",
-        "resourceVersion": "1770806976610",
-        "creationTimestamp": "2026-02-11T10:49:36Z"
+        "resourceVersion": "1776334251375",
+        "creationTimestamp": "2026-02-11T10:49:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-16 10:10:51.375991 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables CSV export using scenes dashboard architecture",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
