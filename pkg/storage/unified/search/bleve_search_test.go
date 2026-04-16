@@ -376,6 +376,21 @@ func TestWildcardQuery(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, int64(2), res.TotalHits)
 	})
+
+	t.Run("multi-word wildcard matches via title_phrase", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Grafana Dev Overview",
+			"name2": "Production Alerts",
+		})
+
+		// Legacy dashboard search wraps queries as "*<lowered title>*".
+		// Multi-word wildcards can't match word tokens in the standard-analyzed
+		// title field, but DO match the keyword-analyzed title_phrase field.
+		checkSearchQuery(t, index, newTestQuery("*grafana dev overview*"), []string{"name1"})
+		// Partial multi-word match
+		checkSearchQuery(t, index, newTestQuery("*dev overview*"), []string{"name1"})
+	})
 }
 
 func TestScoringHierarchy(t *testing.T) {
