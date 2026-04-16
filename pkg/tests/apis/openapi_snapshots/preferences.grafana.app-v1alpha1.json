@@ -803,6 +803,11 @@
       "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesSpec": {
         "type": "object",
         "properties": {
+          "helpFlags1": {
+            "description": "Bitwise flags that will hide help modals in the UI NOTE: this property is only valid on user preferences",
+            "type": "integer",
+            "format": "int64"
+          },
           "homeDashboardUID": {
             "description": "UID for the home dashboard",
             "type": "string"

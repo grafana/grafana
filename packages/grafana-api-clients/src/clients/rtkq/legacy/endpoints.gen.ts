@@ -4506,6 +4506,9 @@ export type PreferencesQueryHistoryPreference = {
   homeTab?: string;
 };
 export type PreferencesSpec = {
+  /** Bitwise flags that will hide help modals in the UI
+    NOTE: this property is only valid on user preferences */
+  helpFlags1?: number;
   /** UID for the home dashboard */
   homeDashboardUID?: string;
   /** Selected language (beta) */
