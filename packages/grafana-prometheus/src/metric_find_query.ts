@@ -18,7 +18,8 @@ import { getOriginalMetricName } from './result_transformer';
 export class PrometheusMetricFindQuery {
   constructor(
     private datasource: PrometheusDatasource,
-    private query: string
+    private query: string,
+    private requestHeaders?: Record<string, string>
   ) {
     this.datasource = datasource;
     this.query = query;
@@ -94,7 +95,7 @@ export class PrometheusMetricFindQuery {
       query,
       time: getPrometheusTime(range.to, true).toString(),
     };
-    return this.datasource.metadataRequest(url, params).then((result) => {
+    return this.datasource.metadataRequest(url, params, { headers: this.requestHeaders }).then((result) => {
       switch (result.data.data.resultType) {
         case 'scalar': // [ <unix_time>, "<scalar_value>" ]
         case 'string': // [ <unix_time>, "<string_value>" ]
@@ -136,7 +137,7 @@ export class PrometheusMetricFindQuery {
       end: end.toString(),
     };
 
-    const result = await this.datasource.metadataRequest(`/api/v1/series`, params);
+    const result = await this.datasource.metadataRequest(`/api/v1/series`, params, { headers: this.requestHeaders });
     return result.data.data.map((metric: Record<string, string>) => ({
       text: getOriginalMetricName(metric),
       expandable: true,
