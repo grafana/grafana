@@ -44,10 +44,10 @@ This is different from the [**No Data** state](ref:no-data-state), which occurs 
 
 A stale alert instance transitions to the **Normal (MissingSeries)** state as **Resolved**, and is then evicted:
 
-| Eval. Interval   | 1   | 2               | 3                                       | 4   |
-| :--------------- | :-- | :-------------- | :-------------------------------------- | :-- |
-| Alert instance A | ✔   | ✔               | ✔                                       | ✔   |
-| Alert instance B | ✔   | `MissingSeries` | ️`Normal(MissingSeries)` 📩<sup>\*</sup> |     |
+| Eval. Interval   | 1   | 2               | 3                                        | 4   |
+| :--------------- | :-- | :-------------- | :--------------------------------------- | :-- |
+| Alert instance A | ✔  | ✔              | ✔                                       | ✔  |
+| Alert instance B | ✔  | `MissingSeries` | ️`Normal(MissingSeries)` 📩<sup>\*</sup> |     |
 
 {{< admonition type="note" >}}
 
