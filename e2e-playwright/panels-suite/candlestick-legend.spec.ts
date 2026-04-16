@@ -28,4 +28,36 @@ test.describe('Panels test: Candlestick legend', { tag: ['@panels', '@candlestic
     await expect(legendVisibilitySwitch).not.toBeChecked();
     await expect(legend, 'legend is no longer visible').not.toBeVisible();
   });
+
+  test('legend mode and placement toggles', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '1' }),
+    });
+
+    const legend = dashboardPage.getByGrafanaSelector(selectors.components.VizLayout.legend);
+    await expect(legend, 'legend is rendered').toBeVisible();
+
+    // switch mode from List to Table
+    const modeOption = dashboardPage.getByGrafanaSelector(
+      selectors.components.PanelEditor.OptionsPane.fieldLabel('Legend Mode')
+    );
+    await modeOption.getByLabel('Table').click();
+    await expect(legend, 'legend still visible after mode switch').toBeVisible();
+
+    // switch back to List
+    await modeOption.getByLabel('List').click();
+    await expect(legend, 'legend still visible after switching back').toBeVisible();
+
+    // switch placement from Bottom to Right
+    const placementOption = dashboardPage.getByGrafanaSelector(
+      selectors.components.PanelEditor.OptionsPane.fieldLabel('Legend Placement')
+    );
+    await placementOption.getByLabel('Right').click();
+    await expect(legend, 'legend still visible after placement switch').toBeVisible();
+
+    // switch back to Bottom
+    await placementOption.getByLabel('Bottom').click();
+    await expect(legend, 'legend still visible after switching back').toBeVisible();
+  });
 });
