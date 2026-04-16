@@ -3,6 +3,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import * as pluginSettings from 'app/features/plugins/pluginSettings';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -33,6 +34,10 @@ mimirDataSource();
 setupPluginsExtensionsHook();
 
 describe('RuleEditor cloud', () => {
+  beforeAll(() => {
+    mockBoundingClientRect();
+  });
+
   beforeEach(() => {
     // Mock getPluginSettings to ensure labels plugin is not detected
     // This ensures consistent test behavior across OSS and Enterprise environments
