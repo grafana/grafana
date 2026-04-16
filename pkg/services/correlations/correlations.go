@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -140,19 +141,95 @@ type CorrelationsK8sService struct {
 }
 
 func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (Correlation, error) {
-	return Correlation{}, nil
+	quotaReached, err := s.QuotaService.CheckQuotaReached(ctx, QuotaTargetSrv, nil)
+	if err != nil {
+		logger.Warn("Error getting correlation quota.", "error", err)
+		return Correlation{}, ErrCorrelationsQuotaFailed
+	}
+	if quotaReached {
+		return Correlation{}, ErrCorrelationsQuotaReached
+	}
+
+	client, err := s.getK8sClient()
+	if err != nil {
+		return Correlation{}, err
+	}
+
+	correlation := Correlation{
+		UID:         util.GenerateShortUID(),
+		OrgID:       cmd.OrgId,
+		SourceUID:   cmd.SourceUID,
+		TargetUID:   cmd.TargetUID,
+		Label:       cmd.Label,
+		Description: cmd.Description,
+		Config:      cmd.Config,
+		Provisioned: cmd.Provisioned,
+		Type:        cmd.Type,
+	}
+
+	corrSpec, err := ToResource(correlation)
+
+	appPlatformCorr, err := client.Create(ctx, corrSpec, resource.CreateOptions{DryRun: false})
+	if err != nil {
+		return Correlation{}, err
+	}
+
+	legacyCorr, err := ToCorrelation(appPlatformCorr)
+	if err != nil {
+		return Correlation{}, err
+	}
+
+	return *legacyCorr, nil
 }
 
+// TODO this is an annoying one to convert. the legacy version uses XORM to get a correlation record without an UID but we can't do this here. Figure this out with a app platform person prob. It's used for provisioning, to try to preserve records, maybe not relevant for app platform?
 func (s *CorrelationsK8sService) CreateOrUpdateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) error {
 	return nil
 }
 
 func (s *CorrelationsK8sService) DeleteCorrelation(ctx context.Context, cmd DeleteCorrelationCommand) error {
-	return nil
+	client, err := s.getK8sClient()
+	if err != nil {
+		return err
+	}
+
+	identifier := resource.Identifier{
+		Namespace: authlib.OrgNamespaceFormatter(cmd.OrgId),
+		Name:      cmd.UID,
+	}
+
+	err = client.Delete(ctx, identifier, resource.DeleteOptions{})
+
+	return err
 }
 
 func (s *CorrelationsK8sService) UpdateCorrelation(ctx context.Context, cmd UpdateCorrelationCommand) (Correlation, error) {
-	return Correlation{}, nil
+	client, err := s.getK8sClient()
+	if err != nil {
+		return Correlation{}, err
+	}
+
+	correlation := Correlation{
+		UID:         cmd.UID,
+		OrgID:       cmd.OrgId,
+		SourceUID:   cmd.SourceUID,
+		Label:       *cmd.Label,
+		Description: *cmd.Description,
+		Config: CorrelationConfig{
+			Field:           *cmd.Config.Field,
+			Target:          *cmd.Config.Target,
+			Transformations: cmd.Config.Transformations,
+		},
+		Type: *cmd.Type,
+	}
+
+	corrSpec, err := ToResource(correlation)
+
+	appPlatformCorr, err := client.Update(ctx, corrSpec, resource.UpdateOptions{})
+
+	legacyCorr, err := ToCorrelation(appPlatformCorr)
+
+	return *legacyCorr, nil
 }
 
 func (s *CorrelationsK8sService) GetCorrelation(ctx context.Context, cmd GetCorrelationQuery) (Correlation, error) {
