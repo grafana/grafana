@@ -1869,7 +1869,7 @@ var (
 		{
 			Name:        "metricsFromProfiles",
 			Description: "Enables creating metrics from profiles and storing them as recording rules",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePrivatePreview,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 			Generate:    Generate{LegacyFrontend: true},
 			Expression:  "false",
@@ -2563,7 +2563,7 @@ var (
 		{
 			Name:        "profilesExemplars",
 			Description: "Enables profiles exemplars support in profiles drilldown",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Expression:  "false",
@@ -2943,6 +2943,14 @@ var (
 			Description: "Enables the query service to fetch the configuration from the settings service",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:        "profilesHeatmap",
+			Description: "Enables heatmap visualization support for Pyroscope profiles",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 			Expression:  "false",
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},

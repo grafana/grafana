@@ -806,7 +806,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /tools/ @grafana/frontend-ops
 /lefthook.yml @grafana/frontend-ops
 /lefthook.rc @grafana/frontend-ops
-/.husky/pre-commit @grafana/frontend-ops
 /cypress.config.js @grafana/grafana-frontend-platform
 /.levignore.js @grafana/grafana-frontend-platform
 playwright.config.ts @grafana/plugins-platform-frontend
@@ -1082,6 +1081,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/build-deb.sh @grafana/grafana-backend-services-squad
 /scripts/build-rpm.sh @grafana/grafana-backend-services-squad
 /scripts/build-targz.sh @grafana/grafana-backend-services-squad
+scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/check-breaking-changes.sh @grafana/grafana-frontend-platform
 /scripts/ci-* @grafana/grafana-developer-enablement-squad
 /scripts/publish-npm-packages.sh @grafana/grafana-developer-enablement-squad @grafana/grafana-frontend-platform
@@ -1104,7 +1104,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/trigger_docker_build.sh @grafana/grafana-developer-enablement-squad
 /scripts/trigger_grafana_packer.sh @grafana/grafana-developer-enablement-squad
 /scripts/trigger_windows_build.sh @grafana/grafana-developer-enablement-squad
-/scripts/cleanup-husky.sh @grafana/frontend-ops
 /scripts/verify-repo-update/ @grafana/grafana-developer-enablement-squad
 /scripts/generate-alerting-rtk-apis.ts @grafana/alerting-frontend
 /scripts/levitate-parse-json-report.js @grafana/grafana-frontend-platform
@@ -1319,8 +1318,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/scripts/create-security-branch/create-security-branch.sh @grafana/grafana-developer-enablement-squad
 /.github/workflows/dashboards-issue-add-label.yml @grafana/dashboards-squad
 /.github/workflows/run-schema-v2-e2e.yml  @grafana/dashboards-squad
-/.github/workflows/run-dashboard-search-e2e.yml  @grafana/grafana-search-and-storage
-/.github/workflows/trigger-dashboard-search-e2e.yml  @grafana/grafana-search-and-storage
 /.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/create-security-patch-from-security-mirror.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/i18n-crowdin-upload.yml @grafana/grafana-frontend-platform

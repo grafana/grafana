@@ -15,6 +15,7 @@ import (
 
 func GetBleveMappings(fields resource.SearchableDocumentFields, selectableFields []string) (mapping.IndexMapping, error) {
 	mapper := bleve.NewIndexMapping()
+	mapper.DocValuesDynamic = false // only folder and title_phrase need DocValues
 	mapper.ScoringModel = index.BM25Scoring
 
 	err := RegisterCustomAnalyzers(mapper)
@@ -45,6 +46,7 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFie
 	titleNgramMapping := bleve.NewTextFieldMapping()
 	titleNgramMapping.Analyzer = TITLE_ANALYZER
 	titleNgramMapping.Store = false // already stored in title
+	titleNgramMapping.DocValues = false
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE_NGRAM, titleNgramMapping)
 
 	// for searching by title - uses ngram token filter
@@ -52,13 +54,21 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFie
 	titleSearchMapping := bleve.NewTextFieldMapping()
 	titleSearchMapping.Analyzer = TITLE_ANALYZER
 	titleSearchMapping.Store = false // already stored in title
+	titleSearchMapping.DocValues = false
 
 	// mapping for title to search on words/tokens larger than the ngram size
 	titleWordMapping := bleve.NewTextFieldMapping()
 	titleWordMapping.Analyzer = standard.Name
 	titleWordMapping.Store = true
+	titleWordMapping.DocValues = false
+
+	// separate keyword mapping for title (no DocValues — only the standalone title_phrase needs them)
+	titleKeywordMapping := bleve.NewKeywordFieldMapping()
+	titleKeywordMapping.Store = false
+	titleKeywordMapping.DocValues = false
+
 	// NOTE: this causes 3 title fields in the response
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE, titleWordMapping, titleSearchMapping, titlePhraseMapping)
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE, titleWordMapping, titleSearchMapping, titleKeywordMapping)
 
 	descriptionMapping := &mapping.FieldMapping{
 		Name:               resource.SEARCH_FIELD_DESCRIPTION,
@@ -156,7 +166,9 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFie
 		IncludeTermVectors: false,
 		IncludeInAll:       true,
 	})
-	source.AddFieldMappingsAt("timestampMillis", mapping.NewNumericFieldMapping())
+	timestampMillisMapping := mapping.NewNumericFieldMapping()
+	timestampMillisMapping.DocValues = false
+	source.AddFieldMappingsAt("timestampMillis", timestampMillisMapping)
 
 	mapper.AddSubDocumentMapping("source", source)
 	mapper.AddSubDocumentMapping("manager", manager)
@@ -186,6 +198,7 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFie
 			if def.Properties != nil && def.Properties.Filterable && def.Type == resourcepb.ResourceTableColumnDefinition_STRING {
 				keywordMapping := bleve.NewKeywordFieldMapping()
 				keywordMapping.Store = true
+				keywordMapping.DocValues = false
 
 				fieldMapper.AddFieldMappingsAt(def.Name, keywordMapping)
 			}
