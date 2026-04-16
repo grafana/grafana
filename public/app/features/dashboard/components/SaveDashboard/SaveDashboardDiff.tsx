@@ -1,8 +1,8 @@
-import { Suspense, type ReactElement } from 'react';
+import { type ReactElement } from 'react';
 import { useAsync } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, LoadingPlaceholder, Spinner, Stack } from '@grafana/ui';
+import { Alert, Box, Spinner, Stack } from '@grafana/ui';
 import LazyDiffViewer from 'app/features/dashboard-scene/settings/version-history/LazyDiffViewer';
 import { type Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
 
@@ -56,11 +56,7 @@ export const SaveDashboardDiff = ({
       diffs,
       count,
       showDiffs: count < 15, // overwhelming if too many changes
-      jsonView: (
-        <Suspense fallback={<LoadingPlaceholder text={t('diff-viewer.loading', 'Loading diff...')} />}>
-          <LazyDiffViewer oldValue={oldJSON} newValue={newJSON} />
-        </Suspense>
-      ),
+      jsonView: <LazyDiffViewer oldValue={oldJSON} newValue={newJSON} />,
     };
   }, [diff, oldValue, newValue]);
 

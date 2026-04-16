@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { omit } from 'lodash';
 import moment from 'moment';
-import { Suspense, useState } from 'react';
+import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -283,9 +283,7 @@ function CompareVersions({ left, right, disabled = false, onCancel, onConfirm }:
           we're hiding the line numbers because the historical snapshots will have certain parts of the config hidden (ex. auto-generated policies)
           so the line numbers will not match up with what you can see in the JSON modal tab
         */}
-        <Suspense fallback={<LoadingPlaceholder text={t('diff-viewer.loading', 'Loading diff...')} />}>
-          <LazyDiffViewer newValue={left} oldValue={right} hideLineNumbers={true} />
-        </Suspense>
+        <LazyDiffViewer newValue={left} oldValue={right} hideLineNumbers={true} />
       </div>
       <Stack direction="row" alignItems="center">
         <Spacer />

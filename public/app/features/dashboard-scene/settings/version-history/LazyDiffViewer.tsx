@@ -1,5 +1,14 @@
-import { lazy } from 'react';
+import { lazy, Suspense } from 'react';
+import { type ReactDiffViewerProps } from 'react-diff-viewer-continued';
 
-const LazyDiffViewer = lazy(() => import('./DiffViewer').then((module) => ({ default: module.DiffViewer })));
+import { LoadingPlaceholder } from '@grafana/ui';
+
+const LazyDiffViewerInternal = lazy(() => import('./DiffViewer').then((module) => ({ default: module.DiffViewer })));
+
+const LazyDiffViewer = (props: ReactDiffViewerProps) => (
+  <Suspense fallback={<LoadingPlaceholder text={t('diff-viewer.loading', 'Loading diff...')} />}>
+    <LazyDiffViewerInternal {...props} />
+  </Suspense>
+);
 
 export default LazyDiffViewer;

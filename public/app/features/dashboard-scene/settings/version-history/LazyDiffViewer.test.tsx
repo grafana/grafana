@@ -1,4 +1,4 @@
-import { type PropsWithChildren, Suspense } from 'react';
+import { type PropsWithChildren } from 'react';
 import { render, screen, waitFor, getWrapper } from 'test/test-utils';
 
 import { createTheme, ThemeContext } from '@grafana/data';
@@ -21,12 +21,7 @@ describe('LazyDiffViewer', () => {
     const oldValue = 'lazy-diff-viewer-old-marker';
     const newValue = 'lazy-diff-viewer-new-marker';
 
-    render(
-      <Suspense fallback={'Loading...'}>
-        <LazyDiffViewer oldValue={oldValue} newValue={newValue} />
-      </Suspense>,
-      { wrapper: TestProviders }
-    );
+    render(<LazyDiffViewer oldValue={oldValue} newValue={newValue} />, { wrapper: TestProviders });
 
     expect(screen.getByText('Loading...')).toBeInTheDocument();
 
