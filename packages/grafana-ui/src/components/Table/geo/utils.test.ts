@@ -1,3 +1,6 @@
+import { Point } from 'ol/geom';
+import { fromLonLat } from 'ol/proj';
+
 import { createDataFrame, FieldType } from '@grafana/data';
 
 import { isGeometry, hasGeoCell } from './utils';
@@ -31,7 +34,7 @@ describe('geo utils', () => {
         fields: [
           {
             type: FieldType.geo,
-            values: [{ intersectsCoordinate: () => true }],
+            values: [new Point(fromLonLat([0, 0]))],
           },
         ],
       });
