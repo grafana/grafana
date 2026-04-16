@@ -194,7 +194,9 @@ func (s *preferenceStorage) save(ctx context.Context, obj runtime.Object) (runti
 	// Update the users table
 	if owner.Owner == utils.UserResourceOwner {
 		helpFlag := ptr.Deref(p.Spec.HelpFlags1, 0)
-		s.sql.updateHelpFlags(ctx, user.GetOrgID(), owner.Identifier, helpFlag)
+		if err = s.sql.updateHelpFlags(ctx, user.GetOrgID(), owner.Identifier, helpFlag); err != nil {
+			return nil, err
+		}
 	}
 
 	cmd := &pref.SavePreferenceCommand{
