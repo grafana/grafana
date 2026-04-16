@@ -131,8 +131,6 @@ export const getEditableVariables: () => Record<EditableVariableType, EditableVa
   },
 });
 
-export const ADHOC_VARIABLE_TYPE = 'adhoc';
-
 export function getEditableVariableDefinition(type: string): EditableVariableConfig {
   const editableVariables = getEditableVariables();
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -142,6 +140,12 @@ export function getEditableVariableDefinition(type: string): EditableVariableCon
   }
 
   return editableVariable;
+}
+
+export const ADHOC_VARIABLE_TYPE = 'adhoc';
+
+export function isAdHocVariable(variable: SceneVariable): boolean {
+  return variable.state.type === ADHOC_VARIABLE_TYPE;
 }
 
 export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
