@@ -120,7 +120,7 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
         return ConditionalRenderingTimeRangeSize.createEmpty();
 
       case 'variable':
-        const variables = getUserDefinedVariables(this.parent || this);
+        const variables = getUserDefinedVariables(this);
         // The code should not be hit when variables.length === 0 because we grey out the form if there are no variables
         // but was added to avoid potential runtime errors if the UX changes and the section is not disabled.
         return ConditionalRenderingVariable.createEmpty(variables.length ? variables[0].state.name : '');
@@ -207,10 +207,7 @@ export class ConditionalRenderingGroup extends SceneObjectBase<ConditionalRender
 
 function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<ConditionalRenderingGroup>) {
   const { condition, visibility, conditions } = model.useState();
-  // Start from the parent as the variable is defined inside the container. If the user selects a variable
-  // to trigger row hiding then the row would disappear along with variables making it impossible to
-  // make it visible again (apart from changing the URL)
-  const variables = useUserDefinedVariables(model.parent || model);
+  const variables = useUserDefinedVariables(model);
 
   const objectType = useMemo(() => extractObjectType(model.parent), [model]);
 
