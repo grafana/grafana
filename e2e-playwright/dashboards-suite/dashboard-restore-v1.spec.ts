@@ -206,6 +206,7 @@ test.describe(
         selectors,
       }) => {
         await page.goto('/dashboards');
+        await page.reload(); // ensure locationInfo cache includes test folders
 
         // Select Folder A (will cascade-select its children)
         const folderARow = page.getByTestId(selectors.pages.BrowseDashboards.table.row(folderAName));
@@ -312,6 +313,7 @@ test.describe(
         selectors,
       }) => {
         await page.goto('/dashboards');
+        await page.reload(); // ensure locationInfo cache includes test folder
 
         // Select the folder row and delete it (cascade-deletes dashboard)
         const folderRow = page.getByTestId(selectors.pages.BrowseDashboards.table.row(folderName));
