@@ -16,6 +16,15 @@ export const useSharedPreferences = (
    * TODO: change to use listPreferences with fieldSelector=metadata.name={name} instead of getPreferences
    * and unwrap the array to return just the one preference object
    *
+   * todo list:
+   * - [x] get user preferences
+   * - [x] get team preferences
+   * - [ ] get org preferences
+   *
+   * - [x] update user preferences
+   * - [ ] update team preferences
+   * - [ ] update org preferences
+   *
    * ~~~ context ~~~
    *
    * getPreferences: /apis/preferences.grafana.app/v1alpha1/namespaces/{namespace}/preferences/{name}
