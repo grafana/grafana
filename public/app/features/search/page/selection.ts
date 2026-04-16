@@ -1,4 +1,3 @@
-// testing that ole e2e workflows aren't triggered
 // Using '*' for uid will return true if anything is selected
 export type SelectionChecker = (kind: string, uid: string) => boolean;
 export type SelectionToggle = (kind: string, uid: string) => void;
