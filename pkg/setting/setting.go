@@ -572,6 +572,7 @@ type Cfg struct {
 	ZanzanaServer     ZanzanaServerSettings
 	ZanzanaReconciler ZanzanaReconcilerSettings
 	ZanzanaGRPCStore  ZanzanaGRPCStoreSettings
+	ZanzanaRollout    ZanzanaRolloutSettings
 
 	// GRPC Server.
 	GRPCServer GRPCServerSettings
@@ -655,6 +656,10 @@ type Cfg struct {
 	IndexModificationCacheTTL                  time.Duration // TTL for dedup cache used in ListModifiedSince. 0 disables the cache.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
+	IndexSnapshotEnabled                       bool          // Enable remote index snapshots
+	IndexSnapshotBucketURL                     string        // Go CDK bucket URL for snapshot storage (s3://, gs://, azblob://, mem://, file:///)
+	IndexSnapshotThreshold                     int           // Min doc count to use remote snapshots (must be >= IndexFileThreshold, default: 5000)
+	IndexSnapshotMaxAge                        time.Duration // Max snapshot age before deletion (must be >= MaxFileIndexAge, default: 7d)
 	EnableSharding                             bool
 	QOSEnabled                                 bool
 	QOSNumberWorker                            int

@@ -70,6 +70,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
     strategy?: PluginUpdateStrategy;
   };
   category?: string;
+  distributionType?: string;
 }
 export interface Screenshots {
   path: string;
@@ -199,6 +200,7 @@ export type RemotePlugin = {
     strategy?: PluginUpdateStrategy;
   };
   category?: string;
+  versionDistributionType?: string;
 };
 
 export enum PluginUpdateStrategy {

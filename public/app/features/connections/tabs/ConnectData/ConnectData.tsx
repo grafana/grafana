@@ -188,7 +188,7 @@ export function AddNewConnection() {
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <div className={styles.searchField}>
                 <Field label={t('common.search', 'Search')} noMargin>
-                  <SearchField value={searchTerm} onSearch={handleSearchChange} />
+                  <SearchField value={searchTerm} onSearch={handleSearchChange} id="connections-search-field" />
                 </Field>
               </div>
               <div className={styles.groupByControl}>
