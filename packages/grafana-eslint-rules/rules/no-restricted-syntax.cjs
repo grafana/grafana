@@ -52,7 +52,6 @@ module.exports = createNoRestrictedSyntax(
   {
     name: 'no-direct-date-fns',
     selector: 'ImportDeclaration[source.value="date-fns"][importKind!="type"]',
-    message:
-      'Use deep imports instead (e.g. date-fns/format) to avoid pulling in the entire library.',
+    message: 'Use deep imports instead (e.g. date-fns/format) to avoid pulling in the entire library.',
   }
 );
