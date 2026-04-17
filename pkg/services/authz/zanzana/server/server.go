@@ -67,13 +67,13 @@ type Server struct {
 	metrics *metrics
 }
 
-func NewEmbeddedZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileGVRs []schema.GroupVersionResource) (*Server, error) {
+func NewEmbeddedZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource) (*Server, error) {
 	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	return newServer(cfg, openfga, store, logger, tracer, reg, restConfig, reconcileGVRs)
+	return newServer(cfg, openfga, store, logger, tracer, reg, restConfig, reconcileCRDs)
 }
 
 func NewZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) (*Server, error) {
@@ -85,7 +85,7 @@ func NewZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger l
 	return newServer(cfg, openfgaServer, store, logger, tracer, reg, nil, nil)
 }
 
-func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileGVRs []schema.GroupVersionResource) (*Server, error) {
+func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource) (*Server, error) {
 	channel := &inprocgrpc.Channel{}
 	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
 	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
@@ -199,7 +199,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 				WriteBatchSize:      cfg.ZanzanaReconciler.WriteBatchSize,
 				ZanzanaReadPageSize: int(cfg.ZanzanaServer.ReadPageSize),
 				QueueSize:           cfg.ZanzanaReconciler.QueueSize,
-				GVRs:                reconcileGVRs,
+				CRDs:                reconcileCRDs,
 			},
 			reconcilerLogger,
 			tracer,

@@ -456,8 +456,8 @@ var wireBasicSet = wire.NewSet(
 	userimpl.ProvideVerifier,
 	connectors.ProvideOrgRoleMapper,
 	wire.Bind(new(user.Verifier), new(*userimpl.Verifier)),
-	// authz.ReconcileGVRs is left out of WireSet here — each build chooses
-	// its own provider (authz.ProvideReconcileGVRs in OSS, the enterprise
+	// authz.ReconcileCRDs is left out of WireSet here — each build chooses
+	// its own provider (authz.ProvideReconcileCRDs in OSS, the enterprise
 	// equivalent in wireexts_enterprise.go) to avoid a multi-binding conflict.
 	authz.WireSetBase,
 	// Secrets Manager

@@ -89,7 +89,7 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Serv
 }
 
 // ProvideEmbeddedZanzanaServer creates and registers embedded ZanzanaServer.
-func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, storeProvider zStore.StoreProvider, reconcileGVRs ReconcileGVRs) (zanzana.Server, error) {
+func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, storeProvider zStore.StoreProvider, reconcileCRDs []schema.GroupVersionResource) (zanzana.Server, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		return zServer.NewNoopServer(), nil
@@ -102,7 +102,7 @@ func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tra
 		return nil, fmt.Errorf("failed to create zanzana store: %w", err)
 	}
 
-	srv, err := zServer.NewEmbeddedZanzanaServer(cfg, store, logger, tracer, reg, restConfig, []schema.GroupVersionResource(reconcileGVRs))
+	srv, err := zServer.NewEmbeddedZanzanaServer(cfg, store, logger, tracer, reg, restConfig, []schema.GroupVersionResource(reconcileCRDs))
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
@@ -110,16 +110,11 @@ func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tra
 	return srv, nil
 }
 
-// ReconcileGVRs is the Wire-bound list of GVRs the MT reconciler translates
-// from Unistore into Zanzana tuples. Enterprise rebinds ProvideReconcileGVRs
-// to include Role/RoleBinding (and any other enterprise-only resources).
-type ReconcileGVRs []schema.GroupVersionResource
-
-// ProvideReconcileGVRs returns the OSS list of GVRs. Role and RoleBinding are
+// ProvideReconcileCRDs returns the OSS list of CRDs. Role and RoleBinding are
 // noop-implemented in OSS (pkg/registry/apis/iam/api_installer.go) and are
 // omitted — listing them would fail the whole namespace reconcile.
-func ProvideReconcileGVRs() ReconcileGVRs {
-	return ReconcileGVRs(reconciler.ReconcileGVRs())
+func ProvideReconcileCRDs() []schema.GroupVersionResource {
+	return reconciler.DefaultCRDs
 }
 
 // ProvideEmbeddedZanzanaService creates a background service wrapper for the embedded zanzana server

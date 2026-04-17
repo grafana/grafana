@@ -449,8 +449,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	permissionRegistry := permreg.ProvidePermissionRegistry()
 	serverLockService := serverlock.ProvideService(sqlStore, tracingService)
 	storeProvider := store2.ProvideDefaultStoreProvider()
-	reconcileGVRs := authz.ProvideReconcileGVRs()
-	server, err := authz.ProvideEmbeddedZanzanaServer(cfg, sqlStore, tracingService, featureToggles, registerer, eventualRestConfigProvider, storeProvider, reconcileGVRs)
+	v := authz.ProvideReconcileCRDs()
+	server, err := authz.ProvideEmbeddedZanzanaServer(cfg, sqlStore, tracingService, featureToggles, registerer, eventualRestConfigProvider, storeProvider, v)
 	if err != nil {
 		return nil, err
 	}
@@ -804,7 +804,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service14, cacheServiceImpl, plugincontextProvider, cfg)
-	v := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
+	v2 := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
 	appInstaller, err := playlist2.RegisterAppInstaller(featureToggles, acimplService, accessControl)
 	if err != nil {
@@ -863,11 +863,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	v2 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller)
+	v3 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	backend := auditing.ProvideNoopBackend()
 	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()
-	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, sqlStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2, builderMetrics, backend, policyRuleProvider)
+	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, sqlStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v2, eventualRestConfigProvider, registerer, aggregatorRunner, v3, builderMetrics, backend, policyRuleProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -932,11 +932,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, sqlStore, prefService, userimplService, apiserverService)
 	collectionsAPIBuilder := collections.RegisterAPIService(cfg, featureToggles, sqlStore, starService, userimplService, apiserverService)
 	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
-	v3 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
+	v4 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
 	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
-	v4 := extras.ProvideExtraWorkers(pullRequestWorker)
-	v5 := _wireValue
-	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, v5)
+	v5 := extras.ProvideExtraWorkers(pullRequestWorker)
+	v6 := _wireValue
+	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, v6)
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
 	if err != nil {
 		return nil, err
@@ -946,19 +946,19 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	factory := github.ProvideFactory()
-	v6 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
-	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, v6)
+	v7 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
+	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, v7)
 	if err != nil {
 		return nil, err
 	}
 	githubFactory := github2.ProvideFactory()
-	v7 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory, registerer)
-	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, v7)
+	v8 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory, registerer)
+	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, v8)
 	if err != nil {
 		return nil, err
 	}
 	quotaGetter := extras.ProvideQuotaGetter(cfg)
-	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, tracingService, v3, v4, repositoryFactory, connectionFactory, quotaGetter)
+	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, tracingService, v4, v5, repositoryFactory, connectionFactory, quotaGetter)
 	if err != nil {
 		return nil, err
 	}
@@ -1148,8 +1148,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	permissionRegistry := permreg.ProvidePermissionRegistry()
 	serverLockService := serverlock.ProvideService(sqlStore, tracingService)
 	storeProvider := store2.ProvideDefaultStoreProvider()
-	reconcileGVRs := authz.ProvideReconcileGVRs()
-	server, err := authz.ProvideEmbeddedZanzanaServer(cfg, sqlStore, tracingService, featureToggles, registerer, eventualRestConfigProvider, storeProvider, reconcileGVRs)
+	v := authz.ProvideReconcileCRDs()
+	server, err := authz.ProvideEmbeddedZanzanaServer(cfg, sqlStore, tracingService, featureToggles, registerer, eventualRestConfigProvider, storeProvider, v)
 	if err != nil {
 		return nil, err
 	}
@@ -1505,7 +1505,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service14, cacheServiceImpl, plugincontextProvider, cfg)
-	v := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
+	v2 := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
 	appInstaller, err := playlist2.RegisterAppInstaller(featureToggles, acimplService, accessControl)
 	if err != nil {
@@ -1564,11 +1564,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	v2 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller)
+	v3 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	backend := auditing.ProvideNoopBackend()
 	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()
-	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, sqlStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2, builderMetrics, backend, policyRuleProvider)
+	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, sqlStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v2, eventualRestConfigProvider, registerer, aggregatorRunner, v3, builderMetrics, backend, policyRuleProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1633,11 +1633,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, sqlStore, prefService, userimplService, apiserverService)
 	collectionsAPIBuilder := collections.RegisterAPIService(cfg, featureToggles, sqlStore, starService, userimplService, apiserverService)
 	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
-	v3 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
+	v4 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
 	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
-	v4 := extras.ProvideExtraWorkers(pullRequestWorker)
-	v5 := _wireValue
-	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, v5)
+	v5 := extras.ProvideExtraWorkers(pullRequestWorker)
+	v6 := _wireValue
+	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, v6)
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
 	if err != nil {
 		return nil, err
@@ -1647,19 +1647,19 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	factory := github.ProvideFactory()
-	v6 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
-	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, v6)
+	v7 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
+	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, v7)
 	if err != nil {
 		return nil, err
 	}
 	githubFactory := github2.ProvideFactory()
-	v7 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory, registerer)
-	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, v7)
+	v8 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory, registerer)
+	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, v8)
 	if err != nil {
 		return nil, err
 	}
 	quotaGetter := extras.ProvideQuotaGetter(cfg)
-	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, tracingService, v3, v4, repositoryFactory, connectionFactory, quotaGetter)
+	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, tracingService, v4, v5, repositoryFactory, connectionFactory, quotaGetter)
 	if err != nil {
 		return nil, err
 	}
@@ -1802,8 +1802,8 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (Runner, error) {
 	permissionRegistry := permreg.ProvidePermissionRegistry()
 	serverLockService := serverlock.ProvideService(sqlStore, tracingService)
 	storeProvider := store2.ProvideDefaultStoreProvider()
-	reconcileGVRs := authz.ProvideReconcileGVRs()
-	server, err := authz.ProvideEmbeddedZanzanaServer(cfg, sqlStore, tracingService, featureToggles, registerer, eventualRestConfigProvider, storeProvider, reconcileGVRs)
+	v := authz.ProvideReconcileCRDs()
+	server, err := authz.ProvideEmbeddedZanzanaServer(cfg, sqlStore, tracingService, featureToggles, registerer, eventualRestConfigProvider, storeProvider, v)
 	if err != nil {
 		return Runner{}, err
 	}

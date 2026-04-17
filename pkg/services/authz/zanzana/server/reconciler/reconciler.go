@@ -62,14 +62,10 @@ type Reconciler struct {
 type Config struct {
 	Workers             int
 	Interval            time.Duration
-	WriteBatchSize      int // Number of tuples to write in a single batch (0 = no batching)
-	QueueSize           int // Size of the buffered work queue for namespaces (default 1000)
-	ZanzanaReadPageSize int // Page size when reading tuples from Zanzana (default 100, max 100)
-	// GVRs is the set of namespaced resources the reconciler will translate
-	// from Unistore into Zanzana tuples. OSS and enterprise builds supply
-	// different lists via Wire so the reconciler never tries to list a resource
-	// that isn't served in this build.
-	GVRs []schema.GroupVersionResource
+	WriteBatchSize      int                           // Number of tuples to write in a single batch (0 = no batching)
+	QueueSize           int                           // Size of the buffered work queue for namespaces (default 1000)
+	ZanzanaReadPageSize int                           // Page size when reading tuples from Zanzana (default 100, max 100)
+	CRDs                []schema.GroupVersionResource // The set of namespaced resources the reconciler will translate
 }
 
 func (c Config) queueSize() int {
@@ -86,19 +82,13 @@ func (c Config) zanzanaReadPageSize() int32 {
 	return int32(c.ZanzanaReadPageSize)
 }
 
-// ReconcileGVRs returns the OSS list of namespaced GVRs the reconciler
-// translates into Zanzana tuples. Role/RoleBinding are noop-implemented in OSS
-// (pkg/registry/apis/iam/api_installer.go) so they are omitted — listing them
-// would fail the whole namespace reconcile. Enterprise rebinds the Wire
-// provider that wraps this to include its additional resources.
-func ReconcileGVRs() []schema.GroupVersionResource {
-	return []schema.GroupVersionResource{
-		folderv1.FolderResourceInfo.GroupVersionResource(),
-		iamv0.ResourcePermissionInfo.GroupVersionResource(),
-		iamv0.TeamBindingResourceInfo.GroupVersionResource(),
-		iamv0.UserResourceInfo.GroupVersionResource(),
-		iamv0.ServiceAccountResourceInfo.GroupVersionResource(),
-	}
+// defaultCRDs is the list of namespaced CRDs the reconciler will translate into Zanzana tuples.
+var DefaultCRDs = []schema.GroupVersionResource{
+	folderv1.FolderResourceInfo.GroupVersionResource(),
+	iamv0.ResourcePermissionInfo.GroupVersionResource(),
+	iamv0.TeamBindingResourceInfo.GroupVersionResource(),
+	iamv0.UserResourceInfo.GroupVersionResource(),
+	iamv0.ServiceAccountResourceInfo.GroupVersionResource(),
 }
 
 // NewReconciler creates a new reconciler instance.

@@ -164,7 +164,7 @@ var wireExtsBasicSet = wire.NewSet(
 	configProviderExtras,
 	advisor.ProvideAppInstaller,
 	zStore.ProvideDefaultStoreProvider,
-	authz.ProvideReconcileGVRs,
+	authz.ProvideReconcileCRDs,
 )
 
 var wireExtsSet = wire.NewSet(
