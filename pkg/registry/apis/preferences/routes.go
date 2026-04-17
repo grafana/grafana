@@ -5,14 +5,13 @@ import (
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
-
-	"k8s.io/apiserver/pkg/endpoints/request"
+	"sigs.k8s.io/yaml"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/resource"
-
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -114,7 +113,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 						return
 					}
 
-					client, err := b.clientGetter(ctx)
+					client, err := b.clientGenerator.ClientFor(preferences.PreferencesKind())
 					if err != nil {
 						errhttp.Write(ctx, err, w)
 						return
@@ -124,11 +123,21 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 						Namespace: request.NamespaceValue(ctx),
 						Name:      fmt.Sprintf("user-%s", id.GetIdentifier()),
 					})
+					if err != nil {
+						errhttp.Write(ctx, err, w)
+						return
+					}
 
-					fmt.Printf("GOT: %+v\n%v", p, err)
+					out, err := yaml.Marshal(p)
+					if err != nil {
+						errhttp.Write(ctx, err, w)
+						return
+					}
+
+					fmt.Printf("GOT: %s\n\n", string(out))
 
 					// &util.DynMap{"message": "Help flag set", "helpFlags1": *bitmask}
-					w.Write([]byte("TODO... set flags"))
+					_, _ = w.Write([]byte("TODO... set flags"))
 				},
 			}, {
 				Path: "helpflags",

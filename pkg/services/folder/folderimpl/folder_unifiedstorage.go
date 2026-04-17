@@ -484,15 +484,6 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if cmd.NewTitle != nil && *cmd.NewTitle != "" {
-		title := strings.TrimSpace(*cmd.NewTitle)
-		cmd.NewTitle = &title
-
-		if strings.EqualFold(*cmd.NewTitle, dashboards.RootFolderName) {
-			return nil, folder.ErrNameExists
-		}
-	}
-
 	if !util.IsValidShortUID(cmd.UID) {
 		return nil, dashboards.ErrDashboardInvalidUid
 	} else if util.IsShortUIDTooLong(cmd.UID) {

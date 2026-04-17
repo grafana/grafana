@@ -8,8 +8,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/open-feature/go-sdk/openfeature"
-
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -23,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -216,7 +213,7 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetUserPermission")
 	defer span.End()
 
-	actions, err := s.mapPermission(ctx, permission)
+	actions, err := s.mapPermission(permission)
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +247,7 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetTeamPermission")
 	defer span.End()
 
-	actions, err := s.mapPermission(ctx, permission)
+	actions, err := s.mapPermission(permission)
 	if err != nil {
 		return nil, err
 	}
@@ -284,7 +281,7 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetBuiltInRolePermission")
 	defer span.End()
 
-	actions, err := s.mapPermission(ctx, permission)
+	actions, err := s.mapPermission(permission)
 	if err != nil {
 		return nil, err
 	}
@@ -348,7 +345,7 @@ func (s *Service) SetPermissions(
 			}
 		}
 
-		actions, err := s.mapPermission(ctx, cmd.Permission)
+		actions, err := s.mapPermission(cmd.Permission)
 		if err != nil {
 			return nil, err
 		}
@@ -392,7 +389,7 @@ func (s *Service) DeleteResourcePermissions(ctx context.Context, orgID int64, re
 	})
 }
 
-func (s *Service) mapPermission(ctx context.Context, permission string) ([]string, error) {
+func (s *Service) mapPermission(permission string) ([]string, error) {
 	if permission == "" {
 		return []string{}, nil
 	}
@@ -406,17 +403,6 @@ func (s *Service) mapPermission(ctx context.Context, permission string) ([]strin
 		// If we only want to store action sets, return now
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if s.features.IsEnabledGlobally(featuremgmt.FlagOnlyStoreActionSets) {
-			return actions, nil
-		}
-	}
-
-	// Write action set token for service accounts. Granular actions are also written until
-	// FlagOnlyStoreServiceAccountActionSets is enabled (after the backfill migration has run).
-	if s.options.Resource == serviceaccounts.ScopeServiceAccountRoot {
-		actions = append(actions, s.options.GetActionSetName(permission))
-
-		onlyActionSets, _ := openfeature.NewDefaultClient().BooleanValue(ctx, featuremgmt.FlagOnlyStoreServiceAccountActionSets, false, openfeature.TransactionContext(ctx))
-		if onlyActionSets {
 			return actions, nil
 		}
 	}
@@ -657,8 +643,7 @@ func (a *ActionSetSvc) RegisterActionSets(ctx context.Context, pluginID string, 
 func isActionSetEnabledResource(action string) bool {
 	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) ||
 		strings.HasPrefix(action, folder.ScopeFoldersRoot) ||
-		strings.HasPrefix(action, accesscontrol.AlertingRoutesKind) ||
-		strings.HasPrefix(action, serviceaccounts.ScopeServiceAccountRoot)
+		strings.HasPrefix(action, accesscontrol.AlertingRoutesKind)
 }
 
 // scopeResource returns the resource prefix used for Resource fields in commands/queries.

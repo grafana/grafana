@@ -14,12 +14,11 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 
-	"github.com/grafana/grafana-app-sdk/k8s"
+	"github.com/grafana/grafana-app-sdk/resource"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -35,9 +34,9 @@ var (
 )
 
 type APIBuilder struct {
-	authorizer   authorizer.Authorizer
-	legacyPrefs  rest.Storage
-	clientGetter func(context.Context) (*preferences.PreferencesClient, error)
+	authorizer      authorizer.Authorizer
+	clientGenerator resource.ClientGenerator
+	legacyPrefs     rest.Storage
 
 	merger *merger // joins all preferences
 }
@@ -49,24 +48,12 @@ func RegisterAPIService(
 	prefs pref.Service,
 	users user.Service,
 	apiregistration builder.APIRegistrar,
-	restConfigProvider apiserver.RestConfigProvider,
+	clientGenerator resource.ClientGenerator,
 ) *APIBuilder {
-	getter := func(ctx context.Context) (*preferences.PreferencesClient, error) {
-		restConfig, err := restConfigProvider.GetRestConfig(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("error getting client: %w", err)
-		}
-		client, err := k8s.NewClientRegistry(*restConfig, k8s.DefaultClientConfig()).ClientFor(preferences.PreferencesKind())
-		if err != nil {
-			return nil, fmt.Errorf("unable to create example client: %w", err)
-		}
-		return preferences.NewPreferencesClient(client), nil
-	}
-
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
-		clientGetter: getter,
-		merger:       newMerger(cfg, sql),
+		clientGenerator: clientGenerator,
+		merger:          newMerger(cfg, sql),
 		authorizer: &utils.AuthorizeFromName{
 			OKNames: []string{"merged"},
 			Teams:   sql, // should be from the IAM service
