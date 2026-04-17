@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { textUtil } from '@grafana/data';
 
-const isHttpUrl = (value: string): boolean => {
+export const isHttpUrl = (value: string): boolean => {
   try {
     const url = new URL(value);
     return url.protocol === 'http:' || url.protocol === 'https:';
