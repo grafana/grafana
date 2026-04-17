@@ -686,15 +686,10 @@ func (c *stubCache) Set(_ context.Context, namespace string, entry encryption.Da
 func (c *stubCache) Flush(_ context.Context, namespace string) {}
 func (c *stubCache) RemoveExpired(_ context.Context)           {}
 
-type fatalNamespaceOnGetByIdCache struct {
-	poisonDataKeyID string
-}
+type fatalNamespaceOnGetByIdCache struct{}
 
-func (c *fatalNamespaceOnGetByIdCache) GetById(_ context.Context, _, id string) (encryption.DataKeyCacheEntry, bool, error) {
-	if c.poisonDataKeyID != "" && id == c.poisonDataKeyID {
-		return encryption.DataKeyCacheEntry{}, false, encryption.ErrDataKeyCacheUnexpectedNamespace
-	}
-	return encryption.DataKeyCacheEntry{}, false, nil
+func (c *fatalNamespaceOnGetByIdCache) GetById(context.Context, string, string) (encryption.DataKeyCacheEntry, bool, error) {
+	return encryption.DataKeyCacheEntry{}, false, encryption.ErrDataKeyCacheUnexpectedNamespace
 }
 
 func (c *fatalNamespaceOnGetByIdCache) GetByLabel(_ context.Context, _, _ string) (encryption.DataKeyCacheEntry, bool, error) {
@@ -740,8 +735,6 @@ func TestConsolidateNamespace_FatalWhenCacheGetByIdReportsUnexpectedNamespace(t 
 	namespace := xkube.Namespace("test-namespace")
 	encrypted, err := svc.Encrypt(ctx, namespace, []byte("consolidation-payload"), contracts.EncryptionOption{})
 	require.NoError(t, err)
-
-	cache.poisonDataKeyID = encrypted.DataKeyID
 
 	values := []*contracts.EncryptedValue{
 		{
