@@ -221,7 +221,10 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     try {
-      const meta = (await getDatasourcePluginMeta(instanceSettings.type)) ?? instanceSettings.meta;
+      const meta = await getDatasourcePluginMeta(instanceSettings.type);
+      if (!meta) {
+        return Promise.reject({ message: `Meta for datasource ${key} was not found` });
+      }
       const dsPlugin = await pluginImporter.importDataSource(meta);
       // check if its in cache now
       if (this.datasources[key]) {
@@ -242,7 +245,7 @@ export class DatasourceSrv implements DataSourceService {
         anyInstance.name = instanceSettings.name;
         anyInstance.id = instanceSettings.id;
         anyInstance.type = instanceSettings.type;
-        anyInstance.meta = instanceSettings.meta;
+        anyInstance.meta = meta;
         anyInstance.uid = instanceSettings.uid;
         anyInstance.getRef = DataSourceApi.prototype.getRef;
       }

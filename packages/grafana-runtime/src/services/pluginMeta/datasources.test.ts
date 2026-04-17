@@ -1,15 +1,20 @@
+import { PluginType } from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
+import { config } from '../../config';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
 
+import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
 import {
   getDatasourcePluginMeta,
   getDatasourcePluginMetas,
   refetchDatasourcePluginMetas,
   setDatasourcePluginMetas,
 } from './datasources';
+import { logPluginMetaWarning } from './logging';
 import { initPluginMetas, refetchPluginMetas } from './plugins';
 import { prometheusMeta } from './test-fixtures/config.datasources';
+import { v0alpha1Response } from './test-fixtures/v0alpha1Response';
 
 jest.mock('./plugins', () => ({
   ...jest.requireActual('./plugins'),
@@ -17,8 +22,17 @@ jest.mock('./plugins', () => ({
   refetchPluginMetas: jest.fn(),
 }));
 
+jest.mock('./logging', () => ({
+  logPluginMetaWarning: jest.fn(),
+  logPluginMetaError: jest.fn(),
+}));
+
 const initPluginMetasMock = jest.mocked(initPluginMetas);
 const refetchPluginMetasMock = jest.mocked(refetchPluginMetas);
+const logPluginMetaWarningMock = jest.mocked(logPluginMetaWarning);
+
+const datasourceItemsFromApi = v0alpha1Response.items.filter((i) => i.spec.pluginJson.type === 'datasource');
+const datasourceIdsFromApi = datasourceItemsFromApi.map((i) => i.spec.pluginJson.id);
 
 describe('when useMTPlugins flag is enabled', () => {
   beforeAll(() => {
@@ -55,6 +69,32 @@ describe('when useMTPlugins flag is enabled', () => {
 
       expect(result).toEqual(null);
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('and API returns non-empty items', () => {
+    beforeEach(() => {
+      setDatasourcePluginMetas({});
+      jest.resetAllMocks();
+      initPluginMetasMock.mockResolvedValue(v0alpha1Response);
+    });
+
+    it('getDatasourcePluginMetas should return metas mapped from the API response', async () => {
+      const result = await getDatasourcePluginMetas();
+
+      expect(result).toHaveLength(datasourceIdsFromApi.length);
+      expect(result.map((m) => m.id).sort()).toEqual([...datasourceIdsFromApi].sort());
+      expect(result.every((m) => m.type === PluginType.datasource)).toBe(true);
+      expect(logPluginMetaWarningMock).not.toHaveBeenCalled();
+    });
+
+    it('getDatasourcePluginMeta should return the mapped meta for a known id', async () => {
+      const knownId = datasourceIdsFromApi[0];
+      const result = await getDatasourcePluginMeta(knownId);
+
+      expect(result).not.toBeNull();
+      expect(result!.id).toBe(knownId);
+      expect(result!.type).toBe(PluginType.datasource);
     });
   });
 
@@ -120,25 +160,53 @@ describe('when useMTPlugins flag is enabled', () => {
     });
   });
 
+  describe('and refetchDatasourcePluginMetas returns non-empty items', () => {
+    beforeEach(() => {
+      setDatasourcePluginMetas({});
+      jest.resetAllMocks();
+      refetchPluginMetasMock.mockResolvedValue(v0alpha1Response);
+    });
+
+    it('should populate metas from the mapped API response', async () => {
+      await refetchDatasourcePluginMetas();
+      const result = await getDatasourcePluginMetas();
+
+      expect(result).toHaveLength(datasourceIdsFromApi.length);
+      expect(result.map((m) => m.id).sort()).toEqual([...datasourceIdsFromApi].sort());
+      expect(result.every((m) => m.type === PluginType.datasource)).toBe(true);
+      expect(logPluginMetaWarningMock).not.toHaveBeenCalled();
+    });
+  });
+
   describe('and API returns empty items', () => {
-    let consoleSpy: jest.SpyInstance;
+    const originalConfigDatasources = config.datasources;
 
     beforeEach(() => {
       setDatasourcePluginMetas({});
       jest.resetAllMocks();
       initPluginMetasMock.mockResolvedValue({ items: [] });
-      consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      config.datasources = {
+        Prometheus: { type: 'prometheus', meta: prometheusMeta } as (typeof config.datasources)[string],
+      };
     });
 
     afterEach(() => {
-      consoleSpy.mockRestore();
+      config.datasources = originalConfigDatasources;
     });
 
     it('should fall back to bootdata when API returns empty', async () => {
       const result = await getDatasourcePluginMetas();
 
-      expect(result).toEqual([]);
+      expect(result).toEqual([prometheusMeta]);
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should log a warning when falling back to bootdata', async () => {
+      await getDatasourcePluginMetas();
+
+      expect(logPluginMetaWarningMock).toHaveBeenCalledTimes(1);
+      expect(logPluginMetaWarningMock).toHaveBeenCalledWith(FALLBACK_TO_BOOTDATA_WARNING, PluginType.datasource);
     });
   });
 });
