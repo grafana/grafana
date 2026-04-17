@@ -51,12 +51,6 @@ func folderMetadataJSON(uid, title string) []byte {
 	return data
 }
 
-func requireFolderExists(t *testing.T, helper *common.GitTestHelper, folderUID string) {
-	t.Helper()
-	_, err := helper.Folders.Resource.Get(context.Background(), folderUID, metav1.GetOptions{})
-	require.NoError(t, err, "folder %s should exist", folderUID)
-}
-
 func requireFolderNotExists(t *testing.T, helper *common.GitTestHelper, folderUID string) {
 	t.Helper()
 	_, err := helper.Folders.Resource.Get(context.Background(), folderUID, metav1.GetOptions{})
