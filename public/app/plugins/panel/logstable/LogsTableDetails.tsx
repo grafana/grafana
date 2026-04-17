@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { Resizable } from 're-resizable';
-import { useState, useCallback, startTransition, useRef, useMemo } from 'react';
+import { useState, useCallback, startTransition, useRef, useMemo, useEffect } from 'react';
 
 import { type PanelProps, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -25,6 +25,18 @@ export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone
   const inputRef = useRef('');
   const styles = useStyles2(getStyles);
   const dragStyles = useStyles2(getDragStyles);
+
+  useEffect(() => {
+    function handleClose(event: KeyboardEvent) {
+      if (event.key === 'Escape' && showDetails.length > 0) {
+        closeDetails();
+      }
+    }
+    document.addEventListener('keyup', handleClose);
+    return () => {
+      document.removeEventListener('keyup', handleClose);
+    };
+  }, [closeDetails, showDetails.length]);
 
   const handleSearch = useCallback((newSearch: string) => {
     inputRef.current = newSearch;
