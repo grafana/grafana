@@ -9,8 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
-const ScopeServiceAccountRoot = "serviceaccounts"
-
 var (
 	ScopeAll = "serviceaccounts:*"
 	ScopeID  = accesscontrol.Scope("serviceaccounts", "id", accesscontrol.Parameter(":serviceAccountId"))

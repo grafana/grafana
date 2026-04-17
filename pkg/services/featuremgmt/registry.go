@@ -2381,15 +2381,6 @@ var (
 			Expression:   "true",
 		},
 		{
-			Name:         "onlyStoreServiceAccountActionSets",
-			Description:  "When storing service account resource permissions, only store action sets and not the full list of underlying permissions",
-			Stage:        FeatureStageExperimental,
-			Generate:     Generate{LegacyGo: true},
-			HideFromDocs: true,
-			Owner:        identityAccessTeam,
-			Expression:   "false",
-		},
-		{
 			Name:         "excludeRedundantManagedPermissions",
 			Description:  "Exclude redundant individual dashboard/folder permissions from managed roles at query time",
 			Stage:        FeatureStageExperimental,
@@ -3027,6 +3018,14 @@ var (
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{React: true},
 			Owner:       grafanaFrontendPlatformSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "datasource.useNewCRUDAPIs",
+			Description: "Use the new datasource API groups for datasource CRUD requests, backend flag",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true},
+			Owner:       grafanaDatasourcesCoreServicesSquad,
 			Expression:  "false",
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
