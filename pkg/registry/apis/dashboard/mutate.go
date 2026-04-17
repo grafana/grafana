@@ -31,6 +31,14 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 	switch a.GetResource().Resource {
 	case dashboardV0.DASHBOARD_RESOURCE:
 		return b.mutateDashboard(ctx, a)
+	// Reachability invariant: this case only fires when the apiserver routes
+	// a request to the v2 Variable storage, which is registered in
+	// UpdateAPIGroupInfo behind FlagGlobalDashboardVariables (see register.go).
+	// No other dashboard.grafana.app version registers a standalone Variable
+	// resource, so without the flag the apiserver has no route and admission
+	// never dispatches here. If Variable is ever added to another version or
+	// moved to a subresource, update both the storage registration and this
+	// switch in lockstep.
 	case dashboardV2.VariableResourceInfo.GroupVersionResource().Resource:
 		return mutateVariable(a)
 

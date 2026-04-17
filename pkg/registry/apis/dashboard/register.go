@@ -347,6 +347,14 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		return nil // OK for now
 	case dashv0.SNAPSHOT_RESOURCE:
 		return nil // OK for now
+	// Reachability invariant: this case only fires when the apiserver routes
+	// a request to the v2 Variable storage, which is registered in
+	// UpdateAPIGroupInfo behind FlagGlobalDashboardVariables. No other
+	// dashboard.grafana.app version registers a standalone Variable resource,
+	// so without the flag the apiserver has no route and admission never
+	// dispatches here. If Variable is ever added to another version or moved
+	// to a subresource, update both the storage registration and this switch
+	// in lockstep.
 	case dashv2.VariableResourceInfo.GroupVersionResource().Resource:
 		switch op {
 		case admission.Create:
