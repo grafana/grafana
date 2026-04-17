@@ -33,7 +33,7 @@ If you're affected, use the following recovery paths:
 - **If your instance used mixed local and Git Sync content:** restore from the database backup you took before upgrading, then upgrade to Grafana v13.0.1.
 - **If your instance used full-instance Git Sync:** upgrade to Grafana v13.0.1 and resync from your Git repository.
 - **If unsure:** restore from your database backup before upgrading to v13.0.1.
-{{< /admonition >}}
+  {{< /admonition >}}
 
 ### React 19 related updates
 
