@@ -33,25 +33,10 @@ const (
 
 var (
 	searchRegex = regexp.MustCompile(`\{(\w+)\}`)
-
-	prometheusCompatibleDsTypes = []string{
-		datasources.DS_PROMETHEUS,
-		datasources.DS_AMAZON_PROMETHEUS,
-		datasources.DS_AZURE_PROMETHEUS,
-	}
 )
 
-func isPrometheusCompatible(dsType string) bool {
-	for _, t := range prometheusCompatibleDsTypes {
-		if dsType == t {
-			return true
-		}
-	}
-	return false
-}
-
 func isLotexRulerCompatible(dsType string) bool {
-	return dsType == datasources.DS_LOKI || isPrometheusCompatible(dsType)
+	return dsType == datasources.DS_LOKI || datasources.IsPrometheusCompatible(dsType)
 }
 
 func toMacaronPath(path string) string {
