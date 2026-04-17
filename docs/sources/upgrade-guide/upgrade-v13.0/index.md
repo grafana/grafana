@@ -21,16 +21,18 @@ weight: 495
 
 ## Technical notes
 
-{{< admonition type="warning" >}}
-**GitSync early adopters:** If you upgraded to Grafana v13.0.0 with GitSync enabled from Grafana v12.x.x, a migration bug might have caused dashboards and folders to be lost or reverted during the upgrade. This issue is fixed in Grafana v13.0.1.
+{{< admonition type="caution" >}}
+**Git Sync early adopters:** If you enabled Git Sync in Grafana v12.x.x and upgraded to Grafana v13.0.0, upgrade to Grafana v13.0.1 to fix a migration bug that may cause dashboards and folders to be lost or reverted during the upgrade to Grafana 13.0.0.
 
-This bug only affects self-managed instances that enabled the GitSync feature flags (`provisioning`, `kubernetesClientDashboardsFolders`, `kubernetesDashboards`, and `grafanaAPIServerEnsureKubectlAccess`) before GitSync reached general availability.
+The bug only affects self-managed instances with Git Sync feature flags (`provisioning`, `kubernetesClientDashboardsFolders`, `kubernetesDashboards`, and `grafanaAPIServerEnsureKubectlAccess`) enabled on Grafana v12.x.x.
 
-Grafana v13.0.0 was removed from distribution and a fix is included in Grafana v13.0.1.
+Grafana v13.0.0 has been removed from distribution and the fix has shipped in Grafana v13.0.1.
 
-If you are affected, recovery might require restoring from backup or resyncing from Git, depending on whether your instance used mixed local and GitSync content or full-instance sync.
+If you're affected, use the following recovery paths:
 
-We recommend using your database backup to restore and then upgrading to v13.0.1.
+- **If your instance used mixed local and Git Sync content:** restore from the database backup you took before upgrading, then upgrade to Grafana v13.0.1.
+- **If your instance used full-instance Git Sync:** upgrade to Grafana v13.0.1 and resync from your Git repository.
+- **If unsure:** restore from your database backup before upgrading to v13.0.1.
 {{< /admonition >}}
 
 ### React 19 related updates
