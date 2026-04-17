@@ -173,6 +173,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
         }))
       ),
       transformation: () => Promise.resolve(standardTransformers.organizeFieldsTransformer),
+      defaultOptions: standardTransformers.organizeFieldsTransformer.defaultOptions,
       name: t('transformers.organize-fields-transformer-editor.name.organize-fields', 'Organize fields by name'),
       description: t(
         'transformers.organize-fields-transformer-editor.description.reorder-hide-or-rename-fields',
@@ -243,6 +244,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
         }))
       ),
       transformation: () => Promise.resolve(standardTransformers.calculateFieldTransformer),
+      defaultOptions: standardTransformers.calculateFieldTransformer.defaultOptions,
       name: t(
         'transformers.get-calculate-field-transform-registry-item.name.add-field-from-calculation',
         'Add field from calculation'
