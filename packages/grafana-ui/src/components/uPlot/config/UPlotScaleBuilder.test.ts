@@ -72,11 +72,10 @@ describe('UPlotScaleBuilder', () => {
     });
 
     it('falls back to log base 10 when an invalid log base is given', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const config = new UPlotScaleBuilder({
         ...baseProps,
         distribution: ScaleDistribution.Log,
-        log: 7 as any,
+        log: 7,
       }).getConfig();
       expect(config['y'].log).toBe(10);
     });
