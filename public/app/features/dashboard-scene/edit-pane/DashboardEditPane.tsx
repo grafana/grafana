@@ -5,6 +5,7 @@ import {
   type ElementSelectionOnSelectOptions,
 } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
+import { getState } from 'app/store/store';
 
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { getRepeatCloneSourceKey } from '../utils/clone';
@@ -17,6 +18,7 @@ import {
   DashboardEditActionEvent,
   type DashboardEditActionEventPayload,
   DashboardStateChangedEvent,
+  getEditableElementFor,
   NewObjectAddedToCanvasEvent,
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
@@ -303,6 +305,14 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       selectedDisconnectedObject: this.state.previousState.selectedDisconnectedObject,
       previousState: this.state.previousState.previousState,
     });
+
+    if (this.state.openPane?.getId() === 'element' && this.state.selectionContext.selected.length === 1) {
+      const selectedObj = this.getSelectedObject();
+      if (selectedObj) {
+        const element = getEditableElementFor(selectedObj);
+        element?.scrollIntoView?.();
+      }
+    }
   }
 
   private updateSelection(selected: ElementSelectionContextItem[], selectedDisconnectedObject?: SceneObject) {
@@ -317,7 +327,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       openPane: selected.length ? new ElementEditPane({}) : undefined,
       isNewElement: false,
       selectedDisconnectedObject,
-      previousState: this.state,
+      previousState: getStateForPaneHistory(this.state),
     });
   }
 
@@ -374,7 +384,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       return;
     }
 
-    this.setState({ openPane, previousState: this.state });
+    this.setState({ openPane, previousState: getStateForPaneHistory(this.state) });
   }
 
   public closePane() {
@@ -438,4 +448,16 @@ function trySwitchingToSourceTab(source: SceneObject) {
   } else {
     trySwitchingToSourceTab(source.parent);
   }
+}
+
+function getStateForPaneHistory(state: DashboardEditPaneState | undefined): DashboardEditPaneState | undefined {
+  if (!state) {
+    return undefined;
+  }
+
+  if (state.openPane?.disableGoBack) {
+    return getStateForPaneHistory(state.previousState!);
+  }
+
+  return state;
 }
