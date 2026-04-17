@@ -83,6 +83,13 @@ func (m *mockDirectRestConfigProvider) GetDirectRestConfig(c *contextmodel.ReqCo
 	}
 }
 
+func (m *mockDirectRestConfigProvider) GetServiceRestConfig(_ int64) *clientrest.Config {
+	return &clientrest.Config{
+		Host:      m.host,
+		Transport: m.transport,
+	}
+}
+
 func (m *mockDirectRestConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
 	m.lastServedPath = r.URL.Path
 	m.lastServedMethod = r.Method

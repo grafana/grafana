@@ -1365,10 +1365,23 @@ func TestUserK8sService_GetSignedInUser(t *testing.T) {
 			expectErr:   true,
 		},
 		{
-			name:         "returns error when no request context",
+			name:         "falls back to service identity when no request context",
 			cmd:          &user.GetSignedInUserQuery{UserID: 42, OrgID: 1},
 			noReqContext: true,
-			expectErr:    true,
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				makeUserListResponse(newTestK8sUser("some-uid", "org-1", "jdoe", "jdoe@example.com"))(w, r)
+			},
+			expectUser: &user.SignedInUser{
+				UserUID:        "some-uid",
+				OrgID:          1,
+				OrgRole:        "Admin",
+				Login:          "jdoe",
+				Email:          "jdoe@example.com",
+				Name:           "John Doe",
+				IsGrafanaAdmin: true,
+				EmailVerified:  true,
+				LastSeenAt:     time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC),
+			},
 		},
 		{
 			name:        "returns error when no requester and no OrgID in query",
@@ -1488,6 +1501,10 @@ type mockDirectRestConfigProvider struct {
 }
 
 func (m *mockDirectRestConfigProvider) GetDirectRestConfig(_ *contextmodel.ReqContext) *rest.Config {
+	return m.restConfig
+}
+
+func (m *mockDirectRestConfigProvider) GetServiceRestConfig(_ int64) *rest.Config {
 	return m.restConfig
 }
 

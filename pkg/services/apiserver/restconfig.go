@@ -7,6 +7,7 @@ import (
 
 	clientrest "k8s.io/client-go/rest"
 
+	apiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 )
 
@@ -34,6 +35,11 @@ type DirectRestConfigProvider interface {
 	// logged in user as the current request context.  This is useful when
 	// creating clients that map legacy API handlers to k8s backed services
 	GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config
+
+	// GetServiceRestConfig returns a k8s client configuration that uses service identity
+	// for authentication. Use this for internal calls made without a signed-in user in
+	// context (e.g., from auth hooks before the user is resolved).
+	GetServiceRestConfig(orgID int64) *clientrest.Config
 
 	// This can be used to rewrite incoming requests to path now supported under /apis
 	DirectlyServeHTTP(w http.ResponseWriter, r *http.Request)
@@ -91,6 +97,21 @@ func (e *eventualRestConfigProvider) GetDirectRestConfig(c *contextmodel.ReqCont
 		return e.cfg.GetDirectRestConfig(c)
 	case <-c.Req.Context().Done():
 		return nil
+	}
+}
+
+func (e *eventualRestConfigProvider) GetServiceRestConfig(orgID int64) *clientrest.Config {
+	return &clientrest.Config{
+		Transport: &apiserveroptions.RoundTripperFunc{
+			Fn: func(req *http.Request) (*http.Response, error) {
+				select {
+				case <-e.ready:
+				case <-req.Context().Done():
+					return nil, req.Context().Err()
+				}
+				return e.cfg.GetServiceRestConfig(orgID).Transport.RoundTrip(req)
+			},
+		},
 	}
 }
 

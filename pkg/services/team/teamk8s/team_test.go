@@ -1230,6 +1230,10 @@ func (m *mockDirectRestConfigProvider) GetDirectRestConfig(_ *contextmodel.ReqCo
 	return m.restConfig
 }
 
+func (m *mockDirectRestConfigProvider) GetServiceRestConfig(_ int64) *clientrest.Config {
+	return m.restConfig
+}
+
 func (m *mockDirectRestConfigProvider) DirectlyServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
 
 func (m *mockDirectRestConfigProvider) IsReady() bool {

@@ -604,6 +604,21 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 	}
 }
 
+func (s *service) GetServiceRestConfig(orgID int64) *clientrest.Config {
+	return &clientrest.Config{
+		Transport: &grafanaapiserveroptions.RoundTripperFunc{
+			Fn: func(req *http.Request) (*http.Response, error) {
+				if err := s.AwaitRunning(req.Context()); err != nil {
+					return nil, err
+				}
+				ctx, _ := identity.WithServiceIdentity(req.Context(), orgID)
+				wrapped := grafanaresponsewriter.WrapHandler(s.handler)
+				return wrapped(req.WithContext(ctx))
+			},
+		},
+	}
+}
+
 func (s *service) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := s.AwaitRunning(r.Context()); err != nil {
 		return
