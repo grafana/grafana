@@ -1,9 +1,10 @@
-import { type JSX, useCallback } from 'react';
+import { type JSX, useCallback, useEffect, useState } from 'react';
 
 import { Pages } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
 
 import {
   isAdvisorEnabled,
@@ -12,17 +13,34 @@ import {
 } from '../../hooks/useDatasourceAdvisorChecks';
 
 export function RunAdvisorChecksButton(): JSX.Element | null {
+  const notifyApp = useAppNotification();
   const { createChecks, isCreatingChecks, isAvailable } = useCreateDatasourceAdvisorChecks();
   const { check, isLoading: isLatestCheckLoading } = useLatestDatasourceCheck();
   const advisorEnabled = isAdvisorEnabled();
+  const [isWaitingForCheckCompletion, setIsWaitingForCheckCompletion] = useState(false);
 
   const onClick = useCallback(() => {
     reportInteraction('connections_datasource_list_advisor_run_checks_clicked', {
       creator_team: 'grafana_plugins_catalog',
       schema_version: '1.0.0',
     });
+    setIsWaitingForCheckCompletion(true);
     createChecks();
   }, [createChecks]);
+
+  useEffect(() => {
+    if (!isWaitingForCheckCompletion || isCreatingChecks || !check) {
+      return;
+    }
+
+    notifyApp.success(
+      t(
+        'data-sources.run-advisor-checks-button.success',
+        'Advisor checks created successfully. Go to Administration > Advisor for more details.'
+      )
+    );
+    setIsWaitingForCheckCompletion(false);
+  }, [check, isCreatingChecks, isWaitingForCheckCompletion, notifyApp]);
 
   // Keep the button visible while checks are running, but hide it once
   // onboarding is complete (a check exists and checks are no longer running).
