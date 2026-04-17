@@ -17,41 +17,36 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// CDKLockBackend implements LockBackend using gocloud.dev/blob with conditional writes.
+// cdkLockBackend implements LockBackend using gocloud.dev/blob with conditional writes.
 // Lock expiry is determined from the object's server-side ModTime + TTL + clock skew allowance.
-type CDKLockBackend struct {
-	bucket              resource.CDKBucket
-	conditionalWriteFn  conditionalWriteFunc
-	conditionalDeleteFn conditionalDeleteFunc
-	clockSkewAllowance  time.Duration
-	log                 log.Logger
-	now                 func() time.Time
+type cdkLockBackend struct {
+	bucket             resource.CDKBucket
+	ops                conditionalOps
+	clockSkewAllowance time.Duration
+	log                log.Logger
+	now                func() time.Time
 }
 
-// NewCDKLockBackend creates a new CDKLockBackend.
-func NewCDKLockBackend(bucket resource.CDKBucket, opts CDKLockBackendOptions) *CDKLockBackend {
+// newCDKLockBackend creates a new cdkLockBackend.
+func newCDKLockBackend(bucket resource.CDKBucket, opts cdkLockBackendOptions) *cdkLockBackend {
 	clockSkew := opts.clockSkewAllowance
 	if clockSkew == 0 {
 		clockSkew = 30 * time.Second
 	}
-	return &CDKLockBackend{
-		bucket:              bucket,
-		conditionalWriteFn:  opts.conditionalWrite,
-		conditionalDeleteFn: opts.conditionalDelete,
-		clockSkewAllowance:  clockSkew,
-		log:                 log.New("cdk-lock-backend"),
-		now:                 time.Now,
+	return &cdkLockBackend{
+		bucket:             bucket,
+		ops:                opts.ops,
+		clockSkewAllowance: clockSkew,
+		log:                log.New("cdk-lock-backend"),
+		now:                time.Now,
 	}
 }
 
 // Create atomically creates a lock if it does not exist.
 // If the lock exists but is expired (mtime + TTL + clockSkewAllowance < now), it attempts a conditional
-// takeover. Returns ErrLockHeld if the lock is live or if another instance wins the
+// takeover. Returns errLockHeld if the lock is live or if another instance wins the
 // takeover race.
-func (b *CDKLockBackend) Create(ctx context.Context, key string, info LockInfo) error {
-	if err := validateObjectKey(key); err != nil {
-		return err
-	}
+func (b *cdkLockBackend) Create(ctx context.Context, key string, info lockInfo) error {
 	data, err := json.Marshal(info)
 	if err != nil {
 		return fmt.Errorf("marshal lock info: %w", err)
@@ -72,17 +67,22 @@ func (b *CDKLockBackend) Create(ctx context.Context, key string, info LockInfo) 
 		return fmt.Errorf("create lock: %w", err)
 	}
 
-	// Lock object exists — check if it's expired.
-	return b.tryTakeover(ctx, key, data)
-}
+	createIfNotExists := func() error {
+		err := b.bucket.WriteAll(ctx, key, data, &blob.WriterOptions{
+			ContentType: "application/json",
+			IfNotExist:  true,
+		})
+		if err != nil && isObjectExistsErr(err) {
+			return errLockHeld
+		}
+		return err
+	}
 
-// tryTakeover reads the existing lock and, if expired, attempts a conditional overwrite.
-func (b *CDKLockBackend) tryTakeover(ctx context.Context, key string, newData []byte) error {
+	// Lock object exists — check if it's expired and attempt takeover.
 	attrs, err := b.bucket.Attributes(ctx, key)
 	if err != nil {
 		if gcerrors.Code(err) == gcerrors.NotFound {
-			// Lock was deleted between our create attempt and this read.
-			return b.retryCreate(ctx, key, newData)
+			return createIfNotExists()
 		}
 		return fmt.Errorf("read lock attributes: %w", err)
 	}
@@ -90,68 +90,54 @@ func (b *CDKLockBackend) tryTakeover(ctx context.Context, key string, newData []
 	existing, err := readLockData(ctx, b.bucket, key)
 	if err != nil {
 		if gcerrors.Code(err) == gcerrors.NotFound {
-			return b.retryCreate(ctx, key, newData)
+			return createIfNotExists()
 		}
 		return err
 	}
 
 	expiresAt := attrs.ModTime.Add(existing.TTL + b.clockSkewAllowance)
 	if b.now().Before(expiresAt) {
-		return ErrLockHeld
+		return errLockHeld
 	}
 
-	// Lock is expired — attempt conditional overwrite.
+	// The local expiry check is a best-effort optimization: attrs and existing
+	// may be from different generations if the object was replaced between the
+	// two reads. Correctness is enforced by IfMatch=attrs.ETag on the conditional
+	// write below — a generation mismatch will be rejected as errLockHeld.
 	b.log.Info("taking over expired lock", "key", key, "previous_owner", existing.Owner)
-	err = b.conditionalWrite(ctx, key, newData, attrs)
-	if errors.Is(err, ErrLockNotFound) {
-		// Lock was deleted between our read and conditional write — retry create.
-		return b.retryCreate(ctx, key, newData)
-	}
-	return err
-}
-
-// retryCreate retries an atomic create after the lock object disappeared.
-// Returns ErrLockHeld if an object already exists.
-func (b *CDKLockBackend) retryCreate(ctx context.Context, key string, data []byte) error {
-	err := b.bucket.WriteAll(ctx, key, data, &blob.WriterOptions{
-		ContentType: "application/json",
-		IfNotExist:  true,
-	})
-	if err != nil && isObjectExistsErr(err) {
-		return ErrLockHeld
+	err = b.conditionalWrite(ctx, key, data, attrs)
+	if errors.Is(err, errLockNotFound) {
+		return createIfNotExists()
 	}
 	return err
 }
 
 // conditionalWrite writes with optional conditional (If-Match) semantics.
-func (b *CDKLockBackend) conditionalWrite(ctx context.Context, key string, data []byte, attrs *blob.Attributes) error {
+func (b *cdkLockBackend) conditionalWrite(ctx context.Context, key string, data []byte, attrs *blob.Attributes) error {
 	opts := &blob.WriterOptions{ContentType: "application/json"}
-	if b.conditionalWriteFn != nil && attrs != nil {
-		opts.BeforeWrite = b.conditionalWriteFn(attrs)
+	if b.ops != nil && attrs != nil {
+		opts.BeforeWrite = b.ops.BeforeWrite(attrs)
 	}
 	err := b.bucket.WriteAll(ctx, key, data, opts)
 	if err != nil {
 		if isObjectExistsErr(err) {
 			// Another instance modified the lock between our read and write.
-			return ErrLockHeld
+			return errLockHeld
 		}
 		if gcerrors.Code(err) == gcerrors.NotFound {
 			// Lock object was deleted between Attributes/ReadAll and this write.
-			return ErrLockNotFound
+			return errLockNotFound
 		}
 	}
 	return err
 }
 
 // Update atomically updates an existing lock, verifying ownership via conditional write.
-func (b *CDKLockBackend) Update(ctx context.Context, key string, info LockInfo) error {
-	if err := validateObjectKey(key); err != nil {
-		return err
-	}
+func (b *cdkLockBackend) Update(ctx context.Context, key string, info lockInfo) error {
 	attrs, err := b.bucket.Attributes(ctx, key)
 	if err != nil {
 		if gcerrors.Code(err) == gcerrors.NotFound {
-			return ErrLockNotFound
+			return errLockNotFound
 		}
 		return fmt.Errorf("read lock attributes: %w", err)
 	}
@@ -159,17 +145,17 @@ func (b *CDKLockBackend) Update(ctx context.Context, key string, info LockInfo) 
 	existing, err := readLockData(ctx, b.bucket, key)
 	if err != nil {
 		if gcerrors.Code(err) == gcerrors.NotFound {
-			return ErrLockNotFound
+			return errLockNotFound
 		}
 		return err
 	}
 	if existing.Owner != info.Owner {
-		return ErrLockHeld
+		return errLockHeld
 	}
 
 	// No clockSkewAllowance: holder should detect expiry before a takeover node does.
 	if !b.now().Before(attrs.ModTime.Add(existing.TTL)) {
-		return ErrLeaseExpired
+		return errLeaseExpired
 	}
 
 	data, err := json.Marshal(info)
@@ -184,14 +170,11 @@ func (b *CDKLockBackend) Update(ctx context.Context, key string, info LockInfo) 
 }
 
 // Delete atomically deletes a lock, verifying ownership.
-func (b *CDKLockBackend) Delete(ctx context.Context, key string, owner string) error {
-	if err := validateObjectKey(key); err != nil {
-		return err
-	}
+func (b *cdkLockBackend) Delete(ctx context.Context, key string, owner string) error {
 	attrs, err := b.bucket.Attributes(ctx, key)
 	if err != nil {
 		if gcerrors.Code(err) == gcerrors.NotFound {
-			return ErrLockNotFound
+			return errLockNotFound
 		}
 		return fmt.Errorf("read lock attributes: %w", err)
 	}
@@ -199,40 +182,37 @@ func (b *CDKLockBackend) Delete(ctx context.Context, key string, owner string) e
 	existing, err := readLockData(ctx, b.bucket, key)
 	if err != nil {
 		if gcerrors.Code(err) == gcerrors.NotFound {
-			return ErrLockNotFound
+			return errLockNotFound
 		}
 		return err
 	}
 	if existing.Owner != owner {
-		return ErrLockHeld
+		return errLockHeld
 	}
 
-	if b.conditionalDeleteFn != nil {
-		err = b.conditionalDeleteFn(ctx, key, attrs)
+	if b.ops != nil {
+		err = b.ops.Delete(ctx, key, attrs)
 	} else {
 		err = b.bucket.Delete(ctx, key)
 		if err != nil && gcerrors.Code(err) == gcerrors.NotFound {
-			return ErrLockNotFound
+			return errLockNotFound
 		}
 	}
 	if err != nil {
 		if errors.Is(err, errPreconditionFailed) || gcerrors.Code(err) == gcerrors.FailedPrecondition {
-			return fmt.Errorf("lock was modified during delete: %w", ErrLockHeld)
+			return fmt.Errorf("lock was modified during delete: %w", errLockHeld)
 		}
 		return err
 	}
 	return nil
 }
 
-// Read returns the current lock info, or ErrLockNotFound if no lock exists.
-func (b *CDKLockBackend) Read(ctx context.Context, key string) (*LockInfo, error) {
-	if err := validateObjectKey(key); err != nil {
-		return nil, err
-	}
+// Read returns the current lock info, or errLockNotFound if no lock exists.
+func (b *cdkLockBackend) Read(ctx context.Context, key string) (*lockInfo, error) {
 	info, err := readLockData(ctx, b.bucket, key)
 	if err != nil {
 		if gcerrors.Code(err) == gcerrors.NotFound {
-			return nil, ErrLockNotFound
+			return nil, errLockNotFound
 		}
 		return nil, err
 	}
@@ -243,9 +223,19 @@ func (b *CDKLockBackend) Read(ctx context.Context, key string) (*LockInfo, error
 // See https://github.com/google/go-cloud/blob/v0.45.0/internal/escape/escape.go
 var validObjectKey = regexp.MustCompile(`^[a-zA-Z0-9_./-]+$`)
 
+func validatePrefix(prefix string) error {
+	if prefix == "" {
+		return nil
+	}
+	if prefix[len(prefix)-1] != '/' {
+		return fmt.Errorf("%w: prefix must end with '/'", errInvalidLockKey)
+	}
+	return validateObjectKey(prefix + "probe")
+}
+
 func validateObjectKey(key string) error {
 	if len(key) == 0 || !validObjectKey.MatchString(key) || strings.Contains(key, "..") || key[0] == '/' || key[len(key)-1] == '/' {
-		return fmt.Errorf("%w: %q", ErrInvalidLockKey, key)
+		return fmt.Errorf("%w: %q", errInvalidLockKey, key)
 	}
 	return nil
 }
@@ -254,18 +244,18 @@ func validateObjectKey(key string) error {
 const maxLockDataSize = 4096
 
 // readLockData downloads and unmarshals the lock object with maxLockDataSize size limit
-func readLockData(ctx context.Context, bucket resource.CDKBucket, key string) (LockInfo, error) {
+func readLockData(ctx context.Context, bucket resource.CDKBucket, key string) (lockInfo, error) {
 	var buf bytes.Buffer
 	lw := &resource.LimitedWriter{W: &buf, N: maxLockDataSize}
 	if err := bucket.Download(ctx, key, lw, nil); err != nil {
 		if errors.Is(err, resource.ErrWriteLimitExceeded) {
-			return LockInfo{}, fmt.Errorf("lock data exceeds %d bytes", maxLockDataSize)
+			return lockInfo{}, fmt.Errorf("lock data exceeds %d bytes", maxLockDataSize)
 		}
-		return LockInfo{}, err
+		return lockInfo{}, err
 	}
-	var info LockInfo
+	var info lockInfo
 	if err := json.Unmarshal(buf.Bytes(), &info); err != nil {
-		return LockInfo{}, fmt.Errorf("unmarshal lock info: %w", err)
+		return lockInfo{}, fmt.Errorf("unmarshal lock info: %w", err)
 	}
 	return info, nil
 }

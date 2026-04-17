@@ -24,21 +24,22 @@ import (
 
 var errPreconditionFailed = errors.New("precondition failed")
 
-// conditionalWriteFunc performs a conditional write using If-Match / ifGenerationMatch.
-// ETag or Generation can be extracted from attrs and used to construct provider-specific options.
-// When nil, the backend falls back to non-conditional writes.
-type conditionalWriteFunc func(attrs *blob.Attributes) func(asFunc func(any) bool) error
+// conditionalOps groups the conditional write and delete operations for a single
+// cloud provider. Implementations must wrap errPreconditionFailed to signal
+// concurrent modification on delete.
+// When nil, the backend falls back to unconditional writes/deletes.
+type conditionalOps interface {
+	// BeforeWrite returns a callback for blob.WriterOptions.BeforeWrite that sets
+	// provider-specific If-Match / ifGenerationMatch headers.
+	BeforeWrite(attrs *blob.Attributes) func(asFunc func(any) bool) error
 
-// conditionalDeleteFunc performs a conditional delete (If-Match / ifGenerationMatch)
-// using provider-specific APIs.
-// Implementations must wrap errPreconditionFailed to signal concurrent modification.
-// When nil, the backend falls back to CDKBucket.Delete() (unconditional).
-type conditionalDeleteFunc func(ctx context.Context, key string, attrs *blob.Attributes) error
+	// Delete performs a conditional delete using native provider SDKs.
+	Delete(ctx context.Context, key string, attrs *blob.Attributes) error
+}
 
-// CDKLockBackendOptions holds optional configuration for CDKLockBackend.
-type CDKLockBackendOptions struct {
-	conditionalWrite  conditionalWriteFunc
-	conditionalDelete conditionalDeleteFunc
+// cdkLockBackendOptions holds optional configuration for cdkLockBackend.
+type cdkLockBackendOptions struct {
+	ops conditionalOps
 	// clockSkewAllowance accounts for clock skew between instances when checking lock expiry (30s default)
 	clockSkewAllowance time.Duration
 }
@@ -55,38 +56,29 @@ func (t bucketTarget) objectKey(key string) string {
 	return t.prefix + key
 }
 
-// CDKLockOptionsFromBucket detects the provider behind bucket and returns matching
-// CDKLockBackendOptions. Returns an error for unsupported providers.
+// cdkLockOptionsFromBucket detects the provider behind bucket and returns matching
+// cdkLockBackendOptions. Returns an error for unsupported providers.
 // The bucketURL is parsed for the bucket name and an optional ?prefix= parameter.
-func CDKLockOptionsFromBucket(bucket *blob.Bucket, bucketURL string) (CDKLockBackendOptions, error) {
+func cdkLockOptionsFromBucket(bucket *blob.Bucket, bucketURL string) (cdkLockBackendOptions, error) {
 	target, err := bucketTargetFromURL(bucketURL)
 	if err != nil {
-		return CDKLockBackendOptions{}, fmt.Errorf("parse bucket URL: %w", err)
+		return cdkLockBackendOptions{}, fmt.Errorf("parse bucket URL: %w", err)
 	}
-	if target.prefix != "" {
-		// Validate prefix early: append a safe probe char to form a full key.
-		if err := validateObjectKey(target.prefix + "probe"); err != nil {
-			return CDKLockBackendOptions{}, fmt.Errorf("unsafe bucket prefix: %w", err)
-		}
-	}
-	optsFn := func(w conditionalWriteFunc, d conditionalDeleteFunc) (CDKLockBackendOptions, error) {
-		return CDKLockBackendOptions{
-			conditionalWrite:  w,
-			conditionalDelete: d,
-		}, nil
+	if err := validatePrefix(target.prefix); err != nil {
+		return cdkLockBackendOptions{}, err
 	}
 	var s3Client *s3.Client
 	var gcsClient *gcsstorage.Client
 	var containerClient *container.Client
 	switch {
 	case bucket.As(&s3Client):
-		return optsFn(s3ConditionalWrite, s3ConditionalDelete(s3Client, target))
+		return cdkLockBackendOptions{ops: &s3Ops{client: s3Client, target: target}}, nil
 	case bucket.As(&gcsClient):
-		return optsFn(gcsConditionalWrite, gcsConditionalDelete(gcsClient, target))
+		return cdkLockBackendOptions{ops: &gcsOps{client: gcsClient, target: target}}, nil
 	case bucket.As(&containerClient):
-		return optsFn(azureConditionalWrite, azureConditionalDelete(containerClient, target))
+		return cdkLockBackendOptions{ops: &azureOps{client: containerClient, target: target}}, nil
 	default:
-		return CDKLockBackendOptions{}, fmt.Errorf("unsupported blob provider: conditional writes required for distributed locking")
+		return cdkLockBackendOptions{}, fmt.Errorf("unsupported blob provider: conditional writes required for distributed locking")
 	}
 }
 
@@ -122,7 +114,12 @@ func isObjectExistsErr(err error) bool {
 
 // --- S3 ---
 
-func s3ConditionalWrite(attrs *blob.Attributes) func(asFunc func(any) bool) error {
+type s3Ops struct {
+	client *s3.Client
+	target bucketTarget
+}
+
+func (o *s3Ops) BeforeWrite(attrs *blob.Attributes) func(asFunc func(any) bool) error {
 	return func(asFunc func(any) bool) error {
 		var input *s3.PutObjectInput
 		if !asFunc(&input) {
@@ -133,31 +130,34 @@ func s3ConditionalWrite(attrs *blob.Attributes) func(asFunc func(any) bool) erro
 	}
 }
 
-func s3ConditionalDelete(client *s3.Client, target bucketTarget) conditionalDeleteFunc {
-	return func(ctx context.Context, key string, attrs *blob.Attributes) error {
-		_, err := client.DeleteObject(ctx, &s3.DeleteObjectInput{
-			Bucket:  aws.String(target.name),
-			Key:     aws.String(target.objectKey(key)),
-			IfMatch: aws.String(attrs.ETag),
-		})
-		if err != nil {
-			var respErr *smithyhttp.ResponseError
-			if errors.As(err, &respErr) {
-				switch respErr.HTTPStatusCode() {
-				case 412:
-					return fmt.Errorf("%w: %w", errPreconditionFailed, err)
-				case 404:
-					return fmt.Errorf("%w: %w", ErrLockNotFound, err)
-				}
+func (o *s3Ops) Delete(ctx context.Context, key string, attrs *blob.Attributes) error {
+	_, err := o.client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket:  aws.String(o.target.name),
+		Key:     aws.String(o.target.objectKey(key)),
+		IfMatch: aws.String(attrs.ETag),
+	})
+	if err != nil {
+		var respErr *smithyhttp.ResponseError
+		if errors.As(err, &respErr) {
+			switch respErr.HTTPStatusCode() {
+			case 412:
+				return fmt.Errorf("%w: %w", errPreconditionFailed, err)
+			case 404:
+				return fmt.Errorf("%w: %w", errLockNotFound, err)
 			}
 		}
-		return err
 	}
+	return err
 }
 
 // --- GCS ---
 
-func gcsConditionalWrite(attrs *blob.Attributes) func(asFunc func(any) bool) error {
+type gcsOps struct {
+	client *gcsstorage.Client
+	target bucketTarget
+}
+
+func (o *gcsOps) BeforeWrite(attrs *blob.Attributes) func(asFunc func(any) bool) error {
 	return func(asFunc func(any) bool) error {
 		// gcsblob requires **storage.ObjectHandle to be accessed before
 		// *storage.Writer in the AsFunc call order.
@@ -176,43 +176,46 @@ func gcsConditionalWrite(attrs *blob.Attributes) func(asFunc func(any) bool) err
 	}
 }
 
-func gcsConditionalDelete(client *gcsstorage.Client, target bucketTarget) conditionalDeleteFunc {
-	return func(ctx context.Context, key string, attrs *blob.Attributes) error {
-		var gcsAttrs gcsstorage.ObjectAttrs
-		if !attrs.As(&gcsAttrs) {
-			return fmt.Errorf("failed to extract GCS generation from attributes")
-		}
-		obj := client.Bucket(target.name).Object(target.objectKey(key))
-		err := obj.If(gcsstorage.Conditions{
-			GenerationMatch: gcsAttrs.Generation,
-		}).Delete(ctx)
-		if err != nil {
-			// GCS uses REST by default (*googleapi.Error), but may use gRPC. Check both.
-			var apiErr *googleapi.Error
-			if errors.As(err, &apiErr) {
-				switch apiErr.Code {
-				case 412:
-					return fmt.Errorf("%w: %w", errPreconditionFailed, err)
-				case 404:
-					return fmt.Errorf("%w: %w", ErrLockNotFound, err)
-				}
-			}
-			if s, ok := status.FromError(err); ok {
-				switch s.Code() { //nolint:exhaustive
-				case codes.FailedPrecondition:
-					return fmt.Errorf("%w: %w", errPreconditionFailed, err)
-				case codes.NotFound:
-					return fmt.Errorf("%w: %w", ErrLockNotFound, err)
-				}
-			}
-		}
-		return err
+func (o *gcsOps) Delete(ctx context.Context, key string, attrs *blob.Attributes) error {
+	var gcsAttrs gcsstorage.ObjectAttrs
+	if !attrs.As(&gcsAttrs) {
+		return fmt.Errorf("failed to extract GCS generation from attributes")
 	}
+	obj := o.client.Bucket(o.target.name).Object(o.target.objectKey(key))
+	err := obj.If(gcsstorage.Conditions{
+		GenerationMatch: gcsAttrs.Generation,
+	}).Delete(ctx)
+	if err != nil {
+		// GCS uses REST by default (*googleapi.Error), but may use gRPC. Check both.
+		var apiErr *googleapi.Error
+		if errors.As(err, &apiErr) {
+			switch apiErr.Code {
+			case 412:
+				return fmt.Errorf("%w: %w", errPreconditionFailed, err)
+			case 404:
+				return fmt.Errorf("%w: %w", errLockNotFound, err)
+			}
+		}
+		if s, ok := status.FromError(err); ok {
+			switch s.Code() { //nolint:exhaustive
+			case codes.FailedPrecondition:
+				return fmt.Errorf("%w: %w", errPreconditionFailed, err)
+			case codes.NotFound:
+				return fmt.Errorf("%w: %w", errLockNotFound, err)
+			}
+		}
+	}
+	return err
 }
 
 // --- Azure ---
 
-func azureConditionalWrite(attrs *blob.Attributes) func(asFunc func(any) bool) error {
+type azureOps struct {
+	client *container.Client
+	target bucketTarget
+}
+
+func (o *azureOps) BeforeWrite(attrs *blob.Attributes) func(asFunc func(any) bool) error {
 	return func(asFunc func(any) bool) error {
 		var opts *azblob.UploadStreamOptions
 		if !asFunc(&opts) {
@@ -228,28 +231,26 @@ func azureConditionalWrite(attrs *blob.Attributes) func(asFunc func(any) bool) e
 	}
 }
 
-func azureConditionalDelete(containerClient *container.Client, target bucketTarget) conditionalDeleteFunc {
-	return func(ctx context.Context, key string, attrs *blob.Attributes) error {
-		etag := azcore.ETag(attrs.ETag)
-		blobClient := containerClient.NewBlobClient(target.objectKey(key))
-		_, err := blobClient.Delete(ctx, &azblobblob.DeleteOptions{
-			AccessConditions: &azblobblob.AccessConditions{
-				ModifiedAccessConditions: &azblobblob.ModifiedAccessConditions{
-					IfMatch: &etag,
-				},
+func (o *azureOps) Delete(ctx context.Context, key string, attrs *blob.Attributes) error {
+	etag := azcore.ETag(attrs.ETag)
+	blobClient := o.client.NewBlobClient(o.target.objectKey(key))
+	_, err := blobClient.Delete(ctx, &azblobblob.DeleteOptions{
+		AccessConditions: &azblobblob.AccessConditions{
+			ModifiedAccessConditions: &azblobblob.ModifiedAccessConditions{
+				IfMatch: &etag,
 			},
-		})
-		if err != nil {
-			var respErr *azcore.ResponseError
-			if errors.As(err, &respErr) {
-				switch respErr.StatusCode {
-				case 412:
-					return fmt.Errorf("%w: %w", errPreconditionFailed, err)
-				case 404:
-					return fmt.Errorf("%w: %w", ErrLockNotFound, err)
-				}
+		},
+	})
+	if err != nil {
+		var respErr *azcore.ResponseError
+		if errors.As(err, &respErr) {
+			switch respErr.StatusCode {
+			case 412:
+				return fmt.Errorf("%w: %w", errPreconditionFailed, err)
+			case 404:
+				return fmt.Errorf("%w: %w", errLockNotFound, err)
 			}
 		}
-		return err
 	}
+	return err
 }

@@ -32,32 +32,31 @@ import (
 //	CDK_TEST_BUCKET_URL=gs://bucket go test ./pkg/storage/unified/search/lock/... -v
 //	CDK_TEST_BUCKET_URL=azblob://container go test ./pkg/storage/unified/search/lock/... -v
 
-func testBackend(t *testing.T, opts ...func(*CDKLockBackendOptions)) *CDKLockBackend {
+func testBackend(t *testing.T, opts ...func(*cdkLockBackendOptions)) *cdkLockBackend {
 	t.Helper()
 	bucket, backendOpts := testBucketAndOpts(t, opts...)
-	return NewCDKLockBackend(bucket, backendOpts)
+	return newCDKLockBackend(bucket, backendOpts)
 }
 
 // testBucketAndOpts returns a shared bucket and options for test backends.
 // Uses a real provider when CDK_TEST_BUCKET_URL is set, otherwise a fake conditionalBucket.
-func testBucketAndOpts(t *testing.T, opts ...func(*CDKLockBackendOptions)) (resource.CDKBucket, CDKLockBackendOptions) {
+func testBucketAndOpts(t *testing.T, opts ...func(*cdkLockBackendOptions)) (resource.CDKBucket, cdkLockBackendOptions) {
 	t.Helper()
 	var bucket resource.CDKBucket
-	var backendOpts CDKLockBackendOptions
+	var backendOpts cdkLockBackendOptions
 
 	if bucketURL := os.Getenv("CDK_TEST_BUCKET_URL"); bucketURL != "" {
 		ctx := context.Background()
 		rb, err := blob.OpenBucket(ctx, bucketURL)
 		require.NoError(t, err)
 		t.Cleanup(func() { _ = rb.Close() })
-		backendOpts, err = CDKLockOptionsFromBucket(rb, bucketURL)
+		backendOpts, err = cdkLockOptionsFromBucket(rb, bucketURL)
 		require.NoError(t, err)
 		bucket = rb
 	} else {
 		cb := newConditionalBucket()
-		backendOpts = CDKLockBackendOptions{
-			conditionalWrite:  fakeConditionalWrite,
-			conditionalDelete: fakeConditionalDeleteFor(cb),
+		backendOpts = cdkLockBackendOptions{
+			ops: newFakeOps(cb),
 		}
 		bucket = cb
 	}
@@ -67,10 +66,9 @@ func testBucketAndOpts(t *testing.T, opts ...func(*CDKLockBackendOptions)) (reso
 	return bucket, backendOpts
 }
 
-func newFakeBackend(bucket *conditionalBucket) *CDKLockBackend {
-	return NewCDKLockBackend(bucket, CDKLockBackendOptions{
-		conditionalWrite:  fakeConditionalWrite,
-		conditionalDelete: fakeConditionalDeleteFor(bucket),
+func newFakeBackend(bucket *conditionalBucket) *cdkLockBackend {
+	return newCDKLockBackend(bucket, cdkLockBackendOptions{
+		ops: newFakeOps(bucket),
 	})
 }
 
@@ -93,27 +91,27 @@ func testKey(t *testing.T, suffix ...string) string {
 	return "test-locks/" + name
 }
 
-// --- CDKLockBackend tests ---
+// --- cdkLockBackend tests ---
 // Tests use testBackend(t) so they run against either the fake conditionalBucket
 // or a real cloud provider depending on CDK_TEST_BUCKET_URL.
 
-// Verify CDKLockBackend implements LockBackend.
-var _ LockBackend = (*CDKLockBackend)(nil)
+// Verify cdkLockBackend implements lockBackend.
+var _ lockBackend = (*cdkLockBackend)(nil)
 
 func TestCDKLockBackend_Create(t *testing.T) {
-	t.Run("succeeds create and returns ErrLockHeld", func(t *testing.T) {
+	t.Run("succeeds create and returns errLockHeld", func(t *testing.T) {
 		backend := testBackend(t)
 		ctx := context.Background()
 		key := testKey(t)
 		t.Cleanup(func() { _ = backend.Delete(ctx, key, "owner-1") })
 
-		require.NoError(t, backend.Create(ctx, key, lockInfo("owner-1", time.Minute)))
+		require.NoError(t, backend.Create(ctx, key, newLockInfo("owner-1", time.Minute)))
 
 		info, err := backend.Read(ctx, key)
 		require.NoError(t, err)
 		assert.Equal(t, "owner-1", info.Owner)
 
-		require.ErrorIs(t, backend.Create(ctx, key, lockInfo("owner-2", time.Minute)), ErrLockHeld)
+		require.ErrorIs(t, backend.Create(ctx, key, newLockInfo("owner-2", time.Minute)), errLockHeld)
 	})
 
 	// --- tests below need fake bucket for internal manipulation ---
@@ -122,7 +120,7 @@ func TestCDKLockBackend_Create(t *testing.T) {
 		backend, _ := expiredFakeLock(t, "lock-1", "owner-1")
 		ctx := context.Background()
 
-		require.NoError(t, backend.Create(ctx, "lock-1", lockInfo("owner-2", time.Minute)))
+		require.NoError(t, backend.Create(ctx, "lock-1", newLockInfo("owner-2", time.Minute)))
 
 		info, err := backend.Read(ctx, "lock-1")
 		require.NoError(t, err)
@@ -133,16 +131,18 @@ func TestCDKLockBackend_Create(t *testing.T) {
 		backend, bucket := expiredFakeLock(t, "lock-1", "owner-1")
 		ctx := context.Background()
 
-		origWrite := backend.conditionalWriteFn
-		backend.conditionalWriteFn = func(attrs *blob.Attributes) func(asFunc func(any) bool) error {
-			bucket.mu.Lock()
-			bucket.etags["lock-1"] = "raced-etag"
-			bucket.mu.Unlock()
-			return origWrite(attrs)
+		origOps := backend.ops
+		backend.ops = &interceptOps{
+			conditionalOps: origOps,
+			beforeWriteHook: func() {
+				bucket.mu.Lock()
+				bucket.etags["lock-1"] = "raced-etag"
+				bucket.mu.Unlock()
+			},
 		}
 
-		err := backend.Create(ctx, "lock-1", lockInfo("owner-2", time.Minute))
-		require.ErrorIs(t, err, ErrLockHeld)
+		err := backend.Create(ctx, "lock-1", newLockInfo("owner-2", time.Minute))
+		require.ErrorIs(t, err, errLockHeld)
 	})
 
 	t.Run("takeover retries create when lock deleted during conditional write", func(t *testing.T) {
@@ -154,7 +154,7 @@ func TestCDKLockBackend_Create(t *testing.T) {
 		origBucket := bucket.CDKBucket
 		backend.bucket = &notFoundOnWriteBucket{CDKBucket: origBucket}
 
-		err := backend.Create(ctx, "lock-1", lockInfo("owner-2", time.Minute))
+		err := backend.Create(ctx, "lock-1", newLockInfo("owner-2", time.Minute))
 		require.NoError(t, err)
 
 		// Restore bucket for read.
@@ -172,9 +172,9 @@ func TestCDKLockBackend_Update(t *testing.T) {
 		key := testKey(t)
 		t.Cleanup(func() { _ = backend.Delete(ctx, key, "owner-1") })
 
-		require.NoError(t, backend.Create(ctx, key, lockInfo("owner-1", time.Minute)))
+		require.NoError(t, backend.Create(ctx, key, newLockInfo("owner-1", time.Minute)))
 
-		err := backend.Update(ctx, key, lockInfo("owner-1", 2*time.Minute))
+		err := backend.Update(ctx, key, newLockInfo("owner-1", 2*time.Minute))
 		require.NoError(t, err)
 
 		info, err := backend.Read(ctx, key)
@@ -188,19 +188,19 @@ func TestCDKLockBackend_Update(t *testing.T) {
 		key := testKey(t)
 		t.Cleanup(func() { _ = backend.Delete(ctx, key, "owner-1") })
 
-		require.NoError(t, backend.Create(ctx, key, lockInfo("owner-1", time.Minute)))
+		require.NoError(t, backend.Create(ctx, key, newLockInfo("owner-1", time.Minute)))
 
-		err := backend.Update(ctx, key, lockInfo("owner-2", time.Minute))
-		require.ErrorIs(t, err, ErrLockHeld)
+		err := backend.Update(ctx, key, newLockInfo("owner-2", time.Minute))
+		require.ErrorIs(t, err, errLockHeld)
 	})
 
-	t.Run("returns ErrLockNotFound for missing key", func(t *testing.T) {
+	t.Run("returns errLockNotFound for missing key", func(t *testing.T) {
 		backend := testBackend(t)
 		ctx := context.Background()
 		key := testKey(t)
 
-		err := backend.Update(ctx, key, lockInfo("owner-1", time.Minute))
-		require.ErrorIs(t, err, ErrLockNotFound)
+		err := backend.Update(ctx, key, newLockInfo("owner-1", time.Minute))
+		require.ErrorIs(t, err, errLockNotFound)
 	})
 
 	// --- tests below need fake bucket for internal manipulation ---
@@ -210,26 +210,28 @@ func TestCDKLockBackend_Update(t *testing.T) {
 		backend := newFakeBackend(bucket)
 		ctx := context.Background()
 
-		require.NoError(t, backend.Create(ctx, "lock-1", lockInfo("owner-1", time.Minute)))
+		require.NoError(t, backend.Create(ctx, "lock-1", newLockInfo("owner-1", time.Minute)))
 
-		origWrite := backend.conditionalWriteFn
-		backend.conditionalWriteFn = func(attrs *blob.Attributes) func(asFunc func(any) bool) error {
-			bucket.mu.Lock()
-			bucket.etags["lock-1"] = "concurrent-etag"
-			bucket.mu.Unlock()
-			return origWrite(attrs)
+		origOps := backend.ops
+		backend.ops = &interceptOps{
+			conditionalOps: origOps,
+			beforeWriteHook: func() {
+				bucket.mu.Lock()
+				bucket.etags["lock-1"] = "concurrent-etag"
+				bucket.mu.Unlock()
+			},
 		}
 
-		err := backend.Update(ctx, "lock-1", lockInfo("owner-1", 2*time.Minute))
-		require.ErrorIs(t, err, ErrLockHeld)
+		err := backend.Update(ctx, "lock-1", newLockInfo("owner-1", 2*time.Minute))
+		require.ErrorIs(t, err, errLockHeld)
 	})
 
 	t.Run("rejects renewal of expired lease", func(t *testing.T) {
 		backend, _ := expiredFakeLock(t, "lock-1", "owner-1")
 		ctx := context.Background()
 
-		err := backend.Update(ctx, "lock-1", lockInfo("owner-1", time.Minute))
-		require.ErrorIs(t, err, ErrLeaseExpired)
+		err := backend.Update(ctx, "lock-1", newLockInfo("owner-1", time.Minute))
+		require.ErrorIs(t, err, errLeaseExpired)
 	})
 
 	t.Run("rejects renewal at exact expiry boundary", func(t *testing.T) {
@@ -238,11 +240,11 @@ func TestCDKLockBackend_Update(t *testing.T) {
 		backend.clockSkewAllowance = 0
 		ctx := context.Background()
 
-		require.NoError(t, backend.Create(ctx, "lock-1", lockInfo("owner-1", time.Minute)))
+		require.NoError(t, backend.Create(ctx, "lock-1", newLockInfo("owner-1", time.Minute)))
 		backend.now = func() time.Time { return time.Now().Add(time.Minute) }
 
-		err := backend.Update(ctx, "lock-1", lockInfo("owner-1", time.Minute))
-		require.ErrorIs(t, err, ErrLeaseExpired)
+		err := backend.Update(ctx, "lock-1", newLockInfo("owner-1", time.Minute))
+		require.ErrorIs(t, err, errLeaseExpired)
 	})
 
 	t.Run("succeeds within TTL", func(t *testing.T) {
@@ -251,26 +253,26 @@ func TestCDKLockBackend_Update(t *testing.T) {
 		backend.clockSkewAllowance = 0
 		ctx := context.Background()
 
-		require.NoError(t, backend.Create(ctx, "lock-1", lockInfo("owner-1", time.Minute)))
+		require.NoError(t, backend.Create(ctx, "lock-1", newLockInfo("owner-1", time.Minute)))
 		backend.now = func() time.Time { return time.Now().Add(59 * time.Second) }
 
-		err := backend.Update(ctx, "lock-1", lockInfo("owner-1", time.Minute))
+		err := backend.Update(ctx, "lock-1", newLockInfo("owner-1", time.Minute))
 		require.NoError(t, err)
 	})
 
-	t.Run("returns ErrLockNotFound when lock deleted during conditional write", func(t *testing.T) {
+	t.Run("returns errLockNotFound when lock deleted during conditional write", func(t *testing.T) {
 		bucket := newConditionalBucket()
 		backend := newFakeBackend(bucket)
 		ctx := context.Background()
 
-		require.NoError(t, backend.Create(ctx, "lock-1", lockInfo("owner-1", time.Minute)))
+		require.NoError(t, backend.Create(ctx, "lock-1", newLockInfo("owner-1", time.Minute)))
 
 		// Swap bucket so conditional write returns NotFound (lock deleted mid-operation).
 		origBucket := bucket.CDKBucket
 		backend.bucket = &notFoundOnWriteBucket{CDKBucket: origBucket}
 
-		err := backend.Update(ctx, "lock-1", lockInfo("owner-1", 2*time.Minute))
-		require.ErrorIs(t, err, ErrLockNotFound)
+		err := backend.Update(ctx, "lock-1", newLockInfo("owner-1", 2*time.Minute))
+		require.ErrorIs(t, err, errLockNotFound)
 	})
 }
 
@@ -280,11 +282,11 @@ func TestCDKLockBackend_Delete(t *testing.T) {
 		ctx := context.Background()
 		key := testKey(t)
 
-		require.NoError(t, backend.Create(ctx, key, lockInfo("owner-1", time.Minute)))
+		require.NoError(t, backend.Create(ctx, key, newLockInfo("owner-1", time.Minute)))
 		require.NoError(t, backend.Delete(ctx, key, "owner-1"))
 
 		_, err := backend.Read(ctx, key)
-		require.ErrorIs(t, err, ErrLockNotFound)
+		require.ErrorIs(t, err, errLockNotFound)
 	})
 
 	t.Run("fails for wrong owner", func(t *testing.T) {
@@ -293,19 +295,19 @@ func TestCDKLockBackend_Delete(t *testing.T) {
 		key := testKey(t)
 		t.Cleanup(func() { _ = backend.Delete(ctx, key, "owner-1") })
 
-		require.NoError(t, backend.Create(ctx, key, lockInfo("owner-1", time.Minute)))
+		require.NoError(t, backend.Create(ctx, key, newLockInfo("owner-1", time.Minute)))
 
 		err := backend.Delete(ctx, key, "owner-2")
-		require.ErrorIs(t, err, ErrLockHeld)
+		require.ErrorIs(t, err, errLockHeld)
 	})
 
-	t.Run("returns ErrLockNotFound for missing key", func(t *testing.T) {
+	t.Run("returns errLockNotFound for missing key", func(t *testing.T) {
 		backend := testBackend(t)
 		ctx := context.Background()
 		key := testKey(t)
 
 		err := backend.Delete(ctx, key, "owner-1")
-		require.ErrorIs(t, err, ErrLockNotFound)
+		require.ErrorIs(t, err, errLockNotFound)
 	})
 
 	// --- fake bucket: ETag injection ---
@@ -315,14 +317,16 @@ func TestCDKLockBackend_Delete(t *testing.T) {
 		backend := newFakeBackend(bucket)
 		ctx := context.Background()
 
-		require.NoError(t, backend.Create(ctx, "lock-1", lockInfo("owner-1", time.Minute)))
+		require.NoError(t, backend.Create(ctx, "lock-1", newLockInfo("owner-1", time.Minute)))
 
-		origDelete := backend.conditionalDeleteFn
-		backend.conditionalDeleteFn = func(ctx context.Context, key string, attrs *blob.Attributes) error {
-			bucket.mu.Lock()
-			bucket.etags[key] = "concurrent-etag"
-			bucket.mu.Unlock()
-			return origDelete(ctx, key, attrs)
+		origOps := backend.ops
+		backend.ops = &interceptOps{
+			conditionalOps: origOps,
+			beforeDeleteHook: func(key string) {
+				bucket.mu.Lock()
+				bucket.etags[key] = "concurrent-etag"
+				bucket.mu.Unlock()
+			},
 		}
 
 		err := backend.Delete(ctx, "lock-1", "owner-1")
@@ -332,22 +336,22 @@ func TestCDKLockBackend_Delete(t *testing.T) {
 }
 
 func TestCDKLockBackend_Read(t *testing.T) {
-	t.Run("returns ErrLockNotFound for missing key", func(t *testing.T) {
+	t.Run("returns errLockNotFound for missing key", func(t *testing.T) {
 		backend := testBackend(t)
 		ctx := context.Background()
 		key := testKey(t)
 
 		_, err := backend.Read(ctx, key)
-		require.ErrorIs(t, err, ErrLockNotFound)
+		require.ErrorIs(t, err, errLockNotFound)
 	})
 
-	t.Run("returns correct LockInfo", func(t *testing.T) {
+	t.Run("returns correct lockInfo", func(t *testing.T) {
 		backend := testBackend(t)
 		ctx := context.Background()
 		key := testKey(t)
 		t.Cleanup(func() { _ = backend.Delete(ctx, key, "owner-1") })
 
-		require.NoError(t, backend.Create(ctx, key, lockInfo("owner-1", 5*time.Minute)))
+		require.NoError(t, backend.Create(ctx, key, newLockInfo("owner-1", 5*time.Minute)))
 
 		info, err := backend.Read(ctx, key)
 		require.NoError(t, err)
@@ -358,7 +362,7 @@ func TestCDKLockBackend_Read(t *testing.T) {
 
 func TestCDKLockBackend_ExpiredTakeover(t *testing.T) {
 	ttl, clockSkew, wait := expiryTestTimings()
-	backend := testBackend(t, func(opts *CDKLockBackendOptions) {
+	backend := testBackend(t, func(opts *cdkLockBackendOptions) {
 		opts.clockSkewAllowance = clockSkew
 	})
 	ctx := context.Background()
@@ -369,13 +373,13 @@ func TestCDKLockBackend_ExpiredTakeover(t *testing.T) {
 		_ = backend.Delete(ctx, key, "old-owner")
 	})
 
-	info := LockInfo{Owner: "old-owner", TTL: ttl, Heartbeat: time.Now()}
+	info := lockInfo{Owner: "old-owner", TTL: ttl, Heartbeat: time.Now()}
 	require.NoError(t, backend.Create(ctx, key, info))
 
 	// Wait for mtime + TTL + clockSkewAllowance to pass.
 	time.Sleep(wait)
 
-	info2 := LockInfo{Owner: "new-owner", TTL: 30 * time.Second, Heartbeat: time.Now()}
+	info2 := lockInfo{Owner: "new-owner", TTL: 30 * time.Second, Heartbeat: time.Now()}
 	require.NoError(t, backend.Create(ctx, key, info2))
 
 	got, err := backend.Read(ctx, key)
@@ -390,7 +394,7 @@ func TestCDKLockBackend_HeartbeatPreserved(t *testing.T) {
 	t.Cleanup(func() { _ = backend.Delete(ctx, key, "owner-1") })
 
 	now := time.Now().Truncate(time.Millisecond)
-	info := LockInfo{Owner: "owner-1", TTL: time.Minute, Heartbeat: now}
+	info := lockInfo{Owner: "owner-1", TTL: time.Minute, Heartbeat: now}
 	require.NoError(t, backend.Create(ctx, key, info))
 
 	got, err := backend.Read(ctx, key)
@@ -403,17 +407,17 @@ func TestCDKLockBackend_RejectsInvalidKeys(t *testing.T) {
 	ctx := context.Background()
 
 	badKey := "lock#bad"
-	err := backend.Create(ctx, badKey, lockInfo("owner", time.Minute))
-	require.ErrorIs(t, err, ErrInvalidLockKey)
+	err := backend.Create(ctx, badKey, newLockInfo("owner", time.Minute))
+	require.ErrorIs(t, err, errInvalidLockKey)
 
-	err = backend.Update(ctx, badKey, lockInfo("owner", time.Minute))
-	require.ErrorIs(t, err, ErrInvalidLockKey)
+	err = backend.Update(ctx, badKey, newLockInfo("owner", time.Minute))
+	require.ErrorIs(t, err, errInvalidLockKey)
 
 	err = backend.Delete(ctx, badKey, "owner")
-	require.ErrorIs(t, err, ErrInvalidLockKey)
+	require.ErrorIs(t, err, errInvalidLockKey)
 
 	_, err = backend.Read(ctx, badKey)
-	require.ErrorIs(t, err, ErrInvalidLockKey)
+	require.ErrorIs(t, err, errInvalidLockKey)
 }
 
 // --- tests that always use fake bucket (need internal manipulation) ---
@@ -421,24 +425,24 @@ func TestCDKLockBackend_RejectsInvalidKeys(t *testing.T) {
 func TestCDKLockBackend_NoConditionalFuncs(t *testing.T) {
 	t.Run("fallback to unconditional writes when conditional funcs are nil", func(t *testing.T) {
 		bucket := newConditionalBucket()
-		backend := NewCDKLockBackend(bucket, CDKLockBackendOptions{})
+		backend := newCDKLockBackend(bucket, cdkLockBackendOptions{})
 
 		ctx := context.Background()
-		require.NoError(t, backend.Create(ctx, "lock-1", lockInfo("owner-1", time.Minute)))
-		require.NoError(t, backend.Update(ctx, "lock-1", lockInfo("owner-1", 2*time.Minute)))
+		require.NoError(t, backend.Create(ctx, "lock-1", newLockInfo("owner-1", time.Minute)))
+		require.NoError(t, backend.Update(ctx, "lock-1", newLockInfo("owner-1", 2*time.Minute)))
 		require.NoError(t, backend.Delete(ctx, "lock-1", "owner-1"))
 	})
 
 	t.Run("expired takeover without conditional write", func(t *testing.T) {
 		bucket := newConditionalBucket()
-		backend := NewCDKLockBackend(bucket, CDKLockBackendOptions{})
+		backend := newCDKLockBackend(bucket, cdkLockBackendOptions{})
 		backend.clockSkewAllowance = 0
 		ctx := context.Background()
 
-		require.NoError(t, backend.Create(ctx, "lock-1", lockInfo("owner-1", 100*time.Millisecond)))
+		require.NoError(t, backend.Create(ctx, "lock-1", newLockInfo("owner-1", 100*time.Millisecond)))
 		backend.now = func() time.Time { return time.Now().Add(200 * time.Millisecond) }
 
-		require.NoError(t, backend.Create(ctx, "lock-1", lockInfo("owner-2", time.Minute)))
+		require.NoError(t, backend.Create(ctx, "lock-1", newLockInfo("owner-2", time.Minute)))
 
 		info, err := backend.Read(ctx, "lock-1")
 		require.NoError(t, err)
@@ -449,22 +453,22 @@ func TestCDKLockBackend_NoConditionalFuncs(t *testing.T) {
 func TestCDKLockBackend_CorruptData(t *testing.T) {
 	tests := []struct {
 		name string
-		op   func(ctx context.Context, backend *CDKLockBackend) error
+		op   func(ctx context.Context, backend *cdkLockBackend) error
 	}{
-		{"read", func(ctx context.Context, b *CDKLockBackend) error {
+		{"read", func(ctx context.Context, b *cdkLockBackend) error {
 			_, err := b.Read(ctx, "lock-1")
 			return err
 		}},
-		{"update", func(ctx context.Context, b *CDKLockBackend) error {
-			return b.Update(ctx, "lock-1", lockInfo("owner-1", time.Minute))
+		{"update", func(ctx context.Context, b *cdkLockBackend) error {
+			return b.Update(ctx, "lock-1", newLockInfo("owner-1", time.Minute))
 		}},
-		{"delete", func(ctx context.Context, b *CDKLockBackend) error {
+		{"delete", func(ctx context.Context, b *cdkLockBackend) error {
 			return b.Delete(ctx, "lock-1", "owner-1")
 		}},
-		{"takeover", func(ctx context.Context, b *CDKLockBackend) error {
+		{"takeover", func(ctx context.Context, b *cdkLockBackend) error {
 			b.clockSkewAllowance = 0
 			b.now = func() time.Time { return time.Now().Add(10 * time.Minute) }
-			return b.Create(ctx, "lock-1", lockInfo("owner-2", time.Minute))
+			return b.Create(ctx, "lock-1", newLockInfo("owner-2", time.Minute))
 		}},
 	}
 	for _, tc := range tests {
@@ -490,10 +494,10 @@ func TestCDKLockBackend_IfNotExistError(t *testing.T) {
 	backend := newFakeBackend(bucket)
 	ctx := context.Background()
 
-	require.NoError(t, backend.Create(ctx, "lock-1", lockInfo("owner-1", time.Minute)))
+	require.NoError(t, backend.Create(ctx, "lock-1", newLockInfo("owner-1", time.Minute)))
 
-	err := backend.Create(ctx, "lock-1", lockInfo("owner-2", time.Minute))
-	require.ErrorIs(t, err, ErrLockHeld)
+	err := backend.Create(ctx, "lock-1", newLockInfo("owner-2", time.Minute))
+	require.ErrorIs(t, err, errLockHeld)
 
 	writeErr := bucket.CDKBucket.WriteAll(ctx, "lock-1", []byte("x"), &blob.WriterOptions{IfNotExist: true})
 	require.Error(t, writeErr)
@@ -505,13 +509,13 @@ func TestCDKLockBackend_S3ConflictError(t *testing.T) {
 	backend := newFakeBackend(bucket)
 	ctx := context.Background()
 
-	require.NoError(t, backend.Create(ctx, "lock-1", lockInfo("owner-1", time.Minute)))
+	require.NoError(t, backend.Create(ctx, "lock-1", newLockInfo("owner-1", time.Minute)))
 
 	origBucket := bucket.CDKBucket
 	bucket.CDKBucket = &s3ConflictBucket{CDKBucket: origBucket}
 
-	err := backend.Create(ctx, "lock-1", lockInfo("owner-2", time.Minute))
-	require.ErrorIs(t, err, ErrLockHeld)
+	err := backend.Create(ctx, "lock-1", newLockInfo("owner-2", time.Minute))
+	require.ErrorIs(t, err, errLockHeld)
 }
 
 // s3ConflictBucket returns a smithy 409 error for IfNotExist writes.
@@ -571,24 +575,23 @@ func TestCDKLockBackend_ClockSkewAllowance(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			bucket := newConditionalBucket()
-			opts := CDKLockBackendOptions{
-				conditionalWrite:  fakeConditionalWrite,
-				conditionalDelete: fakeConditionalDeleteFor(bucket),
+			opts := cdkLockBackendOptions{
+				ops: newFakeOps(bucket),
 			}
 			if tc.clockSkew > 0 {
 				opts.clockSkewAllowance = tc.clockSkew
 			}
-			backend := NewCDKLockBackend(bucket, opts)
+			backend := newCDKLockBackend(bucket, opts)
 			ctx := context.Background()
 
-			require.NoError(t, backend.Create(ctx, "lock-1", lockInfo("owner-1", time.Minute)))
+			require.NoError(t, backend.Create(ctx, "lock-1", newLockInfo("owner-1", time.Minute)))
 			backend.now = func() time.Time { return time.Now().Add(tc.timeAdvance) }
 
-			err := backend.Create(ctx, "lock-1", lockInfo("owner-2", time.Minute))
+			err := backend.Create(ctx, "lock-1", newLockInfo("owner-2", time.Minute))
 			if tc.expectTakeover {
 				require.NoError(t, err)
 			} else {
-				require.ErrorIs(t, err, ErrLockHeld)
+				require.ErrorIs(t, err, errLockHeld)
 			}
 		})
 	}
@@ -631,7 +634,7 @@ func TestValidateObjectKey(t *testing.T) {
 	for _, tc := range invalid {
 		t.Run("invalid:"+tc.reason, func(t *testing.T) {
 			err := validateObjectKey(tc.key)
-			require.ErrorIs(t, err, ErrInvalidLockKey)
+			require.ErrorIs(t, err, errInvalidLockKey)
 		})
 	}
 }
@@ -640,14 +643,14 @@ func TestCDKLockOptionsFromBucket_RejectsUnsupportedProvider(t *testing.T) {
 	bucket := memblob.OpenBucket(nil)
 	defer func() { _ = bucket.Close() }()
 
-	_, err := CDKLockOptionsFromBucket(bucket, "mem://test-bucket")
+	_, err := cdkLockOptionsFromBucket(bucket, "mem://test-bucket")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unsupported blob provider")
 }
 
 func TestValidateObjectKey_RejectsUnsafePrefix(t *testing.T) {
 	err := validateObjectKey("bad#prefix/probe")
-	require.ErrorIs(t, err, ErrInvalidLockKey)
+	require.ErrorIs(t, err, errInvalidLockKey)
 }
 
 func TestBucketTargetFromURL(t *testing.T) {
@@ -679,16 +682,20 @@ func TestBucketTarget_ObjectKey(t *testing.T) {
 // --- concurrent tests ---
 // These prove that conditional writes provide mutual exclusion on real providers.
 
-// testBackendPair returns two CDKLockBackend instances sharing the same underlying bucket.
-func testBackendPair(t *testing.T, opts ...func(*CDKLockBackendOptions)) (*CDKLockBackend, *CDKLockBackend) {
+// testBackendPair returns two cdkLockBackend instances sharing the same underlying bucket.
+func testBackendPair(t *testing.T, opts ...func(*cdkLockBackendOptions)) (*cdkLockBackend, *cdkLockBackend) {
 	t.Helper()
 	bucket, backendOpts := testBucketAndOpts(t, opts...)
-	return NewCDKLockBackend(bucket, backendOpts), NewCDKLockBackend(bucket, backendOpts)
+	return newCDKLockBackend(bucket, backendOpts), newCDKLockBackend(bucket, backendOpts)
 }
 
+// Against real providers (CDK_TEST_BUCKET_URL), this test exercises true
+// concurrent conditional-write atomicity. Against the fake conditionalBucket,
+// writes are serialised under a mutex, so it only verifies the error-handling
+// paths (exactly one errLockHeld, one success) rather than actual race behavior.
 func TestCDKLockBackend_ConcurrentTakeover(t *testing.T) {
 	ttl, clockSkew, wait := expiryTestTimings()
-	backendA, backendB := testBackendPair(t, func(opts *CDKLockBackendOptions) {
+	backendA, backendB := testBackendPair(t, func(opts *cdkLockBackendOptions) {
 		opts.clockSkewAllowance = clockSkew
 	})
 	ctx := context.Background()
@@ -700,7 +707,7 @@ func TestCDKLockBackend_ConcurrentTakeover(t *testing.T) {
 	})
 
 	// Create an expired lock.
-	info := LockInfo{Owner: "old-owner", TTL: ttl, Heartbeat: time.Now()}
+	info := lockInfo{Owner: "old-owner", TTL: ttl, Heartbeat: time.Now()}
 	require.NoError(t, backendA.Create(ctx, key, info))
 
 	// Wait for expiry (mtime + TTL + clockSkewAllowance).
@@ -708,8 +715,8 @@ func TestCDKLockBackend_ConcurrentTakeover(t *testing.T) {
 
 	// Race two takeovers. Exactly one should win.
 	errCh := make(chan error, 2)
-	go func() { errCh <- backendA.Create(ctx, key, lockInfo("owner-a", 30*time.Second)) }()
-	go func() { errCh <- backendB.Create(ctx, key, lockInfo("owner-b", 30*time.Second)) }()
+	go func() { errCh <- backendA.Create(ctx, key, newLockInfo("owner-a", 30*time.Second)) }()
+	go func() { errCh <- backendB.Create(ctx, key, newLockInfo("owner-b", 30*time.Second)) }()
 
 	err1 := <-errCh
 	err2 := <-errCh
@@ -719,7 +726,7 @@ func TestCDKLockBackend_ConcurrentTakeover(t *testing.T) {
 		if err == nil {
 			wins++
 		} else {
-			require.ErrorIs(t, err, ErrLockHeld, "loser should get ErrLockHeld, got: %v", err)
+			require.ErrorIs(t, err, errLockHeld, "loser should get errLockHeld, got: %v", err)
 		}
 	}
 	assert.Equal(t, 1, wins, "exactly one takeover should succeed")
@@ -727,7 +734,7 @@ func TestCDKLockBackend_ConcurrentTakeover(t *testing.T) {
 
 func TestCDKLockBackend_UpdateAfterTTLExpires(t *testing.T) {
 	ttl, clockSkew, wait := expiryTestTimings()
-	backend := testBackend(t, func(opts *CDKLockBackendOptions) {
+	backend := testBackend(t, func(opts *cdkLockBackendOptions) {
 		opts.clockSkewAllowance = clockSkew
 	})
 	ctx := context.Background()
@@ -736,7 +743,7 @@ func TestCDKLockBackend_UpdateAfterTTLExpires(t *testing.T) {
 	t.Cleanup(func() { _ = backend.Delete(ctx, key, "owner-1") })
 
 	// Create a lock with a short TTL.
-	info := LockInfo{Owner: "owner-1", TTL: ttl, Heartbeat: time.Now()}
+	info := lockInfo{Owner: "owner-1", TTL: ttl, Heartbeat: time.Now()}
 	require.NoError(t, backend.Create(ctx, key, info))
 
 	// Wait for the lease to expire (mtime + TTL).
@@ -744,12 +751,12 @@ func TestCDKLockBackend_UpdateAfterTTLExpires(t *testing.T) {
 	time.Sleep(wait)
 
 	// Update from the same owner should be rejected — lease has expired.
-	err := backend.Update(ctx, key, lockInfo("owner-1", 30*time.Second))
-	require.ErrorIs(t, err, ErrLeaseExpired)
+	err := backend.Update(ctx, key, newLockInfo("owner-1", 30*time.Second))
+	require.ErrorIs(t, err, errLeaseExpired)
 }
 
-func lockInfo(owner string, ttl time.Duration) LockInfo {
-	return LockInfo{Owner: owner, TTL: ttl, Heartbeat: time.Now()}
+func newLockInfo(owner string, ttl time.Duration) lockInfo {
+	return lockInfo{Owner: owner, TTL: ttl, Heartbeat: time.Now()}
 }
 
 // --- conditionalBucket: fake ETag tracking for memblob ---
@@ -765,7 +772,7 @@ var errPrecondition = func() error {
 }()
 
 // conditionalBucket wraps a CDKBucket (backed by memblob) and adds ETag tracking
-// to simulate conditional write semantics for testing CDKLockBackend.
+// to simulate conditional write semantics for testing cdkLockBackend.
 type conditionalBucket struct {
 	resource.CDKBucket
 	mu    sync.Mutex
@@ -850,24 +857,33 @@ func (c *conditionalBucket) Delete(ctx context.Context, key string) error {
 
 // expiredFakeLock creates a fake backend with an expired lock at the given key.
 // Returns the backend and underlying bucket for tests that need ETag manipulation.
-func expiredFakeLock(t *testing.T, key, owner string) (*CDKLockBackend, *conditionalBucket) {
+func expiredFakeLock(t *testing.T, key, owner string) (*cdkLockBackend, *conditionalBucket) {
 	t.Helper()
 	bucket := newConditionalBucket()
 	backend := newFakeBackend(bucket)
 	backend.clockSkewAllowance = 0
 	ctx := context.Background()
-	require.NoError(t, backend.Create(ctx, key, lockInfo(owner, 100*time.Millisecond)))
+	require.NoError(t, backend.Create(ctx, key, newLockInfo(owner, 100*time.Millisecond)))
 	backend.now = func() time.Time { return time.Now().Add(200 * time.Millisecond) }
 	return backend, bucket
 }
 
-// --- fakeIfMatchRequest for conditional write/delete callbacks ---
+// --- fake conditionalOps for test infrastructure ---
 
 type fakeIfMatchRequest struct {
 	ETag string
 }
 
-func fakeConditionalWrite(attrs *blob.Attributes) func(asFunc func(any) bool) error {
+// fakeOps implements conditionalOps using the fake ETag tracking in conditionalBucket.
+type fakeOps struct {
+	bucket *conditionalBucket
+}
+
+func newFakeOps(bucket *conditionalBucket) *fakeOps {
+	return &fakeOps{bucket: bucket}
+}
+
+func (f *fakeOps) BeforeWrite(attrs *blob.Attributes) func(asFunc func(any) bool) error {
 	return func(asFunc func(any) bool) error {
 		var req *fakeIfMatchRequest
 		if asFunc(&req) {
@@ -877,18 +893,38 @@ func fakeConditionalWrite(attrs *blob.Attributes) func(asFunc func(any) bool) er
 	}
 }
 
-func fakeConditionalDeleteFor(bucket *conditionalBucket) conditionalDeleteFunc {
-	return func(ctx context.Context, key string, attrs *blob.Attributes) error {
-		bucket.mu.Lock()
-		currentETag, exists := bucket.etags[key]
-		bucket.mu.Unlock()
+func (f *fakeOps) Delete(ctx context.Context, key string, attrs *blob.Attributes) error {
+	f.bucket.mu.Lock()
+	currentETag, exists := f.bucket.etags[key]
+	f.bucket.mu.Unlock()
 
-		if !exists {
-			return bucket.CDKBucket.Delete(ctx, key)
-		}
-		if currentETag != attrs.ETag {
-			return errPrecondition
-		}
-		return bucket.Delete(ctx, key)
+	if !exists {
+		return f.bucket.CDKBucket.Delete(ctx, key)
 	}
+	if currentETag != attrs.ETag {
+		return errPrecondition
+	}
+	return f.bucket.Delete(ctx, key)
+}
+
+// interceptOps wraps a conditionalOps and runs hooks before write/delete to
+// simulate race conditions (e.g. ETag changes between read and write).
+type interceptOps struct {
+	conditionalOps
+	beforeWriteHook  func()
+	beforeDeleteHook func(key string)
+}
+
+func (i *interceptOps) BeforeWrite(attrs *blob.Attributes) func(asFunc func(any) bool) error {
+	if i.beforeWriteHook != nil {
+		i.beforeWriteHook()
+	}
+	return i.conditionalOps.BeforeWrite(attrs)
+}
+
+func (i *interceptOps) Delete(ctx context.Context, key string, attrs *blob.Attributes) error {
+	if i.beforeDeleteHook != nil {
+		i.beforeDeleteHook(key)
+	}
+	return i.conditionalOps.Delete(ctx, key, attrs)
 }

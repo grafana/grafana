@@ -20,7 +20,7 @@ func TestObjectStorageLock_AcquireRelease(t *testing.T) {
 	ctx := context.Background()
 	key := testKey(t)
 
-	lock, err := NewObjectStorageLock(ObjectStorageLockConfig{
+	lock, err := newObjectStorageLock(objectStorageLockConfig{
 		Backend:           backend,
 		Key:               key,
 		Owner:             "instance-1",
@@ -38,7 +38,7 @@ func TestObjectStorageLock_AcquireRelease(t *testing.T) {
 	require.NoError(t, lock.Release())
 
 	_, err = backend.Read(ctx, key)
-	require.ErrorIs(t, err, ErrLockNotFound)
+	require.ErrorIs(t, err, errLockNotFound)
 }
 
 func TestObjectStorageLock_Contention(t *testing.T) {
@@ -46,7 +46,7 @@ func TestObjectStorageLock_Contention(t *testing.T) {
 	ctx := context.Background()
 	key := testKey(t)
 
-	lock1, err := NewObjectStorageLock(ObjectStorageLockConfig{
+	lock1, err := newObjectStorageLock(objectStorageLockConfig{
 		Backend:           backend,
 		Key:               key,
 		Owner:             "instance-1",
@@ -54,7 +54,7 @@ func TestObjectStorageLock_Contention(t *testing.T) {
 		HeartbeatInterval: 100 * time.Millisecond,
 	})
 	require.NoError(t, err)
-	lock2, err := NewObjectStorageLock(ObjectStorageLockConfig{
+	lock2, err := newObjectStorageLock(objectStorageLockConfig{
 		Backend:           backend,
 		Key:               key,
 		Owner:             "instance-2",
@@ -66,7 +66,7 @@ func TestObjectStorageLock_Contention(t *testing.T) {
 	require.NoError(t, lock1.Acquire(ctx))
 
 	err = lock2.Acquire(ctx)
-	require.ErrorIs(t, err, ErrLockHeld)
+	require.ErrorIs(t, err, errLockHeld)
 
 	require.NoError(t, lock1.Release())
 
@@ -86,7 +86,7 @@ func TestObjectStorageLock_Heartbeat(t *testing.T) {
 		hbInterval = 1 * time.Second
 	}
 
-	lock, err := NewObjectStorageLock(ObjectStorageLockConfig{
+	lock, err := newObjectStorageLock(objectStorageLockConfig{
 		Backend:           backend,
 		Key:               key,
 		Owner:             "instance-1",
@@ -116,7 +116,7 @@ func TestObjectStorageLock_Heartbeat(t *testing.T) {
 func TestObjectStorageLock_LostChannel(t *testing.T) {
 	backend := newFakeBackend(newConditionalBucket())
 
-	lock, err := NewObjectStorageLock(ObjectStorageLockConfig{
+	lock, err := newObjectStorageLock(objectStorageLockConfig{
 		Backend:           backend,
 		Key:               "test-lock",
 		Owner:             "instance-1",
@@ -139,7 +139,7 @@ func TestObjectStorageLock_LostChannel(t *testing.T) {
 }
 
 func TestNewObjectStorageLock_RejectsNilBackend(t *testing.T) {
-	_, err := NewObjectStorageLock(ObjectStorageLockConfig{
+	_, err := newObjectStorageLock(objectStorageLockConfig{
 		Key:   "test-lock",
 		Owner: "instance-1",
 	})
@@ -152,11 +152,11 @@ func TestNewObjectStorageLock_RejectsNilBackend(t *testing.T) {
 func TestObjectStorageLock_ReleaseAfterHeartbeatLoss(t *testing.T) {
 	inner := newFakeBackend(newConditionalBucket())
 	backend := &failingUpdateBackend{
-		LockBackend: inner,
+		lockBackend: inner,
 		failAfterN:  0,
 	}
 
-	lock, err := NewObjectStorageLock(ObjectStorageLockConfig{
+	lock, err := newObjectStorageLock(objectStorageLockConfig{
 		Backend:           backend,
 		Key:               "test-lock",
 		Owner:             "instance-1",
@@ -178,16 +178,16 @@ func TestObjectStorageLock_ReleaseAfterHeartbeatLoss(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = backend.Read(ctx, "test-lock")
-	require.ErrorIs(t, err, ErrLockNotFound)
+	require.ErrorIs(t, err, errLockNotFound)
 }
 
 func TestObjectStorageLock_TransientHeartbeatRecovery(t *testing.T) {
 	backend := &failingUpdateBackend{
-		LockBackend: newFakeBackend(newConditionalBucket()),
+		lockBackend: newFakeBackend(newConditionalBucket()),
 		failAfterN:  0,
 	}
 
-	lock, err := NewObjectStorageLock(ObjectStorageLockConfig{
+	lock, err := newObjectStorageLock(objectStorageLockConfig{
 		Backend:           backend,
 		Key:               "test-lock",
 		Owner:             "instance-1",
@@ -218,12 +218,12 @@ func TestObjectStorageLock_TransientHeartbeatRecovery(t *testing.T) {
 
 func TestObjectStorageLock_ImmediateLossOnOwnershipError(t *testing.T) {
 	backend := &failingUpdateBackend{
-		LockBackend:   newFakeBackend(newConditionalBucket()),
+		lockBackend:   newFakeBackend(newConditionalBucket()),
 		failAfterN:    0,
-		updateErrFunc: func() error { return ErrLockHeld },
+		updateErrFunc: func() error { return errLockHeld },
 	}
 
-	lock, err := NewObjectStorageLock(ObjectStorageLockConfig{
+	lock, err := newObjectStorageLock(objectStorageLockConfig{
 		Backend:           backend,
 		Key:               "test-lock",
 		Owner:             "instance-1",
@@ -238,21 +238,21 @@ func TestObjectStorageLock_ImmediateLossOnOwnershipError(t *testing.T) {
 	select {
 	case <-lock.Lost():
 	case <-time.After(500 * time.Millisecond):
-		t.Fatal("expected immediate lock loss on ErrLockHeld, but it was not detected")
+		t.Fatal("expected immediate lock loss on errLockHeld, but it was not detected")
 	}
 }
 
-// failingUpdateBackend wraps a LockBackend and fails Update calls
+// failingUpdateBackend wraps a lockBackend and fails Update calls
 // after a configurable number of successes.
 type failingUpdateBackend struct {
-	LockBackend
+	lockBackend
 	mu            sync.Mutex
 	updateCount   int
 	failAfterN    int
 	updateErrFunc func() error
 }
 
-func (b *failingUpdateBackend) Update(ctx context.Context, key string, info LockInfo) error {
+func (b *failingUpdateBackend) Update(ctx context.Context, key string, info lockInfo) error {
 	b.mu.Lock()
 	b.updateCount++
 	count := b.updateCount
@@ -264,5 +264,5 @@ func (b *failingUpdateBackend) Update(ctx context.Context, key string, info Lock
 		}
 		return fmt.Errorf("simulated transient error")
 	}
-	return b.LockBackend.Update(ctx, key, info)
+	return b.lockBackend.Update(ctx, key, info)
 }

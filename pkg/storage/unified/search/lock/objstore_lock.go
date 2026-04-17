@@ -8,72 +8,73 @@ import (
 	"time"
 )
 
-// LockInfo contains the metadata for a distributed lock.
-type LockInfo struct {
+// lockInfo contains the metadata for a distributed lock.
+type lockInfo struct {
 	Owner     string        `json:"owner"`
 	TTL       time.Duration `json:"ttl"`
 	Heartbeat time.Time     `json:"heartbeat"` // informational: when the owner last renewed the lock
 }
 
-// LockBackend is the storage primitive for distributed locking.
+// lockBackend is the storage primitive for distributed locking.
 // Implementations provide atomic create, conditional update, conditional delete, and read operations.
-type LockBackend interface {
+type lockBackend interface {
 	// Create atomically creates a lock if it does not exist.
-	// Returns ErrLockHeld if the lock already exists and has not expired.
-	Create(ctx context.Context, key string, info LockInfo) error
+	// Returns errLockHeld if the lock already exists and has not expired.
+	Create(ctx context.Context, key string, info lockInfo) error
 
 	// Update atomically updates an existing lock, verifying ownership.
 	// Returns error if lock does not exist or is owned by a different owner.
-	Update(ctx context.Context, key string, info LockInfo) error
+	Update(ctx context.Context, key string, info lockInfo) error
 
 	// Delete atomically deletes a lock, verifying ownership.
 	// Returns error if lock does not exist or is owned by a different owner.
 	Delete(ctx context.Context, key string, owner string) error
 
-	// Read returns the current lock info, or ErrLockNotFound if no lock exists.
-	Read(ctx context.Context, key string) (*LockInfo, error)
+	// Read returns the current lock info, or errLockNotFound if no lock exists.
+	Read(ctx context.Context, key string) (*lockInfo, error)
 }
 
-// ErrLockHeld is returned when a lock cannot be acquired because it is held by another owner.
-var ErrLockHeld = errors.New("lock is held by another owner")
+// errLockHeld is returned when a lock cannot be acquired because it is held by another owner.
+var errLockHeld = errors.New("lock is held by another owner")
 
-// ErrLockNotFound is returned when a lock operation targets a non-existent lock.
-var ErrLockNotFound = errors.New("lock not found")
+// errLockNotFound is returned when a lock operation targets a non-existent lock.
+var errLockNotFound = errors.New("lock not found")
 
-// ErrLeaseExpired is returned when a lock owner attempts to renew a lease that has already expired.
-var ErrLeaseExpired = errors.New("lease expired")
+// errLeaseExpired is returned when a lock owner attempts to renew a lease that has already expired.
+var errLeaseExpired = errors.New("lease expired")
 
-// ErrInvalidLockKey is returned when a lock key contains characters unsafe for object storage providers.
-var ErrInvalidLockKey = errors.New("invalid lock key")
+// errInvalidLockKey is returned when a lock key contains characters unsafe for object storage providers.
+var errInvalidLockKey = errors.New("invalid lock key")
 
-// ObjectStorageLock provides distributed locking via conditional object storage writes.
-type ObjectStorageLock struct {
+// objectStorageLock provides distributed locking via conditional object storage writes.
+type objectStorageLock struct {
 	// Immutable after construction.
-	backend           LockBackend
+	backend           lockBackend
 	key               string
 	owner             string
 	ttl               time.Duration
 	heartbeatInterval time.Duration
 
-	// mu protects held, cancelHB, hbDone, and lostCh.
-	mu       sync.Mutex
-	held     bool
-	cancelHB context.CancelFunc
-	hbDone   chan struct{}
-	lostCh   chan struct{}
+	// mu protects held and stopHeartbeat.
+	mu            sync.Mutex
+	held          bool
+	stopHeartbeat func() // set by Acquire, idempotent
+
+	// lostCh is created in Acquire and only closed by the heartbeat goroutine.
+	lostCh chan struct{}
 }
 
-// ObjectStorageLockConfig holds configuration for creating an ObjectStorageLock.
-type ObjectStorageLockConfig struct {
-	Backend           LockBackend
+// objectStorageLockConfig holds configuration for creating an objectStorageLock.
+type objectStorageLockConfig struct {
+	Backend           lockBackend
 	Key               string
 	Owner             string
 	TTL               time.Duration // Default: 180s
 	HeartbeatInterval time.Duration // Default: 60s
 }
 
-// NewObjectStorageLock creates a new distributed lock.
-func NewObjectStorageLock(cfg ObjectStorageLockConfig) (*ObjectStorageLock, error) {
+// newObjectStorageLock creates a new distributed lock.
+func newObjectStorageLock(cfg objectStorageLockConfig) (*objectStorageLock, error) {
 	if cfg.TTL == 0 {
 		cfg.TTL = 180 * time.Second
 	}
@@ -86,6 +87,9 @@ func NewObjectStorageLock(cfg ObjectStorageLockConfig) (*ObjectStorageLock, erro
 	if cfg.Owner == "" {
 		return nil, fmt.Errorf("owner must not be empty")
 	}
+	if err := validateObjectKey(cfg.Key); err != nil {
+		return nil, err
+	}
 	if cfg.TTL <= 0 {
 		return nil, fmt.Errorf("TTL must be positive, got %s", cfg.TTL)
 	}
@@ -95,7 +99,7 @@ func NewObjectStorageLock(cfg ObjectStorageLockConfig) (*ObjectStorageLock, erro
 	if cfg.TTL < 2*cfg.HeartbeatInterval {
 		return nil, fmt.Errorf("TTL (%s) must be at least 2x HeartbeatInterval (%s)", cfg.TTL, cfg.HeartbeatInterval)
 	}
-	return &ObjectStorageLock{
+	return &objectStorageLock{
 		backend:           cfg.Backend,
 		key:               cfg.Key,
 		owner:             cfg.Owner,
@@ -106,17 +110,15 @@ func NewObjectStorageLock(cfg ObjectStorageLockConfig) (*ObjectStorageLock, erro
 }
 
 // Lost returns a channel that is closed if the lock is lost due to a heartbeat failure.
-// Callers holding the lock should select on this channel to detect lock loss.
-func (l *ObjectStorageLock) Lost() <-chan struct{} {
-	l.mu.Lock()
-	defer l.mu.Unlock()
+// Callers may call Release after losing the lock to attempt a cleanup of the lock object.
+func (l *objectStorageLock) Lost() <-chan struct{} {
 	return l.lostCh
 }
 
 // Acquire attempts to acquire the distributed lock.
-// If the lock is held by another owner and not expired, returns ErrLockHeld.
+// If the lock is held by another owner and not expired, returns errLockHeld.
 // Starts a background heartbeat goroutine on success.
-func (l *ObjectStorageLock) Acquire(ctx context.Context) error {
+func (l *objectStorageLock) Acquire(ctx context.Context) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -124,7 +126,7 @@ func (l *ObjectStorageLock) Acquire(ctx context.Context) error {
 		return fmt.Errorf("lock already held by this instance")
 	}
 
-	info := LockInfo{
+	info := lockInfo{
 		Owner:     l.owner,
 		TTL:       l.ttl,
 		Heartbeat: time.Now(),
@@ -136,51 +138,53 @@ func (l *ObjectStorageLock) Acquire(ctx context.Context) error {
 
 	l.held = true
 	l.lostCh = make(chan struct{})
-	l.startHeartbeat()
+
+	hbCtx, cancel := context.WithCancel(context.Background())
+	hbDone := make(chan struct{})
+	l.startHeartbeat(hbCtx, hbDone)
+
+	var once sync.Once
+	l.stopHeartbeat = func() {
+		once.Do(func() {
+			cancel()
+			<-hbDone
+		})
+	}
 	return nil
 }
 
-// Release releases the distributed lock and stops the heartbeat goroutine.
-func (l *ObjectStorageLock) Release() error {
+// Release stops the heartbeat and deletes the lock object.
+// Non-retriable errors: errLockHeld, errLockNotFound
+func (l *objectStorageLock) Release() error {
 	l.mu.Lock()
 	if !l.held {
 		l.mu.Unlock()
 		return nil
 	}
-	l.cancelHB()
-	// Capture hbDone under the lock to avoid a data race.
-	hbDone := l.hbDone
+	stopHeartbeat := l.stopHeartbeat
 	l.mu.Unlock()
 
-	// Wait for heartbeat goroutine outside the lock to avoid deadlock.
-	<-hbDone
+	stopHeartbeat()
 
 	deleteCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	err := l.backend.Delete(deleteCtx, l.key, l.owner)
 
 	l.mu.Lock()
-	if err == nil || errors.Is(err, ErrLockNotFound) || errors.Is(err, ErrLockHeld) {
-		// Clear everything on success, or when the lock is already gone / taken
-		// by another owner. In those cases this instance no longer owns anything.
-		l.cancelHB = nil
-		l.hbDone = nil
+	if err == nil || errors.Is(err, errLockNotFound) || errors.Is(err, errLockHeld) {
 		l.held = false
+		l.stopHeartbeat = nil
 	}
-	// On transient storage errors, keep held/cancelHB/hbDone intact so the
-	// caller can retry Release without deadlocking on <-hbDone.
+	// On transient Delete errors, keep held=true so a retry re-enters this path
+	// and re-attempts the Delete. stopHeartbeat() is already a no-op on subsequent calls.
 	l.mu.Unlock()
 
 	return err
 }
 
-func (l *ObjectStorageLock) startHeartbeat() {
-	ctx, cancel := context.WithCancel(context.Background())
-	l.cancelHB = cancel
-	l.hbDone = make(chan struct{})
-
+func (l *objectStorageLock) startHeartbeat(ctx context.Context, done chan struct{}) {
 	go func() {
-		defer close(l.hbDone)
+		defer close(done)
 		ticker := time.NewTicker(l.heartbeatInterval)
 		defer ticker.Stop()
 
@@ -194,32 +198,28 @@ func (l *ObjectStorageLock) startHeartbeat() {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				info := LockInfo{
+				info := lockInfo{
 					Owner:     l.owner,
 					TTL:       l.ttl,
 					Heartbeat: time.Now(),
 				}
-				updateCtx, updateCancel := context.WithTimeout(ctx, 30*time.Second)
+				// Use background context so writes can complete before Release's Delete
+				updateCtx, updateCancel := context.WithTimeout(context.Background(), 30*time.Second)
 				err := l.backend.Update(updateCtx, l.key, info)
 				updateCancel()
 				if err != nil {
-					// Release() cancels our loop context — check if we should stop.
 					if ctx.Err() != nil {
 						return
 					}
 					// Definitive loss: another owner took the lock, it was deleted, or our lease expired.
-					if errors.Is(err, ErrLockHeld) || errors.Is(err, ErrLockNotFound) || errors.Is(err, ErrLeaseExpired) {
-						l.mu.Lock()
+					if errors.Is(err, errLockHeld) || errors.Is(err, errLockNotFound) || errors.Is(err, errLeaseExpired) {
 						close(l.lostCh)
-						l.mu.Unlock()
 						return
 					}
 					// Transient error — retry on next tick, give up after maxFailures.
 					consecutiveFailures++
 					if consecutiveFailures >= maxFailures {
-						l.mu.Lock()
 						close(l.lostCh)
-						l.mu.Unlock()
 						return
 					}
 					continue
