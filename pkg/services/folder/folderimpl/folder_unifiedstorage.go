@@ -483,7 +483,6 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-
 	evaluator := accesscontrol.EvalPermission(folder.ActionFoldersWrite, folder.ScopeFoldersProvider.GetResourceScopeUID(cmd.UID))
 	if hasAccess, err := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator); err != nil || !hasAccess {
 		if err != nil {
@@ -492,14 +491,12 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		return nil, toFolderError(dashboards.ErrDashboardUpdateAccessDenied)
 	}
 
-	user := cmd.SignedInUser
-
 	folder, err := s.unifiedStore.Update(ctx, folder.UpdateFolderCommand{
 		UID:                  cmd.UID,
 		OrgID:                cmd.OrgID,
 		NewTitle:             cmd.NewTitle,
 		NewDescription:       cmd.NewDescription,
-		SignedInUser:         user,
+		SignedInUser:         cmd.SignedInUser,
 		Overwrite:            cmd.Overwrite,
 		Version:              cmd.Version,
 		ManagerKindClassicFP: cmd.ManagerKindClassicFP, // nolint:staticcheck
