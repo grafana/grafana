@@ -171,13 +171,17 @@ const (
 	// Log schema validation errors so they can be analyzed later
 	FlagDashboardSchemaValidationLogging = "dashboardSchemaValidationLogging"
 
-	// FlagScanRowInvalidDashboardParseFallbackEnabled
-	// Enable fallback parsing behavior when scan row encounters invalid dashboard JSON
-	FlagScanRowInvalidDashboardParseFallbackEnabled = "scanRowInvalidDashboardParseFallbackEnabled"
+	// FlagDatasourcesQueryTypes
+	// Load Query types from spec.{version}.query.{yaml|json}
+	FlagDatasourcesQueryTypes = "datasources.queryTypes"
 
-	// FlagDatasourceQueryTypes
-	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
-	FlagDatasourceQueryTypes = "datasourceQueryTypes"
+	// FlagDatasourcesLoadOpenAPI
+	// Load the openapi spec from spec.{version}.openapi.{yaml|json}
+	FlagDatasourcesLoadOpenAPI = "datasources.loadOpenAPI"
+
+	// FlagDatasourcesChunkedQueryStreaming
+	// Allow requesting query results as chunked jsonl rather than single json blob
+	FlagDatasourcesChunkedQueryStreaming = "datasources.chunkedQueryStreaming"
 
 	// FlagDatasourceLegacyIdApi
 	// Register legacy datasource apis that use the numeric id
@@ -403,6 +407,10 @@ const (
 	// Use openFGA as main authorization engine and disable legacy RBAC clietn.
 	FlagZanzanaNoLegacyClient = "zanzanaNoLegacyClient"
 
+	// FlagZanzanaSearchUsersPermissions
+	// Search users permissions using Zanzana.
+	FlagZanzanaSearchUsersPermissions = "zanzanaSearchUsersPermissions"
+
 	// FlagReloadDashboardsOnParamsChange
 	// Enables reload of dashboards on scopes, time range and variables changes
 	FlagReloadDashboardsOnParamsChange = "reloadDashboardsOnParamsChange"
@@ -446,10 +454,6 @@ const (
 	// FlagRolePickerDrawer
 	// Enables the new role picker drawer design
 	FlagRolePickerDrawer = "rolePickerDrawer"
-
-	// FlagManagedDualWriter
-	// Pick the dual write mode from database configs
-	FlagManagedDualWriter = "managedDualWriter"
 
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
@@ -690,10 +694,6 @@ const (
 	// Enables the notification history feature
 	FlagAlertingNotificationHistory = "alertingNotificationHistory"
 
-	// FlagUnifiedStorageSearchDualReaderEnabled
-	// Enable dual reader for unified storage search
-	FlagUnifiedStorageSearchDualReaderEnabled = "unifiedStorageSearchDualReaderEnabled"
-
 	// FlagAlertmanagerRemoteSecondaryWithRemoteState
 	// Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
 	FlagAlertmanagerRemoteSecondaryWithRemoteState = "alertmanagerRemoteSecondaryWithRemoteState"
@@ -918,6 +918,10 @@ const (
 	// Enables the query service to fetch the configuration from the settings service
 	FlagQueryFetchConfigFromSettingsService = "queryFetchConfigFromSettingsService"
 
+	// FlagProfilesHeatmap
+	// Enables heatmap visualization support for Pyroscope profiles
+	FlagProfilesHeatmap = "profilesHeatmap"
+
 	// FlagQueryServiceQueryCaching
 	// Enables the query service to do query caching
 	FlagQueryServiceQueryCaching = "queryServiceQueryCaching"
@@ -929,6 +933,10 @@ const (
 	// FlagQuerycachingRedirectToK8SApi
 	// Redirect caching service cache config reads from legacy storage to K8s API
 	FlagQuerycachingRedirectToK8SApi = "querycaching.redirectToK8SApi"
+
+	// FlagQuerycachingEnableConnectionsClient
+	// Use connections client instead of storage to resolve datasource plugin ID in query caching
+	FlagQuerycachingEnableConnectionsClient = "querycaching.enableConnectionsClient"
 
 	// FlagCompiledBootScript
 	// Boots the frontend using the boot.js script built from TS instead of the embedded boot script

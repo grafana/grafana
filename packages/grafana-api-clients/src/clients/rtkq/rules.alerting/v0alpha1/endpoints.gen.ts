@@ -870,7 +870,8 @@ export type AlertRuleExpressionMap = {
 export type AlertRuleNoDataState = 'NoData' | 'Ok' | 'Alerting' | 'KeepLast';
 export type AlertRuleTimeIntervalRef = string;
 export type AlertRulePromDuration = string;
-export type AlertRuleNotificationSettings = {
+export type AlertRuleNotificationSettingsType = 'SimplifiedRouting' | 'NamedRoutingTree';
+export type AlertRuleSimplifiedRouting = {
   activeTimeIntervals?: AlertRuleTimeIntervalRef[];
   groupBy?: string[];
   groupInterval?: AlertRulePromDuration;
@@ -878,7 +879,13 @@ export type AlertRuleNotificationSettings = {
   muteTimeIntervals?: AlertRuleTimeIntervalRef[];
   receiver: string;
   repeatInterval?: AlertRulePromDuration;
+  type: AlertRuleNotificationSettingsType;
 };
+export type AlertRuleNamedRoutingTree = {
+  routingTree: string;
+  type: AlertRuleNotificationSettingsType;
+};
+export type AlertRuleNotificationSettings = AlertRuleSimplifiedRouting | AlertRuleNamedRoutingTree;
 export type AlertRulePanelRef = {
   dashboardUID: string;
   panelID: number;

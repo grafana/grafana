@@ -6,6 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 )
 
 // --- NewMappersRegistry defaults ---
@@ -325,21 +327,6 @@ func TestMappersRegistry_Wildcard_ParseScope(t *testing.T) {
 	assert.Equal(t, "loki.datasource.grafana.app", grn.Group)
 	assert.Equal(t, "datasources", grn.Resource)
 	assert.Equal(t, "ds1", grn.Name)
-
-	t.Run("wildcard scope identifier preserves wildcard group", func(t *testing.T) {
-		grn, err := m.ParseScope("datasources:uid:*", "")
-		require.NoError(t, err)
-		assert.Equal(t, "*.datasource.grafana.app", grn.Group)
-		assert.Equal(t, "datasources", grn.Resource)
-		assert.Equal(t, "*", grn.Name)
-	})
-
-	t.Run("wildcard scope identifier resolves group when type is provided", func(t *testing.T) {
-		grn, err := m.ParseScope("datasources:uid:*", "loki")
-		require.NoError(t, err)
-		assert.Equal(t, "loki.datasource.grafana.app", grn.Group)
-		assert.Equal(t, "*", grn.Name)
-	})
 }
 
 func TestMappersRegistry_MultipleWildcards(t *testing.T) {
@@ -376,4 +363,57 @@ func TestMappersRegistry_MultipleWildcards(t *testing.T) {
 	alertGrn, err := m.ParseScope("alertrules:uid:rule1", "")
 	require.NoError(t, err)
 	assert.Equal(t, "unknown.alerting.grafana.app", alertGrn.Group)
+}
+
+// --- NewMapper / NewIDScopedMapper / NewMapperWithAttribute ---
+
+func TestNewMapper_UIDScoped(t *testing.T) {
+	m := NewMapper("folders", []string{"view", "edit", "admin"})
+
+	assert.Equal(t, "folders:uid:abc", m.Scope("abc"))
+	assert.Equal(t, "folders:uid:%", m.ScopePattern())
+	assert.Equal(t, []string{"folders:view", "folders:edit", "folders:admin"}, m.ActionSets())
+}
+
+func TestNewIDScopedMapper_IDScoped(t *testing.T) {
+	m := NewIDScopedMapper("serviceaccounts", []string{"edit", "admin"})
+
+	assert.Equal(t, "serviceaccounts:id:123", m.Scope("123"))
+	assert.Equal(t, "serviceaccounts:id:%", m.ScopePattern())
+}
+
+func TestNewMapperWithAttribute_ExplicitAttribute(t *testing.T) {
+	uid := NewMapperWithAttribute("folders", []string{"view"}, ScopeAttributeUID, nil)
+	assert.Equal(t, "folders:uid:abc", uid.Scope("abc"))
+	assert.Equal(t, "folders:uid:%", uid.ScopePattern())
+
+	id := NewMapperWithAttribute("serviceaccounts", []string{"edit"}, ScopeAttributeID, nil)
+	assert.Equal(t, "serviceaccounts:id:123", id.Scope("123"))
+	assert.Equal(t, "serviceaccounts:id:%", id.ScopePattern())
+}
+
+// --- AllowsKind ---
+
+func TestMapper_AllowsKind_NilAllowedKinds(t *testing.T) {
+	m := NewMapper("folders", defaultLevels)
+
+	// nil allowedKinds means all kinds are permitted
+	assert.True(t, m.AllowsKind(v0alpha1.ResourcePermissionSpecPermissionKindUser))
+	assert.True(t, m.AllowsKind(v0alpha1.ResourcePermissionSpecPermissionKindTeam))
+	assert.True(t, m.AllowsKind(v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount))
+	assert.True(t, m.AllowsKind(v0alpha1.ResourcePermissionSpecPermissionKindBasicRole))
+}
+
+func TestMapper_AllowsKind_RestrictedList(t *testing.T) {
+	allowedKinds := []v0alpha1.ResourcePermissionSpecPermissionKind{
+		v0alpha1.ResourcePermissionSpecPermissionKindUser,
+		v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount,
+		v0alpha1.ResourcePermissionSpecPermissionKindTeam,
+	}
+	m := NewMapperWithAttribute("serviceaccounts", []string{"edit", "admin"}, ScopeAttributeID, allowedKinds)
+
+	assert.True(t, m.AllowsKind(v0alpha1.ResourcePermissionSpecPermissionKindUser))
+	assert.True(t, m.AllowsKind(v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount))
+	assert.True(t, m.AllowsKind(v0alpha1.ResourcePermissionSpecPermissionKindTeam))
+	assert.False(t, m.AllowsKind(v0alpha1.ResourcePermissionSpecPermissionKindBasicRole))
 }
