@@ -26,11 +26,17 @@ import { advancedFiltersToRulesFilter, searchQueryToDefaultValues, usePluginsFil
 
 const SIDEBAR_WIDTH = 250;
 
+interface RulesFilterSidebarProps {
+  hiddenFilters?: string[];
+}
+
 /**
  * Persistent filter sidebar for the alert rule list v2.
  * All filters apply immediately on change; rule name applies on blur or Enter.
+ * Pass `hiddenFilters` to suppress specific filter dimensions (e.g. `['ruleType']`
+ * when the enclosing tab already scopes by type).
  */
-export function RulesFilterSidebar() {
+export function RulesFilterSidebar({ hiddenFilters = [] }: RulesFilterSidebarProps) {
   const styles = useStyles2(getStyles);
   const { hasActiveFilters, clearAll, searchQuery, filterState } = useRulesFilter();
 
@@ -44,7 +50,7 @@ export function RulesFilterSidebar() {
         </Stack>
         {/* key remounts the form when the URL changes externally (top bar, clearAll, navigation)
             so defaultValues always reflect the current URL state — no sync effects needed */}
-        <FilterSidebarForm key={searchQuery} filterState={filterState} />
+        <FilterSidebarForm key={searchQuery} filterState={filterState} hiddenFilters={hiddenFilters} />
       </Stack>
     </div>
   );
@@ -52,9 +58,10 @@ export function RulesFilterSidebar() {
 
 interface FilterSidebarFormProps {
   filterState: RulesFilter;
+  hiddenFilters: string[];
 }
 
-function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
+function FilterSidebarForm({ filterState, hiddenFilters }: FilterSidebarFormProps) {
   const styles = useStyles2(getStyles);
 
   const { updateFilters } = useRulesFilter();
@@ -450,30 +457,32 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
         )}
 
         <SidebarSection>
-          <SidebarField
-            label={<Trans i18nKey="alerting.search.property.rule-type">Type</Trans>}
-            labelId="filter-label-rule-type"
-          >
-            <Controller
-              name="ruleType"
-              control={control}
-              render={({ field }) => (
-                <ToggleButtonGroup<AdvancedFilters['ruleType']>
-                  aria-labelledby="filter-label-rule-type"
-                  value={field.value}
-                  onChange={(value) => {
-                    field.onChange(value);
-                    applyFormValues();
-                  }}
-                  options={[
-                    { label: t('common.all', 'All'), value: '*' },
-                    { label: t('alerting.rules.type.alert', 'Alert rule'), value: PromRuleType.Alerting },
-                    { label: t('alerting.rules.type.recording', 'Recording rule'), value: PromRuleType.Recording },
-                  ]}
-                />
-              )}
-            />
-          </SidebarField>
+          {!hiddenFilters.includes('ruleType') && (
+            <SidebarField
+              label={<Trans i18nKey="alerting.search.property.rule-type">Type</Trans>}
+              labelId="filter-label-rule-type"
+            >
+              <Controller
+                name="ruleType"
+                control={control}
+                render={({ field }) => (
+                  <ToggleButtonGroup<AdvancedFilters['ruleType']>
+                    aria-labelledby="filter-label-rule-type"
+                    value={field.value}
+                    onChange={(value) => {
+                      field.onChange(value);
+                      applyFormValues();
+                    }}
+                    options={[
+                      { label: t('common.all', 'All'), value: '*' },
+                      { label: t('alerting.rules.type.alert', 'Alert rule'), value: PromRuleType.Alerting },
+                      { label: t('alerting.rules.type.recording', 'Recording rule'), value: PromRuleType.Recording },
+                    ]}
+                  />
+                )}
+              />
+            </SidebarField>
+          )}
 
           <SidebarField
             label={<Trans i18nKey="alerting.search.property.rule-health">Health</Trans>}

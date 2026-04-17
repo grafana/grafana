@@ -50,6 +50,26 @@ export function useAlertRulesNav() {
     },
   ];
 
+  // Add Recording rules and Evaluation chains tabs when the rulesAPIV2 flag is on
+  if (config.featureToggles['alerting.rulesAPIV2']) {
+    tabs.push(
+      {
+        id: 'alert-rules-recording-rules',
+        text: t('alerting.navigation.recording-rules', 'Recording rules'),
+        url: '/alerting/recording-rules',
+        active: location.pathname === '/alerting/recording-rules',
+        parentItem: alertRulesNav,
+      },
+      {
+        id: 'alert-rules-evaluation-chains',
+        text: t('alerting.navigation.evaluation-chains', 'Evaluation chains'),
+        url: '/alerting/evaluation-chains',
+        active: location.pathname === '/alerting/evaluation-chains',
+        parentItem: alertRulesNav,
+      }
+    );
+  }
+
   // Add Recently deleted tab if user has permission
   if (shouldAllowRecoveringDeletedRules()) {
     tabs.push({

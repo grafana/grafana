@@ -1175,6 +1175,23 @@
       "label-metric": "Metric",
       "label-pending-period": "Pending period"
     },
+    "evaluation-chain-badge": {
+      "tooltip": "Part of evaluation chain: {{chainName}}"
+    },
+    "evaluation-chain-row": {
+      "alert-count_one": "{{count}} alert rule",
+      "alert-count_other": "{{count}} alert rule",
+      "alert-rules": "Alert rules",
+      "recording-count_one": "{{count}} recording rule",
+      "recording-count_other": "{{count}} recording rule",
+      "recording-rules": "Recording rules"
+    },
+    "evaluation-chains-list": {
+      "empty": "No evaluation chains found. Evaluation chains are created when you link recording and alert rules together for sequential evaluation.",
+      "folder-count_one": "{{count}} chain",
+      "folder-count_other": "{{count}} chain",
+      "loading": "Loading chains..."
+    },
     "evaluation-group": {
       "label-delete": "Delete",
       "label-export": "Export",
@@ -2178,8 +2195,10 @@
       "alert-rules": "Alert rules",
       "alerts": "Alerts",
       "contact-points": "Contact points",
+      "evaluation-chains": "Evaluation chains",
       "notification-policies": "Notification policies",
       "recently-deleted": "Recently deleted",
+      "recording-rules": "Recording rules",
       "templates": "Templates",
       "time-intervals": "Time intervals"
     },
@@ -2989,6 +3008,7 @@
       "new-alert-rule": "New alert rule",
       "new-datasource-recording-rule": "New Data source recording rule",
       "new-grafana-recording-rule": "New Grafana recording rule",
+      "new-recording-rule": "New recording rule",
       "new-rule-for-export": "New alert rule for export",
       "pagination": {
         "next-page": "Show more…"
@@ -2998,6 +3018,17 @@
         "title": "Alert rules"
       },
       "rulerrule-loading-error": "Failed to load the rule",
+      "tabs": {
+        "alert-rules": {
+          "description": "Alert rules define when a notification for a particular condition should be sent out."
+        },
+        "evaluation-chains": {
+          "description": "Evaluation chains define the order in which recording and alert rules are evaluated, ensuring recording rules always run before the alert rules that depend on them."
+        },
+        "recording-rules": {
+          "description": "Recording rules pre-compute frequently used queries and store their results as new metrics."
+        }
+      },
       "toggle": {
         "use-new-experience": "Use new experience",
         "view-previous-experience": "Revert to previous experience"

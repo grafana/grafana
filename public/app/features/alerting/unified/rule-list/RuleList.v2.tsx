@@ -24,8 +24,16 @@ import { RuleListPageTitle } from './RuleListPageTitle';
 import RulesFilter from './filter/RulesFilter.v2';
 import { RulesFilterSidebar } from './filter/RulesFilterSidebar';
 import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
+import { AlertRulesTab } from './tabs/AlertRulesTab';
 
 function RuleList() {
+  if (config.featureToggles['alerting.rulesAPIV2']) {
+    return <AlertRulesTab />;
+  }
+  return <LegacyRuleList />;
+}
+
+function LegacyRuleList() {
   const { filterState } = useRulesFilter();
   const { viewMode, handleViewChange } = useListViewMode();
 
@@ -50,6 +58,10 @@ function RuleList() {
 }
 
 export function RuleListActions() {
+  return <AlertRuleListActions />;
+}
+
+function AlertRuleListActions() {
   const [createGrafanaRuleSupported, createGrafanaRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
   const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);

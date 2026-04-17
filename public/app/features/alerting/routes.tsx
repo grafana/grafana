@@ -40,6 +40,30 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
+      path: '/alerting/recording-rules',
+      roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
+      component: cfg.featureToggles['alerting.rulesAPIV2']
+        ? importAlertingComponent(
+            () =>
+              import(
+                /* webpackChunkName: "RecordingRulesPage" */ 'app/features/alerting/unified/rule-list/RecordingRulesPage'
+              )
+          )
+        : () => <Navigate replace to="/alerting/list" />,
+    },
+    {
+      path: '/alerting/evaluation-chains',
+      roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
+      component: cfg.featureToggles['alerting.rulesAPIV2']
+        ? importAlertingComponent(
+            () =>
+              import(
+                /* webpackChunkName: "EvaluationChainsPage" */ 'app/features/alerting/unified/rule-list/EvaluationChainsPage'
+              )
+          )
+        : () => <Navigate replace to="/alerting/list" />,
+    },
+    {
       path: '/alerting/routes',
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsRead,
