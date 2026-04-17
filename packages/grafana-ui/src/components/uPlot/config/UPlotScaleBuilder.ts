@@ -28,6 +28,19 @@ export interface ScaleProps {
 
 const isValidLogBase = (v: number | undefined): v is Scale.LogBase => v === 2 || v === 10;
 
+// only used if no log is passed in from the consumer of UPlotScaleBuilder and logrithmic distribution is selected.
+// we probably want to avoid this fallback!
+const FALLBACK_LOG: Scale.LogBase = 10;
+
+// mapping between uPlot and our ScaleDistribution enum values
+const DISTR_MAP: Record<ScaleDistribution, uPlot.Scale.Distr> = {
+  [ScaleDistribution.Linear]: 1,
+  [ScaleDistribution.Ordinal]: 2,
+  [ScaleDistribution.Log]: 3,
+  [ScaleDistribution.Symlog]: 4,
+  // custom is 100 in uPlot, but we don't support it so not mapping here
+};
+
 export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
   merge(props: ScaleProps) {
     this.props.min = optMinMax('min', this.props.min, props.min);
@@ -64,36 +77,25 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     }
 
     const distr = this.props.distribution;
-    let safeLog = this.props.log;
-    if (!isValidLogBase(safeLog)) {
-      safeLog = undefined;
-    }
+    const safeLog = isValidLogBase(this.props.log) ? this.props.log : FALLBACK_LOG;
 
     const distribution = !isTime
       ? {
-          distr:
-            distr === ScaleDistribution.Symlog
-              ? 4
-              : distr === ScaleDistribution.Log
-                ? 3
-                : distr === ScaleDistribution.Ordinal
-                  ? 2
-                  : 1,
-          log: distr === ScaleDistribution.Log || distr === ScaleDistribution.Symlog ? (safeLog ?? 2) : undefined,
+          distr: distr ? DISTR_MAP[distr] : DISTR_MAP[ScaleDistribution.Linear],
+          log: distr === ScaleDistribution.Log || distr === ScaleDistribution.Symlog ? safeLog : undefined,
           asinh: distr === ScaleDistribution.Symlog ? (this.props.linearThreshold ?? 1) : undefined,
         }
       : {};
 
     // guard against invalid log scale limits <= 0, or snap to log boundaries
     if (distr === ScaleDistribution.Log) {
-      const logBase = safeLog ?? 10;
-      const logFn = logBase === 2 ? Math.log2 : Math.log10;
+      const logFn = safeLog === 2 ? Math.log2 : Math.log10;
 
       if (hardMin != null) {
         if (hardMin <= 0) {
           hardMin = null;
         } else {
-          hardMin = logBase ** Math.floor(logFn(hardMin));
+          hardMin = safeLog ** Math.floor(logFn(hardMin));
         }
       }
 
@@ -101,7 +103,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         if (hardMax <= 0) {
           hardMax = null;
         } else {
-          hardMax = logBase ** Math.ceil(logFn(hardMax));
+          hardMax = safeLog ** Math.ceil(logFn(hardMax));
         }
       }
 
@@ -109,7 +111,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         if (softMin <= 0) {
           softMin = null;
         } else {
-          softMin = logBase ** Math.floor(logFn(softMin));
+          softMin = safeLog ** Math.floor(logFn(softMin));
         }
       }
 
@@ -117,7 +119,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         if (softMax <= 0) {
           softMax = null;
         } else {
-          softMax = logBase ** Math.ceil(logFn(softMax));
+          softMax = safeLog ** Math.ceil(logFn(softMax));
         }
       }
     }
@@ -160,9 +162,13 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         return minMax;
       }
 
-      const logBase = scale.log ?? 10;
+      const logBase = scale.log ?? FALLBACK_LOG;
 
-      if (scale.distr === 1 || scale.distr === 2 || scale.distr === 4) {
+      if (
+        scale.distr === DISTR_MAP[ScaleDistribution.Linear] ||
+        scale.distr === DISTR_MAP[ScaleDistribution.Ordinal] ||
+        scale.distr === DISTR_MAP[ScaleDistribution.Symlog]
+      ) {
         if (centeredZero) {
           const absMin = Math.abs(dataMin!);
           const absMax = Math.abs(dataMax!);
@@ -183,17 +189,20 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
           // @ts-ignore here we may use hardMin / hardMax to make sure any extra padding is computed from a more accurate delta
           minMax = uPlot.rangeNum(hardMinOnly ? hardMin : dataMin, hardMaxOnly ? hardMax : dataMax, rangeConfig);
         }
-      } else if (scale.distr === 3) {
+      } else if (scale.distr === DISTR_MAP[ScaleDistribution.Log]) {
         minMax = uPlot.rangeLog(hardMin ?? dataMin!, hardMax ?? dataMax!, logBase, true);
       }
 
       if (decimals === 0) {
-        if (scale.distr === 1 || scale.distr === 2) {
+        if (
+          scale.distr === DISTR_MAP[ScaleDistribution.Linear] ||
+          scale.distr === DISTR_MAP[ScaleDistribution.Ordinal]
+        ) {
           minMax[0] = incrRoundDn(minMax[0]!, 1);
           minMax[1] = incrRoundUp(minMax[1]!, 1);
         }
         // log2 or log10 scale min must be clamped to 1
-        else if (scale.distr === 3) {
+        else if (scale.distr === DISTR_MAP[ScaleDistribution.Log]) {
           const logFn = scale.log === 2 ? Math.log2 : Math.log10;
 
           if (minMax[0]! <= 1) {
@@ -249,7 +258,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
 
       // guard against invalid y ranges
       if (minMax[0]! >= minMax[1]!) {
-        minMax[0] = scale.distr === 3 ? 1 : 0;
+        minMax[0] = scale.distr === DISTR_MAP[ScaleDistribution.Log] ? 1 : 0;
         minMax[1] = 100;
       }
 
