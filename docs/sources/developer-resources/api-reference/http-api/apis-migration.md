@@ -38,8 +38,8 @@ Currently the following replacements apply:
 
 | **Feature** | **Legacy API**      | **New API**                                                                                                                               |
 | ----------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Dashboards  | `/api/dashboards/*` | `[apis/dashboard.grafana.app/*](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard)` |
-| Folders     | `/api/folders/*`    | `[apis/folder.grafana.app/*](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/folder)`       |
+| Dashboards  | `/api/dashboards/*` | [`apis/dashboard.grafana.app/*`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard) |
+| Folders     | `/api/folders/*`    | [`apis/folder.grafana.app/*`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/folder)       |
 
 ## Deprecation notes
 
