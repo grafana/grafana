@@ -28,6 +28,7 @@ import (
 	amgeneral "github.com/prometheus/alertmanager/api/v2/client/general"
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
 	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/prometheus/client_golang/prometheus"
 	common_config "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
@@ -45,11 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
-const (
-	dataSourceUID        = "remote-alertmanager"                // Used in the external alermanager sender metrics ("data_source_uid" label).
-	pathPrefix           = "/alertmanager"                      // Needed for sending alerts to the remote Alertmanager.
-	silenceOperationName = "/alertmanager/api/v2/silence/{uid}" // Used in the HTTP client's metrics (we don't want to capture silence UIDs).
-)
+const silenceOperationName = "/alertmanager/api/v2/silence/{uid}"
 
 type stateStore interface {
 	GetSilences(ctx context.Context) (string, error)
@@ -146,7 +143,6 @@ func NewAlertmanager(
 	store stateStore,
 	crypto Crypto,
 	metrics *metrics.RemoteAlertmanager,
-	senderMetrics *metrics.Sender,
 	tracer tracing.Tracer,
 	features featuremgmt.FeatureToggles,
 ) (*Alertmanager, error) {
@@ -192,7 +188,7 @@ func NewAlertmanager(
 	senderLogger := log.New("ngalert.sender.external-alertmanager")
 	s, err := sender.NewExternalAlertmanagerSender(
 		senderLogger,
-		senderMetrics.GetOrCreateOrgRegistry(cfg.OrgID),
+		prometheus.NewRegistry(),
 		sender.WithDoFunc(doFunc),
 		sender.WithUTF8Labels(),
 	)
@@ -200,7 +196,7 @@ func NewAlertmanager(
 		return nil, err
 	}
 	s.Run()
-	err = s.ApplyConfig(cfg.OrgID, 0, []sender.ExternalAMcfg{{URL: cfg.URL + pathPrefix, Timeout: cfg.Timeout, DatasourceUID: dataSourceUID}})
+	err = s.ApplyConfig(cfg.OrgID, 0, []sender.ExternalAMcfg{{URL: cfg.URL + "/alertmanager", Timeout: cfg.Timeout}})
 	if err != nil {
 		return nil, err
 	}

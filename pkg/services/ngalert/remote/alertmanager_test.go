@@ -129,7 +129,6 @@ func TestNewAlertmanager(t *testing.T) {
 				nil,
 				notifier.NewCrypto(secretsService, nil, log.NewNopLogger()),
 				metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry()),
-				metrics.NewSenderMetrics(prometheus.NewRegistry()),
 				tracing.InitializeTracerForTest(),
 				featuremgmt.WithFeatures(),
 			)
@@ -1716,7 +1715,6 @@ func newRemoteMOA(t *testing.T, cfg AlertmanagerConfig, notificationSettings map
 		fstore,
 		testCrypto,
 		metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry()),
-		metrics.NewSenderMetrics(prometheus.NewRegistry()),
 		tracing.InitializeTracerForTest(),
 		features,
 	)
