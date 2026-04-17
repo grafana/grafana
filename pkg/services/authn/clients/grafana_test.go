@@ -284,7 +284,6 @@ func TestGrafana_AuthenticateProxy_SyncTeamsWithCookie(t *testing.T) {
 
 	t.Run("writes groups hash cookie to the response when team sync is not skipped", func(t *testing.T) {
 		cfg := newCfg()
-		cfg.AuthProxy.SyncTTL = 60
 		c := ProvideGrafana(cfg, usertest.NewUserServiceFake(), tracing.InitializeTracerForTest())
 
 		reqCtx, rec := newTestReqContext(t)
@@ -298,7 +297,7 @@ func TestGrafana_AuthenticateProxy_SyncTeamsWithCookie(t *testing.T) {
 		require.Len(t, cookies, 1)
 		assert.Equal(t, proxyGroupsCookie, cookies[0].Name)
 		assert.Equal(t, hashGroups(cfg.SecretKey, identity.Groups), cookies[0].Value)
-		assert.Equal(t, 60*60, cookies[0].MaxAge) // SyncTTL minutes → seconds
+		assert.Equal(t, 7*24*60*60, cookies[0].MaxAge)
 	})
 
 	t.Run("does not write a new cookie when groups are unchanged", func(t *testing.T) {

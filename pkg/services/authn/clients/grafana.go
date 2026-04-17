@@ -146,7 +146,10 @@ func comparePassword(password, salt, hash string) bool {
 	return subtle.ConstantTimeCompare([]byte(hashedPassword), []byte(hash)) == 1
 }
 
-const proxyGroupsCookie = "grafana_proxy_groups_hash"
+const (
+	proxyGroupsCookie       = "grafana_proxy_groups_hash"
+	proxyGroupsCookieMaxAge = 7 * 24 * 60 * 60 // 7 days in seconds
+)
 
 // hashGroups sorts and hashes the list of groups supplied by the proxy. HMAC is
 // used here to prevent bypassing team sync with a forged hash in the cookie.
@@ -173,6 +176,5 @@ func (c *Grafana) writeGroupsHashCookie(ctx context.Context, groupsHash string) 
 		return
 	}
 
-	maxAge := c.cfg.AuthProxy.SyncTTL * 60
-	cookies.WriteCookie(reqCtx.Resp, proxyGroupsCookie, groupsHash, maxAge, cookies.NewCookieOptions)
+	cookies.WriteCookie(reqCtx.Resp, proxyGroupsCookie, groupsHash, proxyGroupsCookieMaxAge, cookies.NewCookieOptions)
 }
