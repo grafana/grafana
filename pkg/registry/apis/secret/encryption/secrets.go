@@ -42,7 +42,7 @@ func KeyLabel(providerID ProviderID) string {
 	return fmt.Sprintf("%s@%s", time.Now().Format("2006-01-02"), providerID)
 }
 
-var ErrDataKeyCacheUnexpectedNamespace = errors.New("unexpected namespace in data key cache entry")
+var ErrDataKeyCacheUnexpectedNamespace = errors.New("Broken invariant: unexpected namespace in data key cache entry")
 
 func ValidateDataKeyCacheEntryNamespace(methodNamespace string, entry DataKeyCacheEntry) error {
 	if entry.Namespace == "" || entry.Namespace != methodNamespace {
