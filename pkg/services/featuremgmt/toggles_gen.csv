@@ -5,7 +5,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2022-02-03,featureHighlights,GA,@grafana/grafana-operator-experience-squad,false,false,false
 2022-03-17,storage,experimental,@grafana/search-and-storage,false,false,false
 2022-05-31,canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
-2022-09-26,grpcServer,preview,@grafana/search-and-storage,false,false,false
 2022-11-28,cloudWatchCrossAccountQuerying,GA,@grafana/data-sources-plugins,false,false,false
 2022-12-14,alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false
 2026-02-10,alertingRuleGroupSortByFolderFullpath,experimental,@grafana/alerting-squad,false,false,false
@@ -46,7 +45,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-31,kubernetesShortURLs,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2025-08-29,useKubernetesShortURLsAPI,experimental,@grafana/sharing-squad,false,false,true
 2025-08-29,kubernetesCorrelations,experimental,@grafana/datapro,false,true,false
-2025-12-09,kubernetesUnifiedStorageQuotas,experimental,@grafana/search-and-storage,false,true,false
 2025-10-16,kubernetesLogsDrilldown,experimental,@grafana/observability-logs,false,true,false
 2025-10-20,kubernetesQueryCaching,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2025-04-11,dashboardDisableSchemaValidationV1,experimental,@grafana/grafana-app-platform-squad,false,false,false
@@ -353,3 +351,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-13,influxDBConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
 2026-04-09,clickHouseConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
 2026-04-04,grafana.newPreferencesPage,experimental,@grafana/grafana-frontend-platform,false,false,true
+2026-04-14,datasource.useNewCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,false

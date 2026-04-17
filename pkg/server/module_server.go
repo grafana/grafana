@@ -220,7 +220,7 @@ func (s *ModuleServer) Run() error {
 
 	m.RegisterInvisibleModule(modules.GRPCServer, func() (services.Service, error) {
 		var err error
-		s.grpcService, err = grpcserver.ProvideDSKitService(s.cfg, s.features, otel.Tracer("grpc-server"), s.registerer, modules.GRPCServer)
+		s.grpcService, err = grpcserver.ProvideDSKitService(s.cfg, otel.Tracer("grpc-server"), s.registerer, modules.GRPCServer)
 		if err != nil {
 			return nil, err
 		}
