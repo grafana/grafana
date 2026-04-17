@@ -8,10 +8,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+	if b.accessClient != nil {
+		return grafanaauthorizer.NewResourceAuthorizer(b.accessClient)
+	}
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 			if !attr.IsResourceRequest() {
