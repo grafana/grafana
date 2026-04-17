@@ -8,6 +8,7 @@ import (
 	"maps"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -1205,6 +1206,79 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		err := kv.Batch(ctx, section, ops)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "too many operations")
+	})
+
+	t.Run("concurrent create - only one succeeds", func(t *testing.T) {
+		key := nk("concurrent-create")
+		values := [][]byte{[]byte("from-goroutine-0"), []byte("from-goroutine-1")}
+
+		var wg sync.WaitGroup
+		errs := make([]error, 2)
+		start := make(chan struct{})
+		for i := range 2 {
+			wg.Add(1)
+			go func(idx int) {
+				defer wg.Done()
+				<-start
+				errs[idx] = kv.Batch(ctx, section, []resource.BatchOp{
+					{Mode: kvpkg.BatchOpCreate, Key: key, Value: values[idx]},
+				})
+			}(i)
+		}
+		close(start)
+		wg.Wait()
+
+		var winner int = -1
+		losers := 0
+		for i, err := range errs {
+			if err == nil {
+				require.Equal(t, -1, winner, "more than one batch succeeded")
+				winner = i
+			} else {
+				losers++
+			}
+		}
+		require.NotEqual(t, -1, winner, "no batch succeeded")
+		require.Equal(t, 1, losers, "exactly one batch should have failed")
+
+		reader, err := kv.Get(ctx, section, key)
+		require.NoError(t, err)
+		stored, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		require.NoError(t, reader.Close())
+		assert.Equal(t, string(values[winner]), string(stored))
+	})
+
+	t.Run("concurrent put - both succeed", func(t *testing.T) {
+		key := nk("concurrent-put")
+		values := [][]byte{[]byte("from-goroutine-0"), []byte("from-goroutine-1")}
+
+		var wg sync.WaitGroup
+		errs := make([]error, 2)
+		start := make(chan struct{})
+		for i := range 2 {
+			wg.Add(1)
+			go func(idx int) {
+				defer wg.Done()
+				<-start
+				errs[idx] = kv.Batch(ctx, section, []resource.BatchOp{
+					{Mode: kvpkg.BatchOpPut, Key: key, Value: values[idx]},
+				})
+			}(i)
+		}
+		close(start)
+		wg.Wait()
+
+		for i, err := range errs {
+			require.NoError(t, err, "goroutine %d should have succeeded", i)
+		}
+
+		reader, err := kv.Get(ctx, section, key)
+		require.NoError(t, err)
+		stored, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		require.NoError(t, reader.Close())
+		assert.Contains(t, []string{string(values[0]), string(values[1])}, string(stored))
 	})
 
 	t.Run("batch error context with later operation failure", func(t *testing.T) {
