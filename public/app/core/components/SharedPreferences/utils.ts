@@ -10,6 +10,7 @@ import { LOCALES } from 'app/core/internationalization/locales';
 export interface Props {
   resourceUri: string;
   disabled?: boolean;
+  /** @deprecated No used in the new functional component */
   preferenceType: 'org' | 'team' | 'user';
   onConfirm?: () => Promise<boolean>;
 }

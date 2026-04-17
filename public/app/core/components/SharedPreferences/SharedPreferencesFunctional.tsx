@@ -40,12 +40,10 @@ import {
 } from './utils';
 
 export const SharedPreferencesFunctional = memo((props: Props) => {
-  const { preferenceType, resourceUri } = props;
+  const { resourceUri } = props;
 
-  const [updatePreferences, { preferences: prefs, isLoading, isError, isSubmitting }] = useSharedPreferences(
-    preferenceType,
-    resourceUri
-  );
+  const [updatePreferences, { preferences: prefs, isLoading, isError, isSubmitting }] =
+    useSharedPreferences(resourceUri);
 
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const [state, setState] = useState<PrefsState>({
@@ -75,19 +73,10 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
   // Add default option
   themeOptions.unshift({ value: '', label: t('shared-preferences.theme.default-label', 'Default') });
 
+  //TODO - stop copying API in a separate state, use react form hooks instead
   useEffect(() => {
     if (prefs) {
-      setState((prev) => ({
-        ...prev,
-        homeDashboardUID: prefs.homeDashboardUID ?? prev.homeDashboardUID,
-        theme: prefs.theme ?? prev.theme,
-        timezone: prefs.timezone ?? prev.timezone,
-        weekStart: prefs.weekStart ?? prev.weekStart,
-        language: prefs.language ?? prev.language,
-        regionalFormat: prefs.regionalFormat ?? prev.regionalFormat,
-        queryHistory: prefs.queryHistory ?? prev.queryHistory,
-        navbar: prefs.navbar ?? prev.navbar,
-      }));
+      setState(prefs);
     }
   }, [prefs]);
 
@@ -114,7 +103,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
     const prefsData = state;
     await updatePreferences(prefsData);
 
-    // window.location.reload();
+    window.location.reload();
   };
 
   const handleThemeChanged = (value: ComboboxOption<string>) => {

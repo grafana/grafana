@@ -8,11 +8,7 @@ import {
 
 import { type Props } from './utils';
 
-export const useSharedPreferences = (
-  preferenceType: Props['preferenceType'],
-  preferencesName: Props['resourceUri'],
-  metadataName: string
-) => {
+export const useSharedPreferences = (preferencesName: Props['resourceUri']) => {
   /**
    * TODO: change to use listPreferences with fieldSelector=metadata.name={name} instead of getPreferences
    * and unwrap the array to return just the one preference object
@@ -20,11 +16,11 @@ export const useSharedPreferences = (
    * todo list:
    * - [x] get user preferences
    * - [x] get team preferences
-   * - [ ] get org preferences
+   * - [x] get org preferences
    *
    * - [x] update user preferences
-   * - [ ] update team preferences
-   * - [ ] update org preferences
+   * - [x] update team preferences
+   * - [x] update org preferences
    *
    * ~~~ context ~~~
    *
@@ -57,9 +53,14 @@ export const useSharedPreferences = (
   return [
     updatePreferencesWrapped,
     {
-      preferences: updateData?.spec ?? data?.items[0]?.spec,
+      preferences: data?.items[0]?.spec,
       isLoading,
-      isError,
+      /**
+       * After saving preferences, RTK query refetches the preferences
+       * However we also reloads the page what causes the refetch to momentarily error while the window is reloading
+       * so we need to suppress it
+       */
+      isError: updateData ? false : isError,
       isSubmitting: isUpdating,
       isUpdateError,
     },
