@@ -74,8 +74,8 @@ For example, **Span Name** and **Service Name** are string fields so the compari
 You can select multiple values for the same filter.
 The generated query depends on the operator you choose:
 
-- **Equals (`=`) or other non-regex operators**: Each value becomes a separate condition joined with `||` inside parentheses. For the not-equals (`!=`) operator, conditions are joined with `&&` instead.
-- **Regex match (`=~`) or regex not match (`!~`)**: Values are concatenated with `|` inside a single quoted string.
+- Equals (`=`) or other non-regular expression operators: Each value becomes a separate condition joined with `||` inside parentheses. For the not-equals (`!=`) operator, conditions are joined with `&&` instead.
+- Regular expressions match (`=~`) or not match (`!~`): Values are concatenated with `|` inside a single quoted string.
 
 This capability only applies to fields with drop-down value selection.
 
@@ -85,7 +85,7 @@ For example, if you select **Span Name** with the `=` operator and choose both `
 { name="get" || name="log_results_cache" }
 ```
 
-If you select the regex operator `=~` instead, the values are combined into a single regex pattern:
+If you select the regular expression operator `=~` instead, the values are combined into a single regex pattern:
 
 ```traceql
 { name=~"get|log_results_cache" }
