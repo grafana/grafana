@@ -2,9 +2,7 @@ package inmemory
 
 import (
 	"context"
-	"time"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/server"
@@ -17,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/globalrole"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var (
@@ -33,22 +30,14 @@ type InMemoryGlobalRoleApiInstaller struct {
 func ProvideInMemoryGlobalRoleApiInstaller(
 	acService accesscontrol.Service,
 ) iam.GlobalRoleApiInstaller {
-	client := openfeature.NewDefaultClient()
-	ctx, cancelFn := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancelFn()
-
-	if !client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzGlobalRolesApi, false, openfeature.TransactionContext(ctx)) {
-		return iam.ProvideNoopGlobalRoleApiInstaller()
-	}
-
 	return &InMemoryGlobalRoleApiInstaller{
 		acService: acService,
 	}
 }
 
-// GetAuthorizer restricts access to access-policy identities (internal
-// services such as the MT reconciler). Regular users are denied even for
-// reads — this API is not intended for user-facing consumption.
+// GetAuthorizer denies by default and only allows reads from access-policy
+// identities (internal services such as the MT reconciler). Regular users are
+// denied — this API is not intended for user-facing consumption.
 func (r *InMemoryGlobalRoleApiInstaller) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 		authInfo, ok := types.AuthInfoFrom(ctx)
@@ -56,15 +45,11 @@ func (r *InMemoryGlobalRoleApiInstaller) GetAuthorizer() authorizer.Authorizer {
 			return authorizer.DecisionDeny, "Unauthenticated", nil
 		}
 
-		if !readVerbs[attr.GetVerb()] {
-			return authorizer.DecisionDeny, "Write operations not supported", nil
+		if readVerbs[attr.GetVerb()] && types.IsIdentityType(authInfo.GetIdentityType(), types.TypeAccessPolicy) {
+			return authorizer.DecisionAllow, "", nil
 		}
 
-		if !types.IsIdentityType(authInfo.GetIdentityType(), types.TypeAccessPolicy) {
-			return authorizer.DecisionDeny, "Access restricted to internal services", nil
-		}
-
-		return authorizer.DecisionAllow, "", nil
+		return authorizer.DecisionDeny, "Access restricted to internal services for read operations", nil
 	})
 }
 
