@@ -15,6 +15,21 @@
         "fr_notify": true,
         "fr_weekly": true
       }
+    },
+    {
+      "name": "dashboards",
+      "kickoff_date": "2026-04-16",
+      "adoption_date": "2025-04-16",
+      "codeowners_teams": [
+        "@grafana/dashboards-squad"
+      ],
+      "area_labels": ["area/dashboard"],
+      "enabled": {
+        "pr_notify": false,
+        "pr_weekly": true,
+        "fr_notify": false,
+        "fr_weekly": true
+      }
     }
   ]
 }

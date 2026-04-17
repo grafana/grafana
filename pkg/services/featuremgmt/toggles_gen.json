@@ -3720,7 +3720,8 @@
       "metadata": {
         "name": "managedDualWriter",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-02-19T14:50:39Z"
+        "creationTimestamp": "2025-02-19T14:50:39Z",
+        "deletionTimestamp": "2026-04-16T15:30:19Z"
       },
       "spec": {
         "description": "Pick the dual write mode from database configs",
@@ -3747,12 +3748,15 @@
     {
       "metadata": {
         "name": "metricsFromProfiles",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-04-09T10:55:28Z"
+        "resourceVersion": "1776334714934",
+        "creationTimestamp": "2025-04-09T10:55:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-16 10:18:34.934728 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables creating metrics from profiles and storing them as recording rules",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/observability-traces-and-profiling",
         "frontend": true,
         "expression": "false"
@@ -4359,11 +4363,27 @@
     {
       "metadata": {
         "name": "profilesExemplars",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-01-07T12:25:42Z"
+        "resourceVersion": "1776334714934",
+        "creationTimestamp": "2026-01-07T12:25:42Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-16 10:18:34.934728 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables profiles exemplars support in profiles drilldown",
+        "stage": "preview",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "profilesHeatmap",
+        "resourceVersion": "1776332619529",
+        "creationTimestamp": "2026-04-16T09:43:39Z"
+      },
+      "spec": {
+        "description": "Enables heatmap visualization support for Pyroscope profiles",
         "stage": "experimental",
         "codeowner": "@grafana/observability-traces-and-profiling",
         "expression": "false"
@@ -5002,7 +5022,8 @@
       "metadata": {
         "name": "scanRowInvalidDashboardParseFallbackEnabled",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-07-30T14:18:38Z"
+        "creationTimestamp": "2025-07-30T14:18:38Z",
+        "deletionTimestamp": "2026-04-16T15:30:19Z"
       },
       "spec": {
         "description": "Enable fallback parsing behavior when scan row encounters invalid dashboard JSON",
@@ -5528,7 +5549,8 @@
       "metadata": {
         "name": "unifiedStorageSearchDualReaderEnabled",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-07-18T12:43:56Z"
+        "creationTimestamp": "2025-07-18T12:43:56Z",
+        "deletionTimestamp": "2026-04-16T15:44:59Z"
       },
       "spec": {
         "description": "Enable dual reader for unified storage search",

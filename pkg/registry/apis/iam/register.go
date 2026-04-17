@@ -159,7 +159,7 @@ func RegisterAPIService(
 		dual:                              dual,
 		unified:                           unified,
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
-			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg), features),
+			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg)),
 		teamSearch:                       NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(legacyTeamSearchService(teamService), tracing), unified, features, accessClient),
 		resourcePermissionsSearchHandler: newResourcePermissionsSearchHandler(resourcePermsSearchBackend, resourcePermsSearchAuthorizer),
 		tracing:                          tracing,
@@ -479,7 +479,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 			iamv0.TeamBindingResourceInfo.GroupResource(),
 			b.unified,
 			legacyTeamBindingSearchClient,
-			b.features,
 		)
 
 		storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(teamBindingSearchClient, b.tracing, b.features)
@@ -578,7 +577,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 			iamv0.TeamBindingResourceInfo.GroupResource(),
 			b.unified,
 			legacyTeamBindingSearchClient,
-			b.features,
 		)
 
 		statusStore := grafanaregistry.NewRegistryStatusStore(opts.Scheme, userUniStore)
