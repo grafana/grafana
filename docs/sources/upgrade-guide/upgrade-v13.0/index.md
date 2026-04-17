@@ -21,7 +21,7 @@ weight: 495
 
 ## Technical notes
 
-{{< admonition type="caution" >}}
+{{< admonition type="warning" >}}
 **Git Sync early adopters:** If you enabled Git Sync in Grafana v12.x.x and upgraded to Grafana v13.0.0, upgrade to Grafana v13.0.1 to fix a migration bug that may cause dashboards and folders to be lost or reverted during the upgrade to Grafana 13.0.0.
 
 The bug only affects self-managed instances with Git Sync feature flags (`provisioning`, `kubernetesClientDashboardsFolders`, `kubernetesDashboards`, and `grafanaAPIServerEnsureKubectlAccess`) enabled on Grafana v12.x.x.
