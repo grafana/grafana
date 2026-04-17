@@ -1007,19 +1007,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		// Check if the requested RV is higher than the latest available RV
 		if req.ResourceVersion > latestRV {
 			return &BackendReadResponse{
-				Error: &resourcepb.ErrorResult{
-					Code:    http.StatusGatewayTimeout,
-					Reason:  string(metav1.StatusReasonTimeout), // match etcd behavior
-					Message: "ResourceVersion is larger than max",
-					Details: &resourcepb.ErrorDetails{
-						Causes: []*resourcepb.ErrorCause{
-							{
-								Reason:  string(metav1.CauseTypeResourceVersionTooLarge),
-								Message: fmt.Sprintf("requested: %d, current %d", req.ResourceVersion, latestRV),
-							},
-						},
-					},
-				},
+				Error: NewBadRequestError(fmt.Sprintf("too large resource version: %d (current %d)", req.ResourceVersion, latestRV)),
 			}
 		}
 	}

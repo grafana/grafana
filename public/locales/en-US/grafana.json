@@ -4323,15 +4323,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rule",
+      "alertRule_other": "{{count}} alert rules",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboard",
+      "dashboard_other": "{{count}} dashboards",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folder",
+      "folder_other": "{{count}} folders",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panel",
+      "libraryPanel_other": "{{count}} library panels",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} item"
+      "total_other": "{{count}} items"
     },
     "create-new": {
       "dashboard-group": "Dashboard"
@@ -7969,6 +7969,9 @@
     },
     "empty-state": {
       "message": "No data sources found"
+    },
+    "list": {
+      "label": "Data sources"
     }
   },
   "datasources": {
@@ -8188,6 +8191,9 @@
       "current-value": "Current value: {{currentValue}} ",
       "label-state-name": "State name"
     }
+  },
+  "diff-viewer": {
+    "loading": "Loading diff..."
   },
   "dimensions": {
     "background-size-editor": {
@@ -12247,7 +12253,7 @@
     },
     "quick-add": {
       "aria-label": "New",
-      "new-template-dashboard-button": "From template"
+      "new-template-dashboard-button": "Use template"
     },
     "rss-button": "Latest from the blog"
   },
