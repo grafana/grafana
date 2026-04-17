@@ -15,11 +15,11 @@ weight: 100
 
 Starting in Grafana v13, you can use Grafana Assistant on-premise by installing the Assistant app in your self-hosted Grafana deployment and connecting it to a Grafana Cloud stack.
 
-Grafana Assistant on-premise keeps the Assistant experience inside your Grafana deployment. After setup, you can use Assistant to work with metrics, logs, traces, profiles, and databases, create and update dashboards, generate queries, and navigate Grafana resources from natural language prompts. However, it doesn’t include every Grafana Cloud feature. Refer to [Available Assistant features for Grafana on-prem](#available-assistant-features-for-grafana-on-prem).
+Grafana Assistant on-premise keeps the Assistant experience inside your Grafana deployment. After setup, you can use Assistant to work with metrics, logs, traces, profiles, and databases, create and update dashboards, generate queries, and navigate Grafana resources from natural language prompts. However, it doesn’t include every Grafana Cloud feature. Refer to [Available Assistant features for Grafana on-prem](#available-assistant-features-for-grafana-on-prem) for details on the supported services.
 
 For more information refer to the [Grafana Assistant documentation](https://grafana.com/docs/grafana-cloud/machine-learning/assistant/).
 
-## Before you begin
+## Before you begin
 
 Grafana Assistant on-premise needs access in both your self-hosted Grafana deployment and a Grafana Cloud stack.
 
