@@ -949,4 +949,8 @@ const (
 	// FlagClickHouseConfigValidation
 	// Enables validation on the ClickHouse data source configuration page
 	FlagClickHouseConfigValidation = "clickHouseConfigValidation"
+
+	// FlagThemeEditor
+	// Enables the visual theme editor in Administration > General for creating and previewing custom themes
+	FlagThemeEditor = "themeEditor"
 )

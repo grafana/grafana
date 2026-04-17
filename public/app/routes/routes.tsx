@@ -227,6 +227,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: () => <NavLandingPage navId="cfg/general" />,
     },
     {
+      path: '/admin/general/theme-editor',
+      component: config.featureToggles.themeEditor
+        ? SafeDynamicImport(
+            () => import(/* webpackChunkName: "ThemeEditorPage" */ 'app/features/admin/ThemeEditor/ThemeEditorPage')
+          )
+        : () => <Navigate replace to="/admin/general" />,
+    },
+    {
       path: '/admin/plugins',
       component: () => <NavLandingPage navId="cfg/plugins" />,
     },

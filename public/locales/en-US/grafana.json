@@ -12188,6 +12188,10 @@
       "subtitle": "Optimize performance with k6 and Synthetic Monitoring insights",
       "title": "Testing & synthetics"
     },
+    "theme-editor": {
+      "subtitle": "Create and preview custom themes",
+      "title": "Theme editor"
+    },
     "upgrading": {
       "title": "Stats and license"
     },
@@ -15258,6 +15262,51 @@
     "name-mode": "Mode",
     "name-show-line-numbers": "Show line numbers",
     "name-show-mini-map": "Show mini map"
+  },
+  "theme-editor": {
+    "colors": {
+      "background": "Background (canvas)",
+      "error": "Error",
+      "info": "Info",
+      "primary": "Primary",
+      "status-heading": "Status colors",
+      "success": "Success",
+      "surface": "Surface (panels)",
+      "text": "Text",
+      "warning": "Warning"
+    },
+    "export": {
+      "copy": "Copy to clipboard",
+      "import-button": "Import",
+      "import-error": "Invalid theme JSON. Must include name and colors.mode.",
+      "import-heading": "Import theme",
+      "paste-json": "Paste theme JSON",
+      "paste-placeholder": "{\"name\": \"My theme\", \"colors\": {\"mode\": \"dark\", ...}}",
+      "theme-json": "Theme JSON"
+    },
+    "preview": {
+      "actions": "Actions",
+      "breadcrumb": "Home / Dashboards",
+      "btn-destructive": "Destructive",
+      "btn-primary": "Primary",
+      "btn-secondary": "Secondary",
+      "error": "Error",
+      "error-rate": "Error rate",
+      "info": "Info",
+      "latency": "Latency p99",
+      "primary": "Primary",
+      "request-rate": "Request rate",
+      "requests": "Requests/s",
+      "status": "Status",
+      "success": "Success",
+      "uptime": "Uptime",
+      "warning": "Warning"
+    },
+    "sidebar": {
+      "base-mode": "Base mode",
+      "theme-name": "Theme name"
+    },
+    "subtitle": "Create and preview custom Grafana themes"
   },
   "theme-playground": {
     "label-base-theme": "Base theme",

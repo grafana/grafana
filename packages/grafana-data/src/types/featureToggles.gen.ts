@@ -1756,4 +1756,9 @@ export interface FeatureToggles {
   * @default false
   */
   clickHouseConfigValidation?: boolean;
+  /**
+  * Enables the visual theme editor in Administration > General for creating and previewing custom themes
+  * @default false
+  */
+  themeEditor?: boolean;
 }
