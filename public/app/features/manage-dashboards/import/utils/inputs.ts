@@ -404,7 +404,7 @@ export function interpolateV1Dashboard(
     elements: [],
     folder: { uid: '' },
   };
-  const result = applyV1Inputs(dashboard, { dataSources: dsInputs, constants }, form);
+  const result = applyV1Inputs(dashboard as unknown as Dashboard, { dataSources: dsInputs, constants }, form);
   const interpolated = { ...result } as DashboardJson;
   delete interpolated.__inputs;
   delete interpolated.__elements;

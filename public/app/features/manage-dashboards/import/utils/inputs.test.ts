@@ -9,7 +9,13 @@ import { type Dashboard, type Panel, type VariableModel } from '@grafana/schema/
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
 
-import { type DashboardInputs, type DashboardJson, type ImportDashboardDTO, type ImportFormDataV2, InputType } from '../../types';
+import {
+  type DashboardInputs,
+  type DashboardJson,
+  type ImportDashboardDTO,
+  type ImportFormDataV2,
+  InputType,
+} from '../../types';
 
 import {
   applyV1Inputs,
@@ -1564,6 +1570,7 @@ describe('interpolateV1Dashboard', () => {
     pluginId: 'prometheus',
     label: 'Prometheus',
     description: '',
+    value: '',
   };
   const exprInput = {
     name: 'DS_EXPRESSION',
@@ -1571,6 +1578,7 @@ describe('interpolateV1Dashboard', () => {
     pluginId: '__expr__',
     label: 'Expression',
     description: '',
+    value: '',
   };
   const makeDashboard = (overrides: Partial<DashboardJson> = {}): DashboardJson =>
     ({
@@ -1595,14 +1603,16 @@ describe('interpolateV1Dashboard', () => {
           ],
           type: 'timeseries',
         },
-      ] as DashboardJson['panels'],
+      ] as unknown as DashboardJson['panels'],
     });
   const getPanel = (result: DashboardJson, idx = 0) => (result.panels as Panel[])[idx];
 
   beforeEach(() => {
-    mockGetDataSourceSrv.getInstanceSettings = jest.fn().mockImplementation((uid: string) =>
-      uid === 'prom-uid' ? { uid: 'prom-uid', type: 'prometheus', name: 'Prometheus' } : undefined
-    );
+    mockGetDataSourceSrv.getInstanceSettings = jest
+      .fn()
+      .mockImplementation((uid: string) =>
+        uid === 'prom-uid' ? { uid: 'prom-uid', type: 'prometheus', name: 'Prometheus' } : undefined
+      );
   });
 
   it('should replace datasource placeholders with wildcard mapping', () => {
@@ -1668,7 +1678,7 @@ describe('interpolateV1Dashboard', () => {
 
   it('should strip __inputs, __elements, __requires from result', () => {
     const dashboard = makeDashboard({
-      __elements: { somePanel: {} } as DashboardJson['__elements'],
+      __elements: { somePanel: {} } as unknown as DashboardJson['__elements'],
       __requires: [{ type: 'panel', id: 'timeseries' }] as DashboardJson['__requires'],
     });
     const result = interpolateV1Dashboard(dashboard, [{ name: '*', type: 'datasource', value: 'prom-uid' }]);
