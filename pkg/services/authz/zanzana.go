@@ -327,7 +327,6 @@ func (z *Zanzana) start(ctx context.Context) error {
 
 	z.handle, err = grpcserver.ProvideService(
 		z.cfg,
-		z.features,
 		authenticatorInterceptor,
 		z.tracer,
 		prometheus.DefaultRegisterer,

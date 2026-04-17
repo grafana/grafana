@@ -27,10 +27,6 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagGrpcServer
-	// Run the GRPC server
-	FlagGrpcServer = "grpcServer"
-
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
@@ -146,10 +142,6 @@ const (
 	// FlagKubernetesCorrelations
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
-
-	// FlagKubernetesUnifiedStorageQuotas
-	// Adds support for Kubernetes unified storage quotas
-	FlagKubernetesUnifiedStorageQuotas = "kubernetesUnifiedStorageQuotas"
 
 	// FlagKubernetesLogsDrilldown
 	// Adds support for Kubernetes logs drilldown
