@@ -279,7 +279,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-10-17,pluginStoreServiceLoading,experimental,@grafana/plugins-platform-backend,false,false,false
 2025-11-12,newPanelPadding,preview,@grafana/dashboards-squad,false,false,true
 2025-10-20,onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
-2026-04-15,onlyStoreServiceAccountActionSets,experimental,@grafana/identity-access-team,false,false,false
 2026-02-18,excludeRedundantManagedPermissions,experimental,@grafana/identity-access-team,false,false,false
 2025-12-16,pluginInsights,experimental,@grafana/plugins-platform-backend,false,false,true
 2025-10-29,panelTimeSettings,preview,@grafana/dashboards-squad,false,false,false
@@ -354,3 +353,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-13,influxDBConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
 2026-04-09,clickHouseConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
 2026-04-04,grafana.newPreferencesPage,experimental,@grafana/grafana-frontend-platform,false,false,true
+2026-04-14,datasource.useNewCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,false

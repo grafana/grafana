@@ -8189,6 +8189,9 @@
       "label-state-name": "Nome stato"
     }
   },
+  "diff-viewer": {
+    "loading": ""
+  },
   "dimensions": {
     "background-size-editor": {
       "options": {

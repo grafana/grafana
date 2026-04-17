@@ -8275,6 +8275,9 @@
       "label-state-name": "Nazwa stanu"
     }
   },
+  "diff-viewer": {
+    "loading": ""
+  },
   "dimensions": {
     "background-size-editor": {
       "options": {

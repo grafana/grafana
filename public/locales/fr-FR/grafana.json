@@ -8189,6 +8189,9 @@
       "label-state-name": "Nom de l’état"
     }
   },
+  "diff-viewer": {
+    "loading": ""
+  },
   "dimensions": {
     "background-size-editor": {
       "options": {
