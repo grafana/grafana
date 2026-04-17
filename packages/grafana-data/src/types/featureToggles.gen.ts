@@ -279,11 +279,6 @@ export interface FeatureToggles {
   */
   dashboardSchemaValidationLogging?: boolean;
   /**
-  * Enable fallback parsing behavior when scan row encounters invalid dashboard JSON
-  * @default false
-  */
-  scanRowInvalidDashboardParseFallbackEnabled?: boolean;
-  /**
   * Register legacy datasource apis that use the numeric id
   * @default false
   */
@@ -810,11 +805,6 @@ export interface FeatureToggles {
   */
   rolePickerDrawer?: boolean;
   /**
-  * Pick the dual write mode from database configs
-  * @default false
-  */
-  managedDualWriter?: boolean;
-  /**
   * Enables SRI checks for plugin assets
   * @default false
   */
@@ -1260,11 +1250,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistory?: boolean;
-  /**
-  * Enable dual reader for unified storage search
-  * @default false
-  */
-  unifiedStorageSearchDualReaderEnabled?: boolean;
   /**
   * Supports __from and __to macros that always use the dashboard level time range
   * @default false
