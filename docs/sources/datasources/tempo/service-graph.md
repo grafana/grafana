@@ -123,3 +123,14 @@ To open a query in Prometheus with the span name of that row automatically set i
 ![Linked Prometheus data for Rate from within a service graph](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-service-graph-prom.png)
 
 To open a query in Tempo with the span name of that row automatically set in the query, click a row in the **links** column.
+
+You can also use TraceQL to query the same data programmatically. Refer to [TraceQL query examples](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/traceql-query-examples/) to translate Service Graph observations into queries.
+
+## Troubleshoot
+
+If the Service Graph isn't displaying data, the table is empty, or you see high cardinality warnings, refer to [Service graph issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/troubleshooting/#service-graph-issues) in the troubleshooting guide.
+
+## Next steps
+
+- [Enable service graphs](https://grafana.com/docs/tempo/<TEMPO_VERSION>/metrics-from-traces/service_graphs/enable-service-graphs/) - Set up metric generation in Tempo or Alloy.
+- [Node graph panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/) - Navigate and customize the graph layout.
