@@ -7,9 +7,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { type SceneQueryRunner } from '@grafana/scenes';
 import {
-  Box,
   Button,
-  EmptyState,
   LoadingBar,
   ScrollContainer,
   Stack,
@@ -22,12 +20,14 @@ import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import LoadMoreHelper from '../rule-list/LoadMoreHelper';
 
 import { WorkbenchProvider, useExpandCollapseAll } from './WorkbenchContext';
+import { useTriageWorkbenchInitialOutcomeAnalytics } from './hooks/useTriageWorkbenchInitialOutcomeAnalytics';
 import { AlertRuleRow } from './rows/AlertRuleRow';
 import { FolderGroupRow } from './rows/FolderGroupRow';
 import { GroupRow } from './rows/GroupRow';
 import { generateRowKey } from './rows/utils';
 import { GenericRowSkeleton } from './scene/AlertRuleInstances';
 import { SummaryChartReact } from './scene/SummaryChart';
+import { WorkbenchEmptyState } from './scene/WorkbenchEmptyState';
 import { LabelsColumn } from './scene/filters/LabelsColumn';
 import { type Domain, EmptyLabelValue, type Filter, type WorkbenchRow } from './types';
 
@@ -170,6 +170,13 @@ export function Workbench({
 
   const showEmptyState = !isInitialLoading && data.length === 0;
   const showData = data.length > 0;
+
+  useTriageWorkbenchInitialOutcomeAnalytics({
+    isInitialLoading,
+    rowCount: data.length,
+    hasActiveFilters,
+  });
+
   // splitter for template and payload editor
   const splitter = useSplitter({
     direction: 'row',
@@ -207,29 +214,7 @@ export function Workbench({
         {/* content goes here */}
         <div data-testid="groups-container" className={cx(splitter.containerProps.className, styles.groupsContainer)}>
           {showEmptyState ? (
-            <Box
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              width="100%"
-              height="100%"
-              minHeight="400px"
-            >
-              <EmptyState
-                variant="not-found"
-                message={hasActiveFilters ? 'No matching instances found' : 'No firing or pending instances'}
-              >
-                {hasActiveFilters ? (
-                  <Trans i18nKey="alerting.triage.no-matching-instances-with-filters">
-                    No alert instances match your current set of filters for the selected time range.
-                  </Trans>
-                ) : (
-                  <Trans i18nKey="alerting.triage.no-firing-or-pending-instances">
-                    You have no alert instances in a firing or pending state for the selected time range.
-                  </Trans>
-                )}
-              </EmptyState>
-            </Box>
+            <WorkbenchEmptyState hasActiveFilters={hasActiveFilters} />
           ) : (
             <>
               <div className={cx(styles.groupItemWrapper(leftColumnWidth), styles.summaryContainer)}>
