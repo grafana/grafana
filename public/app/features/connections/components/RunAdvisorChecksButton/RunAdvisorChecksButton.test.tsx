@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { reportInteraction } from '@grafana/runtime';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import {
   isAdvisorEnabled,
   useCreateDatasourceAdvisorChecks,
@@ -18,15 +19,26 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
 }));
+jest.mock('app/core/copy/appNotification', () => ({
+  useAppNotification: jest.fn(),
+}));
 
 const mockIsAdvisorEnabled = isAdvisorEnabled as jest.Mock;
 const mockUseCreateDatasourceAdvisorChecks = useCreateDatasourceAdvisorChecks as jest.Mock;
 const mockUseLatestDatasourceCheck = useLatestDatasourceCheck as jest.Mock;
 const mockReportInteraction = reportInteraction as jest.Mock;
+const mockUseAppNotification = useAppNotification as jest.Mock;
+const mockNotifySuccess = jest.fn();
 
 describe('RunAdvisorChecksButton', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAppNotification.mockReturnValue({
+      success: mockNotifySuccess,
+      warning: jest.fn(),
+      error: jest.fn(),
+      info: jest.fn(),
+    });
     mockIsAdvisorEnabled.mockReturnValue(true);
     mockUseCreateDatasourceAdvisorChecks.mockReturnValue({
       createChecks: jest.fn(),
@@ -119,5 +131,37 @@ describe('RunAdvisorChecksButton', () => {
     const button = screen.getByRole('button', { name: 'Running checks' });
     expect(button).toHaveAttribute('aria-disabled', 'true');
     expect(screen.queryByRole('button', { name: 'Enable Advisor checks' })).not.toBeInTheDocument();
+  });
+
+  it('shows success notification when checks complete after user click', () => {
+    const createChecks = jest.fn();
+    let isCreatingChecks = false;
+    let check: { metadata: { name: string } } | undefined;
+
+    mockUseCreateDatasourceAdvisorChecks.mockImplementation(() => ({
+      createChecks,
+      isCreatingChecks,
+      isAvailable: true,
+    }));
+    mockUseLatestDatasourceCheck.mockImplementation(() => ({
+      check,
+      isLoading: false,
+    }));
+
+    const { rerender } = render(<RunAdvisorChecksButton />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Enable Advisor checks' }));
+
+    isCreatingChecks = true;
+    rerender(<RunAdvisorChecksButton />);
+
+    isCreatingChecks = false;
+    check = { metadata: { name: 'check-1' } };
+    rerender(<RunAdvisorChecksButton />);
+
+    expect(mockNotifySuccess).toHaveBeenCalledWith(
+      'Advisor checks created successfully. Go to Administration > Advisor for more details.'
+    );
+    expect(mockNotifySuccess).toHaveBeenCalledTimes(1);
   });
 });
