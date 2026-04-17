@@ -113,42 +113,50 @@ func (s *Service) GetByLoginWithPassword(ctx context.Context, cmd *user.GetUserB
 }
 
 func (s *Service) GetByLogin(ctx context.Context, cmd *user.GetUserByLoginQuery) (*user.User, error) {
-	if s.isKubernetesUserServiceEnabled(ctx) {
-		ctx, span := s.tracer.Start(ctx, "user.GetByLogin", trace.WithAttributes(
-			attribute.String("loginOrEmail", cmd.LoginOrEmail),
-		))
-		defer span.End()
+	ctx, span := s.tracer.Start(ctx, "user.GetByLogin", trace.WithAttributes(
+		attribute.String("loginOrEmail", cmd.LoginOrEmail),
+	))
+	defer span.End()
 
+	ctxLogger := s.logger.FromContext(ctx)
+
+	if s.isKubernetesUserServiceEnabled(ctx) {
 		if hasOrgID(ctx) {
+			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
 			return s.k8sService.GetByLogin(ctx, cmd)
 		}
 
 		err := errors.New("no orgID in context")
-		s.logger.Warn("no orgID in context, falling back to legacy", "method", "GetByLogin")
+		ctxLogger.Warn("no orgID in context, falling back to legacy", "method", "GetByLogin")
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 	}
 
+	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.GetByLogin(ctx, cmd)
 }
 
 func (s *Service) GetByEmail(ctx context.Context, cmd *user.GetUserByEmailQuery) (*user.User, error) {
-	if s.isKubernetesUserServiceEnabled(ctx) {
-		ctx, span := s.tracer.Start(ctx, "user.GetByEmail", trace.WithAttributes(
-			attribute.String("email", cmd.Email),
-		))
-		defer span.End()
+	ctx, span := s.tracer.Start(ctx, "user.GetByEmail", trace.WithAttributes(
+		attribute.String("email", cmd.Email),
+	))
+	defer span.End()
 
+	ctxLogger := s.logger.FromContext(ctx)
+
+	if s.isKubernetesUserServiceEnabled(ctx) {
 		if hasOrgID(ctx) {
+			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
 			return s.k8sService.GetByEmail(ctx, cmd)
 		}
 
 		err := errors.New("no orgID in context")
-		s.logger.Warn("no orgID in context, falling back to legacy", "method", "GetByEmail")
+		ctxLogger.Warn("no orgID in context, falling back to legacy", "method", "GetByEmail")
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 	}
 
+	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.GetByEmail(ctx, cmd)
 }
 
