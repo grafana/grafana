@@ -18,6 +18,7 @@ export interface Options {
   buildLinkToLogLine?: unknown;
   displayedFields?: Array<string>;
   fieldSelectorWidth?: number;
+  isLabelFilterActive?: unknown;
   logDetailsWidth?: number;
   permalinkedLogId?: string;
   showControls?: boolean;

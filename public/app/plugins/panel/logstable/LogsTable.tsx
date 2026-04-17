@@ -49,6 +49,11 @@ import {
 
 interface LogsTablePanelProps extends Omit<PanelProps<Options>, 'timeRange'> {}
 
+/**
+ * Props:
+ * Determines if a given key => value filter is active in a given query. Used by Log details.
+ * isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
+ */
 export const LogsTable = ({
   data,
   width,

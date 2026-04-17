@@ -2,13 +2,23 @@ import { css } from '@emotion/css';
 import { Resizable } from 're-resizable';
 import { useState, useCallback, startTransition, useRef, useMemo, useEffect } from 'react';
 
-import { type PanelProps, type GrafanaTheme2, type TimeRange } from '@grafana/data';
+import {
+  type PanelProps,
+  type GrafanaTheme2,
+  type TimeRange,
+  LogsDedupStrategy,
+  store,
+  LogsSortOrder,
+  CoreApp,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDragStyles, Icon, ScrollContainer, Tab, TabsBar, useStyles2 } from '@grafana/ui';
+import { getDragStyles, Icon, ScrollContainer, Tab, TabsBar, usePanelContext, useStyles2 } from '@grafana/ui';
 import { LogLineDetailsComponent } from 'app/features/logs/components/panel/LogLineDetailsComponent';
 import { LogLineDetailsHeader } from 'app/features/logs/components/panel/LogLineDetailsHeader';
+import { LogListContextProvider } from 'app/features/logs/components/panel/LogListContext';
 
 import { useLogDetailsContext } from './LogDetailsContext';
+import { SETTING_KEY_ROOT } from './constants';
 import { type Options } from './options/types';
 
 interface Props extends Pick<PanelProps<Options>, 'onOptionsChange'> {
@@ -22,6 +32,7 @@ export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone
     useLogDetailsContext();
   const [search, setSearch] = useState('');
   const [detailsWidth, setDetailsWidth] = useState(window.innerWidth * 0.4);
+  const { onAddAdHocFilter, app } = usePanelContext();
   const inputRef = useRef('');
   const styles = useStyles2(getStyles);
   const dragStyles = useStyles2(getDragStyles);
@@ -57,6 +68,28 @@ export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone
       });
     },
     [onOptionsChange, options]
+  );
+
+  const handleFilterFor = useCallback(
+    (key: string, value: string) => {
+      onAddAdHocFilter?.({
+        key,
+        value,
+        operator: '=',
+      });
+    },
+    [onAddAdHocFilter]
+  );
+
+  const handleFilterOut = useCallback(
+    (key: string, value: string) => {
+      onAddAdHocFilter?.({
+        key,
+        value,
+        operator: '!=',
+      });
+    },
+    [onAddAdHocFilter]
   );
 
   if (!enableLogDetails || !currentLog) {
@@ -99,22 +132,37 @@ export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone
               })}
             </TabsBar>
           )}
-          <LogLineDetailsHeader
-            closeDetails={closeDetails}
-            detailsMode="sidebar"
-            log={currentLog}
-            search={search}
-            onSearch={handleSearch}
-          />
-          <ScrollContainer>
-            <LogLineDetailsComponent
+          <LogListContextProvider
+            app={app ?? CoreApp.Unknown}
+            isLabelFilterActive={options.isLabelFilterActive}
+            onClickFilterLabel={handleFilterFor}
+            onClickFilterOutLabel={handleFilterOut}
+            dedupStrategy={LogsDedupStrategy.none}
+            displayedFields={[]}
+            fontSize={store.get(`${SETTING_KEY_ROOT}.fontSize`) ?? 'default'}
+            logs={logs}
+            showControls={false}
+            showTime={false}
+            sortOrder={LogsSortOrder.Ascending}
+            wrapLogMessage
+          >
+            <LogLineDetailsHeader
+              closeDetails={closeDetails}
+              detailsMode="sidebar"
               log={currentLog}
-              logs={logs}
               search={search}
-              timeRange={timeRange}
-              timeZone={timeZone}
+              onSearch={handleSearch}
             />
-          </ScrollContainer>
+            <ScrollContainer>
+              <LogLineDetailsComponent
+                log={currentLog}
+                logs={logs}
+                search={search}
+                timeRange={timeRange}
+                timeZone={timeZone}
+              />
+            </ScrollContainer>
+          </LogListContextProvider>
         </div>
       </Resizable>
     </div>

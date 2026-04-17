@@ -21,14 +21,10 @@ import { type BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
 
 import { SETTING_KEY_ROOT } from './utils/logs';
 
-/**
- * New Logs Table panel
- * @param props
- * @constructor
- */
-export function ExploreLogsTable(props: {
+interface Props {
   eventBus: EventBus;
   data: PanelData;
+  isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   timeZone: 'utc' | 'browser' | string;
   buildLinkToLogLine: BuildLinkToLogLine;
   width: number;
@@ -42,14 +38,19 @@ export function ExploreLogsTable(props: {
     Options,
     'sortBy' | 'sortOrder' | 'displayedFields' | 'permalinkedLogId' | 'frameIndex' | 'fieldSelectorWidth'
   >;
-}) {
+}
+
+/**
+ * New Logs Table panel
+ */
+export function ExploreLogsTable(props: Props) {
   const { onClickFilterLabel, onClickFilterOutLabel } = props;
   const frames = useMemo(() => props?.data.series ?? [], [props.data.series]);
   const frame = useMemo(() => frames[props.externalOptions.frameIndex], [frames, props.externalOptions.frameIndex]);
   const [wrapText, setWrapText] = useState(store.getBool(`${SETTING_KEY_ROOT}.wrapText`, false));
   const [columnWidths, setColumnWidths] = useState<ColumnWidth[]>(getColumnWidthsFromStorage());
 
-  const onCellFilterAdded = useCallback(
+  const handleAdHocFilter = useCallback(
     (filter: AdHocFilterItem) => {
       const { value, key, operator } = filter;
       if (!onClickFilterLabel || !onClickFilterOutLabel) {
@@ -103,11 +104,12 @@ export function ExploreLogsTable(props: {
       showControls: true,
       showCopyLogLink: true,
       ...props.externalOptions,
+      isLabelFilterActive: props.isLabelFilterActive,
       permalinkedLogId: props.externalOptions.permalinkedLogId ?? selectedLogInfo?.id,
       logDetailsWidth: parseInt(store.get(`${SETTING_KEY_ROOT}.logDetailsWidth`) ?? getLogDetailsWidth(), 10),
       wrapText,
     }),
-    [props.buildLinkToLogLine, props.externalOptions, selectedLogInfo?.id, wrapText]
+    [props.buildLinkToLogLine, props.externalOptions, props.isLabelFilterActive, selectedLogInfo?.id, wrapText]
   );
 
   const handleFieldConfigChange = useCallback((config: FieldConfigSource) => {
@@ -158,7 +160,7 @@ export function ExploreLogsTable(props: {
       value={{
         eventsScope: 'explore',
         eventBus: props.eventBus,
-        onAddAdHocFilter: onCellFilterAdded,
+        onAddAdHocFilter: handleAdHocFilter,
         app: CoreApp.Explore,
       }}
     >
