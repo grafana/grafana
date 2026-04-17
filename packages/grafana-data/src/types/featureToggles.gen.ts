@@ -249,6 +249,11 @@ export interface FeatureToggles {
   */
   kubernetesCorrelations?: boolean;
   /**
+  * Adds support for Kubernetes unified storage quotas
+  * @default false
+  */
+  kubernetesUnifiedStorageQuotas?: boolean;
+  /**
   * Adds support for Kubernetes logs drilldown
   * @default false
   */
