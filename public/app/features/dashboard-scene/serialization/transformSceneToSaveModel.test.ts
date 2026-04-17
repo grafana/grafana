@@ -13,6 +13,7 @@ import {
   toDataFrame,
   VariableSupportType,
 } from '@grafana/data';
+import { mockTransformationsRegistry, reduceTransformer } from '@grafana/data/internal';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
@@ -27,7 +28,6 @@ import {
 import { type Dashboard, LoadingState, type Panel, type RowPanel, VariableRefresh } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
-import { mockTransformationsRegistry, reduceTransformer } from '@grafana/data/internal';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 

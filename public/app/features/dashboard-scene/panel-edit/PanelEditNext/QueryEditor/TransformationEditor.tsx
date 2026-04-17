@@ -4,6 +4,7 @@ import { DataTransformerID, type DataTransformerConfig, type DataFrame } from '@
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { ErrorBoundaryAlert, LoadingPlaceholder } from '@grafana/ui';
+
 import { NoOptionsIndicator } from './NoOptionsIndicator';
 import { type Transformation } from './types';
 
