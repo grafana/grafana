@@ -121,31 +121,6 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         }
       }
     }
-    /*
-    // snap to symlog boundaries
-    else if (distr === ScaleDistribution.Symlog) {
-      let logBase = safeLog!; // FIXME: why do we assert this is non-null without just checking?
-      let logFn = logBase === 2 ? Math.log2 : Math.log10;
-
-      let sign = Math.sign(hardMin);
-
-      if (hardMin != null) {
-        hardMin = logBase ** Math.floor(logFn(hardMin));
-      }
-
-      if (hardMax != null) {
-        hardMax = logBase ** Math.ceil(logFn(hardMax));
-      }
-
-      if (softMin != null) {
-        softMin = logBase ** Math.floor(logFn(softMin));
-      }
-
-      if (softMax != null) {
-        softMax = logBase ** Math.ceil(logFn(softMax));
-      }
-    }
-    */
 
     // uPlot's default ranging config for both min & max is {pad: 0.1, hard: null, soft: 0, mode: 3}
     let softMinMode: Range.SoftMode = softMin == null ? 3 : 1;
