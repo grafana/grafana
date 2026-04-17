@@ -53,10 +53,9 @@ SLOs don't focus primarily on whether the service is healthy right now. They mea
 
 - An SLO asks a similar question over a longer window: over the past 4 weeks, did 95% of requests respond in under 3 seconds?
 
-Alerts can also use long evaluation periods, but they reset when the service recovers. 
+Alerts can also use long evaluation periods, but they reset when the service recovers.
 
 SLOs track failures against the [error budget](/grafana-cloud/alerting-and-irm/slo/introduction/#error-budget) even when the service recovers. They record how much degradation has accumulated, and report how much failure is still allowed.
-
 
 {{< figure src="/media/docs/alerting/slo-guide-remaining-error-budget-panel.png" max-width="750px" alt="SLO error budget" >}}
 
@@ -72,13 +71,13 @@ SLOs and threshold-based alerts are complementary. In some cases, tracking the s
 
 This reliability metric could indicate service health over time. It's worth tracking in operational dashboards, but it's not designed to trigger immediate action.
 
-Ask the team: will we commit to an objective on the health of this service and act if performance degrades? If the answer is yes, an SLO is the right fit. 
+Ask the team: will we commit to an objective on the health of this service and act if performance degrades? If the answer is yes, an SLO is the right fit.
 
 In practice, this question often surfaces whether the metric is actually measurable as an [service level indicator (SLI)](/docs/grafana-cloud/alerting-and-irm/slo/introduction/#service-level-indicators-slis).
 
 {{< figure src="/media/docs/alerting/slo-guide-slo-performance.png" max-width="750px" alt="Service level indicator and error budget performance" >}}
 
-Defining the SLO objective aligns the team around a shared target and determines when accumulated degradation is severe enough to require action. This is frequently the hardest part. Expect a few iterations before the objective reflects reality. 
+Defining the SLO objective aligns the team around a shared target and determines when accumulated degradation is severe enough to require action. This is frequently the hardest part. Expect a few iterations before the objective reflects reality.
 
 Sometimes deleting the alert is the right call if there's no commitment or SLI to anchor to a valid SLO. But if the same metric keeps surfacing in post-mortems across teams, that's a different signal that points to a shared reliability concern.
 
@@ -88,11 +87,11 @@ Sometimes, multiple teams maintain alerts for the same user-facing metric such a
 
 This sometimes results in overlapping alerts covering the same signal.
 
-When distinct teams define their own thresholds for service performance or user-experience metrics, this reveals a shared user-experience concern that hasn't been made explicit. 
+When distinct teams define their own thresholds for service performance or user-experience metrics, this reveals a shared user-experience concern that hasn't been made explicit.
 
 In other cases, the SLO is driven by the business, such as a customer commitment or service level agreement (SLA). An SLO formalizes it as a shared objective tracked against what customers expect.
 
-Before creating a shared SLO, teams need to agree on clear ownership. 
+Before creating a shared SLO, teams need to agree on clear ownership.
 
 In both cases, the shift is often from internal metrics to user-facing reliability metrics, as recommended in [prioritize symptoms over causes](ref:prioritize-symptoms-but-dont-ignore-infrastructure-signals).
 
@@ -104,11 +103,9 @@ A team-scoped SLO is the safer default. Move to a shared SLO only once teams agr
 
 The alert fires and resolves without human intervention, a pattern commonly referred to as flapping.
 
-
 {{< figure src="/media/docs/alerting/slo-guide-flapping-alert-timeline.png" max-width="750px" caption="Alert instance states for a flapping alert" >}}
 
 Alerting best practices recommend [tuning away flapping alerts](ref:mitigate-flapping-alerts) by tweaking alert rule settings to avoid detecting short spikes and transient issues. Tuning reduces noise, but can remove the signal entirely.
-
 
 {{< figure src="/media/docs/alerting/slo-guide-non-flapping-alert-timeline.png" max-width="750px" caption="Alert instance states after mitigating flapping behavior" >}}
 
@@ -118,7 +115,7 @@ The [SLO error budget](/docs/grafana-cloud/alerting-and-irm/slo/dashboard/#view-
 
 {{< figure src="/media/docs/alerting/slo-guide-remaining-error-budget-panel.png" max-width="750px" alt="Error budget burndown" >}}
 
-This pattern isn't limited to flapping alerts. Any alert with acceptable transient failures faces the same tradeoff: tune for less noise and lose visibility, or keep the alert and learn to ignore it. 
+This pattern isn't limited to flapping alerts. Any alert with acceptable transient failures faces the same tradeoff: tune for less noise and lose visibility, or keep the alert and learn to ignore it.
 
 Tracking reliability signals in dashboards and alerting on long evaluation periods can be the solution. SLOs are the better fit: the error budget doesn't reset and tracks every failure within the SLO window.
 
@@ -130,8 +127,8 @@ Three common patterns signal an alert is ready for an SLO:
 
 - **No actionable response**: the signal indicates service reliability, but doesn't trigger immediate action.
 - **Shared reliability concern**: teams track similar user-facing metrics, but lack a shared objective.
-- **Transient conditions**: short-lived failures are often ignored, but still impact users. 
+- **Transient conditions**: short-lived failures are often ignored, but still impact users.
 
-In all three cases, the shift is from evaluating a threshold over a recent period to evaluating a reliability objective tracked over a long period. This reduces operational noise and focuses alerting on whether your service meets its reliability goals. SLOs don't replace your existing alerts; they bring a distinct method for measuring service reliability. 
+In all three cases, the shift is from evaluating a threshold over a recent period to evaluating a reliability objective tracked over a long period. This reduces operational noise and focuses alerting on whether your service meets its reliability goals. SLOs don't replace your existing alerts; they bring a distinct method for measuring service reliability.
 
 To get started, refer to [introduction to SLOs in Grafana Cloud](/docs/grafana-cloud/alerting-and-irm/slo/introduction/).
