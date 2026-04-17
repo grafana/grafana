@@ -45,6 +45,8 @@ Currently the following replacements apply:
 
 ### Query history API
 
-The Query History APIs will not be migrated to the new Grafana App Platform. Instead, the Grafana product will revert to using local on-device storage for this functionality. This approach reduces the amount of traffic to the backend with minimal change in functionality.
+The [Query History API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/query_history) will not be migrated.
 
-If you're using this API, Grafana will provide a sample implementation for adoption.
+Grafana will revert to using local on-device storage for this functionality, since this approach reduces the amount of traffic to the backend with minimal change in functionality.
+
+If you're using this API, TBC
