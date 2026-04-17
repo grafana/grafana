@@ -40,7 +40,7 @@ export interface ManagedFieldsEntry {
     subresource?: string;
 }
 
-export interface RuleChain {
+export interface RuleSequence {
     kind: string;
     apiVersion: string;
     metadata: Metadata;

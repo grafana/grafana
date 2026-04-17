@@ -13,9 +13,9 @@ type RuleRef struct {
 	FolderUID string
 }
 
-type RuleChainMembership struct {
-	ChainUID string
-	Found    bool
+type RuleSequenceMembership struct {
+	SequenceUID string
+	Found       bool
 }
 
 var (
@@ -32,8 +32,9 @@ type RuntimeConfig struct {
 	ReservedLabelKeys             map[string]struct{}
 	NotificationSettingsValidator func(ctx context.Context, notificationSettings v0alpha1.AlertRuleNotificationSettings) error
 	ResolveRuleRef                func(ctx context.Context, uid string) (RuleRef, bool, error)
-	// ResolveRuleChainMemberships is used by RuleChain CREATE/UPDATE admission validation to
-	// resolve membership for all rule refs in the incoming RuleChain object in one call.
-	// This avoids repeating expensive membership scans per referenced UID.
-	ResolveRuleChainMemberships func(ctx context.Context, uids []string) (map[string]RuleChainMembership, error)
+	// ResolveRuleSequenceMemberships is used by RuleSequence CREATE/UPDATE admission
+	// validation to resolve membership for all rule refs in the incoming RuleSequence
+	// object in one call. This avoids repeating expensive membership scans per
+	// referenced UID.
+	ResolveRuleSequenceMemberships func(ctx context.Context, uids []string) (map[string]RuleSequenceMembership, error)
 }

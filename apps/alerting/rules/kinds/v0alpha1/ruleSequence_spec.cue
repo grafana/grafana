@@ -1,6 +1,6 @@
 package v0alpha1
 
-RuleChainSpec: {
+RuleSequenceSpec: {
 	trigger: #IntervalTrigger
 	// Non-empty constraint is enforced in Go admission validation (validator.go),
 	// not in CUE. Using [...#RuleRef] instead of [#RuleRef, ...#RuleRef] avoids

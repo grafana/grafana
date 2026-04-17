@@ -195,14 +195,14 @@ type AlertNG struct {
 	schedCfg              schedule.SchedulerCfg
 }
 
-// newRuleChainStore returns a RuleChainStore backed by the k8s API if a
+// newRuleSequenceStore returns a RuleSequenceStore backed by the k8s API if a
 // ClientGenerator is available, or nil otherwise (which causes NewScheduler
-// to fall back to the NoopRuleChainStore).
-func (ng *AlertNG) newRuleChainStore() schedule.RuleChainStore {
+// to fall back to the NoopRuleSequenceStore).
+func (ng *AlertNG) newRuleSequenceStore() schedule.RuleSequenceStore {
 	if ng.clientGenerator == nil {
 		return nil
 	}
-	return schedule.NewK8sRuleChainStore(ng.clientGenerator, log.New("ngalert.rulechain.store"))
+	return schedule.NewK8sRuleSequenceStore(ng.clientGenerator, log.New("ngalert.rulesequence.store"))
 }
 
 func (ng *AlertNG) init() error {
@@ -387,7 +387,7 @@ func (ng *AlertNG) init() error {
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
 		RuleStore:            ng.store,
-		RuleChainStore:       ng.newRuleChainStore(),
+		RuleSequenceStore:    ng.newRuleSequenceStore(),
 		RecordingRulesCfg:    ng.Cfg.UnifiedAlerting.RecordingRules,
 		Metrics:              ng.Metrics.GetSchedulerMetrics(),
 		AlertSender:          alertsRouter,

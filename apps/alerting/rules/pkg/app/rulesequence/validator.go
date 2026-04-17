@@ -1,4 +1,4 @@
-package rulechain
+package rulesequence
 
 import (
 	"context"
@@ -15,9 +15,9 @@ import (
 func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 	return &simple.Validator{
 		ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
-			r, ok := req.Object.(*model.RuleChain)
+			r, ok := req.Object.(*model.RuleSequence)
 			if !ok || r == nil {
-				return fmt.Errorf("object is not of type *v0alpha1.RuleChain")
+				return fmt.Errorf("object is not of type *v0alpha1.RuleSequence")
 			}
 
 			sourceProv := r.GetProvenanceStatus()
@@ -25,50 +25,51 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 				return fmt.Errorf("invalid provenance status: %s", sourceProv)
 			}
 
-			// Note: validateGroupLabels is not called here because RuleChains are not
-			// grouped — they are the grouping mechanism themselves. Group labels
-			// (grafana.com/group, grafana.com/group-index) are not applicable.
+			// Note: validateGroupLabels is not called here because RuleSequences
+			// are not grouped: they are the grouping mechanism themselves. Group
+			// labels (grafana.com/group, grafana.com/group-index) are not applicable.
 
 			if err := util.ValidateInterval(cfg.BaseEvaluationInterval, &r.Spec.Trigger.Interval); err != nil {
 				return err
 			}
 
 			if len(r.Spec.RecordingRules) == 0 {
-				return fmt.Errorf("rulechain requires at least one recording rule")
+				return fmt.Errorf("rule sequence requires at least one recording rule")
 			}
 
-			chainFolderUID := r.Annotations[model.FolderAnnotationKey]
-			if chainFolderUID == "" {
-				return fmt.Errorf("rulechain must be placed in a folder (set annotation %q)", model.FolderAnnotationKey)
+			seqFolderUID := r.Annotations[model.FolderAnnotationKey]
+			if seqFolderUID == "" {
+				return fmt.Errorf("rule sequence must be placed in a folder (set annotation %q)", model.FolderAnnotationKey)
 			}
 			if cfg.FolderValidator != nil {
-				ok, err := cfg.FolderValidator(ctx, chainFolderUID)
+				ok, err := cfg.FolderValidator(ctx, seqFolderUID)
 				if err != nil {
-					return fmt.Errorf("failed to validate folder %q: %w", chainFolderUID, err)
+					return fmt.Errorf("failed to validate folder %q: %w", seqFolderUID, err)
 				}
 				if !ok {
-					return fmt.Errorf("folder %q does not exist or is not accessible", chainFolderUID)
+					return fmt.Errorf("folder %q does not exist or is not accessible", seqFolderUID)
 				}
 			}
 
 			seen := make(map[string]struct{}, len(r.Spec.RecordingRules)+len(r.Spec.AlertingRules))
-			allRefs := make([]model.RuleChainRuleRef, 0, len(r.Spec.RecordingRules)+len(r.Spec.AlertingRules))
+			allRefs := make([]model.RuleSequenceRuleRef, 0, len(r.Spec.RecordingRules)+len(r.Spec.AlertingRules))
 			allRefs = append(allRefs, r.Spec.RecordingRules...)
 			allRefs = append(allRefs, r.Spec.AlertingRules...)
 
-			// RuleChain admission validates one object at a time, but that object can reference
-			// many rule UIDs. Resolve membership in bulk for CREATE/UPDATE to avoid per-UID scans.
-			memberships := map[string]config.RuleChainMembership{}
-			if cfg.ResolveRuleChainMemberships != nil {
+			// RuleSequence admission validates one object at a time, but that
+			// object can reference many rule UIDs. Resolve membership in bulk
+			// for CREATE/UPDATE to avoid per-UID scans.
+			memberships := map[string]config.RuleSequenceMembership{}
+			if cfg.ResolveRuleSequenceMemberships != nil {
 				allUIDs := make([]string, 0, len(allRefs))
 				for _, ref := range allRefs {
 					if uid := string(ref.Uid); uid != "" {
 						allUIDs = append(allUIDs, uid)
 					}
 				}
-				resolved, err := cfg.ResolveRuleChainMemberships(ctx, allUIDs)
+				resolved, err := cfg.ResolveRuleSequenceMemberships(ctx, allUIDs)
 				if err != nil {
-					return fmt.Errorf("failed to resolve chain memberships: %w", err)
+					return fmt.Errorf("failed to resolve sequence memberships: %w", err)
 				}
 				memberships = resolved
 			}
@@ -79,7 +80,7 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 					return fmt.Errorf("rule ref uid must not be empty")
 				}
 				if _, exists := seen[ruleUID]; exists {
-					return fmt.Errorf("rule %q appears multiple times in rulechain", ruleUID)
+					return fmt.Errorf("rule %q appears multiple times in rule sequence", ruleUID)
 				}
 				seen[ruleUID] = struct{}{}
 
@@ -91,17 +92,17 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 					if !found {
 						return fmt.Errorf("rule %q does not exist", ruleUID)
 					}
-					if ruleRef.FolderUID != chainFolderUID {
-						return fmt.Errorf("rule %q is in folder %q but rulechain is in folder %q: all rules must be in the same folder as the chain", ruleUID, ruleRef.FolderUID, chainFolderUID)
+					if ruleRef.FolderUID != seqFolderUID {
+						return fmt.Errorf("rule %q is in folder %q but rule sequence is in folder %q: all rules must be in the same folder as the sequence", ruleUID, ruleRef.FolderUID, seqFolderUID)
 					}
 				}
 
 				membership, hasBulkMembership := memberships[ruleUID]
 				if !hasBulkMembership {
-					membership = config.RuleChainMembership{}
+					membership = config.RuleSequenceMembership{}
 				}
-				if membership.Found && membership.ChainUID != "" && membership.ChainUID != r.Name {
-					return fmt.Errorf("rule %q already belongs to rulechain %q", ruleUID, membership.ChainUID)
+				if membership.Found && membership.SequenceUID != "" && membership.SequenceUID != r.Name {
+					return fmt.Errorf("rule %q already belongs to rule sequence %q", ruleUID, membership.SequenceUID)
 				}
 			}
 

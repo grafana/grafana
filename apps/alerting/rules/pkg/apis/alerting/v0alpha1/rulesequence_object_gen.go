@@ -15,29 +15,29 @@ import (
 )
 
 // +k8s:openapi-gen=true
-type RuleChain struct {
+type RuleSequence struct {
 	metav1.TypeMeta   `json:",inline" yaml:",inline"`
 	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
 
-	// Spec is the spec of the RuleChain
-	Spec RuleChainSpec `json:"spec" yaml:"spec"`
+	// Spec is the spec of the RuleSequence
+	Spec RuleSequenceSpec `json:"spec" yaml:"spec"`
 
-	Status RuleChainStatus `json:"status" yaml:"status"`
+	Status RuleSequenceStatus `json:"status" yaml:"status"`
 }
 
-func NewRuleChain() *RuleChain {
-	return &RuleChain{
-		Spec:   *NewRuleChainSpec(),
-		Status: *NewRuleChainStatus(),
+func NewRuleSequence() *RuleSequence {
+	return &RuleSequence{
+		Spec:   *NewRuleSequenceSpec(),
+		Status: *NewRuleSequenceStatus(),
 	}
 }
 
-func (o *RuleChain) GetSpec() any {
+func (o *RuleSequence) GetSpec() any {
 	return o.Spec
 }
 
-func (o *RuleChain) SetSpec(spec any) error {
-	cast, ok := spec.(RuleChainSpec)
+func (o *RuleSequence) SetSpec(spec any) error {
+	cast, ok := spec.(RuleSequenceSpec)
 	if !ok {
 		return fmt.Errorf("cannot set spec type %#v, not of type Spec", spec)
 	}
@@ -45,13 +45,13 @@ func (o *RuleChain) SetSpec(spec any) error {
 	return nil
 }
 
-func (o *RuleChain) GetSubresources() map[string]any {
+func (o *RuleSequence) GetSubresources() map[string]any {
 	return map[string]any{
 		"status": o.Status,
 	}
 }
 
-func (o *RuleChain) GetSubresource(name string) (any, bool) {
+func (o *RuleSequence) GetSubresource(name string) (any, bool) {
 	switch name {
 	case "status":
 		return o.Status, true
@@ -60,12 +60,12 @@ func (o *RuleChain) GetSubresource(name string) (any, bool) {
 	}
 }
 
-func (o *RuleChain) SetSubresource(name string, value any) error {
+func (o *RuleSequence) SetSubresource(name string, value any) error {
 	switch name {
 	case "status":
-		cast, ok := value.(RuleChainStatus)
+		cast, ok := value.(RuleSequenceStatus)
 		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type RuleChainStatus", value)
+			return fmt.Errorf("cannot set status type %#v, not of type RuleSequenceStatus", value)
 		}
 		o.Status = cast
 		return nil
@@ -74,7 +74,7 @@ func (o *RuleChain) SetSubresource(name string, value any) error {
 	}
 }
 
-func (o *RuleChain) GetStaticMetadata() resource.StaticMetadata {
+func (o *RuleSequence) GetStaticMetadata() resource.StaticMetadata {
 	gvk := o.GroupVersionKind()
 	return resource.StaticMetadata{
 		Name:      o.ObjectMeta.Name,
@@ -85,7 +85,7 @@ func (o *RuleChain) GetStaticMetadata() resource.StaticMetadata {
 	}
 }
 
-func (o *RuleChain) SetStaticMetadata(metadata resource.StaticMetadata) {
+func (o *RuleSequence) SetStaticMetadata(metadata resource.StaticMetadata) {
 	o.Name = metadata.Name
 	o.Namespace = metadata.Namespace
 	o.SetGroupVersionKind(schema.GroupVersionKind{
@@ -95,7 +95,7 @@ func (o *RuleChain) SetStaticMetadata(metadata resource.StaticMetadata) {
 	})
 }
 
-func (o *RuleChain) GetCommonMetadata() resource.CommonMetadata {
+func (o *RuleSequence) GetCommonMetadata() resource.CommonMetadata {
 	dt := o.DeletionTimestamp
 	var deletionTimestamp *time.Time
 	if dt != nil {
@@ -127,7 +127,7 @@ func (o *RuleChain) GetCommonMetadata() resource.CommonMetadata {
 	}
 }
 
-func (o *RuleChain) SetCommonMetadata(metadata resource.CommonMetadata) {
+func (o *RuleSequence) SetCommonMetadata(metadata resource.CommonMetadata) {
 	o.UID = types.UID(metadata.UID)
 	o.ResourceVersion = metadata.ResourceVersion
 	o.Generation = metadata.Generation
@@ -172,7 +172,7 @@ func (o *RuleChain) SetCommonMetadata(metadata resource.CommonMetadata) {
 	}
 }
 
-func (o *RuleChain) GetCreatedBy() string {
+func (o *RuleSequence) GetCreatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -180,7 +180,7 @@ func (o *RuleChain) GetCreatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/createdBy"]
 }
 
-func (o *RuleChain) SetCreatedBy(createdBy string) {
+func (o *RuleSequence) SetCreatedBy(createdBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -188,7 +188,7 @@ func (o *RuleChain) SetCreatedBy(createdBy string) {
 	o.ObjectMeta.Annotations["grafana.com/createdBy"] = createdBy
 }
 
-func (o *RuleChain) GetUpdateTimestamp() time.Time {
+func (o *RuleSequence) GetUpdateTimestamp() time.Time {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -197,7 +197,7 @@ func (o *RuleChain) GetUpdateTimestamp() time.Time {
 	return parsed
 }
 
-func (o *RuleChain) SetUpdateTimestamp(updateTimestamp time.Time) {
+func (o *RuleSequence) SetUpdateTimestamp(updateTimestamp time.Time) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -205,7 +205,7 @@ func (o *RuleChain) SetUpdateTimestamp(updateTimestamp time.Time) {
 	o.ObjectMeta.Annotations["grafana.com/updateTimestamp"] = updateTimestamp.Format(time.RFC3339)
 }
 
-func (o *RuleChain) GetUpdatedBy() string {
+func (o *RuleSequence) GetUpdatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -213,7 +213,7 @@ func (o *RuleChain) GetUpdatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/updatedBy"]
 }
 
-func (o *RuleChain) SetUpdatedBy(updatedBy string) {
+func (o *RuleSequence) SetUpdatedBy(updatedBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -221,21 +221,21 @@ func (o *RuleChain) SetUpdatedBy(updatedBy string) {
 	o.ObjectMeta.Annotations["grafana.com/updatedBy"] = updatedBy
 }
 
-func (o *RuleChain) Copy() resource.Object {
+func (o *RuleSequence) Copy() resource.Object {
 	return resource.CopyObject(o)
 }
 
-func (o *RuleChain) DeepCopyObject() runtime.Object {
+func (o *RuleSequence) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *RuleChain) DeepCopy() *RuleChain {
-	cpy := &RuleChain{}
+func (o *RuleSequence) DeepCopy() *RuleSequence {
+	cpy := &RuleSequence{}
 	o.DeepCopyInto(cpy)
 	return cpy
 }
 
-func (o *RuleChain) DeepCopyInto(dst *RuleChain) {
+func (o *RuleSequence) DeepCopyInto(dst *RuleSequence) {
 	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
@@ -243,39 +243,39 @@ func (o *RuleChain) DeepCopyInto(dst *RuleChain) {
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
-func (RuleChain) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RuleChain"
+func (RuleSequence) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RuleSequence"
 }
 
 // Interface compliance compile-time check
-var _ resource.Object = &RuleChain{}
+var _ resource.Object = &RuleSequence{}
 
 // +k8s:openapi-gen=true
-type RuleChainList struct {
+type RuleSequenceList struct {
 	metav1.TypeMeta `json:",inline" yaml:",inline"`
 	metav1.ListMeta `json:"metadata" yaml:"metadata"`
-	Items           []RuleChain `json:"items" yaml:"items"`
+	Items           []RuleSequence `json:"items" yaml:"items"`
 }
 
-func (o *RuleChainList) DeepCopyObject() runtime.Object {
+func (o *RuleSequenceList) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *RuleChainList) Copy() resource.ListObject {
-	cpy := &RuleChainList{
+func (o *RuleSequenceList) Copy() resource.ListObject {
+	cpy := &RuleSequenceList{
 		TypeMeta: o.TypeMeta,
-		Items:    make([]RuleChain, len(o.Items)),
+		Items:    make([]RuleSequence, len(o.Items)),
 	}
 	o.ListMeta.DeepCopyInto(&cpy.ListMeta)
 	for i := 0; i < len(o.Items); i++ {
-		if item, ok := o.Items[i].Copy().(*RuleChain); ok {
+		if item, ok := o.Items[i].Copy().(*RuleSequence); ok {
 			cpy.Items[i] = *item
 		}
 	}
 	return cpy
 }
 
-func (o *RuleChainList) GetItems() []resource.Object {
+func (o *RuleSequenceList) GetItems() []resource.Object {
 	items := make([]resource.Object, len(o.Items))
 	for i := 0; i < len(o.Items); i++ {
 		items[i] = &o.Items[i]
@@ -283,52 +283,52 @@ func (o *RuleChainList) GetItems() []resource.Object {
 	return items
 }
 
-func (o *RuleChainList) SetItems(items []resource.Object) {
-	o.Items = make([]RuleChain, len(items))
+func (o *RuleSequenceList) SetItems(items []resource.Object) {
+	o.Items = make([]RuleSequence, len(items))
 	for i := 0; i < len(items); i++ {
-		o.Items[i] = *items[i].(*RuleChain)
+		o.Items[i] = *items[i].(*RuleSequence)
 	}
 }
 
-func (o *RuleChainList) DeepCopy() *RuleChainList {
-	cpy := &RuleChainList{}
+func (o *RuleSequenceList) DeepCopy() *RuleSequenceList {
+	cpy := &RuleSequenceList{}
 	o.DeepCopyInto(cpy)
 	return cpy
 }
 
-func (o *RuleChainList) DeepCopyInto(dst *RuleChainList) {
+func (o *RuleSequenceList) DeepCopyInto(dst *RuleSequenceList) {
 	resource.CopyObjectInto(dst, o)
 }
 
-func (RuleChainList) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RuleChainList"
+func (RuleSequenceList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RuleSequenceList"
 }
 
 // Interface compliance compile-time check
-var _ resource.ListObject = &RuleChainList{}
+var _ resource.ListObject = &RuleSequenceList{}
 
 // Copy methods for all subresource types
 
 // DeepCopy creates a full deep copy of Spec
-func (s *RuleChainSpec) DeepCopy() *RuleChainSpec {
-	cpy := &RuleChainSpec{}
+func (s *RuleSequenceSpec) DeepCopy() *RuleSequenceSpec {
+	cpy := &RuleSequenceSpec{}
 	s.DeepCopyInto(cpy)
 	return cpy
 }
 
 // DeepCopyInto deep copies Spec into another Spec object
-func (s *RuleChainSpec) DeepCopyInto(dst *RuleChainSpec) {
+func (s *RuleSequenceSpec) DeepCopyInto(dst *RuleSequenceSpec) {
 	resource.CopyObjectInto(dst, s)
 }
 
-// DeepCopy creates a full deep copy of RuleChainStatus
-func (s *RuleChainStatus) DeepCopy() *RuleChainStatus {
-	cpy := &RuleChainStatus{}
+// DeepCopy creates a full deep copy of RuleSequenceStatus
+func (s *RuleSequenceStatus) DeepCopy() *RuleSequenceStatus {
+	cpy := &RuleSequenceStatus{}
 	s.DeepCopyInto(cpy)
 	return cpy
 }
 
-// DeepCopyInto deep copies RuleChainStatus into another RuleChainStatus object
-func (s *RuleChainStatus) DeepCopyInto(dst *RuleChainStatus) {
+// DeepCopyInto deep copies RuleSequenceStatus into another RuleSequenceStatus object
+func (s *RuleSequenceStatus) DeepCopyInto(dst *RuleSequenceStatus) {
 	resource.CopyObjectInto(dst, s)
 }

@@ -28,13 +28,13 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		RecordingRuleSpec{}.OpenAPIModelName():                            schema_pkg_apis_alerting_v0alpha1_RecordingRuleSpec(ref),
 		RecordingRuleStatus{}.OpenAPIModelName():                          schema_pkg_apis_alerting_v0alpha1_RecordingRuleStatus(ref),
 		RecordingRulestatusOperatorState{}.OpenAPIModelName():             schema_pkg_apis_alerting_v0alpha1_RecordingRulestatusOperatorState(ref),
-		RuleChain{}.OpenAPIModelName():                                    schema_pkg_apis_alerting_v0alpha1_RuleChain(ref),
-		RuleChainIntervalTrigger{}.OpenAPIModelName():                     schema_pkg_apis_alerting_v0alpha1_RuleChainIntervalTrigger(ref),
-		RuleChainList{}.OpenAPIModelName():                                schema_pkg_apis_alerting_v0alpha1_RuleChainList(ref),
-		RuleChainRuleRef{}.OpenAPIModelName():                             schema_pkg_apis_alerting_v0alpha1_RuleChainRuleRef(ref),
-		RuleChainSpec{}.OpenAPIModelName():                                schema_pkg_apis_alerting_v0alpha1_RuleChainSpec(ref),
-		RuleChainStatus{}.OpenAPIModelName():                              schema_pkg_apis_alerting_v0alpha1_RuleChainStatus(ref),
-		RuleChainstatusOperatorState{}.OpenAPIModelName():                 schema_pkg_apis_alerting_v0alpha1_RuleChainstatusOperatorState(ref),
+		RuleSequence{}.OpenAPIModelName():                                 schema_pkg_apis_alerting_v0alpha1_RuleSequence(ref),
+		RuleSequenceIntervalTrigger{}.OpenAPIModelName():                  schema_pkg_apis_alerting_v0alpha1_RuleSequenceIntervalTrigger(ref),
+		RuleSequenceList{}.OpenAPIModelName():                             schema_pkg_apis_alerting_v0alpha1_RuleSequenceList(ref),
+		RuleSequenceRuleRef{}.OpenAPIModelName():                          schema_pkg_apis_alerting_v0alpha1_RuleSequenceRuleRef(ref),
+		RuleSequenceSpec{}.OpenAPIModelName():                             schema_pkg_apis_alerting_v0alpha1_RuleSequenceSpec(ref),
+		RuleSequenceStatus{}.OpenAPIModelName():                           schema_pkg_apis_alerting_v0alpha1_RuleSequenceStatus(ref),
+		RuleSequencestatusOperatorState{}.OpenAPIModelName():              schema_pkg_apis_alerting_v0alpha1_RuleSequencestatusOperatorState(ref),
 	}
 }
 
@@ -970,7 +970,7 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRulestatusOperatorState(ref comm
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_RuleChain(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_RuleSequence(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -998,15 +998,15 @@ func schema_pkg_apis_alerting_v0alpha1_RuleChain(ref common.ReferenceCallback) c
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Spec is the spec of the RuleChain",
+							Description: "Spec is the spec of the RuleSequence",
 							Default:     map[string]interface{}{},
-							Ref:         ref(RuleChainSpec{}.OpenAPIModelName()),
+							Ref:         ref(RuleSequenceSpec{}.OpenAPIModelName()),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(RuleChainStatus{}.OpenAPIModelName()),
+							Ref:     ref(RuleSequenceStatus{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -1014,11 +1014,11 @@ func schema_pkg_apis_alerting_v0alpha1_RuleChain(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			RuleChainSpec{}.OpenAPIModelName(), RuleChainStatus{}.OpenAPIModelName(), metav1.ObjectMeta{}.OpenAPIModelName()},
+			RuleSequenceSpec{}.OpenAPIModelName(), RuleSequenceStatus{}.OpenAPIModelName(), metav1.ObjectMeta{}.OpenAPIModelName()},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_RuleChainIntervalTrigger(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_RuleSequenceIntervalTrigger(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1038,7 +1038,7 @@ func schema_pkg_apis_alerting_v0alpha1_RuleChainIntervalTrigger(ref common.Refer
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_RuleChainList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_RuleSequenceList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1071,7 +1071,7 @@ func schema_pkg_apis_alerting_v0alpha1_RuleChainList(ref common.ReferenceCallbac
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(RuleChain{}.OpenAPIModelName()),
+										Ref:     ref(RuleSequence{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1082,11 +1082,11 @@ func schema_pkg_apis_alerting_v0alpha1_RuleChainList(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			RuleChain{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
+			RuleSequence{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_RuleChainRuleRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_RuleSequenceRuleRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1106,7 +1106,7 @@ func schema_pkg_apis_alerting_v0alpha1_RuleChainRuleRef(ref common.ReferenceCall
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_RuleChainSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_RuleSequenceSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1115,7 +1115,7 @@ func schema_pkg_apis_alerting_v0alpha1_RuleChainSpec(ref common.ReferenceCallbac
 					"trigger": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(RuleChainIntervalTrigger{}.OpenAPIModelName()),
+							Ref:     ref(RuleSequenceIntervalTrigger{}.OpenAPIModelName()),
 						},
 					},
 					"recordingRules": {
@@ -1126,7 +1126,7 @@ func schema_pkg_apis_alerting_v0alpha1_RuleChainSpec(ref common.ReferenceCallbac
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(RuleChainRuleRef{}.OpenAPIModelName()),
+										Ref:     ref(RuleSequenceRuleRef{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1139,7 +1139,7 @@ func schema_pkg_apis_alerting_v0alpha1_RuleChainSpec(ref common.ReferenceCallbac
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(RuleChainRuleRef{}.OpenAPIModelName()),
+										Ref:     ref(RuleSequenceRuleRef{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1150,11 +1150,11 @@ func schema_pkg_apis_alerting_v0alpha1_RuleChainSpec(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			RuleChainIntervalTrigger{}.OpenAPIModelName(), RuleChainRuleRef{}.OpenAPIModelName()},
+			RuleSequenceIntervalTrigger{}.OpenAPIModelName(), RuleSequenceRuleRef{}.OpenAPIModelName()},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_RuleChainStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_RuleSequenceStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1169,7 +1169,7 @@ func schema_pkg_apis_alerting_v0alpha1_RuleChainStatus(ref common.ReferenceCallb
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(RuleChainstatusOperatorState{}.OpenAPIModelName()),
+										Ref:     ref(RuleSequencestatusOperatorState{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1194,11 +1194,11 @@ func schema_pkg_apis_alerting_v0alpha1_RuleChainStatus(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			RuleChainstatusOperatorState{}.OpenAPIModelName()},
+			RuleSequencestatusOperatorState{}.OpenAPIModelName()},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_RuleChainstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_RuleSequencestatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{

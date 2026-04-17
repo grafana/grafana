@@ -12,7 +12,7 @@ manifest: {
 			kinds: [
 				alertRulev0alpha1,
 				recordingRulev0alpha1,
-				ruleChainv0alpha1,
+				ruleSequencev0alpha1,
 			]
 		}
 	}

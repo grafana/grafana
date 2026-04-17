@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func (o *RuleChain) GetProvenanceStatus() string {
+func (o *RuleSequence) GetProvenanceStatus() string {
 	if o == nil || o.Annotations == nil {
 		return ProvenanceStatusNone
 	}
@@ -17,7 +17,7 @@ func (o *RuleChain) GetProvenanceStatus() string {
 	return s
 }
 
-func (o *RuleChain) SetProvenanceStatus(status string) (err error) {
+func (o *RuleSequence) SetProvenanceStatus(status string) (err error) {
 	if o.Annotations == nil {
 		o.Annotations = make(map[string]string, 1)
 	}
@@ -28,19 +28,19 @@ func (o *RuleChain) SetProvenanceStatus(status string) (err error) {
 	return
 }
 
-func (d *RuleChainPromDuration) ToDuration() (time.Duration, error) {
+func (d *RuleSequencePromDuration) ToDuration() (time.Duration, error) {
 	return ToDuration(string(*d))
 }
 
-func (d *RuleChainPromDuration) Clamp() error {
+func (d *RuleSequencePromDuration) Clamp() error {
 	clampedDuration, err := ClampDuration(string(*d))
 	if err != nil {
 		return err
 	}
-	*d = RuleChainPromDuration(clampedDuration)
+	*d = RuleSequencePromDuration(clampedDuration)
 	return nil
 }
 
-func (spec *RuleChainSpec) ClampDurations() error {
+func (spec *RuleSequenceSpec) ClampDurations() error {
 	return spec.Trigger.Interval.Clamp()
 }

@@ -27,8 +27,8 @@ func (f *fakeClientGenerator) ClientFor(_ resource.Kind) (resource.Client, error
 	if f.err != nil {
 		return nil, f.err
 	}
-	// Return nil client; NewRuleChainClient wraps it. The resulting
-	// RuleChainClient cannot serve real requests, but that is fine for
+	// Return nil client; NewRuleSequenceClient wraps it. The resulting
+	// RuleSequenceClient cannot serve real requests, but that is fine for
 	// testing the lazy-init retry logic (we only check that getClient
 	// succeeds, not that the client can list).
 	return nil, nil
@@ -38,18 +38,22 @@ func (f *fakeClientGenerator) GetCustomRouteClient(_ schema.GroupVersion, _ stri
 	return nil, errors.New("not implemented")
 }
 
-func TestK8sRuleChainStore_getClient_retries_on_failure(t *testing.T) {
+func (f *fakeClientGenerator) DiscoveryClient() (resource.DiscoveryClient, error) {
+	return nil, errors.New("not implemented")
+}
+
+func TestK8sRuleSequenceStore_getClient_retries_on_failure(t *testing.T) {
 	gen := &fakeClientGenerator{err: errors.New("apiserver not ready")}
-	store := NewK8sRuleChainStore(gen, log.NewNopLogger())
+	store := NewK8sRuleSequenceStore(gen, log.NewNopLogger())
 
 	// First call should fail and propagate the error.
-	_, err := store.GetRuleChainForScheduling(context.Background())
+	_, err := store.GetRuleSequencesForScheduling(context.Background())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "apiserver not ready")
 	assert.Equal(t, 1, gen.calls)
 
 	// Second call should retry (error is not cached).
-	_, err = store.GetRuleChainForScheduling(context.Background())
+	_, err = store.GetRuleSequencesForScheduling(context.Background())
 	require.Error(t, err)
 	assert.Equal(t, 2, gen.calls, "expected retry after transient failure")
 
@@ -67,51 +71,51 @@ func TestK8sRuleChainStore_getClient_retries_on_failure(t *testing.T) {
 	assert.Equal(t, 3, gen.calls, "expected cached client, no new generator call")
 }
 
-func TestConvertRuleChain(t *testing.T) {
+func TestConvertRuleSequence(t *testing.T) {
 	tests := []struct {
 		name    string
-		chain   alertingv0alpha1.RuleChain
-		want    models.SchedulableRuleChain
+		seq     alertingv0alpha1.RuleSequence
+		want    models.SchedulableRuleSequence
 		wantErr string
 	}{
 		{
 			name: "recording and alerting rules converted",
-			chain: alertingv0alpha1.RuleChain{
-				ObjectMeta: metav1.ObjectMeta{Name: "chain-1"},
-				Spec: alertingv0alpha1.RuleChainSpec{
-					Trigger: alertingv0alpha1.RuleChainIntervalTrigger{
-						Interval: alertingv0alpha1.RuleChainPromDuration("30s"),
+			seq: alertingv0alpha1.RuleSequence{
+				ObjectMeta: metav1.ObjectMeta{Name: "seq-1"},
+				Spec: alertingv0alpha1.RuleSequenceSpec{
+					Trigger: alertingv0alpha1.RuleSequenceIntervalTrigger{
+						Interval: alertingv0alpha1.RuleSequencePromDuration("30s"),
 					},
-					RecordingRules: []alertingv0alpha1.RuleChainRuleRef{
+					RecordingRules: []alertingv0alpha1.RuleSequenceRuleRef{
 						{Uid: "rec-1"}, {Uid: "rec-2"},
 					},
-					AlertingRules: []alertingv0alpha1.RuleChainRuleRef{
+					AlertingRules: []alertingv0alpha1.RuleSequenceRuleRef{
 						{Uid: "alert-1"},
 					},
 				},
 			},
-			want: models.SchedulableRuleChain{
-				UID:               "chain-1",
+			want: models.SchedulableRuleSequence{
+				UID:               "seq-1",
 				IntervalSeconds:   30,
 				RecordingRuleRefs: []string{"rec-1", "rec-2"},
 				AlertRuleRefs:     []string{"alert-1"},
 			},
 		},
 		{
-			name: "recording only chain with minute interval",
-			chain: alertingv0alpha1.RuleChain{
-				ObjectMeta: metav1.ObjectMeta{Name: "chain-rec-only"},
-				Spec: alertingv0alpha1.RuleChainSpec{
-					Trigger: alertingv0alpha1.RuleChainIntervalTrigger{
-						Interval: alertingv0alpha1.RuleChainPromDuration("1m"),
+			name: "recording only sequence with minute interval",
+			seq: alertingv0alpha1.RuleSequence{
+				ObjectMeta: metav1.ObjectMeta{Name: "seq-rec-only"},
+				Spec: alertingv0alpha1.RuleSequenceSpec{
+					Trigger: alertingv0alpha1.RuleSequenceIntervalTrigger{
+						Interval: alertingv0alpha1.RuleSequencePromDuration("1m"),
 					},
-					RecordingRules: []alertingv0alpha1.RuleChainRuleRef{
+					RecordingRules: []alertingv0alpha1.RuleSequenceRuleRef{
 						{Uid: "rec-1"},
 					},
 				},
 			},
-			want: models.SchedulableRuleChain{
-				UID:               "chain-rec-only",
+			want: models.SchedulableRuleSequence{
+				UID:               "seq-rec-only",
 				IntervalSeconds:   60,
 				RecordingRuleRefs: []string{"rec-1"},
 				AlertRuleRefs:     []string{},
@@ -119,13 +123,13 @@ func TestConvertRuleChain(t *testing.T) {
 		},
 		{
 			name: "invalid interval returns error",
-			chain: alertingv0alpha1.RuleChain{
-				ObjectMeta: metav1.ObjectMeta{Name: "chain-bad"},
-				Spec: alertingv0alpha1.RuleChainSpec{
-					Trigger: alertingv0alpha1.RuleChainIntervalTrigger{
-						Interval: alertingv0alpha1.RuleChainPromDuration("not-a-duration"),
+			seq: alertingv0alpha1.RuleSequence{
+				ObjectMeta: metav1.ObjectMeta{Name: "seq-bad"},
+				Spec: alertingv0alpha1.RuleSequenceSpec{
+					Trigger: alertingv0alpha1.RuleSequenceIntervalTrigger{
+						Interval: alertingv0alpha1.RuleSequencePromDuration("not-a-duration"),
 					},
-					RecordingRules: []alertingv0alpha1.RuleChainRuleRef{
+					RecordingRules: []alertingv0alpha1.RuleSequenceRuleRef{
 						{Uid: "rec-1"},
 					},
 				},
@@ -136,7 +140,7 @@ func TestConvertRuleChain(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := convertRuleChain(tc.chain)
+			got, err := convertRuleSequence(tc.seq)
 			if tc.wantErr != "" {
 				require.ErrorContains(t, err, tc.wantErr)
 				return

@@ -1,4 +1,4 @@
-package rulechain
+package rulesequence
 
 import (
 	"context"

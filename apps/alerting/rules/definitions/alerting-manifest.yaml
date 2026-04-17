@@ -448,8 +448,8 @@ spec:
           - CREATE
           - UPDATE
       conversion: false
-      kind: RuleChain
-      plural: RuleChains
+      kind: RuleSequence
+      plural: RuleSequences
       schemas:
         IntervalTrigger:
           additionalProperties: false
@@ -491,14 +491,6 @@ spec:
             pattern: hmuµn
           pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
           type: string
-        RuleChain:
-          properties:
-            spec:
-              $ref: '#/components/schemas/spec'
-            status:
-              $ref: '#/components/schemas/status'
-          required:
-          - spec
         RuleRef:
           additionalProperties: false
           properties:
@@ -507,6 +499,14 @@ spec:
           required:
           - uid
           type: object
+        RuleSequence:
+          properties:
+            spec:
+              $ref: '#/components/schemas/spec'
+            status:
+              $ref: '#/components/schemas/status'
+          required:
+          - spec
         RuleUID:
           pattern: ^[a-zA-Z0-9_-]+$
           type: string

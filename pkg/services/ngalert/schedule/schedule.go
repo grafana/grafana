@@ -86,8 +86,8 @@ type schedule struct {
 
 	evaluatorFactory eval.EvaluatorFactory
 
-	ruleStore      RulesStore
-	ruleChainStore RuleChainStore
+	ruleStore         RulesStore
+	ruleSequenceStore RuleSequenceStore
 
 	stateManager *state.Manager
 
@@ -132,7 +132,7 @@ type SchedulerCfg struct {
 	JitterEvaluations      JitterStrategy
 	EvaluatorFactory       eval.EvaluatorFactory
 	RuleStore              RulesStore
-	RuleChainStore         RuleChainStore
+	RuleSequenceStore      RuleSequenceStore
 	Metrics                *metrics.Scheduler
 	AlertSender            AlertsSender
 	Tracer                 tracing.Tracer
@@ -149,8 +149,8 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		cfg.Log.Warn("Invalid scheduler maxAttempts, using a safe minimum", "configured", cfg.RetryConfig.MaxAttempts, "actual", minMaxAttempts)
 		cfg.RetryConfig.MaxAttempts = minMaxAttempts
 	}
-	if cfg.RuleChainStore == nil {
-		cfg.RuleChainStore = &NoopRuleChainStore{}
+	if cfg.RuleSequenceStore == nil {
+		cfg.RuleSequenceStore = &NoopRuleSequenceStore{}
 	}
 
 	sch := schedule{
@@ -161,7 +161,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		log:                    cfg.Log,
 		evaluatorFactory:       cfg.EvaluatorFactory,
 		ruleStore:              cfg.RuleStore,
-		ruleChainStore:         cfg.RuleChainStore,
+		ruleSequenceStore:      cfg.RuleSequenceStore,
 		metrics:                cfg.Metrics,
 		appURL:                 cfg.AppURL,
 		disableGrafanaFolder:   cfg.DisableGrafanaFolder,

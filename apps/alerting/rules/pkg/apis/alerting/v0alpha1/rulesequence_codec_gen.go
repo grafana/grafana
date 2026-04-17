@@ -11,18 +11,18 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
-// RuleChainJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding
-type RuleChainJSONCodec struct{}
+// RuleSequenceJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding
+type RuleSequenceJSONCodec struct{}
 
 // Read reads JSON-encoded bytes from `reader` and unmarshals them into `into`
-func (*RuleChainJSONCodec) Read(reader io.Reader, into resource.Object) error {
+func (*RuleSequenceJSONCodec) Read(reader io.Reader, into resource.Object) error {
 	return json.NewDecoder(reader).Decode(into)
 }
 
 // Write writes JSON-encoded bytes into `writer` marshaled from `from`
-func (*RuleChainJSONCodec) Write(writer io.Writer, from resource.Object) error {
+func (*RuleSequenceJSONCodec) Write(writer io.Writer, from resource.Object) error {
 	return json.NewEncoder(writer).Encode(from)
 }
 
 // Interface compliance checks
-var _ resource.Codec = &RuleChainJSONCodec{}
+var _ resource.Codec = &RuleSequenceJSONCodec{}

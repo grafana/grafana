@@ -1,4 +1,4 @@
-package rulechain
+package rulesequence
 
 import (
 	"context"
@@ -21,19 +21,19 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-// TestIntegrationRuleChainUnifiedStorageOnly verifies that RuleChain resources
-// work correctly with unified storage only (nil legacy storage). This exercises
-// the code path in appinstaller/server.go where GetLegacyStorage returns nil
-// and the dual-writer is skipped.
-func TestIntegrationRuleChainUnifiedStorageOnly(t *testing.T) {
+// TestIntegrationRuleSequenceUnifiedStorageOnly verifies that RuleSequence
+// resources work correctly with unified storage only (nil legacy storage).
+// This exercises the code path in appinstaller/server.go where
+// GetLegacyStorage returns nil and the dual-writer is skipped.
+func TestIntegrationRuleSequenceUnifiedStorageOnly(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	helper := common.GetTestHelperWithRuleChains(t)
+	helper := common.GetTestHelperWithRuleSequences(t)
 
 	common.CreateTestFolder(t, helper, "test-folder")
 
-	// Create a recording rule so the chain validator's ResolveRuleRef check passes.
+	// Create a recording rule so the sequence validator's ResolveRuleRef check passes.
 	recClient := common.NewRecordingRuleClient(t, helper.Org1.Admin)
 	rule := ngmodels.RuleGen.With(
 		ngmodels.RuleMuts.WithUniqueUID(),
@@ -53,7 +53,7 @@ func TestIntegrationRuleChainUnifiedStorageOnly(t *testing.T) {
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:  rule.Title,
-			Metric: rule.Record.Metric,
+			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
 					QueryType:     util.Pointer(rule.Data[0].QueryType),
@@ -71,40 +71,44 @@ func TestIntegrationRuleChainUnifiedStorageOnly(t *testing.T) {
 			},
 		},
 	}, v1.CreateOptions{})
-	require.NoError(t, err, "recording rule must exist for chain validation")
+	require.NoError(t, err, "recording rule must exist for sequence validation")
 
-	chainClient := common.NewRuleChainClient(t, helper.Org1.Admin)
+	seqClient := common.NewRuleSequenceClient(t, helper.Org1.Admin)
 
 	t.Run("create, get, list, and delete", func(t *testing.T) {
-		chain := &v0alpha1.RuleChain{
+		seq := &v0alpha1.RuleSequence{
 			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-			},
-			Spec: v0alpha1.RuleChainSpec{
-				Trigger: v0alpha1.RuleChainIntervalTrigger{
-					Interval: v0alpha1.RuleChainPromDuration("1m"),
+				Namespace:    "default",
+				GenerateName: "test-seq-",
+				Annotations: map[string]string{
+					"grafana.app/folder": "test-folder",
 				},
-				RecordingRules: []v0alpha1.RuleChainRuleRef{
-					{Uid: v0alpha1.RuleChainRuleUID(recRule.Name)},
+			},
+			Spec: v0alpha1.RuleSequenceSpec{
+				Trigger: v0alpha1.RuleSequenceIntervalTrigger{
+					Interval: v0alpha1.RuleSequencePromDuration("1m"),
+				},
+				RecordingRules: []v0alpha1.RuleSequenceRuleRef{
+					{Uid: v0alpha1.RuleSequenceRuleUID(recRule.Name)},
 				},
 			},
 		}
 
-		created, err := chainClient.Create(ctx, chain, v1.CreateOptions{})
-		require.NoError(t, err, "RuleChain should be creatable with unified storage only")
+		created, err := seqClient.Create(ctx, seq, v1.CreateOptions{})
+		require.NoError(t, err, "RuleSequence should be creatable with unified storage only")
 		require.NotEmpty(t, created.Name)
 
-		got, err := chainClient.Get(ctx, created.Name, v1.GetOptions{})
+		got, err := seqClient.Get(ctx, created.Name, v1.GetOptions{})
 		require.NoError(t, err)
 		require.Equal(t, created.Name, got.Name)
-		require.Equal(t, chain.Spec.Trigger.Interval, got.Spec.Trigger.Interval)
+		require.Equal(t, seq.Spec.Trigger.Interval, got.Spec.Trigger.Interval)
 		require.Len(t, got.Spec.RecordingRules, 1)
 
-		list, err := chainClient.List(ctx, v1.ListOptions{})
+		list, err := seqClient.List(ctx, v1.ListOptions{})
 		require.NoError(t, err)
 		require.NotEmpty(t, list.Items)
 
-		err = chainClient.Delete(ctx, created.Name, v1.DeleteOptions{})
-		require.NoError(t, err, "RuleChain should be deletable with unified storage only")
+		err = seqClient.Delete(ctx, created.Name, v1.DeleteOptions{})
+		require.NoError(t, err, "RuleSequence should be deletable with unified storage only")
 	})
 }

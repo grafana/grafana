@@ -27,38 +27,85 @@ func validateGroupLabels(r *model.RecordingRule, oldObject resource.Object, acti
 	return util.ValidateGroupLabels(r.Labels, oldLabels, action)
 }
 
+func validateDelete(ctx context.Context, req *app.AdmissionRequest, cfg config.RuntimeConfig) error {
+	r, ok := req.OldObject.(*model.RecordingRule)
+	if !ok {
+		return fmt.Errorf("old object is not of type *v0alpha1.RecordingRule")
+	}
+	if cfg.ResolveRuleSequenceMemberships != nil {
+		memberships, err := cfg.ResolveRuleSequenceMemberships(ctx, []string{r.Name})
+		if err != nil {
+			return fmt.Errorf("failed to resolve sequence membership for rule %q: %w", r.Name, err)
+		}
+		if memberships[r.Name].Found {
+			return fmt.Errorf("cannot delete rule %q because it belongs to rule sequence %q", r.Name, memberships[r.Name].SequenceUID)
+		}
+	}
+	return nil
+}
+
+func validateFolderAndSequenceMembership(ctx context.Context, r *model.RecordingRule, oldRule *model.RecordingRule, action resource.AdmissionAction, cfg config.RuntimeConfig) error {
+	folderUID := ""
+	if r.Annotations != nil {
+		folderUID = r.Annotations[model.FolderAnnotationKey]
+	}
+	if folderUID == "" {
+		return fmt.Errorf("folder is required")
+	}
+	if cfg.FolderValidator != nil {
+		ok, verr := cfg.FolderValidator(ctx, folderUID)
+		if verr != nil {
+			return fmt.Errorf("failed to validate folder: %w", verr)
+		}
+		if !ok {
+			return fmt.Errorf("folder does not exist: %s", folderUID)
+		}
+	}
+
+	if action == resource.AdmissionActionUpdate && oldRule != nil && cfg.ResolveRuleSequenceMemberships != nil {
+		oldFolderUID := ""
+		if oldRule.Annotations != nil {
+			oldFolderUID = oldRule.Annotations[model.FolderAnnotationKey]
+		}
+		if oldFolderUID != folderUID {
+			memberships, err := cfg.ResolveRuleSequenceMemberships(ctx, []string{r.Name})
+			if err != nil {
+				return fmt.Errorf("failed to resolve sequence membership for rule %q: %w", r.Name, err)
+			}
+			if memberships[r.Name].Found {
+				return fmt.Errorf("cannot move rule %q to folder %q because it belongs to rule sequence %q", r.Name, folderUID, memberships[r.Name].SequenceUID)
+			}
+		}
+	}
+	return nil
+}
+
+func validateMetric(r *model.RecordingRule) error {
+	if r.Spec.Metric == "" {
+		return fmt.Errorf("metric must be specified")
+	}
+	metric := prom_model.LabelValue(r.Spec.Metric)
+	if !metric.IsValid() {
+		return fmt.Errorf("metric contains invalid characters")
+	}
+	if !prom_model.IsValidMetricName(metric) { // nolint:staticcheck
+		return fmt.Errorf("invalid metric name")
+	}
+	return nil
+}
+
 func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 	return &simple.Validator{
 		ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
-			var (
-				r       *model.RecordingRule
-				oldRule *model.RecordingRule
-				ok      bool
-			)
-
 			if req.Action == resource.AdmissionActionDelete {
-				r, ok = req.OldObject.(*model.RecordingRule)
-				if !ok {
-					return fmt.Errorf("old object is not of type *v0alpha1.RecordingRule")
-				}
-				if cfg.ResolveRuleChainMemberships != nil {
-					memberships, err := cfg.ResolveRuleChainMemberships(ctx, []string{r.Name})
-					if err != nil {
-						return fmt.Errorf("failed to resolve chain membership for rule %q: %w", r.Name, err)
-					}
-					membership := memberships[r.Name]
-					if membership.Found {
-						return fmt.Errorf("cannot delete rule %q because it belongs to rulechain %q", r.Name, membership.ChainUID)
-					}
-				}
-				return nil
+				return validateDelete(ctx, req, cfg)
 			}
 
-			// Cast to specific type
-			r, ok = req.Object.(*model.RecordingRule)
+			r, ok := req.Object.(*model.RecordingRule)
 			if !ok {
 				return fmt.Errorf("object is not of type *v0alpha1.RecordingRule")
 			}
+			var oldRule *model.RecordingRule
 			if req.OldObject != nil {
 				oldRule, _ = req.OldObject.(*model.RecordingRule)
 			}
@@ -72,38 +119,8 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 				return err
 			}
 
-			folderUID := ""
-			if r.Annotations != nil {
-				folderUID = r.Annotations[model.FolderAnnotationKey]
-			}
-			if folderUID == "" {
-				return fmt.Errorf("folder is required")
-			}
-			if cfg.FolderValidator != nil {
-				ok, verr := cfg.FolderValidator(ctx, folderUID)
-				if verr != nil {
-					return fmt.Errorf("failed to validate folder: %w", verr)
-				}
-				if !ok {
-					return fmt.Errorf("folder does not exist: %s", folderUID)
-				}
-			}
-
-			if req.Action == resource.AdmissionActionUpdate && oldRule != nil && cfg.ResolveRuleChainMemberships != nil {
-				oldFolderUID := ""
-				if oldRule.Annotations != nil {
-					oldFolderUID = oldRule.Annotations[model.FolderAnnotationKey]
-				}
-				if oldFolderUID != folderUID {
-					memberships, err := cfg.ResolveRuleChainMemberships(ctx, []string{r.Name})
-					if err != nil {
-						return fmt.Errorf("failed to resolve chain membership for rule %q: %w", r.Name, err)
-					}
-					membership := memberships[r.Name]
-					if membership.Found {
-						return fmt.Errorf("cannot move rule %q to folder %q because it belongs to rulechain %q", r.Name, folderUID, membership.ChainUID)
-					}
-				}
+			if err := validateFolderAndSequenceMembership(ctx, r, oldRule, req.Action, cfg); err != nil {
+				return err
 			}
 
 			if len(r.Spec.Title) > model.AlertRuleMaxTitleLength {
@@ -130,18 +147,7 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 				return err
 			}
 
-			if r.Spec.Metric == "" {
-				return fmt.Errorf("metric must be specified")
-			}
-			metric := prom_model.LabelValue(r.Spec.Metric)
-			if !metric.IsValid() {
-				return fmt.Errorf("metric contains invalid characters")
-			}
-			if !prom_model.IsValidMetricName(metric) { // nolint:staticcheck
-				return fmt.Errorf("invalid metric name")
-			}
-
-			return nil
+			return validateMetric(r)
 		},
 	}
 }

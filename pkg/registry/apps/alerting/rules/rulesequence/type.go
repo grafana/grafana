@@ -1,4 +1,4 @@
-package rulechain
+package rulesequence
 
 import (
 	"strings"
@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-var kind = model.RuleChainKind()
+var kind = model.RuleSequenceKind()
 
 var ResourceInfo = utils.NewResourceInfo(kind.Group(), kind.Version(),
 	kind.GroupVersionResource().Resource, strings.ToLower(kind.Kind()), kind.Kind(),

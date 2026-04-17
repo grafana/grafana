@@ -1,4 +1,4 @@
-package rulechain
+package rulesequence
 
 import (
 	"context"
@@ -12,13 +12,13 @@ import (
 func NewMutator(cfg config.RuntimeConfig) *simple.Mutator {
 	return &simple.Mutator{
 		MutateFunc: func(ctx context.Context, req *app.AdmissionRequest) (*app.MutatingResponse, error) {
-			r, ok := req.Object.(*v1.RuleChain)
+			r, ok := req.Object.(*v1.RuleSequence)
 			if !ok || r == nil {
 				return nil, nil
 			}
 
 			// Sync folder label from annotation so unified storage folder
-			// filtering works for RuleChain resources.
+			// filtering works for RuleSequence resources.
 			folderUID := ""
 			if r.Annotations != nil {
 				folderUID = r.Annotations[v1.FolderAnnotationKey]

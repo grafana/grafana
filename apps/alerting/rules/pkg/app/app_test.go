@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/alertrule"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/recordingrule"
-	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/rulechain"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/rulesequence"
 )
 
 func makeDefaultRuntimeConfig() config.RuntimeConfig {
@@ -390,13 +390,13 @@ func TestAlertRuleValidation_DeleteAndMoveGuardrails(t *testing.T) {
 	baseCfg.FolderValidator = func(ctx context.Context, folderUID string) (bool, error) {
 		return folderUID == "f1" || folderUID == "f2", nil
 	}
-	baseCfg.ResolveRuleChainMemberships = func(ctx context.Context, uids []string) (map[string]config.RuleChainMembership, error) {
-		out := map[string]config.RuleChainMembership{}
+	baseCfg.ResolveRuleSequenceMemberships = func(ctx context.Context, uids []string) (map[string]config.RuleSequenceMembership, error) {
+		out := map[string]config.RuleSequenceMembership{}
 		for _, uid := range uids {
 			if uid == "uid-1" {
-				out[uid] = config.RuleChainMembership{ChainUID: "chain-1", Found: true}
+				out[uid] = config.RuleSequenceMembership{SequenceUID: "seq-1", Found: true}
 			} else {
-				out[uid] = config.RuleChainMembership{}
+				out[uid] = config.RuleSequenceMembership{}
 			}
 		}
 		return out, nil
@@ -404,7 +404,7 @@ func TestAlertRuleValidation_DeleteAndMoveGuardrails(t *testing.T) {
 
 	v := alertrule.NewValidator(baseCfg)
 
-	t.Run("delete blocked when rule is in chain", func(t *testing.T) {
+	t.Run("delete blocked when rule is in sequence", func(t *testing.T) {
 		err := v.Validate(context.Background(), &appsdk.AdmissionRequest{
 			Action:    resource.AdmissionActionDelete,
 			OldObject: baseAlertRule(),
@@ -414,7 +414,7 @@ func TestAlertRuleValidation_DeleteAndMoveGuardrails(t *testing.T) {
 		}
 	})
 
-	t.Run("folder move blocked when rule is in chain", func(t *testing.T) {
+	t.Run("folder move blocked when rule is in sequence", func(t *testing.T) {
 		oldRule := baseAlertRule()
 		newRule := baseAlertRule()
 		newRule.Annotations[v1.FolderAnnotationKey] = "f2"
@@ -435,13 +435,13 @@ func TestRecordingRuleValidation_DeleteAndMoveGuardrails(t *testing.T) {
 	baseCfg.FolderValidator = func(ctx context.Context, folderUID string) (bool, error) {
 		return folderUID == "f1" || folderUID == "f2", nil
 	}
-	baseCfg.ResolveRuleChainMemberships = func(ctx context.Context, uids []string) (map[string]config.RuleChainMembership, error) {
-		out := map[string]config.RuleChainMembership{}
+	baseCfg.ResolveRuleSequenceMemberships = func(ctx context.Context, uids []string) (map[string]config.RuleSequenceMembership, error) {
+		out := map[string]config.RuleSequenceMembership{}
 		for _, uid := range uids {
 			if uid == "uid-1" {
-				out[uid] = config.RuleChainMembership{ChainUID: "chain-1", Found: true}
+				out[uid] = config.RuleSequenceMembership{SequenceUID: "seq-1", Found: true}
 			} else {
-				out[uid] = config.RuleChainMembership{}
+				out[uid] = config.RuleSequenceMembership{}
 			}
 		}
 		return out, nil
@@ -449,7 +449,7 @@ func TestRecordingRuleValidation_DeleteAndMoveGuardrails(t *testing.T) {
 
 	v := recordingrule.NewValidator(baseCfg)
 
-	t.Run("delete blocked when rule is in chain", func(t *testing.T) {
+	t.Run("delete blocked when rule is in sequence", func(t *testing.T) {
 		err := v.Validate(context.Background(), &appsdk.AdmissionRequest{
 			Action:    resource.AdmissionActionDelete,
 			OldObject: baseRecordingRule(),
@@ -459,7 +459,7 @@ func TestRecordingRuleValidation_DeleteAndMoveGuardrails(t *testing.T) {
 		}
 	})
 
-	t.Run("folder move blocked when rule is in chain", func(t *testing.T) {
+	t.Run("folder move blocked when rule is in sequence", func(t *testing.T) {
 		oldRule := baseRecordingRule()
 		newRule := baseRecordingRule()
 		newRule.Annotations[v1.FolderAnnotationKey] = "f2"
@@ -493,28 +493,28 @@ func baseRecordingRule() *v1.RecordingRule {
 }
 
 
-// --- RuleChain helpers ---
+// --- RuleSequence helpers ---
 
-func baseRuleChain() *v1.RuleChain {
-	r := &v1.RuleChain{}
-	r.SetGroupVersionKind(v1.RuleChainKind().GroupVersionKind())
-	r.Name = "chain-1"
+func baseRuleSequence() *v1.RuleSequence {
+	r := &v1.RuleSequence{}
+	r.SetGroupVersionKind(v1.RuleSequenceKind().GroupVersionKind())
+	r.Name = "seq-1"
 	r.Namespace = "ns1"
 	r.Annotations = map[string]string{v1.FolderAnnotationKey: "f1"}
 	r.Labels = map[string]string{}
-	r.Spec = v1.RuleChainSpec{
-		Trigger: v1.RuleChainIntervalTrigger{Interval: v1.RuleChainPromDuration("60s")},
-		RecordingRules: []v1.RuleChainRuleRef{
+	r.Spec = v1.RuleSequenceSpec{
+		Trigger: v1.RuleSequenceIntervalTrigger{Interval: v1.RuleSequencePromDuration("60s")},
+		RecordingRules: []v1.RuleSequenceRuleRef{
 			{Uid: "rec-1"},
 		},
-		AlertingRules: []v1.RuleChainRuleRef{
+		AlertingRules: []v1.RuleSequenceRuleRef{
 			{Uid: "alert-1"},
 		},
 	}
 	return r
 }
 
-func ruleChainRuntimeConfig() config.RuntimeConfig {
+func ruleSequenceRuntimeConfig() config.RuntimeConfig {
 	cfg := makeDefaultRuntimeConfig()
 	cfg.ResolveRuleRef = func(ctx context.Context, uid string) (config.RuleRef, bool, error) {
 		switch uid {
@@ -526,143 +526,143 @@ func ruleChainRuntimeConfig() config.RuntimeConfig {
 			return config.RuleRef{}, false, nil
 		}
 	}
-	cfg.ResolveRuleChainMemberships = func(ctx context.Context, uids []string) (map[string]config.RuleChainMembership, error) {
-		out := make(map[string]config.RuleChainMembership, len(uids))
+	cfg.ResolveRuleSequenceMemberships = func(ctx context.Context, uids []string) (map[string]config.RuleSequenceMembership, error) {
+		out := make(map[string]config.RuleSequenceMembership, len(uids))
 		for _, uid := range uids {
-			out[uid] = config.RuleChainMembership{}
+			out[uid] = config.RuleSequenceMembership{}
 		}
 		return out, nil
 	}
 	return cfg
 }
 
-func TestRuleChainValidation_Success(t *testing.T) {
-	r := baseRuleChain()
+func TestRuleSequenceValidation_Success(t *testing.T) {
+	r := baseRuleSequence()
 	req := &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r}
-	validator := rulechain.NewValidator(ruleChainRuntimeConfig())
+	validator := rulesequence.NewValidator(ruleSequenceRuntimeConfig())
 	require.NoError(t, validator.Validate(context.Background(), req))
 }
 
-func TestRuleChainValidation_Errors(t *testing.T) {
-	cfg := ruleChainRuntimeConfig()
+func TestRuleSequenceValidation_Errors(t *testing.T) {
+	cfg := ruleSequenceRuntimeConfig()
 
-	mk := func(mut func(r *v1.RuleChain)) error {
-		r := baseRuleChain()
+	mk := func(mut func(r *v1.RuleSequence)) error {
+		r := baseRuleSequence()
 		mut(r)
-		return rulechain.NewValidator(cfg).Validate(context.Background(), &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r})
+		return rulesequence.NewValidator(cfg).Validate(context.Background(), &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r})
 	}
 
 	t.Run("missing folder", func(t *testing.T) {
-		err := mk(func(r *v1.RuleChain) { r.Annotations = nil })
+		err := mk(func(r *v1.RuleSequence) { r.Annotations = nil })
 		require.Error(t, err)
 	})
 
 	t.Run("folder does not exist", func(t *testing.T) {
-		err := mk(func(r *v1.RuleChain) { r.Annotations[v1.FolderAnnotationKey] = "bad" })
+		err := mk(func(r *v1.RuleSequence) { r.Annotations[v1.FolderAnnotationKey] = "bad" })
 		require.Error(t, err)
 	})
 
 	t.Run("bad interval", func(t *testing.T) {
-		err := mk(func(r *v1.RuleChain) { r.Spec.Trigger.Interval = v1.RuleChainPromDuration("30s") })
+		err := mk(func(r *v1.RuleSequence) { r.Spec.Trigger.Interval = v1.RuleSequencePromDuration("30s") })
 		require.Error(t, err)
 	})
 
 	t.Run("empty recording rules nil", func(t *testing.T) {
-		err := mk(func(r *v1.RuleChain) { r.Spec.RecordingRules = nil })
+		err := mk(func(r *v1.RuleSequence) { r.Spec.RecordingRules = nil })
 		require.Error(t, err)
 	})
 
 	t.Run("empty recording rules empty slice", func(t *testing.T) {
-		err := mk(func(r *v1.RuleChain) { r.Spec.RecordingRules = []v1.RuleChainRuleRef{} })
+		err := mk(func(r *v1.RuleSequence) { r.Spec.RecordingRules = []v1.RuleSequenceRuleRef{} })
 		require.Error(t, err)
 	})
 
 	t.Run("empty uid in ref", func(t *testing.T) {
-		err := mk(func(r *v1.RuleChain) {
-			r.Spec.RecordingRules = []v1.RuleChainRuleRef{{Uid: ""}}
+		err := mk(func(r *v1.RuleSequence) {
+			r.Spec.RecordingRules = []v1.RuleSequenceRuleRef{{Uid: ""}}
 		})
 		require.Error(t, err)
 	})
 
 	t.Run("duplicate uid", func(t *testing.T) {
-		err := mk(func(r *v1.RuleChain) {
-			r.Spec.RecordingRules = []v1.RuleChainRuleRef{{Uid: "rec-1"}}
-			r.Spec.AlertingRules = []v1.RuleChainRuleRef{{Uid: "rec-1"}}
+		err := mk(func(r *v1.RuleSequence) {
+			r.Spec.RecordingRules = []v1.RuleSequenceRuleRef{{Uid: "rec-1"}}
+			r.Spec.AlertingRules = []v1.RuleSequenceRuleRef{{Uid: "rec-1"}}
 		})
 		require.Error(t, err)
 	})
 
 	t.Run("rule does not exist", func(t *testing.T) {
-		err := mk(func(r *v1.RuleChain) {
-			r.Spec.RecordingRules = []v1.RuleChainRuleRef{{Uid: "nonexistent"}}
+		err := mk(func(r *v1.RuleSequence) {
+			r.Spec.RecordingRules = []v1.RuleSequenceRuleRef{{Uid: "nonexistent"}}
 		})
 		require.Error(t, err)
 	})
 
 	t.Run("rule in wrong folder", func(t *testing.T) {
-		err := mk(func(r *v1.RuleChain) {
-			r.Spec.RecordingRules = []v1.RuleChainRuleRef{{Uid: "other-folder-rule"}}
+		err := mk(func(r *v1.RuleSequence) {
+			r.Spec.RecordingRules = []v1.RuleSequenceRuleRef{{Uid: "other-folder-rule"}}
 			r.Spec.AlertingRules = nil
 		})
 		require.Error(t, err)
 	})
 
 	t.Run("invalid provenance", func(t *testing.T) {
-		err := mk(func(r *v1.RuleChain) {
+		err := mk(func(r *v1.RuleSequence) {
 			r.Annotations[v1.ProvenanceStatusAnnotationKey] = "invalid-provenance"
 		})
 		require.Error(t, err)
 	})
 
 	t.Run("valid non-empty provenance accepted", func(t *testing.T) {
-		err := mk(func(r *v1.RuleChain) {
+		err := mk(func(r *v1.RuleSequence) {
 			r.Annotations[v1.ProvenanceStatusAnnotationKey] = v1.ProvenanceStatusAPI
 		})
 		require.NoError(t, err)
 	})
 }
 
-func TestRuleChainValidation_MembershipGuardrails(t *testing.T) {
-	cfg := ruleChainRuntimeConfig()
-	// Override membership resolver: rec-1 already belongs to chain-other
-	cfg.ResolveRuleChainMemberships = func(ctx context.Context, uids []string) (map[string]config.RuleChainMembership, error) {
-		out := make(map[string]config.RuleChainMembership, len(uids))
+func TestRuleSequenceValidation_MembershipGuardrails(t *testing.T) {
+	cfg := ruleSequenceRuntimeConfig()
+	// Override membership resolver: rec-1 already belongs to seq-other
+	cfg.ResolveRuleSequenceMemberships = func(ctx context.Context, uids []string) (map[string]config.RuleSequenceMembership, error) {
+		out := make(map[string]config.RuleSequenceMembership, len(uids))
 		for _, uid := range uids {
 			if uid == "rec-1" {
-				out[uid] = config.RuleChainMembership{ChainUID: "chain-other", Found: true}
+				out[uid] = config.RuleSequenceMembership{SequenceUID: "seq-other", Found: true}
 			} else {
-				out[uid] = config.RuleChainMembership{}
+				out[uid] = config.RuleSequenceMembership{}
 			}
 		}
 		return out, nil
 	}
 
-	t.Run("create blocked when rule belongs to another chain", func(t *testing.T) {
-		r := baseRuleChain()
-		err := rulechain.NewValidator(cfg).Validate(context.Background(), &appsdk.AdmissionRequest{
+	t.Run("create blocked when rule belongs to another sequence", func(t *testing.T) {
+		r := baseRuleSequence()
+		err := rulesequence.NewValidator(cfg).Validate(context.Background(), &appsdk.AdmissionRequest{
 			Action: resource.AdmissionActionCreate,
 			Object: r,
 		})
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "chain-other")
+		assert.Contains(t, err.Error(), "seq-other")
 	})
 
-	t.Run("update allowed when rule belongs to same chain", func(t *testing.T) {
+	t.Run("update allowed when rule belongs to same sequence", func(t *testing.T) {
 		cfg2 := cfg
-		cfg2.ResolveRuleChainMemberships = func(ctx context.Context, uids []string) (map[string]config.RuleChainMembership, error) {
-			out := make(map[string]config.RuleChainMembership, len(uids))
+		cfg2.ResolveRuleSequenceMemberships = func(ctx context.Context, uids []string) (map[string]config.RuleSequenceMembership, error) {
+			out := make(map[string]config.RuleSequenceMembership, len(uids))
 			for _, uid := range uids {
 				if uid == "rec-1" {
-					// Same chain as the object being validated (chain-1)
-					out[uid] = config.RuleChainMembership{ChainUID: "chain-1", Found: true}
+					// Same sequence as the object being validated (seq-1)
+					out[uid] = config.RuleSequenceMembership{SequenceUID: "seq-1", Found: true}
 				} else {
-					out[uid] = config.RuleChainMembership{}
+					out[uid] = config.RuleSequenceMembership{}
 				}
 			}
 			return out, nil
 		}
-		r := baseRuleChain()
-		err := rulechain.NewValidator(cfg2).Validate(context.Background(), &appsdk.AdmissionRequest{
+		r := baseRuleSequence()
+		err := rulesequence.NewValidator(cfg2).Validate(context.Background(), &appsdk.AdmissionRequest{
 			Action: resource.AdmissionActionUpdate,
 			Object: r,
 		})
@@ -670,46 +670,46 @@ func TestRuleChainValidation_MembershipGuardrails(t *testing.T) {
 	})
 }
 
-func TestRuleChainMutation(t *testing.T) {
+func TestRuleSequenceMutation(t *testing.T) {
 	cfg := makeDefaultRuntimeConfig()
 
 	t.Run("folder label synced from annotation", func(t *testing.T) {
-		r := baseRuleChain()
+		r := baseRuleSequence()
 		r.Labels = nil
-		mutator := rulechain.NewMutator(cfg)
+		mutator := rulesequence.NewMutator(cfg)
 		resp, err := mutator.Mutate(context.Background(), &appsdk.AdmissionRequest{
 			Action: resource.AdmissionActionCreate,
 			Object: r,
 		})
 		require.NoError(t, err)
-		updated := resp.UpdatedObject.(*v1.RuleChain)
+		updated := resp.UpdatedObject.(*v1.RuleSequence)
 		assert.Equal(t, "f1", updated.Labels[v1.FolderLabelKey])
 	})
 
 	t.Run("duration clamped", func(t *testing.T) {
-		r := baseRuleChain()
-		r.Spec.Trigger.Interval = v1.RuleChainPromDuration("120s")
-		mutator := rulechain.NewMutator(cfg)
+		r := baseRuleSequence()
+		r.Spec.Trigger.Interval = v1.RuleSequencePromDuration("120s")
+		mutator := rulesequence.NewMutator(cfg)
 		resp, err := mutator.Mutate(context.Background(), &appsdk.AdmissionRequest{
 			Action: resource.AdmissionActionCreate,
 			Object: r,
 		})
 		require.NoError(t, err)
-		updated := resp.UpdatedObject.(*v1.RuleChain)
+		updated := resp.UpdatedObject.(*v1.RuleSequence)
 		assert.Equal(t, "2m", string(updated.Spec.Trigger.Interval))
 	})
 
 	t.Run("no annotation no label", func(t *testing.T) {
-		r := baseRuleChain()
+		r := baseRuleSequence()
 		r.Annotations = map[string]string{} // no folder annotation
 		r.Labels = nil
-		mutator := rulechain.NewMutator(cfg)
+		mutator := rulesequence.NewMutator(cfg)
 		resp, err := mutator.Mutate(context.Background(), &appsdk.AdmissionRequest{
 			Action: resource.AdmissionActionCreate,
 			Object: r,
 		})
 		require.NoError(t, err)
-		updated := resp.UpdatedObject.(*v1.RuleChain)
+		updated := resp.UpdatedObject.(*v1.RuleSequence)
 		if updated.Labels != nil {
 			assert.NotContains(t, updated.Labels, v1.FolderLabelKey)
 		}

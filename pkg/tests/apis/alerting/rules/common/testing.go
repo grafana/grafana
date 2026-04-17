@@ -38,19 +38,19 @@ func NewRecordingRuleClient(t *testing.T, user apis.User) *apis.TypedClient[v0al
 	}
 }
 
-func NewRuleChainClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.RuleChain, v0alpha1.RuleChainList] {
+func NewRuleSequenceClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.RuleSequence, v0alpha1.RuleSequenceList] {
 	t.Helper()
 
 	client, err := dynamic.NewForConfig(user.NewRestConfig())
 	require.NoError(t, err)
 
-	return &apis.TypedClient[v0alpha1.RuleChain, v0alpha1.RuleChainList]{
+	return &apis.TypedClient[v0alpha1.RuleSequence, v0alpha1.RuleSequenceList]{
 		Client: client.Resource(
-			v0alpha1.RuleChainKind().GroupVersionResource()).Namespace("default"),
+			v0alpha1.RuleSequenceKind().GroupVersionResource()).Namespace("default"),
 	}
 }
 
-func GetTestHelperWithRuleChains(t *testing.T) *apis.K8sTestHelper {
+func GetTestHelperWithRuleSequences(t *testing.T) *apis.K8sTestHelper {
 	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 }
 
