@@ -78,7 +78,9 @@ Welcome to Grafana 13.0! In this Grafana release we help solve the blinking curs
 
 Dynamic dashboards, our next generation of dashboarding, reaches general availability. The increased flexibility and adaptability makes building dashboards delightful, and helps teams consolidate and share a single source of truth. Additionally reaching general availability, Git Sync allows powerful bidirectional GitOps-helping you to manage your Grafana resources reliably at scale.
 
-And that’s not all. There is a lot more to discover in Grafana 13, from the new Gauge visualization, new data sources, improved annotations, the list goes on. Read on to find out more and try for yourself.
+And that’s not all. There is a lot more to discover in Grafana 13, from the new Gauge visualization, new data sources, improved annotations, the list goes on. Read on to find out more and try for yourself!
+
+{{< youtube id=OYd0ahylGGI >}}
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v13.0, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v13.0/).
 
