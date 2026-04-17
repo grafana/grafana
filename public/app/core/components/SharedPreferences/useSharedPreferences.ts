@@ -25,9 +25,8 @@ export const useSharedPreferences = (preferencesName: Props['resourceUri']) => {
       preferences: data?.items[0]?.spec,
       isLoading,
       /**
-       * After saving preferences, RTK query refetches the preferences
-       * However we also reloads the page what causes the refetch to momentarily error while the window is reloading
-       * so we need to suppress it
+       * Suppress errors after updating preferences because RTK automatically refetches the preferences after updating,
+       * but we also reload the page. This cancels the request, and causes a momentary error state while refreshing.
        */
       isError: updateData ? false : isError,
       isUpdating,
