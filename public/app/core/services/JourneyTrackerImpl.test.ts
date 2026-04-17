@@ -153,9 +153,9 @@ describe('JourneyTrackerImpl', () => {
   // Steps
   // -------------------------------------------------------------------------
 
-  it('should create child spans for addStep', () => {
+  it('should create child spans for startStep', () => {
     const handle = tracker.startJourney('dashboard_save');
-    handle.addStep('validate', { panelCount: '12' });
+    handle.startStep('validate', { panelCount: '12' });
 
     expect(mockStartSpan).toHaveBeenCalledTimes(2); // root + child
     expect(mockStartSpan).toHaveBeenCalledWith(
@@ -170,16 +170,45 @@ describe('JourneyTrackerImpl', () => {
     );
   });
 
-  it('should return a no-op step handle when addStep is called after end', () => {
+  it('should create and auto-close a child span for recordEvent', () => {
+    const handle = tracker.startJourney('dashboard_save');
+    handle.recordEvent('user_clicked', { target: 'button' });
+
+    expect(mockStartSpan).toHaveBeenCalledTimes(2); // root + child
+    expect(mockStartSpan).toHaveBeenCalledWith(
+      'step:user_clicked',
+      expect.objectContaining({
+        attributes: expect.objectContaining({
+          'step.name': 'user_clicked',
+          target: 'button',
+        }),
+      }),
+      expect.anything()
+    );
+    // recordEvent must end the span immediately - no leak risk.
+    expect(mockChildSpan.end).toHaveBeenCalledTimes(1);
+  });
+
+  it('should return a no-op step handle when startStep is called after end', () => {
     const handle = tracker.startJourney('dashboard_save');
     handle.end('success');
 
     // Should not throw or create a span
-    const step = handle.addStep('late_step');
+    const step = handle.startStep('late_step');
     expect(step).toBeDefined();
     step.end(); // safe no-op
 
     // Only root span + no extra child
+    expect(mockStartSpan).toHaveBeenCalledTimes(1);
+  });
+
+  it('should be a no-op when recordEvent is called after end', () => {
+    const handle = tracker.startJourney('dashboard_save');
+    handle.end('success');
+
+    handle.recordEvent('late_event');
+
+    // Only root span, no child span created
     expect(mockStartSpan).toHaveBeenCalledTimes(1);
   });
 
@@ -189,7 +218,7 @@ describe('JourneyTrackerImpl', () => {
 
   it('should emit logMeasurement with correct shape on end', () => {
     const handle = tracker.startJourney('dashboard_save', { attributes: { dashboardUid: 'xyz' } });
-    handle.addStep('step1');
+    handle.startStep('step1');
     handle.end('success', { savedVersion: '3' });
 
     expect(mockLogMeasurement).toHaveBeenCalledTimes(1);
@@ -399,7 +428,7 @@ describe('JourneyTrackerImpl', () => {
 
     it('should not create any OTel spans', () => {
       const handle = noOtelTracker.startJourney('dashboard_save');
-      handle.addStep('step1');
+      handle.startStep('step1');
       handle.end('success');
 
       // getTracer is called, but startSpan should not be
@@ -477,7 +506,7 @@ describe('JourneyTrackerImpl', () => {
 
   it('should end a step span when StepHandle.end() is called', () => {
     const handle = tracker.startJourney('dashboard_save');
-    const step = handle.addStep('validate');
+    const step = handle.startStep('validate');
     step.end({ result: 'ok' });
 
     expect(mockChildSpan.setAttributes).toHaveBeenCalledWith({ result: 'ok' });
@@ -486,11 +515,40 @@ describe('JourneyTrackerImpl', () => {
 
   it('should make step end() idempotent', () => {
     const handle = tracker.startJourney('dashboard_save');
-    const step = handle.addStep('validate');
+    const step = handle.startStep('validate');
     step.end();
     step.end();
 
     expect(mockChildSpan.end).toHaveBeenCalledTimes(1);
+  });
+
+  // -------------------------------------------------------------------------
+  // onEnd callback error isolation
+  // -------------------------------------------------------------------------
+
+  it('should isolate throwing onEnd callbacks so later ones still run', () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation();
+    const handle = tracker.startJourney('dashboard_save');
+
+    const throwingCb = jest.fn(() => {
+      throw new Error('boom');
+    });
+    const cleanupCb = jest.fn();
+
+    handle.onEnd(throwingCb);
+    handle.onEnd(cleanupCb);
+
+    handle.end('success');
+
+    expect(throwingCb).toHaveBeenCalledTimes(1);
+    // Critical: the second callback (e.g. Echo unsubscribe) must still run.
+    expect(cleanupCb).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[JourneyTracker] onEnd callback error'),
+      expect.any(Error),
+    );
+
+    errorSpy.mockRestore();
   });
 });
 
@@ -509,9 +567,12 @@ describe('NoopJourneyTracker (via getJourneyTracker when feature is off)', () =>
     expect(handle.journeyType).toBe('');
     expect(handle.isActive).toBe(false);
 
-    // addStep returns a noop step - end() doesn't throw
-    const step = handle.addStep('step1');
+    // startStep returns a noop step - end() doesn't throw
+    const step = handle.startStep('step1');
     step.end();
+
+    // recordEvent is also a safe no-op
+    handle.recordEvent('some_event');
 
     // end() and setAttributes() don't throw
     handle.end('success');

@@ -52,23 +52,23 @@ onJourneyInstance('panel_edit', (handle) => {
 
     switch (action) {
       case 'add_query':
-        handle.addStep('add_query', {
+        handle.recordEvent('add_query', {
           source: String(props.source ?? ''),
           card_source: String(props.card_source ?? ''),
         });
         break;
       case 'add_transformation_initiated':
-        handle.addStep('add_transformation', {
+        handle.recordEvent('add_transformation', {
           source: String(props.source ?? ''),
         });
         break;
       case 'change_sidebar_view':
-        handle.addStep('change_view', {
+        handle.recordEvent('change_view', {
           view: String(props.view ?? ''),
         });
         break;
       default:
-        handle.addStep(action);
+        handle.recordEvent(action);
         break;
     }
   }));

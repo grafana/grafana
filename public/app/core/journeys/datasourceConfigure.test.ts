@@ -84,7 +84,7 @@ describe('datasourceConfigure journey wiring', () => {
 
     simulateInteraction('connections_datasources_ds_configured', { item: 'basic' });
 
-    expect(mockHandle.addStep).toHaveBeenCalledWith('save_config');
+    expect(mockHandle.recordEvent).toHaveBeenCalledWith('save_config');
   });
 
   it('should add test_failed step when test fails (boolean false)', () => {
@@ -101,7 +101,7 @@ describe('datasourceConfigure journey wiring', () => {
       datasource_uid: 'ds-uid-1',
     });
 
-    expect(mockHandle.addStep).toHaveBeenCalledWith('test_failed');
+    expect(mockHandle.recordEvent).toHaveBeenCalledWith('test_failed');
     expect(mockHandle.end).not.toHaveBeenCalled();
   });
 
@@ -161,9 +161,9 @@ describe('datasourceConfigure journey wiring', () => {
       datasource_uid: 'ds-uid-2',
     });
 
-    expect(mockHandle.addStep).toHaveBeenCalledTimes(2);
-    expect(mockHandle.addStep).toHaveBeenNthCalledWith(1, 'test_failed');
-    expect(mockHandle.addStep).toHaveBeenNthCalledWith(2, 'test_failed');
+    expect(mockHandle.recordEvent).toHaveBeenCalledTimes(2);
+    expect(mockHandle.recordEvent).toHaveBeenNthCalledWith(1, 'test_failed');
+    expect(mockHandle.recordEvent).toHaveBeenNthCalledWith(2, 'test_failed');
     expect(mockHandle.end).not.toHaveBeenCalled();
 
     // Success
@@ -203,7 +203,7 @@ describe('datasourceConfigure journey wiring', () => {
     });
 
     expect(mockHandle.end).toHaveBeenCalledTimes(1);
-    expect(mockHandle.addStep).not.toHaveBeenCalled();
+    expect(mockHandle.recordEvent).not.toHaveBeenCalled();
   });
 
 });

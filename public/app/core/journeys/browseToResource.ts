@@ -20,52 +20,37 @@ import { collectUnsubs } from './utils';
  */
 
 registerJourneyTriggers('browse_to_resource', (tracker) => {
-  let pendingFolderStep: StepHandle | null = null;
-  const { add, cleanup } = collectUnsubs();
-
-  // Folder click starts a duration step
-  add(onInteraction('grafana_browse_dashboards_page_click_list_item', (props) => {
-    const existing = tracker.getActiveJourney('browse_to_resource');
-    if (existing && props.itemKind === 'folder') {
-      pendingFolderStep = existing.addStep('navigate_folder', {
-        folderUID: String(props.uid ?? ''),
-      });
-    }
-  }));
-
-  // Page view ends the folder step (folder loaded) or starts the journey
-  add(onInteraction('grafana_browse_dashboards_page_view', (props) => {
-    const folderUID = String(props.folderUID ?? '');
-    const existing = tracker.getActiveJourney('browse_to_resource');
-
-    if (existing) {
-      // End the pending folder navigation step
-      if (pendingFolderStep) {
-        pendingFolderStep.end({ folderUID });
-        pendingFolderStep = null;
-      }
-      existing.setAttributes({ folderUID });
-    } else {
+  // Only wires the start condition. All duration-step bookkeeping lives in
+  // onJourneyInstance so each journey instance has its own closure (no module-scope
+  // StepHandle that can outlive its journey).
+  return onInteraction('grafana_browse_dashboards_page_view', (props) => {
+    if (!tracker.getActiveJourney('browse_to_resource')) {
       tracker.startJourney('browse_to_resource', {
         attributes: {
           source: 'browse_dashboards',
-          folderUID,
+          folderUID: String(props.folderUID ?? ''),
         },
       });
     }
-  }));
-
-  return cleanup;
+  });
 });
 
 onJourneyInstance('browse_to_resource', (handle) => {
+  let pendingFolderStep: StepHandle | null = null;
   let pendingSelectStep: StepHandle | null = null;
   const { add, cleanup } = collectUnsubs();
 
-  // User clicks a non-folder item - start a duration step until resource loads
+  // Folder click starts a navigate_folder duration step; non-folder click starts select_resource.
   add(onInteraction('grafana_browse_dashboards_page_click_list_item', (props) => {
-    if (handle.isActive && props.itemKind !== 'folder') {
-      pendingSelectStep = handle.addStep('select_resource', {
+    if (!handle.isActive) {
+      return;
+    }
+    if (props.itemKind === 'folder') {
+      pendingFolderStep = handle.startStep('navigate_folder', {
+        folderUID: String(props.uid ?? ''),
+      });
+    } else {
+      pendingSelectStep = handle.startStep('select_resource', {
         resourceType: String(props.itemKind ?? 'unknown'),
         resourceUID: String(props.uid ?? ''),
       });
@@ -76,21 +61,35 @@ onJourneyInstance('browse_to_resource', (handle) => {
     }
   }));
 
-  // Dashboard loads -> end the select step and the journey
+  // Subsequent page_views end the pending folder step and enrich the journey.
+  add(onInteraction('grafana_browse_dashboards_page_view', (props) => {
+    if (!handle.isActive) {
+      return;
+    }
+    const folderUID = String(props.folderUID ?? '');
+    if (pendingFolderStep) {
+      pendingFolderStep.end({ folderUID });
+      pendingFolderStep = null;
+    }
+    handle.setAttributes({ folderUID });
+  }));
+
+  // Dashboard loads -> end the select step and the journey.
   add(onInteraction('dashboards_init_dashboard_completed', (props) => {
-    if (handle.isActive) {
-      if (pendingSelectStep) {
-        pendingSelectStep.end({
-          dashboardUid: String(props.uid ?? ''),
-        });
-        pendingSelectStep = null;
-      }
-      handle.setAttributes({
-        resourceType: 'dashboard',
+    if (!handle.isActive) {
+      return;
+    }
+    if (pendingSelectStep) {
+      pendingSelectStep.end({
         dashboardUid: String(props.uid ?? ''),
       });
-      handle.end('success');
+      pendingSelectStep = null;
     }
+    handle.setAttributes({
+      resourceType: 'dashboard',
+      dashboardUid: String(props.uid ?? ''),
+    });
+    handle.end('success');
   }));
 
   return cleanup;

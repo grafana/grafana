@@ -80,7 +80,7 @@ describe('exploreToDashboard journey wiring', () => {
       queries: [],
     });
 
-    expect(mockHandle.addStep).toHaveBeenCalledWith('submit', {
+    expect(mockHandle.recordEvent).toHaveBeenCalledWith('submit', {
       saveTarget: 'existing-dashboard',
       newTab: 'false',
     });
@@ -133,7 +133,7 @@ describe('exploreToDashboard journey wiring', () => {
 
     simulateInteraction('e_2_d_submit', { saveTarget: 'new-dashboard', newTab: true });
 
-    expect(mockHandle.addStep).not.toHaveBeenCalled();
+    expect(mockHandle.recordEvent).not.toHaveBeenCalled();
   });
 
   it('should handle newTab: true in submit attributes', () => {
@@ -146,7 +146,7 @@ describe('exploreToDashboard journey wiring', () => {
       queries: [{ refId: 'A' }],
     });
 
-    expect(mockHandle.addStep).toHaveBeenCalledWith('submit', {
+    expect(mockHandle.recordEvent).toHaveBeenCalledWith('submit', {
       saveTarget: 'new-dashboard',
       newTab: 'true',
     });

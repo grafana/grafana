@@ -60,8 +60,18 @@ export interface JourneyHandle {
   readonly journeyType: string;
   /** False after end() has been called. */
   readonly isActive: boolean;
-  /** Record a named step within the journey. Returns a StepHandle to end the step. */
-  addStep(name: string, attributes?: Record<string, string>): StepHandle;
+  /**
+   * Record a pointwise event on the journey. Creates a zero-duration child span with the
+   * given attributes - no handle returned, nothing to end. Safe no-op when the journey
+   * has already ended.
+   */
+  recordEvent(name: string, attributes?: Record<string, string>): void;
+  /**
+   * Start a duration step on the journey. Returns a StepHandle - the caller MUST call
+   * `step.end()` when the measured operation completes. Safe no-op when the journey
+   * has already ended (returns a noop StepHandle).
+   */
+  startStep(name: string, attributes?: Record<string, string>): StepHandle;
   /** End the journey with a given outcome. Idempotent - second call is a no-op. */
   end(outcome: JourneyOutcome, attributes?: Record<string, string>): void;
   /** Merge additional attributes into the journey. */
@@ -102,7 +112,8 @@ class NoopJourneyHandle implements JourneyHandle {
   readonly journeyType = '';
   readonly isActive = false;
 
-  addStep(): StepHandle {
+  recordEvent(): void {}
+  startStep(): StepHandle {
     return NOOP_STEP;
   }
   end(): void {}

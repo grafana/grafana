@@ -110,18 +110,18 @@ describe('panelEdit journey wiring', () => {
       item_type: 'query',
     });
 
-    expect(mockHandle.addStep).toHaveBeenCalledTimes(4);
-    expect(mockHandle.addStep).toHaveBeenCalledWith('add_query', {
+    expect(mockHandle.recordEvent).toHaveBeenCalledTimes(4);
+    expect(mockHandle.recordEvent).toHaveBeenCalledWith('add_query', {
       source: 'new_query',
       card_source: 'section_header',
     });
-    expect(mockHandle.addStep).toHaveBeenCalledWith('add_transformation', {
+    expect(mockHandle.recordEvent).toHaveBeenCalledWith('add_transformation', {
       source: 'inline',
     });
-    expect(mockHandle.addStep).toHaveBeenCalledWith('change_view', {
+    expect(mockHandle.recordEvent).toHaveBeenCalledWith('change_view', {
       view: 'overrides',
     });
-    expect(mockHandle.addStep).toHaveBeenCalledWith('reorder');
+    expect(mockHandle.recordEvent).toHaveBeenCalledWith('reorder');
   });
 
   it('should end journey with success when panel edit closes', () => {
@@ -162,7 +162,7 @@ describe('panelEdit journey wiring', () => {
     });
 
     // addStep called only 0 times - not after journey ended
-    expect(mockHandle.addStep).not.toHaveBeenCalled();
+    expect(mockHandle.recordEvent).not.toHaveBeenCalled();
   });
 
   it('should end journey with discarded when panel_edit_discarded fires before close', () => {

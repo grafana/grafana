@@ -32,7 +32,8 @@ function createMockHandle(overrides?: Partial<JourneyHandle>): JourneyHandle {
     journeyId: `journey-${Math.random().toString(36).slice(2)}`,
     journeyType: 'test_journey',
     isActive: true,
-    addStep: jest.fn(),
+    recordEvent: jest.fn(),
+    startStep: jest.fn(),
     end: jest.fn(),
     setAttributes: jest.fn(),
     onEnd: jest.fn(),
@@ -239,6 +240,64 @@ describe('JourneyRegistryImpl', () => {
     jest.advanceTimersByTime(5001);
 
     // Now register instanceFn - should NOT replay since buffer was cleaned
+    const instanceFn = jest.fn<() => void, [JourneyHandle]>(() => jest.fn());
+    registry.onInstance('test_journey', instanceFn);
+
+    expect(instanceFn).not.toHaveBeenCalled();
+  });
+
+  it('should use effective (caller-override) timeout for buffer eviction', () => {
+    let capturedTracker: JourneyTracker | undefined;
+    registry.registerTriggers('test_journey', (tracker) => {
+      capturedTracker = tracker;
+      return jest.fn();
+    });
+
+    // Caller overrides timeout to 1000 (registry default is 5000)
+    capturedTracker!.startJourney('test_journey', { timeoutMs: 1000 });
+
+    // Advance past the effective (caller) timeout but before the registry default
+    jest.advanceTimersByTime(1001);
+
+    const instanceFn = jest.fn<() => void, [JourneyHandle]>(() => jest.fn());
+    registry.onInstance('test_journey', instanceFn);
+
+    // Buffer should be cleared since caller's 1000 ms elapsed
+    expect(instanceFn).not.toHaveBeenCalled();
+  });
+
+  it('should evict buffered handle when it ends naturally before timeout', () => {
+    // Collect onEnd callbacks registered on the buffered handle so we can fire them.
+    const onEndCallbacks: Array<() => void> = [];
+    const customTracker: jest.Mocked<JourneyTracker> = {
+      startJourney: jest.fn((type) => ({
+        journeyId: `journey-${type}`,
+        journeyType: type,
+        isActive: true,
+        recordEvent: jest.fn(),
+        startStep: jest.fn(),
+        end: jest.fn(),
+        setAttributes: jest.fn(),
+        onEnd: jest.fn((cb: () => void) => onEndCallbacks.push(cb)),
+      })),
+      getActiveJourney: jest.fn(),
+      cancelAll: jest.fn(),
+    };
+    setJourneyTracker(customTracker);
+
+    let capturedTracker: JourneyTracker | undefined;
+    registry.registerTriggers('test_journey', (tracker) => {
+      capturedTracker = tracker;
+      return jest.fn();
+    });
+
+    capturedTracker!.startJourney('test_journey');
+
+    // Simulate the handle ending naturally - onEnd callbacks fire.
+    expect(onEndCallbacks.length).toBeGreaterThan(0);
+    onEndCallbacks.forEach((cb) => cb());
+
+    // Now register instanceFn - buffer should be empty (not just pending timer).
     const instanceFn = jest.fn<() => void, [JourneyHandle]>(() => jest.fn());
     registry.onInstance('test_journey', instanceFn);
 

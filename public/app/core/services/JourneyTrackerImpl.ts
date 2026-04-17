@@ -212,13 +212,42 @@ class JourneyHandleImpl implements JourneyHandle {
     return this.active;
   }
 
-  addStep(name: string, stepAttributes?: Record<string, string>): StepHandle {
+  recordEvent(name: string, stepAttributes?: Record<string, string>): void {
+    if (!this.active) {
+      return;
+    }
+
+    this.stepCount++;
+    debugLog('recordEvent', `${this.journeyType}/${name}`, {
+      journeyId: this.journeyId,
+      stepNumber: this.stepCount,
+      attributes: stepAttributes,
+    });
+
+    if (this.tracer && this.span) {
+      const parentCtx = trace.setSpan(context.active(), this.span);
+      const childSpan = this.tracer.startSpan(
+        `step:${name}`,
+        {
+          attributes: {
+            'step.name': name,
+            ...stepAttributes,
+          },
+        },
+        parentCtx
+      );
+      // Point-in-time event: end immediately so the span is never left dangling.
+      childSpan.end();
+    }
+  }
+
+  startStep(name: string, stepAttributes?: Record<string, string>): StepHandle {
     if (!this.active) {
       return NOOP_STEP_INTERNAL;
     }
 
     this.stepCount++;
-    debugLog('addStep', `${this.journeyType}/${name}`, {
+    debugLog('startStep', `${this.journeyType}/${name}`, {
       journeyId: this.journeyId,
       stepNumber: this.stepCount,
       attributes: stepAttributes,
@@ -292,9 +321,15 @@ class JourneyHandleImpl implements JourneyHandle {
 
     this.onCleanup();
 
-    // Run registered onEnd callbacks (e.g., end-trigger cleanup from the registry)
+    // Run registered onEnd callbacks (e.g., end-trigger cleanup from the registry).
+    // Isolate each callback so a throwing subscriber doesn't leak the rest -
+    // this list owns Echo onInteraction unsubscribes, so we can't afford to skip any.
     for (const cb of this.onEndCallbacks) {
-      cb();
+      try {
+        cb();
+      } catch (err) {
+        console.error(`[JourneyTracker] onEnd callback error for "${this.journeyType}":`, err);
+      }
     }
   }
 

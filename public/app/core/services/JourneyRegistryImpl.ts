@@ -165,8 +165,9 @@ export class JourneyRegistryImpl implements JourneyRegistry {
         if (instanceFn) {
           this.attachEndHandler(journeyType, handle, instanceFn);
         } else {
-          // Buffer the handle for late registration
-          this.bufferHandle(journeyType, handle, meta.timeoutMs);
+          // Buffer the handle for late registration. Use the effective timeout
+          // (caller override or registry default) so we don't outlive the journey itself.
+          this.bufferHandle(journeyType, handle, mergedOptions.timeoutMs);
         }
 
         return handle;
@@ -206,23 +207,40 @@ export class JourneyRegistryImpl implements JourneyRegistry {
       this.bufferTimers.set(journeyType, timers);
     }
 
-    const timer = setTimeout(() => {
-      const currentHandles = this.bufferedHandles.get(journeyType);
-      if (currentHandles) {
-        const idx = currentHandles.indexOf(handle);
-        if (idx !== -1) {
-          currentHandles.splice(idx, 1);
-        }
-        if (currentHandles.length === 0) {
-          this.bufferedHandles.delete(journeyType);
-        }
+    const evict = () => this.evictBuffered(journeyType, handle);
+
+    const timer = setTimeout(evict, timeoutMs);
+    timers.set(handle.journeyId, timer);
+
+    // If the handle ends on its own (naturally or via cancel) before the timer
+    // fires, drop it from the buffer immediately. Without this, a short-lived
+    // journey would squat a buffer slot and a pending timer for up to its
+    // full timeoutMs (could be an hour for datasource_configure).
+    handle.onEnd(evict);
+  }
+
+  /** Remove a single buffered handle and clear its timer. Safe to call multiple times. */
+  private evictBuffered(journeyType: string, handle: JourneyHandle): void {
+    const handles = this.bufferedHandles.get(journeyType);
+    if (handles) {
+      const idx = handles.indexOf(handle);
+      if (idx !== -1) {
+        handles.splice(idx, 1);
       }
-      timers!.delete(handle.journeyId);
-      if (timers!.size === 0) {
+      if (handles.length === 0) {
+        this.bufferedHandles.delete(journeyType);
+      }
+    }
+    const timers = this.bufferTimers.get(journeyType);
+    if (timers) {
+      const timer = timers.get(handle.journeyId);
+      if (timer) {
+        clearTimeout(timer);
+        timers.delete(handle.journeyId);
+      }
+      if (timers.size === 0) {
         this.bufferTimers.delete(journeyType);
       }
-    }, timeoutMs);
-
-    timers.set(handle.journeyId, timer);
+    }
   }
 }

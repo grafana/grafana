@@ -118,8 +118,9 @@ export async function createJourneyRecorder(page: Page): Promise<JourneyRecorder
       }
     }
 
-    // addStep: prefix = '[JourneyTracker] addStep', contextStr = 'journeyType/stepName'
-    if (prefix.includes('addStep') && contextStr) {
+    // recordEvent / startStep: prefix ends in 'recordEvent' or 'startStep',
+    // contextStr = 'journeyType/stepName'
+    if ((prefix.includes('recordEvent') || prefix.includes('startStep')) && contextStr) {
       const slashIdx = contextStr.indexOf('/');
       if (slashIdx !== -1) {
         const journeyType = contextStr.slice(0, slashIdx);

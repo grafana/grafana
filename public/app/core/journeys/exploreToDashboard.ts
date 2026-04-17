@@ -39,7 +39,7 @@ onJourneyInstance('explore_to_dashboard', (handle) => {
   // Step: form submitted
   add(onInteraction('e_2_d_submit', (props) => {
     if (handle.isActive) {
-      handle.addStep('submit', {
+      handle.recordEvent('submit', {
         saveTarget: String(props.saveTarget ?? ''),
         newTab: String(props.newTab ?? ''),
       });

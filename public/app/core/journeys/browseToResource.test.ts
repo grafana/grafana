@@ -89,24 +89,28 @@ describe('browseToResource journey wiring', () => {
 
   it('should start navigate_folder step when folder item is clicked with active journey', () => {
     loadWiring();
-    mockTracker.getActiveJourney.mockReturnValue(mockHandle);
+
+    // Start the journey (triggers onJourneyInstance wiring)
+    simulateInteraction('grafana_browse_dashboards_page_view', { folderUID: '' });
 
     simulateInteraction('grafana_browse_dashboards_page_click_list_item', {
       itemKind: 'folder',
       uid: 'folder-123',
     });
 
-    expect(mockHandle.addStep).toHaveBeenCalledWith('navigate_folder', {
+    expect(mockHandle.startStep).toHaveBeenCalledWith('navigate_folder', {
       folderUID: 'folder-123',
     });
   });
 
   it('should end navigate_folder step when page_view fires after folder click', () => {
     loadWiring();
-    mockTracker.getActiveJourney.mockReturnValue(mockHandle);
+
+    // Start the journey
+    simulateInteraction('grafana_browse_dashboards_page_view', { folderUID: '' });
 
     const mockStepHandle = createMockStepHandle();
-    mockHandle.addStep.mockReturnValue(mockStepHandle);
+    mockHandle.startStep.mockReturnValue(mockStepHandle);
 
     // Click a folder
     simulateInteraction('grafana_browse_dashboards_page_click_list_item', {
@@ -131,7 +135,7 @@ describe('browseToResource journey wiring', () => {
       uid: 'dash-456',
     });
 
-    expect(mockHandle.addStep).toHaveBeenCalledWith('select_resource', {
+    expect(mockHandle.startStep).toHaveBeenCalledWith('select_resource', {
       resourceType: 'dashboard',
       resourceUID: 'dash-456',
     });
@@ -149,7 +153,7 @@ describe('browseToResource journey wiring', () => {
     simulateInteraction('grafana_browse_dashboards_page_view', { folderUID: '' });
 
     const mockStepHandle = createMockStepHandle();
-    mockHandle.addStep.mockReturnValue(mockStepHandle);
+    mockHandle.startStep.mockReturnValue(mockStepHandle);
 
     // Click a dashboard
     simulateInteraction('grafana_browse_dashboards_page_click_list_item', {
@@ -190,16 +194,18 @@ describe('browseToResource journey wiring', () => {
 
   it('should not start select_resource step for folder clicks (only navigate_folder)', () => {
     loadWiring();
-    mockTracker.getActiveJourney.mockReturnValue(mockHandle);
+
+    // Start the journey
+    simulateInteraction('grafana_browse_dashboards_page_view', { folderUID: '' });
 
     simulateInteraction('grafana_browse_dashboards_page_click_list_item', {
       itemKind: 'folder',
       uid: 'folder-abc',
     });
 
-    // addStep should only be called for navigate_folder, not select_resource
-    const addStepCalls = mockHandle.addStep.mock.calls;
-    for (const call of addStepCalls) {
+    // startStep should only be called for navigate_folder, not select_resource
+    const startStepCalls = mockHandle.startStep.mock.calls;
+    for (const call of startStepCalls) {
       expect(call[0]).not.toBe('select_resource');
     }
   });

@@ -53,7 +53,7 @@ registerJourneyTriggers('datasource_configure', (tracker) => {
   add(onInteraction('grafana_ds_add_datasource_clicked', (props) => {
     const existing = tracker.getActiveJourney('datasource_configure');
     if (existing) {
-      existing.addStep('select_type', {
+      existing.recordEvent('select_type', {
         pluginId: String(props.plugin_id ?? ''),
       });
       existing.setAttributes({
@@ -78,7 +78,7 @@ onJourneyInstance('datasource_configure', (handle) => {
   // User saved datasource config
   add(onInteraction('connections_datasources_ds_configured', () => {
     if (handle.isActive) {
-      handle.addStep('save_config');
+      handle.recordEvent('save_config');
     }
   }));
 
@@ -93,7 +93,7 @@ onJourneyInstance('datasource_configure', (handle) => {
     if (success) {
       handle.end('success');
     } else {
-      handle.addStep('test_failed');
+      handle.recordEvent('test_failed');
     }
   }));
 
