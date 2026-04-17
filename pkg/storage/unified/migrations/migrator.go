@@ -116,8 +116,14 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 	// replaces the static resource list for bulk stream pre-authorization so
 	// that every group the migrator will write — including cloud-only plugin
 	// types not known at compile time — is properly registered.
-	// If the resolver returns empty (namespace has no data), keep opts.Resources
-	// unchanged so the stream can still be opened and closed cleanly.
+	//
+	// We also union in any groups already stored in unified storage for the
+	// same resource. This ensures stale groups (e.g. a datasource plugin that
+	// was previously migrated but has since been deleted from legacy) are
+	// included in the collection so their data is cleaned up on re-migration.
+	//
+	// If the merged result is empty (namespace has no data at all), keep
+	// opts.Resources unchanged so the stream can still open and close cleanly.
 	for _, res := range origResources {
 		resolveFn := m.registry.GetResourceGroupsFunc(res)
 		if resolveFn == nil {
@@ -127,8 +133,13 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 		if err != nil {
 			return nil, fmt.Errorf("resolving resource groups for %s/%s: %w", res.Group, res.Resource, err)
 		}
-		if len(resolved) > 0 {
-			opts.Resources = resolved
+		existing, err := m.existingStorageGroups(ctx, opts.Namespace, res.Resource)
+		if err != nil {
+			return nil, fmt.Errorf("querying existing storage groups for %s/%s: %w", res.Group, res.Resource, err)
+		}
+		merged := mergeGroupResources(resolved, existing)
+		if len(merged) > 0 {
+			opts.Resources = merged
 		}
 	}
 
@@ -157,6 +168,40 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 	}
 	m.log.Info("finished migrating legacy resources", "namespace", opts.Namespace, "orgId", info.OrgID, "stackId", info.StackID)
 	return stream.CloseAndRecv()
+}
+
+// existingStorageGroups queries unified storage for distinct API groups that
+// currently hold data for the given resource name in namespace. Used to ensure
+// stale plugin groups (migrated in a previous run but since deleted from legacy)
+// are included in the bulk collection so their data is cleaned up on re-migration.
+func (m *unifiedMigration) existingStorageGroups(ctx context.Context, namespace, resource string) ([]schema.GroupResource, error) {
+	resp, err := m.client.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: namespace})
+	if err != nil {
+		return nil, fmt.Errorf("getting storage stats: %w", err)
+	}
+	if resp.Error != nil {
+		return nil, fmt.Errorf("getting storage stats: %s", resp.Error.Message)
+	}
+	var result []schema.GroupResource
+	for _, s := range resp.Stats {
+		if s.Resource == resource {
+			result = append(result, schema.GroupResource{Group: s.Group, Resource: s.Resource})
+		}
+	}
+	return result, nil
+}
+
+// mergeGroupResources returns the union of a and b, deduplicated by Group.
+func mergeGroupResources(a, b []schema.GroupResource) []schema.GroupResource {
+	seen := make(map[string]bool, len(a)+len(b))
+	result := make([]schema.GroupResource, 0, len(a)+len(b))
+	for _, gr := range append(a, b...) {
+		if !seen[gr.Group] {
+			seen[gr.Group] = true
+			result = append(result, gr)
+		}
+	}
+	return result
 }
 
 type RebuildIndexOptions struct {
