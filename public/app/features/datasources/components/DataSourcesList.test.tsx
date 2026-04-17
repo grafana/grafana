@@ -113,7 +113,8 @@ describe('<DataSourcesList>', () => {
 
     // After Tab, more items should be rendered due to increased overscan,
     // but not necessarily all of them (overscan is capped)
-    const itemsAfterTab = await screen.findAllByRole('listitem');
+    await waitFor(() => expect(screen.getAllByRole('listitem').length).toBeGreaterThan(initialItems.length));
+    const itemsAfterTab = screen.getAllByRole('listitem');
     expect(itemsAfterTab.length).toBeGreaterThan(initialItems.length);
   });
 
