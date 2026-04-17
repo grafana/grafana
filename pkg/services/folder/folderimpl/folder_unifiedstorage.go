@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 const folderSearchLimit = 100000
@@ -482,12 +481,6 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 
 	if cmd.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
-	}
-
-	if !util.IsValidShortUID(cmd.UID) {
-		return nil, dashboards.ErrDashboardInvalidUid
-	} else if util.IsShortUIDTooLong(cmd.UID) {
-		return nil, dashboards.ErrDashboardUidTooLong
 	}
 
 	cmd.UID = strings.TrimSpace(cmd.UID)
