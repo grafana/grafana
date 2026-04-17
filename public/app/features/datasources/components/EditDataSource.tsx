@@ -16,6 +16,7 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type DataSourceSettingsState } from 'app/types/datasources';
 import { useDispatch } from 'app/types/store';
 
+import { useRetryDatasourceAdvisorCheck } from '../../connections/hooks/useDatasourceAdvisorChecks';
 import {
   useDataSource,
   useDataSourceExploreUrl,
@@ -116,6 +117,7 @@ export function EditDataSourceView({
   const { readOnly, hasWriteRights, hasDeleteRights } = dataSourceRights;
   const hasDataSource = dataSource.id > 0 && dataSource.uid;
   const { components, isLoading } = useDataSourceConfigPluginExtensions();
+  const retryAdvisorCheck = useRetryDatasourceAdvisorCheck();
   // This is a workaround to avoid race-conditions between the `setSecureJsonData()` and `setJsonData()` calls instantiated by the extension components.
   // Both those exposed functions are calling `onOptionsChange()` with the new jsonData and secureJsonData, and if they are called in the same tick, the Redux store
   // (which provides the `datasource` object) won't be updated yet, and they override each others `jsonData` value.
@@ -147,6 +149,9 @@ export function EditDataSourceView({
       return;
     }
 
+    retryAdvisorCheck(dataSource.uid).catch((error) => {
+      console.warn('Error retrying datasource advisor check', error);
+    });
     onTest();
   };
 

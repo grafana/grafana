@@ -208,7 +208,9 @@ func RunTestGet(ctx context.Context, t *testing.T, store storage.Interface) {
 				return
 			}
 			if tt.expectRVTooLarge {
-				if err == nil || !storage.IsTooLargeResourceVersion(err) {
+				// Our implementation differs from etcd by returning 400 (bad request) instead of 504 with
+				// a retry duration.
+				if err == nil || !apierrors.IsBadRequest(err) || !strings.Contains(err.Error(), "too large resource version") {
 					t.Errorf("expecting resource version too high error, but get: %v", err)
 				}
 				return

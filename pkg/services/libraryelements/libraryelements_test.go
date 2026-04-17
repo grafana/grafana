@@ -42,7 +42,7 @@ import (
 )
 
 const userInDbName = "user_in_db"
-const userInDbAvatar = "/avatar/402d08de060496d6b6874495fe20f5ad"
+const userInDbAvatar = "/avatar/949f63d8d8631e6a689c580bc977d933a0c2d6bec94eef583b09d1da3bd1bbc4"
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
@@ -65,7 +65,7 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to delete a folder uid that doesn't exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			sc.service.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-			sc.service.AccessControl.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(sc.service.folderService))
+			sc.service.AccessControl.RegisterScopeAttributeResolver(folder.NewFolderUIDScopeResolver(sc.service.folderService))
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.folder.UID + "xxxx"})
 			resp := sc.service.deleteHandler(sc.reqContext)
 			require.Equal(t, http.StatusNotFound, resp.Status())
@@ -225,9 +225,9 @@ func createFolder(t *testing.T, sc scenarioContext, title string, folderSvc *fol
 	folderSvc.ExpectedFolders = append(folderSvc.ExpectedFolders, f)
 
 	// Set user permissions on the newly created folder so that they can interact with library elements stored in it
-	sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionFoldersWrite] = append(sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionFoldersWrite], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
-	sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionFoldersRead] = append(sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
-	sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionDashboardsCreate] = append(sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionDashboardsCreate], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+	sc.reqContext.Permissions[sc.user.OrgID][folder.ActionFoldersWrite] = append(sc.reqContext.Permissions[sc.user.OrgID][folder.ActionFoldersWrite], folder.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+	sc.reqContext.Permissions[sc.user.OrgID][folder.ActionFoldersRead] = append(sc.reqContext.Permissions[sc.user.OrgID][folder.ActionFoldersRead], folder.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+	sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionDashboardsCreate] = append(sc.reqContext.Permissions[sc.user.OrgID][dashboards.ActionDashboardsCreate], folder.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
 
 	return f
 }
@@ -281,13 +281,13 @@ func setupTestScenario(t *testing.T) scenarioContext {
 		// Allow user to create folders and library elements
 		Permissions: map[int64]map[string][]string{
 			1: {
-				dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll},
-				dashboards.ActionFoldersWrite:  {dashboards.ScopeFoldersAll},
-				dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll},
-				ActionLibraryPanelsCreate:      {dashboards.ScopeFoldersAll},
-				ActionLibraryPanelsRead:        {ScopeLibraryPanelsAll},
-				ActionLibraryPanelsWrite:       {ScopeLibraryPanelsAll},
-				ActionLibraryPanelsDelete:      {ScopeLibraryPanelsAll},
+				folder.ActionFoldersCreate: {folder.ScopeFoldersAll},
+				folder.ActionFoldersWrite:  {folder.ScopeFoldersAll},
+				folder.ActionFoldersRead:   {folder.ScopeFoldersAll},
+				ActionLibraryPanelsCreate:  {folder.ScopeFoldersAll},
+				ActionLibraryPanelsRead:    {ScopeLibraryPanelsAll},
+				ActionLibraryPanelsWrite:   {ScopeLibraryPanelsAll},
+				ActionLibraryPanelsDelete:  {ScopeLibraryPanelsAll},
 			},
 		},
 	}

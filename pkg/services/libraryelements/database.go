@@ -180,7 +180,7 @@ func (l *LibraryElementService) CreateElement(c context.Context, signedInUser id
 	}
 
 	err = l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		allowed, err := l.AccessControl.Evaluate(c, signedInUser, ac.EvalPermission(ActionLibraryPanelsCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)))
+		allowed, err := l.AccessControl.Evaluate(c, signedInUser, ac.EvalPermission(ActionLibraryPanelsCreate, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)))
 		if !allowed {
 			return fmt.Errorf("insufficient permissions for creating library panel in folder with UID: '%s'", folderUID)
 		}
@@ -466,10 +466,14 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		}
 
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
-		// Get the folder tree filtered by user permissions (cached per user per request)
-		folderTree, err := l.treeCache.get(c, signedInUser)
-		if err != nil {
-			return err
+		needsFolderTree := !query.SkipFolderTreeForAdmin || !signedInUser.HasRole(org.RoleAdmin)
+		var folderTree *folder.FolderTree
+		if needsFolderTree {
+			// Get the folder tree filtered by user permissions (cached per user per request)
+			folderTree, err = l.treeCache.get(c, signedInUser)
+			if err != nil {
+				return err
+			}
 		}
 
 		// Filter elements based on folder access using the tree
@@ -479,9 +483,12 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 					continue
 				}
 			}
-			title := folderTree.GetTitle(element.FolderUID)
-			if title == "" {
-				title = dashboards.RootFolderName
+			var title string
+			if needsFolderTree {
+				title = folderTree.GetTitle(element.FolderUID)
+				if title == "" {
+					title = dashboards.RootFolderName
+				}
 			}
 			retDTOs = append(retDTOs, model.LibraryElementDTO{
 				ID:          element.ID,
