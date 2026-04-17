@@ -13,6 +13,9 @@ This documentation describes the Critical User Journey tracking framework in Gra
   - [search_to_resource](#search_to_resource)
   - [browse_to_resource](#browse_to_resource)
   - [dashboard_edit](#dashboard_edit)
+  - [panel_edit](#panel_edit)
+  - [datasource_configure](#datasource_configure)
+  - [explore_to_dashboard](#explore_to_dashboard)
 - [Adding a New Journey](#adding-a-new-journey)
   - [Step 1: Register Metadata](#step-1-register-metadata)
   - [Step 2: Create Wiring File](#step-2-create-wiring-file)
@@ -217,6 +220,66 @@ User enters dashboard edit mode, makes changes, and saves or discards.
 
 **Key behavior:** Handles both `_saved` (existing dashboard) and `_created` (new dashboard) end triggers. Timeout is 30 minutes (long editing sessions are expected).
 
+### panel_edit
+
+**File:** `public/app/core/journeys/panelEdit.ts`
+
+User opens a panel in edit mode and configures queries, transformations, or visualization.
+
+| Event | Trigger | Action |
+|-------|---------|--------|
+| Start | `dashboards_panel_action_clicked` (with `item: 'edit'` or `'configure'`) | Journey starts |
+| Step | `grafana_panel_edit_next_interaction` (action=`add_query`) | `add_query` step |
+| Step | `grafana_panel_edit_next_interaction` (action=`add_transformation_initiated`) | `add_transformation` step |
+| Step | `grafana_panel_edit_next_interaction` (action=`change_sidebar_view`) | `change_view` step |
+| Step | `grafana_panel_edit_next_interaction` (any other action) | step named after the action |
+| End (success) | `panel_edit_closed` (no prior discard) | Editor deactivated via save / close |
+| End (discarded) | `panel_edit_closed` (after `panel_edit_discarded`) | User hit Discard |
+
+**Silent interactions added by this journey:** `panel_edit_closed` (emitted when the PanelEditor scene deactivates), `panel_edit_discarded` (emitted when the user hits Discard).
+
+**Key behavior:** Each panel-edit interaction is a pointwise `recordEvent` (no duration, no StepHandle to end). The journey distinguishes save vs discard via a latched flag set on `panel_edit_discarded`. 30-minute timeout matches long editing sessions.
+
+### datasource_configure
+
+**File:** `public/app/core/journeys/datasourceConfigure.ts`
+
+User adds and configures a new datasource until a successful connection test.
+
+| Event | Trigger | Action |
+|-------|---------|--------|
+| Start | `connections_datasource_list_add_datasource_clicked` | Journey starts (from list page) |
+| Start | `connections_new_datasource_page_view` (no active journey) | Journey starts (direct nav) |
+| Start | `grafana_ds_add_datasource_clicked` (no active journey) | Journey starts (catalog pick) |
+| Step | `grafana_ds_add_datasource_clicked` (journey already active) | `select_type` step |
+| Step | `connections_datasources_ds_configured` | `save_config` step |
+| Step | `grafana_ds_test_datasource_clicked` (success=false) | `test_failed` step (repeatable) |
+| End (success) | `grafana_ds_test_datasource_clicked` (success=true) | Test passed |
+| End (discarded) | `connections_new_datasource_cancelled` | User clicked Cancel |
+| End (discarded) | `connections_datasource_deleted` | User deleted datasource before completing setup |
+| End (abandoned) | `connections_datasource_config_page_left` | User navigated away without testing |
+
+**Silent interactions added by this journey:** `connections_new_datasource_cancelled`, `connections_datasource_deleted`, `connections_datasource_config_page_left`, `connections_new_datasource_page_view`.
+
+**Key behavior:** The same event (`grafana_ds_test_datasource_clicked`) is either a `test_failed` step or a `success` end depending on the `success` property - this is the classic "dual-meaning event" case that drove the hybrid design choice. 1-hour timeout tolerates reading docs mid-setup.
+
+### explore_to_dashboard
+
+**File:** `public/app/core/journeys/exploreToDashboard.ts`
+
+User adds a panel from Explore to a dashboard via the "Add to dashboard" form.
+
+| Event | Trigger | Action |
+|-------|---------|--------|
+| Start | `e_2_d_open` | User opens the "Add to dashboard" modal |
+| Step | `e_2_d_submit` | `submit` step with `saveTarget` and `newTab` attributes |
+| End (success) | `explore_to_dashboard_panel_applied` | Panel applied to the target dashboard |
+| End (discarded) | `e_2_d_discarded` | Form closed without submitting |
+
+**Silent interactions added by this journey:** `explore_to_dashboard_panel_applied` (emitted by `addPanelsOnLoadBehavior` when the panel is applied), `e_2_d_discarded` (emitted on form dismiss).
+
+**Key behavior:** Single-tab case ends on success cleanly. New-tab case currently times out after 60 seconds because the `panel_applied` event fires in a different tab and cross-tab correlation is not implemented. Cross-tab correlation is a backlog item.
+
 ## Adding a New Journey
 
 ### Step 1: Register Metadata
@@ -231,7 +294,6 @@ export const JOURNEY_REGISTRY: JourneyMeta[] = [
     description: 'What the user is doing',
     owner: 'your-squad',
     timeoutMs: 60_000,
-    slo: { latencyP95Ms: 3000, successRate: 0.95 },
   },
 ];
 ```
@@ -245,34 +307,46 @@ Create `public/app/core/journeys/yourJourney.ts`:
 ```typescript
 import { onInteraction, registerJourneyTriggers, onJourneyInstance } from '@grafana/runtime';
 
+import { collectUnsubs, str } from './utils';
+
 // registerJourneyTriggers runs once at bootstrap (global scope)
 registerJourneyTriggers('your_journey_name', (tracker) => {
-  const unsub = onInteraction('your_start_event', (props) => {
+  return onInteraction('your_start_event', (props) => {
     tracker.startJourney('your_journey_name', {
-      attributes: { /* initial context */ },
+      attributes: {
+        // str() coerces null/undefined to '' so attributes never ship 'undefined'
+        someId: str(props.someId),
+      },
     });
   });
-
-  // Must return cleanup function
-  return () => unsub();
 });
 
 // onJourneyInstance runs per journey instance
 onJourneyInstance('your_journey_name', (handle) => {
-  const unsub1 = onInteraction('your_success_event', () => {
-    if (handle.isActive) {
-      handle.end('success');
-    }
-  });
+  const { add, cleanup } = collectUnsubs();
 
-  const unsub2 = onInteraction('your_cancel_event', () => {
-    if (handle.isActive) {
-      handle.end('discarded');
-    }
-  });
+  // recordEvent: pointwise event (no duration, nothing to end)
+  add(onInteraction('your_milestone_event', (props) => {
+    handle.recordEvent('milestone', { detail: str(props.detail) });
+  }));
 
-  // Must return cleanup function
-  return () => { unsub1(); unsub2(); };
+  // startStep: measures elapsed time between two events - caller must end the handle
+  add(onInteraction('your_step_start', () => {
+    const step = handle.startStep('my_step');
+    // Stash `step` somewhere (instance-scoped variable) and call step.end() on the matching event.
+  }));
+
+  // end() and recordEvent() are idempotent - safe to call after the journey ends.
+  // No isActive guards needed unless you want to skip extra work before the call.
+  add(onInteraction('your_success_event', () => {
+    handle.end('success');
+  }));
+
+  add(onInteraction('your_cancel_event', () => {
+    handle.end('discarded');
+  }));
+
+  return cleanup;
 });
 ```
 
@@ -287,6 +361,9 @@ await Promise.all([
   import('./core/journeys/searchToResource'),
   import('./core/journeys/browseToResource'),
   import('./core/journeys/dashboardEdit'),
+  import('./core/journeys/panelEdit'),
+  import('./core/journeys/datasourceConfigure'),
+  import('./core/journeys/exploreToDashboard'),
   import('./core/journeys/yourJourney'),  // <-- add here
 ]);
 ```
@@ -347,26 +424,29 @@ A bound reference to one specific journey instance. All step/end operations go t
 | `journeyId` | Unique ID for this instance. Equals the OTel trace ID when tracing is enabled. |
 | `journeyType` | The journey type string (e.g., `'search_to_resource'`). |
 | `isActive` | `true` until `end()` is called. |
-| `addStep(name, attributes?)` | Add a child step. Returns a `StepHandle` for duration measurement. |
+| `recordEvent(name, attributes?)` | Record a pointwise event. Zero-duration child span - no handle returned, nothing to end. Idempotent no-op after `end()`. |
+| `startStep(name, attributes?)` | Start a duration step. Returns a `StepHandle` - you MUST call `step.end()` when the measured operation completes. Returns a noop handle after `end()`. |
 | `end(outcome, attributes?)` | End the journey. Idempotent - second call is a no-op. |
-| `setAttributes(attrs)` | Enrich the journey with additional attributes. Can be called multiple times. |
+| `setAttributes(attrs)` | Enrich the journey with additional attributes. Can be called multiple times. No-op after `end()`. |
 
 ### StepHandle
 
-Returned by `handle.addStep()`. Represents a child span in the OTel trace.
+Returned by `handle.startStep()`. Represents a child span in the OTel trace.
 
 | Method | Description |
 |--------|-------------|
-| `end(attributes?)` | End the step. The time between `addStep` and `end` is the step's duration in the trace. |
+| `end(attributes?)` | End the step. The time between `startStep` and `end` is the step's duration in the trace. |
 
-**Fire-and-forget vs duration steps:**
+**Pointwise events vs duration steps:**
+
+The split API makes the contract explicit at the call site - you never have to remember "did I need to end this?"
 
 ```typescript
-// Fire-and-forget (zero-duration point event)
-handle.addStep('user_clicked_something', { target: 'button' });
+// Pointwise event: no handle returned, nothing to end.
+handle.recordEvent('user_clicked_something', { target: 'button' });
 
-// Duration step (measures elapsed time)
-const step = handle.addStep('navigate_folder', { folderUID: 'abc' });
+// Duration step: StepHandle returned, caller MUST end it.
+const step = handle.startStep('navigate_folder', { folderUID: 'abc' });
 // ... later, when the folder loads ...
 step.end({ folderUID: 'abc' });
 ```
@@ -391,28 +471,26 @@ Manages journey metadata and trigger registration. Not typically accessed direct
 Steps can measure elapsed time between two events. Hold the `StepHandle` and call `end()` when the operation completes:
 
 ```typescript
-registerJourneyTriggers('browse_to_resource', (tracker) => {
+onJourneyInstance('browse_to_resource', (handle) => {
   let pendingStep: StepHandle | null = null;
+  const { add, cleanup } = collectUnsubs();
 
   // Start step on folder click
-  const unsub1 = onInteraction('folder_clicked', (props) => {
-    const handle = tracker.getActiveJourney('browse_to_resource');
-    if (handle) {
-      pendingStep = handle.addStep('navigate_folder', {
-        folderUID: String(props.uid),
-      });
-    }
-  });
+  add(onInteraction('folder_clicked', (props) => {
+    pendingStep = handle.startStep('navigate_folder', {
+      folderUID: str(props.uid),
+    });
+  }));
 
   // End step when folder loads
-  const unsub2 = onInteraction('folder_loaded', (props) => {
+  add(onInteraction('folder_loaded', (props) => {
     if (pendingStep) {
-      pendingStep.end({ folderUID: String(props.folderUID) });
+      pendingStep.end({ folderUID: str(props.folderUID) });
       pendingStep = null;
     }
-  });
+  }));
 
-  return () => { unsub1(); unsub2(); };
+  return cleanup;
 });
 ```
 
@@ -425,28 +503,27 @@ journey:browse_to_resource  █████████████████�
   step:select_resource                    ██████████  4.1s
 ```
 
-**Thread safety of shared step state:** The `pendingStep` variable lives in the `registerJourneyTriggers` closure, which runs once. This means it's shared across all journey instances of this type. This is safe when `cancelOnRestart: true` (the default) because only one instance is ever active - the previous one is canceled before a new one starts. No race conditions exist between the interaction callbacks either: JavaScript is single-threaded and `onInteraction` fires synchronously inside `reportInteraction`, so the click handler that sets `pendingStep` and the page-view handler that reads it cannot interleave.
+**Per-instance state.** Put step-tracking variables inside `onJourneyInstance` so each journey instance gets its own closure. A module-scope `StepHandle` lives across journey instances - if the previous journey cancels while its step is pending, a later journey's end event would call `.end()` on a dead span. Keeping state inside `onJourneyInstance` avoids this entirely.
 
-If a journey uses `cancelOnRestart: false` and needs duration-based steps, move the step state into `onJourneyInstance` instead (which runs per instance and gets its own closure per handle):
+Interaction callbacks within the same journey cannot interleave: JavaScript is single-threaded and `onInteraction` fires synchronously inside `reportInteraction`, so there is no race between the click handler that sets `pendingStep` and the page-view handler that reads it.
 
 ```typescript
 onJourneyInstance('your_journey', (handle) => {
   let pendingStep: StepHandle | null = null;
+  const { add, cleanup } = collectUnsubs();
 
-  const unsub1 = onInteraction('step_start_event', () => {
-    if (handle.isActive) {
-      pendingStep = handle.addStep('my_step');
-    }
-  });
+  add(onInteraction('step_start_event', () => {
+    pendingStep = handle.startStep('my_step');
+  }));
 
-  const unsub2 = onInteraction('step_end_event', () => {
+  add(onInteraction('step_end_event', () => {
     if (pendingStep) {
       pendingStep.end();
       pendingStep = null;
     }
-  });
+  }));
 
-  return () => { unsub1(); unsub2(); };
+  return cleanup;
 });
 ```
 
@@ -540,7 +617,7 @@ Each journey creates an OTel trace with the following structure:
 | Attribute | Description |
 |-----------|-------------|
 | `step.name` | Step name |
-| Custom attributes | Attributes passed to `addStep` and `stepHandle.end` |
+| Custom attributes | Attributes passed to `recordEvent` / `startStep` and `stepHandle.end` |
 
 **Span links:** Links to concurrent journey root spans.
 
@@ -610,7 +687,7 @@ Reload the page after setting. Uses `createDebugLog` from `app/core/utils/debugL
   journeyId: "a1b2c3d4e5f6...",
   attributes: { source: "browse_dashboards", folderUID: "" }
 }
-[JourneyTracker] addStep browse_to_resource/navigate_folder {
+[JourneyTracker] startStep browse_to_resource/navigate_folder {
   journeyId: "a1b2c3d4e5f6...",
   stepNumber: 1,
   attributes: { folderUID: "team-dashboards" }
@@ -618,7 +695,7 @@ Reload the page after setting. Uses `createDebugLog` from `app/core/utils/debugL
 [JourneyTracker] setAttributes browse_to_resource {
   folderUID: "team-dashboards"
 }
-[JourneyTracker] addStep browse_to_resource/select_resource {
+[JourneyTracker] startStep browse_to_resource/select_resource {
   journeyId: "a1b2c3d4e5f6...",
   stepNumber: 2,
   attributes: { resourceType: "dashboard", resourceUID: "wfTJJL5Wz" }
@@ -667,7 +744,7 @@ Reload the page after setting. Uses `createDebugLog` from `app/core/utils/debugL
 
 ### Noop Tracker
 
-When the `cujTracking` feature toggle is off, `getJourneyTracker()` returns a `NoopJourneyTracker`. All methods are no-ops. `startJourney` returns a shared `NOOP_HANDLE` with no-op `addStep`, `end`, and `setAttributes`. Zero allocation, zero overhead.
+When the `cujTracking` feature toggle is off, `getJourneyTracker()` returns a `NoopJourneyTracker`. All methods are no-ops. `startJourney` returns a shared `NOOP_HANDLE` with no-op `recordEvent`, `startStep`, `end`, and `setAttributes`. Zero allocation, zero overhead.
 
 ### Handle Lifecycle
 
@@ -679,7 +756,7 @@ startJourney()
   ├── Timeout timer set
   ├── Stored in activeJourneys map (keyed by journeyId)
   │
-  │   handle.addStep() / handle.setAttributes() / ...
+  │   handle.recordEvent() / handle.startStep() / handle.setAttributes() / ...
   │
   ▼
 handle.end(outcome)
@@ -692,7 +769,7 @@ handle.end(outcome)
   └── Per-handle onEnd callbacks invoked (end-trigger cleanup)
 ```
 
-`end()` is idempotent. The second call is a no-op. `addStep()` after `end()` returns a noop step handle.
+`end()` is idempotent - the second call is a no-op. `recordEvent()` after `end()` is a no-op. `startStep()` after `end()` returns a noop step handle. This is the contract wiring code relies on: no `isActive` guards needed around these calls.
 
 ### Tab Visibility and Unload
 
