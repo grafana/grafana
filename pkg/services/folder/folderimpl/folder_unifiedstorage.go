@@ -454,30 +454,6 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if cmd.ParentUID != "" {
-		// Check that the user is allowed to create a subfolder in this folder
-		parentUIDScope := folder.ScopeFoldersProvider.GetResourceScopeUID(cmd.ParentUID)
-		legacyEvaluator := accesscontrol.EvalPermission(folder.ActionFoldersWrite, parentUIDScope)
-		newEvaluator := accesscontrol.EvalPermission(folder.ActionFoldersCreate, parentUIDScope)
-		evaluator := accesscontrol.EvalAny(legacyEvaluator, newEvaluator)
-		hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
-		if evalErr != nil {
-			return nil, evalErr
-		}
-		if !hasAccess {
-			return nil, folder.ErrCreationAccessDenied.Errorf("user is missing the permission with action either folders:create or folders:write and scope %s or any of the parent folder scopes", parentUIDScope)
-		}
-	} else {
-		evaluator := accesscontrol.EvalPermission(folder.ActionFoldersCreate, folder.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
-		hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
-		if evalErr != nil {
-			return nil, evalErr
-		}
-		if !hasAccess {
-			return nil, folder.ErrCreationAccessDenied.Errorf("user is missing the permission with action folders:create and scope folders:uid:general, which is required to create a folder under the root level")
-		}
-	}
-
 	cmd = &folder.CreateFolderCommand{
 		// TODO: Today, if a UID isn't specified, the dashboard store
 		// generates a new UID. The new folder store will need to do this as
@@ -506,15 +482,6 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 
 	if cmd.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
-	}
-
-	if cmd.NewTitle != nil && *cmd.NewTitle != "" {
-		title := strings.TrimSpace(*cmd.NewTitle)
-		cmd.NewTitle = &title
-
-		if strings.EqualFold(*cmd.NewTitle, dashboards.RootFolderName) {
-			return nil, folder.ErrNameExists
-		}
 	}
 
 	if !util.IsValidShortUID(cmd.UID) {
