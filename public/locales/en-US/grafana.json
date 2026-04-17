@@ -8189,6 +8189,9 @@
       "label-state-name": "State name"
     }
   },
+  "diff-viewer": {
+    "loading": "Loading diff..."
+  },
   "dimensions": {
     "background-size-editor": {
       "options": {
@@ -12247,7 +12250,7 @@
     },
     "quick-add": {
       "aria-label": "New",
-      "new-template-dashboard-button": "From template"
+      "new-template-dashboard-button": "Use template"
     },
     "rss-button": "Latest from the blog"
   },

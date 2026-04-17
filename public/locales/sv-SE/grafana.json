@@ -8189,6 +8189,9 @@
       "label-state-name": "Regionens namn"
     }
   },
+  "diff-viewer": {
+    "loading": ""
+  },
   "dimensions": {
     "background-size-editor": {
       "options": {

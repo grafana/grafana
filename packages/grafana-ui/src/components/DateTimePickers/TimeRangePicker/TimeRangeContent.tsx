@@ -79,7 +79,7 @@ export const TimeRangeContent = (props: Props) => {
     register,
     formState: { errors },
     setValue,
-    getValues,
+    watch,
   } = useForm<FormState>({
     defaultValues: {
       from: valueAsString(value.raw.from, timeZone),
@@ -259,8 +259,8 @@ export const TimeRangeContent = (props: Props) => {
       <TimePickerCalendar
         isFullscreen={isFullscreen}
         isOpen={isOpen}
-        from={dateTimeParse(getValues('from'), { timeZone })}
-        to={dateTimeParse(getValues('to'), { timeZone })}
+        from={dateTimeParse(watch('from'), { timeZone })}
+        to={dateTimeParse(watch('to'), { timeZone })}
         onApply={onApply}
         onClose={() => setOpen(false)}
         onChange={onChange}
