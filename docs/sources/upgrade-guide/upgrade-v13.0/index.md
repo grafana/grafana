@@ -59,7 +59,7 @@ Grafana is migrating existing APIs to the new `/apis` model, a Kubernetes-style 
 
 **Legacy APIs are not being disabled for the moment**. Removal of legacy APIs is planned for a future major release, and any breaking changes will be announced well in advance to avoid disruptions.
 
-For more information and migration guidance, refer to [Migrate to the new APIs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration.md).
+For more information and migration guidance, refer to [Migrate to the new APIs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration).
 
 ### Deprecated data source APIs disabled
 
