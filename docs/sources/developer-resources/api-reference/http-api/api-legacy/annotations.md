@@ -23,17 +23,13 @@ title: Annotations HTTP API
 
 # Annotations API
 
-{{< admonition type="caution" >}}
-
-Starting in Grafana 13, `/api` endpoints are being deprecated. This change doesn't disrupt or break your current setup: legacy APIs are not being disabled and remain fully accessible and operative. However, `/api` routes will no longer be updated and **will be removed in a future major release.**
-
-To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
-
-{{< /admonition >}}
+{{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
+## Requirements
+
+If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 ## Find Annotations
 

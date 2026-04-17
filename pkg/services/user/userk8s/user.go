@@ -161,7 +161,40 @@ func (s *UserK8sService) Delete(ctx context.Context, cmd *user.DeleteUserCommand
 }
 
 func (s *UserK8sService) GetByID(ctx context.Context, cmd *user.GetUserByIDQuery) (*user.User, error) {
-	return nil, errors.New("not implemented")
+	ctx, span := s.tracer.Start(ctx, "user.getByID", trace.WithAttributes(
+		attribute.Int64("userID", cmd.ID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	orgID, err := s.getOrgID(ctx, ctxLogger)
+	if err != nil {
+		ctxLogger.Error("failed to get orgID from context", "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	namespace := s.namespaceMapper(orgID)
+	span.SetAttributes(attribute.Int64("orgID", orgID))
+
+	client, err := s.getClient(ctx, namespace)
+	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	found, err := s.getByInternalID(ctx, ctxLogger, client, cmd.ID, namespace)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	return toUser(found, orgID), nil
 }
 
 func (s *UserK8sService) GetByUID(ctx context.Context, cmd *user.GetUserByUIDQuery) (*user.User, error) {
