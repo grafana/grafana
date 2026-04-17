@@ -254,7 +254,7 @@ describe('NestedFolderPicker', () => {
     await user.click(await screen.findByRole('button', { name: 'Select folder' }));
 
     expect(await screen.findByText('Error loading some folders')).toBeInTheDocument();
-    expect(await screen.findByText('Failed to load folders')).toBeInTheDocument();
+    expect(screen.getByText('Failed to load folders')).toBeInTheDocument();
   });
 
   describe('when teamFolders is enabled', () => {
