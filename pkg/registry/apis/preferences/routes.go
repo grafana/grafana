@@ -1,8 +1,12 @@
 package preferences
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"path"
+	"strconv"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -106,38 +110,24 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 					},
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
-					ctx := r.Context()
-					id, ok := authlib.AuthInfoFrom(ctx)
-					if !ok || id.GetIdentityType() != authlib.TypeUser {
-						errhttp.Write(ctx, fmt.Errorf("only works for logged in users"), w)
-						return
-					}
-
-					client, err := b.clientGenerator.ClientFor(preferences.PreferencesKind())
+					id := path.Base(r.URL.Path)
+					val, err := strconv.ParseUint(id, 10, 64)
 					if err != nil {
-						errhttp.Write(ctx, err, w)
+						errhttp.Write(r.Context(), err, w)
 						return
 					}
 
-					p, err := client.Get(ctx, resource.Identifier{
-						Namespace: request.NamespaceValue(ctx),
-						Name:      fmt.Sprintf("user-%s", id.GetIdentifier()),
-					})
+					data, err := b.doHelpFlags(r.Context(), &val)
 					if err != nil {
-						errhttp.Write(ctx, err, w)
+						errhttp.Write(r.Context(), err, w)
 						return
 					}
 
-					out, err := yaml.Marshal(p)
+					w.Header().Set("Content-Type", "application/json")
+					err = json.NewEncoder(w).Encode(data)
 					if err != nil {
-						errhttp.Write(ctx, err, w)
-						return
+						errhttp.Write(r.Context(), err, w)
 					}
-
-					fmt.Printf("GOT: %s\n\n", string(out))
-
-					// &util.DynMap{"message": "Help flag set", "helpFlags1": *bitmask}
-					_, _ = w.Write([]byte("TODO... set flags"))
 				},
 			}, {
 				Path: "helpflags",
@@ -170,12 +160,54 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 					},
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
-					// &util.DynMap{"message": "Help flag set", "helpFlags1": *bitmask}
-					w.Write([]byte("TODO... delete flags"))
+					data, err := b.doHelpFlags(r.Context(), nil) // nil will remove everything
+					if err != nil {
+						errhttp.Write(r.Context(), err, w)
+						return
+					}
+
+					w.Header().Set("Content-Type", "application/json")
+					err = json.NewEncoder(w).Encode(data)
+					if err != nil {
+						errhttp.Write(r.Context(), err, w)
+					}
 				},
 			},
 		},
 	}
+}
+
+// Helper function that behaves just like the existing help flag
+func (b *APIBuilder) doHelpFlags(ctx context.Context, set *uint64) (map[string]any, error) {
+	id, ok := authlib.AuthInfoFrom(ctx)
+	if !ok || id.GetIdentityType() != authlib.TypeUser {
+		return nil, fmt.Errorf("only works for logged in users")
+	}
+
+	client, err := b.clientGenerator.ClientFor(preferences.PreferencesKind())
+	if err != nil {
+		return nil, err
+	}
+
+	p, err := client.Get(ctx, resource.Identifier{
+		Namespace: request.NamespaceValue(ctx),
+		Name:      fmt.Sprintf("user-%s", id.GetIdentifier()),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	out, err := yaml.Marshal(p)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("GOT: %s\n\n", string(out))
+	fmt.Printf("TODO, set: %v\n", set)
+
+	return map[string]any{
+		"message":    "Help flag set",
+		"helpFlags1": 0,
+	}, nil
 }
 
 func getHelpResponse() *spec3.Response {
