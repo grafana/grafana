@@ -20,7 +20,7 @@ describe('isHttpUrl', () => {
     { url: 'http://localhost:3000', expected: true },
     { url: 'ftp://files.example.com', expected: false },
     { url: 'not a url', expected: false },
-  ])('isUrl($url) returns $expected', ({ url, expected }) => {
+  ])('"$url" returns $expected', ({ url, expected }) => {
     expect(isHttpUrl(url)).toBe(expected);
   });
 });
