@@ -5,7 +5,6 @@ FROM grafana/grafana:${GRAFANA_VERSION}
 ARG GF_GID="0"
 
 ENV GF_PATHS_PLUGINS="/var/lib/grafana-plugins"
-ENV GF_PLUGIN_RENDERING_CHROME_BIN="/usr/bin/chrome"
 
 USER root
 
