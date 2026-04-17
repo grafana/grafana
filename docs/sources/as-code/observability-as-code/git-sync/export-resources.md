@@ -29,9 +29,9 @@ aliases:
 
 {{< /admonition >}}
 
-Git Sync is under development, and traditional operations like moving or copying a dashboard to a provisioned folder are not fully supported for resources already existing in Grafana. Git Sync doesn't offer any built-in functionality to easily export resources from Grafana in bulk. However, the following options are available:
+Traditional operations such as moving or copying a dashboard to a provisioned folder or bulk export are gradually being incorporated into Git Sync. In the meantime the following options are available:
 
-- [Export an existing dashboard from the Grafana UI as a copy](#provision-an-existing-dashboard-from-the-grafana-ui)
+- [Export an existing dashboard from the Grafana UI as a copy](#add-an-existing-dashboard-from-the-grafana-ui)
 - [Export the dashboard with Grafana CLI](#add-a-dashboard-with-grafana-cli)
 - [Copy the dashboard as JSON and commit to the repository](#add-a-dashboard-via-json-export)
 

@@ -279,11 +279,6 @@ export interface FeatureToggles {
   */
   dashboardSchemaValidationLogging?: boolean;
   /**
-  * Enable fallback parsing behavior when scan row encounters invalid dashboard JSON
-  * @default false
-  */
-  scanRowInvalidDashboardParseFallbackEnabled?: boolean;
-  /**
   * Register legacy datasource apis that use the numeric id
   * @default false
   */
@@ -810,11 +805,6 @@ export interface FeatureToggles {
   */
   rolePickerDrawer?: boolean;
   /**
-  * Pick the dual write mode from database configs
-  * @default false
-  */
-  managedDualWriter?: boolean;
-  /**
   * Enables SRI checks for plugin assets
   * @default false
   */
@@ -1112,7 +1102,7 @@ export interface FeatureToggles {
   pluginsAutoUpdate?: boolean;
   /**
   * Enables the alerting list view v2 preview toggle
-  * @default true
+  * @default false
   */
   alertingListViewV2PreviewToggle?: boolean;
   /**
@@ -1260,11 +1250,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistory?: boolean;
-  /**
-  * Enable dual reader for unified storage search
-  * @default false
-  */
-  unifiedStorageSearchDualReaderEnabled?: boolean;
   /**
   * Supports __from and __to macros that always use the dashboard level time range
   * @default false
@@ -1721,6 +1706,11 @@ export interface FeatureToggles {
   * @default false
   */
   queryFetchConfigFromSettingsService?: boolean;
+  /**
+  * Enables heatmap visualization support for Pyroscope profiles
+  * @default false
+  */
+  profilesHeatmap?: boolean;
   /**
   * Enables the query service to do query caching
   * @default false
