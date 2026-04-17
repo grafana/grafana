@@ -77,8 +77,16 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 	filteredPluginIDs := map[string]bool{}
 	for _, pluginDef := range pluginDefinitions {
 		// filter out app sub plugins
-		if embeddedFilter == "0" && pluginDef.IncludedInAppID != "" {
-			continue
+		if pluginDef.IncludedInAppID != "" {
+			if embeddedFilter == "0" {
+				continue
+			}
+			if strings.HasPrefix(embeddedFilter, "include-") {
+				allowedType := strings.TrimPrefix(embeddedFilter, "include-")
+				if string(pluginDef.Type) != allowedType {
+					continue
+				}
+			}
 		}
 
 		// filter out core plugins
