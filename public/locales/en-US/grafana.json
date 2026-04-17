@@ -15655,6 +15655,9 @@
       }
     },
     "ensure-columns-transformer-editor": {
+      "description": {
+        "ensure-columns": "Ensure that the specified columns exist in the data frame."
+      },
       "name": {
         "ensure-columns": "Ensure columns"
       }

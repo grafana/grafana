@@ -28,7 +28,6 @@ import { InlineField, InlineSwitch, Input, Select } from '@grafana/ui';
 
 import darkImage from '../../images/dark/calculateField.svg';
 import lightImage from '../../images/light/calculateField.svg';
-import { rawStandardTransformers } from '../../standardTransformers';
 
 import { BinaryOperationOptionsEditor } from './BinaryOperationOptionsEditor';
 import { CumulativeOptionsEditor } from './CumulativeOptionsEditor';
@@ -87,7 +86,7 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
 
   useEffect(() => {
     const ctx = { interpolate: (v: string) => v };
-    const subscription = from(Promise.resolve(rawStandardTransformers.ensureColumnsTransformer))
+    const subscription = from(standardTransformersRegistry.get('ensureColumns').transformation())
       .pipe(
         mergeMap((t) =>
           of(input).pipe(

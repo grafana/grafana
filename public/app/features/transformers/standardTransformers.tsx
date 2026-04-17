@@ -82,7 +82,23 @@ import transposeLight from './images/light/transpose.svg';
 import { isSmoothingApplicable } from './smoothing/applicability';
 import { isTimeSeriesTableApplicable } from './timeSeriesTable/applicability';
 
-export const rawStandardTransformers = standardTransformers;
+const emptyLazyEditor = lazy(async () => ({ default: () => <></> }));
+
+function hiddenTransformer(
+  id: DataTransformerID,
+  transformation: TransformerRegistryItem['transformation']
+): TransformerRegistryItem {
+  return {
+    id,
+    transformation,
+    editor: emptyLazyEditor,
+    name: id,
+    description: '',
+    imageDark: '',
+    imageLight: '',
+    excludeFromPicker: true,
+  };
+}
 
 export const getStandardTransformers = (): TransformerRegistryItem[] => {
   return [
@@ -699,19 +715,22 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       imageDark: transposeDark,
       imageLight: transposeLight,
     },
-    // @ts-ignore: FIXME we need to figure out how to make a non-editor
-    // {
-    //   id: DataTransformerID.ensureColumns,
-    //   transformation: () => Promise.resolve(standardTransformers.ensureColumnsTransformer),
-    //   name: t('transformers.ensure-columns-transformer-editor.name.ensure-columns', 'Ensure columns'),
-    //   description: t(
-    //     'transformers.ensure-columns-transformer-editor.description.ensure-columns',
-    //     'Ensure that the specified columns exist in the data frame.'
-    //   ),
-    //   categories: new Set([TransformerCategory.CalculateNewFields]),
-    //   imageDark: reduceDark,
-    //   imageLight: reduceLight,
-    //   excludeFromPicker: true,
-    // },
+    hiddenTransformer(DataTransformerID.ensureColumns, () =>
+      Promise.resolve(standardTransformers.ensureColumnsTransformer)
+    ),
+    hiddenTransformer(DataTransformerID.noop, () => Promise.resolve(standardTransformers.noopTransformer)),
+    hiddenTransformer(DataTransformerID.order, () => Promise.resolve(standardTransformers.orderFieldsTransformer)),
+    hiddenTransformer(DataTransformerID.rename, () => Promise.resolve(standardTransformers.renameFieldsTransformer)),
+    hiddenTransformer(DataTransformerID.filterFields, () =>
+      Promise.resolve(standardTransformers.filterFieldsTransformer)
+    ),
+    hiddenTransformer(DataTransformerID.filterFrames, () =>
+      Promise.resolve(standardTransformers.filterFramesTransformer)
+    ),
+    hiddenTransformer(DataTransformerID.convertFrameType, () =>
+      Promise.resolve(standardTransformers.convertFrameTypeTransformer)
+    ),
+    // No dedicated append transformer exists; noop ensures safe passthrough for saved dashboards that reference this id
+    hiddenTransformer(DataTransformerID.append, () => Promise.resolve(standardTransformers.noopTransformer)),
   ];
 };
