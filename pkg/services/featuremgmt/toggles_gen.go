@@ -949,4 +949,8 @@ const (
 	// FlagClickHouseConfigValidation
 	// Enables validation on the ClickHouse data source configuration page
 	FlagClickHouseConfigValidation = "clickHouseConfigValidation"
+
+	// FlagDatasourceUseNewCRUDAPIs
+	// Use the new datasource API groups for datasource CRUD requests, backend flag
+	FlagDatasourceUseNewCRUDAPIs = "datasource.useNewCRUDAPIs"
 )

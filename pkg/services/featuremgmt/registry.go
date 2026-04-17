@@ -3029,6 +3029,14 @@ var (
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",
 		},
+		{
+			Name:        "datasource.useNewCRUDAPIs",
+			Description: "Use the new datasource API groups for datasource CRUD requests, backend flag",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true},
+			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Expression:  "false",
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle

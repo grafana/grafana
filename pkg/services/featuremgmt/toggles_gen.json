@@ -1675,6 +1675,19 @@
     },
     {
       "metadata": {
+        "name": "datasource.useNewCRUDAPIs",
+        "resourceVersion": "1776199197997",
+        "creationTimestamp": "2026-04-14T20:39:57Z"
+      },
+      "spec": {
+        "description": "Use the new datasource API groups for datasource CRUD requests, backend flag",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourceAPIServers",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-09-19T08:28:27Z"

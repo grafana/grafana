@@ -32,6 +32,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagGrafanaAdvisor,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // library panels in v0
 			featuremgmt.FlagQueryServiceWithConnections,
+			featuremgmt.FlagDatasourceUseNewCRUDAPIs,
 			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint,
 			// featuremgmt.FlagDatasourcesQueryTypes,
 			featuremgmt.FlagDatasourcesLoadOpenAPI,
