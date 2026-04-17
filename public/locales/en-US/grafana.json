@@ -15654,14 +15654,6 @@
         }
       }
     },
-    "ensure-columns-transformer-editor": {
-      "description": {
-        "ensure-columns": "Ensure that the specified columns exist in the data frame."
-      },
-      "name": {
-        "ensure-columns": "Ensure columns"
-      }
-    },
     "enum-mapping-editor": {
       "add-enum-value": "Add enum value",
       "generate-enum-values-from-data": "Generate enum values from data"
