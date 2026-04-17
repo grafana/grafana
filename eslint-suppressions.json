@@ -1398,11 +1398,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rules/Filter/RulesFilter.v1.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 4
-    }
-  },
   "public/app/features/alerting/unified/components/rules/RuleListGroupView.tsx": {
     "@grafana/no-locale-compare": {
       "count": 2

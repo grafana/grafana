@@ -10,15 +10,15 @@ import { setupDataSources } from 'app/features/alerting/unified/testSetup/dataso
 
 import { AccessControlAction } from '../../../../../types/accessControl';
 import NotificationPolicies from '../../NotificationPoliciesPage';
-import { useContactPointAbility } from '../../hooks/abilities/useContactPointAbility';
-import { useNotificationPolicyAbility } from '../../hooks/abilities/useNotificationPolicyAbility';
 import {
   type Ability,
-  NotificationPolicyAction,
   Granted,
   InsufficientPermissions,
   NotSupported,
+  NotificationPolicyAction,
 } from '../../hooks/abilities/types';
+import { useContactPointAbility } from '../../hooks/abilities/useContactPointAbility';
+import { useNotificationPolicyAbility } from '../../hooks/abilities/useNotificationPolicyAbility';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
 import { getRoutingTree, getRoutingTreeList, resetRoutingTreeMap } from '../../mocks/server/entities/k8s/routingtrees';
 import { KnownProvenance } from '../../types/knownProvenance';

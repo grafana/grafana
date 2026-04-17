@@ -1,4 +1,4 @@
-import { AccessControlAction } from 'app/types/accessControl';
+import { type AccessControlAction } from 'app/types/accessControl';
 
 import { instancesPermissions } from '../../utils/access-control';
 

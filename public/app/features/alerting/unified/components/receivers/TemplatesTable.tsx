@@ -8,9 +8,9 @@ import { CodeText } from 'app/features/alerting/unified/components/common/TextVa
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
 import { isGranted } from '../../hooks/abilities/abilityUtils';
+import { NotificationTemplateAction } from '../../hooks/abilities/types';
 import { useNotificationTemplateAbility } from '../../hooks/abilities/useNotificationTemplateAbility';;
 
-import { NotificationTemplateAction } from '../../hooks/abilities/types';
 import { getAlertTableStyles } from '../../styles/table';
 import { isProvisionedResource } from '../../utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';

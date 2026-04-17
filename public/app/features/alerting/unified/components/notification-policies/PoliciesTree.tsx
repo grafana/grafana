@@ -6,9 +6,10 @@ import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useContactPointsWithStatus } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
-import { useAlertGroupAbility } from '../../hooks/abilities/useAlertGroupAbility';;
 
-import { useContactPointAbility } from '../../hooks/abilities/useContactPointAbility';;
+;
+
+;
 
 import { AlertGroupAction, ContactPointAction } from 'app/features/alerting/unified/hooks/abilities/types';
 import { type FormAmRoute } from 'app/features/alerting/unified/types/amroutes';
@@ -21,6 +22,8 @@ import {
   type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 
+import { useAlertGroupAbility } from '../../hooks/abilities/useAlertGroupAbility';
+import { useContactPointAbility } from '../../hooks/abilities/useContactPointAbility';
 import { anyOfRequestState, isError } from '../../hooks/useAsync';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { type ContactPointsState } from '../../types/alerting';

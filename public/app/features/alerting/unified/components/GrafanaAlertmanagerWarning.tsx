@@ -7,11 +7,11 @@ import { Alert, useStyles2 } from '@grafana/ui';
 import { AlertmanagerChoice } from '../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { isGranted } from '../hooks/abilities/abilityUtils';
+import { NotificationPolicyAction, SilenceAction } from '../hooks/abilities/types';
 import { useNotificationPolicyAbility } from '../hooks/abilities/useNotificationPolicyAbility';;
 
 import { useSilenceAbility } from '../hooks/abilities/useSilenceAbility';;
 
-import { NotificationPolicyAction, SilenceAction } from '../hooks/abilities/types';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 interface GrafanaAlertmanagerWarningProps {

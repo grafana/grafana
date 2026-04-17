@@ -9,9 +9,9 @@ import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { type AlertQuery, type Labels } from 'app/types/unified-alerting-dto';
 
 import { isGranted } from '../../../hooks/abilities/abilityUtils';
+import { NotificationPolicyAction } from '../../../hooks/abilities/types';
 import { useNotificationPolicyAbility } from '../../../hooks/abilities/useNotificationPolicyAbility';;
 
-import { NotificationPolicyAction } from '../../../hooks/abilities/types';
 import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
 import { type Folder, type KBObjectArray } from '../../../types/rule-form';
 import {

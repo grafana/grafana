@@ -20,6 +20,7 @@ import {
   useListNotificationPolicyRoutes,
 } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
 import { isGranted } from 'app/features/alerting/unified/hooks/abilities/abilityUtils';
+
 import { useAlertGroupAbility } from './hooks/abilities/useAlertGroupAbility';;
 
 import { useNotificationPolicyAbility } from './hooks/abilities/useNotificationPolicyAbility';;

@@ -7,17 +7,16 @@ import { config } from '@grafana/runtime';
 import { useSelector } from 'app/types/store';
 
 import { isGranted } from '../hooks/abilities/abilityUtils';
-import { useContactPointAbility } from '../hooks/abilities/useContactPointAbility';
-import { useNotificationPolicyAbility } from '../hooks/abilities/useNotificationPolicyAbility';
-import { useNotificationTemplateAbility } from '../hooks/abilities/useNotificationTemplateAbility';
-import { useTimeIntervalAbility } from '../hooks/abilities/useTimeIntervalAbility';
 import {
   ContactPointAction,
   NotificationPolicyAction,
   NotificationTemplateAction,
   TimeIntervalAction,
 } from '../hooks/abilities/types';
-
+import { useContactPointAbility } from '../hooks/abilities/useContactPointAbility';
+import { useNotificationPolicyAbility } from '../hooks/abilities/useNotificationPolicyAbility';
+import { useNotificationTemplateAbility } from '../hooks/abilities/useNotificationTemplateAbility';
+import { useTimeIntervalAbility } from '../hooks/abilities/useTimeIntervalAbility';
 import { ALERTING_PATHS, NAV_IDS } from '../utils/navigation';
 
 /**

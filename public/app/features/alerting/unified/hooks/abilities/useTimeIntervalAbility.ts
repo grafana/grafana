@@ -2,7 +2,7 @@ import {
   PERMISSIONS_TIME_INTERVALS_MODIFY,
   PERMISSIONS_TIME_INTERVALS_READ,
 } from 'app/features/alerting/unified/components/mute-timings/permissions';
-import { AccessControlAction } from 'app/types/accessControl';
+import { type AccessControlAction } from 'app/types/accessControl';
 
 import { type MuteTiming } from '../../components/mute-timings/useMuteTimings';
 import { notificationsPermissions } from '../../utils/access-control';
@@ -34,7 +34,7 @@ export function useTimeIntervalAbility(payload: TimeIntervalAbilityParam): Abili
 
     case TimeIntervalAction.Update:
     case TimeIntervalAction.Delete: {
-      if (payload.context?.provisioned) return Provisioned;
+      if (payload.context?.provisioned) {return Provisioned;}
       return makeAbility(true, PERMISSIONS[payload.action]);
     }
   }

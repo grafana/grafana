@@ -9,7 +9,7 @@ import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useSilenceAbility } from '../../hooks/abilities/useSilenceAbility';;
 
 import { useGlobalRuleAbility } from '../../hooks/abilities/ruleAbilities';
-import { SilenceAction, RuleAction } from '../../hooks/abilities/types';
+import { RuleAction, SilenceAction } from '../../hooks/abilities/types';
 import { isGrafanaRulesSource } from '../../utils/datasource';
 import { makeAMLink, makeLabelBasedSilenceLink } from '../../utils/misc';
 import { AnnotationDetailsField } from '../AnnotationDetailsField';

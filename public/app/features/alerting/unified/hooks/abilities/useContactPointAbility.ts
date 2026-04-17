@@ -29,19 +29,19 @@ export function useContactPointAbility(payload: ContactPointAbilityParam): Abili
       return makeAbility(true, PERMISSIONS[payload.action]);
 
     case ContactPointAction.Update: {
-      if (isK8sEntityProvisioned(payload.context)) return Provisioned;
-      if (!canEditEntity(payload.context)) return InsufficientPermissions(PERMISSIONS[ContactPointAction.Update]);
+      if (isK8sEntityProvisioned(payload.context)) {return Provisioned;}
+      if (!canEditEntity(payload.context)) {return InsufficientPermissions(PERMISSIONS[ContactPointAction.Update]);}
       return makeAbility(true, PERMISSIONS[ContactPointAction.Update]);
     }
 
     case ContactPointAction.Delete: {
-      if (isK8sEntityProvisioned(payload.context)) return Provisioned;
-      if (!canDeleteEntity(payload.context)) return InsufficientPermissions(PERMISSIONS[ContactPointAction.Delete]);
+      if (isK8sEntityProvisioned(payload.context)) {return Provisioned;}
+      if (!canDeleteEntity(payload.context)) {return InsufficientPermissions(PERMISSIONS[ContactPointAction.Delete]);}
       return makeAbility(true, PERMISSIONS[ContactPointAction.Delete]);
     }
 
     case ContactPointAction.Export: {
-      if (isK8sEntityProvisioned(payload.context)) return Provisioned;
+      if (isK8sEntityProvisioned(payload.context)) {return Provisioned;}
       return makeAbility(true, PERMISSIONS[ContactPointAction.View]);
     }
   }

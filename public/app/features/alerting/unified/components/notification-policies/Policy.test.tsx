@@ -14,8 +14,8 @@ import {
   type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 
+import { type Ability, Granted, InsufficientPermissions, NotSupported, NotificationPolicyAction } from '../../hooks/abilities/types';
 import { useNotificationPolicyAbility } from '../../hooks/abilities/useNotificationPolicyAbility';
-import { type Ability, Granted, InsufficientPermissions, NotificationPolicyAction, NotSupported } from '../../hooks/abilities/types';
 import { mockReceiversState } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { KnownProvenance } from '../../types/knownProvenance';

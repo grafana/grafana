@@ -10,11 +10,13 @@ import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerti
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Field, Icon, Input, Label, Stack, Tooltip } from '@grafana/ui';
-import { useContactPointAbility } from '../../hooks/abilities/useContactPointAbility';;
+
+;
 
 import { ContactPointAction } from 'app/features/alerting/unified/hooks/abilities/types';
 import { type ObjectMatcher, type RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
+import { useContactPointAbility } from '../../hooks/abilities/useContactPointAbility';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { matcherToObjectMatcher } from '../../utils/alertmanager';

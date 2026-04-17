@@ -15,10 +15,6 @@ import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { isAvailable } from './abilityUtils';
-import { useContactPointAbility } from './useContactPointAbility';
-import { useNotificationTemplateAbility } from './useNotificationTemplateAbility';
-import { useSilenceAbility } from './useSilenceAbility';
-import { useTimeIntervalAbility } from './useTimeIntervalAbility';
 import {
   ContactPointAction,
   NotificationTemplateAction,
@@ -26,6 +22,10 @@ import {
   TimeIntervalAction,
   isInsufficientPermissions,
 } from './types';
+import { useContactPointAbility } from './useContactPointAbility';
+import { useNotificationTemplateAbility } from './useNotificationTemplateAbility';
+import { useSilenceAbility } from './useSilenceAbility';
+import { useTimeIntervalAbility } from './useTimeIntervalAbility';
 
 setupMswServer();
 

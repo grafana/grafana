@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
+
 import { useAlertGroupAbility } from '../../hooks/abilities/useAlertGroupAbility';;
 
 import { AlertGroupAction } from 'app/features/alerting/unified/hooks/abilities/types';

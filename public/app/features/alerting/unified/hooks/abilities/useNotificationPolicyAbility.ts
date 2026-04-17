@@ -2,7 +2,7 @@ import {
   PERMISSIONS_NOTIFICATION_POLICIES_MODIFY,
   PERMISSIONS_NOTIFICATION_POLICIES_READ,
 } from 'app/features/alerting/unified/components/notification-policies/permissions';
-import { AccessControlAction } from 'app/types/accessControl';
+import { type AccessControlAction } from 'app/types/accessControl';
 
 import { notificationsPermissions } from '../../utils/access-control';
 import { isProvisionedResource } from '../../utils/k8s/utils';
@@ -52,7 +52,7 @@ export function useNotificationPolicyAbility(payload: NotificationPolicyAbilityP
     case NotificationPolicyAction.UpdateTree:
     case NotificationPolicyAction.Delete:
     case NotificationPolicyAction.Export: {
-      if (isProvisionedResource(payload.context.provenance)) return Provisioned;
+      if (isProvisionedResource(payload.context.provenance)) {return Provisioned;}
       return makeAbility(true, PERMISSIONS[payload.action]);
     }
   }
