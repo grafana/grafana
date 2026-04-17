@@ -642,9 +642,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 # @grafana/plugin-configs
 /packages/grafana-plugin-configs/ @grafana/grafana-frontend-platform
 
-# @grafana/prometheus
-/packages/grafana-prometheus/ @grafana/data-sources-plugins
-
 # @grafana/runtime
 /packages/grafana-runtime/CHANGELOG.md @grafana/grafana-frontend-platform
 /packages/grafana-runtime/LICENSE_APACHE2 @grafana/grafana-frontend-platform
