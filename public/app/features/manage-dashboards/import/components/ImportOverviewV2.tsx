@@ -1,11 +1,15 @@
 import { useMemo } from 'react';
 
+import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { AppEvents, locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { Form } from 'app/core/components/Form/Form';
+import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
+import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { useDispatch } from 'app/types/store';
 
 import { type DashboardInputs, DashboardSource, type ImportFormDataV2 } from '../../types';
 import { truncateFloatGridItems } from '../utils/floatingGridItems';
@@ -27,6 +31,7 @@ type Props = {
 };
 
 export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source, folderUid, onCancel }: Props) {
+  const dispatch = useDispatch();
   const { layout: normalizedLayout, modified: hasFloatGridItems } = useMemo(
     () => truncateFloatGridItems(dashboard.layout),
     [dashboard.layout]
@@ -50,6 +55,12 @@ export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source
         ...form,
         dashboard: dashboardWithDataSources,
       });
+
+      // The v2 save path goes directly through the app-platform Dashboard client and bypasses
+      // RTK Query, so we have to invalidate the browse-folder cache ourselves. Otherwise the
+      // newly-imported dashboard does not appear in the destination folder until a hard refresh.
+      dispatch(refetchChildren({ parentUID: form.folderUid, pageSize: PAGE_SIZE }));
+      invalidateQuotaUsage(dispatch);
 
       if (result.url) {
         const dashboardUrl = locationUtil.stripBaseFromUrl(result.url);
