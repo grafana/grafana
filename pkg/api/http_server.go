@@ -217,6 +217,7 @@ type HTTPServer struct {
 	promRegister                    prometheus.Registerer
 	promGatherer                    prometheus.Gatherer
 	clientConfigProvider            grafanaapiserver.DirectRestConfigProvider
+	clientProvider                  grafanaapiserver.ClientProvider
 	namespacer                      request.NamespaceMapper
 	anonService                     anonymous.Service
 	userVerifier                    user.Verifier
@@ -274,7 +275,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	accesscontrolService accesscontrol.Service, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
-	starApi *starApi.API, promRegister prometheus.Registerer, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, anonService anonymous.Service,
+	starApi *starApi.API, promRegister prometheus.Registerer, anonService anonymous.Service,
+	clientConfigProvider grafanaapiserver.DirectRestConfigProvider, clientProvider grafanaapiserver.ClientProvider,
 	userVerifier user.Verifier, pluginPreinstall pluginchecker.Preinstall, publicDashboardsService publicdashboards.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
@@ -374,6 +376,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		promRegister:                 promRegister,
 		promGatherer:                 promGatherer,
 		clientConfigProvider:         clientConfigProvider,
+		clientProvider:               clientProvider,
 		namespacer:                   request.GetNamespaceMapper(cfg),
 		anonService:                  anonService,
 		userVerifier:                 userVerifier,

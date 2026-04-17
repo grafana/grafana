@@ -11,7 +11,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 
 	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -121,18 +120,18 @@ func (hs *HTTPServer) getShortURL(c *contextmodel.ReqContext) response.Response 
 }
 
 type shortURLK8sHandler struct {
-	namespacer           request.NamespaceMapper
-	gvr                  schema.GroupVersionResource
-	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
-	cfg                  *setting.Cfg
+	namespacer     request.NamespaceMapper
+	gvr            schema.GroupVersionResource
+	clientProvider grafanaapiserver.ClientProvider
+	cfg            *setting.Cfg
 }
 
 func newShortURLK8sHandler(hs *HTTPServer) *shortURLK8sHandler {
 	return &shortURLK8sHandler{
-		gvr:                  v1beta1.ShortURLKind().GroupVersionResource(),
-		namespacer:           request.GetNamespaceMapper(hs.Cfg),
-		clientConfigProvider: hs.clientConfigProvider,
-		cfg:                  hs.Cfg,
+		gvr:            v1beta1.ShortURLKind().GroupVersionResource(),
+		namespacer:     request.GetNamespaceMapper(hs.Cfg),
+		clientProvider: hs.clientProvider,
+		cfg:            hs.Cfg,
 	}
 }
 
@@ -166,13 +165,13 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 		return
 	}
 
-	client, err := kubernetes.NewForConfig(sk8s.clientConfigProvider.GetDirectRestConfig(c))
+	client, err := sk8s.clientProvider.GetRestClient(c.Req.Context())
 	if err != nil {
 		c.JsonApiErr(500, "client", err)
 		return
 	}
 
-	result := client.RESTClient().Get().
+	result := client.Get().
 		Prefix("apis", v1beta1.APIGroup, v1beta1.APIVersion).
 		Namespace(sk8s.namespacer(c.OrgID)).
 		Resource(v1beta1.ShortURLKind().Plural()).

@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -34,8 +35,9 @@ var (
 )
 
 type APIBuilder struct {
-	authorizer  authorizer.Authorizer
-	legacyPrefs rest.Storage
+	authorizer     authorizer.Authorizer
+	clientProvider apiserver.ClientProvider
+	legacyPrefs    rest.Storage
 
 	merger *merger // joins all preferences
 }
@@ -47,10 +49,12 @@ func RegisterAPIService(
 	prefs pref.Service,
 	users user.Service,
 	apiregistration builder.APIRegistrar,
+	clientProvider apiserver.ClientProvider,
 ) *APIBuilder {
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
-		merger: newMerger(cfg, sql),
+		clientProvider: clientProvider,
+		merger:         newMerger(cfg, sql),
 		authorizer: &utils.AuthorizeFromName{
 			OKNames: []string{"merged"},
 			Teams:   sql, // should be from the IAM service

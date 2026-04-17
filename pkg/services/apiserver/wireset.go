@@ -9,6 +9,7 @@ import (
 var WireSet = wire.NewSet(
 	builder.ProvideBuilderMetrics,
 	ProvideEventualRestConfigProvider,
+	ProvideClientProvider,
 	wire.Bind(new(RestConfigProvider), new(*eventualRestConfigProvider)),
 	wire.Bind(new(DirectRestConfigProvider), new(*eventualRestConfigProvider)),
 	ProvideService,
