@@ -24,7 +24,7 @@ func TestMapperRegistry_DatasourceWildcard(t *testing.T) {
 		require.NotNil(t, mapping)
 		assert.Equal(t, "datasources:uid:", mapping.Prefix())
 		all := reg.GetAll(group)
-		require.Len(t, all, 1)
+		require.Len(t, all, 4)
 	}
 
 	// Security: wildcard-matched group must not resolve to resources from other groups
