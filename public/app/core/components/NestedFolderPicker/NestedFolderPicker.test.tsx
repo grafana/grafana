@@ -65,7 +65,6 @@ describe('NestedFolderPicker', () => {
 
   afterEach(() => {
     jest.resetAllMocks();
-    jest.restoreAllMocks();
   });
 
   it('renders a button with the correct label when no folder is selected', async () => {
