@@ -53,11 +53,10 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 	}
 
 	gitRepo, err := git.NewRepository(ctx, r, git.RepositoryConfig{
-		URL:       r.Spec.GitHub.URL,
-		Branch:    r.Spec.GitHub.Branch,
-		Path:      r.Spec.GitHub.Path,
-		Token:     token,
-		TokenUser: r.Spec.GitHub.TokenUser,
+		URL:    r.Spec.GitHub.URL,
+		Branch: r.Spec.GitHub.Branch,
+		Path:   r.Spec.GitHub.Path,
+		Token:  token,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error creating git repository: %w", err)

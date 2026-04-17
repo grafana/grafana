@@ -2552,6 +2552,9 @@ func (h *GitTestHelper) CreateFolderTargetGitRepo(t *testing.T, repoName string,
 }
 
 // CreateGithubRepo creates a github-type repository backed by the gittest server.
+// The repo will NOT become healthy (git auth uses default "git" user which doesn't
+// exist on gittest), but webhooks are created before the health check runs, so
+// Status.Webhook will be populated if the GitHub API mock is configured.
 // workflows is optional; defaults to ["write"].
 // webhookBaseURL is optional; pass it to enable webhook creation on the repo.
 func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialFiles map[string][]byte, webhookBaseURL string, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
@@ -2601,7 +2604,6 @@ func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialF
 		"Title":         fmt.Sprintf("Test Repository %s", repoName),
 		"URL":           remote.URL,
 		"Branch":        "main",
-		"TokenUser":     user.Username,
 		"SyncTarget":    "instance",
 		"Token":         user.Password,
 		"WorkflowsJSON": string(workflowsJSON),
@@ -2615,7 +2617,9 @@ func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialF
 	_, err = h.Repositories.Resource.Create(ctx, repoObj, metav1.CreateOptions{})
 	require.NoError(t, err, "failed to create repository")
 
-	h.waitForReadyRepository(t, repoName)
+	// Don't wait for healthy — git auth will fail (default tokenUser "git"
+	// doesn't exist on gittest). Webhooks are created before health check,
+	// so callers should poll for Status.Webhook instead.
 
 	return remote, local
 }

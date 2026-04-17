@@ -873,13 +873,6 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 							Format:      "",
 						},
 					},
-					"tokenUser": {
-						SchemaProps: spec.SchemaProps{
-							Description: "TokenUser is the user that will be used to access the repository if it's a personal access token.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"generateDashboardPreviews": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
