@@ -54,7 +54,18 @@ Git Sync is available for any Git provider through a Pure Git repository type, a
 
 Alternatively, on-prem file provisioning in Grafana lets you include resources, including folders and dashboard JSON files, that are stored in a local file system. Refer to [Provision resources on-prem](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/) for more details.
 
-Select any of the following options to proceed:
+Select any of these options to proceed:
+
+- [GitHub](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-github)
+- [GitLab](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-gitlab)
+- [Bitbucket](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-bitbucket)
+- [Pure Git](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-pure-git)
+
+{{< admonition type="note" >}}
+
+If you're using self-hosted Git servers or GitHub Enterprise refer to [Configure with Pure Git](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-pure-git) for instructions on how to set up Git Sync.
+
+{{< /admonition >}}
 
 ### Configure with GitHub
 
