@@ -88,6 +88,15 @@ func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		return err
 	}
 
+	// Required for patch (hub version)
+	scheme.AddKnownTypes(schema.GroupVersion{
+		Group:   gv.Group,
+		Version: runtime.APIVersionInternal,
+	},
+		&preferences.Preferences{},
+		&preferences.PreferencesList{},
+	)
+
 	metav1.AddToGroupVersion(scheme, gv)
 	return scheme.SetVersionPriority(gv)
 }

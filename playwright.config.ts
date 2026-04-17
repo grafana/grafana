@@ -43,6 +43,11 @@ export const baseConfig: PlaywrightTestConfig<PluginOptions, {}> = {
     screenshot: 'only-on-failure',
     permissions: ['clipboard-read', 'clipboard-write'],
     provisioningRootDir: path.join(process.cwd(), process.env.PROV_DIR ?? 'conf/provisioning'),
+    // Preserve legacy dashboard layout behavior in E2E unless a test overrides this (shallow merge on
+    // `featureToggles` would otherwise drop toggles when a spec sets only a subset).
+    featureToggles: {
+      dashboardNewLayouts: false,
+    },
   },
 };
 

@@ -26,7 +26,6 @@ keywords:
   - json
   - model
   - schema v2
-  - v1 resource
   - v2 resource
   - classic
 labels:
@@ -47,23 +46,31 @@ Grafana dashboards are represented as JSON objects that store metadata, panels, 
 
 There are currently three dashboard JSON schema models:
 
-- [Classic](#classic-model) - A non-Kubernetes resource used before the adoption of the Kubernetes API by Grafana in v12.2.0. It's been widely used for exporting, importing, and sharing dashboards in the Grafana dashboards collection at [grafana.com/dashboards](https://grafana.com/grafana/dashboards/).
-- [V1 Resource](#v1-resource-model) - The Classic dashboard schema formatted as a Kubernetes-style resource. Its `spec` property contains the Classic model of the schema. This is the default format for API communication after Grafana v12.2.0, which enabled the Kubernetes Platform API as default backend for Grafana dashboards. Dashboards created using the Classic model can be exported using either the Classic or the V1 Resource format.
-- [V2 Resource](#v2-resource-model) - The latest format, supporting new features such as advanced layouts and conditional rendering. It models all dashboard elements as Kubernetes kinds, following Kubernetes conventions for declaring dashboard components. This format is future-proof and represents the evolving standard for dashboards.
+- [V2 Resource](#v2-resource-model): The current schema, supporting new features such as advanced layouts and conditional rendering. It models all dashboard elements as Kubernetes kinds, following Kubernetes conventions for declaring dashboard components.
+- [Classic](#classic-model): A non-Kubernetes resource that was the default before Grafana v13.0. It's been widely used for exporting, importing, and sharing dashboards in the Grafana dashboards collection at [grafana.com/dashboards](https://grafana.com/grafana/dashboards/). Dashboards created using this model can be exported using either this model or V2.
 
 {{< admonition type="note" >}}
-[Observability as Code](https://grafana.com/docs/grafana/latest/as-code/observability-as-code/) works with all versions of the JSON model, and it's fully compatible with version 2.
+[Observability as Code](https://grafana.com/docs/grafana/latest/as-code/observability-as-code/) works with both versions of the JSON model, but it's fully compatible with version 2.
 {{< /admonition >}}
 
 ## Access and update the JSON model {#view-json}
 
 To access the JSON representation of a dashboard:
 
-1. Click **Edit**.
+1. Navigate to the dashboard.
+1. Click **Edit** in the top-right corner.
 1. In the toolbar, click the **Dashboard options** icon.
 1. In the sidebar, click **Settings**.
 1. Go to the **JSON Model** tab.
-1. When you've finished viewing the JSON, click **Back to dashboard** and **Exit edit**.
+1. When you've finished updating the JSON, click **Save changes** at the bottom of the tab.
+1. Click **Back to dashboard** and **Exit edit**.
+
+## V2 Resource model
+
+For the detailed V2 Resource model schema, refer to the [Swagger documentation](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2beta1).
+You can also reach the Swagger schema documentation from your Grafana Cloud instance at: https://grafana.com/launch/swagger.
+
+<!-- how does this work? -->
 
 ## Classic model
 
@@ -308,82 +315,3 @@ Usage of the above mentioned fields in the templating section is explained below
 | **refresh**     | configures when to refresh a variable                                                                   |
 | **regex**       | extracts part of a series name or metric node segment                                                   |
 | **type**        | type of variable, i.e. `custom`, `query` or `interval`                                                  |
-
-## V1 Resource model
-
-The V1 Resource schema model formats the [Classic JSON model](#classic-model) schema as a Kubernetes-style resource.
-The `spec` property of the schema contains the Classic-style model of the schema.
-
-Dashboards created using the Classic model can be exported using either this model or the Classic one.
-
-The following code snippet shows the fields included in the V1 Resource model.
-
-```json
-{
-  "apiVersion": "dashboard.grafana.app/v1beta1",
-  "kind": "Dashboard",
-  "metadata": {
-    "name": "isnt5ss",
-    "namespace": "stacks-521104",
-    "uid": "92674c0e-0360-4bb4-99ab-fb150581376d",
-    "resourceVersion": "1764705030717045",
-    "generation": 1,
-    "creationTimestamp": "2025-12-02T19:50:30Z",
-    "labels": {
-      "grafana.app/deprecatedInternalID": "1329"
-    },
-    "annotations": {
-      "grafana.app/createdBy": "user:u000000002",
-      "grafana.app/folder": "",
-      "grafana.app/saved-from-ui": "Grafana Cloud (instant)"
-    }
-  },
-  "spec": {
-    "annotations": {
-      "list": [
-        {
-          "builtIn": 1,
-          "datasource": {
-            "type": "grafana",
-            "uid": "-- Grafana --"
-          },
-          "enable": true,
-          "hide": true,
-          "iconColor": "rgba(0, 211, 255, 1)",
-          "name": "Annotations & Alerts",
-          "type": "dashboard"
-        }
-      ]
-    },
-    "editable": true,
-    "fiscalYearStartMonth": 0,
-    "graphTooltip": 0,
-    "id": 1329,
-    "links": [],
-    "panels": [],
-    "preload": false,
-    "schemaVersion": 42,
-    "tags": [],
-    "templating": {
-      "list": []
-    },
-    "time": {
-      "from": "now-6h",
-      "to": "now"
-    },
-    "timepicker": {},
-    "timezone": "Africa/Abidjan",
-    "title": "Graphite suggestions",
-    "uid": "isnt5ss",
-    "version": 1,
-    "weekStart": ""
-  },
-  "status": {}
-}
-```
-
-## V2 Resource model
-
-{{< docs/public-preview product="Dashboard JSON schema v2" >}}
-
-For the detailed V2 Resource model schema, refer to the [Swagger documentation](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2beta1).

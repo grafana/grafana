@@ -55,7 +55,7 @@ func (m *TracingHeaderMiddleware) applyHeaders(ctx context.Context, req backend.
 		if gotVal == "" {
 			continue
 		}
-		if !utf8.ValidString(gotVal) {
+		if !isGRPCSafeHeaderValue(gotVal) {
 			gotVal = sanitizeHTTPHeaderValueForGRPC(gotVal)
 		}
 		req.SetHTTPHeader(headerName, gotVal)
@@ -111,27 +111,51 @@ func (m *TracingHeaderMiddleware) RunStream(ctx context.Context, req *backend.Ru
 	return m.BaseHandler.RunStream(ctx, req, sender)
 }
 
+// isGRPCSafeHeaderValue reports whether every byte in s is a printable ASCII
+// character (0x20–0x7E), which is the range allowed in gRPC metadata values.
+func isGRPCSafeHeaderValue(s string) bool {
+	for i := 0; i < len(s); i++ {
+		b := s[i]
+		if b < 0x20 || b > 0x7E {
+			return false
+		}
+	}
+	return true
+}
+
 // sanitizeHTTPHeaderValueForGRPC sanitizes header values according to HTTP/2 gRPC specification.
 // The spec defines that header values must consist of printable ASCII characters 0x20 (space) - 0x7E(tilde) inclusive.
-// First attempts to decode any percent-encoded characters, then encodes invalid characters.
+//
+// If the value is already valid UTF-8, any bytes outside the printable ASCII range are
+// percent-encoded directly (e.g. é as UTF-8 0xC3 0xA9 → %C3%A9).
+//
+// If the value is NOT valid UTF-8 (e.g. a raw ISO-8859-1 byte stream as sent by some
+// browsers), it is first decoded from ISO-8859-1 to UTF-8 and then percent-encoded,
+// producing the same %C3%A9 representation for é.
 func sanitizeHTTPHeaderValueForGRPC(value string) string {
-	// First try to decode characters that were encoded by the frontend
-	decoder := charmap.ISO8859_1.NewDecoder()
-	decoded, _, err := transform.Bytes(decoder, []byte(value))
-	// If decoding fails, work with the original value
-	if err != nil {
-		decoded = []byte(value)
+	var input []byte
+	if utf8.ValidString(value) {
+		// Already valid UTF-8: percent-encode non-printable-ASCII bytes directly.
+		input = []byte(value)
+	} else {
+		// Not valid UTF-8: assume ISO-8859-1 (Latin-1) bytes sent by the browser.
+		// Convert to UTF-8 first so the percent-encoded output is consistent.
+		decoder := charmap.ISO8859_1.NewDecoder()
+		decoded, _, err := transform.Bytes(decoder, []byte(value))
+		if err != nil {
+			decoded = []byte(value)
+		}
+		input = decoded
 	}
+
 	var sanitized strings.Builder
-	sanitized.Grow(len(decoded)) // Pre-allocate reasonable capacity
-	// Then encode invalid characters
-	for _, b := range decoded {
+	sanitized.Grow(len(input))
+	for _, b := range input {
 		if b >= 0x20 && b <= 0x7E {
 			sanitized.WriteByte(b)
 		} else {
-			sanitized.WriteString(fmt.Sprintf("%%%02X", b))
+			fmt.Fprintf(&sanitized, "%%%02X", b)
 		}
 	}
-
 	return sanitized.String()
 }

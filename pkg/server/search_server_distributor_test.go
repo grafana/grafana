@@ -395,12 +395,11 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	features := featuremgmt.WithFeatures()
 	docBuilders, err := InitializeDocumentBuilders(cfg)
 	require.NoError(t, err)
-	tracer := noop.NewTracerProvider().Tracer("test-tracer")
 	require.NoError(t, err)
 	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
 	require.NoError(t, err)
 	cfg.DisablePruner = dbType == "sqlite3"
-	backend, err := sql.NewStorageBackend(cfg, nil, nil, nil, tracer, false)
+	backend, err := sql.NewStorageBackend(cfg, nil, nil, nil, false)
 	require.NoError(t, err)
 	backendService := backend.(services.Service)
 	require.NotNil(t, backendService)
@@ -408,7 +407,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	server, err := sql.NewResourceServer(sql.ServerOptions{
 		Backend:       backend,
 		Cfg:           cfg,
-		Tracer:        tracer,
+		Tracer:        noop.NewTracerProvider().Tracer("test-tracer"),
 		Reg:           nil,
 		AccessClient:  nil,
 		SearchOptions: searchOpts,

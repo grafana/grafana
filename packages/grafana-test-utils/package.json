@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/test-utils",
-  "version": "13.0.0-pre",
+  "version": "13.1.0-pre",
   "private": true,
   "description": "Grafana test utils & Mock API",
   "keywords": [
@@ -70,6 +70,6 @@
     "@types/lodash": "4.17.20",
     "@types/node": "24.10.1",
     "jest": "29.7.0",
-    "typescript": "5.9.2"
+    "typescript": "6.0.2"
   }
 }

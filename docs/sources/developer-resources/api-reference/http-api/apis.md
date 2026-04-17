@@ -19,13 +19,19 @@ menuTitle: API Structure
 weight: 01
 ---
 
-# The API structure in Grafana
+# The new API structure in Grafana
 
 {{< admonition type="note" >}}
 Available in Grafana 12 and later.
 {{< /admonition >}}
 
-The new Grafana HTTP APIs follow a standardized API structure alongside consistent API versioning.
+Grafana 13 marks the deprecation of legacy API endpoints (`/api`) in favor of a new generation of improved APIs (`/apis`), a Kubernetes-style API layer which follows a standardized API structure alongside consistent API versioning.
+
+## Migrate from legacy `api` endpoints
+
+**Legacy APIs are not being disabled for the moment**. Removal of legacy APIs is planned for a future major release, and any breaking changes will be announced well in advance to avoid disruptions.
+
+Note that while Grafana is working on migrating existing APIs to the new `/apis` model, currently there may not be an exact match to the legacy API you're using.
 
 ## API structure
 

@@ -15,7 +15,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/authlib/types"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -26,8 +25,6 @@ var _ ResourceIndex = &MockResourceIndex{}
 
 // Mock implementations
 type MockResourceIndex struct {
-	mock.Mock
-
 	updateIndexError error
 
 	updateIndexMu    sync.Mutex
@@ -40,29 +37,24 @@ func (m *MockResourceIndex) BuildInfo() (IndexBuildInfo, error) {
 	return m.buildInfo, nil
 }
 
-func (m *MockResourceIndex) BulkIndex(req *BulkIndexRequest) error {
-	args := m.Called(req)
-	return args.Error(0)
+func (m *MockResourceIndex) BulkIndex(_ *BulkIndexRequest) error {
+	return nil
 }
 
-func (m *MockResourceIndex) Search(ctx context.Context, access types.AccessClient, req *resourcepb.ResourceSearchRequest, federate []ResourceIndex, stats *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
-	args := m.Called(ctx, access, req, federate)
-	return args.Get(0).(*resourcepb.ResourceSearchResponse), args.Error(1)
+func (m *MockResourceIndex) Search(_ context.Context, _ types.AccessClient, _ *resourcepb.ResourceSearchRequest, _ []ResourceIndex, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
+	return nil, fmt.Errorf("not expected")
 }
 
-func (m *MockResourceIndex) CountManagedObjects(ctx context.Context, stats *SearchStats) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
-	args := m.Called(ctx)
-	return args.Get(0).([]*resourcepb.CountManagedObjectsResponse_ResourceCount), args.Error(1)
+func (m *MockResourceIndex) CountManagedObjects(_ context.Context, _ *SearchStats) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
+	return nil, fmt.Errorf("not expected")
 }
 
-func (m *MockResourceIndex) DocCount(ctx context.Context, folder string, stats *SearchStats) (int64, error) {
-	args := m.Called(ctx, folder)
-	return args.Get(0).(int64), args.Error(1)
+func (m *MockResourceIndex) DocCount(_ context.Context, _ string, _ *SearchStats) (int64, error) {
+	return 0, nil
 }
 
-func (m *MockResourceIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest, stats *SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
-	args := m.Called(ctx, req)
-	return args.Get(0).(*resourcepb.ListManagedObjectsResponse), args.Error(1)
+func (m *MockResourceIndex) ListManagedObjects(_ context.Context, _ *resourcepb.ListManagedObjectsRequest, _ *SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
+	return nil, fmt.Errorf("not expected")
 }
 
 func (m *MockResourceIndex) UpdateIndex(_ context.Context) (int64, error) {
@@ -73,18 +65,12 @@ func (m *MockResourceIndex) UpdateIndex(_ context.Context) (int64, error) {
 	return 0, m.updateIndexError
 }
 
-var _ DocumentBuilder = &MockDocumentBuilder{}
+// fakeDocumentBuilder implements DocumentBuilder for testing.
+// BuildDocument is never called in these tests — the struct is only used as a cache entry.
+type fakeDocumentBuilder struct{}
 
-type MockDocumentBuilder struct {
-	mock.Mock
-}
-
-func (m *MockDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, resourceVersion int64, value []byte) (*IndexableDocument, error) {
-	args := m.Called(ctx, key, resourceVersion, value)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*IndexableDocument), nil
+func (f *fakeDocumentBuilder) BuildDocument(_ context.Context, _ *resourcepb.ResourceKey, _ int64, _ []byte) (*IndexableDocument, error) {
+	return nil, fmt.Errorf("not expected")
 }
 
 // mockStorageBackend implements StorageBackend for testing
@@ -165,8 +151,6 @@ func (m *mockSearchBackend) GetIndex(key NamespacedResource) ResourceIndex {
 
 func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
 	index := &MockResourceIndex{}
-	index.On("BulkIndex", mock.Anything).Return(nil).Maybe()
-	index.On("DocCount", mock.Anything, mock.Anything).Return(int64(0), nil).Maybe()
 
 	// Call the builder function (required by the contract)
 	_, err := builder(index)
@@ -768,7 +752,7 @@ func TestRebuildIndexes(t *testing.T) {
 	t.Run("Rebuild dashboard index (it has no build info), verify that builders cache was emptied.", func(t *testing.T) {
 		dashKey := NamespacedResource{Namespace: "idx3", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}
 
-		support.builders.ns.Add(dashKey, &MockDocumentBuilder{})
+		support.builders.ns.Add(dashKey, &fakeDocumentBuilder{})
 		_, ok := support.builders.ns.Get(dashKey)
 		require.True(t, ok)
 
