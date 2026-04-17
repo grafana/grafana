@@ -49,6 +49,32 @@ describe('OperationList', () => {
     });
   });
 
+  it('associates each param label with its input so screen readers announce it', () => {
+    // Regression for https://github.com/grafana/grafana/issues/66347 — the <label>
+    // used a useId-derived id while the editors used operation.id, so every param
+    // label was an orphan and Prometheus query builder fields had no accessible name.
+    setup();
+    // Rate has a Range param — the label "Range" must be linked to its combo box input.
+    expect(screen.getByLabelText('Range').tagName).toBe('INPUT');
+  });
+
+  it('gives each instance of a duplicated operation a distinct input id', () => {
+    // The id includes the operation's index so two `rate` operations don't
+    // produce duplicate `operations.rate.param.0` ids (which would confuse
+    // screen readers and collide in the DOM).
+    setup({
+      metric: 'random_metric',
+      labels: [{ label: 'instance', op: '=', value: 'localhost:9090' }],
+      operations: [
+        { id: 'rate', params: ['auto'] },
+        { id: 'rate', params: ['$__rate_interval'] },
+      ],
+    });
+    const rangeInputs = screen.getAllByLabelText('Range');
+    expect(rangeInputs).toHaveLength(2);
+    expect(rangeInputs[0].id).not.toBe(rangeInputs[1].id);
+  });
+
   it('adds an operation', async () => {
     const { onChange } = setup();
     await addOperationInQueryBuilder('Aggregations', 'Min');

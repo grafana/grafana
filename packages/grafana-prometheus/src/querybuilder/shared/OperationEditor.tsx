@@ -1,7 +1,7 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/OperationEditor.tsx
 import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as React from 'react';
 
 import { type DataSourceApi, type GrafanaTheme2, type TimeRange } from '@grafana/data';
@@ -49,7 +49,6 @@ export function OperationEditor({
   const styles = useStyles2(getStyles);
   const def = queryModeller.getOperationDef(operation.id);
   const shouldFlash = useFlash(flash);
-  const id = useId();
 
   if (!def) {
     return (
@@ -90,7 +89,7 @@ export function OperationEditor({
       <div className={styles.paramRow} key={`${paramIndex}-1`}>
         {!paramDef.hideName && (
           <div className={styles.paramName}>
-            <label htmlFor={getOperationParamId(id, paramIndex)}>{paramDef.name}</label>
+            <label htmlFor={getOperationParamId(`${operation.id}.${index}`, paramIndex)}>{paramDef.name}</label>
             {paramDef.description && (
               <Tooltip placement="top" content={paramDef.description} theme="info">
                 <Icon name="info-circle" size="sm" className={styles.infoIcon} />
@@ -104,7 +103,7 @@ export function OperationEditor({
               paramDef={paramDef}
               value={operation.params[paramIndex]}
               index={paramIndex}
-              operationId={operation.id}
+              operationId={`${operation.id}.${index}`}
               query={query}
               datasource={datasource}
               timeRange={timeRange}
