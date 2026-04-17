@@ -66,7 +66,7 @@
     "@types/systemjs": "6.15.3",
     "jest": "^29.6.4",
     "react": "18.3.1",
-    "rollup": "4.59.0",
+    "rollup": "^4.60.1",
     "ts-jest": "29.4.0",
     "ts-node": "10.9.2",
     "typescript": "6.0.2"

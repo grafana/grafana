@@ -7969,6 +7969,15 @@
     },
     "empty-state": {
       "message": "No data sources found"
+    },
+    "list": {
+      "label": "Data sources"
+    },
+    "run-advisor-checks-button": {
+      "label": "Enable Advisor checks",
+      "running": "Running checks",
+      "success": "Advisor checks created successfully. Go to Administration > Advisor for more details.",
+      "tooltip": "Advisor checks helps you find issues with your data sources and plugins"
     }
   },
   "datasources": {
@@ -8188,6 +8197,9 @@
       "current-value": "Current value: {{currentValue}} ",
       "label-state-name": "State name"
     }
+  },
+  "diff-viewer": {
+    "loading": "Loading diff..."
   },
   "dimensions": {
     "background-size-editor": {
