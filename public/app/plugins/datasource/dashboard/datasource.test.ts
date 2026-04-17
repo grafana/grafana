@@ -71,15 +71,13 @@ describe('DashboardDatasource', () => {
   });
 
   it('Can subscribe to panel data + transforms', async () => {
-    jest.useFakeTimers();
-
     const { observable } = setup({ refId: 'A', panelId: 1, withTransforms: true });
 
-    let rsp: DataQueryResponse | undefined;
-
-    observable.subscribe({ next: (data) => (rsp = data) });
-
-    jest.runAllTimers();
+    const rsp = await new Promise<DataQueryResponse | undefined>((r) =>
+      observable.subscribe({
+        next: r,
+      })
+    );
 
     expect(rsp?.data[0].fields[1].values).toEqual([3]);
   });
@@ -112,29 +110,27 @@ describe('DashboardDatasource', () => {
     expect(first).not.toHaveBeenCalled();
   });
 
-  it('Should not mutate field state in dataframe', () => {
-    jest.useFakeTimers();
+  it('Should not mutate field state in dataframe', async () => {
     const { observable } = setup({ refId: 'A', panelId: 1, withTransforms: true });
 
-    let rsp: DataQueryResponse | undefined;
-
-    const test = observable.subscribe({ next: (data) => (rsp = data) });
-
-    jest.runAllTimers();
+    const r = await new Promise<DataQueryResponse | undefined>((resolve) => {
+      const test = observable.subscribe({
+        next: (data) => {
+          test.unsubscribe();
+          resolve(data);
+        },
+      });
+    });
 
     // modifying series in dashboard DS should not affect the original dataframe
-    rsp!.data[0].fields[0].state = {
+    r!.data[0].fields[0].state = {
       calcs: { sum: 3 },
     };
 
-    test.unsubscribe();
-
-    observable.subscribe({ next: (data) => (rsp = data) });
-
-    jest.runAllTimers();
+    const r2 = await new Promise<DataQueryResponse | undefined>((resolve) => observable.subscribe({ next: resolve }));
 
     // on further emissions the result should be the unmodified original dataframe
-    expect(rsp!.data[0].fields[0].state).toEqual({});
+    expect(r2!.data[0].fields[0].state).toEqual({});
   });
 
   describe('AdHoc Filtering', () => {
