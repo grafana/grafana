@@ -51,6 +51,7 @@ posts:
       - whats-new/2026-04-07-alerting-provenance-permissions-now-enforced-on-kubernetes-style-notification-apis.md
   - title: Other
     items:
+      - whats-new/2026-04-15-deprecation-of-api-path.md
       - whats-new/2026-03-30-pre-scenes-architecture-feature-toggle-removal.md
       - whats-new/2026-03-04-grafana-database-metrics-deprecation.md
   - title: Breaking changes
