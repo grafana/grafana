@@ -10,16 +10,19 @@ type QuotaTracker interface {
 	TryAcquire() bool
 	// Release decrements the resource counter, e.g. after a successful deletion.
 	Release()
-	// AllowOverLimit temporarily raises the quota limit by n. This is useful
-	// for situations where counting may be temporarily inaccurate.
+	// AllowOverLimit raises the quota limit by n for the remaining lifetime of
+	// the tracker. This is useful for situations where counting may be inaccurate.
 	AllowOverLimit(n int)
 }
 
 // inMemoryQuotaTracker provides best-effort, in-memory quota enforcement.
 type inMemoryQuotaTracker struct {
+	// limit is immutable after construction
+	limit int64 // 0 means unlimited
+
 	mu      sync.Mutex
 	current int64
-	limit   int64 // 0 means unlimited
+	extra   int64 // additional allowance on top of limit; guarded by mu
 }
 
 // NewInMemoryQuotaTracker creates a new in-memory QuotaTracker.
@@ -38,7 +41,7 @@ func (q *inMemoryQuotaTracker) TryAcquire() bool {
 	}
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	if q.current >= q.limit {
+	if q.current >= q.limit+q.extra {
 		return false
 	}
 	q.current++
@@ -62,5 +65,5 @@ func (q *inMemoryQuotaTracker) AllowOverLimit(n int) {
 	}
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	q.limit += int64(n)
+	q.extra += int64(n)
 }
