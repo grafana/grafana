@@ -3467,7 +3467,8 @@
       "metadata": {
         "name": "kubernetesUnifiedStorageQuotas",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-12-09T15:40:34Z"
+        "creationTimestamp": "2025-12-09T15:40:34Z",
+        "deletionTimestamp": "2026-04-16T18:07:54Z"
       },
       "spec": {
         "description": "Adds support for Kubernetes unified storage quotas",
