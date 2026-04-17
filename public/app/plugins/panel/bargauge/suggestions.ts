@@ -3,15 +3,26 @@ import { defaultsDeep } from 'lodash';
 import {
   FieldColorModeId,
   FieldType,
-  VisualizationSuggestion,
-  VisualizationSuggestionsSupplier,
+  type VisualizationSuggestion,
+  type VisualizationSuggestionsSupplier,
   VizOrientation,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { BarGaugeDisplayMode } from '@grafana/ui';
 import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
 
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
+
+const MAX_PREVIEW_BARGAUGES = 6;
+
+export const BARGAUGE_CARD_OPTIONS: VisualizationSuggestion<Options>['cardOptions'] = {
+  maxSeries: MAX_PREVIEW_BARGAUGES,
+  previewModifier: (s) => {
+    if (s.options?.reduceOptions?.values) {
+      s.options.reduceOptions.limit = MAX_PREVIEW_BARGAUGES;
+    }
+  },
+};
 
 const withDefaults = (suggestion: VisualizationSuggestion<Options>): VisualizationSuggestion<Options> =>
   defaultsDeep(suggestion, {
@@ -27,6 +38,7 @@ const withDefaults = (suggestion: VisualizationSuggestion<Options>): Visualizati
       },
       overrides: [],
     },
+    cardOptions: BARGAUGE_CARD_OPTIONS,
   });
 
 const BAR_LIMIT = 30;

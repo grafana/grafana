@@ -113,6 +113,7 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		return nil, err
 	}
 	r.OrgID = orgID
+	ctx = identity.WithOrgID(ctx, orgID)
 
 	var authErr error
 	for _, item := range s.clientQueue.items {

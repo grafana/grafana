@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
@@ -67,27 +67,15 @@ async function expectNoAlert() {
 
 const errorAlert = { name: /hit your storage limits/i };
 const warningAlert = { name: /nearing your storage limits/i };
-// Alert's buttonContent button gets aria-label="Close alert" (hardcoded in Alert component)
-const extensionButton = { name: /close alert/i };
+const extensionButton = { name: /request quota extension/i };
 
 describe('QuotaLimitBanner', () => {
-  testWithFeatureToggles({ enable: ['kubernetesUnifiedStorageQuotas'] });
-
   beforeEach(() => {
     mockIsFreeTier = false;
     store.delete(DISMISS_STORAGE_KEY);
   });
 
   describe('renders nothing', () => {
-    describe('when feature flag is off', () => {
-      testWithFeatureToggles({ disable: ['kubernetesUnifiedStorageQuotas'] });
-
-      it('renders nothing', async () => {
-        render(<QuotaLimitBanner />);
-        await expectNoAlert();
-      });
-    });
-
     it('when both queries error', async () => {
       mockErrorForResource();
       render(<QuotaLimitBanner />);
@@ -199,7 +187,7 @@ describe('QuotaLimitBanner', () => {
       const { user } = render(<QuotaLimitBanner />);
       expect(await screen.findByRole('alert', warningAlert)).toBeInTheDocument();
 
-      await user.click(screen.getByRole('button', { name: /dismiss/i }));
+      await user.click(screen.getByRole('button', { name: /close alert/i }));
       expect(screen.queryByRole('alert', warningAlert)).not.toBeInTheDocument();
     });
 
@@ -208,7 +196,7 @@ describe('QuotaLimitBanner', () => {
       const { user } = render(<QuotaLimitBanner />);
       expect(await screen.findByRole('alert', warningAlert)).toBeInTheDocument();
 
-      await user.click(screen.getByRole('button', { name: /dismiss/i }));
+      await user.click(screen.getByRole('button', { name: /close alert/i }));
       const stored = store.getObject<Record<string, boolean>>(DISMISS_STORAGE_KEY);
       expect(stored).toEqual(expect.objectContaining({ dashboards: true }));
     });

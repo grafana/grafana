@@ -2,7 +2,10 @@ package setting
 
 import (
 	"slices"
+	"strconv"
 	"time"
+
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 )
 
 type ZanzanaMode string
@@ -10,6 +13,21 @@ type ZanzanaMode string
 const (
 	ZanzanaModeClient   ZanzanaMode = "client"
 	ZanzanaModeEmbedded ZanzanaMode = "embedded"
+)
+
+// ZanzanaPrimaryEngine controls which engine is on the hot path when the shadow
+// client is active (i.e. the Zanzana feature flag is enabled but
+// ZanzanaNoLegacyClient is not). The other engine runs in the background for
+// comparison only.
+type ZanzanaPrimaryEngine string
+
+const (
+	// ZanzanaPrimaryEngineRBAC uses legacy RBAC as the primary engine and runs
+	// Zanzana checks in the background (default – preserves existing behaviour).
+	ZanzanaPrimaryEngineRBAC ZanzanaPrimaryEngine = "rbac"
+	// ZanzanaPrimaryEngineZanzana uses Zanzana as the primary engine and runs
+	// legacy RBAC checks in the background.
+	ZanzanaPrimaryEngineZanzana ZanzanaPrimaryEngine = "zanzana"
 )
 
 type ZanzanaClientSettings struct {
@@ -29,6 +47,9 @@ type ZanzanaClientSettings struct {
 	TokenExchangeURL string
 	// Namespace to use for the token.
 	TokenNamespace string
+	// PrimaryEngine selects which engine is on the hot path when the shadow
+	// client is active. Accepted values: "rbac" (default) and "zanzana".
+	PrimaryEngine ZanzanaPrimaryEngine
 }
 
 type ZanzanaReconcilerMode string
@@ -59,9 +80,27 @@ type ZanzanaReconcilerSettings struct {
 	WriteBatchSize int
 	// Size of the buffered work queue for namespaces.
 	QueueSize int
+
+	// --- HA leader election (standalone mode in K8s) ---
+
+	LeaderElection leaderelection.Config
+}
+
+type ZanzanaStoreType string
+
+const (
+	ZanzanaStoreTypeSQL  ZanzanaStoreType = "sql"
+	ZanzanaStoreTypeGRPC ZanzanaStoreType = "grpc"
+)
+
+type ZanzanaGRPCStoreSettings struct {
+	Addr        string
+	TLSCertPath string
+	TLSKeyPath  string
 }
 
 type ZanzanaServerSettings struct {
+	StoreType ZanzanaStoreType
 	// OpenFGA http server address which allows to connect with fga cli.
 	// Can only be used in dev mode.
 	OpenFGAHttpAddr string
@@ -220,6 +259,14 @@ type OpenFgaCacheSettings struct {
 	SharedIteratorTTL time.Duration
 }
 
+// ZanzanaRolloutSettings controls per-resource tenant routing to Zanzana.
+// Keys are "group/resource" (e.g. "dashboard.grafana.app/dashboards"),
+// values are fractions in [0.0, 1.0]. Tenants are assigned deterministically
+// via a hash of namespace+resource; the same tenant always lands in the same bucket.
+type ZanzanaRolloutSettings struct {
+	ResourcePercentages map[string]float64
+}
+
 const (
 	defaultReadPageSize = 100
 )
@@ -254,11 +301,19 @@ func (cfg *Cfg) readZanzanaSettings() {
 		zc.TokenExchangeURL = tokenExchangeURL
 	}
 
+	zc.PrimaryEngine = ZanzanaPrimaryEngine(clientSec.Key("primary_engine").MustString(string(ZanzanaPrimaryEngineRBAC)))
+	validEngines := []ZanzanaPrimaryEngine{ZanzanaPrimaryEngineRBAC, ZanzanaPrimaryEngineZanzana}
+	if !slices.Contains(validEngines, zc.PrimaryEngine) {
+		cfg.Logger.Warn("Invalid zanzana primary_engine", "expected", validEngines, "got", zc.PrimaryEngine)
+		zc.PrimaryEngine = ZanzanaPrimaryEngineRBAC
+	}
+
 	cfg.ZanzanaClient = zc
 
 	zs := ZanzanaServerSettings{}
 	serverSec := cfg.SectionWithEnvOverrides("zanzana.server")
 
+	zs.StoreType = ZanzanaStoreType(serverSec.Key("store_type").MustString(string(ZanzanaStoreTypeSQL)))
 	zs.OpenFGAHttpAddr = serverSec.Key("http_addr").MustString("")
 	zs.ListObjectsDeadline = serverSec.Key("list_objects_deadline").MustDuration(3 * time.Second)
 	zs.ListObjectsMaxResults = uint32(serverSec.Key("list_objects_max_results").MustUint(1000))
@@ -348,5 +403,38 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zr.Interval = reconcilerSec.Key("interval").MustDuration(1 * time.Hour)
 	zr.WriteBatchSize = reconcilerSec.Key("write_batch_size").MustInt(100)
 	zr.QueueSize = reconcilerSec.Key("queue_size").MustInt(1000)
+	zr.LeaderElection = leaderelection.Config{
+		Enabled:       reconcilerSec.Key("leader_election_enabled").MustBool(false),
+		LeaseName:     reconcilerSec.Key("leader_election_lease_name").MustString("zanzana-mt-reconciler"),
+		Namespace:     reconcilerSec.Key("leader_election_namespace").MustString(""),
+		Identity:      reconcilerSec.Key("leader_election_identity").MustString(""),
+		LeaseDuration: reconcilerSec.Key("lease_duration").MustDuration(15 * time.Second),
+		RenewDeadline: reconcilerSec.Key("renew_deadline").MustDuration(10 * time.Second),
+		RetryPeriod:   reconcilerSec.Key("retry_period").MustDuration(2 * time.Second),
+	}
 	cfg.ZanzanaReconciler = zr
+
+	// gRPC store settings
+	grpcStoreSec := cfg.SectionWithEnvOverrides("zanzana.store.grpc")
+	cfg.ZanzanaGRPCStore = ZanzanaGRPCStoreSettings{
+		Addr:        grpcStoreSec.Key("address").MustString(""),
+		TLSCertPath: grpcStoreSec.Key("tls_cert_path").MustString(""),
+		TLSKeyPath:  grpcStoreSec.Key("tls_key_path").MustString(""),
+	}
+
+	// Rollout settings
+	rolloutSec := cfg.SectionWithEnvOverrides("zanzana.rollout")
+	rollout := ZanzanaRolloutSettings{ResourcePercentages: make(map[string]float64)}
+	for resource, value := range rolloutSec.KeysHash() {
+		if resource == "" {
+			continue
+		}
+		pct, err := strconv.ParseFloat(value, 64)
+		if err != nil || pct < 0 || pct > 1 {
+			cfg.Logger.Warn("invalid zanzana.rollout percentage, skipping", "resource", resource, "value", value)
+			continue
+		}
+		rollout.ResourcePercentages[resource] = pct
+	}
+	cfg.ZanzanaRollout = rollout
 }

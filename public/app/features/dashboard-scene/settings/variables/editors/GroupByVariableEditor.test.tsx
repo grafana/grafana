@@ -1,7 +1,7 @@
 import { act, render, waitFor, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { MetricFindValue, VariableSupportType } from '@grafana/data';
+import { type MetricFindValue, VariableSupportType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { GroupByVariable } from '@grafana/scenes';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
@@ -126,8 +126,9 @@ describe('GroupByVariableEditor', () => {
     expect(within(section).getByRole('button', { name: 'Remove' })).toBeInTheDocument();
   });
 
-  it('should update variable defaultValue when selecting a value from dropdown', async () => {
+  it('should update variable defaultValue and call changeValueTo when selecting a value from dropdown', async () => {
     const { renderer, variable, user } = await setup();
+    const changeValueToSpy = jest.spyOn(variable, 'changeValueTo');
 
     await waitFor(() => {
       expect(
@@ -142,6 +143,20 @@ describe('GroupByVariableEditor', () => {
     await user.click(await screen.findByRole('option', { name: 'job' }));
 
     expect(variable.state.defaultValue).toEqual({ value: ['job'], text: ['job'] });
+    expect(changeValueToSpy).toHaveBeenCalledWith(['job'], ['job']);
+  });
+
+  it('should clear defaultValue and call changeValueTo with empty arrays when removing all selections', async () => {
+    const { renderer, variable, user } = await setup(undefined, { value: ['job'], text: ['job'] });
+    const changeValueToSpy = jest.spyOn(variable, 'changeValueTo');
+
+    const section = renderer.getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.defaultValueSection
+    );
+    await user.click(within(section).getByRole('button', { name: 'Remove' }));
+
+    expect(variable.state.defaultValue).toBeUndefined();
+    expect(changeValueToSpy).toHaveBeenCalledWith([], []);
   });
 
   it('should return an OptionsPaneItemDescriptor that renders Editor', async () => {

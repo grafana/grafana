@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
+import memoize from 'micro-memoize';
 import { useCallback, useMemo } from 'react';
 import * as React from 'react';
-import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
+import { FixedSizeList as List, type ListChildComponentProps } from 'react-window';
 
-import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, formattedValueToString, getValueFormat, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
@@ -210,7 +211,7 @@ function ItemRenderer({ index, style, data: { onCheckedChanged, items, values, c
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = memoize((theme: GrafanaTheme2) => ({
   filterList: css({
     label: 'filterList',
     marginBottom: theme.spacing(0.5),
@@ -231,4 +232,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
   noValuesLabel: css({
     paddingTop: theme.spacing(1),
   }),
-});
+}));

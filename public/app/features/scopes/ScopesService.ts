@@ -1,12 +1,12 @@
 import { isEqual } from 'lodash';
-import { BehaviorSubject, Observable, combineLatest, Subscription } from 'rxjs';
+import { BehaviorSubject, type Observable, combineLatest, type Subscription } from 'rxjs';
 import { map, distinctUntilChanged } from 'rxjs/operators';
 
-import { LocationService, ScopesContextValue, ScopesContextValueState } from '@grafana/runtime';
+import { type LocationService, type ScopesContextValue, type ScopesContextValueState } from '@grafana/runtime';
 
-import { ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
+import { type ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
 import { deserializeFolderPath, serializeFolderPath } from './dashboards/scopeNavgiationUtils';
-import { ScopesSelectorService } from './selector/ScopesSelectorService';
+import { type ScopesSelectorService } from './selector/ScopesSelectorService';
 
 export interface State {
   enabled: boolean;
@@ -87,12 +87,28 @@ export class ScopesService implements ScopesContextValue {
       if (navScopePath && !navigationScope) {
         this.dashboardsService.setNavScopePath(deserializeFolderPath(navScopePath));
       }
+
+      // If scope_node wasn't in the URL, derive it from defaultPath and preload the path
+      // so the badge and tree display correctly on initial load.
+      if (!scopeNodeId) {
+        const firstApplied = this.selectorService.state.appliedScopes[0];
+        const scope = firstApplied ? this.selectorService.state.scopes[firstApplied.scopeId] : undefined;
+        const defaultPath = scope?.spec.defaultPath || [];
+        if (defaultPath.length > 0) {
+          const derivedNodeId = defaultPath[defaultPath.length - 1];
+          const tree = this.selectorService.state.tree;
+          if (derivedNodeId && tree) {
+            this.selectorService.resolvePathToRoot(derivedNodeId, tree, firstApplied.scopeId).catch((error) => {
+              console.error('Failed to pre-load node path from defaultPath', error);
+            });
+          }
+        }
+      }
     });
 
-    // Pre-load scope node (which loads parent too)
-    const nodeToPreload = scopeNodeId;
-    if (nodeToPreload) {
-      this.selectorService.resolvePathToRoot(nodeToPreload, this.selectorService.state.tree!).catch((error) => {
+    // Preload scope node (which loads parent too)
+    if (scopeNodeId) {
+      this.selectorService.resolvePathToRoot(scopeNodeId, this.selectorService.state.tree!).catch((error) => {
         console.error('Failed to pre-load node path', error);
       });
     }

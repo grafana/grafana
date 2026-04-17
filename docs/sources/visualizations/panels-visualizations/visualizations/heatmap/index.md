@@ -209,6 +209,10 @@ When you set the **Tooltip mode** to **Single**, this option is displayed. This 
 
 Choose whether you want to display the heatmap legend on the visualization by toggling the **Show legend** switch.
 
+### Annotation options
+
+{{< docs/shared lookup="visualizations/annotations/options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ### Exemplars
 
 Set the color used to show exemplar data.

@@ -172,7 +172,7 @@ To export a dashboard in its current state as a PDF, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-1. Click the **Export** drop-down in the sidebar and select **Export as PDF**.
+1. Click the **Export** drop-down in the toolbar and select **Export as PDF**.
 1. In the **Export dashboard PDF** drawer that opens, select either **Landscape** or **Portrait** for the PDF orientation.
 1. Select either **Grid** or **Simple** for the PDF layout.
 1. Set the **Zoom** level; zoom in to enlarge text, or zoom out to see more data (like table columns) per panel.
@@ -189,31 +189,30 @@ To export a JSON file, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-1. Click the **Export** drop-down list in the sidebar and select **Export as code**.
+1. In the toolbar, click the **Export** icon and select **Export as code**.
 
    The **Export dashboard** drawer opens.
 
-1. (Optional) Click **Advanced options** to expand the section and choose whether the dashboard export is in **JSON** or **YAML**.
+1. (Optional) Click **Advanced options** to expand the section, and then make the following selections:
+   - **Model**: Choose from **Classic** or **V2 Resource**
+   - **Format**: For the V2 Resource only, choose from **JSON** or **YAML**
+
 1. (Optional) Toggle the **Share dashboard with another instance** switch to remove details specific to your Grafana instance.
 1. Click **Download file** or **Copy to clipboard**.
+1. Paste the JSON in another location.
 1. Click the **X** at the top-right corner to close the share drawer.
-
-The generated file uses one of the following schema models:
-
-- **V1 Resource** - For dashboards created using the [current dashboard schema](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/) wrapped in the `spec` property of the [V1 Kubernetes-style resource](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2alpha1).
-- **V2 Resource** - For dashboards created using the [V2 Resource schema](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2beta1).
 
 ### Export a dashboard as an image
 
 {{< admonition type="note">}}
-You must have the [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer/) installed to export a dashboard as an image.
+You must have the [Grafana Image Renderer service](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/) configured to export a dashboard as an image.
 {{< /admonition >}}
 
 To export a dashboard in its current state as a PNG image file, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-1. Click the **Export** drop-down list in the sidebar and select **Export as image**.
+1. Click the **Export** drop-down list in the toolbar and select **Export as image**.
 
    The **Export as image** drawer opens.
 
@@ -252,11 +251,11 @@ To share a personalized, direct link to your panel within your organization, fol
 1. Click **Copy link**.
 1. Send the copied link to a Grafana user with authorization to view it.
 1. (Optional) To [generate an image of the panel as a PNG file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/), customize the image settings:
-   - **Width** - In pixels. The default is 1000.
-   - **Height** - In pixels. The default is 500.
+   - **Width** - In pixels. The default and minimum is 1000.
+   - **Height** - In pixels. The default and minimum is 500.
    - **Scale factor** - The default is 1.
 
-   There are maximums for [width](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#viewport-maximum-width), [height](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#viewport-maximum-height), and [scale factor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#maximum-device-scale-factor) in the image renderer configuration that you can customize if needed.
+   There are minimums and maximums for width, height, and scale factor in the image renderer [configuration options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/troubleshooting/#available-configuration-options) that you can customize if needed.
 
 1. (Optional) Click **Generate image** to see a preview of the panel image.
 1. (Optional) Click **Download image**.
@@ -269,14 +268,14 @@ When you click **Generate image** in the panel link settings, Grafana generates 
 
 | Parameter | Description                                                                                                                    |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| width     | Width in pixels. Default is 1000.                                                                                              |
-| height    | Height in pixels. Default is 500.                                                                                              |
+| width     | Width in pixels. Default and minimum is 1000.                                                                                  |
+| height    | Height in pixels. Default and minimum is 500.                                                                                  |
 | tz        | Timezone in the format `UTC%2BHH%3AMM` where HH and MM are offset in hours and minutes after UTC.                              |
 | timeout   | Number of seconds. The timeout can be increased if the query for the panel needs more than the default 30 seconds.             |
 | scale     | Numeric value to configure device scale factor. Default is 1. Use a higher value to produce more detailed images (higher DPI). |
 
 {{< admonition type="note" >}}
-The image renderer enforces minimum width and height requirements. You can customize these minimums in self-managed Grafana installations through the [image renderer configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#configuration). In Grafana Cloud, the configuration is managed by Grafana and can't be modified. If you encounter size-related errors when rendering images using the API, ensure your dimensions meet the minimum requirements.
+The image renderer enforces minimum dimensions of 1000px for width and 500px for height. You can customize these minimums in self-managed Grafana installations through the [image renderer configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#configuration). In Grafana Cloud, the configuration is managed by Grafana and can't be modified. If you encounter size-related errors when rendering images using the API, ensure your dimensions meet the minimum requirements.
 {{< /admonition >}}
 
 You can also update these parameters in the [image rendering configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#configuration).
@@ -284,7 +283,7 @@ You can also update these parameters in the [image rendering configuration](http
 The following example shows a link to a server-side rendered PNG:
 
 ```bash
-https://play.grafana.org/render/d-solo/ktMs4D6Mk?from=2024-09-03T11:55:44.442Z&to=2024-09-03T17:55:44.442Z&panelId=panel-13&__feature.dashboardScene&width=1000&height=500&tz=UTC
+https://play.grafana.org/render/d-solo/ktMs4D6Mk?from=2024-09-03T11:55:44.442Z&to=2024-09-03T17:55:44.442Z&panelId=panel-13&width=1000&height=500&tz=UTC
 ```
 
 ### Share an embed

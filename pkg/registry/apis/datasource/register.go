@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"maps"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,6 +16,7 @@ import (
 	openapi "k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-prometheus-datasource/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -41,6 +40,7 @@ type DataSourceAPIBuilderConfig struct {
 	LoadQueryTypes         bool
 	UseDualWriter          bool
 	EnableResourceEndpoint bool
+	EnableHealthEndpoint   bool
 }
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
@@ -67,8 +67,7 @@ func RegisterAPIService(
 	pluginSources sources.Registry,
 ) (*DataSourceAPIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) &&
-		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs) {
 		return nil, nil
 	}
 
@@ -106,9 +105,10 @@ func RegisterAPIService(
 			accessControl,
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			DataSourceAPIBuilderConfig{
-				LoadQueryTypes:         features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
-				UseDualWriter:          features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
+				LoadQueryTypes:         features.IsEnabledGlobally(featuremgmt.FlagDatasourcesQueryTypes),
+				UseDualWriter:          features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs),
 				EnableResourceEndpoint: features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint),
+				EnableHealthEndpoint:   features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint),
 			},
 		)
 		if err != nil {
@@ -246,17 +246,14 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// Register the raw datasource connection
 	ds := b.datasourceResourceInfo
 	storage[ds.StoragePath("query")] = &subQueryREST{builder: b}
-	storage[ds.StoragePath("health")] = &subHealthREST{builder: b}
 
 	if b.cfg.EnableResourceEndpoint {
-		storage[ds.StoragePath("resource")] = &subResourceREST{builder: b}
+		storage[ds.StoragePath("resources")] = &subResourceREST{builder: b}
 	}
 
-	// FIXME: temporarily register both "datasources" and "connections" query paths
-	// This lets us deploy both datasources/{uid}/query and connections/{uid}/query
-	// while we transition requests to the new path
-	storage["connections"] = &noopREST{}                            // hidden from openapi
-	storage["connections/query"] = storage[ds.StoragePath("query")] // deprecated in openapi
+	if b.cfg.EnableHealthEndpoint {
+		storage[ds.StoragePath("health")] = &subHealthREST{builder: b}
+	}
 
 	if b.cfg.UseDualWriter {
 		legacyStore := &legacyStorage{
@@ -311,9 +308,7 @@ func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string)
 
 func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {
 	return func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
-		defs := datasourceV0.GetOpenAPIDefinitions(ref) // required when running standalone
-		maps.Copy(defs, datasourceV0.GetOpenAPIDefinitions(ref))
-		return defs
+		return datasourceV0.GetOpenAPIDefinitions(ref)
 	}
 }
 
@@ -331,17 +326,26 @@ func getDatasourcePlugins(pluginSources sources.Registry) ([]plugins.JSONData, e
 			return nil, err
 		}
 		for _, p := range res {
-			if !p.Primary.JSONData.Backend || p.Primary.JSONData.Type != plugins.TypeDataSource {
-				continue
+			if p.Primary.JSONData.Type == plugins.TypeDataSource {
+				if _, found := uniquePlugins[p.Primary.JSONData.ID]; found {
+					backend.Logger.Info("Found duplicate plugin %s when registering API groups.", p.Primary.JSONData.ID)
+					continue
+				}
+
+				uniquePlugins[p.Primary.JSONData.ID] = true
+				pluginJSONs = append(pluginJSONs, p.Primary.JSONData)
 			}
 
-			if _, found := uniquePlugins[p.Primary.JSONData.ID]; found {
-				backend.Logger.Info("Found duplicate plugin %s when registering API groups.", p.Primary.JSONData.ID)
-				continue
+			for _, child := range p.Children {
+				if child.JSONData.Type == plugins.TypeDataSource {
+					if _, found := uniquePlugins[child.JSONData.ID]; found {
+						backend.Logger.Info("Found duplicate plugin %s when registering API groups.", child.JSONData.ID)
+						continue
+					}
+					uniquePlugins[child.JSONData.ID] = true
+					pluginJSONs = append(pluginJSONs, child.JSONData)
+				}
 			}
-
-			uniquePlugins[p.Primary.JSONData.ID] = true
-			pluginJSONs = append(pluginJSONs, p.Primary.JSONData)
 		}
 	}
 	return pluginJSONs, nil

@@ -85,9 +85,9 @@
         "tooltip-classic-query": "A Prometheus változólekérdezés-szerkesztő eredeti implementációja. Adjon meg egy karakterláncot a megfelelő lekérdezéstípussal és paraméterekkel, a jelen dokumentumokban leírtak szerint. Például: {{exampleQuery}}.",
         "tooltip-label": "A címke nevéhez tartozó címkeértékek listáját adja vissza az összes metrikában, kivéve, ha a metrika meg van adva.",
         "tooltip-metric-regex": "A címkenevek listáját adja vissza, opcionálisan a megadott metrikai reguláris kifejezés szerint szűrve.",
-        "tooltip-query": "A lekérdezéshez a Prometheus-lekérdezési eredmények listáját adja vissza. Ez magában foglalhatja a Prometheus-funkciókat, azaz: {{exampleQuery}}.",
+        "tooltip-query": "A lekérdezéshez a Prometheus-lekérdezési eredmények listáját adja vissza. Ez magában foglalhatja a Prometheus-funkciókat, azaz {{exampleQuery}}.",
         "tooltip-query-type": "A Prometheus adatforrás-beépülőmodul a következő lekérdezéstípusokat biztosítja a sablonváltozókhoz.",
-        "tooltip-series-query": "Adjon meg egy metrikát címkékkel, csak egy metrikát vagy csak címkéket, azaz: {{example1}}, {{example2}} vagy{{example3}}. A bevitt adatokhoz társított idősorok listáját adja vissza."
+        "tooltip-series-query": "Adjon meg egy metrikát címkékkel, csak egy metrikát vagy csak címkéket: {{example1}}, {{example2}} vagy {{example3}}. A bevitt adatokhoz társított idősorok listáját adja vissza."
       },
       "selector-actions": {
         "aria-label-selector": "választó",
@@ -182,9 +182,9 @@
         "title-performance": "Teljesítmény",
         "title-query-editor": "Lekérdezésszerkesztő",
         "tooltip-cache-level": "Beállítja a böngésző gyorsítótárának szintjét a szerkesztői lekérdezésekhez. A magasabb számossági adatforrásokhoz magasabb gyorsítótár-beállítások ajánlottak.",
-        "tooltip-custom-query-parameters": "Egyéni paraméterek hozzáadása a Prometheus lekérdezési URL-jéhez. Például: {{example1}}, {{example2}}, {{example3}} vagy{{example4}}. Több paramétert a következővel kell összefűzni: {{concatenationChar}}.",
+        "tooltip-custom-query-parameters": "Egyéni paraméterek hozzáadása a Prometheus lekérdezési URL-jéhez. Például: {{example1}}, {{example2}}, {{example3}} vagy {{example4}}. Több paramétert a következővel kell összefűzni: {{concatenationChar}}.",
         "tooltip-default-editor": "Beállítja az alapértelmezett szerkesztőopciót az adatforrás minden felhasználója számára.",
-        "tooltip-disable-metrics-lookup": "Ennek az opciónak a bejelölése letiltja a metrikaválasztót és a metrika-/címketámogatást a lekérdezési mező automatikus kitöltésében. Ez segít, ha a nagyobb Prometheus-példányokkal teljesítményproblémái vannak.",
+        "tooltip-disable-metrics-lookup": "Ennek az opciónak a bejelölése letiltja a metrikaválasztót és a metrika-/címketámogatást a lekérdezési mező automatikus kitöltésében. Ez segít, ha a nagyobb Prometheus-példányokkal teljesítményproblémái vannak. ",
         "tooltip-disable-recording-rules-beta": "Ez a funkció letiltja a felvételkészítési szabályokat. Kapcsolja be az irányítópult teljesítményének javítása érdekében",
         "tooltip-http-method": "A Prometheus-adatforrás lekérdezéséhez használhatja a POST- vagy a GET HTTP-metódust. A POST az ajánlott metódus, mivel nagyobb lekérdezéseket tesz lehetővé. Módosítsa ezt GET-re, ha a Prometheus-verziója régebbi, mint a 2.1-es, vagy ha a POST-kérések korlátozva vannak a hálózatában.",
         "tooltip-incremental-querying-beta": "Ez a funkció megváltoztatja a relatív lekérdezések azon alapértelmezett viselkedését, hogy mindig friss adatokat kérjenek le a Prometheus-példányból, ehelyett a lekérdezési eredményeket a rendszer gyorsítótárazza, és csak új rekordok lesznek lekérve. Kapcsolja be az adatbázis és a hálózat terhelésének csökkentése érdekében.",
@@ -256,7 +256,7 @@
         "documentation-histogram-stddev": "Visszaadja a natív hisztogramban szereplő megfigyelések becsült szórását a megfigyelések helyét tartalmazó tartományok geometriai átlaga alapján.",
         "documentation-histogram-stdvar": "Visszaadja a natív hisztogramban szereplő megfigyelések becsült varianciáját.",
         "documentation-histogram-sum": "Visszaadja a natív hisztogramban tárolt megfigyelések összegét.",
-        "documentation-holt-winters": "A Prometheus v3.x verzióban double_exponential_smoothing megnevezést kapott. A Prometheus v3.0 vagy annál újabb verzóknál használja a double_exponential_smoothing funkciót.\n\nA „v” tartomány alapján simított értéket állít elő az idősorokhoz. Minél alacsonyabb az „sf” simítási tényező, annál nagyobb jelentőséget kapnak a régebbi adatok. Minél magasabb a „tf” trendtényező, annál nagyobb szerepet kapnak az adatokban a trendek. Mind az „sf”, mind a „tf” értékének 0 és 1 között kell lennie.",
+        "documentation-holt-winters": "A Prometheus v3.x verzióban double_exponential_smoothing megnevezést kapott. A Prometheus v3.0 vagy annál újabb verzióknál használja a double_exponential_smoothing funkciót.\n\nA „v” tartomány alapján simított értéket állít elő az idősorokhoz. Minél alacsonyabb az „sf” simítási tényező, annál nagyobb jelentőséget kapnak a régebbi adatok. Minél magasabb a „tf” trendtényező, annál nagyobb szerepet kapnak az adatokban a trendek. Mind az „sf”, mind a „tf” értékének 0 és 1 között kell lennie.",
         "documentation-hour": "Visszaadja az adott időpontok óráját UTC-ben. A visszaadott értékek 0 és 23 között lehetnek.",
         "documentation-idelta": "Kiszámítja a „v” tartományvektor utolsó két mintája közötti különbséget, és visszaad egy pillanatnyi vektort a megadott deltákkal és egyenértékű címkékkel.",
         "documentation-increase": "Kiszámítja az idősor növekedését a tartományvektorban. A monotonitás megszakadásait (például a cél újraindítása miatt bekövetkező számláló-visszaállításokat) a rendszer automatikusan kiigazítja. A növekedés extrapolálásra kerül, hogy lefedje a tartományvektor-választóban megadott teljes időtartományt, így lehetséges, hogy nem egész számú eredményt kapunk, még akkor is, ha a számláló csak egész számmal növekszik.",
@@ -479,7 +479,7 @@
         "aria-label-selector": "választó"
       },
       "results-table": {
-        "content-descriptive-type": "{{descriptiveType}} létrehozásakor a Prometheus több, számláló típusú sorozatot jelenít meg.",
+        "content-descriptive-type": "{{descriptiveType}} létrehozásakor a Prometheus több, számláló típusú sorozatot jelenít meg. ",
         "description": "Leírás",
         "message-expand-label-filters": "Nem található metrika. Próbálja meg kibővíteni a címkeszűrőket.",
         "message-expand-search": "Nem található metrika. Próbálja meg kibővíteni a keresést és a szűrőket.",

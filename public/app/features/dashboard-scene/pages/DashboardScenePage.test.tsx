@@ -6,29 +6,28 @@ import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { PanelProps, store, systemDateFormats, SystemDateFormatsState } from '@grafana/data';
+import { type PanelProps, store, systemDateFormats, type SystemDateFormatsState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   LocationServiceProvider,
-  config,
   locationSearchToObject,
   locationService,
   setPluginImportUtils,
 } from '@grafana/runtime';
-import { setGetObservablePluginLinks } from '@grafana/runtime/internal';
+import { setGetObservablePluginLinks, setPanelPluginMetas } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
-import { Dashboard } from '@grafana/schema';
+import { type Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types/dashboard';
 
 import { setPublicDashboardConfigFn } from '../../dashboard/components/PublicDashboard/usePublicDashboardConfig';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { setupLoadDashboardMockReject, setupLoadDashboardRuntimeErrorMock } from '../utils/test-utils';
 
-import { DashboardScenePage, Props } from './DashboardScenePage';
+import { DashboardScenePage, type Props } from './DashboardScenePage';
 import {
   DashboardScenePageStateManager,
   DashboardScenePageStateManagerV2,
@@ -138,7 +137,13 @@ const panelPlugin = getPanelPlugin(
   CustomVizPanel
 );
 
-config.panels['custom-viz-panel'] = panelPlugin.meta;
+beforeEach(() => {
+  setPanelPluginMetas({ 'custom-viz-panel': panelPlugin.meta });
+});
+
+afterEach(() => {
+  setPanelPluginMetas({});
+});
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(panelPlugin),

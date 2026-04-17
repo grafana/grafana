@@ -1,13 +1,20 @@
 import { size } from 'lodash';
 import { of } from 'rxjs';
 
-import { AnnotationEvent, DataFrame, DataQueryRequest, dateTime, FieldType, MutableDataFrame } from '@grafana/data';
-import { config, FetchResponse } from '@grafana/runtime';
+import {
+  type AnnotationEvent,
+  type DataFrame,
+  type DataQueryRequest,
+  dateTime,
+  FieldType,
+  MutableDataFrame,
+} from '@grafana/data';
+import { config, type FetchResponse } from '@grafana/runtime';
 
 import InfluxQueryModel from './influx_query_model';
 import { getMockDSInstanceSettings, getMockInfluxDS } from './mocks/datasource';
 import ResponseParser, { getSelectedParams } from './response_parser';
-import { InfluxQuery } from './types';
+import { type InfluxQuery } from './types';
 
 const backendSrv = {
   fetch: jest.fn(),

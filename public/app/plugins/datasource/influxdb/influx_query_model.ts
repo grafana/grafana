@@ -1,12 +1,12 @@
 import { filter, find, indexOf, map } from 'lodash';
 
-import { AdHocVariableFilter, escapeRegex, ScopedVars } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
-import { QueryPart } from './query_part_core';
+import { type AdHocVariableFilter, escapeRegex, type ScopedVars } from '@grafana/data';
+import { type TemplateSrv } from '@grafana/runtime';
+import { type QueryPart } from './query_part_core';
 
 import { removeRegexWrapper } from './queryUtils';
 import queryPart from './query_part';
-import { DEFAULT_POLICY, InfluxQuery, InfluxQueryTag } from './types';
+import { DEFAULT_POLICY, type InfluxQuery, type InfluxQueryTag } from './types';
 
 export default class InfluxQueryModel {
   target: InfluxQuery;

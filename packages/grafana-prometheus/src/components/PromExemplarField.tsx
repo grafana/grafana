@@ -3,12 +3,12 @@ import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { IconButton, InlineLabel, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { PrometheusDatasource } from '../datasource';
-import { PromQuery } from '../types';
+import { type PrometheusDatasource } from '../datasource';
+import { type PromQuery } from '../types';
 
 interface Props {
   onChange: (exemplar: boolean) => void;

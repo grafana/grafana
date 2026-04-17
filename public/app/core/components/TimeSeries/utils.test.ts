@@ -1,4 +1,11 @@
-import { createDataFrame, dateTime, DateTimeInput, EventBus, FieldType } from '@grafana/data';
+import {
+  createDataFrame,
+  dateTime,
+  type DateTimeInput,
+  type EventBus,
+  FieldColorModeId,
+  FieldType,
+} from '@grafana/data';
 import { getTheme } from '@grafana/ui';
 
 import { getXAxisConfig, preparePlotConfigBuilder, UPLOT_DEFAULT_AXIS_GAP } from './utils';
@@ -396,5 +403,134 @@ describe('calculateAnnotationLaneSizes', () => {
         size: 26,
       },
     });
+  });
+});
+
+describe('colorblind line style patterns', () => {
+  const eventBus: EventBus = {
+    publish: jest.fn(),
+    getStream: jest.fn() as EventBus['getStream'],
+    subscribe: jest.fn(),
+    removeAllListeners: jest.fn(),
+    newScopedBus: jest.fn(),
+  };
+
+  function buildWithLineStyle(lineStyle: object | undefined, fieldCount: number) {
+    const fields: Array<Record<string, unknown>> = [
+      {
+        config: {},
+        values: [1000, 2000, 3000],
+        name: 'Time',
+        state: { multipleFrames: false, displayName: 'Time', origin: { fieldIndex: 0, frameIndex: 0 } },
+        type: FieldType.time,
+      },
+    ];
+
+    for (let i = 0; i < fieldCount; i++) {
+      fields.push({
+        config: {
+          color: { mode: FieldColorModeId.PaletteClassic },
+          custom: lineStyle ? { lineStyle } : {},
+        },
+        values: [i + 1, i + 2, i + 3],
+        name: `Series${i}`,
+        state: {
+          multipleFrames: false,
+          displayName: `Series${i}`,
+          origin: { fieldIndex: i + 1, frameIndex: 0 },
+        },
+        type: FieldType.number,
+      });
+    }
+
+    const frame = createDataFrame({ fields });
+
+    return preparePlotConfigBuilder({
+      frame,
+      // @ts-ignore
+      theme: getTheme(),
+      timeZones: ['browser'],
+      getTimeRange: jest.fn(),
+      eventBus,
+      sync: jest.fn(),
+      allFrames: [frame],
+      renderers: [],
+    });
+  }
+
+  it('should assign different patterns per series when colorblind line style is selected', () => {
+    const builder = buildWithLineStyle({ fill: 'accessible' }, 3);
+    const series = builder.getSeries();
+
+    expect(series[0].props.lineStyle).toEqual({ fill: 'solid' });
+    expect(series[1].props.lineStyle).toEqual({ fill: 'dash', dash: [10, 10] });
+    expect(series[2].props.lineStyle).toEqual({ fill: 'dash', dash: [20, 10] });
+  });
+
+  it('should cycle patterns after 9 series', () => {
+    const builder = buildWithLineStyle({ fill: 'accessible' }, 10);
+    const series = builder.getSeries();
+
+    // 10th series (index 9) wraps to first pattern (9 % 9 = 0)
+    expect(series[9].props.lineStyle).toEqual({ fill: 'solid' });
+  });
+
+  it('should assign all 9 distinct patterns before cycling', () => {
+    const builder = buildWithLineStyle({ fill: 'accessible' }, 9);
+    const series = builder.getSeries();
+    const styles = series.map((s) => JSON.stringify(s.props.lineStyle));
+    const unique = new Set(styles);
+    expect(unique.size).toBe(9);
+  });
+
+  it('should use only solid and dash fills (no dot patterns)', () => {
+    const builder = buildWithLineStyle({ fill: 'accessible' }, 9);
+    const series = builder.getSeries();
+
+    for (const s of series) {
+      expect(s.props.lineStyle?.fill).toMatch(/^(solid|dash)$/);
+    }
+  });
+
+  it('should not modify non-colorblind line styles', () => {
+    const dashStyle = { fill: 'dash', dash: [50, 50] };
+    const builder = buildWithLineStyle(dashStyle, 2);
+    const series = builder.getSeries();
+
+    expect(series[0].props.lineStyle).toEqual(dashStyle);
+    expect(series[1].props.lineStyle).toEqual(dashStyle);
+  });
+
+  it('should pass through solid line style unchanged', () => {
+    const builder = buildWithLineStyle({ fill: 'solid' }, 2);
+    const series = builder.getSeries();
+
+    expect(series[0].props.lineStyle).toEqual({ fill: 'solid' });
+    expect(series[1].props.lineStyle).toEqual({ fill: 'solid' });
+  });
+
+  it('should pass through undefined line style', () => {
+    const builder = buildWithLineStyle(undefined, 2);
+    const series = builder.getSeries();
+
+    expect(series[0].props.lineStyle).toBeUndefined();
+    expect(series[1].props.lineStyle).toBeUndefined();
+  });
+
+  it('should work with any color palette (decoupled from color mode)', () => {
+    // Uses PaletteClassic (not colorblind palette) but colorblind line style
+    const builder = buildWithLineStyle({ fill: 'accessible' }, 2);
+    const series = builder.getSeries();
+
+    expect(series[0].props.lineStyle).toEqual({ fill: 'solid' });
+    expect(series[1].props.lineStyle).toEqual({ fill: 'dash', dash: [10, 10] });
+  });
+
+  it('should handle single series', () => {
+    const builder = buildWithLineStyle({ fill: 'accessible' }, 1);
+    const series = builder.getSeries();
+
+    expect(series).toHaveLength(1);
+    expect(series[0].props.lineStyle).toEqual({ fill: 'solid' });
   });
 });

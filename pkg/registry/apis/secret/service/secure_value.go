@@ -6,14 +6,13 @@ import (
 	"strconv"
 	"time"
 
-	claims "github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apiserver/pkg/admission"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/codes"
-
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -380,6 +379,41 @@ func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespa
 	}
 
 	return sv, nil
+}
+
+func (s *SecureValueService) DeleteAllFromGroup(ctx context.Context, namespace xkube.Namespace, apiGroup string) (deleteAllErr error) {
+	start := time.Now()
+
+	ctx, span := s.tracer.Start(ctx, "SecureValueService.DeleteAllFromGroup", trace.WithAttributes(
+		attribute.String("namespace", namespace.String()),
+		attribute.String("apiGroup", apiGroup),
+	))
+	defer span.End()
+
+	defer func() {
+		args := []any{
+			"namespace", namespace.String(),
+			"apiGroup", apiGroup,
+		}
+
+		success := deleteAllErr == nil
+		args = append(args, "success", success)
+		if !success {
+			span.SetStatus(codes.Error, "SecureValueService.DeleteAllFromGroup failed")
+			span.RecordError(deleteAllErr)
+			args = append(args, "error", deleteAllErr)
+		}
+
+		logging.FromContext(ctx).Debug("SecureValueService.DeleteAllFromGroup finished", args...)
+
+		s.metrics.SecureValueDeleteAllFromGroupDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+	}()
+
+	if err := s.secureValueMetadataStorage.SetInactiveAllFromGroup(ctx, namespace, apiGroup); err != nil {
+		return fmt.Errorf("deleting all secure values from group %q in namespace %q: %w", apiGroup, namespace, err)
+	}
+
+	return nil
 }
 
 func (s *SecureValueService) SetKeeperAsActive(ctx context.Context, namespace xkube.Namespace, name string) error {

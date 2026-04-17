@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -31,6 +33,11 @@ func (m *mockLokiClient) RangeQuery(ctx context.Context, logQL string, start, en
 func (m *mockLokiClient) MetricsQuery(ctx context.Context, logQL string, ts int64, limit int64) (lokiclient.MetricsQueryRes, error) {
 	args := m.Called(ctx, logQL, ts, limit)
 	return args.Get(0).(lokiclient.MetricsQueryRes), args.Error(1)
+}
+
+func (m *mockLokiClient) MetricsRangeQuery(ctx context.Context, logQL string, start, end, limit, step int64) (lokiclient.MetricsRangeQueryRes, error) {
+	args := m.Called(ctx, logQL, start, end, limit, step)
+	return args.Get(0).(lokiclient.MetricsRangeQueryRes), args.Error(1)
 }
 
 func TestLokiReader_Query(t *testing.T) {
@@ -125,6 +132,7 @@ func TestBuildQuery(t *testing.T) {
 	tests := []struct {
 		name     string
 		query    Query
+		uuids    []string
 		expected string
 		experr   error
 	}{
@@ -247,11 +255,36 @@ func TestBuildQuery(t *testing.T) {
 			},
 			experr: ErrInvalidQuery,
 		},
+		{
+			name:  "query with UUID filter",
+			query: Query{},
+			uuids: []string{"uuid-1", "uuid-2"},
+			expected: fmt.Sprintf(`{%s=%q} | json | uuid =~ "uuid-1|uuid-2"`,
+				historian.LabelFrom, historian.LabelFromValue),
+		},
+		{
+			name:  "query with single UUID filter",
+			query: Query{},
+			uuids: []string{"uuid-1"},
+			expected: fmt.Sprintf(`{%s=%q} | json | uuid =~ "uuid-1"`,
+				historian.LabelFrom, historian.LabelFromValue),
+		},
+		{
+			name: "query with UUID filter and other filters",
+			query: Query{
+				RuleUID:  stringPtr("test-rule-uid"),
+				Receiver: stringPtr("email-receiver"),
+				Status:   createStatusPtr(v0alpha1.CreateNotificationqueryRequestNotificationStatusFiring),
+			},
+			uuids: []string{"uuid-1"},
+			expected: fmt.Sprintf(`{%s=%q} | rule_uids =~ "(^|.*,)test-rule-uid($|,.*)" | receiver = "email-receiver" | json | status = "firing" | uuid =~ "uuid-1"`,
+				historian.LabelFrom, historian.LabelFromValue),
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := buildQuery(tt.query)
+			result, err := buildQuery(tt.query, tt.uuids)
 			if tt.experr != nil {
 				require.ErrorIs(t, err, tt.experr)
 			} else {
@@ -628,6 +661,181 @@ func TestBuildAlertQuery(t *testing.T) {
 	}
 }
 
+func TestBuildAlertLabelQuery(t *testing.T) {
+	tests := []struct {
+		name     string
+		ruleUID  *string
+		labels   Matchers
+		expected string
+		experr   error
+	}{
+		{
+			name:   "single label matcher without rule uid",
+			labels: Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}},
+			expected: fmt.Sprintf(`{%s=%q} | json | labels_alertname = "HighCPU"`,
+				historian.LabelFrom, historian.LabelFromValueAlerts),
+		},
+		{
+			name:    "single label matcher with rule uid",
+			ruleUID: stringPtr("test-rule-uid"),
+			labels:  Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}},
+			expected: fmt.Sprintf(`{%s=%q} | rule_uid = "test-rule-uid" | json | labels_alertname = "HighCPU"`,
+				historian.LabelFrom, historian.LabelFromValueAlerts),
+		},
+		{
+			name: "multiple label matchers",
+			labels: Matchers{
+				{Type: "=", Label: "alertname", Value: "HighCPU"},
+				{Type: "!=", Label: "severity", Value: "info"},
+				{Type: "=~", Label: "env", Value: "prod|staging"},
+			},
+			expected: fmt.Sprintf(`{%s=%q} | json | labels_alertname = "HighCPU" | labels_severity != "info" | labels_env =~ "prod|staging"`,
+				historian.LabelFrom, historian.LabelFromValueAlerts),
+		},
+		{
+			name:    "multiple label matchers with rule uid",
+			ruleUID: stringPtr("my-rule"),
+			labels: Matchers{
+				{Type: "=", Label: "alertname", Value: "HighCPU"},
+				{Type: "!=", Label: "severity", Value: "info"},
+			},
+			expected: fmt.Sprintf(`{%s=%q} | rule_uid = "my-rule" | json | labels_alertname = "HighCPU" | labels_severity != "info"`,
+				historian.LabelFrom, historian.LabelFromValueAlerts),
+		},
+		{
+			name:   "invalid label key",
+			labels: Matchers{{Type: "=", Label: "bad key", Value: "bar"}},
+			experr: ErrInvalidQuery,
+		},
+		{
+			name:   "invalid matcher type",
+			labels: Matchers{{Type: "|=", Label: "foo", Value: "bar"}},
+			experr: ErrInvalidQuery,
+		},
+		{
+			name:    "invalid rule uid",
+			ruleUID: stringPtr("bad uid!"),
+			labels:  Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}},
+			experr:  ErrInvalidQuery,
+		},
+		{
+			name:    "empty rule uid is ignored",
+			ruleUID: stringPtr(""),
+			labels:  Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}},
+			expected: fmt.Sprintf(`{%s=%q} | json | labels_alertname = "HighCPU"`,
+				historian.LabelFrom, historian.LabelFromValueAlerts),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := buildAlertLabelQuery(tt.ruleUID, tt.labels)
+			if tt.experr != nil {
+				require.ErrorIs(t, err, tt.experr)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestBuildAlertUUIDMetricsQuery(t *testing.T) {
+	now := time.Now().UTC()
+	from := now.Add(-6 * time.Hour)
+	rangeSeconds := int64(now.Sub(from).Seconds())
+
+	inner := fmt.Sprintf(`{%s=%q} | json | labels_alertname = "HighCPU"`,
+		historian.LabelFrom, historian.LabelFromValueAlerts)
+	result := buildAlertUUIDMetricsQuery(inner, from, now)
+	expected := fmt.Sprintf(`sum by (uuid) (count_over_time(%s[%ds]))`, inner, rangeSeconds)
+	assert.Equal(t, expected, result)
+}
+
+func TestLokiReader_QueryWithLabels(t *testing.T) {
+	now := time.Now().UTC()
+	testTimestamp := now.Add(-1 * time.Hour)
+
+	makeMetricSample := func(uuid string) lokiclient.MetricSample {
+		ts, _ := json.Marshal(now.Unix())
+		val, _ := json.Marshal("1")
+		return lokiclient.MetricSample{
+			Metric: map[string]string{"uuid": uuid},
+			Value:  lokiclient.MetricSampleValue{ts, val},
+		}
+	}
+
+	// Metrics response with deduplicated UUIDs from the alerts stream.
+	alertMetricsResponse := lokiclient.MetricsQueryRes{
+		Data: lokiclient.MetricsQueryData{
+			Result: []lokiclient.MetricSample{
+				makeMetricSample("uuid-abc"),
+				makeMetricSample("uuid-def"),
+			},
+		},
+	}
+
+	// Create notification entries matching those UUIDs.
+	notificationResponse := createMockLokiResponse(testTimestamp)
+
+	t.Run("labels filter performs two-phase lookup", func(t *testing.T) {
+		mockClient := &mockLokiClient{}
+		// First call: metrics query against alerts stream for UUIDs.
+		mockClient.On("MetricsQuery", mock.Anything, mock.MatchedBy(func(logql string) bool {
+			return strings.Contains(logql, historian.LabelFromValueAlerts) && strings.Contains(logql, "sum by (uuid)")
+		}), mock.Anything, mock.Anything).
+			Return(alertMetricsResponse, nil).Once()
+		// Second call: range query for notifications with UUID filter.
+		mockClient.On("RangeQuery", mock.Anything, mock.MatchedBy(func(logql string) bool {
+			return strings.Contains(logql, historian.LabelFromValue) && strings.Contains(logql, "uuid =~")
+		}), mock.Anything, mock.Anything, mock.Anything).
+			Return(notificationResponse, nil).Once()
+
+		reader := &LokiReader{
+			client: mockClient,
+			logger: &logging.NoOpLogger{},
+		}
+
+		labels := Matchers{{Type: "=", Label: "alertname", Value: "HighCPU"}}
+		result, err := reader.Query(context.Background(), Query{
+			Labels: &labels,
+		})
+
+		require.NoError(t, err)
+		assert.Len(t, result.Entries, 1)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("labels filter returns empty when no alerts match", func(t *testing.T) {
+		emptyMetricsResponse := lokiclient.MetricsQueryRes{
+			Data: lokiclient.MetricsQueryData{
+				Result: []lokiclient.MetricSample{},
+			},
+		}
+
+		mockClient := &mockLokiClient{}
+		mockClient.On("MetricsQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(emptyMetricsResponse, nil).Once()
+
+		reader := &LokiReader{
+			client: mockClient,
+			logger: &logging.NoOpLogger{},
+		}
+
+		labels := Matchers{{Type: "=", Label: "alertname", Value: "NonExistent"}}
+		result, err := reader.Query(context.Background(), Query{
+			Labels: &labels,
+		})
+
+		require.NoError(t, err)
+		assert.Empty(t, result.Entries)
+		assert.Empty(t, result.Counts)
+		// Only MetricsQuery should be called (for alert UUIDs), not RangeQuery.
+		mockClient.AssertNumberOfCalls(t, "MetricsQuery", 1)
+		mockClient.AssertNumberOfCalls(t, "RangeQuery", 0)
+	})
+}
+
 func TestParseLokiAlertEntry(t *testing.T) {
 	now := time.Now().UTC().Truncate(time.Second)
 	startsAt := now.Add(-30 * time.Minute)
@@ -918,6 +1126,24 @@ func TestBuildMetricsQuery(t *testing.T) {
 				`(count_over_time({foo="bar"} | json`+
 				` | label_format outcome="{{ if .error }}error{{ else }}success{{ end }}"[%ds])))`, rangeSeconds),
 		},
+		{
+			name:       "group by ruleUID omits topk and adds rule_uids",
+			logqlInner: `{foo="bar"} | json`,
+			from:       from,
+			to:         now,
+			limit:      100,
+			groupBy:    QueryGroupBy{RuleUID: true},
+			expected:   fmt.Sprintf(`sum by (rule_uids) (count_over_time({foo="bar"} | json[%ds]))`, rangeSeconds),
+		},
+		{
+			name:       "group by ruleUID and receiver omits topk",
+			logqlInner: `{foo="bar"} | json`,
+			from:       from,
+			to:         now,
+			limit:      50,
+			groupBy:    QueryGroupBy{Receiver: true, RuleUID: true},
+			expected:   fmt.Sprintf(`sum by (receiver,rule_uids) (count_over_time({foo="bar"} | json[%ds]))`, rangeSeconds),
+		},
 	}
 
 	for _, tt := range tests {
@@ -990,6 +1216,14 @@ func TestParseCount(t *testing.T) {
 			want: Count{Count: 1, Error: stringPtr("connection refused")},
 		},
 		{
+			name: "with rule_uids",
+			sample: lokiclient.MetricSample{
+				Metric: map[string]string{"rule_uids": "ruleA,ruleB"},
+				Value:  makeValue("15"),
+			},
+			want: Count{Count: 15, RuleUID: stringPtr("ruleA,ruleB")},
+		},
+		{
 			name: "non-integer count",
 			sample: lokiclient.MetricSample{
 				Metric: map[string]string{},
@@ -1023,6 +1257,245 @@ func TestParseCount(t *testing.T) {
 			assert.Equal(t, tt.want.Status, got.Status)
 			assert.Equal(t, tt.want.Outcome, got.Outcome)
 			assert.Equal(t, tt.want.Error, got.Error)
+			assert.Equal(t, tt.want.RuleUID, got.RuleUID)
+		})
+	}
+}
+
+func TestLokiReader_Query_RangeCounts(t *testing.T) {
+	now := time.Now().UTC()
+	queryTypeRangeCounts := v0alpha1.CreateNotificationqueryRequestBodyTypeRangeCounts
+
+	makeRangeSample := func(metric map[string]string, values [][2]any) lokiclient.MetricRangeSample {
+		svs := make([]lokiclient.MetricSampleValue, 0, len(values))
+		for _, v := range values {
+			ts, _ := json.Marshal(v[0])
+			val, _ := json.Marshal(v[1])
+			svs = append(svs, lokiclient.MetricSampleValue{ts, val})
+		}
+		return lokiclient.MetricRangeSample{Metric: metric, Values: svs}
+	}
+
+	tests := []struct {
+		name          string
+		query         Query
+		lokiResponse  lokiclient.MetricsRangeQueryRes
+		responseError error
+		experr        bool
+		validateFn    func(t *testing.T, result QueryResult)
+	}{
+		{
+			name: "successful range_counts query with results",
+			query: Query{
+				Type:    &queryTypeRangeCounts,
+				GroupBy: &QueryGroupBy{Receiver: true},
+			},
+			lokiResponse: lokiclient.MetricsRangeQueryRes{
+				Data: lokiclient.MetricsRangeQueryData{
+					Result: []lokiclient.MetricRangeSample{
+						makeRangeSample(
+							map[string]string{"receiver": "email"},
+							[][2]any{{1234567890.0, "5"}, {1234567950.0, "10"}},
+						),
+					},
+				},
+			},
+			validateFn: func(t *testing.T, result QueryResult) {
+				require.Len(t, result.Counts, 1)
+				require.NotNil(t, result.Counts[0].Receiver)
+				assert.Equal(t, "email", *result.Counts[0].Receiver)
+				require.Len(t, result.Counts[0].Values, 2)
+				assert.Equal(t, int64(5), result.Counts[0].Values[0].Count)
+				assert.Equal(t, int64(10), result.Counts[0].Values[1].Count)
+			},
+		},
+		{
+			name: "range_counts query with over max limit",
+			query: Query{
+				Type:  &queryTypeRangeCounts,
+				Limit: int64Ptr(1001),
+			},
+			lokiResponse: lokiclient.MetricsRangeQueryRes{},
+			experr:       true,
+		},
+		{
+			name: "range_counts query loki error is propagated",
+			query: Query{
+				Type: &queryTypeRangeCounts,
+			},
+			lokiResponse:  lokiclient.MetricsRangeQueryRes{},
+			responseError: fmt.Errorf("loki unavailable"),
+			experr:        true,
+		},
+		{
+			name: "range_counts query uses custom step",
+			query: Query{
+				Type: &queryTypeRangeCounts,
+				From: timePtr(now.Add(-time.Hour)),
+				To:   timePtr(now),
+				Step: int64Ptr(300),
+			},
+			lokiResponse: lokiclient.MetricsRangeQueryRes{},
+			validateFn: func(t *testing.T, result QueryResult) {
+				assert.Empty(t, result.Counts)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mockLokiClient{}
+			mockClient.On("MetricsRangeQuery", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				Return(tt.lokiResponse, tt.responseError)
+
+			reader := &LokiReader{
+				client: mockClient,
+				logger: &logging.NoOpLogger{},
+			}
+
+			result, err := reader.Query(context.Background(), tt.query)
+			if tt.experr {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			if tt.validateFn != nil {
+				tt.validateFn(t, result)
+			}
+		})
+	}
+}
+
+func TestBuildMetricsRangeQuery(t *testing.T) {
+	step := 60 * time.Second
+
+	tests := []struct {
+		name       string
+		logqlInner string
+		step       time.Duration
+		groupBy    QueryGroupBy
+		expected   string
+	}{
+		{
+			name:       "no grouping",
+			logqlInner: `{foo="bar"} | json`,
+			step:       step,
+			groupBy:    QueryGroupBy{},
+			expected:   `sum(count_over_time({foo="bar"} | json[60s]))`,
+		},
+		{
+			name:       "group by receiver",
+			logqlInner: `{foo="bar"} | json`,
+			step:       step,
+			groupBy:    QueryGroupBy{Receiver: true},
+			expected:   `sum by (receiver) (count_over_time({foo="bar"} | json[60s]))`,
+		},
+		{
+			name:       "group by outcome adds label_format",
+			logqlInner: `{foo="bar"} | json`,
+			step:       step,
+			groupBy:    QueryGroupBy{Outcome: true},
+			expected:   `sum by (outcome) (count_over_time({foo="bar"} | json | label_format outcome="{{ if .error }}error{{ else }}success{{ end }}"[60s]))`,
+		},
+		{
+			name:       "group by ruleUID adds rule_uids to by clause",
+			logqlInner: `{foo="bar"} | json`,
+			step:       step,
+			groupBy:    QueryGroupBy{RuleUID: true},
+			expected:   `sum by (rule_uids) (count_over_time({foo="bar"} | json[60s]))`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := buildMetricsRangeQuery(tt.logqlInner, tt.step, tt.groupBy)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestParseRangeCount(t *testing.T) {
+	makeValue := func(ts float64, count string) lokiclient.MetricSampleValue {
+		tsRaw, _ := json.Marshal(ts)
+		countRaw, _ := json.Marshal(count)
+		return lokiclient.MetricSampleValue{tsRaw, countRaw}
+	}
+
+	tests := []struct {
+		name    string
+		sample  lokiclient.MetricRangeSample
+		wantErr bool
+		want    Count
+	}{
+		{
+			name: "empty metric labels",
+			sample: lokiclient.MetricRangeSample{
+				Metric: map[string]string{},
+				Values: []lokiclient.MetricSampleValue{makeValue(1234567890.0, "5")},
+			},
+			want: Count{
+				Values: []RangeValue{{Timestamp: 1234567890, Count: 5}},
+			},
+		},
+		{
+			name: "with receiver label",
+			sample: lokiclient.MetricRangeSample{
+				Metric: map[string]string{"receiver": "email"},
+				Values: []lokiclient.MetricSampleValue{makeValue(1000.0, "3")},
+			},
+			want: Count{
+				Receiver: stringPtr("email"),
+				Values:   []RangeValue{{Timestamp: 1000, Count: 3}},
+			},
+		},
+		{
+			name: "multiple values",
+			sample: lokiclient.MetricRangeSample{
+				Metric: map[string]string{},
+				Values: []lokiclient.MetricSampleValue{
+					makeValue(100.0, "1"),
+					makeValue(200.0, "2"),
+					makeValue(300.0, "3"),
+				},
+			},
+			want: Count{
+				Values: []RangeValue{
+					{Timestamp: 100, Count: 1},
+					{Timestamp: 200, Count: 2},
+					{Timestamp: 300, Count: 3},
+				},
+			},
+		},
+		{
+			name: "non-integer count returns error",
+			sample: lokiclient.MetricRangeSample{
+				Metric: map[string]string{},
+				Values: []lokiclient.MetricSampleValue{makeValue(100.0, "not-a-number")},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseRangeCount(tt.sample)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want.Receiver, got.Receiver)
+			assert.Equal(t, tt.want.Integration, got.Integration)
+			assert.Equal(t, tt.want.IntegrationIndex, got.IntegrationIndex)
+			assert.Equal(t, tt.want.Status, got.Status)
+			assert.Equal(t, tt.want.Outcome, got.Outcome)
+			assert.Equal(t, tt.want.Error, got.Error)
+			require.Len(t, got.Values, len(tt.want.Values))
+			for i, v := range tt.want.Values {
+				assert.Equal(t, v.Timestamp, got.Values[i].Timestamp)
+				assert.Equal(t, v.Count, got.Values[i].Count)
+			}
 		})
 	}
 }
@@ -1122,6 +1595,133 @@ func createMockAlertLokiResponse(timestamp time.Time) lokiclient.QueryRes {
 				},
 			},
 		},
+	}
+}
+
+func TestExplodeRuleUIDCounts(t *testing.T) {
+	tests := []struct {
+		name   string
+		counts []Count
+		limit  int64
+		want   []Count
+	}{
+		{
+			name:   "empty input",
+			counts: []Count{},
+			limit:  10,
+			want:   []Count{},
+		},
+		{
+			name: "single rule_uid no splitting needed",
+			counts: []Count{
+				{RuleUID: stringPtr("ruleA"), Count: 5},
+			},
+			limit: 10,
+			want: []Count{
+				{RuleUID: stringPtr("ruleA"), Count: 5},
+			},
+		},
+		{
+			name: "comma-separated rule_uids are split",
+			counts: []Count{
+				{RuleUID: stringPtr("ruleA,ruleB"), Count: 10},
+			},
+			limit: 10,
+			want: []Count{
+				{RuleUID: stringPtr("ruleA"), Count: 10},
+				{RuleUID: stringPtr("ruleB"), Count: 10},
+			},
+		},
+		{
+			name: "aggregation across multiple entries",
+			counts: []Count{
+				{RuleUID: stringPtr("ruleA,ruleB"), Count: 10},
+				{RuleUID: stringPtr("ruleB,ruleC"), Count: 5},
+			},
+			limit: 10,
+			want: []Count{
+				{RuleUID: stringPtr("ruleB"), Count: 15},
+				{RuleUID: stringPtr("ruleA"), Count: 10},
+				{RuleUID: stringPtr("ruleC"), Count: 5},
+			},
+		},
+		{
+			name: "limit is applied after aggregation",
+			counts: []Count{
+				{RuleUID: stringPtr("ruleA,ruleB"), Count: 10},
+				{RuleUID: stringPtr("ruleB,ruleC"), Count: 5},
+			},
+			limit: 2,
+			want: []Count{
+				{RuleUID: stringPtr("ruleB"), Count: 15},
+				{RuleUID: stringPtr("ruleA"), Count: 10},
+			},
+		},
+		{
+			name: "preserves other groupBy fields",
+			counts: []Count{
+				{RuleUID: stringPtr("ruleA,ruleB"), Receiver: stringPtr("email"), Count: 7},
+			},
+			limit: 10,
+			want: []Count{
+				{RuleUID: stringPtr("ruleA"), Receiver: stringPtr("email"), Count: 7},
+				{RuleUID: stringPtr("ruleB"), Receiver: stringPtr("email"), Count: 7},
+			},
+		},
+		{
+			name: "aggregation with other dimensions",
+			counts: []Count{
+				{RuleUID: stringPtr("ruleA"), Receiver: stringPtr("email"), Count: 3},
+				{RuleUID: stringPtr("ruleA"), Receiver: stringPtr("slack"), Count: 5},
+			},
+			limit: 10,
+			want: []Count{
+				{RuleUID: stringPtr("ruleA"), Receiver: stringPtr("slack"), Count: 5},
+				{RuleUID: stringPtr("ruleA"), Receiver: stringPtr("email"), Count: 3},
+			},
+		},
+		{
+			name: "nil rule_uids treated as empty",
+			counts: []Count{
+				{Count: 10},
+			},
+			limit: 10,
+			want: []Count{
+				{Count: 10},
+			},
+		},
+	}
+
+	derefStr := func(p *string) string {
+		if p == nil {
+			return ""
+		}
+		return *p
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := explodeRuleUIDCounts(tt.counts, tt.limit)
+			require.Len(t, got, len(tt.want))
+			// Sort tied counts by ruleUID for deterministic comparison.
+			sort.SliceStable(got, func(i, j int) bool {
+				if got[i].Count != got[j].Count {
+					return got[i].Count > got[j].Count
+				}
+				return derefStr(got[i].RuleUID) < derefStr(got[j].RuleUID)
+			})
+			sort.SliceStable(tt.want, func(i, j int) bool {
+				if tt.want[i].Count != tt.want[j].Count {
+					return tt.want[i].Count > tt.want[j].Count
+				}
+				return derefStr(tt.want[i].RuleUID) < derefStr(tt.want[j].RuleUID)
+			})
+			for i := range tt.want {
+				assert.Equal(t, tt.want[i].Count, got[i].Count, "index %d count", i)
+				assert.Equal(t, derefStr(tt.want[i].RuleUID), derefStr(got[i].RuleUID), "index %d ruleUID", i)
+				assert.Equal(t, derefStr(tt.want[i].Receiver), derefStr(got[i].Receiver), "index %d receiver", i)
+			}
+		})
 	}
 }
 

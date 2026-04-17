@@ -165,9 +165,15 @@ var provisionerUser = func(orgID int64) identity.Requester {
 		orgID,
 		org.RoleAdmin,
 		[]accesscontrol.Permission{
-			{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-			{Action: accesscontrol.ActionAlertingProvisioningReadSecrets, Scope: dashboards.ScopeFoldersAll},
-			{Action: accesscontrol.ActionAlertingProvisioningWrite, Scope: dashboards.ScopeFoldersAll},
+			{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersAll},
+			{Action: accesscontrol.ActionAlertingProvisioningReadSecrets},
+			{Action: accesscontrol.ActionAlertingProvisioningWrite},
+			{Action: accesscontrol.ActionAlertingReceiversCreate},
+			{Action: accesscontrol.ActionAlertingReceiversRead, Scope: alert_models.ScopeReceiversAll},
+			{Action: accesscontrol.ActionAlertingReceiversUpdate, Scope: alert_models.ScopeReceiversAll},
+			{Action: accesscontrol.ActionAlertingReceiversDelete, Scope: alert_models.ScopeReceiversAll},
+			// Required for updating protected fields in contact points
+			{Action: accesscontrol.ActionAlertingReceiversUpdateProtected, Scope: alert_models.ScopeReceiversAll},
 		},
 	)
 }

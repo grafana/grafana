@@ -180,14 +180,8 @@ func schema_pkg_apis_dashboard_v2beta1_AnnotationPermission(ref common.Reference
 							Ref:     ref(AnnotationActions{}.OpenAPIModelName()),
 						},
 					},
-					"organization": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(AnnotationActions{}.OpenAPIModelName()),
-						},
-					},
 				},
-				Required: []string{"dashboard", "organization"},
+				Required: []string{"dashboard"},
 			},
 		},
 		Dependencies: []string{
@@ -531,6 +525,21 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAdhocVariableKind(ref common.Ref
 							Format:  "",
 						},
 					},
+					"labels": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 					"datasource": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref(DashboardV2beta1AdhocVariableKindDatasource{}.OpenAPIModelName()),
@@ -635,6 +644,13 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAdhocVariableSpec(ref common.Ref
 							Default: false,
 							Type:    []string{"boolean"},
 							Format:  "",
+						},
+					},
+					"enableGroupBy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether the group-by operator is enabled in the ad hoc filter combobox.",
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 					"origin": {
@@ -1757,6 +1773,21 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardDataQueryKind(ref common.Referen
 							Format:  "",
 						},
 					},
+					"labels": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 					"datasource": {
 						SchemaProps: spec.SchemaProps{
 							Description: "New type for datasource reference Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.",
@@ -2620,6 +2651,21 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardGroupByVariableKind(ref common.R
 							Format:  "",
 						},
 					},
+					"labels": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 					"datasource": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref(DashboardV2beta1GroupByVariableKindDatasource{}.OpenAPIModelName()),
@@ -3110,6 +3156,13 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardMatcherConfig(ref common.Referen
 						SchemaProps: spec.SchemaProps{
 							Description: "The matcher id. This is used to find the matcher implementation from registry.",
 							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"scope": {
+						SchemaProps: spec.SchemaProps{
+							Description: "If set, limits this matcher to fields of that type. If not set, \"series\" mode is used.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

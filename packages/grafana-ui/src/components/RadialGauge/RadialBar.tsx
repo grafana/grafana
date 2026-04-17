@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
 
-import { colorManipulator, FALLBACK_COLOR, FieldDisplay } from '@grafana/data';
+import { colorManipulator, FALLBACK_COLOR, type FieldDisplay } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
 import { RadialArcPath } from './RadialArcPath';
-import { RadialShape, RadialGaugeDimensions, GradientStop } from './types';
+import { type RadialShape, type RadialGaugeDimensions, type GradientStop } from './types';
 
 export interface RadialBarProps {
   angleRange: number;
@@ -54,6 +55,7 @@ export function RadialBar({
           roundedBars={roundedBars}
           shape={shape}
           startAngle={startAngle}
+          data-testid={selectors.components.Panels.Visualization.Gauge.Track}
         />
       )}
       {/** Track after value */}
@@ -65,6 +67,7 @@ export function RadialBar({
         roundedBars={roundedBars}
         shape={shape}
         startAngle={startAngle + startValueAngle + endValueAngle}
+        data-testid={selectors.components.Panels.Visualization.Gauge.Track}
       />
       {/** The colored bar */}
       <RadialArcPath
@@ -78,6 +81,7 @@ export function RadialBar({
         roundedBars={roundedBars}
         shape={shape}
         startAngle={startAngle + startValueAngle}
+        data-testid={selectors.components.Panels.Visualization.Gauge.Bar}
         {...colorProps}
       />
     </>

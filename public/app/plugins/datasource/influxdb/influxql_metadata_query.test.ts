@@ -2,7 +2,7 @@ import { config } from '@grafana/runtime';
 
 import { getAllMeasurements, getAllPolicies, getFieldKeys, getTagKeys, getTagValues } from './influxql_metadata_query';
 import { getMockInfluxDS } from './mocks/datasource';
-import { InfluxQuery, InfluxVariableQuery } from './types';
+import { type InfluxQuery, type InfluxVariableQuery } from './types';
 
 describe('influx_metadata_query', () => {
   let query: InfluxVariableQuery;

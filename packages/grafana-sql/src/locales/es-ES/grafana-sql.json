@@ -4,17 +4,17 @@
       "confirm-modal": {
         "builder-mode": "El modo Creador no muestra los cambios realizados en el código. El creador de consultas mostrará los últimos cambios que haya realizado en el modo Creador.",
         "cancel": "Cancelar",
-        "clipboard": "¿Quiere copiar su código en el portapapeles?",
+        "clipboard": "¿Quieres copiar tu código en el portapapeles?",
         "copy-code-and-switch": "Copiar código y cambiar",
         "discard-code-and-switch": "Descartar código y cambiar",
         "warning": "Advertencia"
       },
       "connection-limits": {
         "auto-max-idle": "Inactividad máxima automática",
-        "content-auto-max-idle": "Si está habilitado, establece automáticamente el número de <i>Conexiones inactivas máximas</i> en el mismo valor que <i>Conexiones abiertas máximas</i>. Si no se establece el número de conexiones abiertas máximas, se establecerá en el valor predeterminado ({{defaultMaxIdle}}).",
-        "content-max-idle": "El número máximo de conexiones en el grupo de conexiones inactivas. Si <i>Conexiones abiertas máximas</i> es mayor que 0 pero menor que <i>Conexiones inactivas máximas</i>, entonces <i>Conexiones inactivas máximas</i> se reducirá para que coincida con el límite de <i>Conexiones abiertas máximas</i>. Si se establece en 0, no se conservan las conexiones inactivas.",
+        "content-auto-max-idle": "Si este ajuste está habilitado, establece automáticamente el número de <i>Conexiones inactivas máximas</i> en el mismo valor que <i>Conexiones abiertas máximas</i>. Si no se establece el número de conexiones abiertas máximas, se establecerá en el valor predeterminado ({{defaultMaxIdle}}).",
+        "content-max-idle": "El número máximo de conexiones en el grupo de conexiones inactivas. Si <i>Conexiones abiertas máximas</i> es mayor que «0» pero menor que <i>Conexiones inactivas máximas</i>, entonces el valor de <i>Conexiones inactivas máximas</i> se reducirá para que coincida con el límite de <i>Conexiones abiertas máximas</i>. Si se establece en «0», no se conservarán las conexiones inactivas.",
         "content-max-lifetime": "La cantidad máxima de tiempo en segundos que se puede reutilizar una conexión. Si se establece en 0, las conexiones se reutilizan para siempre.",
-        "content-max-open": "El número máximo de conexiones abiertas a la base de datos. Si <i>Conexiones inactivas máximas</i> es mayor que 0 y <i>Conexiones abiertas máximas</i> es menor que <i>Conexiones inactivas máximas</i>, entonces <i>Conexiones inactivas máximas</i> se reducirá para que coincida con el límite de <i>Conexiones abiertas máximas</i>. Si se establece en 0, no hay límite en el número de conexiones abiertas.",
+        "content-max-open": "El número máximo de conexiones abiertas a la base de datos. Si <i>Conexiones inactivas máximas</i> es mayor que 0 y <i>Conexiones abiertas máximas</i> es menor que <i>Conexiones inactivas máximas</i>, entonces el valor de <i>Conexiones inactivas máximas</i> se reducirá para que coincida con el límite de <i>Conexiones abiertas máximas</i>. Si se establece en «0», no habrá límite en el número de conexiones abiertas.",
         "max-idle": "Máx. inactivas",
         "max-lifetime": "Vida útil máxima",
         "max-open": "Máx. abiertas",
@@ -54,7 +54,7 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "Tu consulta no es válida. A continuación podrás obtener más información. <br />En todo caso, puedes ejecutar esta consulta.",
+        "content-invalid-query": "Tu consulta no es válida. A continuación podrás obtener más información. <br/>En todo caso, puedes ejecutar esta consulta.",
         "editor-modes": {
           "label-builder": "Constructor",
           "label-code": "Código"
@@ -137,7 +137,7 @@
       },
       "tlssecrets-config": {
         "content-tlsssl-client-certificate": "Para autenticarse con un certificado de cliente TLS/SSL, proporciónelo aquí.",
-        "content-tlsssl-client-key": "Para autenticarse con un certificado TLS/SSL de cliente, proporcione la clave aquí.",
+        "content-tlsssl-client-key": "Para autenticarse con un certificado TLS/SSL de cliente, proporciona la clave aquí.",
         "content-tlsssl-root-certificate": "Si el modo TLS/SSL seleccionado requiere un certificado raíz del servidor, proporciónelo aquí",
         "tlsssl-client-certificate": "Certificado de cliente TLS/SSL",
         "tlsssl-client-key": "Clave de cliente TLS/SSL",

@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -70,6 +71,7 @@ func setup(t *testing.T, srv *Server) *Server {
 		common.NewFolderTuple("user:17", common.RelationSetView, "4"),
 		common.NewFolderTuple("user:18", common.RelationCreate, "general"),
 		common.NewFolderResourceTuple("user:18", common.RelationCreate, dashboardGroup, dashboardResource, "", "general"),
+		common.NewGroupResourceTuple("user:19", common.RelationGetPermissions, userGroup, userResource, ""),
 	}
 
 	return setupOpenFGADatabase(t, srv, tuples)
@@ -91,7 +93,10 @@ func setupOpenFGAServer(t *testing.T) *Server {
 		}
 	}
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, testStore, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil)
+	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
+	require.NoError(t, err)
+
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {

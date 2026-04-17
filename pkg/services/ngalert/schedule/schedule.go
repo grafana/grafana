@@ -86,7 +86,8 @@ type schedule struct {
 
 	evaluatorFactory eval.EvaluatorFactory
 
-	ruleStore RulesStore
+	ruleStore      RulesStore
+	ruleChainStore RuleChainStore
 
 	stateManager *state.Manager
 
@@ -156,6 +157,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		log:                    cfg.Log,
 		evaluatorFactory:       cfg.EvaluatorFactory,
 		ruleStore:              cfg.RuleStore,
+		ruleChainStore:         &NoopRuleChainStore{},
 		metrics:                cfg.Metrics,
 		appURL:                 cfg.AppURL,
 		disableGrafanaFolder:   cfg.DisableGrafanaFolder,
@@ -263,6 +265,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
 		case <-ctx.Done():
 			// waiting for all rule evaluation routines to stop
 			waitErr := dispatcherGroup.Wait()
+			sch.metrics.ResetOnStop()
 			return waitErr
 		}
 	}

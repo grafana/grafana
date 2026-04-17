@@ -1,16 +1,22 @@
 import { useMemo } from 'react';
 
-import { Folder } from 'app/api/clients/folder/v1beta1';
-import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { type Folder } from 'app/api/clients/folder/v1beta1';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { getCanPushToConfiguredBranch, getDefaultWorkflow } from 'app/features/provisioning/components/defaults';
+import {
+  getCanPushToConfiguredBranch,
+  getDefaultRef,
+  getDefaultWorkflow,
+} from 'app/features/provisioning/components/defaults';
+import { ensureFolderPathTrailingSlash } from 'app/features/provisioning/components/utils/path';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
-import { BaseProvisionedFormData } from '../types/form';
+import { type BaseProvisionedFormData } from '../types/form';
 
 interface UseProvisionedFolderFormDataProps {
   folderUid?: string;
   title?: string;
+  branchPrefix?: string;
 }
 
 export interface ProvisionedFolderFormDataResult {
@@ -22,11 +28,12 @@ export interface ProvisionedFolderFormDataResult {
 }
 
 /**
- * Hook for managing provisioned folder create/delete form data.
+ * Hook for managing provisioned folder form data (create/rename/delete).
  */
 export function useProvisionedFolderFormData({
   folderUid,
   title,
+  branchPrefix = 'folder',
 }: UseProvisionedFolderFormDataProps): ProvisionedFolderFormDataResult {
   const { repository, folder, isLoading, isReadOnlyRepo } = useGetResourceRepositoryView({ folderName: folderUid });
 
@@ -37,18 +44,15 @@ export function useProvisionedFolderFormData({
     if (!repository || isLoading) {
       return undefined;
     }
-    const defaultWorkflow = getDefaultWorkflow(repository);
-
     return {
       title: title || '',
       comment: '',
-      // When workflow is branch, we don't set a default ref, user will select from branches dropdown
-      ref: defaultWorkflow === 'branch' ? '' : (repository?.branch ?? ''),
+      ref: getDefaultRef(repository, branchPrefix),
       repo: repository.name || '',
-      path: folder?.metadata?.annotations?.[AnnoKeySourcePath] || '',
+      path: ensureFolderPathTrailingSlash(folder?.metadata?.annotations?.[AnnoKeySourcePath] || ''),
       workflow: getDefaultWorkflow(repository),
     };
-  }, [repository, isLoading, title, folder?.metadata?.annotations]);
+  }, [repository, isLoading, title, folder?.metadata?.annotations, branchPrefix]);
 
   return {
     repository,

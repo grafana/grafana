@@ -23,6 +23,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/resource"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/youmark/pkcs8"
@@ -80,7 +82,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
@@ -197,7 +198,6 @@ type HTTPServer struct {
 	dashboardVersionService      dashver.Service
 	PublicDashboardsApi          *publicdashboardsApi.Api
 	starService                  star.Service
-	playlistService              playlist.Service
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
 	pluginsCDNService            *pluginscdn.Service
@@ -219,12 +219,14 @@ type HTTPServer struct {
 	promRegister                    prometheus.Registerer
 	promGatherer                    prometheus.Gatherer
 	clientConfigProvider            grafanaapiserver.DirectRestConfigProvider
+	clientGenerator                 resource.ClientGenerator
 	namespacer                      request.NamespaceMapper
 	anonService                     anonymous.Service
 	userVerifier                    user.Verifier
 	tlsCerts                        TLSCerts
 	htmlHandlerRequestsDuration     *prometheus.HistogramVec
 	dsConfigHandlerRequestsDuration *prometheus.HistogramVec
+	dsEndpointRedirects             *prometheus.CounterVec
 	dsConnectionClient              datasource.ConnectionClient
 	publicDashboardsService         publicdashboards.Service
 }
@@ -267,7 +269,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, managedPlugins managedplugins.Manager,
-	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
+	apiKeyService apikey.Service, kvStore kvstore.KVStore,
 	secretsMigrator secrets.Migrator, secretsService secrets.Service,
 	secretMigrationProvider spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service,
@@ -275,7 +277,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	accesscontrolService accesscontrol.Service, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
-	starApi *starApi.API, promRegister prometheus.Registerer, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, anonService anonymous.Service,
+	starApi *starApi.API, promRegister prometheus.Registerer, anonService anonymous.Service,
+	clientConfigProvider grafanaapiserver.DirectRestConfigProvider, clientGenerator resource.ClientGenerator,
 	userVerifier user.Verifier, pluginPreinstall pluginchecker.Preinstall, publicDashboardsService publicdashboards.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
@@ -353,7 +356,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardPermissionsService:  dashboardPermissionsService,
 		dashboardVersionService:      dashboardVersionService,
 		starService:                  starService,
-		playlistService:              playlistService,
 		apiKeyService:                apiKeyService,
 		kvStore:                      kvStore,
 		PublicDashboardsApi:          publicDashboardsApi,
@@ -376,6 +378,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		promRegister:                 promRegister,
 		promGatherer:                 promGatherer,
 		clientConfigProvider:         clientConfigProvider,
+		clientGenerator:              clientGenerator,
 		namespacer:                   request.GetNamespaceMapper(cfg),
 		anonService:                  anonService,
 		userVerifier:                 userVerifier,
@@ -390,11 +393,17 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 			Name:      "ds_config_handler_requests_duration_seconds",
 			Help:      "Duration of requests handled by datasource configuration handlers",
 		}, []string{"handler"}),
+		dsEndpointRedirects: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "grafana",
+			Name:      "ds_endpoint_redirects_total",
+			Help:      "Total number of datasource endpoint redirects by route (local/remote) and plugin type",
+		}, []string{"route", "plugin_type", "target"}),
 		dsConnectionClient: datasource.NewLegacyConnectionClient(dataSourcesService),
 	}
 
 	promRegister.MustRegister(hs.htmlHandlerRequestsDuration)
 	promRegister.MustRegister(hs.dsConfigHandlerRequestsDuration)
+	promRegister.MustRegister(hs.dsEndpointRedirects)
 
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -771,6 +780,7 @@ type healthResponse struct {
 	Version          string `json:"version,omitempty"`
 	Commit           string `json:"commit,omitempty"`
 	EnterpriseCommit string `json:"enterpriseCommit,omitempty"`
+	APIServer        string `json:"apiserver,omitempty"`
 }
 
 // swagger:route GET /health health getHealth
@@ -799,13 +809,26 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 		}
 	}
 
+	healthy := true
+
 	if !hs.databaseHealthy(ctx.Req.Context()) {
 		data.Database = "failing"
-		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		ctx.Resp.WriteHeader(http.StatusServiceUnavailable)
-	} else {
-		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		healthy = false
+	}
+
+	// Check apiserver readiness. This gates the health endpoint on apiserver
+	// boot sequence completion, including remote APIService initialization —
+	// preventing Kubernetes from routing traffic before aggregated services are ready.
+	if hs.clientConfigProvider != nil && !hs.clientConfigProvider.IsReady() {
+		data.APIServer = "not ready"
+		healthy = false
+	}
+
+	ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	if healthy {
 		ctx.Resp.WriteHeader(http.StatusOK)
+	} else {
+		ctx.Resp.WriteHeader(http.StatusServiceUnavailable)
 	}
 
 	dataBytes, err := json.MarshalIndent(data, "", "  ")

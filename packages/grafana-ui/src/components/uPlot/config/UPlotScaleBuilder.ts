@@ -1,7 +1,7 @@
-import uPlot, { Scale, Range } from 'uplot';
+import uPlot, { type Scale, type Range } from 'uplot';
 
-import { DecimalCount, incrRoundDn, incrRoundUp, isBooleanUnit } from '@grafana/data';
-import { ScaleOrientation, ScaleDirection, ScaleDistribution, StackingMode } from '@grafana/schema';
+import { type DecimalCount, incrRoundDn, incrRoundUp, isBooleanUnit } from '@grafana/data';
+import { type ScaleOrientation, type ScaleDirection, ScaleDistribution, StackingMode } from '@grafana/schema';
 
 import { PlotConfigBuilder } from '../types';
 
@@ -250,6 +250,20 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
 
         if (hardMaxOnly) {
           minMax[1] = hardMax!;
+        }
+      }
+
+      // for tiny ranges like 0.999999999811111, 1, uPlot's rangeNum may return [1,1]
+      if (minMax[0]! === minMax[1]! && minMax[0]! !== 0) {
+        // only applies to linear scales
+        if (scale.distr === 1) {
+          if (minMax[0] < 0) {
+            minMax[0] *= 2;
+            minMax[1] = 0;
+          } else {
+            minMax[1] *= 2;
+            minMax[0] = 0;
+          }
         }
       }
 

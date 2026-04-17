@@ -1,6 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
-import { SQLQuery } from '@grafana/sql';
+import { type SQLQuery } from '@grafana/sql';
 import { config } from '@grafana/runtime';
 
 import InfluxDatasource from './datasource';
