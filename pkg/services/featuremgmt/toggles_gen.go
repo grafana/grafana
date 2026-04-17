@@ -171,10 +171,6 @@ const (
 	// Log schema validation errors so they can be analyzed later
 	FlagDashboardSchemaValidationLogging = "dashboardSchemaValidationLogging"
 
-	// FlagScanRowInvalidDashboardParseFallbackEnabled
-	// Enable fallback parsing behavior when scan row encounters invalid dashboard JSON
-	FlagScanRowInvalidDashboardParseFallbackEnabled = "scanRowInvalidDashboardParseFallbackEnabled"
-
 	// FlagDatasourcesQueryTypes
 	// Load Query types from spec.{version}.query.{yaml|json}
 	FlagDatasourcesQueryTypes = "datasources.queryTypes"
@@ -459,10 +455,6 @@ const (
 	// Enables the new role picker drawer design
 	FlagRolePickerDrawer = "rolePickerDrawer"
 
-	// FlagManagedDualWriter
-	// Pick the dual write mode from database configs
-	FlagManagedDualWriter = "managedDualWriter"
-
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
 	FlagPluginsSriChecks = "pluginsSriChecks"
@@ -701,10 +693,6 @@ const (
 	// FlagAlertingNotificationHistory
 	// Enables the notification history feature
 	FlagAlertingNotificationHistory = "alertingNotificationHistory"
-
-	// FlagUnifiedStorageSearchDualReaderEnabled
-	// Enable dual reader for unified storage search
-	FlagUnifiedStorageSearchDualReaderEnabled = "unifiedStorageSearchDualReaderEnabled"
 
 	// FlagAlertmanagerRemoteSecondaryWithRemoteState
 	// Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.

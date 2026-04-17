@@ -8189,6 +8189,9 @@
       "label-state-name": "Durum adı"
     }
   },
+  "diff-viewer": {
+    "loading": ""
+  },
   "dimensions": {
     "background-size-editor": {
       "options": {
