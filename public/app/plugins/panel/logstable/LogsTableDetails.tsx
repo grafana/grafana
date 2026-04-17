@@ -2,20 +2,22 @@ import { css } from '@emotion/css';
 import { Resizable } from 're-resizable';
 import { useState, useCallback, startTransition, useRef, useMemo } from 'react';
 
-import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
+import { type PanelProps, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDragStyles, Icon, ScrollContainer, Tab, TabsBar, useStyles2 } from '@grafana/ui';
 import { LogLineDetailsComponent } from 'app/features/logs/components/panel/LogLineDetailsComponent';
 import { LogLineDetailsHeader } from 'app/features/logs/components/panel/LogLineDetailsHeader';
 
 import { useLogDetailsContext } from './LogDetailsContext';
+import { type Options } from './options/types';
 
-interface Props {
+interface Props extends Pick<PanelProps<Options>, 'onOptionsChange'> {
+  options: Options;
   timeRange: TimeRange;
   timeZone: string;
 }
 
-export const LogsTableDetails = ({ timeRange, timeZone }: Props) => {
+export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone }: Props) => {
   const { currentLog, enableLogDetails, logs, setCurrentLog, showDetails, toggleDetails } = useLogDetailsContext();
   const [search, setSearch] = useState('');
   const [detailsWidth, setDetailsWidth] = useState(window.innerWidth * 0.4);
@@ -32,9 +34,17 @@ export const LogsTableDetails = ({ timeRange, timeZone }: Props) => {
 
   const tabs = useMemo(() => showDetails.slice().reverse(), [showDetails]);
 
-  const handleResize = useCallback((event: unknown, direction: unknown, elementRef: HTMLElement) => {
-    setDetailsWidth(elementRef.clientWidth);
-  }, []);
+  const handleResize = useCallback(
+    (event: unknown, direction: unknown, elementRef: HTMLElement) => {
+      const width = elementRef.clientWidth;
+      setDetailsWidth(width);
+      onOptionsChange({
+        ...options,
+        logDetailsWidth: width,
+      });
+    },
+    [onOptionsChange, options]
+  );
 
   if (!enableLogDetails || !currentLog) {
     return null;
@@ -91,6 +101,10 @@ export const LogsTableDetails = ({ timeRange, timeZone }: Props) => {
     </div>
   );
 };
+
+export function getLogDetailsWidth() {
+  return Math.max(Math.round(window.innerWidth * 0.4), 400);
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({

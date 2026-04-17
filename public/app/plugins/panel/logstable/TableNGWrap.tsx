@@ -64,14 +64,6 @@ export function TableNGWrap({
   const controlsWidth = !showControls ? 0 : controlsExpanded ? CONTROLS_WIDTH_EXPANDED : LOG_LIST_CONTROLS_WIDTH;
   const styles = useStyles2(getStyles, fieldSelectorWidth, height, tableWidth, controlsWidth, !!title);
 
-  // Callbacks
-  const onTableOptionsChange = useCallback(
-    (options: TableOptions) => {
-      onOptionsChange(options);
-    },
-    [onOptionsChange]
-  );
-
   const handleSortOrderChange = useCallback(
     (sortOrder: LogsSortOrder) => {
       getAppEvents().publish(
@@ -132,7 +124,7 @@ export function TableNGWrap({
         renderCounter={renderCounter}
         title={title}
         eventBus={eventBus}
-        onOptionsChange={onTableOptionsChange}
+        onOptionsChange={onOptionsChange}
         onFieldConfigChange={handleTableOnFieldConfigChange}
         replaceVariables={replaceVariables}
         onChangeTimeRange={onChangeTimeRange}

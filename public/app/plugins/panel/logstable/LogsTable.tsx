@@ -28,7 +28,7 @@ import { dataFrameToLogsModel } from 'app/features/logs/logsModel';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
 import { LogDetailsContextProvider } from './LogDetailsContext';
-import { LogsTableDetails } from './LogsTableDetails';
+import { getLogDetailsWidth, LogsTableDetails } from './LogsTableDetails';
 import { TableNGWrap } from './TableNGWrap';
 import { LogsTableFields } from './fieldSelector/LogsTableFields';
 import { detectLevelField } from './fields/logs';
@@ -238,6 +238,7 @@ export const LogsTable = ({
       sortOrder: LogsSortOrder.Descending,
       sortBy: [{ displayName: timeFieldName, desc: true }],
       fieldSelectorWidth: options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth(),
+      logDetailsWidth: options.logDetailsWidth ? options.logDetailsWidth : getLogDetailsWidth(),
       ...options,
       wrapText,
     }),
@@ -320,7 +321,7 @@ export const LogsTable = ({
             logOptionsStorageKey={SETTING_KEY_ROOT}
           />
 
-          <LogsTableDetails timeRange={data.timeRange} timeZone={timeZone} />
+          <LogsTableDetails onOptionsChange={handleTableOptionsChange} timeRange={data.timeRange} timeZone={timeZone} />
         </LogDetailsContextProvider>
       )}
     </div>

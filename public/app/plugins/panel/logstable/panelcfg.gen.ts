@@ -16,6 +16,7 @@ export interface Options {
   buildLinkToLogLine?: unknown;
   displayedFields?: Array<string>;
   fieldSelectorWidth?: number;
+  logDetailsWidth?: number;
   permalinkedLogId?: string;
   showControls?: boolean;
   showCopyLogLink?: boolean;
@@ -27,6 +28,7 @@ export interface Options {
 export const defaultOptions: Partial<Options> = {
   displayedFields: [],
   fieldSelectorWidth: 220,
+  logDetailsWidth: 400,
   showControls: true,
   showCopyLogLink: false,
   showInspectLogLine: true,
