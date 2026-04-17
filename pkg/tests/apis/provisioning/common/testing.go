@@ -755,6 +755,7 @@ type TestRepo struct {
 	Token                     string
 	TokenUser                 string
 	WebhookSecret             string
+	WebhookBaseURL            string
 	GenerateName              string
 	GenerateDashboardPreviews bool
 
