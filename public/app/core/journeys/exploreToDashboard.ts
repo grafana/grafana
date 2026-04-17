@@ -1,6 +1,6 @@
 import { onInteraction, registerJourneyTriggers, onJourneyInstance } from '@grafana/runtime';
 
-import { collectUnsubs } from './utils';
+import { collectUnsubs, str } from './utils';
 
 /**
  * Journey: explore_to_dashboard
@@ -36,32 +36,26 @@ registerJourneyTriggers('explore_to_dashboard', (tracker) => {
 onJourneyInstance('explore_to_dashboard', (handle) => {
   const { add, cleanup } = collectUnsubs();
 
-  // Step: form submitted
+  // Pointwise event: form submitted
   add(onInteraction('e_2_d_submit', (props) => {
-    if (handle.isActive) {
-      handle.recordEvent('submit', {
-        saveTarget: String(props.saveTarget ?? ''),
-        newTab: String(props.newTab ?? ''),
-      });
-      handle.setAttributes({
-        saveTarget: String(props.saveTarget ?? ''),
-        newTab: String(props.newTab ?? ''),
-      });
-    }
+    handle.recordEvent('submit', {
+      saveTarget: str(props.saveTarget),
+      newTab: str(props.newTab),
+    });
+    handle.setAttributes({
+      saveTarget: str(props.saveTarget),
+      newTab: str(props.newTab),
+    });
   }));
 
   // Success: panel applied on the dashboard side
   add(onInteraction('explore_to_dashboard_panel_applied', () => {
-    if (handle.isActive) {
-      handle.end('success');
-    }
+    handle.end('success');
   }));
 
   // Discarded: form closed without submitting
   add(onInteraction('e_2_d_discarded', () => {
-    if (handle.isActive) {
-      handle.end('discarded');
-    }
+    handle.end('discarded');
   }));
 
   return cleanup;

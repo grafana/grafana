@@ -109,31 +109,16 @@ describe('exploreToDashboard journey wiring', () => {
     expect(mockHandle.end).toHaveBeenCalledWith('discarded');
   });
 
-  it('should not end journey twice', () => {
+  // The wiring no longer guards end() with isActive - it trusts the idempotent
+  // end() contract. The real handle no-ops on subsequent ends.
+  it('should end exactly once on panel applied', () => {
     loadWiring();
 
     simulateInteraction('e_2_d_open', {});
     simulateInteraction('explore_to_dashboard_panel_applied', {});
 
-    // Mock isActive to false after first end
-    Object.defineProperty(mockHandle, 'isActive', { value: false, writable: true });
-
-    simulateInteraction('e_2_d_discarded', {});
-
     expect(mockHandle.end).toHaveBeenCalledTimes(1);
-  });
-
-  it('should not add step if journey is not active', () => {
-    loadWiring();
-
-    simulateInteraction('e_2_d_open', {});
-
-    // End the journey
-    Object.defineProperty(mockHandle, 'isActive', { value: false, writable: true });
-
-    simulateInteraction('e_2_d_submit', { saveTarget: 'new-dashboard', newTab: true });
-
-    expect(mockHandle.recordEvent).not.toHaveBeenCalled();
+    expect(mockHandle.end).toHaveBeenCalledWith('success');
   });
 
   it('should handle newTab: true in submit attributes', () => {

@@ -9,3 +9,11 @@ export function collectUnsubs() {
     cleanup: () => unsubs.forEach((fn) => fn()),
   };
 }
+
+/**
+ * Coerces an interaction property to a string attribute. Nullish values become ''
+ * so we don't emit the literal strings 'undefined' / 'null' as span attributes.
+ */
+export function str(value: unknown): string {
+  return value == null ? '' : String(value);
+}

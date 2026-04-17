@@ -1,6 +1,6 @@
 import { onInteraction, registerJourneyTriggers, onJourneyInstance } from '@grafana/runtime';
 
-import { collectUnsubs } from './utils';
+import { collectUnsubs, str } from './utils';
 
 /**
  * Journey: dashboard_edit
@@ -21,7 +21,7 @@ registerJourneyTriggers('dashboard_edit', (tracker) => {
   return onInteraction('dashboards_edit_button_clicked', (props) => {
     tracker.startJourney('dashboard_edit', {
       attributes: {
-        dashboardUID: String(props.dashboardUid ?? ''),
+        dashboardUID: str(props.dashboardUid),
       },
     });
   });
@@ -31,21 +31,15 @@ onJourneyInstance('dashboard_edit', (handle) => {
   const { add, cleanup } = collectUnsubs();
 
   add(onInteraction('grafana_dashboard_saved', () => {
-    if (handle.isActive) {
-      handle.end('success');
-    }
+    handle.end('success');
   }));
 
   add(onInteraction('grafana_dashboard_created', () => {
-    if (handle.isActive) {
-      handle.end('success');
-    }
+    handle.end('success');
   }));
 
   add(onInteraction('dashboards_edit_discarded', () => {
-    if (handle.isActive) {
-      handle.end('discarded');
-    }
+    handle.end('discarded');
   }));
 
   return cleanup;

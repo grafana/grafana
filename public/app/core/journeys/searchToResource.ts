@@ -1,6 +1,6 @@
 import { onInteraction, registerJourneyTriggers, onJourneyInstance } from '@grafana/runtime';
 
-import { collectUnsubs } from './utils';
+import { collectUnsubs, str } from './utils';
 
 /**
  * Journey: search_to_resource
@@ -34,7 +34,7 @@ onJourneyInstance('search_to_resource', (handle) => {
   // Track whether user selected something, enrich with resource type
   add(onInteraction('command_palette_action_selected', (props) => {
     actionSelected = true;
-    const actionId = String(props.actionId ?? '');
+    const actionId = str(props.actionId);
     if (actionId.startsWith('go/dashboard')) {
       selectedResourceType = 'dashboard';
     } else if (actionId.startsWith('go/folder')) {
@@ -45,26 +45,24 @@ onJourneyInstance('search_to_resource', (handle) => {
     handle.setAttributes({
       resourceType: selectedResourceType,
       actionId,
-      actionName: String(props.actionName ?? ''),
+      actionName: str(props.actionName),
     });
   }));
 
   // Dashboard loaded -> success
   add(onInteraction('dashboards_init_dashboard_completed', (props) => {
-    if (handle.isActive) {
-      handle.setAttributes({
-        resourceType: 'dashboard',
-        dashboardUid: String(props.uid ?? ''),
-      });
-      handle.end('success');
-    }
+    handle.setAttributes({
+      resourceType: 'dashboard',
+      dashboardUid: str(props.uid),
+    });
+    handle.end('success');
   }));
 
   // Browse page loaded after folder selection -> success
   add(onInteraction('grafana_browse_dashboards_page_view', (props) => {
-    if (handle.isActive && selectedResourceType === 'folder') {
+    if (selectedResourceType === 'folder') {
       handle.setAttributes({
-        folderUID: String(props.folderUID ?? ''),
+        folderUID: str(props.folderUID),
       });
       handle.end('success');
     }
@@ -74,14 +72,12 @@ onJourneyInstance('search_to_resource', (handle) => {
   // - no action selected -> discarded
   // - nav action selected (resourceType 'other') -> success (palette closing IS the navigation)
   add(onInteraction('command_palette_closed', () => {
-    if (handle.isActive) {
-      if (!actionSelected) {
-        handle.end('discarded');
-      } else if (selectedResourceType === 'other') {
-        handle.end('success');
-      }
-      // dashboard/folder: don't end here, wait for their specific load events
+    if (!actionSelected) {
+      handle.end('discarded');
+    } else if (selectedResourceType === 'other') {
+      handle.end('success');
     }
+    // dashboard/folder: don't end here, wait for their specific load events
   }));
 
   return cleanup;

@@ -109,21 +109,17 @@ describe('dashboardEdit journey wiring', () => {
     expect(mockHandle.end).toHaveBeenCalledWith('discarded');
   });
 
-  it('should not end journey twice', () => {
+  // The wiring no longer guards end() with isActive - it trusts the idempotent
+  // end() contract. On the real handle a second end() is a no-op; Faro sees only
+  // one journey_complete measurement per journey. This test now just verifies
+  // the happy path: one save -> one end('success').
+  it('should end exactly once on save', () => {
     loadWiring();
 
-    // Start journey
     simulateInteraction('dashboards_edit_button_clicked', { dashboardUid: 'abc123' });
-
-    // Save dashboard
     simulateInteraction('grafana_dashboard_saved', {});
 
-    // Mock isActive to false after first end
-    Object.defineProperty(mockHandle, 'isActive', { value: false, writable: true });
-
-    // Try to discard - should not call end again
-    simulateInteraction('dashboards_edit_discarded', {});
-
     expect(mockHandle.end).toHaveBeenCalledTimes(1);
+    expect(mockHandle.end).toHaveBeenCalledWith('success');
   });
 });

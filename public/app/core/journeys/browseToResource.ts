@@ -1,6 +1,6 @@
 import { type StepHandle, onInteraction, registerJourneyTriggers, onJourneyInstance } from '@grafana/runtime';
 
-import { collectUnsubs } from './utils';
+import { collectUnsubs, str } from './utils';
 
 /**
  * Journey: browse_to_resource
@@ -28,7 +28,7 @@ registerJourneyTriggers('browse_to_resource', (tracker) => {
       tracker.startJourney('browse_to_resource', {
         attributes: {
           source: 'browse_dashboards',
-          folderUID: String(props.folderUID ?? ''),
+          folderUID: str(props.folderUID),
         },
       });
     }
@@ -42,31 +42,25 @@ onJourneyInstance('browse_to_resource', (handle) => {
 
   // Folder click starts a navigate_folder duration step; non-folder click starts select_resource.
   add(onInteraction('grafana_browse_dashboards_page_click_list_item', (props) => {
-    if (!handle.isActive) {
-      return;
-    }
     if (props.itemKind === 'folder') {
       pendingFolderStep = handle.startStep('navigate_folder', {
-        folderUID: String(props.uid ?? ''),
+        folderUID: str(props.uid),
       });
     } else {
       pendingSelectStep = handle.startStep('select_resource', {
-        resourceType: String(props.itemKind ?? 'unknown'),
-        resourceUID: String(props.uid ?? ''),
+        resourceType: str(props.itemKind ?? 'unknown'),
+        resourceUID: str(props.uid),
       });
       handle.setAttributes({
-        resourceType: String(props.itemKind ?? 'unknown'),
-        resourceUID: String(props.uid ?? ''),
+        resourceType: str(props.itemKind ?? 'unknown'),
+        resourceUID: str(props.uid),
       });
     }
   }));
 
   // Subsequent page_views end the pending folder step and enrich the journey.
   add(onInteraction('grafana_browse_dashboards_page_view', (props) => {
-    if (!handle.isActive) {
-      return;
-    }
-    const folderUID = String(props.folderUID ?? '');
+    const folderUID = str(props.folderUID);
     if (pendingFolderStep) {
       pendingFolderStep.end({ folderUID });
       pendingFolderStep = null;
@@ -76,18 +70,15 @@ onJourneyInstance('browse_to_resource', (handle) => {
 
   // Dashboard loads -> end the select step and the journey.
   add(onInteraction('dashboards_init_dashboard_completed', (props) => {
-    if (!handle.isActive) {
-      return;
-    }
     if (pendingSelectStep) {
       pendingSelectStep.end({
-        dashboardUid: String(props.uid ?? ''),
+        dashboardUid: str(props.uid),
       });
       pendingSelectStep = null;
     }
     handle.setAttributes({
       resourceType: 'dashboard',
-      dashboardUid: String(props.uid ?? ''),
+      dashboardUid: str(props.uid),
     });
     handle.end('success');
   }));

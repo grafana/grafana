@@ -1,6 +1,6 @@
 import { onInteraction, registerJourneyTriggers, onJourneyInstance } from '@grafana/runtime';
 
-import { collectUnsubs } from './utils';
+import { collectUnsubs, str } from './utils';
 
 /**
  * Journey: datasource_configure
@@ -54,16 +54,16 @@ registerJourneyTriggers('datasource_configure', (tracker) => {
     const existing = tracker.getActiveJourney('datasource_configure');
     if (existing) {
       existing.recordEvent('select_type', {
-        pluginId: String(props.plugin_id ?? ''),
+        pluginId: str(props.plugin_id),
       });
       existing.setAttributes({
-        pluginId: String(props.plugin_id ?? ''),
+        pluginId: str(props.plugin_id),
       });
     } else {
       tracker.startJourney('datasource_configure', {
         attributes: {
           source: 'catalog',
-          pluginId: String(props.plugin_id ?? ''),
+          pluginId: str(props.plugin_id),
         },
       });
     }
@@ -77,17 +77,11 @@ onJourneyInstance('datasource_configure', (handle) => {
 
   // User saved datasource config
   add(onInteraction('connections_datasources_ds_configured', () => {
-    if (handle.isActive) {
-      handle.recordEvent('save_config');
-    }
+    handle.recordEvent('save_config');
   }));
 
   // User tested datasource connection
   add(onInteraction('grafana_ds_test_datasource_clicked', (props) => {
-    if (!handle.isActive) {
-      return;
-    }
-
     const success = props.success === true || props.success === 'true';
 
     if (success) {
@@ -99,23 +93,17 @@ onJourneyInstance('datasource_configure', (handle) => {
 
   // User clicked Cancel on the new datasource page
   add(onInteraction('connections_new_datasource_cancelled', () => {
-    if (handle.isActive) {
-      handle.end('discarded');
-    }
+    handle.end('discarded');
   }));
 
   // User deleted the datasource instead of completing setup
   add(onInteraction('connections_datasource_deleted', () => {
-    if (handle.isActive) {
-      handle.end('discarded');
-    }
+    handle.end('discarded');
   }));
 
   // User navigated away from config page without completing test
   add(onInteraction('connections_datasource_config_page_left', () => {
-    if (handle.isActive) {
-      handle.end('abandoned');
-    }
+    handle.end('abandoned');
   }));
 
   return cleanup;

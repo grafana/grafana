@@ -1,6 +1,6 @@
 import { onInteraction, registerJourneyTriggers, onJourneyInstance } from '@grafana/runtime';
 
-import { collectUnsubs } from './utils';
+import { collectUnsubs, str } from './utils';
 
 /**
  * Journey: panel_edit
@@ -31,8 +31,8 @@ registerJourneyTriggers('panel_edit', (tracker) => {
     if (props.item === 'edit' || props.item === 'configure') {
       tracker.startJourney('panel_edit', {
         attributes: {
-          panelId: String(props.id ?? ''),
-          source: String(props.source ?? ''),
+          panelId: str(props.id),
+          source: str(props.source),
         },
       });
     }
@@ -42,29 +42,26 @@ registerJourneyTriggers('panel_edit', (tracker) => {
 onJourneyInstance('panel_edit', (handle) => {
   const { add, cleanup } = collectUnsubs();
 
-  // Track panel edit interactions as journey steps (fire-and-forget, no duration)
+  // Track panel edit interactions as pointwise events (no duration).
+  // recordEvent is the fire-and-forget form - no StepHandle to leak.
   add(onInteraction('grafana_panel_edit_next_interaction', (props) => {
-    if (!handle.isActive) {
-      return;
-    }
-
-    const action = String(props.action ?? 'unknown');
+    const action = str(props.action ?? 'unknown');
 
     switch (action) {
       case 'add_query':
         handle.recordEvent('add_query', {
-          source: String(props.source ?? ''),
-          card_source: String(props.card_source ?? ''),
+          source: str(props.source),
+          card_source: str(props.card_source),
         });
         break;
       case 'add_transformation_initiated':
         handle.recordEvent('add_transformation', {
-          source: String(props.source ?? ''),
+          source: str(props.source),
         });
         break;
       case 'change_sidebar_view':
         handle.recordEvent('change_view', {
-          view: String(props.view ?? ''),
+          view: str(props.view),
         });
         break;
       default:
@@ -81,9 +78,7 @@ onJourneyInstance('panel_edit', (handle) => {
 
   // End journey when panel edit mode closes
   add(onInteraction('panel_edit_closed', () => {
-    if (handle.isActive) {
-      handle.end(discarded ? 'discarded' : 'success');
-    }
+    handle.end(discarded ? 'discarded' : 'success');
   }));
 
   return cleanup;

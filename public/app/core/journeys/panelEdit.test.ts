@@ -134,35 +134,17 @@ describe('panelEdit journey wiring', () => {
     expect(mockHandle.end).toHaveBeenCalledWith('success');
   });
 
-  it('should not end journey twice', () => {
+  // The wiring no longer guards calls with isActive - it trusts the idempotent
+  // end() contract on the real handle. The mock handle doesn't enforce
+  // no-op-after-end, so we only verify end is called exactly once per close event.
+  it('should end exactly once on panel_edit_closed', () => {
     loadWiring();
 
     simulateInteraction('dashboards_panel_action_clicked', { item: 'edit', id: 1 });
-
-    simulateInteraction('panel_edit_closed', {});
-
-    Object.defineProperty(mockHandle, 'isActive', { value: false, writable: true });
 
     simulateInteraction('panel_edit_closed', {});
 
     expect(mockHandle.end).toHaveBeenCalledTimes(1);
-  });
-
-  it('should not record steps after journey ends', () => {
-    loadWiring();
-
-    simulateInteraction('dashboards_panel_action_clicked', { item: 'edit', id: 1 });
-
-    simulateInteraction('panel_edit_closed', {});
-    Object.defineProperty(mockHandle, 'isActive', { value: false, writable: true });
-
-    simulateInteraction('grafana_panel_edit_next_interaction', {
-      action: 'add_query',
-      source: 'new_query',
-    });
-
-    // addStep called only 0 times - not after journey ended
-    expect(mockHandle.recordEvent).not.toHaveBeenCalled();
   });
 
   it('should end journey with discarded when panel_edit_discarded fires before close', () => {
