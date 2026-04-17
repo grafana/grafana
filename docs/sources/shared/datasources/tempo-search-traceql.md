@@ -71,13 +71,25 @@ The field type determines the available operators.
 For example, **Span Name** and **Service Name** are string fields so the comparison operators are equals (`=`), not equal (`!=`), matches regular expressions (`=~`), or doesn't match regular expression (`!~`).
 **Duration** is a duration field type and uses range selections (`>`, `>=`, `<`, `<=`).
 
-When you select multiple values for the same filter, Grafana automatically changes the operator to the regular expression (regex) operator `=~` and concatenates the values with a `|`.
+You can select multiple values for the same filter.
+The generated query depends on the operator you choose:
+
+- **Equals (`=`) or other non-regex operators**: Each value becomes a separate condition joined with `||` inside parentheses. For the not-equals (`!=`) operator, conditions are joined with `&&` instead.
+- **Regex match (`=~`) or regex not match (`!~`)**: Values are concatenated with `|` inside a single quoted string.
+
 This capability only applies to fields with drop-down value selection.
 
-For example, if you choose **Span Name** `= get` and then **Span Name** `= log_results_cache,` operator drop-down list changes from `=` to `=~` and both `get` and `log_results_cache` are listed in the **Span Name** field.
-The resulting query is updated with this:
+For example, if you select **Span Name** with the `=` operator and choose both `get` and `log_results_cache` as values, the generated query uses separate conditions:
 
-`{duration>5ms && duration<10ms && name=~"get|log_results_cache"}`
+```traceql
+{ name="get" || name="log_results_cache" }
+```
+
+If you select the regex operator `=~` instead, the values are combined into a single regex pattern:
+
+```traceql
+{ name=~"get|log_results_cache" }
+```
 
 To define filters, follow these steps:
 
