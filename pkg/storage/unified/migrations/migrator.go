@@ -111,22 +111,24 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 
 	origResources := opts.Resources
 
-	// TODO... the migrator must be able to dynamically define the groups
-	// The bulk processor will clean up any resources in these groups, and
-	// initialize authorization scoped to this set of resources
-	if len(opts.Resources) == 1 && opts.Resources[0].Group == "datasource.grafana.app" {
-		// This should be loaded from the DB, or the plugin scanning
-		plugins := []string{
-			"alertmanager", "azuremonitor", "cloud-monitoring", "cloudwatch", "dashboard", "elasticsearch",
-			"grafana-postgresql-datasource", "grafana-pyroscope-datasource", "grafana-testdata-datasource",
-			"graphite", "influxdb", "jaeger", "loki", "mixed", "mssql", "mysql", "opentsdb", "parca", "prometheus",
-			"tempo", "zipkin",
+	// If a definition provides a dynamic group resolver, call it to discover
+	// which plugin-specific groups actually exist in this namespace. This
+	// replaces the static resource list for bulk stream pre-authorization so
+	// that every group the migrator will write — including cloud-only plugin
+	// types not known at compile time — is properly registered.
+	// If the resolver returns empty (namespace has no data), keep opts.Resources
+	// unchanged so the stream can still be opened and closed cleanly.
+	for _, res := range origResources {
+		resolveFn := m.registry.GetResourceGroupsFunc(res)
+		if resolveFn == nil {
+			continue
 		}
-		opts.Resources = make([]schema.GroupResource, 0, len(plugins))
-		for _, p := range plugins {
-			opts.Resources = append(opts.Resources, schema.GroupResource{
-				Group: p + ".datasource.grafana.app", Resource: "datasources",
-			})
+		resolved, err := resolveFn(ctx, opts.Namespace)
+		if err != nil {
+			return nil, fmt.Errorf("resolving resource groups for %s/%s: %w", res.Group, res.Resource, err)
+		}
+		if len(resolved) > 0 {
+			opts.Resources = resolved
 		}
 	}
 

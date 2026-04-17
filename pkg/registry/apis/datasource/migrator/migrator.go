@@ -8,6 +8,7 @@ import (
 	"io"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -21,6 +22,11 @@ import (
 // DataSourceMigrator handles migrating datasources from legacy SQL storage.
 type DataSourceMigrator interface {
 	MigrateDataSources(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
+	// PluginGroups returns the distinct per-plugin GroupResources present in the
+	// given namespace. Called before opening the bulk stream so every group that
+	// MigrateDataSources will write to is pre-authorized — including cloud-only
+	// plugin types that are not known at compile time.
+	PluginGroups(ctx context.Context, namespace string) ([]schema.GroupResource, error)
 }
 
 type dataSourceMigrator struct {
@@ -184,6 +190,24 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 
 	opts.Progress(-2, fmt.Sprintf("finished datasources... (%d)", len(dsList)))
 	return nil
+}
+
+func (m *dataSourceMigrator) PluginGroups(ctx context.Context, namespace string) ([]schema.GroupResource, error) {
+	dsList, err := m.getter(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+	seen := make(map[string]bool, len(dsList))
+	result := make([]schema.GroupResource, 0, len(dsList))
+	for _, ds := range dsList {
+		group := ds.GroupVersionKind().Group
+		if group == "" || seen[group] {
+			continue
+		}
+		seen[group] = true
+		result = append(result, schema.GroupResource{Group: group, Resource: "datasources"})
+	}
+	return result, nil
 }
 
 func (m *dataSourceMigrator) createSecrets(ctx context.Context, dsSecrets common.InlineSecureValues, objRef common.ObjectReference) (common.InlineSecureValues, error) {
