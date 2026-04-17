@@ -167,7 +167,7 @@ func (qb *queryBuilder) buildBatchDeleteQuery(keyPaths []string) (string, []inte
 // buildCheckKeyExistsQuery generates a lightweight existence check for a key
 func (qb *queryBuilder) buildCheckKeyExistsQuery(keyPath string) (string, []interface{}) {
 	query := fmt.Sprintf(
-		"SELECT 1 FROM %s WHERE %s = %s LIMIT 1",
+		"SELECT 1 FROM %s WHERE %s = %s",
 		qb.dialect.QuoteIdent(qb.tableName),
 		qb.dialect.QuoteIdent("key_path"),
 		qb.dialect.Placeholder(1),

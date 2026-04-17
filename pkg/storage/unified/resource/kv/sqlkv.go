@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	mysql "github.com/go-sql-driver/mysql"
+	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
@@ -553,24 +553,20 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 		return fmt.Errorf("too many operations: %d > %d", len(ops), MaxBatchOps)
 	}
 
+	for _, op := range ops {
+		if op.Mode != BatchOpDelete && len(op.Value) == 0 {
+			return ErrEmptyValue
+		}
+	}
+
 	qb, err := k.getQueryBuilder(section)
 	if err != nil {
 		return err
 	}
 
-	// Use context transaction if available (backwards-compatible mode),
-	// otherwise start a new one.
-	var conn dbtx
-	var tx *sql.Tx
-	if ctxTx, ok := dbtxFromCtx(ctx); ok {
-		conn = ctxTx
-	} else {
-		var txErr error
-		tx, txErr = k.db.BeginTx(ctx, nil)
-		if txErr != nil {
-			return fmt.Errorf("failed to begin batch transaction: %w", txErr)
-		}
-		conn = tx
+	tx, txErr := k.db.BeginTx(ctx, nil)
+	if txErr != nil {
+		return fmt.Errorf("failed to begin batch transaction: %w", txErr)
 	}
 
 	isDataSection := section == DataSection
@@ -587,13 +583,13 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 		var opErr error
 		switch op.Mode {
 		case BatchOpCreate:
-			opErr = k.batchCreate(ctx, conn, qb, keyPath, op.Value, isDataSection)
+			opErr = k.batchCreate(ctx, tx, qb, keyPath, op.Value, isDataSection)
 		case BatchOpUpdate:
-			opErr = k.batchUpdateOp(ctx, conn, qb, keyPath, op.Value)
+			opErr = k.batchUpdateOp(ctx, tx, qb, keyPath, op.Value)
 		case BatchOpPut:
-			opErr = k.batchPut(ctx, conn, qb, keyPath, op.Value, isDataSection)
+			opErr = k.batchPut(ctx, tx, qb, keyPath, op.Value, isDataSection)
 		case BatchOpDelete:
-			opErr = k.batchDeleteOp(ctx, conn, qb, keyPath)
+			opErr = k.batchDeleteOp(ctx, tx, qb, keyPath)
 		default:
 			opErr = fmt.Errorf("unknown operation mode: %d", op.Mode)
 		}
@@ -603,34 +599,30 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 		}
 	}
 
-	// Commit only if we opened our own transaction
-	if tx != nil {
-		if err := tx.Commit(); err != nil {
-			return fmt.Errorf("failed to commit batch transaction: %w", err)
-		}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit batch transaction: %w", err)
 	}
 
 	return nil
 }
 
 func (k *SqlKV) batchCreate(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte, isDataSection bool) error {
-	if len(value) == 0 {
-		return ErrEmptyValue
-	}
-	exists, err := k.keyExists(ctx, conn, qb, keyPath)
-	if err != nil {
-		return err
-	}
-	if exists {
-		return ErrKeyAlreadyExists
+	// resource_history has only a non-unique index on key_path, so the INSERT
+	// won't fail on a duplicate — check first. The other sections have key_path
+	// as PRIMARY KEY and rely on the duplicate-key error mapped inside batchInsert.
+	if isDataSection {
+		exists, err := k.keyExists(ctx, conn, qb, keyPath)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return ErrKeyAlreadyExists
+		}
 	}
 	return k.batchInsert(ctx, conn, qb, keyPath, value, isDataSection)
 }
 
 func (k *SqlKV) batchUpdateOp(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte) error {
-	if len(value) == 0 {
-		return ErrEmptyValue
-	}
 	exists, err := k.keyExists(ctx, conn, qb, keyPath)
 	if err != nil {
 		return err
@@ -642,9 +634,6 @@ func (k *SqlKV) batchUpdateOp(ctx context.Context, conn dbtx, qb *queryBuilder, 
 }
 
 func (k *SqlKV) batchPut(ctx context.Context, conn dbtx, qb *queryBuilder, keyPath string, value []byte, isDataSection bool) error {
-	if len(value) == 0 {
-		return ErrEmptyValue
-	}
 	if isDataSection {
 		// DataSection: check exists → insert or update (resource_history has extra NOT NULL columns)
 		// TODO: clean up after compatibility mode is not needed anymore
