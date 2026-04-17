@@ -6,13 +6,18 @@ import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { NestedFolderPicker } from './NestedFolderPicker';
-import * as useFoldersQueryModule from './useFoldersQuery';
+import { useFoldersQuery } from './useFoldersQuery';
 import { useGetTeamFolders } from './useTeamOwnedFolder';
 
 const [_, { folderA, folderB, folderC, folderA_folderA, folderA_folderB, folderA_folderC }] = getFolderFixtures();
 
 setupMockServer();
 setBackendSrv(backendSrv);
+
+jest.mock('./useFoldersQuery', () => {
+  const actual = jest.requireActual('./useFoldersQuery');
+  return { ...actual, useFoldersQuery: jest.fn() };
+});
 
 jest.mock('./useTeamOwnedFolder', () => {
   const actual = jest.requireActual('./useTeamOwnedFolder');
@@ -26,12 +31,16 @@ describe('NestedFolderPicker', () => {
   const mockOnChange = jest.fn();
   const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
   const useGetTeamFoldersMock = useGetTeamFolders as jest.Mock;
+  const useFoldersQueryMock = useFoldersQuery as jest.Mock;
 
   beforeAll(() => {
     window.HTMLElement.prototype.scrollIntoView = function () {};
   });
 
   beforeEach(() => {
+    const { useFoldersQuery: realUseFoldersQuery } = jest.requireActual('./useFoldersQuery');
+    useFoldersQueryMock.mockImplementation(realUseFoldersQuery);
+
     useGetTeamFoldersMock.mockImplementation((options?: { skip: boolean }) => {
       if (options?.skip) {
         return { foldersByTeam: [], isLoading: false, error: undefined };
@@ -234,7 +243,7 @@ describe('NestedFolderPicker', () => {
   });
 
   it('shows an error when folder browsing fails', async () => {
-    jest.spyOn(useFoldersQueryModule, 'useFoldersQuery').mockReturnValue({
+    useFoldersQueryMock.mockReturnValue({
       emptyFolders: new Set<string>(),
       items: [],
       isLoading: false,
