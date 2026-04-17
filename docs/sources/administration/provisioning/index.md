@@ -744,9 +744,9 @@ Grafana Enterprise supports:
 
 The Grafana community maintains libraries for many popular configuration management tools.
 
-| Tool      | Project                                                                                                                           |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Puppet    | <https://forge.puppet.com/puppet/grafana>                                                                                         |
-| Ansible   | <https://github.com/grafana/grafana-ansible-collection>                                                                           |
-| Chef      | <https://github.com/sous-chefs/chef-grafana>                                                                                      |
-| NixOS     | [`services.grafana.provision` module](https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/monitoring/grafana.nix) |
+| Tool    | Project                                                                                                                           |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Puppet  | <https://forge.puppet.com/puppet/grafana>                                                                                         |
+| Ansible | <https://github.com/grafana/grafana-ansible-collection>                                                                           |
+| Chef    | <https://github.com/sous-chefs/chef-grafana>                                                                                      |
+| NixOS   | [`services.grafana.provision` module](https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/monitoring/grafana.nix) |
