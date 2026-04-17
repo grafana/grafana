@@ -67,14 +67,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "grpcServer",
-			Description: "Run the GRPC server",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "cloudWatchCrossAccountQuerying",
 			Description: "Enables cross-account querying in CloudWatch datasources",
 			Stage:       FeatureStageGeneralAvailability,

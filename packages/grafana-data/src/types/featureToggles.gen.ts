@@ -49,11 +49,6 @@ export interface FeatureToggles {
   */
   canvasPanelNesting?: boolean;
   /**
-  * Run the GRPC server
-  * @default false
-  */
-  grpcServer?: boolean;
-  /**
   * Enables cross-account querying in CloudWatch datasources
   * @default true
   */
