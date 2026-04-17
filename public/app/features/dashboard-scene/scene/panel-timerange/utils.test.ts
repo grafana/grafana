@@ -31,6 +31,7 @@ describe('panel-timerange/utils', () => {
   });
 
   describe('getCompareTimeRange', () => {
+    // 6-hour span so __previousPeriod shifts (by range duration) differ from the fixed intervals below.
     const baseRange = makeTimeRange('2024-01-10T06:00:00.000Z', '2024-01-10T12:00:00.000Z');
 
     it('should return undefined when compareWith is undefined', () => {
@@ -42,12 +43,14 @@ describe('panel-timerange/utils', () => {
     });
 
     it('should shift by the range duration when compareWith is __previousPeriod', () => {
+      // The __previousPeriod sentinel shifts by (to - from) rather than a fixed interval.
       const result = getCompareTimeRange(baseRange, '__previousPeriod')!;
 
       expect(result.from.toISOString()).toBe('2024-01-10T00:00:00.000Z');
       expect(result.to.toISOString()).toBe('2024-01-10T06:00:00.000Z');
     });
 
+    // Interval strings are parsed via rangeUtil.intervalToMs, then subtracted from both ends of the range.
     const intervalCases = [
       {
         name: 'should shift by 1 day when compareWith is 1d',
@@ -79,6 +82,7 @@ describe('panel-timerange/utils', () => {
     });
 
     it('should populate raw to match the shifted range', () => {
+      // raw.from/to are typed `string | DateTime`; dateTime() normalizes either for ISO comparison.
       const result = getCompareTimeRange(baseRange, '1d')!;
 
       expect(dateTime(result.raw.from).toISOString()).toBe('2024-01-09T06:00:00.000Z');
@@ -90,9 +94,11 @@ describe('panel-timerange/utils', () => {
     const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
     const primaryRange = makeTimeRange('2024-01-10T00:00:00.000Z', '2024-01-10T01:00:00.000Z');
     const secondaryRange = makeTimeRange('2024-01-09T00:00:00.000Z', '2024-01-09T01:00:00.000Z');
+    // Secondary is 1 day before primary, so (secondary.from - primary.from) is negative.
     const expectedDiffMs = -MILLISECONDS_PER_DAY;
 
     it('should emit the secondary PanelData', async () => {
+      // The processor mutates secondary in place and re-emits the same reference; downstream code relies on that.
       const secondary = makePanelData(secondaryRange, [toDataFrame({ refId: 'A', fields: [] })]);
       const primary = makePanelData(primaryRange);
 
@@ -124,6 +130,7 @@ describe('panel-timerange/utils', () => {
     });
 
     it('should preserve existing meta fields when adding timeCompare', async () => {
+      // The processor spread-merges onto existing meta ({ ...series.meta, timeCompare }), so prior fields must survive.
       const frame = toDataFrame({
         refId: 'A',
         fields: [{ name: 'time', type: FieldType.time, values: [] }],
@@ -137,6 +144,7 @@ describe('panel-timerange/utils', () => {
     });
 
     it('should handle a series with no refId by producing -compare', async () => {
+      // Exercises the `series.refId || ''` fallback in the source — avoids an "undefined-compare" result.
       const secondary = makePanelData(secondaryRange, [toDataFrame({ fields: [] })]);
 
       const result = await lastValueFrom(timeShiftAlignmentProcessor(makePanelData(primaryRange), secondary));
