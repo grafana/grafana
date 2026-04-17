@@ -104,7 +104,8 @@ describe('TransformationEditorHelpDisplay', () => {
       ...mockTransformer,
       id: 'second-transform',
       name: 'Second Transform',
-      transformation: () => Promise.resolve({ ...mockTransformationInfo, id: 'second-transform', name: 'Second Transform' }),
+      transformation: () =>
+        Promise.resolve({ ...mockTransformationInfo, id: 'second-transform', name: 'Second Transform' }),
     };
 
     const { rerender } = render(

@@ -26,8 +26,15 @@ export {
   type ConvertFieldTypeTransformerOptions,
   convertFieldType,
 } from '../transformations/transformers/convertFieldType';
-export { convertFrameTypeTransformer, type ConvertFrameTypeTransformerOptions, FrameType } from '../transformations/transformers/convertFrameType';
-export { filterFieldsByNameTransformer, type FilterFieldsByNameTransformerOptions } from '../transformations/transformers/filterByName';
+export {
+  convertFrameTypeTransformer,
+  type ConvertFrameTypeTransformerOptions,
+  FrameType,
+} from '../transformations/transformers/convertFrameType';
+export {
+  filterFieldsByNameTransformer,
+  type FilterFieldsByNameTransformerOptions,
+} from '../transformations/transformers/filterByName';
 export { type FilterFramesByRefIdTransformerOptions } from '../transformations/transformers/filterByRefId';
 export { FormatStringOutput, type FormatStringTransformerOptions } from '../transformations/transformers/formatString';
 export { organizeFieldsTransformer } from '../transformations/transformers/organize';
@@ -65,7 +72,11 @@ export { joinByFieldTransformer, type JoinByFieldOptions, JoinMode } from '../tr
 export { LabelsToFieldsMode, type LabelsToFieldsOptions } from '../transformations/transformers/labelsToFields';
 export { type LimitTransformerOptions } from '../transformations/transformers/limit';
 export { type MergeTransformerOptions } from '../transformations/transformers/merge';
-export { reduceTransformer, ReduceTransformerMode, type ReduceTransformerOptions } from '../transformations/transformers/reduce';
+export {
+  reduceTransformer,
+  ReduceTransformerMode,
+  type ReduceTransformerOptions,
+} from '../transformations/transformers/reduce';
 export {
   createOrderFieldsComparer,
   Order,

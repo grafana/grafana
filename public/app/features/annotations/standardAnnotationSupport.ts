@@ -74,7 +74,12 @@ export function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFr
         };
 
         return from(standardTransformersRegistry.get(DataTransformerID.merge).transformation()).pipe(
-          mergeMap((t) => of(data).pipe(t.operator({}, ctx), map((d) => d[0])))
+          mergeMap((t) =>
+            of(data).pipe(
+              t.operator({}, ctx),
+              map((d) => d[0])
+            )
+          )
         );
       })
     );

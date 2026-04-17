@@ -13,7 +13,11 @@ import {
   toDataFrame,
   DataFrameType,
 } from '@grafana/data';
-import { filterFieldsByNameTransformer, mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
+import {
+  filterFieldsByNameTransformer,
+  mockTransformationsRegistry,
+  organizeFieldsTransformer,
+} from '@grafana/data/internal';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { getMockFrames } from 'app/plugins/datasource/loki/mocks/frames';
 
@@ -681,11 +685,7 @@ describe('downloadLogs', () => {
 
   describe('CSV format', () => {
     beforeAll(() => {
-      mockTransformationsRegistry([
-        extractFieldsTransformer,
-        organizeFieldsTransformer,
-        filterFieldsByNameTransformer,
-      ]);
+      mockTransformationsRegistry([extractFieldsTransformer, organizeFieldsTransformer, filterFieldsByNameTransformer]);
     });
 
     beforeEach(() => {

@@ -34,11 +34,7 @@ export function TransformationEditor({ transformation, inputData, onUpdate }: Tr
     <div data-testid={selectors.components.TransformTab.transformationEditor(registryItem?.name || '')}>
       <ErrorBoundaryAlert>
         <Suspense
-          fallback={
-            <LoadingPlaceholder
-              text={t('transformers.transformation-editor.loading', 'Loading editor...')}
-            />
-          }
+          fallback={<LoadingPlaceholder text={t('transformers.transformation-editor.loading', 'Loading editor...')} />}
         >
           <Editor
             input={inputData}
