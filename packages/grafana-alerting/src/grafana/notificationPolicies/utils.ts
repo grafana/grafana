@@ -1,6 +1,6 @@
 import { groupBy, isArray, pick, reduce, uniqueId } from 'lodash';
 
-import { type RoutingTree, type RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { type RoutingTree, type RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 
 import { type Label } from '../matchers/types';
 import { type LabelMatchDetails, matchLabels } from '../matchers/utils';
@@ -111,10 +111,11 @@ export function getInheritedProperties<T extends Route>(
     ...propertiesParentInherited,
   } as const;
 
-  // @ts-expect-error we're using "keyof" for the property so the type checker can help us out but this makes the
+  // @ts-ignore TS5 & TS6 we're using "keyof" for the property so the type checker can help us out but this makes the
   // reduce function signature unhappy
   const inherited = reduce(
     inheritableProperties,
+    // @ts-ignore TSGO / TS7 see above comment about the reduce function signature.
     (inheritedProperties: InheritableProperties, parentValue, property: keyof InheritableProperties) => {
       const parentHasValue = parentValue != null;
 

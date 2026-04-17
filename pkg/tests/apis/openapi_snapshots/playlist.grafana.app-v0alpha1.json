@@ -135,17 +135,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistList"
                 }
               }
             }
@@ -197,12 +197,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
               }
             }
           },
@@ -214,12 +214,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               }
             }
@@ -229,12 +229,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               }
             }
@@ -244,12 +244,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               }
             }
@@ -446,12 +446,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               }
             }
@@ -503,12 +503,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
               }
             }
           },
@@ -520,12 +520,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               }
             }
@@ -535,12 +535,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               }
             }
@@ -720,12 +720,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               }
             }
@@ -735,12 +735,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               }
             }
@@ -798,12 +798,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               }
             }
@@ -855,12 +855,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
               }
             }
           },
@@ -872,12 +872,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               }
             }
@@ -887,12 +887,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               }
             }
@@ -980,12 +980,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               }
             }
@@ -995,12 +995,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               }
             }
@@ -1048,7 +1048,7 @@
   },
   "components": {
     "schemas": {
-      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist": {
+      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist": {
         "type": "object",
         "required": [
           "kind",
@@ -1074,10 +1074,10 @@
             ]
           },
           "spec": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistSpec"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistSpec"
           },
           "status": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistStatus"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistStatus"
           }
         },
         "x-kubernetes-group-version-kind": [
@@ -1085,18 +1085,13 @@
             "group": "playlist.grafana.app",
             "kind": "Playlist",
             "version": "v0alpha1"
-          },
-          {
-            "group": "playlist.grafana.app",
-            "kind": "Playlist",
-            "version": "v1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistItem": {
-        "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistPlaylistItem"
+      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistItem": {
+        "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistPlaylistItem"
       },
-      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistList": {
+      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistList": {
         "type": "object",
         "required": [
           "metadata",
@@ -1113,7 +1108,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.Playlist"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.Playlist"
                 }
               ]
             }
@@ -1136,15 +1131,10 @@
             "group": "playlist.grafana.app",
             "kind": "PlaylistList",
             "version": "v0alpha1"
-          },
-          {
-            "group": "playlist.grafana.app",
-            "kind": "PlaylistList",
-            "version": "v1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistOperatorState": {
+      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistOperatorState": {
         "type": "object",
         "required": [
           "lastEvaluation",
@@ -1176,7 +1166,7 @@
         },
         "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistPlaylistItem": {
+      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistPlaylistItem": {
         "description": "Shared item definition for all versions",
         "type": "object",
         "required": [
@@ -1200,7 +1190,7 @@
         },
         "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistSpec": {
+      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistSpec": {
         "type": "object",
         "required": [
           "title",
@@ -1214,7 +1204,7 @@
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistItem"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistItem"
             }
           },
           "title": {
@@ -1223,7 +1213,7 @@
         },
         "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistStatus": {
+      "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistStatus": {
         "type": "object",
         "properties": {
           "additionalFields": {
@@ -1235,7 +1225,7 @@
             "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
             "type": "object",
             "additionalProperties": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistOperatorState"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v0alpha1.PlaylistOperatorState"
             }
           }
         },

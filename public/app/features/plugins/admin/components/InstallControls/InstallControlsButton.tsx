@@ -11,7 +11,7 @@ import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
 import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuthFeaturesCard';
 import { useDispatch } from 'app/types/store';
 
-import { getExternalManageLink, isDisabledAngularPlugin } from '../../helpers';
+import { getExternalManageLink, isDisabledAngularPlugin, isMarketplacePlugin } from '../../helpers';
 import {
   useInstallStatus,
   useUninstallStatus,
@@ -201,6 +201,19 @@ export function InstallControlsButton({
         )}
         {uninstallControls}
       </Stack>
+    );
+  }
+
+  if (isMarketplacePlugin(plugin)) {
+    return (
+      <LinkButton
+        href={`${getExternalManageLink(plugin.id)}?tab=installation`}
+        target="_blank"
+        rel="noopener noreferrer"
+        icon="external-link-alt"
+      >
+        <Trans i18nKey="plugins.install-controls.contact-us">Contact us</Trans>
+      </LinkButton>
     );
   }
 

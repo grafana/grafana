@@ -44,7 +44,7 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: ${{ inputs.name }}
           pattern: ${{ inputs.pattern }}
@@ -57,6 +57,7 @@ jobs:
           environment: ${{ inputs.environment }}
           service_account: ${{ inputs.service-account }}
       - name: Coalesce artifacts
+        id: coalesce
         run: |
           mkdir -p out
           shopt -s nullglob
@@ -69,10 +70,13 @@ jobs:
           done
           ls -al out
           if [ -z "$(ls -A out)" ]; then
-            echo "No artifacts were downloaded to ./artifact"
-            exit 1
+            echo "No artifacts were downloaded to ./artifact (skipping upload)"
+            echo "has-artifacts=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has-artifacts=true" >> "$GITHUB_OUTPUT"
           fi
       - name: Upload artifacts
+        if: steps.coalesce.outputs.has-artifacts == 'true'
         uses: grafana/shared-workflows/actions/push-to-gcs@main
         with:
           bucket: ${{ inputs.bucket }}

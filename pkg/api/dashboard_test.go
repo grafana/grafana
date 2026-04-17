@@ -380,8 +380,6 @@ func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("Post dashboard response tests", func(t *testing.T) {
-		dashboardStore := &dashboards.FakeDashboardStore{}
-		defer dashboardStore.AssertExpectations(t)
 		// This tests that a valid request returns correct response
 		t.Run("Given a correct request for creating a dashboard", func(t *testing.T) {
 			folderUID := "Folder"
@@ -467,7 +465,7 @@ func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 				{SaveError: dashboards.ErrDashboardTitleEmpty, ExpectedStatusCode: http.StatusBadRequest},
 				{SaveError: dashboards.ErrDashboardFolderCannotHaveParent, ExpectedStatusCode: http.StatusBadRequest},
 				{SaveError: dashboards.ErrDashboardTypeMismatch, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: dashboards.ErrDashboardFolderNameExists, ExpectedStatusCode: http.StatusBadRequest},
+				{SaveError: folder.ErrNameExists, ExpectedStatusCode: http.StatusBadRequest},
 				{SaveError: dashboards.ErrDashboardUpdateAccessDenied, ExpectedStatusCode: http.StatusForbidden},
 				{SaveError: dashboards.ErrDashboardInvalidUid, ExpectedStatusCode: http.StatusBadRequest},
 				{SaveError: dashboards.ErrDashboardUidTooLong, ExpectedStatusCode: http.StatusBadRequest},

@@ -25,8 +25,6 @@ type MigrateOptions struct {
 }
 
 // Read from legacy and write into unified storage
-//
-//go:generate mockery --name UnifiedMigrator --structname MockUnifiedMigrator --inpackage --filename migrator_mock.go --with-expecter
 type UnifiedMigrator interface {
 	Migrate(ctx context.Context, opts MigrateOptions) (*resourcepb.BulkResponse, error)
 	RebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error
@@ -116,7 +114,7 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 	// TODO... the migrator must be able to dynamically define the groups
 	// The bulk processor will clean up any resources in these groups, and
 	// initialize authorization scoped to this set of resources
-	if len(opts.Resources) == 1 && opts.Resources[0].Group == "*.datasource.grafana.app" {
+	if len(opts.Resources) == 1 && opts.Resources[0].Group == "datasource.grafana.app" {
 		// This should be loaded from the DB, or the plugin scanning
 		plugins := []string{
 			"alertmanager", "azuremonitor", "cloud-monitoring", "cloudwatch", "dashboard", "elasticsearch",

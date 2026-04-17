@@ -30,10 +30,12 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagQueryService, // Query Library
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagGrafanaAdvisor,
-			featuremgmt.FlagKubernetesAlertingRules,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // library panels in v0
 			featuremgmt.FlagQueryServiceWithConnections,
+			featuremgmt.FlagDatasourceUseNewCRUDAPIs,
 			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint,
+			// featuremgmt.FlagDatasourcesQueryTypes,
+			featuremgmt.FlagDatasourcesLoadOpenAPI,
 			featuremgmt.FlagKubernetesShortURLs,
 			featuremgmt.FlagKubernetesCorrelations,
 			featuremgmt.FlagKubernetesAlertingHistorian,

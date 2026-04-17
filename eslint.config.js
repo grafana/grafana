@@ -1,4 +1,5 @@
-// @ts-check
+// TODO: Migrate to Typescript.
+// @ts-nocheck
 const emotionPlugin = require('@emotion/eslint-plugin');
 const restrictedGlobals = require('confusing-browser-globals');
 const importPlugin = require('eslint-plugin-import');
@@ -207,6 +208,7 @@ module.exports = [
       ],
       'unicorn/no-empty-file': 'error',
       'no-constant-condition': 'error',
+      '@grafana/define-feature-events': 'error',
       '@grafana/no-plain-links': 'error',
     },
   },

@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/sync/singleflight"
+
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	authnlib "github.com/grafana/authlib/authn"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -20,6 +22,7 @@ import (
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/clientauth"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -52,7 +55,8 @@ type Server struct {
 
 	cfg      setting.ZanzanaServerSettings
 	stores   map[string]zanzana.StoreInfo
-	storesMU *sync.Mutex
+	storesMU sync.RWMutex
+	storeSF  singleflight.Group
 	cache    *localcache.CacheService
 
 	mtReconciler zanzana.MTReconciler
@@ -91,7 +95,6 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 		openFGAServer: openfga,
 		openFGAClient: openFGAClient,
 		store:         store,
-		storesMU:      &sync.Mutex{},
 		stores:        make(map[string]zanzana.StoreInfo),
 		cfg:           zanzanaCfg,
 		cache:         localcache.New(zanzanaCfg.CacheSettings.CheckQueryCacheTTL, cacheCleanInterval),
@@ -168,27 +171,22 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 	if cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
 		reconcilerLogger := log.New("zanzana.mt-reconciler")
 
-		var leaderElector reconciler.LeaderElector
-		if cfg.ZanzanaReconciler.LeaderElectionEnabled {
+		var le leaderelection.Elector
+		if cfg.ZanzanaReconciler.LeaderElection.Enabled {
 			restCfg, err := clientrest.InClusterConfig()
 			if err != nil {
 				return nil, fmt.Errorf("failed to get in-cluster config for leader election: %w", err)
 			}
-			leaderElector, err = reconciler.NewKubernetesLeaderElector(
+			le, err = leaderelection.NewKubernetesElector(
 				restCfg,
-				cfg.ZanzanaReconciler.LeaderElectionLeaseName,
-				cfg.ZanzanaReconciler.LeaderElectionNamespace,
-				cfg.ZanzanaReconciler.LeaderElectionIdentity,
-				cfg.ZanzanaReconciler.LeaseDuration,
-				cfg.ZanzanaReconciler.RenewDeadline,
-				cfg.ZanzanaReconciler.RetryPeriod,
+				cfg.ZanzanaReconciler.LeaderElection,
 				reconcilerLogger,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create leader elector: %w", err)
 			}
 		} else {
-			leaderElector = reconciler.NewNoopLeaderElector()
+			le = leaderelection.NewNoopElector()
 		}
 
 		mtReconciler = reconciler.NewReconciler(
@@ -204,7 +202,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 			reconcilerLogger,
 			tracer,
 			reg,
-			leaderElector,
+			le,
 		)
 	} else {
 		mtReconciler = reconciler.NewNoopReconciler()

@@ -1,7 +1,6 @@
 package migrations
 
 import (
-	dashboardFolderMigrations "github.com/grafana/grafana/pkg/services/dashboards/database/migrations"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/anonservice"
@@ -75,8 +74,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	addCorrelationsMigrations(mg)
 
-	addEntityEventsTableMigration(mg)
-
 	addPublicDashboardMigration(mg)
 	addDbFileStorageMigration(mg)
 
@@ -101,7 +98,7 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.MigrationServiceMigration(mg)
 	ualert.CreatedFoldersMigration(mg)
 
-	dashboardFolderMigrations.AddDashboardFolderMigrations(mg)
+	AddDashboardFolderMigrations(mg)
 
 	ssosettings.AddMigration(mg)
 
@@ -130,6 +127,8 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddOrphanedMigrations(mg)
 
 	accesscontrol.AddActionSetPermissionsMigrator(mg)
+
+	accesscontrol.AddSAActionSetPermissionsMigrator(mg)
 
 	externalsession.AddMigration(mg)
 
