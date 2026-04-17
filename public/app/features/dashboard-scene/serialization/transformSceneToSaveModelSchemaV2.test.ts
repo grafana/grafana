@@ -61,6 +61,7 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { djb2Hash } from '../utils/djb2Hash';
 
@@ -1562,6 +1563,73 @@ describe('vizPanelToSchemaV2 snapshot repeat clones', () => {
     expect(snapshotElement.kind).toBe('Panel');
     expect(snapshotElement.spec.id).toBe(djb2Hash(cloneKey));
     expect(snapshotElement.spec.id).not.toBe(normalElement.spec.id);
+  });
+});
+
+describe('vizPanelToSchemaV2 time range fields', () => {
+  function buildPanel(timeRange?: SceneTimeRange | PanelTimeRange) {
+    return new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      title: 'Test',
+      ...(timeRange && { $timeRange: timeRange }),
+    });
+  }
+
+  function getQueryOptions(timeRange?: SceneTimeRange | PanelTimeRange) {
+    const result = vizPanelToSchemaV2(buildPanel(timeRange), undefined, false);
+    if (result.kind !== 'Panel') {
+      throw new Error(`Expected PanelKind, got ${result.kind}`);
+    }
+    return result.spec.data.spec.queryOptions;
+  }
+
+  function expectNoTimeRangeFields(queryOptions: ReturnType<typeof getQueryOptions>) {
+    expect(queryOptions.timeFrom).toBeUndefined();
+    expect(queryOptions.timeShift).toBeUndefined();
+    expect(queryOptions.hideTimeOverride).toBeUndefined();
+    expect(queryOptions.timeCompare).toBeUndefined();
+  }
+
+  it('should omit time range fields when the panel has no $timeRange', () => {
+    expectNoTimeRangeFields(getQueryOptions());
+  });
+
+  it('should omit time range fields when $timeRange is a SceneTimeRange (not PanelTimeRange)', () => {
+    expectNoTimeRangeFields(getQueryOptions(new SceneTimeRange({})));
+  });
+
+  it('should serialize all four time range fields when set on PanelTimeRange', () => {
+    const queryOptions = getQueryOptions(
+      new PanelTimeRange({
+        timeFrom: '2h',
+        timeShift: '1h',
+        hideTimeOverride: true,
+        compareWith: '1d',
+      })
+    );
+
+    expect(queryOptions).toMatchObject({
+      timeFrom: '2h',
+      timeShift: '1h',
+      hideTimeOverride: true,
+      timeCompare: '1d',
+    });
+  });
+
+  const isolationCases = [
+    { name: 'timeFrom only', state: { timeFrom: '2h' }, field: 'timeFrom', value: '2h' },
+    { name: 'timeShift only', state: { timeShift: '1h' }, field: 'timeShift', value: '1h' },
+    { name: 'hideTimeOverride only', state: { hideTimeOverride: true }, field: 'hideTimeOverride', value: true },
+    { name: 'compareWith only maps to timeCompare', state: { compareWith: '1d' }, field: 'timeCompare', value: '1d' },
+  ] as const;
+
+  isolationCases.forEach(({ name, state, field, value }) => {
+    it(`should serialize ${name}`, () => {
+      const queryOptions = getQueryOptions(new PanelTimeRange(state));
+
+      expect(queryOptions[field]).toBe(value);
+    });
   });
 });
 
