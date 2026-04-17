@@ -1,5 +1,5 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/guides/when-alerts-need-an-slo/
+canonical: https://grafana.com/docs/grafana/latest/alerting/guides/when-slos-reduce-alert-noise/
 description: Not every alert should be tuned or deleted. This guide covers common patterns where an alert is ready to become an SLO.
 keywords:
   - grafana
@@ -8,8 +8,8 @@ keywords:
 labels:
   products:
     - cloud
-title: When alerts need a service level objective
-menuTitle: When alerts need an SLO
+title: When SLOs reduce alert noise
+menuTitle: When SLOs reduce alert noise
 weight: 1040
 refs:
   design-alerts-for-first-responders-and-clear-actions:
@@ -29,13 +29,13 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/guides/best-practices/#mitigate-flapping-alerts
 ---
 
-# When alerts need a service level objective
+# When SLOs reduce alert noise
 
 As your alerting grows in production, not every alert works as expected. Sometimes, they fire too often or resolve immediately before anyone responds. You start wondering if the problem is the alert.
 
 When this happens, the instinct is to tune the query or threshold, or maybe just delete it. Sometimes the alert is telling you that you're measuring reliability wrong, and implementing [service level objectives (SLOs)](/docs/grafana-cloud/alerting-and-irm/slo/introduction/) can be the right answer.
 
-This guide covers the three most common patterns where an alert is ready to become an SLO, and how to recognize them in your own setup.
+This guide covers the three most common patterns where SLOs can help reduce alert noise and improve reliability coverage, and how to recognize them in your own setup.
 
 ## How SLOs differ from threshold alerts
 
@@ -68,7 +68,7 @@ SLOs and threshold-based alerts are complementary. In some cases, tracking the s
 
 ## The alert has no actionable response
 
-[Alerts should be actionable](ref:design-alerts-for-first-responders-and-clear-actions). An alert without a defined response is often an anti-pattern. If the alert consistently triggers no response, but the metric still matters to your team, this is a reliability concern.
+[Alerts should be actionable](ref:design-alerts-for-first-responders-and-clear-actions). An alert nobody acts on is operational noise. If the alert consistently triggers no response, but the metric still matters to your team, this is a reliability concern.
 
 This reliability metric could indicate service health over time. It's worth tracking in operational dashboards, but it's not designed to trigger immediate action.
 
@@ -86,7 +86,9 @@ Sometimes deleting the alert is the right call if there's no commitment or SLI t
 
 Sometimes, multiple teams maintain alerts for the same user-facing metric such as service response times, each applying their own thresholds and internal metrics for their services, but lacking an objective to evaluate the end-to-end user experience.
 
-When distinct teams define their own thresholds for service performance or user-experience metrics, this signals a shared user-experience concern that hasn't been made explicit. 
+This sometimes results in overlapping alerts covering the same signal.
+
+When distinct teams define their own thresholds for service performance or user-experience metrics, this reveals a shared user-experience concern that hasn't been made explicit. 
 
 In other cases, the SLO is driven by the business, such as a customer commitment or service level agreement (SLA). An SLO formalizes it as a shared objective tracked against what customers expect.
 
@@ -130,6 +132,6 @@ Three common patterns signal an alert is ready for an SLO:
 - **Shared reliability concern**: teams track similar user-facing metrics, but lack a shared objective.
 - **Transient conditions**: short-lived failures are often ignored, but still impact users. 
 
-In all three cases, the shift is from evaluating a threshold over a recent period to evaluating a reliability objective tracked over a long period. 
+In all three cases, the shift is from evaluating a threshold over a recent period to evaluating a reliability objective tracked over a long period. This reduces operational noise and focuses alerting on whether your service meets its reliability goals. SLOs don't replace your existing alerts; they bring a distinct method for measuring service reliability. 
 
-SLOs don't replace your existing alerts; they bring a distinct method for measuring service reliability. To get started, refer to [introduction to SLOs in Grafana Cloud](/docs/grafana-cloud/alerting-and-irm/slo/introduction/).
+To get started, refer to [introduction to SLOs in Grafana Cloud](/docs/grafana-cloud/alerting-and-irm/slo/introduction/).

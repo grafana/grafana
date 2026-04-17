@@ -16,11 +16,11 @@ menuTitle: Best practices
 title: Best practices
 weight: 1010
 refs:
-  when-alerts-need-an-slo:
+  when-slos-reduce-alert-noise:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/guides/when-alerts-need-an-slo/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/guides/when-slos-reduce-alert-noise/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/guides/when-alerts-need-an-slo/
+      destination: /docs/grafana-cloud/alerting-and-irm/guides/when-slos-reduce-alert-noise/
   recovery-threshold:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#recovery-threshold
@@ -190,7 +190,7 @@ SLOs also align distinct teams around common reliability goals by providing a sh
 
 For example, instead of several teams alerting on high latency, a single SLO can be used across teams to capture overall API performance.
 
-For other use cases, refer to [when alerts need an SLO](ref:when-alerts-need-an-slo).
+For other use cases, refer to [when alerts need an SLO](ref:when-slos-reduce-alert-noise).
 
 ## Integrate alerting into incident post-mortems
 
