@@ -32,7 +32,7 @@ aliases:
 To set up Git Sync and synchronize your Grafana dashboards and folders with a GitHub repository, follow these steps:
 
 1. Read [Before you begin](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/) carefully.
-1. Set up Git Sync [using the UI](#set-up-git-sync-using-the-ui) or [as code](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-code/)
+1. Set up Git Sync [using the UI](#set-up-git-sync-using-the-ui), with [Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-terraform/), or [as code](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-code/)
 1. After setup, [verify your dashboards](#verify-your-dashboards-in-grafana).
 1. Optionally, you can also [extend Git Sync with webhooks and image rendering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-extend/).
 
@@ -61,15 +61,15 @@ Select any of these options to proceed:
 - [Bitbucket](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-bitbucket)
 - [Pure Git](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-pure-git)
 
-{{< admonition type="note" >}}
-
-If you're using self-hosted Git servers or GitHub Enterprise refer to [Configure with Pure Git](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-pure-git) for instructions on how to set up Git Sync.
-
-{{< /admonition >}}
-
 ### Configure with GitHub
 
-If you want to configure Git Sync for GitHub, you can connect using a **Personal Access Token** or with **GitHub App**.
+If you want to configure Git Sync for public cloud GitHub, you can connect using a **Personal Access Token** or with **GitHub App**.
+
+{{< admonition type="note" >}}
+
+If you're using self-hosted GitHub servers or GitHub Enterprise refer to [Configure with Pure Git](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-pure-git) for instructions on how to set up Git Sync.
+
+{{< /admonition >}}
 
 #### Connect with a GitHub Personal Access Token
 
