@@ -17,9 +17,9 @@ weight: 350
 
 # Manage team folders
 
-Team folders help you associate folders with teams so admins and team members can find the right dashboards, library panels and alert rules faster. A team folder is still a regular folder. The team association adds ownership metadata and team-aware navigation, but it doesn't replace folder permissions.
+Team Folders help you associate folders with teams so admins and team members can find the right dashboards, library panels, and alert rules faster. They streamline setup by letting admins create and assign a dedicated folder when creating a team, establishing clear ownership from the start. A Team Folder is still a regular folder—the team association adds ownership metadata and team-aware navigation, but it doesn’t change or replace folder permission.
 
-Team folders is in public preview.
+Team Folders is in public preview.
 
 Before you begin, ensure you have the following:
 
@@ -29,7 +29,7 @@ Before you begin, ensure you have the following:
 
 ## Enable team folders
 
-To enable team folders in Grafana OSS or Grafana Enterprise, the `teamFolders` feature toggle must be enabled.
+To enable team folders in Grafana OSS or Grafana Enterprise, the `teamFolders` and `foldersAppPlatformAPI` feature toggle must be enabled.
 
 For more information about feature toggles, refer to [Configure feature toggles](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/).
 
@@ -53,7 +53,7 @@ For more information about creating teams, refer to [Configure Grafana Teams](/d
 
 ## Create or assign a team folder from Dashboards
 
-You can create a new folder for a team, or assign ownership to an existing folder from the browse dashboards page.
+You can create a new folder for a team or assign ownership to an existing folder.
 
 ### Create a new team folder
 
@@ -117,7 +117,7 @@ If team members need access to the folder, configure folder permissions for the 
 Team folders currently have the following limitations:
 
 - You can select only one team owner per folder.
-- You can't assign or change a team owner for provisioned or repository-managed folders.
+- You can't assign or change a team owner for repository-managed folders.
 
 ## Next steps
 
