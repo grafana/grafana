@@ -1,4 +1,7 @@
-import { Stack } from '@grafana/ui';
+import { css } from '@emotion/css';
+
+import type { GrafanaTheme2 } from '@grafana/data';
+import { Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { AdvisorRedirectNotice } from 'app/features/connections/components/AdvisorRedirectNotice/AdvisorRedirectNotice';
 import { RunAdvisorChecksButton } from 'app/features/connections/components/RunAdvisorChecksButton/RunAdvisorChecksButton';
@@ -9,6 +12,7 @@ import { getDataSourcesCount } from 'app/features/datasources/state/selectors';
 import { type StoreState, useSelector } from 'app/types/store';
 
 export function DataSourcesListPage() {
+  const styles = useStyles2(getStyles);
   const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSources));
 
   const actions =
@@ -21,7 +25,7 @@ export function DataSourcesListPage() {
   return (
     <AdvisorCheckProvider>
       <Page navId={'connections-datasources'} actions={actions}>
-        <Page.Contents>
+        <Page.Contents className={styles.pageContents}>
           <AdvisorRedirectNotice />
           <DataSourcesList />
         </Page.Contents>
@@ -29,3 +33,13 @@ export function DataSourcesListPage() {
     </AdvisorCheckProvider>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  pageContents: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+    height: '100%',
+    minHeight: 0,
+  }),
+});

@@ -7970,6 +7970,9 @@
     "empty-state": {
       "message": "No data sources found"
     },
+    "list": {
+      "label": "Data sources"
+    },
     "run-advisor-checks-button": {
       "label": "Enable Advisor checks",
       "running": "Running checks",
