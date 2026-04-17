@@ -17,6 +17,7 @@ import (
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -42,7 +43,7 @@ type Reconciler struct {
 	logger        log.Logger
 	tracer        tracing.Tracer
 	metrics       *reconcilerMetrics
-	leaderElector LeaderElector
+	leaderElector leaderelection.Elector
 
 	workQueue chan string
 
@@ -99,7 +100,7 @@ func NewReconciler(
 	logger log.Logger,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
-	leaderElector LeaderElector,
+	leaderElector leaderelection.Elector,
 ) *Reconciler {
 	return &Reconciler{
 		server:        srv,
@@ -132,7 +133,7 @@ func (r *Reconciler) Run(ctx context.Context) error {
 }
 
 // runLoop contains the main reconciliation loop, started when this instance
-// acquires leadership (or immediately for NoopLeaderElector).
+// acquires leadership (or immediately for NoopElector).
 func (r *Reconciler) runLoop(ctx context.Context) {
 	r.metrics.isLeader.Set(1)
 	defer r.metrics.isLeader.Set(0)

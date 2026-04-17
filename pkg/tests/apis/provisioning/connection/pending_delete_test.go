@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -57,7 +58,7 @@ func TestIntegrationProvisioning_ConnectionPendingDeleteLabel_SkipsReconciliatio
 		if err != nil {
 			return
 		}
-		conn := common.UnstructuredToConnection(t, obj)
+		conn := common.MustFromUnstructured[provisioning.Connection](t, obj)
 		assert.Equal(collect, conn.Generation, conn.Status.ObservedGeneration,
 			"generation and observedGeneration should match after initial reconciliation")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
@@ -66,7 +67,7 @@ func TestIntegrationProvisioning_ConnectionPendingDeleteLabel_SkipsReconciliatio
 	obj, err := helper.Connections.Resource.Get(t.Context(), connName, metav1.GetOptions{})
 	require.NoError(t, err)
 
-	initialConn := common.UnstructuredToConnection(t, obj)
+	initialConn := common.MustFromUnstructured[provisioning.Connection](t, obj)
 	require.Equal(t, initialConn.Generation, initialConn.Status.ObservedGeneration,
 		"generation and observedGeneration should match after initial reconciliation")
 
@@ -97,7 +98,7 @@ func TestIntegrationProvisioning_ConnectionPendingDeleteLabel_SkipsReconciliatio
 		if err != nil {
 			return false
 		}
-		conn := common.UnstructuredToConnection(t, obj)
+		conn := common.MustFromUnstructured[provisioning.Connection](t, obj)
 		return conn.Status.ObservedGeneration >= newGeneration
 	}, 10*time.Second, 200*time.Millisecond,
 		"ObservedGeneration must not advance while the pending-delete label is set (reconciliation should be skipped)")
@@ -122,7 +123,7 @@ func TestIntegrationProvisioning_ConnectionPendingDeleteLabel_SkipsReconciliatio
 		if err != nil {
 			return
 		}
-		conn := common.UnstructuredToConnection(t, obj)
+		conn := common.MustFromUnstructured[provisioning.Connection](t, obj)
 		assert.GreaterOrEqual(collect, conn.Status.ObservedGeneration, newGeneration,
 			"connection should be reconciled after label removal")
 		assert.True(collect, conn.Status.Health.Healthy,
@@ -186,7 +187,7 @@ func TestIntegrationProvisioning_ConnectionPendingDeleteAdmission(t *testing.T) 
 		common.SetPendingDeleteLabel(t, helper.Connections.Resource, connName)
 
 		// Always re-Get to avoid stale resourceVersion conflicts from concurrent status updates.
-		err := common.RetryOnConflict(func() error {
+		err := common.RetryOnConflict(t, func() error {
 			obj, err := helper.Connections.Resource.Get(t.Context(), connName, metav1.GetOptions{})
 			if err != nil {
 				return err
@@ -208,7 +209,7 @@ func TestIntegrationProvisioning_ConnectionPendingDeleteAdmission(t *testing.T) 
 		// Echo back the current object via UpdateStatus. The admission webhook must
 		// pass status-subresource requests through without a Forbidden rejection,
 		// regardless of whether the pending-delete label is set.
-		err := common.RetryOnConflict(func() error {
+		err := common.RetryOnConflict(t, func() error {
 			obj, err := helper.Connections.Resource.Get(t.Context(), connName, metav1.GetOptions{})
 			if err != nil {
 				return err
@@ -225,7 +226,7 @@ func TestIntegrationProvisioning_ConnectionPendingDeleteAdmission(t *testing.T) 
 		common.SetPendingDeleteLabel(t, helper.Connections.Resource, connName)
 
 		// Always re-Get to avoid stale resourceVersion conflicts from concurrent status updates.
-		err := common.RetryOnConflict(func() error {
+		err := common.RetryOnConflict(t, func() error {
 			obj, err := helper.Connections.Resource.Get(t.Context(), connName, metav1.GetOptions{})
 			if err != nil {
 				return err

@@ -396,7 +396,8 @@ func (integration *Integration) Validate(decryptFn DecryptFn) error {
 	return ValidateIntegration(context.Background(), models.IntegrationConfig{
 		UID:                   decrypted.UID,
 		Name:                  decrypted.Name,
-		Type:                  string(decrypted.Config.Type()),
+		Type:                  decrypted.Config.Type(),
+		Version:               decrypted.Config.Version,
 		DisableResolveMessage: decrypted.DisableResolveMessage,
 		Settings:              jsonBytes,
 		SecureSettings:        decrypted.SecureSettings,

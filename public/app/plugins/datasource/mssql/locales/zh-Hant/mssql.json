@@ -41,7 +41,7 @@
     "fillvalue": "透過設定 fillvalue，Grafana 將根據間隔填寫缺失的值。fillvalue 可以是文字值、{{null}} 或 {{previous}}；如果尚未看到任何值，{{previous}} 將填先前看到的值或 {{null}}",
     "macros": "巨集：",
     "optional": "可選：",
-    "optional-tip": "傳回名為「<i>{{columnName}}</i>」的欄位，以代表系列名稱。",
+    "optional-tip": "傳回名為「<i>{{columnName}}</i>」的欄位，以代表序列名稱。",
     "optional-tip-2": "如果傳回多個值的欄位，則「{{columnName}}」欄會用作前綴。",
     "optional-tip-3": "如果找不到名為「{{columnName}}」的欄，則值的欄位名稱會用作序列名稱",
     "resultsets-time-sorted": "時間序列查詢的結果集需要按時間排序。",
@@ -103,7 +103,7 @@
       "username-message": "使用 <1>user@EXAMPLE.COM</1> 格式。領域是從使用者名稱衍生而來。"
     },
     "kerberos-advanced-settings": {
-      "description-dns-lookup-kdc": "指明是否應使用 DNS「SRV」紀錄，來定位領域的 KDC 和其他伺服器。預設值為 <1>{{default}}</1>。",
+      "description-dns-lookup-kdc": "指明是否應使用 DNS「SRV」記錄，來定位領域的 KDC 和其他伺服器。預設值為 <1>{{default}}</1>。",
       "description-krb5-config-file-path": "<2>MIT krb5 套件</2>的設定檔案路徑。預設值為 <4>{{default}}</4>。",
       "description-udp-preference-limit": "預設值為 <1>{{default}}</1>，表示一律使用 TCP，且為選用。",
       "label-dns-lookup-kdc": "DNS 查找 KDC",
