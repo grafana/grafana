@@ -47,6 +47,4 @@ Currently the following replacements apply:
 
 The [Query History API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/query_history) will not be migrated.
 
-Grafana will revert to using local on-device storage for this functionality, since this approach reduces the amount of traffic to the backend with minimal change in functionality.
-
-If you're using this API, TBC
+This functionality is being deprecated. Grafana will revert to using local on-device storage for this functionality, since this approach reduces the amount of traffic to the backend with minimal change in functionality. If you're using this API, consider using a similar approach.
