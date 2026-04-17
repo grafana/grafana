@@ -61,7 +61,7 @@ export const useSharedPreferences = (preferencesName: Props['resourceUri']) => {
        * so we need to suppress it
        */
       isError: updateData ? false : isError,
-      isSubmitting: isUpdating,
+      isUpdating,
       isUpdateError,
     },
   ] as const;

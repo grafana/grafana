@@ -42,7 +42,7 @@ import {
 export const SharedPreferencesFunctional = memo((props: Props) => {
   const { resourceUri } = props;
 
-  const [updatePreferences, { preferences: prefs, isLoading, isError, isSubmitting }] =
+  const [updatePreferences, { preferences: prefs, isLoading, isError, isUpdating, isUpdateError }] =
     useSharedPreferences(resourceUri);
 
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
@@ -175,8 +175,15 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
 
   return (
     <form onSubmit={handleSubmitForm} className={styles.form}>
-      {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-      {isError && <Alert severity="error" title="Error loading preferences!!!" />}
+      {isError && (
+        <Alert severity="error" title={t('shared-preferences.error.get-preferences', 'Error loading preferences')} />
+      )}
+      {isUpdateError && (
+        <Alert
+          severity="error"
+          title={t('shared-preferences.error.update-preferences', 'Error updating preferences')}
+        />
+      )}
       <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={props.disabled}>
         <Stack direction="column" gap={2}>
           <Field
@@ -312,7 +319,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
       </FieldSet>
       <Box marginTop={6}>
         <Button
-          disabled={isSubmitting}
+          disabled={isUpdating}
           type="submit"
           variant="primary"
           data-testid={selectors.components.UserProfile.preferencesSaveButton}
