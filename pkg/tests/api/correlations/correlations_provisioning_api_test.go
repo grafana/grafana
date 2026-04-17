@@ -85,7 +85,7 @@ func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
 
 	t.Run("Correctly marks existing correlations as provisioned", func(t *testing.T) {
 		// should be updated
-		ctx.createOrUpdateCorrelation(correlations.CreateCorrelationCommand{
+		ctx.createCorrelation(correlations.CreateCorrelationCommand{
 			SourceUID:   needsMigration.SourceUID,
 			OrgId:       needsMigration.OrgID,
 			TargetUID:   needsMigration.TargetUID,
@@ -97,7 +97,7 @@ func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
 		})
 
 		// should be added
-		ctx.createOrUpdateCorrelation(correlations.CreateCorrelationCommand{
+		ctx.createCorrelation(correlations.CreateCorrelationCommand{
 			SourceUID:   needsMigration.SourceUID,
 			OrgId:       needsMigration.OrgID,
 			TargetUID:   needsMigration.TargetUID,
