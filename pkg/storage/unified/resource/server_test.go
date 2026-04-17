@@ -1098,7 +1098,7 @@ func TestPeriodicBookmarks(t *testing.T) {
 	namespace := "default"
 
 	var counter int
-	createPlaylist := func(srv *server) error {
+	createPlaylist := func(testCtx context.Context, srv *server) error {
 		counter += 1
 		name := fmt.Sprintf("bookmark-test-%d", counter)
 
@@ -1129,7 +1129,7 @@ func TestPeriodicBookmarks(t *testing.T) {
 			Name:      name,
 		}
 
-		ctx := authlib.WithAuthInfo(t.Context(), testUser)
+		ctx := authlib.WithAuthInfo(testCtx, testUser)
 		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
 		if err != nil {
 			return err
@@ -1168,7 +1168,7 @@ func TestPeriodicBookmarks(t *testing.T) {
 		})
 
 		// Create a resource so initial events backfill produces a non-zero RV.
-		require.NoError(t, createPlaylist(srv))
+		require.NoError(t, createPlaylist(t.Context(), srv))
 		return srv
 	}
 
@@ -1216,7 +1216,7 @@ func TestPeriodicBookmarks(t *testing.T) {
 			for {
 				select {
 				case <-ticker.C:
-					if err := createPlaylist(srv); err != nil {
+					if err := createPlaylist(t.Context(), srv); err != nil {
 						return err
 					}
 
