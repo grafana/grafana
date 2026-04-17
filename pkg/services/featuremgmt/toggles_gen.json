@@ -4054,6 +4054,20 @@
     },
     {
       "metadata": {
+        "name": "onlyStoreServiceAccountActionSets",
+        "resourceVersion": "1776254687768",
+        "creationTimestamp": "2026-04-15T12:04:47Z"
+      },
+      "spec": {
+        "description": "When storing service account resource permissions, only store action sets and not the full list of underlying permissions",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "opentsdbBackendMigration",
         "resourceVersion": "1775137669107",
         "creationTimestamp": "2025-12-04T08:11:33Z",
