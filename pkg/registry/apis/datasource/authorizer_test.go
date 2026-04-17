@@ -22,13 +22,13 @@ func TestDataSourceAuthorizerLegacyPath(t *testing.T) {
 	}
 
 	tests := []struct {
-		name        string
-		ctx         context.Context
-		attr        authorizer.AttributesRecord
-		access      actest.FakeAccessControl
-		want        authorizer.Decision
-		wantReason  string
-		wantErr     bool
+		name       string
+		ctx        context.Context
+		attr       authorizer.AttributesRecord
+		access     actest.FakeAccessControl
+		want       authorizer.Decision
+		wantReason string
+		wantErr    bool
 	}{
 		{
 			name: "returns no opinion for non-resource requests",

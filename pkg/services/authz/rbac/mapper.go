@@ -352,9 +352,9 @@ func NewMapperRegistry() MapperRegistry {
 			// Keep proxy blocked until plugin route-level auth mapping is fully specified.
 			// Empty verb mapping means all verbs are treated as unsupported and denied.
 			"datasources/proxy": {
-				resource:     "datasources",
-				attribute:    "uid",
-				verbMapping:  map[string]string{},
+				resource:      "datasources",
+				attribute:     "uid",
+				verbMapping:   map[string]string{},
 				folderSupport: false,
 			},
 			"datasources/resources": {
