@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	commonv11 "github.com/grafana/tempo/pkg/tempopb/common/v1"
