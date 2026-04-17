@@ -5,8 +5,9 @@ import { LinkButton, Stack, Tooltip } from '@grafana/ui';
 
 import { ROUTES_META_SYMBOL, type Route } from '../../../../../../plugins/datasource/alertmanager/types';
 import { isAvailable } from '../../../hooks/abilities/abilityUtils';
-import { useAlertmanagerAbilities } from '../../../hooks/abilities/notificationAbilities';
-import { AlertmanagerAction } from '../../../hooks/abilities/types';
+import { useNotificationPolicyAbility } from '../../../hooks/abilities/useNotificationPolicyAbility';;
+
+import { NotificationPolicyAction } from '../../../hooks/abilities/types';
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { createRelativeUrl } from '../../../utils/url';
 import ConditionalWrap from '../../ConditionalWrap';
@@ -24,11 +25,10 @@ export const ActionButtons = ({ route }: ActionButtonsProps) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
 
-  const [updateAbility, deleteAbility, exportAbility] = useAlertmanagerAbilities([
-    AlertmanagerAction.UpdateNotificationPolicyTree,
-    AlertmanagerAction.DeleteNotificationPolicy,
-    AlertmanagerAction.ExportNotificationPolicies,
-  ]);
+  const context = { provenance: route[ROUTES_META_SYMBOL]?.provenance ?? route.provenance };
+  const updateAbility = useNotificationPolicyAbility({ action: NotificationPolicyAction.UpdateTree, context });
+  const deleteAbility = useNotificationPolicyAbility({ action: NotificationPolicyAction.Delete, context });
+  const exportAbility = useNotificationPolicyAbility({ action: NotificationPolicyAction.Export, context });
 
   const [ExportDrawer, showExportDrawer] = useExportRoutingTree();
   const [deleteTrigger] = useDeleteRoutingTree();

@@ -2,8 +2,9 @@ import { Trans } from '@grafana/i18n';
 import { LinkButton, Stack, Text } from '@grafana/ui';
 
 import { isAvailable } from '../../hooks/abilities/abilityUtils';
-import { useAlertmanagerAbility } from '../../hooks/abilities/notificationAbilities';
-import { AlertmanagerAction } from '../../hooks/abilities/types';
+import { useNotificationTemplateAbility } from '../../hooks/abilities/useNotificationTemplateAbility';;
+
+import { NotificationTemplateAction } from '../../hooks/abilities/types';
 import { useTemplatesNav } from '../../navigation/useNotificationConfigNav';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
@@ -12,7 +13,7 @@ import { GrafanaAlertmanagerWarning } from '../GrafanaAlertmanagerWarning';
 import { NotificationTemplates } from './NotificationTemplates';
 
 function TemplatesPageContent() {
-  const createTemplateAbility = useAlertmanagerAbility(AlertmanagerAction.CreateNotificationTemplate);
+  const createTemplateAbility = useNotificationTemplateAbility({ action: NotificationTemplateAction.Create });
 
   return (
     <Stack direction="column" gap={1}>

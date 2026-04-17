@@ -22,14 +22,14 @@ import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from 'app/features/ale
 import { type AlertmanagerAlert, type Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { isAvailable } from '../../hooks/abilities/abilityUtils';
-import { useAlertmanagerAbility } from '../../hooks/abilities/notificationAbilities';
-import { AlertmanagerAction } from '../../hooks/abilities/types';
+import { isAvailable, isGranted } from '../../hooks/abilities/abilityUtils';
+import { useSilenceAbility } from '../../hooks/abilities/useSilenceAbility';;
+
+import { SilenceAction } from '../../hooks/abilities/types';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
 import { getSilenceFiltersFromUrlParams, makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
-import { AbilityAny } from '../AbilityGuards';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../DynamicTable';
 import { GrafanaAlertmanagerWarning } from '../GrafanaAlertmanagerWarning';
@@ -51,7 +51,7 @@ const API_QUERY_OPTIONS = { pollingInterval: SILENCES_POLL_INTERVAL_MS, refetchO
 
 const SilencesTable = () => {
   const { selectedAlertmanager: alertManagerSourceName = '' } = useAlertmanager();
-  const { granted: canPreview } = useAlertmanagerAbility(AlertmanagerAction.PreviewSilencedInstances);
+  const { granted: canPreview } = useSilenceAbility({ action: SilenceAction.Preview });
 
   const { data: alertManagerAlerts = [], isLoading: amAlertsIsLoading } =
     alertmanagerApi.endpoints.getAlertmanagerAlerts.useQuery(
@@ -149,13 +149,13 @@ const SilencesTable = () => {
       {!!silences.length && (
         <Stack direction="column">
           <SilencesFilter silences={silences} />
-          <AbilityAny actions={[AlertmanagerAction.CreateSilence]}>
+          {isGranted(useSilenceAbility({ action: SilenceAction.Create })) && (
             <Stack justifyContent="end">
               <LinkButton href={makeAMLink('/alerting/silence/new', alertManagerSourceName)} icon="plus">
                 <Trans i18nKey="silences.table.add-silence-button">Add Silence</Trans>
               </LinkButton>
             </Stack>
-          </AbilityAny>
+          )}
           <SilenceList
             items={itemsNotExpired}
             alertManagerSourceName={alertManagerSourceName}
@@ -279,7 +279,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 function useColumns(alertManagerSourceName: string) {
-  const updateAbility = useAlertmanagerAbility(AlertmanagerAction.UpdateSilence);
+  const updateAbility = useSilenceAbility({ action: SilenceAction.Update });
   const [expireSilence] = alertSilencesApi.endpoints.expireSilence.useMutation();
 
   const isGrafanaFlavoredAlertmanager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;

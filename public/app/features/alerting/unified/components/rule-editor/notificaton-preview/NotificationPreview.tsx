@@ -9,8 +9,9 @@ import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { type AlertQuery, type Labels } from 'app/types/unified-alerting-dto';
 
 import { isGranted } from '../../../hooks/abilities/abilityUtils';
-import { useAlertmanagerAbility } from '../../../hooks/abilities/notificationAbilities';
-import { AlertmanagerAction } from '../../../hooks/abilities/types';
+import { useNotificationPolicyAbility } from '../../../hooks/abilities/useNotificationPolicyAbility';;
+
+import { NotificationPolicyAction } from '../../../hooks/abilities/types';
 import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
 import { type Folder, type KBObjectArray } from '../../../types/rule-form';
 import {
@@ -184,7 +185,7 @@ export const NotificationPreview = ({
  * Uses the standard ability system to check ViewNotificationPolicyTree permission.
  */
 function NotificationPreviewGrafanaPermissionCheck({ children }: React.PropsWithChildren) {
-  const viewPoliciesAbility = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationPolicyTree);
+  const viewPoliciesAbility = useNotificationPolicyAbility({ action: NotificationPolicyAction.ViewTree });
 
   if (isGranted(viewPoliciesAbility)) {
     return <>{children}</>;

@@ -7,10 +7,11 @@ import { Alert, useStyles2 } from '@grafana/ui';
 import { AlertmanagerChoice } from '../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { isGranted } from '../hooks/abilities/abilityUtils';
-import {
-  useGrafanaNotificationPolicyViewAbility,
-  useGrafanaSilenceViewAbility,
-} from '../hooks/abilities/notificationAbilities';
+import { useNotificationPolicyAbility } from '../hooks/abilities/useNotificationPolicyAbility';;
+
+import { useSilenceAbility } from '../hooks/abilities/useSilenceAbility';;
+
+import { NotificationPolicyAction, SilenceAction } from '../hooks/abilities/types';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 interface GrafanaAlertmanagerWarningProps {
@@ -25,8 +26,10 @@ function GrafanaExternalAlertmanagerConfigWarning({ currentAlertmanager }: Grafa
   const styles = useStyles2(getStyles);
   const externalAlertmanager = currentAlertmanager !== GRAFANA_RULES_SOURCE_NAME;
 
-  const canViewSilences = isGranted(useGrafanaSilenceViewAbility());
-  const canViewNotificationPolicies = isGranted(useGrafanaNotificationPolicyViewAbility());
+  const canViewSilences = isGranted(useSilenceAbility({ action: SilenceAction.View }));
+  const canViewNotificationPolicies = isGranted(
+    useNotificationPolicyAbility({ action: NotificationPolicyAction.ViewTree })
+  );
   const canReadConfigurationStatus = canViewSilences || canViewNotificationPolicies;
 
   const { currentData: amChoiceStatus } = alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery(

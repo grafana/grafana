@@ -7,12 +7,17 @@ import { config } from '@grafana/runtime';
 import { useSelector } from 'app/types/store';
 
 import { isGranted } from '../hooks/abilities/abilityUtils';
+import { useContactPointAbility } from '../hooks/abilities/useContactPointAbility';
+import { useNotificationPolicyAbility } from '../hooks/abilities/useNotificationPolicyAbility';
+import { useNotificationTemplateAbility } from '../hooks/abilities/useNotificationTemplateAbility';
+import { useTimeIntervalAbility } from '../hooks/abilities/useTimeIntervalAbility';
 import {
-  useGrafanaContactPointViewAbility,
-  useGrafanaNotificationPolicyViewAbility,
-  useGrafanaTemplateViewAbility,
-  useGrafanaTimeIntervalViewAbility,
-} from '../hooks/abilities/notificationAbilities';
+  ContactPointAction,
+  NotificationPolicyAction,
+  NotificationTemplateAction,
+  TimeIntervalAction,
+} from '../hooks/abilities/types';
+
 import { ALERTING_PATHS, NAV_IDS } from '../utils/navigation';
 
 /**
@@ -62,10 +67,12 @@ export function useNotificationConfigNav() {
   // V2 Navigation: Get the notification config nav item
   const notificationConfigNav = navIndex[NAV_IDS.NOTIFICATION_CONFIG];
 
-  const canViewContactPoints = isGranted(useGrafanaContactPointViewAbility());
-  const canViewNotificationPolicies = isGranted(useGrafanaNotificationPolicyViewAbility());
-  const canViewTemplates = isGranted(useGrafanaTemplateViewAbility());
-  const canViewTimeIntervals = isGranted(useGrafanaTimeIntervalViewAbility());
+  const canViewContactPoints = isGranted(useContactPointAbility({ action: ContactPointAction.View }));
+  const canViewNotificationPolicies = isGranted(
+    useNotificationPolicyAbility({ action: NotificationPolicyAction.ViewTree })
+  );
+  const canViewTemplates = isGranted(useNotificationTemplateAbility({ action: NotificationTemplateAction.View }));
+  const canViewTimeIntervals = isGranted(useTimeIntervalAbility({ action: TimeIntervalAction.View }));
 
   // Build tabs based on permissions - memoized to avoid recreating on every render
   const tabs = useMemo(() => {

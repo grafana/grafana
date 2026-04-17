@@ -10,10 +10,10 @@ import {
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/constants';
 
-import { AbilityAny } from '../../components/AbilityGuards';
-import { isAvailable } from '../../hooks/abilities/abilityUtils';
-import { useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/abilities/notificationAbilities';
-import { AlertmanagerAction } from '../../hooks/abilities/types';
+import { isAvailable, isGranted } from '../../hooks/abilities/abilityUtils';
+import { useTimeIntervalAbility } from '../../hooks/abilities/useTimeIntervalAbility';;
+
+import { TimeIntervalAction } from '../../hooks/abilities/types';
 import { makeAMLink } from '../../utils/misc';
 import { DynamicTable, type DynamicTableColumnProps } from '../DynamicTable';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
@@ -46,8 +46,8 @@ export const TimeIntervalsTable = () => {
     });
   }, [data]);
 
-  const createAbility = useAlertmanagerAbility(AlertmanagerAction.CreateTimeInterval);
-  const exportAbility = useAlertmanagerAbility(AlertmanagerAction.ExportTimeIntervals);
+  const createAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Create });
+  const exportAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Export });
   const columns = useColumns(alertManagerSourceName, hideActions);
 
   if (isLoading) {
@@ -79,7 +79,7 @@ export const TimeIntervalsTable = () => {
         </Text>
         <Spacer />
         {!hideActions && items.length > 0 && (
-          <AbilityAny actions={[AlertmanagerAction.CreateTimeInterval]}>
+          {isGranted(createAbility) && (
             <LinkButton
               icon="plus"
               variant="primary"
@@ -87,7 +87,7 @@ export const TimeIntervalsTable = () => {
             >
               <Trans i18nKey="alerting.time-interval.add-time-interval">New time interval</Trans>
             </LinkButton>
-          </AbilityAny>
+          )}
         )}
         {isAvailable(exportAbility) && (
           <>
@@ -135,10 +135,10 @@ export const TimeIntervalsTable = () => {
 };
 
 function useColumns(alertManagerSourceName: string, hideActions = false) {
-  const [editAbility, deleteAbility] = useAlertmanagerAbilities([
-    AlertmanagerAction.UpdateTimeInterval,
-    AlertmanagerAction.DeleteTimeInterval,
-  ]);
+  // Context-free RBAC check — decides whether the actions column is shown at all.
+  // Per-entity checks (provisioning) are applied inside MuteTimingActionsButtons.
+  const editAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Update });
+  const deleteAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Delete });
   const showActions = !hideActions && (editAbility.granted || deleteAbility.granted);
 
   return useMemo((): Array<DynamicTableColumnProps<MuteTiming>> => {

@@ -19,8 +19,11 @@ import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 import { isAvailable, isGranted } from '../../hooks/abilities/abilityUtils';
-import { useAlertmanagerAbility, useGrafanaContactPointViewAbility } from '../../hooks/abilities/notificationAbilities';
-import { AlertmanagerAction } from '../../hooks/abilities/types';
+import { useContactPointAbility } from '../../hooks/abilities/useContactPointAbility';;
+
+import { useNotificationTemplateAbility } from '../../hooks/abilities/useNotificationTemplateAbility';;
+
+import { ContactPointAction, NotificationTemplateAction } from '../../hooks/abilities/types';
 import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useContactPointsNav } from '../../navigation/useNotificationConfigNav';
@@ -54,7 +57,7 @@ const ContactPointsTab = () => {
   // as we get metadata about this from the API
   const fetchPolicies = !shouldUseK8sApi(selectedAlertmanager!);
   // User may have access to list contact points, but not permission to fetch the status endpoint
-  const fetchStatuses = isGranted(useGrafanaContactPointViewAbility());
+  const fetchStatuses = isGranted(useContactPointAbility({ action: ContactPointAction.View }));
 
   const { isLoading, error, contactPoints } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,
@@ -62,8 +65,8 @@ const ContactPointsTab = () => {
     fetchStatuses,
   });
 
-  const addContactPointAbility = useAlertmanagerAbility(AlertmanagerAction.CreateContactPoint);
-  const exportContactPointsAbility = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
+  const addContactPointAbility = useContactPointAbility({ action: ContactPointAction.Create });
+  const exportContactPointsAbility = useContactPointAbility({ action: ContactPointAction.Export });
 
   const [ExportDrawer, showExportDrawer] = useExportContactPoint();
 
@@ -147,7 +150,7 @@ const ContactPointsTab = () => {
 };
 
 const NotificationTemplatesTab = () => {
-  const createTemplateAbility = useAlertmanagerAbility(AlertmanagerAction.CreateNotificationTemplate);
+  const createTemplateAbility = useNotificationTemplateAbility({ action: NotificationTemplateAction.Create });
 
   return (
     <Stack direction="column" gap={1}>
@@ -193,9 +196,9 @@ const useTabQueryParam = (defaultTab: ActiveTab) => {
 
 export const ContactPointsPageContents = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  const { granted: canViewContactPoints } = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
-  const { granted: canCreateContactPoints } = useAlertmanagerAbility(AlertmanagerAction.CreateContactPoint);
-  const { granted: showTemplatesTab } = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationTemplate);
+  const { granted: canViewContactPoints } = useContactPointAbility({ action: ContactPointAction.View });
+  const { granted: canCreateContactPoints } = useContactPointAbility({ action: ContactPointAction.Create });
+  const { granted: showTemplatesTab } = useNotificationTemplateAbility({ action: NotificationTemplateAction.View });
 
   const showContactPointsTab = canViewContactPoints || canCreateContactPoints;
 

@@ -2,7 +2,8 @@ import { Trans, t } from '@grafana/i18n';
 import { CallToActionCard, EmptyState, LinkButton } from '@grafana/ui';
 
 import { isGranted } from '../../hooks/abilities/abilityUtils';
-import { useAlertmanagerSilenceCreateAbility } from '../../hooks/abilities/notificationAbilities';
+import { useAlertmanagerSilenceCreateAbility } from '../../hooks/abilities/useAlertmanagerSilenceCreateAbility';;
+
 import { makeAMLink } from '../../utils/misc';
 
 type Props = {

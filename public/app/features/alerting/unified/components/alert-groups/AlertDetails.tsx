@@ -6,11 +6,12 @@ import { LinkButton, useStyles2 } from '@grafana/ui';
 import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { isGranted } from '../../hooks/abilities/abilityUtils';
+import { useSilenceAbility } from '../../hooks/abilities/useSilenceAbility';;
+
 import { useGlobalRuleAbility } from '../../hooks/abilities/ruleAbilities';
-import { AlertmanagerAction, RuleAction } from '../../hooks/abilities/types';
+import { SilenceAction, RuleAction } from '../../hooks/abilities/types';
 import { isGrafanaRulesSource } from '../../utils/datasource';
 import { makeAMLink, makeLabelBasedSilenceLink } from '../../utils/misc';
-import { AbilityAny } from '../AbilityGuards';
 import { AnnotationDetailsField } from '../AnnotationDetailsField';
 
 interface AmNotificationsAlertDetailsProps {
@@ -26,36 +27,34 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
   const isGrafanaSource = isGrafanaRulesSource(alertManagerSourceName);
   const viewRuleAbility = useGlobalRuleAbility(RuleAction.View);
   const isSeeSourceButtonEnabled = isGrafanaSource ? isGranted(viewRuleAbility) : true;
+  const canCreateSilence = isGranted(useSilenceAbility({ action: SilenceAction.Create }));
+  const canUpdateSilence = isGranted(useSilenceAbility({ action: SilenceAction.Update }));
 
   return (
     <>
       <div className={styles.actionsRow}>
-        {alert.status.state === AlertState.Suppressed && (
-          <AbilityAny actions={[AlertmanagerAction.CreateSilence, AlertmanagerAction.UpdateSilence]}>
-            <LinkButton
-              href={`${makeAMLink(
-                '/alerting/silences',
-                alertManagerSourceName
-              )}&silenceIds=${alert.status.silencedBy.join(',')}`}
-              className={styles.button}
-              icon={'bell'}
-              size={'sm'}
-            >
-              <Trans i18nKey="alerting.alert-details.manage-silences">Manage silences</Trans>
-            </LinkButton>
-          </AbilityAny>
+        {alert.status.state === AlertState.Suppressed && (canCreateSilence || canUpdateSilence) && (
+          <LinkButton
+            href={`${makeAMLink(
+              '/alerting/silences',
+              alertManagerSourceName
+            )}&silenceIds=${alert.status.silencedBy.join(',')}`}
+            className={styles.button}
+            icon={'bell'}
+            size={'sm'}
+          >
+            <Trans i18nKey="alerting.alert-details.manage-silences">Manage silences</Trans>
+          </LinkButton>
         )}
-        {alert.status.state === AlertState.Active && (
-          <AbilityAny actions={[AlertmanagerAction.CreateSilence]}>
-            <LinkButton
-              href={makeLabelBasedSilenceLink(alertManagerSourceName, alert.labels)}
-              className={styles.button}
-              icon={'bell-slash'}
-              size={'sm'}
-            >
-              <Trans i18nKey="alerting.alert-details.silence">Silence</Trans>
-            </LinkButton>
-          </AbilityAny>
+        {alert.status.state === AlertState.Active && canCreateSilence && (
+          <LinkButton
+            href={makeLabelBasedSilenceLink(alertManagerSourceName, alert.labels)}
+            className={styles.button}
+            icon={'bell-slash'}
+            size={'sm'}
+          >
+            <Trans i18nKey="alerting.alert-details.silence">Silence</Trans>
+          </LinkButton>
         )}
         {isSeeSourceButtonEnabled && alert.generatorURL && (
           <LinkButton className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>

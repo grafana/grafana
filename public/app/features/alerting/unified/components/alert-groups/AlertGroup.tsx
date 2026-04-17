@@ -8,7 +8,9 @@ import { Stack, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { isGranted } from '../../hooks/abilities/abilityUtils';
-import { useGrafanaContactPointViewAbility } from '../../hooks/abilities/notificationAbilities';
+import { useContactPointAbility } from '../../hooks/abilities/useContactPointAbility';;
+
+import { ContactPointAction } from '../../hooks/abilities/types';
 import { createContactPointSearchLink } from '../../utils/misc';
 import { CollapseToggle } from '../CollapseToggle';
 import { MetaText } from '../MetaText';
@@ -24,7 +26,7 @@ interface Props {
 export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
   const styles = useStyles2(getStyles);
-  const canViewContactPoint = isGranted(useGrafanaContactPointViewAbility());
+  const canViewContactPoint = isGranted(useContactPointAbility({ action: ContactPointAction.View }));
 
   // When group is grouped, receiver.name is 'NONE' as it can contain multiple receivers
   const receiverInGroup = group.receiver.name !== 'NONE';

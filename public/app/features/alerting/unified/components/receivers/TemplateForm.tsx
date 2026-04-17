@@ -31,7 +31,9 @@ import { type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/type
 
 import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
 import { isGranted } from '../../hooks/abilities/abilityUtils';
-import { useGrafanaTemplateTestAbility } from '../../hooks/abilities/notificationAbilities';
+import { useNotificationTemplateAbility } from '../../hooks/abilities/useNotificationTemplateAbility';;
+
+import { NotificationTemplateAction } from '../../hooks/abilities/types';
 import { KnownProvenance } from '../../types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DOCS_URL_TEMPLATE_EXAMPLES, DOCS_URL_TEMPLATE_NOTIFICATIONS } from '../../utils/docs';
@@ -107,8 +109,14 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   const formRef = useRef<HTMLFormElement>(null);
   const isGrafanaAlertManager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
 
-  // Check if user has permission to test templates
-  const canTestTemplates = isGranted(useGrafanaTemplateTestAbility());
+  // Check if user has permission to test templates.
+  // For new templates (no originalTemplate) provenance is empty — never provisioned.
+  const canTestTemplates = isGranted(
+    useNotificationTemplateAbility({
+      action: NotificationTemplateAction.Test,
+      context: originalTemplate ?? { provenance: '', uid: '', title: '', content: '', kind: 'grafana' },
+    })
+  );
 
   // Only show preview and payload panels if both conditions are met:
   // 1. It's a Grafana Alertmanager

@@ -11,7 +11,9 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 
 import { LogMessages, logInfo, trackAlertRuleFilterEvent } from '../../../Analytics';
 import { isGranted } from '../../../hooks/abilities/abilityUtils';
-import { useGrafanaContactPointViewAbility } from '../../../hooks/abilities/notificationAbilities';
+import { useContactPointAbility } from '../../../hooks/abilities/useContactPointAbility';;
+
+import { ContactPointAction } from '../../../hooks/abilities/types';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
 import { type RulesFilterProps as RulesFilterV2Props } from '../../../rule-list/filter/RulesFilter.v2';
@@ -45,7 +47,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
   const styles = useStyles2(getStyles);
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
-  const canRenderContactPointSelector = isGranted(useGrafanaContactPointViewAbility());
+  const canRenderContactPointSelector = isGranted(useContactPointAbility({ action: ContactPointAction.View }));
 
   // This key is used to force a rerender on the inputs when the filters are cleared
   const [filterKey, setFilterKey] = useState<number>(Math.floor(Math.random() * 100));
@@ -114,6 +116,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
     <Stack direction="column" gap={0}>
       <Stack direction="row" gap={1} wrap="wrap">
         <Field
+          noMargin
           className={styles.dsPickerContainer}
           label={
             <Label htmlFor="data-source-picker">
@@ -165,6 +168,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
         </Field>
 
         <Field
+          noMargin
           className={styles.dashboardPickerContainer}
           label={
             <Label htmlFor="filters-dashboard-picker">
@@ -217,6 +221,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
         {canRenderContactPointSelector && (
           <Stack direction="column" gap={0}>
             <Field
+              noMargin
               label={
                 <Label htmlFor="contactPointFilter">
                   <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
@@ -271,6 +276,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
             })}
           >
             <Field
+              noMargin
               label={
                 <Label htmlFor="rulesSearchInput">
                   <Stack gap={0.5} alignItems="center">

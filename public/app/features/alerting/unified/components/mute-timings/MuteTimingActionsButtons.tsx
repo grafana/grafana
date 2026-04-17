@@ -4,10 +4,10 @@ import { Trans, t } from '@grafana/i18n';
 import { Badge, ConfirmModal, LinkButton, Stack } from '@grafana/ui';
 import { useExportMuteTimingsDrawer } from 'app/features/alerting/unified/components/mute-timings/useExportMuteTimingsDrawer';
 
-import { AbilityAny } from '../../components/AbilityGuards';
-import { isAvailable } from '../../hooks/abilities/abilityUtils';
-import { useAlertmanagerAbility } from '../../hooks/abilities/notificationAbilities';
-import { AlertmanagerAction } from '../../hooks/abilities/types';
+import { isAvailable, isGranted } from '../../hooks/abilities/abilityUtils';
+import { useTimeIntervalAbility } from '../../hooks/abilities/useTimeIntervalAbility';;
+
+import { TimeIntervalAction } from '../../hooks/abilities/types';
 import { isLoading } from '../../hooks/useAsync';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
@@ -26,7 +26,9 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
   });
   const [showDeleteDrawer, setShowDeleteDrawer] = useState(false);
   const [ExportDrawer, showExportDrawer] = useExportMuteTimingsDrawer();
-  const exportAbility = useAlertmanagerAbility(AlertmanagerAction.ExportTimeIntervals);
+  const updateAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Update, context: muteTiming });
+  const deleteAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Delete, context: muteTiming });
+  const exportAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Export });
 
   const closeDeleteModal = () => setShowDeleteDrawer(false);
 
@@ -57,7 +59,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
         {!isGrafanaDataSource && isDisabled(muteTiming) && (
           <Badge text={t('alerting.mute-timing-actions-buttons.text-disabled', 'Disabled')} color="orange" />
         )}
-        <AbilityAny actions={[AlertmanagerAction.UpdateTimeInterval]}>{viewOrEditButton}</AbilityAny>
+        {isAvailable(updateAbility) && viewOrEditButton}
 
         {isAvailable(exportAbility) && (
           <LinkButton
@@ -72,18 +74,16 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
           </LinkButton>
         )}
 
-        {!muteTiming.provisioned && (
-          <AbilityAny actions={[AlertmanagerAction.DeleteTimeInterval]}>
-            <LinkButton
-              icon="trash-alt"
-              variant="secondary"
-              size="sm"
-              onClick={() => setShowDeleteDrawer(true)}
-              disabled={isLoading(deleteMuteTimingRequestState)}
-            >
-              <Trans i18nKey="alerting.common.delete">Delete</Trans>
-            </LinkButton>
-          </AbilityAny>
+        {!muteTiming.provisioned && isGranted(deleteAbility) && (
+          <LinkButton
+            icon="trash-alt"
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowDeleteDrawer(true)}
+            disabled={isLoading(deleteMuteTimingRequestState)}
+          >
+            <Trans i18nKey="alerting.common.delete">Delete</Trans>
+          </LinkButton>
         )}
       </Stack>
       <ConfirmModal

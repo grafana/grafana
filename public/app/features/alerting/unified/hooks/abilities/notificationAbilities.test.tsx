@@ -15,15 +15,20 @@ import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { isAvailable } from './abilityUtils';
-import { useAlertmanagerAbilities, useAlertmanagerAbility, useAllAlertmanagerAbilities } from './notificationAbilities';
-import { AlertmanagerAction, isInsufficientPermissions } from './types';
+import { useContactPointAbility } from './useContactPointAbility';
+import { useNotificationTemplateAbility } from './useNotificationTemplateAbility';
+import { useSilenceAbility } from './useSilenceAbility';
+import { useTimeIntervalAbility } from './useTimeIntervalAbility';
+import {
+  ContactPointAction,
+  NotificationTemplateAction,
+  SilenceAction,
+  TimeIntervalAction,
+  isInsufficientPermissions,
+} from './types';
 
 setupMswServer();
 
-/**
- * Snapshot tests for notification (alertmanager) abilities.
- * Every change to the snapshot should be reviewed carefully!
- */
 describe('notificationAbilities', () => {
   it("should report Create / Update / Delete actions aren't supported for external vanilla alertmanager", () => {
     setupDataSources(
@@ -34,9 +39,17 @@ describe('notificationAbilities', () => {
       })
     );
 
-    const { result } = renderHook(() => useAllAlertmanagerAbilities(), {
-      wrapper: createAlertmanagerWrapper('does-not-exist'),
-    });
+    // For a vanilla prometheus AM, configuration API is unavailable — mutating actions should be NotSupported
+    const { result } = renderHook(
+      () => ({
+        createContactPoint: useContactPointAbility({ action: ContactPointAction.Create }),
+        updateContactPoint: useContactPointAbility({ action: ContactPointAction.Update, context: {} }),
+        deleteContactPoint: useContactPointAbility({ action: ContactPointAction.Delete, context: {} }),
+        createTemplate: useNotificationTemplateAbility({ action: NotificationTemplateAction.Create }),
+        createTimeInterval: useTimeIntervalAbility({ action: TimeIntervalAction.Create }),
+      }),
+      { wrapper: createAlertmanagerWrapper('does-not-exist') }
+    );
     expect(result.current).toMatchSnapshot();
   });
 
@@ -50,9 +63,17 @@ describe('notificationAbilities', () => {
 
     grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingInstanceRead]);
 
-    const { result } = renderHook(() => useAllAlertmanagerAbilities(), {
-      wrapper: createAlertmanagerWrapper(GRAFANA_RULES_SOURCE_NAME),
-    });
+    const { result } = renderHook(
+      () => ({
+        viewContactPoint: useContactPointAbility({ action: ContactPointAction.View }),
+        createContactPoint: useContactPointAbility({ action: ContactPointAction.Create }),
+        viewSilence: useSilenceAbility({ action: SilenceAction.View }),
+        createSilence: useSilenceAbility({ action: SilenceAction.Create }),
+        viewTemplate: useNotificationTemplateAbility({ action: NotificationTemplateAction.View }),
+        viewTimeInterval: useTimeIntervalAbility({ action: TimeIntervalAction.View }),
+      }),
+      { wrapper: createAlertmanagerWrapper(GRAFANA_RULES_SOURCE_NAME) }
+    );
 
     // Every action should be applicable (either granted or denied-but-visible)
     Object.values(result.current).forEach((ability) => {
@@ -60,10 +81,8 @@ describe('notificationAbilities', () => {
     });
 
     // read permission was granted — view should be granted
-    const { result: viewResult } = renderHook(() => useAlertmanagerAbility(AlertmanagerAction.ViewSilence), {
-      wrapper: createAlertmanagerWrapper(GRAFANA_RULES_SOURCE_NAME),
-    });
-    expect(viewResult.current.granted).toBe(true);
+    expect(result.current.viewSilence.granted).toBe(true);
+    expect(result.current.viewContactPoint.granted).toBe(true);
 
     expect(result.current).toMatchSnapshot();
   });
@@ -84,9 +103,19 @@ describe('notificationAbilities', () => {
       AccessControlAction.AlertingInstancesExternalWrite,
     ]);
 
-    const { result } = renderHook(() => useAllAlertmanagerAbilities(), {
-      wrapper: createAlertmanagerWrapper('mimir'),
-    });
+    const { result } = renderHook(
+      () => ({
+        viewContactPoint: useContactPointAbility({ action: ContactPointAction.View }),
+        createContactPoint: useContactPointAbility({ action: ContactPointAction.Create }),
+        exportContactPoint: useContactPointAbility({ action: ContactPointAction.Export, context: {} }),
+        viewSilence: useSilenceAbility({ action: SilenceAction.View }),
+        createSilence: useSilenceAbility({ action: SilenceAction.Create }),
+        viewTemplate: useNotificationTemplateAbility({ action: NotificationTemplateAction.View }),
+        viewTimeInterval: useTimeIntervalAbility({ action: TimeIntervalAction.View }),
+        createTimeInterval: useTimeIntervalAbility({ action: TimeIntervalAction.Create }),
+      }),
+      { wrapper: createAlertmanagerWrapper('mimir') }
+    );
 
     expect(result.current).toMatchSnapshot();
   });
@@ -102,12 +131,11 @@ describe('notificationAbilities', () => {
     grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);
 
     const { result } = renderHook(
-      () =>
-        useAlertmanagerAbilities([
-          AlertmanagerAction.ViewContactPoint,
-          AlertmanagerAction.CreateContactPoint,
-          AlertmanagerAction.ExportContactPoint,
-        ]),
+      () => [
+        useContactPointAbility({ action: ContactPointAction.View }),
+        useContactPointAbility({ action: ContactPointAction.Create }),
+        useContactPointAbility({ action: ContactPointAction.Export, context: {} }),
+      ],
       { wrapper: createAlertmanagerWrapper(GRAFANA_RULES_SOURCE_NAME) }
     );
 
