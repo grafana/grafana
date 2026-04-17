@@ -1,12 +1,6 @@
 import { lazy } from 'react';
 
-import {
-  DataTransformerID,
-  PluginState,
-  TransformerCategory,
-  type TransformerRegistryItem,
-} from '@grafana/data';
-
+import { DataTransformerID, PluginState, TransformerCategory, type TransformerRegistryItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 
@@ -15,9 +9,6 @@ import { config } from '@grafana/runtime';
 import { standardTransformers } from '../../../../packages/grafana-data/src/transformations/transformers';
 
 import { isHeatmapApplicable } from './calculateHeatmap/applicability';
-import { isSmoothingApplicable } from './smoothing/applicability';
-import { isTimeSeriesTableApplicable } from './timeSeriesTable/applicability';
-
 // SVG images - dark
 import calculateFieldDark from './images/dark/calculateField.svg';
 import concatenateDark from './images/dark/concatenate.svg';
@@ -88,6 +79,10 @@ import sortByLight from './images/light/sortBy.svg';
 import spatialLight from './images/light/spatial.svg';
 import timeSeriesTableLight from './images/light/timeSeriesTable.svg';
 import transposeLight from './images/light/transpose.svg';
+import { isSmoothingApplicable } from './smoothing/applicability';
+import { isTimeSeriesTableApplicable } from './timeSeriesTable/applicability';
+
+export const rawStandardTransformers = standardTransformers;
 
 export const getStandardTransformers = (): TransformerRegistryItem[] => {
   return [
@@ -363,8 +358,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
           default: m.ConfigFromQueryTransformerEditor,
         }))
       ),
-      transformation: () =>
-        import('./configFromQuery/configFromQuery').then((m) => m.getConfigFromDataTransformer()),
+      transformation: () => import('./configFromQuery/configFromQuery').then((m) => m.getConfigFromDataTransformer()),
       name: t(
         'transformers.get-config-from-data-transformer.name.config-from-query-results',
         'Config from query results'
@@ -387,10 +381,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       ),
       transformation: () =>
         import('./prepareTimeSeries/prepareTimeSeries').then((m) => m.getPrepareTimeSeriesTransformer()),
-      name: t(
-        'transformers.prepare-time-series.name.prepare-time-series',
-        'Prepare time series'
-      ),
+      name: t('transformers.prepare-time-series.name.prepare-time-series', 'Prepare time series'),
       description: t(
         'transformers.prepare-time-series.description.stretch-data-frames',
         'Stretch data frames from the wide format into the long format.'
@@ -423,10 +414,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
         import('./spatial/SpatialTransformerEditor').then((m) => ({ default: m.SetGeometryTransformerEditor }))
       ),
       transformation: () => import('./spatial/spatialTransformer').then((m) => m.getSpatialTransformer()),
-      name: t(
-        'transformers.get-spatial-transformer.name.spatial-operations',
-        'Spatial operations'
-      ),
+      name: t('transformers.get-spatial-transformer.name.spatial-operations', 'Spatial operations'),
       description: t(
         'transformers.get-spatial-transformer.description.apply-spatial-operations-to-query-results',
         'Apply spatial operations to query results.'
@@ -559,9 +547,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
         'Create a new data frame containing values predicted by a statistical model.'
       ),
       categories: new Set([TransformerCategory.CalculateNewFields]),
-      tags: new Set([
-        t('transformers.regression-transformer-editor.tags.regression-analysis', 'Regression analysis'),
-      ]),
+      tags: new Set([t('transformers.regression-transformer-editor.tags.regression-analysis', 'Regression analysis')]),
       imageDark: regressionDark,
       imageLight: regressionLight,
     },
@@ -574,10 +560,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       ),
       transformation: () =>
         import('./partitionByValues/partitionByValues').then((m) => m.getPartitionByValuesTransformer()),
-      name: t(
-        'transformers.get-partition-by-values-transformer.name.partition-by-values',
-        'Partition by values'
-      ),
+      name: t('transformers.get-partition-by-values-transformer.name.partition-by-values', 'Partition by values'),
       description: t(
         'transformers.get-partition-by-values-transformer.description.split-oneframe-dataset-multiple-series',
         'Split a one-frame dataset into multiple series.'
@@ -680,10 +663,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       ),
       transformation: () =>
         import('./timeSeriesTable/timeSeriesTableTransformer').then((m) => m.getTimeSeriesTableTransformer()),
-      name: t(
-        'transformers.time-series-table.name.time-series-to-table',
-        'Time series to table'
-      ),
+      name: t('transformers.time-series-table.name.time-series-to-table', 'Time series to table'),
       description: t(
         'transformers.time-series-table.description.convert-to-table-rows',
         'Convert time series data to table rows so that they can be viewed in tabular or sparkline format.'
@@ -717,5 +697,19 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       imageDark: transposeDark,
       imageLight: transposeLight,
     },
+    // @ts-ignore: FIXME we need to figure out how to make a non-editor
+    // {
+    //   id: DataTransformerID.ensureColumns,
+    //   transformation: () => Promise.resolve(standardTransformers.ensureColumnsTransformer),
+    //   name: t('transformers.ensure-columns-transformer-editor.name.ensure-columns', 'Ensure columns'),
+    //   description: t(
+    //     'transformers.ensure-columns-transformer-editor.description.ensure-columns',
+    //     'Ensure that the specified columns exist in the data frame.'
+    //   ),
+    //   categories: new Set([TransformerCategory.CalculateNewFields]),
+    //   imageDark: reduceDark,
+    //   imageLight: reduceLight,
+    //   excludeFromPicker: true,
+    // },
   ];
 };

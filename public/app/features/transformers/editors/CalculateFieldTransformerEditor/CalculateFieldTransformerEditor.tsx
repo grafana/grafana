@@ -28,6 +28,7 @@ import { InlineField, InlineSwitch, Input, Select } from '@grafana/ui';
 
 import darkImage from '../../images/dark/calculateField.svg';
 import lightImage from '../../images/light/calculateField.svg';
+import { rawStandardTransformers } from '../../standardTransformers';
 
 import { BinaryOperationOptionsEditor } from './BinaryOperationOptionsEditor';
 import { CumulativeOptionsEditor } from './CumulativeOptionsEditor';
@@ -36,6 +37,7 @@ import { ReduceRowOptionsEditor } from './ReduceRowOptionsEditor';
 import { UnaryOperationEditor } from './UnaryOperationEditor';
 import { WindowOptionsEditor } from './WindowOptionsEditor';
 import { LABEL_WIDTH } from './constants';
+
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
 
 interface CalculateFieldTransformerEditorState {
@@ -85,10 +87,15 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
 
   useEffect(() => {
     const ctx = { interpolate: (v: string) => v };
-    const subscription = from(standardTransformersRegistry.get(DataTransformerID.ensureColumns).transformation())
+    const subscription = from(Promise.resolve(rawStandardTransformers.ensureColumnsTransformer))
       .pipe(
         mergeMap((t) =>
-          of(input).pipe(t.operator(null, ctx), extractAllNames(), getVariableNames(), extractNamesAndSelected(configuredOptions || []))
+          of(input).pipe(
+            t.operator(null, ctx),
+            extractAllNames(),
+            getVariableNames(),
+            extractNamesAndSelected(configuredOptions || [])
+          )
         )
       )
       .subscribe(({ selected, names }) => {
