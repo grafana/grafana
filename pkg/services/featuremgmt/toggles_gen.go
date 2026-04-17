@@ -27,10 +27,6 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagGrpcServer
-	// Run the GRPC server
-	FlagGrpcServer = "grpcServer"
-
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
@@ -146,10 +142,6 @@ const (
 	// FlagKubernetesCorrelations
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
-
-	// FlagKubernetesUnifiedStorageQuotas
-	// Adds support for Kubernetes unified storage quotas
-	FlagKubernetesUnifiedStorageQuotas = "kubernetesUnifiedStorageQuotas"
 
 	// FlagKubernetesLogsDrilldown
 	// Adds support for Kubernetes logs drilldown
@@ -694,10 +686,6 @@ const (
 	// Enables the notification history feature
 	FlagAlertingNotificationHistory = "alertingNotificationHistory"
 
-	// FlagUnifiedStorageSearchDualReaderEnabled
-	// Enable dual reader for unified storage search
-	FlagUnifiedStorageSearchDualReaderEnabled = "unifiedStorageSearchDualReaderEnabled"
-
 	// FlagAlertmanagerRemoteSecondaryWithRemoteState
 	// Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
 	FlagAlertmanagerRemoteSecondaryWithRemoteState = "alertmanagerRemoteSecondaryWithRemoteState"
@@ -953,4 +941,8 @@ const (
 	// FlagClickHouseConfigValidation
 	// Enables validation on the ClickHouse data source configuration page
 	FlagClickHouseConfigValidation = "clickHouseConfigValidation"
+
+	// FlagDatasourceUseNewCRUDAPIs
+	// Use the new datasource API groups for datasource CRUD requests, backend flag
+	FlagDatasourceUseNewCRUDAPIs = "datasource.useNewCRUDAPIs"
 )

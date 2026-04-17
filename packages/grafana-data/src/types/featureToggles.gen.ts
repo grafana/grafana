@@ -49,11 +49,6 @@ export interface FeatureToggles {
   */
   canvasPanelNesting?: boolean;
   /**
-  * Run the GRPC server
-  * @default false
-  */
-  grpcServer?: boolean;
-  /**
   * Enables cross-account querying in CloudWatch datasources
   * @default true
   */
@@ -248,11 +243,6 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesCorrelations?: boolean;
-  /**
-  * Adds support for Kubernetes unified storage quotas
-  * @default false
-  */
-  kubernetesUnifiedStorageQuotas?: boolean;
   /**
   * Adds support for Kubernetes logs drilldown
   * @default false
@@ -1250,11 +1240,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistory?: boolean;
-  /**
-  * Enable dual reader for unified storage search
-  * @default false
-  */
-  unifiedStorageSearchDualReaderEnabled?: boolean;
   /**
   * Supports __from and __to macros that always use the dashboard level time range
   * @default false
