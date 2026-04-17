@@ -257,16 +257,12 @@ func (s *CorrelationsK8sService) GetCorrelation(ctx context.Context, cmd GetCorr
 }
 
 func (s *CorrelationsK8sService) GetCorrelationsBySourceUID(ctx context.Context, cmd GetCorrelationsBySourceUIDQuery) ([]Correlation, error) {
-			client, err := s.getK8sClient()
+	client, err := s.getK8sClient()
 	if err != nil {
-		return  []Correlation, err
+		return []Correlation{}, err
 	}
-    /*const labelSelectString = `correlations.grafana.app/sourceDS-ref in (${labelStr})`;
-    const { data } = await dispatch(
-      correlationsAPIv0alpha1.endpoints.listCorrelation.initiate({
-        labelSelector: labelSelectString,
-      })*/
-	appPlatformCorrs, err := client.List(ctx, authlib.OrgNamespaceFormatter(cmd.OrgId), resource.ListOptions{LabelFilters: ["correlations.grafana.app/sourceDS-ref in (" + cmd.SourceUID + ")"] })
+	// todo: we will need the datasource type here
+	appPlatformCorrs, err := client.List(ctx, authlib.OrgNamespaceFormatter(cmd.OrgId), resource.ListOptions{LabelFilters: []string{"correlations.grafana.app/sourceDS-ref=" + cmd.SourceUID}})
 
 	correlations := make([]Correlation, len(appPlatformCorrs.Items))
 
@@ -276,13 +272,13 @@ func (s *CorrelationsK8sService) GetCorrelationsBySourceUID(ctx context.Context,
 	}
 
 	// TODO pagination
-	return []Correlation,nil
+	return []Correlation{}, nil
 }
 
 func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) (GetCorrelationsResponseBody, error) {
-		client, err := s.getK8sClient()
+	client, err := s.getK8sClient()
 	if err != nil {
-		return  GetCorrelationsResponseBody{}, err
+		return GetCorrelationsResponseBody{}, err
 	}
 
 	appPlatformCorrs, err := client.List(ctx, authlib.OrgNamespaceFormatter(cmd.OrgId), resource.ListOptions{})
@@ -300,19 +296,29 @@ func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCor
 	}, nil
 }
 
+// todo - best option for deleting multiple resources at once?
+// the frontend client generates a delete collection endpoint that must communicate directly with kubernetes - but that is not provided by the generator of go code
+// with delete collection and a label selector, this should be easy - I think I should implement it in pkg/registry/apis/correlations ?
 func (s *CorrelationsK8sService) DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
+	/*client, err := s.getK8sClient()
+	if err != nil {
+		return GetCorrelationsResponseBody{}, err
+	}*/
 	return nil
 }
 
+// todo - best option for deleting multiple resources at once?
 func (s *CorrelationsK8sService) DeleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error {
 	return nil
 }
 
+// this handles deleting all correlations associated with a datasource, both as source and target, when the datasource itself is deleted.
 func (s *CorrelationsK8sService) handleDatasourceDeletion(ctx context.Context, event *events.DataSourceDeleted) error {
 	// TODO
 	return nil
 }
 
+// what's the best way to return just a count of records
 func (s *CorrelationsK8sService) Usage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
 	// TODO
 	return &quota.Map{}, nil
