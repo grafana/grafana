@@ -932,7 +932,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		}
 
 		storage := apiGroupInfo.VersionedResourcesStorageMap[dashv2.VERSION]
-		storage[dashv2.VariableResourceInfo.StoragePath()] = gvStore
+		storage[dashv2.VariableResourceInfo.StoragePath()] = newVariableStorage(gvStore, b.variableClientProvider)
 	}
 
 	return nil

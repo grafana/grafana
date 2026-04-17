@@ -2,13 +2,17 @@ package dashboard
 
 import (
 	"context"
+	"errors"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/admission"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 
@@ -227,6 +231,231 @@ func TestVariableNameUniquenessHelpers(t *testing.T) {
 		require.Equal(t, "same-folder-conflict", findVariableNameConflict(list, "folder-a", ""))
 		require.Empty(t, findVariableNameConflict(list, "folder-a", "same-folder-conflict"))
 	})
+}
+
+func TestPickVariableWinner(t *testing.T) {
+	mkItem := func(name, uid string, created time.Time) unstructured.Unstructured {
+		return unstructured.Unstructured{
+			Object: map[string]any{
+				"metadata": map[string]any{
+					"name":              name,
+					"uid":               uid,
+					"creationTimestamp": metav1.NewTime(created).Format(time.RFC3339),
+				},
+			},
+		}
+	}
+
+	t.Run("single item is its own winner", func(t *testing.T) {
+		base := time.Date(2026, 1, 1, 10, 0, 0, 0, time.UTC)
+		items := []unstructured.Unstructured{mkItem("only", "uid-1", base)}
+		winner := pickVariableWinner(items)
+		require.Equal(t, "only", winner.GetName())
+	})
+
+	t.Run("earliest creationTimestamp wins", func(t *testing.T) {
+		base := time.Date(2026, 1, 1, 10, 0, 0, 0, time.UTC)
+		items := []unstructured.Unstructured{
+			mkItem("second", "uid-b", base.Add(5*time.Second)),
+			mkItem("first", "uid-a", base),
+			mkItem("third", "uid-c", base.Add(10*time.Second)),
+		}
+		winner := pickVariableWinner(items)
+		require.Equal(t, "first", winner.GetName())
+	})
+
+	t.Run("ties broken by lowest UID lexicographically", func(t *testing.T) {
+		base := time.Date(2026, 1, 1, 10, 0, 0, 0, time.UTC)
+		items := []unstructured.Unstructured{
+			mkItem("zoo", "uid-zzz", base),
+			mkItem("alpha", "uid-aaa", base),
+			mkItem("mid", "uid-mmm", base),
+		}
+		winner := pickVariableWinner(items)
+		require.Equal(t, "uid-aaa", string(winner.GetUID()))
+	})
+
+	t.Run("timestamp beats UID when not tied", func(t *testing.T) {
+		base := time.Date(2026, 1, 1, 10, 0, 0, 0, time.UTC)
+		items := []unstructured.Unstructured{
+			mkItem("late-low-uid", "uid-aaa", base.Add(time.Second)),
+			mkItem("early-high-uid", "uid-zzz", base),
+		}
+		winner := pickVariableWinner(items)
+		require.Equal(t, "early-high-uid", winner.GetName())
+	})
+}
+
+func TestFilterVariablesInScope(t *testing.T) {
+	list := &unstructured.UnstructuredList{
+		Items: []unstructured.Unstructured{
+			makeVariableListItem("global-a", "uid-global-a", "", time.Time{}),
+			makeVariableListItem("folder-a-1", "uid-f-a-1", "folder-a", time.Time{}),
+			makeVariableListItem("folder-b-1", "uid-f-b-1", "folder-b", time.Time{}),
+		},
+	}
+
+	t.Run("global scope keeps only items without a folder label", func(t *testing.T) {
+		items := filterVariablesInScope(list, "")
+		require.Len(t, items, 1)
+		require.Equal(t, "global-a", items[0].GetName())
+	})
+
+	t.Run("folder scope keeps only items in the same folder", func(t *testing.T) {
+		items := filterVariablesInScope(list, "folder-a")
+		require.Len(t, items, 1)
+		require.Equal(t, "folder-a-1", items[0].GetName())
+	})
+
+	t.Run("nil list returns nil", func(t *testing.T) {
+		require.Nil(t, filterVariablesInScope(nil, ""))
+	})
+}
+
+func TestResolveVariableNameConflictAfterCreate(t *testing.T) {
+	ctx := context.Background()
+	createdTime := time.Date(2026, 1, 1, 10, 0, 0, 0, time.UTC)
+
+	t.Run("returns false when no duplicate exists", func(t *testing.T) {
+		created := newCreatedVariable("region", "region-123", "uid-created", "42", "", createdTime)
+		handler := &client.MockK8sHandler{}
+		handler.On("List", mock.Anything, int64(1), mock.MatchedBy(matchListOptions("region", "", "42"))).
+			Return(&unstructured.UnstructuredList{
+				Items: []unstructured.Unstructured{
+					makeVariableListItem("region-123", "uid-created", "", createdTime),
+				},
+			}, nil).Once()
+
+		lost, err := resolveVariableNameConflictAfterCreate(ctx, &staticHandlerProvider{handler: handler}, created)
+		require.NoError(t, err)
+		require.False(t, lost)
+		handler.AssertExpectations(t)
+	})
+
+	t.Run("returns false when we are the tie-break winner", func(t *testing.T) {
+		created := newCreatedVariable("region", "region-created", "uid-aaa", "42", "", createdTime)
+		handler := &client.MockK8sHandler{}
+		handler.On("List", mock.Anything, int64(1), mock.Anything).
+			Return(&unstructured.UnstructuredList{
+				Items: []unstructured.Unstructured{
+					makeVariableListItem("region-created", "uid-aaa", "", createdTime),
+					makeVariableListItem("region-other", "uid-zzz", "", createdTime.Add(time.Second)),
+				},
+			}, nil).Once()
+
+		lost, err := resolveVariableNameConflictAfterCreate(ctx, &staticHandlerProvider{handler: handler}, created)
+		require.NoError(t, err)
+		require.False(t, lost)
+	})
+
+	t.Run("returns true when we lost to an earlier creationTimestamp", func(t *testing.T) {
+		created := newCreatedVariable("region", "region-created", "uid-later", "42", "", createdTime.Add(time.Second))
+		handler := &client.MockK8sHandler{}
+		handler.On("List", mock.Anything, int64(1), mock.Anything).
+			Return(&unstructured.UnstructuredList{
+				Items: []unstructured.Unstructured{
+					makeVariableListItem("region-created", "uid-later", "", createdTime.Add(time.Second)),
+					makeVariableListItem("region-winner", "uid-winner", "", createdTime),
+				},
+			}, nil).Once()
+
+		lost, err := resolveVariableNameConflictAfterCreate(ctx, &staticHandlerProvider{handler: handler}, created)
+		require.NoError(t, err)
+		require.True(t, lost)
+	})
+
+	t.Run("folder-scoped duplicates ignore global-scope entries", func(t *testing.T) {
+		created := newCreatedVariable("region", "region-f", "uid-f", "42", "folder-a", createdTime)
+		handler := &client.MockK8sHandler{}
+		handler.On("List", mock.Anything, int64(1), mock.Anything).
+			Return(&unstructured.UnstructuredList{
+				Items: []unstructured.Unstructured{
+					makeVariableListItem("region-f", "uid-f", "folder-a", createdTime),
+					makeVariableListItem("region-global", "uid-g", "", createdTime.Add(-time.Hour)),
+					makeVariableListItem("region-other-folder", "uid-o", "folder-b", createdTime.Add(-time.Hour)),
+				},
+			}, nil).Once()
+
+		lost, err := resolveVariableNameConflictAfterCreate(ctx, &staticHandlerProvider{handler: handler}, created)
+		require.NoError(t, err)
+		require.False(t, lost, "only the folder-a entry is in scope, so we are the sole survivor")
+	})
+
+	t.Run("list error is surfaced", func(t *testing.T) {
+		created := newCreatedVariable("region", "region-x", "uid-x", "42", "", createdTime)
+		handler := &client.MockK8sHandler{}
+		handler.On("List", mock.Anything, int64(1), mock.Anything).
+			Return(nil, errors.New("kaboom")).Once()
+
+		_, err := resolveVariableNameConflictAfterCreate(ctx, &staticHandlerProvider{handler: handler}, created)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "post-create uniqueness check")
+	})
+
+	t.Run("nil provider returns false without error", func(t *testing.T) {
+		created := newCreatedVariable("region", "region-x", "uid-x", "42", "", createdTime)
+		lost, err := resolveVariableNameConflictAfterCreate(ctx, nil, created)
+		require.NoError(t, err)
+		require.False(t, lost)
+	})
+}
+
+// newCreatedVariable builds a *dashv2.Variable resembling the object returned
+// by registry.Store.Create: metadata is fully populated including namespace,
+// UID, resourceVersion, and (optionally) folder annotation + label.
+func newCreatedVariable(specName, metadataName, uid, resourceVersion, folderUID string, created time.Time) *dashv2.Variable {
+	v := newCustomVariable(specName, metadataName)
+	v.SetNamespace("stacks-1")
+	v.SetUID(types.UID(uid))
+	v.SetResourceVersion(resourceVersion)
+	v.SetCreationTimestamp(metav1.NewTime(created))
+	if folderUID != "" {
+		v.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+		v.SetLabels(map[string]string{variableFolderLabelKey: folderUID})
+	}
+	return v
+}
+
+// makeVariableListItem builds an unstructured list entry shaped like the one
+// a List call would return for a Variable. Only the fields consulted by the
+// resolver are populated.
+func makeVariableListItem(name, uid, folderUID string, created time.Time) unstructured.Unstructured {
+	meta := map[string]any{
+		"name": name,
+		"uid":  uid,
+	}
+	if !created.IsZero() {
+		meta["creationTimestamp"] = metav1.NewTime(created).Format(time.RFC3339)
+	}
+	if folderUID != "" {
+		meta["labels"] = map[string]any{
+			variableFolderLabelKey: folderUID,
+		}
+	}
+	return unstructured.Unstructured{Object: map[string]any{"metadata": meta}}
+}
+
+// matchListOptions asserts the field selector and (if set) resourceVersion
+// floor passed to the post-create list. It also permits any folder label
+// selector so tests can share it across scope variants.
+func matchListOptions(specName, folderUID, resourceVersion string) func(metav1.ListOptions) bool {
+	return func(opts metav1.ListOptions) bool {
+		if opts.FieldSelector != "spec.spec.name="+specName {
+			return false
+		}
+		if folderUID != "" && opts.LabelSelector != variableFolderLabelKey+"="+folderUID {
+			return false
+		}
+		if resourceVersion != "" {
+			if opts.ResourceVersion != resourceVersion {
+				return false
+			}
+			if opts.ResourceVersionMatch != metav1.ResourceVersionMatchNotOlderThan {
+				return false
+			}
+		}
+		return true
+	}
 }
 
 func buildVariableAttributesForOp(op admission.Operation, newVariable, oldVariable *dashv2.Variable) admission.Attributes {
