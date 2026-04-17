@@ -56,7 +56,7 @@ The following features are not available on-premise:
 - Automations and sandbox settings
 - Anonymous access to the Assistant app
 
-## Use Grafana Assistant on-prem
+## Use Assistant on-prem
 
 Grafana Assistant on-premise connects your self-hosted Grafana deployment to the Grafana Cloud stack that provides the backend services.
 
