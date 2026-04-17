@@ -8,15 +8,18 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
+	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/grpcutils"
@@ -33,13 +36,17 @@ import (
 
 //go:generate mockery --name ResourceClient --structname MockResourceClient --inpackage --filename client_mock.go --with-expecter
 type ResourceClient interface {
+	SearchClient
 	resourcepb.ResourceStoreClient
-	resourcepb.ResourceIndexClient
-	resourcepb.ManagedObjectIndexClient
 	resourcepb.BulkStoreClient
 	resourcepb.BlobStoreClient
-	resourcepb.DiagnosticsClient
 	resourcepb.QuotasClient
+}
+
+type SearchClient interface {
+	resourcepb.ResourceIndexClient
+	resourcepb.ManagedObjectIndexClient
+	resourcepb.DiagnosticsClient //nolint:staticcheck
 }
 
 // Internal implementation
@@ -123,6 +130,15 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	)
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
+
+	// Add retry interceptor for transient conflict errors (same config as remote client).
+	retryInterceptor := grpc_retry.UnaryClientInterceptor(
+		grpc_retry.WithMax(3),
+		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(time.Second, 0.1)),
+		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable, codes.Aborted),
+	)
+	cc = grpchan.InterceptClientConn(cc, retryInterceptor, nil)
+
 	return newResourceClient(cc, cc)
 }
 
@@ -174,17 +190,20 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("no claims found")
 	}
 
+	// If the identity is the service identity, we don't need to extract the ID token
+	if info.GetIdentityType() == types.TypeAccessPolicy {
+		return "", nil
+	}
+
 	if token := info.GetIDToken(); len(token) != 0 {
 		return token, nil
 	}
 
-	if !types.IsIdentityType(info.GetIdentityType(), types.TypeAccessPolicy) {
-		authLogger.FromContext(ctx).Warn(
-			"calling resource store as the service without id token or marking it as the service identity",
-			"subject", info.GetSubject(),
-			"uid", info.GetUID(),
-		)
-	}
+	authLogger.FromContext(ctx).Warn(
+		"calling resource store as the service without id token or marking it as the service identity",
+		"subject", info.GetSubject(),
+		"uid", info.GetUID(),
+	)
 
 	return "", nil
 }

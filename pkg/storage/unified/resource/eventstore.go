@@ -11,11 +11,15 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
 const (
-	eventsSection        = "unified/events"
+	eventsSection        = kv.EventsSection
 	deleteEventBatchSize = 50
 )
 
@@ -30,7 +34,7 @@ type EventKey struct {
 	Resource        string
 	Name            string
 	ResourceVersion int64
-	Action          DataAction
+	Action          kv.DataAction
 	Folder          string
 	GUID            string
 }
@@ -40,9 +44,6 @@ func (k EventKey) String() string {
 }
 
 func (k EventKey) Validate() error {
-	if k.Namespace == "" {
-		return NewValidationError("namespace", k.Namespace, ErrNamespaceRequired)
-	}
 	if k.ResourceVersion < 0 {
 		return errors.New(ErrResourceVersionInvalid)
 	}
@@ -50,9 +51,8 @@ func (k EventKey) Validate() error {
 		return NewValidationError("action", string(k.Action), ErrActionRequired)
 	}
 
-	// Validate each field against the naming rules
 	// Validate naming conventions for all required fields
-	if k.Namespace != clusterScopeNamespace {
+	if k.Namespace != "" {
 		if err := validation.IsValidNamespace(k.Namespace); err != nil {
 			return NewValidationError("namespace", k.Namespace, err[0])
 		}
@@ -81,14 +81,14 @@ func (k EventKey) Validate() error {
 }
 
 type Event struct {
-	Namespace       string     `json:"namespace"`
-	Group           string     `json:"group"`
-	Resource        string     `json:"resource"`
-	Name            string     `json:"name"`
-	ResourceVersion int64      `json:"resource_version"`
-	Action          DataAction `json:"action"`
-	Folder          string     `json:"folder"`
-	PreviousRV      int64      `json:"previous_rv"`
+	Namespace       string        `json:"namespace"`
+	Group           string        `json:"group"`
+	Resource        string        `json:"resource"`
+	Name            string        `json:"name"`
+	ResourceVersion int64         `json:"resource_version"`
+	Action          kv.DataAction `json:"action"`
+	Folder          string        `json:"folder"`
+	PreviousRV      int64         `json:"previous_rv"`
 }
 
 func newEventStore(kv KV) *eventStore {
@@ -115,7 +115,7 @@ func ParseEventKey(key string) (EventKey, error) {
 		Group:           parts[2],
 		Resource:        parts[3],
 		Name:            parts[4],
-		Action:          DataAction(parts[5]),
+		Action:          kv.DataAction(parts[5]),
 		Folder:          parts[6],
 	}, nil
 }
@@ -123,6 +123,9 @@ func ParseEventKey(key string) (EventKey, error) {
 // LastEventKey returns the Event Key of the event with the highest resource version.
 // If no events are found, it returns ErrNotFound.
 func (n *eventStore) LastEventKey(ctx context.Context) (EventKey, error) {
+	ctx, span := tracer.Start(ctx, "resource.eventStore.LastEventKey")
+	defer span.End()
+
 	for key, err := range n.kv.Keys(ctx, eventsSection, ListOptions{Sort: SortOrderDesc, Limit: 1}) {
 		if err != nil {
 			return EventKey{}, err
@@ -153,6 +156,11 @@ func (n *eventStore) Save(ctx context.Context, event Event) error {
 		return fmt.Errorf("invalid event key: %w", err)
 	}
 
+	ctx, span := tracer.Start(ctx, "resource.eventStore.Save", trace.WithAttributes(
+		attribute.String("action", string(event.Action)),
+	))
+	defer span.End()
+
 	writer, err := n.kv.Save(ctx, eventsSection, eventKey.String())
 	if err != nil {
 		return err
@@ -171,6 +179,9 @@ func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
 		return Event{}, fmt.Errorf("invalid event key: %w", err)
 	}
 
+	ctx, span := tracer.Start(ctx, "resource.eventStore.Get")
+	defer span.End()
+
 	reader, err := n.kv.Get(ctx, eventsSection, key.String())
 	if err != nil {
 		return Event{}, err
@@ -185,11 +196,15 @@ func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
 
 // ListSince returns a sequence of events since the given resource version.
 func (n *eventStore) ListKeysSince(ctx context.Context, sinceRV int64, sortOrder SortOrder) iter.Seq2[string, error] {
+	ctx, span := tracer.Start(ctx, "resource.eventStore.ListKeysSince", trace.WithAttributes(
+		attribute.Int64("sinceRV", sinceRV),
+	))
 	opts := ListOptions{
 		Sort:     sortOrder,
 		StartKey: fmt.Sprintf("%d", sinceRV),
 	}
 	return func(yield func(string, error) bool) {
+		defer span.End()
 		for evtKey, err := range n.kv.Keys(ctx, eventsSection, opts) {
 			if err != nil {
 				yield("", err)
@@ -203,7 +218,11 @@ func (n *eventStore) ListKeysSince(ctx context.Context, sinceRV int64, sortOrder
 }
 
 func (n *eventStore) ListSince(ctx context.Context, sinceRV int64, sortOrder SortOrder) iter.Seq2[Event, error] {
+	ctx, span := tracer.Start(ctx, "resource.eventStore.ListSince", trace.WithAttributes(
+		attribute.Int64("sinceRV", sinceRV),
+	))
 	return func(yield func(Event, error) bool) {
+		defer span.End()
 		for evtKey, err := range n.ListKeysSince(ctx, sinceRV, sortOrder) {
 			if err != nil {
 				yield(Event{}, err)
@@ -233,6 +252,9 @@ func (n *eventStore) ListSince(ctx context.Context, sinceRV int64, sortOrder Sor
 
 // CleanupOldEvents deletes events older than the specified retention period.
 func (n *eventStore) CleanupOldEvents(ctx context.Context, cutoff time.Time) (int, error) {
+	ctx, span := tracer.Start(ctx, "resource.eventStore.CleanupOldEvents")
+	defer span.End()
+
 	// Keys are stored in the format of "resource_version~namespace~group~resource~name"
 	// With a start key of "1" and an end key of the cutoff time we can get all expired events.
 	endKey := fmt.Sprintf("%d", snowflakeFromTime(cutoff))
@@ -257,6 +279,11 @@ func (n *eventStore) CleanupOldEvents(ctx context.Context, cutoff time.Time) (in
 // batchDelete deletes multiple events in batches.
 // Keys are processed in batches (default 50).
 func (n *eventStore) batchDelete(ctx context.Context, keys []string) error {
+	ctx, span := tracer.Start(ctx, "resource.eventStore.batchDelete", trace.WithAttributes(
+		attribute.Int("batchSize", len(keys)),
+	))
+	defer span.End()
+
 	for len(keys) > 0 {
 		batch := keys
 		if len(batch) > deleteEventBatchSize {

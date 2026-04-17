@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -34,6 +35,9 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 		return nil, models.ErrInternalServerError.Errorf("FindAnnotations: failed to unmarshal dashboard annotations: %w", err)
 	}
 
+	// Use dashboard time range if time selection is disabled, otherwise use request time range
+	from, to := getAnnotationsTimeRange(dash, reqDTO, pub.TimeSelectionEnabled)
+
 	// We don't have a signed in user for public dashboards. We are using Grafana's Identity to query the annotations.
 	svcCtx, svcIdent := identity.WithServiceIdentity(ctx, dash.OrgID)
 	uniqueEvents := make(map[int64]models.AnnotationEvent, 0)
@@ -43,8 +47,8 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 			continue
 		}
 		annoQuery := &annotations.ItemQuery{
-			From:         reqDTO.From,
-			To:           reqDTO.To,
+			From:         from,
+			To:           to,
 			OrgID:        dash.OrgID,
 			DashboardID:  dash.ID,
 			DashboardUID: dash.UID,
@@ -459,6 +463,29 @@ func sanitizeData(data *simplejson.Json) {
 	}
 }
 
+// sanitizeDataV2 removes query expression fields from a v2 dashboard's elements.
+// V2 dashboards use the path: elements[key].spec.data.spec.queries[].spec.query.spec
+func sanitizeDataV2(data *simplejson.Json) {
+	for _, elemObj := range data.Get("elements").MustMap() {
+		elem := simplejson.NewFromAny(elemObj)
+		queries := elem.Get("spec").Get("data").Get("spec").Get("queries").MustArray()
+		for _, queryObj := range queries {
+			query := simplejson.NewFromAny(queryObj)
+			dataQuerySpec := query.Get("spec").Get("query").Get("spec")
+			dataQuerySpec.Del("expr")
+			dataQuerySpec.Del("query")
+			dataQuerySpec.Del("rawSql")
+		}
+	}
+}
+
+// isDashboardV2 returns true for dashboard API versions v2 and above.
+// v0/v1 (including empty, which implies legacy v1) use the panels schema.
+func isDashboardV2(dash *dashboards.Dashboard) bool {
+	v := dash.APIVersion
+	return v != "" && !strings.HasPrefix(v, "v0") && !strings.HasPrefix(v, "v1")
+}
+
 // NewTimeRange declared to be able to stub this function in tests
 var NewTimeRange = gtime.NewTimeRange
 
@@ -635,4 +662,37 @@ func getPanelRelativeTimeRangeV2(dashboard *simplejson.Json, panelID int64) stri
 	}
 
 	return ""
+}
+
+func getAnnotationsTimeRange(d *dashboards.Dashboard, reqDTO models.AnnotationsQueryDTO, timeSelectionEnabled bool) (int64, int64) {
+	// Use request time range if time selection is enabled
+	if timeSelectionEnabled {
+		return reqDTO.From, reqDTO.To
+	}
+
+	// Parse dashboard time range depending on version
+	isV2 := d.Data.Get("elements").Interface() != nil
+	var fromStr, toStr, dashboardTimezone string
+
+	if isV2 {
+		timeSettings := d.Data.Get("timeSettings")
+		fromStr = timeSettings.Get("from").MustString()
+		toStr = timeSettings.Get("to").MustString()
+		dashboardTimezone = timeSettings.Get("timezone").MustString()
+	} else {
+		fromStr = d.Data.GetPath("time", "from").MustString()
+		toStr = d.Data.GetPath("time", "to").MustString()
+		dashboardTimezone = d.Data.GetPath("timezone").MustString()
+	}
+
+	timezone, err := time.LoadLocation(dashboardTimezone)
+	if err != nil {
+		timezone = time.UTC
+	}
+
+	timeRange := NewTimeRange(fromStr, toStr)
+	timeFrom, _ := timeRange.ParseFrom(gtime.WithLocation(timezone))
+	timeTo, _ := timeRange.ParseTo(gtime.WithLocation(timezone))
+
+	return timeFrom.UnixMilli(), timeTo.UnixMilli()
 }

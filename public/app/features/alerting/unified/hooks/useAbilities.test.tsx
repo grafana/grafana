@@ -1,13 +1,16 @@
-import { PropsWithChildren } from 'react';
+import { type PropsWithChildren } from 'react';
 import { getWrapper, render, renderHook, screen, waitFor } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
-import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
+import {
+  type AlertManagerDataSourceJsonData,
+  AlertManagerImplementation,
+} from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { type CombinedRule } from 'app/types/unified-alerting';
 
 import { getCloudRule, getGrafanaRule, grantUserPermissions, mockDataSource } from '../mocks';
 import { AlertmanagerProvider } from '../state/AlertmanagerContext';
@@ -216,6 +219,28 @@ describe('AlertRule abilities', () => {
     });
 
     expect(result.current).toMatchSnapshot();
+  });
+
+  it('should allow editing/deleting rules with plugin origin label when plugin is not installed', async () => {
+    // Create a rule with a plugin origin label for a plugin that doesn't exist
+    const rule = getGrafanaRule({
+      labels: { __grafana_origin: 'plugin/non-existent-plugin' },
+    });
+
+    const { result } = renderHook(() => useAllAlertRuleAbilities(rule), { wrapper: wrapper() });
+
+    await waitFor(() => {
+      // Wait for the abilities to settle - update should be supported (not loading)
+      const [updateSupported] = result.current[AlertRuleAction.Update];
+      expect(updateSupported).toBe(true);
+    });
+
+    // When plugin is not installed, these actions should be supported
+    const [updateSupported] = result.current[AlertRuleAction.Update];
+    const [deleteSupported] = result.current[AlertRuleAction.Delete];
+
+    expect(updateSupported).toBe(true);
+    expect(deleteSupported).toBe(true);
   });
 });
 

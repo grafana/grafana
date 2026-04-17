@@ -172,6 +172,7 @@ describe('setupKeyboardShortcuts', () => {
 
   describe('other keyboard shortcuts', () => {
     beforeEach(() => {
+      config.featureToggles.newTimeRangeZoomShortcuts = false;
       setupKeyboardShortcuts(mockScene);
     });
 
@@ -209,6 +210,7 @@ describe('setupKeyboardShortcuts', () => {
   describe('edit mode shortcuts', () => {
     beforeEach(() => {
       jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
+      mockScene.setState({ meta: { ...mockScene.state.meta, canSave: true } });
       setupKeyboardShortcuts(mockScene);
     });
 
@@ -252,6 +254,14 @@ describe('setupKeyboardShortcuts', () => {
       expect(modOBinding).toBeDefined();
       expect(vBinding).toBeDefined();
       expect(drBinding).toBeDefined();
+    });
+
+    it('should setup collapse/expand all rows shortcuts when cannot edit', () => {
+      const collapseBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 'd shift+c');
+      const expandBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 'd shift+e');
+
+      expect(collapseBinding).toBeDefined();
+      expect(expandBinding).toBeDefined();
     });
   });
 

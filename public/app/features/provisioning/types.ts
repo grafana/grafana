@@ -1,14 +1,16 @@
-import { Path } from 'react-hook-form';
+import { type Path } from 'react-hook-form';
 
 import {
-  BitbucketRepositoryConfig,
-  ConnectionSpec,
-  GitHubRepositoryConfig,
-  GitLabRepositoryConfig,
-  GitRepositoryConfig,
-  LocalRepositoryConfig,
-  RepositorySpec,
+  type BitbucketRepositoryConfig,
+  type ConnectionSpec,
+  type GitHubRepositoryConfig,
+  type GitLabRepositoryConfig,
+  type GitRepositoryConfig,
+  type LocalRepositoryConfig,
+  type RepositorySpec,
 } from '../../api/clients/provisioning/v0alpha1';
+
+export type JobType = 'sync' | 'delete' | 'move' | 'fix' | 'releaseResources' | 'deleteResources';
 
 // Repository type definition - extracted from API client
 export type RepositoryType = RepositorySpec['type'];
@@ -25,6 +27,8 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | RepositorySp
     enablePushToConfiguredBranch: boolean;
     // top-level inline secure value
     token?: string;
+    // GitHub App connection name (when using app-based auth instead of PAT)
+    connectionName?: string;
   };
 
 export type RepositorySettingsField = Path<RepositoryFormData>;
@@ -33,7 +37,9 @@ export type RepositorySettingsField = Path<RepositoryFormData>;
 export type ConnectionType = ConnectionSpec['type'];
 
 export type ConnectionFormData = {
-  type: ConnectionSpec['type'];
+  type: ConnectionType;
+  title: string;
+  description: string;
   appID: string;
   installationID: string;
   privateKey?: string;
@@ -93,9 +99,17 @@ export interface TreeItem {
   hash?: string;
   status?: SyncStatus;
   hasFile?: boolean;
+  missingFolderMetadata?: boolean;
 }
 
 export interface FlatTreeItem {
   item: TreeItem;
   level: number;
+}
+
+// External repository from the provider (e.g., GitHub)
+export interface ExternalRepository {
+  name?: string;
+  owner?: string;
+  url?: string;
 }

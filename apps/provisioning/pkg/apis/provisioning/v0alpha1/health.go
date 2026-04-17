@@ -4,9 +4,104 @@ package v0alpha1
 // +enum
 type HealthFailureType string
 
+func (HealthFailureType) OpenAPIModelName() string {
+	return OpenAPIPrefix + "HealthFailureType"
+}
+
 const (
 	HealthFailureHook   HealthFailureType = "hook"
 	HealthFailureHealth HealthFailureType = "health"
+)
+
+// Condition types for Repository and Connection resources
+const (
+	// ConditionTypeReady indicates that the resource is ready for use.
+	// For repositories and connections, this reflects whether the health check is passing.
+	ConditionTypeReady = "Ready"
+
+	// ConditionTypeNamespaceQuota indicates whether the resource's namespace is within configured quota limits.
+	// This is an aggregated condition that can track multiple quota types (e.g., number of repositories in namespace).
+	// True = within quota or no limits configured, False = quota reached or exceeded.
+	ConditionTypeNamespaceQuota = "NamespaceQuota"
+
+	// ConditionTypeResourceQuota indicates whether the resource is within configured quota limits.
+	// This is an aggregated condition that can track multiple quota types (e.g., dashboards synced by repository).
+	// True = within quota or no limits configured, False = quota reached or exceeded.
+	ConditionTypeResourceQuota = "ResourceQuota"
+
+	// ConditionTypePullStatus indicates the outcome of the last completed pull operation.
+	// True = last pull succeeded, False = last pull failed (quota exceeded, general error, etc.).
+	ConditionTypePullStatus = "PullStatus"
+)
+
+// Condition reasons for the Ready condition
+const (
+	// ReasonAvailable indicates the resource is available and ready for use.
+	ReasonAvailable = "Available"
+
+	// ReasonInvalidSpec indicates the resource has a configuration issue
+	// with the spec format or structure (validation errors, invalid fields, secret errors).
+	// Automation should NOT automatically retry - wait for user to fix configuration.
+	ReasonInvalidSpec = "InvalidSpec"
+
+	// ReasonAuthenticationFailed indicates authentication or authorization failed
+	// (invalid credentials, wrong app ID, expired token, insufficient permissions).
+	// Automation should NOT automatically retry - wait for user to fix credentials.
+	ReasonAuthenticationFailed = "AuthenticationFailed"
+
+	// ReasonServiceUnavailable indicates an external service issue (API down, network timeout).
+	// Automation CAN retry with standard backoff - the issue is transient and outside user control.
+	ReasonServiceUnavailable = "ServiceUnavailable"
+
+	// ReasonRateLimited indicates the external service is rate limiting requests.
+	// User may need to take action (upgrade plan, reduce load). Automation should retry with
+	// longer backoff and respect Retry-After headers.
+	ReasonRateLimited = "RateLimited"
+)
+
+// Condition reasons for the PullStatus condition
+const (
+	// ReasonSuccess indicates the operation completed successfully.
+	ReasonSuccess = "Success"
+	// ReasonFailure indicates the operation failed due to an error.
+	ReasonFailure = "Failure"
+	// ReasonCompletedWithWarnings indicates the operation completed but with non-critical issues.
+	ReasonCompletedWithWarnings = "CompletedWithWarnings"
+	// ReasonResourceInvalid indicates a resource-level issue such as validation errors or ownership conflicts.
+	ReasonResourceInvalid = "ResourceInvalid"
+	// ReasonMissingFolderMetadata indicates the pull completed but some folders are missing
+	// _folder.json metadata files; their UIDs are unstable and may change on re-sync.
+	ReasonMissingFolderMetadata = "MissingFolderMetadata"
+	// ReasonFolderMetadataConflict indicates a conflict between folder metadata in the
+	// repository and the actual folder state in Grafana (e.g., ID mismatch, deleted folder).
+	ReasonFolderMetadataConflict = "FolderMetadataConflict"
+	// ReasonInvalidFolderMetadata indicates a _folder.json file exists but contains
+	// malformed or unparseable content; the folder falls back to hash-derived identity.
+	ReasonInvalidFolderMetadata = "InvalidFolderMetadata"
+	// ReasonFolderMetadataUpdated indicates the folder metadata UID changed,
+	// so the old folder was replaced with a new identity.
+	ReasonFolderMetadataUpdated = "FolderMetadataUpdated"
+	// ReasonFolderMetadataCreated indicates folder metadata was created where
+	// none existed, so the old hash-based folder was replaced.
+	ReasonFolderMetadataCreated = "FolderMetadataCreated"
+	// ReasonFolderMetadataDeleted indicates folder metadata was deleted,
+	// so the folder reverts to hash-based identity.
+	ReasonFolderMetadataDeleted = "FolderMetadataDeleted"
+	// ReasonFolderOrphaned indicates the folder exists in the cluster but
+	// no longer in the git repository.
+	ReasonFolderOrphaned = "FolderOrphaned"
+)
+
+// Condition reasons for the Quota condition
+const (
+	// ReasonWithinQuota indicates all quota limits are satisfied.
+	ReasonWithinQuota = "WithinQuota"
+	// ReasonQuotaUnlimited indicates no quota limits are configured.
+	ReasonQuotaUnlimited = "QuotaUnlimited"
+	// ReasonQuotaReached indicates the resource count is exactly at the limit.
+	ReasonQuotaReached = "QuotaReached"
+	// ReasonQuotaExceeded indicates the resource count exceeds the limit.
+	ReasonQuotaExceeded = "QuotaExceeded"
 )
 
 type HealthStatus struct {
@@ -23,4 +118,8 @@ type HealthStatus struct {
 	// Will only be populated when not healthy
 	// +listType=atomic
 	Message []string `json:"message,omitempty"`
+}
+
+func (HealthStatus) OpenAPIModelName() string {
+	return OpenAPIPrefix + "HealthStatus"
 }

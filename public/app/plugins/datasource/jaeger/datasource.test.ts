@@ -1,21 +1,21 @@
 import { lastValueFrom, of } from 'rxjs';
 
 import {
-  DataQueryRequest,
-  DataSourceInstanceSettings,
+  type DataQueryRequest,
+  type DataSourceInstanceSettings,
   dateTime,
   FieldType,
-  PluginMetaInfo,
+  type PluginMetaInfo,
   PluginType,
-  ScopedVars,
+  type ScopedVars,
 } from '@grafana/data';
-import { BackendSrv, DataSourceWithBackend } from '@grafana/runtime';
+import { type BackendSrv, DataSourceWithBackend, type TemplateSrv } from '@grafana/runtime';
 
-import { JaegerDatasource, JaegerJsonData } from './datasource';
+import { JaegerDatasource, type JaegerJsonData } from './datasource';
 import mockJson from './mockJsonResponse.json';
 import mockSearchResponse from './mockSearchResponse.json';
 import mockTraceResponse from './mockTraceResponse.json';
-import { JaegerQuery } from './types';
+import { type JaegerQuery } from './types';
 
 export const backendSrv = { fetch: jest.fn() } as unknown as BackendSrv;
 
@@ -77,6 +77,40 @@ describe('upload, search and trace query types', () => {
 
     expect(response.data[0].meta.preferredVisualisationType).toBe('trace');
     expect(response.data[0].fields.length).toBe(7);
+  });
+});
+
+describe('template variable interpolation', () => {
+  it('should interpolate template variables in TraceID queries', () => {
+    const templateSrv = {
+      replace: (value: string, scopedVars: ScopedVars): string => {
+        return value.replace(/\$\{(\w+)\}|\$(\w+)/g, (_match, var1, var2) => {
+          const key = var1 || var2;
+          const scopedVar = scopedVars[key];
+          return scopedVar?.value ?? '';
+        });
+      },
+      containsTemplate: (val: string): boolean => {
+        return val.includes('$');
+      },
+    } as TemplateSrv;
+
+    const ds = new JaegerDatasource(defaultSettings, templateSrv);
+
+    const interpolated = ds.interpolateVariablesInQueries(
+      [
+        {
+          refId: 'A',
+          queryType: undefined,
+          query: '${traceID}',
+        } as JaegerQuery,
+      ],
+      {
+        traceID: { value: 'Yyij7GaxbMkkus6NJEcAr6UedJxTCuYl' },
+      } as unknown as ScopedVars
+    );
+
+    expect(interpolated[0].query).toBe('Yyij7GaxbMkkus6NJEcAr6UedJxTCuYl');
   });
 });
 

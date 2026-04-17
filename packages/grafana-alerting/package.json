@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/alerting",
-  "version": "12.4.0-pre",
+  "version": "13.1.0-pre",
   "description": "Grafana Alerting Library – Build vertical integrations on top of the industry-leading alerting solution",
   "keywords": [
     "typescript",
@@ -72,16 +72,16 @@
     "@types/react-dom": "18.3.5",
     "@types/tinycolor2": "^1",
     "i18next": "^25.5.2",
-    "i18next-cli": "^1.24.22",
+    "i18next-cli": "^1.48.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-redux": "^9.2.0",
     "rimraf": "^6.0.1",
-    "rollup": "^4.22.4",
+    "rollup": "^4.60.1",
     "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
     "type-fest": "^4.40.0",
-    "typescript": "5.9.2"
+    "typescript": "6.0.2"
   },
   "peerDependencies": {
     "@grafana/data": ">=11.6 <= 12.x",
@@ -94,8 +94,8 @@
   "dependencies": {
     "@emotion/css": "11.13.5",
     "@faker-js/faker": "^9.8.0",
-    "@grafana/api-clients": "12.4.0-pre",
-    "@grafana/i18n": "12.4.0-pre",
+    "@grafana/api-clients": "13.1.0-pre",
+    "@grafana/i18n": "13.1.0-pre",
     "@reduxjs/toolkit": "2.10.1",
     "fishery": "^2.3.1",
     "lodash": "^4.17.21",

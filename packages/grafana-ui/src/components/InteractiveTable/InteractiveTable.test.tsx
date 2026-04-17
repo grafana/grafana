@@ -6,7 +6,7 @@ import { Checkbox } from '../Forms/Checkbox';
 import { Icon } from '../Icon/Icon';
 
 import { InteractiveTable } from './InteractiveTable';
-import { Column } from './types';
+import { type Column } from './types';
 
 interface TableData {
   id: string;
@@ -204,6 +204,127 @@ describe('InteractiveTable', () => {
       expect(screen.getByRole('button', { name: /previous/i })).toBeInTheDocument();
     });
 
+    it('renders contents on second page after navigating to the second page', async () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
+      const data: TableData[] = [
+        { id: '1', value: '1', country: 'Sweden' },
+        { id: '2', value: '2', country: 'Belgium' },
+      ];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={1} />);
+
+      expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /previous/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /1/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /2/i })).toBeInTheDocument();
+
+      expect(screen.getByText('Sweden')).toBeInTheDocument();
+      expect(screen.queryByText('Belgium')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /2/i }));
+
+      expect(screen.queryByText('Sweden')).not.toBeInTheDocument();
+      expect(screen.getByText('Belgium')).toBeInTheDocument();
+    });
+
+    it('does not reset page number after modifying table data', async () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
+      const data: TableData[] = [
+        { id: '1', value: '1', country: 'Sweden' },
+        { id: '2', value: '2', country: 'Belgium' },
+      ];
+      const { rerender } = render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={1} />);
+
+      expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /previous/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /1/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /2/i })).toBeInTheDocument();
+
+      expect(screen.getByText('Sweden')).toBeInTheDocument();
+      expect(screen.queryByText('Belgium')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /2/i }));
+
+      expect(screen.queryByText('Sweden')).not.toBeInTheDocument();
+      expect(screen.getByText('Belgium')).toBeInTheDocument();
+
+      const updatedData = [data[0], { ...data[1], country: 'Belgique' }];
+      rerender(<InteractiveTable columns={columns} data={updatedData} getRowId={getRowId} pageSize={1} />);
+
+      expect(screen.queryByText('Sweden')).not.toBeInTheDocument(); // Because we are on the 2nd page
+      expect(screen.queryByText('Belgium')).not.toBeInTheDocument(); // Because it was changed to Belgique
+      expect(screen.getByText('Belgique')).toBeInTheDocument();
+    });
+
+    it('does reset to first page after modifying table data if `autoResetPage` is set', async () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
+      const data: TableData[] = [
+        { id: '1', value: '1', country: 'Sweden' },
+        { id: '2', value: '2', country: 'Belgium' },
+      ];
+      const { rerender } = render(
+        <InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={1} autoResetPage />
+      );
+
+      expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /previous/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /1/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /2/i })).toBeInTheDocument();
+
+      expect(screen.getByText('Sweden')).toBeInTheDocument();
+      expect(screen.queryByText('Belgium')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /2/i }));
+
+      expect(screen.queryByText('Sweden')).not.toBeInTheDocument();
+      expect(screen.getByText('Belgium')).toBeInTheDocument();
+
+      const updatedData = [data[0], { ...data[1], country: 'Belgique' }];
+      rerender(
+        <InteractiveTable columns={columns} data={updatedData} getRowId={getRowId} pageSize={1} autoResetPage />
+      );
+
+      expect(screen.getByText('Sweden')).toBeInTheDocument(); // Because we are back on the first page
+      expect(screen.queryByText('Belgium')).not.toBeInTheDocument(); // Because we should be on the first page now
+      expect(screen.queryByText('Belgique')).not.toBeInTheDocument(); // Because we should be on the first page now
+    });
+
+    it('when on the last page, and its rows are all deleted, gracefully stay on the same page number even though it is blank', async () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
+      const data: TableData[] = [
+        { id: '1', value: '1', country: 'Sweden' },
+        { id: '2', value: '2', country: 'Belgium' },
+        { id: '3', value: '3', country: 'Canada' },
+      ];
+      const { rerender } = render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={1} />);
+
+      expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /previous/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /1/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /2/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /3/i })).toBeInTheDocument();
+
+      expect(screen.getByText('Sweden')).toBeInTheDocument();
+      expect(screen.queryByText('Belgium')).not.toBeInTheDocument();
+      expect(screen.queryByText('Canada')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /3/i }));
+
+      expect(screen.queryByText('Sweden')).not.toBeInTheDocument();
+      expect(screen.queryByText('Belgium')).not.toBeInTheDocument();
+      expect(screen.getByText('Canada')).toBeInTheDocument();
+
+      const updatedData = data.slice(0, 2);
+      rerender(<InteractiveTable columns={columns} data={updatedData} getRowId={getRowId} pageSize={1} />);
+
+      expect(screen.getByRole('button', { name: /1/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /2/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /3/i })).not.toBeInTheDocument(); // Because the 3rd page is now empty
+
+      expect(screen.queryByText('Sweden')).not.toBeInTheDocument(); // Because we are still on the 3rd page (even though it is empty)
+      expect(screen.queryByText('Belgium')).not.toBeInTheDocument(); // Because we are still on the 3rd page (even though it is empty)
+      expect(screen.queryByText('Canada')).not.toBeInTheDocument(); // Because it was deleted
+    });
+
     it('does not render pagination controls if pageSize is set and fewer items than page size', () => {
       const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
       const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
@@ -348,6 +469,82 @@ describe('InteractiveTable', () => {
       expect(screen.getByText('Norway')).toBeInTheDocument();
       expect(screen.getByText('Value 1')).toBeInTheDocument();
       expect(screen.getByText('Value 2')).toBeInTheDocument();
+    });
+  });
+
+  describe('column widths', () => {
+    it('should apply fixed width to header and cells', () => {
+      const columns: Array<Column<TableData>> = [
+        { id: 'id', header: 'ID', width: 80 },
+        { id: 'country', header: 'Country' },
+      ];
+      const data: TableData[] = [{ id: '1', country: 'Sweden' }];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} />);
+
+      const header = screen.getByRole('columnheader', { name: 'ID' });
+      expect(header).toHaveStyle({ width: '80px' });
+
+      const cells = screen.getAllByRole('cell');
+      // First visible cell after expander should have the width
+      const idCell = cells.find((cell) => cell.textContent === '1');
+      expect(idCell).toHaveStyle({ width: '80px' });
+    });
+
+    it('should apply minWidth and maxWidth to header and cells', () => {
+      const columns: Array<Column<TableData>> = [
+        { id: 'id', header: 'ID', minWidth: 100, maxWidth: 300 },
+        { id: 'country', header: 'Country' },
+      ];
+      const data: TableData[] = [{ id: '1', country: 'Sweden' }];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} />);
+
+      const header = screen.getByRole('columnheader', { name: 'ID' });
+      expect(header).toHaveStyle({ minWidth: '100px', maxWidth: '300px' });
+
+      const idCell = screen.getAllByRole('cell').find((cell) => cell.textContent === '1');
+      expect(idCell).toHaveStyle({ minWidth: '100px', maxWidth: '300px' });
+    });
+
+    it('should not apply width styles when no width props are set', () => {
+      const columns: Array<Column<TableData>> = [
+        { id: 'id', header: 'ID' },
+        { id: 'country', header: 'Country' },
+      ];
+      const data: TableData[] = [{ id: '1', country: 'Sweden' }];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} />);
+
+      const header = screen.getByRole('columnheader', { name: 'ID' });
+      expect(header).not.toHaveStyle({ width: '0px' });
+
+      const idCell = screen.getAllByRole('cell').find((cell) => cell.textContent === '1');
+      expect(idCell).not.toHaveStyle({ width: '0px' });
+    });
+
+    it('should still apply disableGrow when width is not set', () => {
+      const columns: Array<Column<TableData>> = [
+        { id: 'id', header: 'ID', disableGrow: true },
+        { id: 'country', header: 'Country' },
+      ];
+      const data: TableData[] = [{ id: '1', country: 'Sweden' }];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} />);
+
+      const header = screen.getByRole('columnheader', { name: 'ID' });
+      expect(header).toHaveStyle({ width: '0px' });
+    });
+
+    it('should use width over disableGrow when both are set', () => {
+      const columns: Array<Column<TableData>> = [
+        { id: 'id', header: 'ID', width: 120, disableGrow: true },
+        { id: 'country', header: 'Country' },
+      ];
+      const data: TableData[] = [{ id: '1', country: 'Sweden' }];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} />);
+
+      const header = screen.getByRole('columnheader', { name: 'ID' });
+      expect(header).toHaveStyle({ width: '120px' });
+
+      const idCell = screen.getAllByRole('cell').find((cell) => cell.textContent === '1');
+      expect(idCell).toHaveStyle({ width: '120px' });
     });
   });
 });

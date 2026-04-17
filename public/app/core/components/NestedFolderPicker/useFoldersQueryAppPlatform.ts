@@ -4,14 +4,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
-import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { ManagerKind } from '../../../features/apiserver/types';
+import { type ManagerKind } from '../../../features/apiserver/types';
 import { PAGE_SIZE } from '../../../features/browse-dashboards/api/services';
 import { getPaginationPlaceholders } from '../../../features/browse-dashboards/state/utils';
 
-import { UseFoldersQueryProps } from './useFoldersQuery';
+import { type UseFoldersQueryProps } from './useFoldersQuery';
 import { getRootFolderItem } from './utils';
 
 type GetFolderChildrenQuery = ReturnType<
@@ -30,7 +30,6 @@ const collator = new Intl.Collator();
  * This version uses the getFolderChildren API from the folder v1beta1 API. Compared to legacy API, the v1beta1 API
  * does not have pagination at the moment.
  */
-
 export function useFoldersQueryAppPlatform({
   isBrowsing,
   openFolders,

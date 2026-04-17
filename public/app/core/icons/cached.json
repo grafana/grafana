@@ -22,6 +22,7 @@
   "unicons/arrows-h",
   "unicons/backward",
   "unicons/bars",
+  "unicons/bars-clock",
   "unicons/bell",
   "unicons/bell-slash",
   "unicons/bolt",
@@ -63,6 +64,7 @@
   "unicons/cube",
   "unicons/dashboard",
   "unicons/database",
+  "unicons/database-observability",
   "unicons/document-info",
   "unicons/download-alt",
   "unicons/draggabledots",
@@ -124,6 +126,7 @@
   "unicons/search-plus",
   "unicons/share-alt",
   "unicons/shield",
+  "unicons/sigil",
   "unicons/signal",
   "unicons/signin",
   "unicons/signout",
@@ -193,7 +196,9 @@
   "unicons/window-grid",
   "unicons/ban",
   "unicons/git",
+  "unicons/grid",
   "unicons/bitbucket",
   "unicons/tachometer-fast",
-  "unicons/tachometer-empty"
+  "unicons/tachometer-empty",
+  "unicons/vial"
 ]

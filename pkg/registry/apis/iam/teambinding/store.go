@@ -2,6 +2,7 @@ package teambinding
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -15,6 +16,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -36,14 +38,13 @@ var (
 	_ rest.CollectionDeleter    = (*LegacyBindingStore)(nil)
 )
 
-func NewLegacyBindingStore(store legacy.LegacyIdentityStore, enableAuthnMutation bool, tracer trace.Tracer) *LegacyBindingStore {
-	return &LegacyBindingStore{store, enableAuthnMutation, tracer}
+func NewLegacyBindingStore(store legacy.LegacyIdentityStore, tracer trace.Tracer) *LegacyBindingStore {
+	return &LegacyBindingStore{store, tracer}
 }
 
 type LegacyBindingStore struct {
-	store               legacy.LegacyIdentityStore
-	enableAuthnMutation bool
-	tracer              trace.Tracer
+	store  legacy.LegacyIdentityStore
+	tracer trace.Tracer
 }
 
 // Destroy implements rest.Storage.
@@ -75,12 +76,8 @@ func (l *LegacyBindingStore) ConvertToTable(ctx context.Context, object runtime.
 }
 
 func (l *LegacyBindingStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	ctx, span := l.tracer.Start(ctx, "teambinding.Update")
+	ctx, span := l.tracer.Start(ctx, "teambinding.update")
 	defer span.End()
-
-	if !l.enableAuthnMutation {
-		return nil, false, apierrors.NewMethodNotSupported(bindingResource.GroupResource(), "update")
-	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -130,12 +127,8 @@ func (l *LegacyBindingStore) Update(ctx context.Context, name string, objInfo re
 }
 
 func (l *LegacyBindingStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	ctx, span := l.tracer.Start(ctx, "teambinding.Delete")
+	ctx, span := l.tracer.Start(ctx, "teambinding.delete")
 	defer span.End()
-
-	if !l.enableAuthnMutation {
-		return nil, false, apierrors.NewMethodNotSupported(bindingResource.GroupResource(), "delete")
-	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -168,12 +161,8 @@ func (l *LegacyBindingStore) DeleteCollection(ctx context.Context, deleteValidat
 }
 
 func (l *LegacyBindingStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	ctx, span := l.tracer.Start(ctx, "teambinding.Create")
+	ctx, span := l.tracer.Start(ctx, "teambinding.create")
 	defer span.End()
-
-	if !l.enableAuthnMutation {
-		return nil, apierrors.NewMethodNotSupported(bindingResource.GroupResource(), "create")
-	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -194,6 +183,16 @@ func (l *LegacyBindingStore) Create(ctx context.Context, obj runtime.Object, cre
 		if err := createValidation(ctx, teamMemberObj); err != nil {
 			return nil, err
 		}
+	}
+
+	binding, err := l.Get(ctx, teamMemberObj.Name, nil)
+	var statusErr *apierrors.StatusError
+	if errors.As(err, &statusErr) && !apierrors.IsNotFound(err) {
+		return nil, apierrors.NewInternalError(err)
+	}
+
+	if binding != nil {
+		return nil, apierrors.NewAlreadyExists(bindingResource.GroupResource(), teamMemberObj.Name)
 	}
 
 	// Fetch the user by ID
@@ -232,6 +231,9 @@ func (l *LegacyBindingStore) Create(ctx context.Context, obj runtime.Object, cre
 
 	result, err := l.store.CreateTeamMember(ctx, ns, createCmd)
 	if err != nil {
+		if errors.Is(err, team.ErrTeamMemberAlreadyAdded) {
+			return nil, apierrors.NewConflict(bindingResource.GroupResource(), teamMemberObj.Name, err)
+		}
 		return nil, err
 	}
 
@@ -241,7 +243,7 @@ func (l *LegacyBindingStore) Create(ctx context.Context, obj runtime.Object, cre
 
 // Get implements rest.Getter.
 func (l *LegacyBindingStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	ctx, span := l.tracer.Start(ctx, "teambinding.Get")
+	ctx, span := l.tracer.Start(ctx, "teambinding.get")
 	defer span.End()
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
@@ -268,7 +270,7 @@ func (l *LegacyBindingStore) Get(ctx context.Context, name string, options *meta
 
 // List implements rest.Lister.
 func (l *LegacyBindingStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	ctx, span := l.tracer.Start(ctx, "teambinding.List")
+	ctx, span := l.tracer.Start(ctx, "teambinding.list")
 	defer span.End()
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
@@ -286,6 +288,13 @@ func (l *LegacyBindingStore) List(ctx context.Context, options *internalversion.
 		}
 		if name, ok := options.FieldSelector.RequiresExactMatch("spec.subject.name"); ok {
 			query.UserUID = name
+		}
+		if externalStr, ok := options.FieldSelector.RequiresExactMatch("spec.external"); ok {
+			external, err := strconv.ParseBool(externalStr)
+			if err != nil {
+				return nil, fmt.Errorf("invalid value for field selector spec.external: %w", err)
+			}
+			query.External = &external
 		}
 	}
 
@@ -319,7 +328,7 @@ func mapToBindingObject(ns claims.NamespaceInfo, tm legacy.TeamMember) iamv0alph
 		ct = tm.Created
 	}
 
-	return iamv0alpha1.TeamBinding{
+	result := iamv0alpha1.TeamBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              tm.UID,
 			Namespace:         ns.Value,
@@ -331,10 +340,16 @@ func mapToBindingObject(ns claims.NamespaceInfo, tm legacy.TeamMember) iamv0alph
 				Name: tm.TeamUID,
 			},
 			Subject: iamv0alpha1.TeamBindingspecSubject{
+				Kind: "User",
 				Name: tm.UserUID,
 			},
 			Permission: common.MapTeamPermission(tm.Permission),
 			External:   tm.External,
 		},
 	}
+
+	meta, _ := utils.MetaAccessor(&result)
+	meta.SetDeprecatedInternalID(tm.TeamID) // nolint:staticcheck
+
+	return result
 }

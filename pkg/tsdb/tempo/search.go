@@ -366,7 +366,7 @@ func transformTraceSearchResponseSubFrame(trace *tempopb.TraceSearchMetadata, sp
 			if attribute, ok := traceData.attributes[attributeName]; ok {
 				frame.Fields[attributeIndex].Append(attribute)
 			} else {
-				frame.Fields[attributeIndex].Append("")
+				frame.Fields[attributeIndex].Append(nil)
 			}
 			attributeIndex++
 		}
@@ -539,8 +539,10 @@ func transformSpanToTraceData(span *tempopb.Span, spanSet *tempopb.SpanSet, trac
 			val := attribute.Value.GetStringValue()
 			attributes[attribute.Key] = &val
 		case *v1.AnyValue_IntValue:
-			val := attribute.Value.GetIntValue()
-			attributes[attribute.Key] = &val
+			// Use float64 for int tags so dynamic columns stay consistent when the same key
+			// appears as IntValue on some spans and DoubleValue on others (see getTypeForAttribute).
+			v := float64(attribute.Value.GetIntValue())
+			attributes[attribute.Key] = &v
 		case *v1.AnyValue_DoubleValue:
 			val := attribute.Value.GetDoubleValue()
 			attributes[attribute.Key] = &val
@@ -571,7 +573,9 @@ func getTypeForAttribute(attribute *v1.KeyValue) interface{} {
 	case *v1.AnyValue_StringValue:
 		return []*string{}
 	case *v1.AnyValue_IntValue:
-		return []*int64{}
+		// Match transformSpanToTraceData: ints are stored as *float64 so one column can
+		// hold both OTLP integer and double values for the same attribute key.
+		return []*float64{}
 	case *v1.AnyValue_DoubleValue:
 		return []*float64{}
 	case *v1.AnyValue_BoolValue:

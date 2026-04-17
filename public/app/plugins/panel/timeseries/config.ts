@@ -1,19 +1,20 @@
+/* istanbul ignore file */
 import {
   FieldColorModeId,
   FieldConfigProperty,
   FieldType,
   identityOverrideProcessor,
-  SetFieldConfigOptionsArgs,
-  Field,
+  type SetFieldConfigOptionsArgs,
+  type Field,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   BarAlignment,
   GraphDrawStyle,
-  GraphFieldConfig,
+  type GraphFieldConfig,
   GraphGradientMode,
   LineInterpolation,
-  LineStyle,
+  type LineStyle,
   VisibilityMode,
   StackingMode,
   GraphThresholdsStyleMode,
@@ -25,7 +26,6 @@ import { InsertNullsEditor } from './InsertNullsEditor';
 import { LineStyleEditor } from './LineStyleEditor';
 import { SpanNullsEditor } from './SpanNullsEditor';
 import { ThresholdsStyleEditor } from './ThresholdsStyleEditor';
-
 export const defaultGraphConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
   lineInterpolation: LineInterpolation.Linear,

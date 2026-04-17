@@ -16,9 +16,10 @@ import (
 // GetUserVisibleNamespaces returns the folders that are visible to the user
 func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, user identity.Requester) (map[string]*folder.Folder, error) {
 	folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
-		OrgID:        orgID,
-		WithFullpath: true,
-		SignedInUser: user,
+		OrgID:            orgID,
+		WithFullpath:     true,
+		WithFullpathUIDs: true,
+		SignedInUser:     user,
 	})
 	if err != nil {
 		return nil, err
@@ -38,7 +39,7 @@ func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64
 		return nil, err
 	}
 	if len(f) == 0 {
-		return nil, dashboards.ErrFolderAccessDenied
+		return nil, folder.ErrAccessDenied
 	}
 	return f[0], nil
 }

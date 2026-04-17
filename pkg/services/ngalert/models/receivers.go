@@ -345,8 +345,11 @@ func (integration *Integration) WithExistingSecureFields(existing *Integration, 
 	for _, secureField := range fields {
 		delete(integration.Settings, secureField) // Ensure secure fields are removed from new settings and secure settings.
 		delete(integration.SecureSettings, secureField)
-		if existing != nil {
+		if existing != nil && existing.SecureSettings != nil {
 			if existingVal, ok := existing.SecureSettings[secureField]; ok {
+				if integration.SecureSettings == nil {
+					integration.SecureSettings = make(map[string]string, len(fields))
+				}
 				integration.SecureSettings[secureField] = existingVal
 			}
 		}
@@ -393,7 +396,8 @@ func (integration *Integration) Validate(decryptFn DecryptFn) error {
 	return ValidateIntegration(context.Background(), models.IntegrationConfig{
 		UID:                   decrypted.UID,
 		Name:                  decrypted.Name,
-		Type:                  string(decrypted.Config.Type()),
+		Type:                  decrypted.Config.Type(),
+		Version:               decrypted.Config.Version,
 		DisableResolveMessage: decrypted.DisableResolveMessage,
 		Settings:              jsonBytes,
 		SecureSettings:        decrypted.SecureSettings,
@@ -487,6 +491,15 @@ func (r *Receiver) Fingerprint() string {
 	}
 
 	return sum.String()
+}
+
+func (r *Receiver) GetIntegrationByUID(uid string) *Integration {
+	for _, integration := range r.Integrations {
+		if integration.UID == uid {
+			return integration
+		}
+	}
+	return nil
 }
 
 func writeSettings(f fingerprint, m map[string]any) {

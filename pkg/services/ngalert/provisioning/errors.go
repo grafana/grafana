@@ -34,21 +34,14 @@ var (
 		"Template '{{ .Public.Name }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration.",
 		errutil.WithPublic("Template '{{ .Public.Name }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
 	)
+	ErrTemplateLimitExceeded = errutil.TooManyRequests("alerting.notifications.templates.limitExceeded", errutil.WithPublicMessage("Maximum number of templates has been reached. Delete some templates before creating new ones."))
+	ErrTemplateSizeExceeded  = errutil.BadRequest("alerting.notifications.templates.sizeExceeded", errutil.WithPublicMessage("Template size exceeds the maximum allowed size."))
 
 	ErrContactPointReferenced = errutil.Conflict("alerting.notifications.contact-points.referenced", errutil.WithPublicMessage("Contact point is currently referenced by a notification policy."))
 	ErrContactPointUsedInRule = errutil.Conflict("alerting.notifications.contact-points.used-by-rule", errutil.WithPublicMessage("Contact point is currently used in the notification settings of one or many alert rules."))
 	contactPointUidExists     = "Receiver configuration with UID '{{ .Public.UID }}' already exists in contact point '{{ .Public.Name }}'. Please use unique identifiers for receivers across all contact points."
 	ErrContactPointUidExists  = errutil.Conflict("alerting.notifications.contact-points.uidInUse").MustTemplate(
 		contactPointUidExists, errutil.WithPublic(contactPointUidExists),
-	)
-
-	ErrRouteInvalidFormat = errutil.BadRequest("alerting.notifications.routes.invalidFormat").MustTemplate(
-		"Invalid format of the submitted route.",
-		errutil.WithPublic("Invalid format of the submitted route: {{.Public.Error}}. Correct the payload and try again."),
-	)
-
-	ErrRouteConflictingMatchers = errutil.BadRequest("alerting.notifications.routes.conflictingMatchers").MustTemplate("Routing tree conflicts with the external configuration",
-		errutil.WithPublic("Cannot add\\update route: matchers conflict with an external routing tree merging matchers {{ .Public.Matchers }}, making the added\\updated route unreachable."),
 	)
 )
 
@@ -110,23 +103,6 @@ func MakeErrTimeIntervalDependentResourcesProvenance(usedByRoutes bool, rules []
 
 	return ErrTimeIntervalDependentResourcesProvenance.Build(errutil.TemplateData{
 		Public: data,
-	})
-}
-
-func MakeErrRouteInvalidFormat(err error) error {
-	return ErrRouteInvalidFormat.Build(errutil.TemplateData{
-		Public: map[string]any{
-			"Error": err.Error(),
-		},
-		Error: err,
-	})
-}
-
-func MakeErrRouteConflictingMatchers(matchers string) error {
-	return ErrRouteConflictingMatchers.Build(errutil.TemplateData{
-		Public: map[string]any{
-			"Matchers": matchers,
-		},
 	})
 }
 

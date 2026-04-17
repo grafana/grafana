@@ -1,12 +1,12 @@
-import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
-import { LogGroup } from '../../../dataquery.gen';
-import { ResourcesAPI } from '../../../resources/ResourcesAPI';
+import { type LogGroup } from '../../../dataquery.gen';
+import { type ResourcesAPI } from '../../../resources/ResourcesAPI';
 import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
-import { LinkedToken } from '../../monarch/LinkedToken';
+import { type LinkedToken } from '../../monarch/LinkedToken';
 import { TRIGGER_SUGGEST } from '../../monarch/commands';
-import { SuggestionKind, CompletionItemPriority, StatementPosition } from '../../monarch/types';
+import { SuggestionKind, CompletionItemPriority, type StatementPosition } from '../../monarch/types';
 import { fetchLogGroupFields } from '../../utils';
 import {
   ASC,
@@ -142,6 +142,12 @@ export class LogsSQLCompletionItemProvider extends CompletionItemProvider {
             command: TRIGGER_SUGGEST,
             sortText: CompletionItemPriority.MediumHigh,
           });
+          addSuggestion(`${FROM} \`$__logGroups\``, {
+            insertText: `${FROM} \`$__logGroups\``,
+            kind: monaco.languages.CompletionItemKind.Snippet,
+            sortText: CompletionItemPriority.High,
+            detail: 'Use selected log groups from the selector',
+          });
           addSuggestion(`${FROM} \`logGroups(logGroupIdentifier: [...])\``, {
             insertText: `${FROM} \`logGroups(logGroupIdentifier: [$0])\``,
             insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
@@ -152,6 +158,12 @@ export class LogsSQLCompletionItemProvider extends CompletionItemProvider {
           break;
 
         case SuggestionKind.AfterFromKeyword:
+          addSuggestion('`$__logGroups`', {
+            insertText: '`$__logGroups`',
+            kind: monaco.languages.CompletionItemKind.Variable,
+            sortText: CompletionItemPriority.High,
+            detail: 'Expands to selected log groups',
+          });
           addSuggestion('`logGroups(logGroupIdentifier: [...])`', {
             insertText: '`logGroups(logGroupIdentifier: [$0])`',
             insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,

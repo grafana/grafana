@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
-import { SelectableValue, StandardEditorProps } from '@grafana/data';
-import { DashboardPicker as BasePicker, DashboardPickerDTO } from 'app/core/components/Select/DashboardPicker';
+import { type SelectableValue, type StandardEditorProps } from '@grafana/data';
+import { DashboardPicker as BasePicker, type DashboardPickerDTO } from 'app/core/components/Select/DashboardPicker';
 
 export interface DashboardPickerOptions {
   placeholder?: string;

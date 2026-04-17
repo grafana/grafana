@@ -21,11 +21,7 @@ weight: 310
 # Manage users and teams with SCIM
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
-{{< /admonition >}}
-
-{{< admonition type="warning" >}}
-**Public Preview:** SCIM provisioning is currently in Public Preview. While functional, the feature is actively being refined and may undergo changes. We recommend thorough testing in non-production environments before deploying to production systems.
+Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud/).
 {{< /admonition >}}
 
 SCIM streamlines identity management in Grafana by automating user lifecycle and team membership operations. This guide explains how SCIM works with existing Grafana setups, handles user provisioning, and manages team synchronization.
@@ -52,7 +48,7 @@ After a user is provisioned through SCIM, they cannot be deleted from Grafana - 
 
 For detailed configuration steps specific to the identity provider, see:
 
-- [Configure SCIM with Entra ID](../configure-scim-with-azuread/)
+- [Configure SCIM with Entra ID](../configure-scim-with-entraid/)
 - [Configure SCIM with Okta](../configure-scim-with-okta/)
 
 ### How SCIM identifies users
@@ -231,7 +227,7 @@ Teams provisioned through SCIM cannot be deleted manually from Grafana - they ca
 
 For detailed configuration steps specific to the identity provider, see:
 
-- [Configure SCIM with Entra ID](../configure-scim-with-azuread/)
+- [Configure SCIM with Entra ID](../configure-scim-with-entraid/)
 - [Configure SCIM with Okta](../configure-scim-with-okta/)
 
 ### SCIM vs Team Sync

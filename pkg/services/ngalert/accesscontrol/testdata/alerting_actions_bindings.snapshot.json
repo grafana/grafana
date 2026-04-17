@@ -1,0 +1,467 @@
+[
+  {
+    "action": "alert.instances.external:read",
+    "roles": [
+      "fixed:alerting.instances:reader",
+      "fixed:alerting.instances:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:reader",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.instances.external:write",
+    "roles": [
+      "fixed:alerting.instances:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.instances:create",
+    "roles": [
+      "fixed:alerting.instances:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.instances:read",
+    "roles": [
+      "fixed:alerting.instances:reader",
+      "fixed:alerting.instances:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:reader",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.instances:write",
+    "roles": [
+      "fixed:alerting.instances:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.external:read",
+    "roles": [
+      "fixed:alerting.notifications.external:reader",
+      "fixed:alerting.notifications.external:writer",
+      "fixed:alerting.notifications:reader",
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:reader",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.external:write",
+    "roles": [
+      "fixed:alerting.notifications.external:writer",
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.inhibition-rules:delete",
+    "roles": [
+      "fixed:alerting.inhibition-rules:writer",
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.inhibition-rules:read",
+    "roles": [
+      "fixed:alerting.inhibition-rules:reader",
+      "fixed:alerting.inhibition-rules:writer",
+      "fixed:alerting.notifications:reader",
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:reader",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.inhibition-rules:write",
+    "roles": [
+      "fixed:alerting.inhibition-rules:writer",
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.provisioning:read",
+    "roles": [
+      "fixed:alerting.provisioning.secrets:reader",
+      "fixed:alerting.provisioning:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.provisioning:write",
+    "roles": [
+      "fixed:alerting.provisioning:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.receivers.protected:write",
+    "roles": [
+      "fixed:alerting:admin"
+    ]
+  },
+  {
+    "action": "alert.notifications.receivers.secrets:read",
+    "roles": [
+      "fixed:alerting:admin"
+    ]
+  },
+  {
+    "action": "alert.notifications.receivers.test:create",
+    "roles": [
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.receivers:creator",
+      "fixed:alerting.receivers:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.receivers:create",
+    "roles": [
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.receivers:creator",
+      "fixed:alerting.receivers:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.receivers:delete",
+    "roles": [
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.receivers:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.receivers:list",
+    "roles": [
+      "fixed:alerting.rules:reader",
+      "fixed:alerting.rules:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:reader",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.receivers:read",
+    "roles": [
+      "fixed:alerting.notifications:reader",
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.receivers:reader",
+      "fixed:alerting.receivers:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:reader",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.receivers:test",
+    "roles": [
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.receivers:creator",
+      "fixed:alerting.receivers:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.receivers:write",
+    "roles": [
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.receivers:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.routes:read",
+    "roles": [
+      "fixed:alerting.legacy:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.routes:write",
+    "roles": [
+      "fixed:alerting.legacy:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.templates.test:write",
+    "roles": [
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.templates:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.templates:delete",
+    "roles": [
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.templates:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.templates:read",
+    "roles": [
+      "fixed:alerting.notifications:reader",
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.templates:reader",
+      "fixed:alerting.templates:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:reader",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.templates:write",
+    "roles": [
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.templates:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.time-intervals:delete",
+    "roles": [
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.time-intervals:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.time-intervals:read",
+    "roles": [
+      "fixed:alerting.notifications:reader",
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.rules:reader",
+      "fixed:alerting.rules:writer",
+      "fixed:alerting.time-intervals:reader",
+      "fixed:alerting.time-intervals:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:reader",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications.time-intervals:write",
+    "roles": [
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.time-intervals:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications:read",
+    "roles": [
+      "fixed:alerting.legacy:writer"
+    ]
+  },
+  {
+    "action": "alert.notifications:write",
+    "roles": [
+      "fixed:alerting.legacy:writer"
+    ]
+  },
+  {
+    "action": "alert.provisioning.provenance:write",
+    "roles": [
+      "fixed:alerting.provisioning.provenance:writer"
+    ]
+  },
+  {
+    "action": "alert.provisioning.secrets:read",
+    "roles": [
+      "fixed:alerting.provisioning.secrets:reader"
+    ]
+  },
+  {
+    "action": "alert.provisioning:read",
+    "roles": [
+      "fixed:alerting.provisioning.secrets:reader",
+      "fixed:alerting.provisioning:writer"
+    ]
+  },
+  {
+    "action": "alert.provisioning:write",
+    "roles": [
+      "fixed:alerting.provisioning:writer"
+    ]
+  },
+  {
+    "action": "alert.rules.external:read",
+    "roles": [
+      "fixed:alerting.rules:reader",
+      "fixed:alerting.rules:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:reader",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.rules.external:write",
+    "roles": [
+      "fixed:alerting.rules:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.rules.provisioning:read",
+    "roles": [
+      "fixed:alerting.provisioning.secrets:reader",
+      "fixed:alerting.provisioning:writer"
+    ]
+  },
+  {
+    "action": "alert.rules.provisioning:write",
+    "roles": [
+      "fixed:alerting.provisioning:writer"
+    ]
+  },
+  {
+    "action": "alert.rules:create",
+    "roles": [
+      "fixed:alerting.rules:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.rules:delete",
+    "roles": [
+      "fixed:alerting.rules:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.rules:read",
+    "roles": [
+      "fixed:alerting.rules:reader",
+      "fixed:alerting.rules:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:reader",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.rules:write",
+    "roles": [
+      "fixed:alerting.rules:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.silences:create",
+    "roles": [
+      "fixed:alerting.rules:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.silences:read",
+    "roles": [
+      "fixed:alerting.rules:reader",
+      "fixed:alerting.rules:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:reader",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "alert.silences:write",
+    "roles": [
+      "fixed:alerting.rules:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "notifications.alerting.grafana.app/routingtrees:create",
+    "roles": [
+      "fixed:alerting.managed-routes:creator",
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.routes:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "notifications.alerting.grafana.app/routingtrees:delete",
+    "roles": [
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.routes:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "notifications.alerting.grafana.app/routingtrees:get",
+    "roles": [
+      "fixed:alerting.notifications:reader",
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.routes:reader",
+      "fixed:alerting.routes:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:reader",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "notifications.alerting.grafana.app/routingtrees:get_permissions",
+    "roles": [
+      "fixed:alerting:admin"
+    ]
+  },
+  {
+    "action": "notifications.alerting.grafana.app/routingtrees:set_permissions",
+    "roles": [
+      "fixed:alerting:admin"
+    ]
+  },
+  {
+    "action": "notifications.alerting.grafana.app/routingtrees:update",
+    "roles": [
+      "fixed:alerting.notifications:writer",
+      "fixed:alerting.routes:writer",
+      "fixed:alerting:admin",
+      "fixed:alerting:writer"
+    ]
+  },
+  {
+    "action": "receivers.permissions:read",
+    "roles": [
+      "fixed:alerting:admin"
+    ]
+  },
+  {
+    "action": "receivers.permissions:write",
+    "roles": [
+      "fixed:alerting:admin"
+    ]
+  }
+]

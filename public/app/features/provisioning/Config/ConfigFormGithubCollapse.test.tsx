@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
-import { UseFormRegister } from 'react-hook-form';
+import { type UseFormRegister } from 'react-hook-form';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { checkImageRenderer, checkImageRenderingAllowed, checkPublicAccess } from '../GettingStarted/features';
-import { RepositoryFormData } from '../types';
+import { type RepositoryFormData } from '../types';
 
 import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
 
@@ -62,10 +62,12 @@ describe('ConfigFormGithubCollapse', () => {
   });
 
   it('returns null when image rendering is not allowed on a public instance', () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
     const { renderResult } = setup({ imageRenderingAllowed: false, isPublic: true });
 
     expect(renderResult.container).toBeEmptyDOMElement();
     expect(screen.queryByText('GitHub features')).not.toBeInTheDocument();
+    jest.spyOn(console, 'warn').mockRestore();
   });
 
   it('renders preview checkbox when image rendering is allowed', () => {
@@ -88,14 +90,20 @@ describe('ConfigFormGithubCollapse', () => {
     expect(checkbox).toBeDisabled();
   });
 
-  it('disables preview checkbox and shows realtime feedback info on private instances', () => {
+  it('disables preview checkbox and shows learn more link on private instances', () => {
     setup({ isPublic: false, imageRenderingAllowed: true });
 
     const checkbox = screen.getByRole('checkbox', {
       name: /Enable dashboard previews in pull requests/i,
     });
     expect(checkbox).toBeDisabled();
-    expect(screen.getByRole('link', { name: 'Configure webhooks' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Learn more' })).toBeInTheDocument();
+  });
+
+  it('hides learn more link on public instances', () => {
+    setup({ isPublic: true, imageRenderingAllowed: true });
+
+    expect(screen.queryByRole('link', { name: 'Learn more' })).not.toBeInTheDocument();
   });
 
   it('hides preview checkbox when image rendering is not allowed', () => {
@@ -106,5 +114,12 @@ describe('ConfigFormGithubCollapse', () => {
         name: /Enable dashboard previews in pull requests/i,
       })
     ).not.toBeInTheDocument();
+  });
+
+  it('always renders webhook URL field', () => {
+    const { registerMock } = setup({ isPublic: true, imageRenderingAllowed: true });
+
+    expect(screen.getByText('Webhook URL')).toBeInTheDocument();
+    expect(registerMock).toHaveBeenCalledWith('webhook.baseUrl');
   });
 });

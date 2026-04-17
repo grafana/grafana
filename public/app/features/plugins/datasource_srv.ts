@@ -1,26 +1,25 @@
 import {
   AppEvents,
   DataSourceApi,
-  DataSourceInstanceSettings,
-  DataSourceRef,
-  DataSourceSelectItem,
-  ScopedVars,
+  type DataSourceInstanceSettings,
+  type DataSourceRef,
+  type ScopedVars,
   isObject,
   matchPluginId,
 } from '@grafana/data';
 import {
-  DataSourceSrv as DataSourceService,
+  type DataSourceSrv as DataSourceService,
   getBackendSrv,
-  GetDataSourceListFilters,
+  type GetDataSourceListFilters,
   getDataSourceSrv as getDataSourceService,
   getTemplateSrv,
-  RuntimeDataSourceRegistration,
-  RuntimeDataSource,
-  TemplateSrv,
+  type RuntimeDataSourceRegistration,
+  type RuntimeDataSource,
+  type TemplateSrv,
   isExpressionReference,
 } from '@grafana/runtime';
 import { ExpressionDatasourceRef, UserStorage } from '@grafana/runtime/internal';
-import { DataQuery, DataSourceJsonData } from '@grafana/schema';
+import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import config from 'app/core/config';
 import {
@@ -367,39 +366,6 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     return sorted;
-  }
-
-  /**
-   * @deprecated use getList
-   * */
-  getExternal(): DataSourceInstanceSettings[] {
-    return this.getList();
-  }
-
-  /**
-   * @deprecated use getList
-   * */
-  getAnnotationSources() {
-    return this.getList({ annotations: true, variables: true }).map((x) => {
-      return {
-        name: x.name,
-        value: x.name,
-        meta: x.meta,
-      };
-    });
-  }
-
-  /**
-   * @deprecated use getList
-   * */
-  getMetricSources(options?: { skipVariables?: boolean }): DataSourceSelectItem[] {
-    return this.getList({ metrics: true, variables: !options?.skipVariables }).map((x) => {
-      return {
-        name: x.name,
-        value: x.name,
-        meta: x.meta,
-      };
-    });
   }
 
   async reload() {

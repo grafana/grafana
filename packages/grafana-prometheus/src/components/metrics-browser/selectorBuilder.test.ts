@@ -31,12 +31,12 @@ describe('selectorBuilder', () => {
     });
 
     it('handles multiple values for a label using regex matcher', () => {
-      expect(buildSelector('', { multi: ['val1', 'val2', 'val3'] })).toEqual('{multi=~"val1|val2|val3"}');
+      expect(buildSelector('', { multi: ['val1', 'val2', 'val3'] })).toEqual('{multi=~"(val1|val2|val3)"}');
     });
 
     it('properly escapes special characters in regex values', () => {
       expect(buildSelector('', { special: ['val*', 'val.', 'val+'] })).toEqual(
-        '{special=~"val\\\\*|val\\\\.|val\\\\+"}'
+        '{special=~"(val\\\\*|val\\\\.|val\\\\+)"}'
       );
     });
 
@@ -64,7 +64,7 @@ describe('selectorBuilder', () => {
           single: ['value'],
           multi: ['val1', 'val2'],
         })
-      ).toEqual('{single="value",multi=~"val1|val2"}');
+      ).toEqual('{single="value",multi=~"(val1|val2)"}');
     });
 
     describe('utf8 support', () => {
@@ -99,7 +99,7 @@ describe('selectorBuilder', () => {
       });
 
       it('handles utf8 characters in label values', () => {
-        expect(buildSelector('', { label: ['值', '😀', '你好'] })).toEqual('{label=~"值|😀|你好"}');
+        expect(buildSelector('', { label: ['值', '😀', '你好'] })).toEqual('{label=~"(值|😀|你好)"}');
       });
     });
   });

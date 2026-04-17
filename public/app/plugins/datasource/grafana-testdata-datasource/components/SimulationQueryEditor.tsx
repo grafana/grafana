@@ -1,11 +1,11 @@
-import { FormEvent, useMemo, useState } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataFrameJSON, SelectableValue } from '@grafana/data';
+import { type DataFrameJSON, type SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Label, Select } from '@grafana/ui';
 
-import { EditorProps } from '../QueryEditor';
-import { SimulationQuery } from '../dataquery';
+import { type EditorProps } from '../QueryEditor';
+import { type SimulationQuery } from '../dataquery';
 
 import { SimulationSchemaForm, type Config } from './SimulationSchemaForm';
 

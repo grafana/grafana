@@ -145,6 +145,24 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	getTeamUIDByID := func(q *GetTeamUIDByIDQuery) sqltemplate.SQLTemplate {
+		v := newGetTeamUIDByID(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	updateUserLastSeenAt := func(cmd *UpdateUserLastSeenAtCommand) sqltemplate.SQLTemplate {
+		v := newUpdateUserLastSeenAt(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	getUserUIDByID := func(q *GetUserUIDByIDQuery) sqltemplate.SQLTemplate {
+		v := newGetUserUIDByID(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir:        "testdata",
 		SQLTemplatesFS: sqlTemplatesFS,
@@ -172,12 +190,26 @@ func TestIdentityQueries(t *testing.T) {
 						},
 					}),
 				},
+				{
+					Name: "teams_id",
+					Data: listTeams(&ListTeamQuery{
+						ID:         42,
+						Pagination: common.Pagination{Limit: 1},
+					}),
+				},
 			},
 			sqlQueryUsersTemplate: {
 				{
 					Name: "users_uid",
 					Data: listUsers(&ListUserQuery{
 						UID:        "abc",
+						Pagination: common.Pagination{Limit: 1},
+					}),
+				},
+				{
+					Name: "users_id",
+					Data: listUsers(&ListUserQuery{
+						ID:         123,
 						Pagination: common.Pagination{Limit: 1},
 					}),
 				},
@@ -194,6 +226,20 @@ func TestIdentityQueries(t *testing.T) {
 							Limit:    1,
 							Continue: 2,
 						},
+					}),
+				},
+				{
+					Name: "users_email",
+					Data: listUsers(&ListUserQuery{
+						Email:      "test@example.com",
+						Pagination: common.Pagination{Limit: 5},
+					}),
+				},
+				{
+					Name: "users_login",
+					Data: listUsers(&ListUserQuery{
+						Login:      "testuser",
+						Pagination: common.Pagination{Limit: 5},
 					}),
 				},
 			},
@@ -269,6 +315,17 @@ func TestIdentityQueries(t *testing.T) {
 							Limit:    1,
 							Continue: 2,
 						},
+					}),
+				},
+				{
+					Name: "team_bindings_external_true",
+					Data: listTeamBindings(&ListTeamBindingsQuery{
+						OrgID: 1,
+						Pagination: common.Pagination{
+							Limit:    1,
+							Continue: 2,
+						},
+						External: boolPtr(true),
 					}),
 				},
 			},
@@ -614,6 +671,46 @@ func TestIdentityQueries(t *testing.T) {
 					}),
 				},
 			},
+			sqlUpdateUserLastSeenAtTemplate: {
+				{
+					Name: "update_user_last_seen_at_basic",
+					Data: updateUserLastSeenAt(&UpdateUserLastSeenAtCommand{
+						UID:        "user-1",
+						LastSeenAt: legacysql.NewDBTime(time.Date(2023, 6, 15, 10, 30, 0, 0, time.UTC)),
+					}),
+				},
+			},
+			sqlQueryTeamUIDByIDTemplate: {
+				{
+					Name: "team_uid_by_id",
+					Data: getTeamUIDByID(&GetTeamUIDByIDQuery{
+						OrgID: 1,
+						ID:    42,
+					}),
+				},
+			},
+			sqlQueryUserUIDByIDTemplate: {
+				{
+					Name: "user_uid_by_id",
+					Data: getUserUIDByID(&GetUserUIDByIDQuery{
+						OrgID:            1,
+						ID:               99,
+						IsServiceAccount: false,
+					}),
+				},
+				{
+					Name: "service_account_uid_by_id",
+					Data: getUserUIDByID(&GetUserUIDByIDQuery{
+						OrgID:            1,
+						ID:               55,
+						IsServiceAccount: true,
+					}),
+				},
+			},
 		},
 	})
+}
+
+func boolPtr(b bool) *bool {
+	return &b
 }

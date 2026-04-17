@@ -11,14 +11,14 @@ import { Portal } from '../Portal/Portal';
 import { Text } from '../Text/Text';
 import { Tooltip } from '../Tooltip/Tooltip';
 
-import { ComboboxBaseProps, AutoSizeConditionals } from './Combobox';
+import { type ComboboxBaseProps, type AutoSizeConditionals } from './Combobox';
 import { ComboboxList } from './ComboboxList';
 import { SuffixIcon } from './SuffixIcon';
 import { ValuePill } from './ValuePill';
 import { itemToString } from './filter';
 import { getComboboxStyles } from './getComboboxStyles';
 import { getMultiComboboxStyles } from './getMultiComboboxStyles';
-import { ALL_OPTION_VALUE, ComboboxOption } from './types';
+import { ALL_OPTION_VALUE, type ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { MAX_SHOWN_ITEMS, useMeasureMulti } from './useMeasureMulti';
 import { useMultiInputAutoSize } from './useMultiInputAutoSize';
@@ -53,6 +53,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     maxWidth,
     isClearable,
     createCustomValue = false,
+    customValueDescription,
     'aria-labelledby': ariaLabelledBy,
     'data-testid': dataTestId,
     portalContainer,
@@ -80,7 +81,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     updateOptions,
     asyncLoading,
     asyncError,
-  } = useOptions(props.options, createCustomValue);
+  } = useOptions(props.options, createCustomValue, customValueDescription);
   const options = useMemo(() => {
     // Only add the 'All' option if there's more than 1 option
     const addAllOption = enableAllOption && baseOptions.length > 1;
@@ -159,6 +160,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     inputId: id,
     inputValue,
     selectedItem: null,
+    isItemDisabled: (item) => !!item?.infoOption,
     stateReducer: (state, actionAndChanges) => {
       const { type } = actionAndChanges;
       let { changes } = actionAndChanges;
@@ -300,7 +302,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                   </>
                 }
               >
-                <div className={multiStyles.restNumber}>{selectedItems.length - shownItems}</div>
+                <div className={multiStyles.restNumber}>{selectedItems.length - visibleItems.length}</div>
               </Tooltip>
             </Box>
           )}
@@ -316,6 +318,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               }),
               'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
               'data-testid': dataTestId,
+              onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
+                // Stop Escape from propagating to parent overlays (e.g. Modals, Drawers)
+                // so that only the dropdown menu closes, not the parent.
+                if (event.key === 'Escape' && isOpen) {
+                  event.stopPropagation();
+                }
+              },
             })}
           />
 
@@ -378,7 +387,17 @@ function getSelectedItemsFromValue<T extends string | number>(
   if (isComboboxOptions(value)) {
     return value;
   }
-  const valueMap = new Map(value.map((val, index) => [val, index]));
+  // Deduplicate values before building the map. Without dedup, duplicate keys
+  // cause Map to keep the last index, leaving earlier indices as undefined holes
+  // in resultingItems (sparse array), which crashes when label is accessed.
+  const valueMap = new Map<T, number>();
+  let index = 0;
+  for (const val of value) {
+    if (!valueMap.has(val)) {
+      valueMap.set(val, index);
+      index++;
+    }
+  }
   const resultingItems: Array<ComboboxOption<T>> = [];
 
   for (const option of options) {

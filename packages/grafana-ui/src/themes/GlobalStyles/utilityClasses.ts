@@ -1,7 +1,7 @@
 import { css } from '@emotion/react';
-import { CSSInterpolation } from '@emotion/serialize';
+import { type CSSInterpolation } from '@emotion/serialize';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 function buttonBackgroundMixin(
   startColor: string,

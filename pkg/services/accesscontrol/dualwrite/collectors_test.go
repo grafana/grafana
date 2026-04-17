@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	authlib "github.com/grafana/authlib/types"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/stretchr/testify/assert"
@@ -56,7 +57,7 @@ func setupTestEnv(t *testing.T) *testEnv {
 	cfg.AutoAssignOrgRole = "Viewer"
 	cfg.AutoAssignOrgId = 1
 
-	teamService, err := teamimpl.ProvideService(sql, cfg, tracing.InitializeTracerForTest())
+	teamService, err := teamimpl.ProvideService(sql, cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(t, err)
 
 	orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
@@ -64,7 +65,7 @@ func setupTestEnv(t *testing.T) *testEnv {
 
 	userService, err := userimpl.ProvideService(
 		sql, orgService, cfg, teamService, localcache.ProvideService(), tracing.InitializeTracerForTest(),
-		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 
@@ -218,6 +219,10 @@ func (m *mockZanzanaClient) Read(ctx context.Context, req *authzextv1.ReadReques
 func (m *mockZanzanaClient) Write(ctx context.Context, req *authzextv1.WriteRequest) error {
 	args := m.Called(ctx, req)
 	return args.Error(0)
+}
+
+func (m *mockZanzanaClient) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
+	return &authzv1.ListResponse{}, nil
 }
 
 // authlib.AccessClient methods
@@ -947,7 +952,7 @@ func TestZanzanaCollector(t *testing.T) {
 			ContinuationToken: "",
 		}, nil)
 
-		collector := zanzanaCollector([]string{"member"})
+		collector := zanzanaCollector([]string{"member"}, 100)
 		result, err := collector(context.Background(), mockClient, "team:team1", "org:1")
 
 		require.NoError(t, err)
@@ -993,7 +998,7 @@ func TestZanzanaCollector(t *testing.T) {
 			ContinuationToken: "",
 		}, nil)
 
-		collector := zanzanaCollector([]string{"member", "admin"})
+		collector := zanzanaCollector([]string{"member", "admin"}, 100)
 		result, err := collector(context.Background(), mockClient, "team:team1", "org:1")
 
 		require.NoError(t, err)
@@ -1041,7 +1046,7 @@ func TestZanzanaCollector(t *testing.T) {
 			ContinuationToken: "",
 		}, nil).Once()
 
-		collector := zanzanaCollector([]string{"member"})
+		collector := zanzanaCollector([]string{"member"}, 100)
 		result, err := collector(context.Background(), mockClient, "team:team1", "org:1")
 
 		require.NoError(t, err)
@@ -1058,7 +1063,7 @@ func TestZanzanaCollector(t *testing.T) {
 			ContinuationToken: "",
 		}, nil)
 
-		collector := zanzanaCollector([]string{"member"})
+		collector := zanzanaCollector([]string{"member"}, 100)
 		result, err := collector(context.Background(), mockClient, "team:team1", "org:1")
 
 		require.NoError(t, err)
@@ -1072,10 +1077,39 @@ func TestZanzanaCollector(t *testing.T) {
 
 		mockClient.On("Read", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("client error"))
 
-		collector := zanzanaCollector([]string{"member"})
+		collector := zanzanaCollector([]string{"member"}, 100)
 		_, err := collector(context.Background(), mockClient, "team:team1", "org:1")
 
 		require.Error(t, err)
+
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("should pass correct page size to read request", func(t *testing.T) {
+		mockClient := new(mockZanzanaClient)
+
+		var capturedPageSize int32
+
+		mockClient.On("Read", mock.Anything, mock.MatchedBy(func(req *authzextv1.ReadRequest) bool {
+			if req.PageSize != nil {
+				val := req.PageSize.GetValue()
+				capturedPageSize = val
+			}
+			return true
+		})).Return(
+			&authzextv1.ReadResponse{
+				Tuples:            []*authzextv1.Tuple{},
+				ContinuationToken: "",
+			}, nil,
+		)
+
+		customPageSize := int32(250)
+		collector := zanzanaCollector([]string{"member"}, customPageSize)
+		_, err := collector(context.Background(), mockClient, "team:team1", "org:1")
+		require.NoError(t, err)
+
+		require.NotNil(t, capturedPageSize, "PageSize should be set in ReadRequest")
+		assert.Equal(t, customPageSize, capturedPageSize, "PageSize should match configured value")
 
 		mockClient.AssertExpectations(t)
 	})

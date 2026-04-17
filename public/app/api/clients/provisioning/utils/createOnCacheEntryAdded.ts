@@ -1,23 +1,38 @@
-import { Subscription } from 'rxjs';
+import { type ThunkDispatch, type UnknownAction } from '@reduxjs/toolkit';
+import { type Subscription } from 'rxjs';
 
 import { ScopedResourceClient } from 'app/features/apiserver/client';
-import { ListOptions, GeneratedResourceList as ResourceList } from 'app/features/apiserver/types';
+import { type ListOptions, type GeneratedResourceList as ResourceList } from 'app/features/apiserver/types';
+
+interface OnCacheEntryAddedOptions<List = unknown> {
+  onError?: (
+    error: unknown,
+    updateCachedData: (fn: (draft: List) => void) => void,
+    dispatch: ThunkDispatch<unknown, unknown, UnknownAction>,
+    arg: ListOptions | undefined
+  ) => (() => void) | undefined | void;
+}
 
 /**
  * Creates a cache entry handler for RTK Query that watches for changes to a resource
  * and updates the cache accordingly.
  */
-export function createOnCacheEntryAdded<Spec, Status>(resourceName: string) {
+export function createOnCacheEntryAdded<Spec, Status>(
+  resourceName: string,
+  options: OnCacheEntryAddedOptions<ResourceList<Spec, Status>> = {}
+) {
   return async function onCacheEntryAdded<List extends ResourceList<Spec, Status>>(
     arg: ListOptions | undefined,
     {
       updateCachedData,
       cacheDataLoaded,
       cacheEntryRemoved,
+      dispatch,
     }: {
       updateCachedData: (fn: (draft: List) => void) => void;
       cacheDataLoaded: Promise<{ data: List }>;
       cacheEntryRemoved: Promise<void>;
+      dispatch: ThunkDispatch<unknown, unknown, UnknownAction>;
     }
   ) {
     if (!arg?.watch) {
@@ -31,31 +46,39 @@ export function createOnCacheEntryAdded<Spec, Status>(resourceName: string) {
     });
 
     let subscription: Subscription | null = null;
+    const errorCleanup: { fn?: () => void } = {};
     try {
       // Wait for the initial query to resolve before proceeding
       const response = await cacheDataLoaded;
       const resourceVersion = response.data.metadata?.resourceVersion;
 
-      subscription = client.watch({ resourceVersion }).subscribe((event) => {
-        updateCachedData((draft) => {
-          if (!draft.items) {
-            draft.items = [];
-          }
-          // Find the item with the matching name
-          const existingIndex = draft.items.findIndex((item) => item.metadata?.name === event.object.metadata.name);
+      subscription = client
+        .watch({ resourceVersion, fieldSelector: arg?.fieldSelector, labelSelector: arg?.labelSelector })
+        .subscribe({
+          next: (event) => {
+            updateCachedData((draft) => {
+              if (!draft.items) {
+                draft.items = [];
+              }
+              // Find the item with the matching name
+              const existingIndex = draft.items.findIndex((item) => item.metadata?.name === event.object.metadata.name);
 
-          if (event.type === 'ADDED' && existingIndex === -1) {
-            draft.items.push(event.object);
-          } else if (event.type === 'DELETED' && existingIndex !== -1) {
-            // Remove the item if it exists
-            draft.items.splice(existingIndex, 1);
-          } else if (existingIndex !== -1) {
-            // Could be ADDED or MODIFIED
-            // Update the existing item if it exists
-            draft.items[existingIndex] = event.object;
-          }
+              if (event.type === 'ADDED' && existingIndex === -1) {
+                draft.items.push(event.object);
+              } else if (event.type === 'DELETED' && existingIndex !== -1) {
+                // Remove the item if it exists
+                draft.items.splice(existingIndex, 1);
+              } else if (existingIndex !== -1) {
+                // Could be ADDED or MODIFIED
+                // Update the existing item if it exists
+                draft.items[existingIndex] = event.object;
+              }
+            });
+          },
+          error: (error) => {
+            errorCleanup.fn = options.onError?.(error, updateCachedData, dispatch, arg) ?? undefined;
+          },
         });
-      });
     } catch (error) {
       console.error('Error in onCacheEntryAdded:', error);
       return;
@@ -63,5 +86,6 @@ export function createOnCacheEntryAdded<Spec, Status>(resourceName: string) {
 
     await cacheEntryRemoved;
     subscription?.unsubscribe();
+    errorCleanup.fn?.();
   };
 }

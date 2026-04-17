@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
 import { test, expect } from '@grafana/plugin-e2e';
 
@@ -8,6 +8,7 @@ test.use({
     alertingListViewV2: true,
     alertingFilterV2: true,
     alertingSavedSearches: true,
+    dashboardNewLayouts: false,
   },
 });
 
@@ -190,9 +191,9 @@ test.describe(
       await ui.searchInput(page).clear();
       await ui.searchInput(page).press('Enter');
 
-      // Apply the saved search
+      // Apply the saved search by clicking the search name link
       await ui.savedSearchesButton(page).click();
-      await page.getByRole('button', { name: /apply.*search.*firing rules/i }).click();
+      await page.getByRole('link', { name: 'Firing Rules' }).click();
 
       // Verify the search input is updated
       await expect(ui.searchInput(page)).toHaveValue('state:firing');

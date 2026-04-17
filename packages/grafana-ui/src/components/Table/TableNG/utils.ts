@@ -1,29 +1,27 @@
-import { Property } from 'csstype';
+import { type Property } from 'csstype';
 import memoize from 'micro-memoize';
-import WKT from 'ol/format/WKT';
-import Geometry from 'ol/geom/Geometry';
-import { CSSProperties } from 'react';
-import { SortColumn } from 'react-data-grid';
+import { type CSSProperties } from 'react';
+import { type SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
-import { Count, varPreLine } from 'uwrap';
+import { type Count, varPreLine } from 'uwrap';
 
 import {
   FieldType,
-  Field,
+  type Field,
   formattedValueToString,
-  GrafanaTheme2,
-  DisplayValue,
-  LinkModel,
-  DisplayValueAlignmentFactors,
-  DataFrame,
-  DisplayProcessor,
+  type GrafanaTheme2,
+  type DisplayValue,
+  type LinkModel,
+  type DisplayValueAlignmentFactors,
+  type DataFrame,
+  type DisplayProcessor,
   isDataFrame,
-  FieldSparkline,
-  DecimalCount,
+  type FieldSparkline,
+  type DecimalCount,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
-  FieldTextAlignment,
+  type FieldTextAlignment,
   TableCellBackgroundDisplayMode,
   TableCellDisplayMode,
   TableCellHeight,
@@ -31,19 +29,21 @@ import {
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellInspectorMode } from '../TableCellInspector';
-import { TableCellOptions } from '../types';
+import { type OpenLayersContextValue, isGeometry } from '../geo';
+import { type TableCellOptions } from '../types';
 
 import { inferPills } from './Cells/PillCell';
 import { AutoCellRenderer, getAutoRendererDisplayMode, getCellRenderer } from './Cells/renderers';
 import { COLUMN, TABLE } from './constants';
 import {
-  TableRow,
-  ColumnTypes,
-  FrameToRowsConverter,
-  Comparator,
-  TypographyCtx,
-  MeasureCellHeight,
-  MeasureCellHeightEntry,
+  type TableRow,
+  type ColumnTypes,
+  type FrameToRowsConverter,
+  type Comparator,
+  type TypographyCtx,
+  type MeasureCellHeight,
+  type MeasureCellHeightEntry,
+  type FilterType,
 } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
@@ -59,7 +59,7 @@ export function getDefaultRowHeight(
   cellHeight?: TableCellHeight
 ): NonNullable<CSSProperties['height']> {
   if (fields?.some((field) => field.config?.custom?.cellOptions?.dynamicHeight)) {
-    return 'auto';
+    return 'min-content';
   }
 
   switch (cellHeight) {
@@ -314,10 +314,9 @@ export function buildCellHeightMeasurers(
         setupMeasurerForIdx(TableCellDisplayMode.DataLinks, fieldIdx);
       } else if (cellType === TableCellDisplayMode.Pill) {
         setupMeasurerForIdx(TableCellDisplayMode.Pill, fieldIdx);
-      } else if (
-        field.type === FieldType.string &&
-        getCellRenderer(field, getCellOptions(field)) === AutoCellRenderer
-      ) {
+      } else if (getCellRenderer(field, getCellOptions(field)) === AutoCellRenderer) {
+        // Any field rendered by AutoCellRenderer (string, time, number, boolean, etc.) can
+        // produce a multi-line formatted string, so we include it in height measurement.
         setupMeasurerForIdx(TableCellDisplayMode.Auto, fieldIdx);
       } else {
         // no measurer was configured for this cell type
@@ -345,7 +344,7 @@ export const SINGLE_LINE_ESTIMATE_THRESHOLD = 18.5;
  */
 export function getRowHeight(
   fields: Field[],
-  rowIdx: number,
+  row: TableRow,
   columnWidths: number[],
   defaultHeight: number,
   measurers?: MeasureCellHeightEntry[],
@@ -357,7 +356,7 @@ export function getRowHeight(
   }
 
   let maxHeight = -1;
-  let maxValue = '';
+  let maxValue: unknown = '';
   let maxWidth = 0;
   let maxField: Field | undefined;
   let preciseMeasurer: MeasureCellHeight | undefined;
@@ -371,14 +370,22 @@ export function getRowHeight(
 
     for (const fieldIdx of fieldIdxs) {
       const field = fields[fieldIdx];
+      const displayName = getDisplayName(field);
       // special case: for the header, provide `-1` as the row index.
-      const cellValueRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
+      const cellValueRaw = row.__index === -1 ? displayName : row[displayName];
       if (cellValueRaw != null) {
+        // For non-string fields (e.g. Time, Number), the raw value is a number/epoch that
+        // AutoCell formats via field.display() before rendering. Measure the rendered string
+        // so the height matches what is actually displayed in the cell.
+        const cellValueForMeasuring =
+          field.type !== FieldType.string && row.__index !== -1 && field.display != null
+            ? formattedValueToString(field.display(cellValueRaw))
+            : cellValueRaw;
         const colWidth = columnWidths[fieldIdx];
-        const estimatedHeight = measurer(cellValueRaw, colWidth, field, rowIdx, lineHeight);
+        const estimatedHeight = measurer(cellValueForMeasuring, colWidth, field, row.__index, lineHeight);
         if (estimatedHeight > maxHeight) {
           maxHeight = estimatedHeight;
-          maxValue = cellValueRaw;
+          maxValue = cellValueForMeasuring;
           maxWidth = colWidth;
           maxField = field;
           preciseMeasurer = isEstimating ? measure : undefined;
@@ -396,7 +403,7 @@ export function getRowHeight(
   // if we finished this row height loop with an estimate, we need to call
   // the `preciseMeasurer` method to get the exact line count.
   if (preciseMeasurer !== undefined) {
-    maxHeight = preciseMeasurer(maxValue, maxWidth, maxField, rowIdx, lineHeight);
+    maxHeight = preciseMeasurer(maxValue, maxWidth, maxField, row.__index, lineHeight);
   }
 
   // adjust for vertical padding, and clamp to a minimum default height
@@ -617,6 +624,44 @@ export const getCellLinks = (field: Field, rowIdx: number) => {
   return links.filter((link) => link.href || link.onClick != null);
 };
 
+/**
+ * @internal
+ * Processes nested table rows
+ */
+export const processNestedTableRows = (
+  rows: TableRow[],
+  processParents: (parents: TableRow[]) => TableRow[]
+): TableRow[] => {
+  // Separate parent and child rows
+  // Array for parentRows: enables sorting and maintains order for iteration
+  // Map for childRows: provides O(1) lookup by parent index when reconstructing the result
+  const parentRows: TableRow[] = [];
+  const childRows: Map<number, TableRow> = new Map();
+
+  for (const row of rows) {
+    if (row.__depth === 0) {
+      parentRows.push(row);
+    } else {
+      childRows.set(row.__index, row);
+    }
+  }
+
+  // Process parent rows (filter or sort)
+  const processedParents = processParents(parentRows);
+
+  // Reconstruct the result
+  const result: TableRow[] = [];
+  for (const row of processedParents) {
+    result.push(row);
+    const childRow = childRows.get(row.__index);
+    if (childRow) {
+      result.push(childRow);
+    }
+  }
+
+  return result;
+};
+
 /* ----------------------------- Data grid sorting ---------------------------- */
 /**
  * @internal
@@ -625,8 +670,8 @@ export function applySort(
   rows: TableRow[],
   fields: Field[],
   sortColumns: SortColumn[],
-  columnTypes: ColumnTypes = getColumnTypes(fields),
-  hasNestedFrames: boolean = getIsNestedTable(fields)
+  columnTypes: ColumnTypes,
+  hasNestedFrames?: boolean
 ): TableRow[] {
   if (sortColumns.length === 0) {
     return rows;
@@ -662,20 +707,84 @@ export function applySort(
     return result;
   };
 
-  // Handle nested tables
-  if (hasNestedFrames) {
-    return processNestedTableRows(rows, (parents) => [...parents].sort(compareRows));
+  return hasNestedFrames
+    ? processNestedTableRows(rows, (parents) => parents.sort(compareRows))
+    : [...rows].sort(compareRows);
+}
+
+export interface ApplyFilterResult {
+  crossFilterOrder: string[];
+  crossFilterRows: Record<string, TableRow[]>;
+  crossFilterTailRows: TableRow[];
+  filteredRows: TableRow[];
+}
+
+/**
+ * @internal
+ * Applies active filters to `rows` and computes cross-filter metadata for filter popup UIs.
+ *
+ * Filters are chained sequentially so that for each filter key, `crossFilterRows[key]`
+ * holds the rows available *before* that filter was applied (i.e. the rows that passed all
+ * preceding filters in the same scope). `crossFilterTailRows` holds the rows that survive
+ * *all* filters — used for new filters that have not yet been applied.
+ *
+ * `filteredRows` is the display-ready result: equal to `crossFilterTailRows` for flat tables,
+ * or wrapped with `processNestedTableRows` to preserve parent-child structure when
+ * `hasNestedFrames` is true.
+ *
+ * When called for a nested table instance, pass `parentIndex` to scope filters to that level.
+ */
+export function applyFilter(
+  rows: TableRow[],
+  filter: FilterType,
+  fields: Field[],
+  hasNestedFrames?: boolean,
+  parentIndex?: number
+): ApplyFilterResult {
+  // Scope rows to the relevant nesting level
+  const isNested = parentIndex !== undefined;
+  const scopedRows = !isNested ? rows.filter((r) => r.__depth === 0) : rows;
+
+  // Collect filter keys that belong to this scope (preserving JS insertion order)
+  const crossFilterOrder = Object.keys(filter).filter((key) => {
+    const entry = filter[key];
+    return !isNested ? entry.parentIndex == null : entry.parentIndex === parentIndex;
+  });
+
+  const crossFilterRows: Record<string, TableRow[]> = {};
+  let crossFilterTailRows = scopedRows;
+
+  for (const filterKey of crossFilterOrder) {
+    const filterEntry = filter[filterKey];
+    // Store rows available *before* this filter is applied
+    crossFilterRows[filterKey] = crossFilterTailRows;
+    // Advance the chain by applying this filter
+    crossFilterTailRows = crossFilterTailRows.filter((row) => {
+      const field = fields.find((f) => getDisplayName(f) === filterEntry.displayName);
+      if (!field || !field.display) {
+        return true;
+      }
+      const displayedValue = formattedValueToString(field.display(row[filterEntry.displayName]));
+      return filterEntry.filteredSet.has(displayedValue);
+    });
   }
 
-  // Regular sort for tables without nesting
-  return [...rows].sort(compareRows);
+  // For nested frames, wrap with processNestedTableRows so parent rows that have matching
+  // children are preserved for the expander UI. Use a Set for O(1) membership checks.
+  let filteredRows = crossFilterTailRows;
+  if (hasNestedFrames) {
+    const tailSet = new Set(crossFilterTailRows);
+    filteredRows = processNestedTableRows(rows, (parents) => parents.filter((row) => tailSet.has(row)));
+  }
+
+  return { crossFilterOrder, crossFilterRows, crossFilterTailRows, filteredRows };
 }
 
 /* ----------------------------- Data grid mapping ---------------------------- */
 /**
  * @internal
  */
-export const frameToRecords = (frame: DataFrame, nestedFramesFieldName?: string): TableRow[] => {
+export function compileFrameToRecords(frame: DataFrame, nestedFramesFieldName?: string): FrameToRowsConverter {
   const fnBody = `
     const rows = Array(frame.length);
     const values = frame.fields.map(f => f.values);
@@ -688,12 +797,16 @@ export const frameToRecords = (frame: DataFrame, nestedFramesFieldName?: string)
         __index: i,
         ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(getDisplayName(field))}: values[${fieldIdx}][i]`).join(',')}
       };
+      if (nestedRowIndex != null) {
+        rows[rowCount].__parentIndex = nestedRowIndex;
+      }
       rowCount++;
 
       if (hasNestedFrames) {
         const childFrame = rows[rowCount-1][${JSON.stringify(nestedFramesFieldName)}];
-        if (childFrame){
-          rows[rowCount] = {__depth: 1, __index: i, data: childFrame[0]}
+        if (childFrame) {
+          delete rows[rowCount - 1][${JSON.stringify(nestedFramesFieldName)}];
+          rows[rowCount] = { __depth: 1, __index: i };
           rowCount++;
         }
       }
@@ -704,9 +817,8 @@ export const frameToRecords = (frame: DataFrame, nestedFramesFieldName?: string)
   // Creates a function that converts a DataFrame into an array of TableRows
   // Uses new Function() for performance as it's faster than creating rows using loops
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const convert = new Function('frame', 'nestedFramesFieldName', fnBody) as FrameToRowsConverter;
-  return convert(frame, nestedFramesFieldName);
-};
+  return new Function('frame', 'nestedRowIndex', fnBody) as FrameToRowsConverter;
+}
 
 /* ----------------------------- Data grid comparator ---------------------------- */
 // The numeric: true option is used to sort numbers as strings correctly. It recognizes numeric sequences
@@ -810,48 +922,18 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
 
 /**
  * @internal
+ * Returns unique key for each row
+ */
+export function rowKeyGetter(row: TableRow): string {
+  return row.__index + '_' + row.__depth;
+}
+
+/**
+ * @internal
  * Returns true if the DataFrame contains nested frames
  */
 export const getIsNestedTable = (fields: Field[]): boolean =>
   fields.some(({ type }) => type === FieldType.nestedFrames);
-
-/**
- * @internal
- * Processes nested table rows
- */
-export const processNestedTableRows = (
-  rows: TableRow[],
-  processParents: (parents: TableRow[]) => TableRow[]
-): TableRow[] => {
-  // Separate parent and child rows
-  // Array for parentRows: enables sorting and maintains order for iteration
-  // Map for childRows: provides O(1) lookup by parent index when reconstructing the result
-  const parentRows: TableRow[] = [];
-  const childRows: Map<number, TableRow> = new Map();
-
-  for (const row of rows) {
-    if (row.__depth === 0) {
-      parentRows.push(row);
-    } else {
-      childRows.set(row.__index, row);
-    }
-  }
-
-  // Process parent rows (filter or sort)
-  const processedParents = processParents(parentRows);
-
-  // Reconstruct the result
-  const result: TableRow[] = [];
-  processedParents.forEach((row) => {
-    result.push(row);
-    const childRow = childRows.get(row.__index);
-    if (childRow) {
-      result.push(childRow);
-    }
-  });
-
-  return result;
-};
 
 /**
  * @internal
@@ -1023,17 +1105,18 @@ function isPlainObject(value: unknown): value is object {
   return typeof value === 'object' && value != null && !Array.isArray(value);
 }
 
-export function buildInspectValue(value: unknown, field: Field): [string, TableCellInspectorMode] {
+export function buildInspectValue(
+  value: unknown,
+  field: Field,
+  formatGeometry?: OpenLayersContextValue['formatGeometry']
+): [string, TableCellInspectorMode] {
   const cellOptions = getCellOptions(field);
 
   let inspectValue: string;
   let mode = TableCellInspectorMode.text;
 
-  if (field.type === FieldType.geo && value instanceof Geometry) {
-    inspectValue = new WKT().writeGeometry(value, {
-      featureProjection: 'EPSG:3857',
-      dataProjection: 'EPSG:4326',
-    });
+  if (field.type === FieldType.geo && isGeometry(value)) {
+    inspectValue = formatGeometry ? formatGeometry(value) : JSON.stringify(value, null, '  ');
     mode = TableCellInspectorMode.code;
   } else if (
     cellOptions.type === TableCellDisplayMode.Sparkline ||

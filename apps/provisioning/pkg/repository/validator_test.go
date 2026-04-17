@@ -15,6 +15,7 @@ import (
 	"k8s.io/apiserver/pkg/authentication/user"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -43,6 +44,9 @@ func TestValidator_Validate(t *testing.T) {
 			name: "missing title",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer},
+					},
 					Spec: provisioning.RepositorySpec{},
 				}
 			}(),
@@ -55,6 +59,9 @@ func TestValidator_Validate(t *testing.T) {
 			name: "sync enabled without target",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer},
+					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
 						Sync: provisioning.SyncOptions{
@@ -69,29 +76,12 @@ func TestValidator_Validate(t *testing.T) {
 			},
 		},
 		{
-			name: "sync interval too low",
-			repository: func() *provisioning.Repository {
-				return &provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						Title: "Test Repo",
-						Sync: provisioning.SyncOptions{
-							Enabled:         true,
-							Target:          provisioning.SyncTargetTypeFolder,
-							IntervalSeconds: 5,
-						}},
-				}
-			}(),
-			expectedErrs: 1,
-			validateError: func(t *testing.T, errors field.ErrorList) {
-				require.Contains(t, errors.ToAggregate().Error(), "spec.sync.intervalSeconds: Invalid value")
-			},
-		},
-		{
 			name: "reserved name",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "sql",
+						Name:       "sql",
+						Finalizers: []string{CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
@@ -111,6 +101,9 @@ func TestValidator_Validate(t *testing.T) {
 			name: "mismatched local config",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer},
+					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
 						Type:  provisioning.GitHubRepositoryType,
@@ -127,6 +120,9 @@ func TestValidator_Validate(t *testing.T) {
 			name: "mismatched github config",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer},
+					},
 					Spec: provisioning.RepositorySpec{
 						Title:  "Test Repo",
 						Type:   provisioning.LocalRepositoryType,
@@ -143,6 +139,9 @@ func TestValidator_Validate(t *testing.T) {
 			name: "github enabled when image rendering is not allowed",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer},
+					},
 					Spec: provisioning.RepositorySpec{
 						Title:  "Test Repo",
 						Type:   provisioning.GitHubRepositoryType,
@@ -159,6 +158,9 @@ func TestValidator_Validate(t *testing.T) {
 			name: "mismatched git config",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer},
+					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
 						Type:  provisioning.LocalRepositoryType,
@@ -176,27 +178,31 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "sql",
+						Name:       "sql",
+						Finalizers: []string{CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
 						Sync: provisioning.SyncOptions{
 							Enabled:         true,
 							IntervalSeconds: 5,
-							Target:          provisioning.SyncTargetTypeInstance,
+							Target:          "",
 						},
 					},
 				}
 			}(),
 			expectedErrs: 2,
 			// 1. reserved name
-			// 2. sync interval too low
+			// 2. Empty target
 			// Note: "sync target not supported" is now checked in AdmissionValidator, not RepositoryValidator
 		},
 		{
 			name: "branch workflow for non-github repository",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer},
+					},
 					Spec: provisioning.RepositorySpec{
 						Title:     "Test Repo",
 						Type:      provisioning.LocalRepositoryType,
@@ -213,6 +219,9 @@ func TestValidator_Validate(t *testing.T) {
 			name: "invalid workflow in the list",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer},
+					},
 					Spec: provisioning.RepositorySpec{
 						Title:     "Test Repo",
 						Type:      provisioning.GitHubRepositoryType,
@@ -263,11 +272,110 @@ func TestValidator_Validate(t *testing.T) {
 				require.Contains(t, errors.ToAggregate().Error(), "unknown finalizer: invalid-finalizer")
 			},
 		},
+		{
+			name: "valid webhook base URL",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:   "Test Repo",
+						Webhook: &provisioning.WebhookConfig{BaseURL: "https://grafana.example.com/"},
+					},
+				}
+			}(),
+			expectedErrs: 0,
+		},
+		{
+			name: "valid HTTP webhook base URL",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:   "Test Repo",
+						Webhook: &provisioning.WebhookConfig{BaseURL: "http://grafana.example.com"},
+					},
+				}
+			}(),
+			expectedErrs: 0,
+		},
+		{
+			name: "webhook base URL with unsupported scheme",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:   "Test Repo",
+						Webhook: &provisioning.WebhookConfig{BaseURL: "ftp://grafana.example.com/"},
+					},
+				}
+			}(),
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errors field.ErrorList) {
+				require.Contains(t, errors.ToAggregate().Error(), "must use HTTP or HTTPS scheme")
+			},
+		},
+		{
+			name: "webhook base URL missing host",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:   "Test Repo",
+						Webhook: &provisioning.WebhookConfig{BaseURL: "https://"},
+					},
+				}
+			}(),
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errors field.ErrorList) {
+				require.Contains(t, errors.ToAggregate().Error(), "must include a host")
+			},
+		},
+		{
+			name: "nil webhook section is allowed",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title: "Test Repo",
+					},
+				}
+			}(),
+			expectedErrs: 0,
+		},
+		{
+			name: "no finalizers on resource not marked for deletion",
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Finalizers: []string{},
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:     "Test Repo",
+						Type:      provisioning.GitHubRepositoryType,
+						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					},
+				}
+			}(),
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errors field.ErrorList) {
+				require.Contains(t, errors.ToAggregate().Error(), "cannot have no finalizers set on resources not marked for deletion")
+			},
+		},
 	}
 
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-	validator := NewValidator(10*time.Second, false, mockFactory)
+	validator := NewValidator(false, mockFactory)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Tests validate new configurations, so always pass isCreate=true
@@ -308,7 +416,10 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 		{
 			name: "valid repository passes validation",
 			obj: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+				},
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
 					Type:  provisioning.GitHubRepositoryType,
@@ -321,7 +432,10 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 		{
 			name: "invalid repository fails validation",
 			obj: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+				},
 				Spec: provisioning.RepositorySpec{
 					// Missing title
 					Type: provisioning.GitHubRepositoryType,
@@ -372,7 +486,10 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 		{
 			name: "forbids changing repository type on update",
 			obj: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+				},
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
 					Type:  provisioning.GitRepositoryType, // Changed from github
@@ -380,7 +497,10 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				},
 			},
 			old: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+				},
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
 					Type:  provisioning.GitHubRepositoryType,
@@ -394,7 +514,10 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 		{
 			name: "forbids changing sync target after sync",
 			obj: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+				},
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
 					Type:  provisioning.GitHubRepositoryType,
@@ -402,7 +525,10 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				},
 			},
 			old: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+				},
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
 					Type:  provisioning.GitHubRepositoryType,
@@ -416,6 +542,106 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			wantErr:         true,
 			wantErrContains: "Changing sync target after running sync is not supported",
 		},
+		{
+			name: "blocks UPDATE when both old and new objects have the pending-delete label",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+					Labels:     map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo (modified)",
+					Type:  provisioning.GitHubRepositoryType,
+				},
+			},
+			old: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "test",
+					Labels: map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+				},
+			},
+			operation:       admission.Update,
+			wantErr:         true,
+			wantErrContains: "namespace is pending deletion",
+		},
+		{
+			name: "allows UPDATE that removes the pending-delete label (explicit unlock)",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+					Sync:  provisioning.SyncOptions{IntervalSeconds: 60},
+				},
+			},
+			old: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+					Labels:     map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+					Sync:  provisioning.SyncOptions{IntervalSeconds: 60},
+				},
+			},
+			operation: admission.Update,
+			wantErr:   false,
+		},
+		{
+			name: "allows the UPDATE that sets the pending-delete label (old without label → new with label)",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+					Labels:     map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+					Sync:  provisioning.SyncOptions{IntervalSeconds: 60},
+				},
+			},
+			old: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+					Sync:  provisioning.SyncOptions{IntervalSeconds: 60},
+				},
+			},
+			operation: admission.Update,
+			wantErr:   false,
+		},
+		{
+			name: "blocks CREATE when incoming object carries the pending-delete label",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+					Labels:     map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+				},
+			},
+			operation:       admission.Create,
+			wantErr:         true,
+			wantErrContains: "namespace is pending deletion",
+		},
 	}
 
 	for _, tt := range tests {
@@ -423,7 +649,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			mockFactory := NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-			validator := NewValidator(10*time.Second, false, mockFactory)
+			validator := NewValidator(false, mockFactory)
 
 			admissionValidator := NewAdmissionValidator(
 				[]provisioning.SyncTargetType{
@@ -454,14 +680,17 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	validator := NewValidator(10*time.Second, false, mockFactory)
+	validator := NewValidator(false, mockFactory)
 	admissionValidator := NewAdmissionValidator(
 		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder},
 		validator,
 	)
 
 	oldRepo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test",
+			Finalizers: []string{CleanFinalizer},
+		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
 			Type:  provisioning.GitHubRepositoryType,
@@ -474,7 +703,10 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 	}
 
 	newRepo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test",
+			Finalizers: []string{CleanFinalizer},
+		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
 			Type:  provisioning.GitHubRepositoryType,
@@ -508,7 +740,7 @@ func TestAdmissionValidator_CallsMultipleValidators(t *testing.T) {
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	baseValidator := NewValidator(10*time.Second, false, mockFactory)
+	baseValidator := NewValidator(false, mockFactory)
 	additionalValidator := &mockValidator{}
 
 	admissionValidator := NewAdmissionValidator(
@@ -518,7 +750,10 @@ func TestAdmissionValidator_CallsMultipleValidators(t *testing.T) {
 	)
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test",
+			Finalizers: []string{CleanFinalizer},
+		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
 			Type:  provisioning.GitHubRepositoryType,
@@ -537,7 +772,7 @@ func TestAdmissionValidator_ValidatorError(t *testing.T) {
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	baseValidator := NewValidator(10*time.Second, false, mockFactory)
+	baseValidator := NewValidator(false, mockFactory)
 	additionalValidator := &mockValidator{
 		errors: field.ErrorList{field.Forbidden(field.NewPath("spec"), "duplicate repository")},
 	}
@@ -549,7 +784,10 @@ func TestAdmissionValidator_ValidatorError(t *testing.T) {
 	)
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test",
+			Finalizers: []string{CleanFinalizer},
+		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
 			Type:  provisioning.GitHubRepositoryType,

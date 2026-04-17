@@ -1,63 +1,92 @@
 import { defaultsDeep } from 'lodash';
 
-import { ThresholdsMode, FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplier } from '@grafana/data';
+import {
+  FieldColorModeId,
+  type FieldConfigSource,
+  FieldType,
+  type VisualizationSuggestion,
+  type VisualizationSuggestionsSupplier,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { type GraphFieldConfig } from '@grafana/ui';
 import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
 
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
-const withDefaults = (suggestion: VisualizationSuggestion<Options>): VisualizationSuggestion<Options> =>
+const withDefaults = (
+  suggestion: VisualizationSuggestion<Options, GraphFieldConfig>
+): VisualizationSuggestion<Options, GraphFieldConfig> =>
   defaultsDeep(suggestion, {
-    fieldConfig: {
-      defaults: {
-        thresholds: {
-          steps: [
-            { value: -Infinity, color: 'green' },
-            { value: 70, color: 'orange' },
-            { value: 85, color: 'red' },
-          ],
-          mode: ThresholdsMode.Percentage,
-        },
-        custom: {},
-      },
-      overrides: [],
+    options: {
+      barWidthFactor: 0.3,
+      showThresholdMarkers: false,
     },
     cardOptions: {
       previewModifier: (s) => {
-        if (s.options?.reduceOptions?.values) {
-          s.options.reduceOptions.limit = 2;
+        if (s.options?.reduceOptions) {
+          s.options.reduceOptions.limit = 4;
+        }
+        if (s.fieldConfig) {
+          s.fieldConfig.defaults.unit = 'short';
         }
       },
     },
-  } satisfies VisualizationSuggestion<Options>);
+  } satisfies VisualizationSuggestion<Options, GraphFieldConfig>);
 
-const GAUGE_LIMIT = 10;
+const MAX_GAUGES = 10;
 
-export const gaugeSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> = (dataSummary) => {
+export const gaugeSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, GraphFieldConfig> = (dataSummary) => {
   if (!dataSummary.hasData || !dataSummary.hasFieldType(FieldType.number)) {
     return;
   }
 
   // for many fields / series this is probably not a good fit
-  if (dataSummary.fieldCountByType(FieldType.number) > GAUGE_LIMIT) {
+  if (dataSummary.fieldCountByType(FieldType.number) > MAX_GAUGES) {
     return;
   }
 
-  const suggestions: Array<VisualizationSuggestion<Options>> = [
-    { name: t('gauge.suggestions.arc', 'Gauge') },
+  const fieldConfig: FieldConfigSource<Partial<GraphFieldConfig>> = {
+    defaults: {},
+    overrides: [],
+  };
+
+  const suggestions: Array<VisualizationSuggestion<Options, GraphFieldConfig>> = [
     {
-      name: t('gauge.suggestions.no-thresholds', 'Gauge - no thresholds'),
-      options: {
-        showThresholdMarkers: false,
-      },
+      name: t('gauge.suggestions.arc', 'Gauge'),
+      fieldConfig,
+      options: { shape: 'gauge' },
+    },
+    {
+      name: t('gauge.suggestions.circular', 'Circular gauge'),
+      fieldConfig,
+      options: { shape: 'circle' },
     },
   ];
 
-  // sometimes, we want to de-aggregate the data for the gauge suggestion
   const shouldUseRawValues =
     dataSummary.hasFieldType(FieldType.string) &&
     dataSummary.frameCount === 1 &&
-    dataSummary.rowCountTotal <= GAUGE_LIMIT;
+    dataSummary.rowCountTotal <= MAX_GAUGES;
 
-  return suggestions.map((s) => defaultNumericVizOptions(withDefaults(s), dataSummary, shouldUseRawValues));
+  const showSparkline =
+    !shouldUseRawValues && dataSummary.rowCountTotal > 1 && dataSummary.hasFieldType(FieldType.time);
+
+  return suggestions.map((s) => {
+    const suggestion = defaultNumericVizOptions(withDefaults(s), dataSummary, shouldUseRawValues);
+
+    suggestion.options = suggestion.options ?? {};
+    suggestion.options.sparkline = showSparkline;
+
+    if (shouldUseRawValues) {
+      suggestion.fieldConfig = suggestion.fieldConfig ?? {
+        defaults: {},
+        overrides: [],
+      };
+      suggestion.fieldConfig.defaults.color = suggestion.fieldConfig.defaults.color ?? {
+        mode: FieldColorModeId.PaletteClassic,
+      };
+    }
+
+    return suggestion;
+  });
 };

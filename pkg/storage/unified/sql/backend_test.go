@@ -5,9 +5,12 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -88,9 +91,9 @@ func setupBackendTest(t *testing.T) (testBackend, context.Context) {
 	b, err := NewBackend(BackendOptions{DBProvider: dbp})
 	require.NoError(t, err)
 	require.NotNil(t, b)
-
-	err = b.Init(ctx)
-	require.NoError(t, err)
+	svc, ok := b.(services.Service)
+	require.True(t, ok)
+	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
 
 	bb, ok := b.(*backend)
 	require.True(t, ok)
@@ -114,6 +117,38 @@ func TestNewBackend(t *testing.T) {
 		require.NotNil(t, b)
 	})
 
+	t.Run("happy path without storage services enabled", func(t *testing.T) {
+		t.Parallel()
+
+		dbp := test.NewDBProviderNopSQL(t)
+		b, err := NewBackend(BackendOptions{DBProvider: dbp, DisableStorageServices: true})
+		require.NoError(t, err)
+		require.NotNil(t, b)
+	})
+
+	t.Run("with TmpDir does not create directory eagerly", func(t *testing.T) {
+		t.Parallel()
+
+		tmpDir := t.TempDir() + "/not-yet-created"
+		dbp := test.NewDBProviderNopSQL(t)
+		b, err := NewBackend(BackendOptions{DBProvider: dbp, TmpDir: tmpDir})
+		require.NoError(t, err)
+		require.NotNil(t, b)
+
+		// The directory should NOT have been created at construction time.
+		_, statErr := os.Stat(tmpDir)
+		require.True(t, os.IsNotExist(statErr), "TmpDir should not be created eagerly by NewBackend")
+	})
+
+	t.Run("with empty TmpDir", func(t *testing.T) {
+		t.Parallel()
+
+		dbp := test.NewDBProviderNopSQL(t)
+		b, err := NewBackend(BackendOptions{DBProvider: dbp, TmpDir: ""})
+		require.NoError(t, err)
+		require.NotNil(t, b)
+	})
+
 	t.Run("no db provider", func(t *testing.T) {
 		t.Parallel()
 
@@ -121,6 +156,18 @@ func TestNewBackend(t *testing.T) {
 		require.Nil(t, b)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "no db provider")
+	})
+}
+
+func TestTmpDir(t *testing.T) {
+	t.Parallel()
+
+	t.Run("returns empty string for empty dataPath", func(t *testing.T) {
+		require.Equal(t, "", tmpDir(""))
+	})
+
+	t.Run("returns dataPath/tmp for non-empty dataPath", func(t *testing.T) {
+		require.Equal(t, filepath.Join("/var/lib/grafana", "tmp"), tmpDir("/var/lib/grafana"))
 	})
 }
 
@@ -132,35 +179,45 @@ func TestBackend_Init(t *testing.T) {
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dbp := test.NewDBProviderWithPing(t)
+		dbp.SQLMock.ExpectPing().WillReturnError(nil)
 		b, err := NewBackend(BackendOptions{DBProvider: dbp})
 		require.NoError(t, err)
 		require.NotNil(t, b)
 
+		svc, ok := b.(services.Service)
+		require.True(t, ok)
+		require.NoError(t, services.StartAndAwaitRunning(context.Background(), svc))
+
+		// cannot start service twice
+		require.ErrorContains(t, services.StartAndAwaitRunning(ctx, svc), "invalid service state")
+		svc.StopAsync()
+		require.NoError(t, svc.AwaitTerminated(ctx))
+	})
+
+	t.Run("happy path without storage services enabled", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := testutil.NewDefaultTestContext(t)
+		dbp := test.NewDBProviderWithPing(t)
 		dbp.SQLMock.ExpectPing().WillReturnError(nil)
-		err = b.Init(ctx)
+		b, err := NewBackend(BackendOptions{DBProvider: dbp, DisableStorageServices: true})
 		require.NoError(t, err)
+		require.NotNil(t, b)
 
-		// if it isn't idempotent, then it will make a second ping and the
-		// expectation will fail
-		err = b.Init(ctx)
-		require.NoError(t, err, "should be idempotent")
-
-		err = b.Stop(ctx)
-		require.NoError(t, err)
+		svc, ok := b.(services.Service)
+		require.True(t, ok)
+		require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
+		svc.StopAsync()
+		require.NoError(t, svc.AwaitTerminated(ctx))
 	})
 
 	t.Run("no db provider", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := testutil.NewDefaultTestContext(t)
 		dbp := test.TestDBProvider{
 			Err: errTest,
 		}
-		b, err := NewBackend(BackendOptions{DBProvider: dbp})
-		require.NoError(t, err)
-		require.NotNil(t, b)
-
-		err = b.Init(ctx)
+		_, err := NewBackend(BackendOptions{DBProvider: dbp})
 		require.Error(t, err)
 		require.ErrorContains(t, err, "initialize resource DB")
 	})
@@ -168,18 +225,13 @@ func TestBackend_Init(t *testing.T) {
 	t.Run("no dialect for driver", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := testutil.NewDefaultTestContext(t)
 		mockDB, _, err := sqlmock.New()
 		require.NoError(t, err)
 		dbp := test.TestDBProvider{
 			DB: dbimpl.NewDB(mockDB, "juancarlo"),
 		}
 
-		b, err := NewBackend(BackendOptions{DBProvider: dbp})
-		require.NoError(t, err)
-		require.NotNil(t, b)
-
-		err = b.Init(ctx)
+		_, err = NewBackend(BackendOptions{DBProvider: dbp})
 		require.Error(t, err)
 		require.ErrorContains(t, err, "no dialect for driver")
 	})
@@ -187,14 +239,9 @@ func TestBackend_Init(t *testing.T) {
 	t.Run("database unreachable", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := testutil.NewDefaultTestContext(t)
 		dbp := test.NewDBProviderWithPing(t)
-		b, err := NewBackend(BackendOptions{DBProvider: dbp})
-		require.NoError(t, err)
-		require.NotNil(t, dbp.DB)
-
 		dbp.SQLMock.ExpectPing().WillReturnError(errTest)
-		err = b.Init(ctx)
+		_, err := NewBackend(BackendOptions{DBProvider: dbp})
 		require.Error(t, err)
 		require.ErrorIs(t, err, errTest)
 	})
@@ -205,21 +252,22 @@ func TestBackend_IsHealthy(t *testing.T) {
 
 	ctx := testutil.NewDefaultTestContext(t)
 	dbp := test.NewDBProviderWithPing(t)
+	dbp.SQLMock.ExpectPing().WillReturnError(nil) // for Init
 	b, err := NewBackend(BackendOptions{DBProvider: dbp})
 	require.NoError(t, err)
 	require.NotNil(t, dbp.DB)
+	svc, ok := b.(services.Service)
+	require.True(t, ok)
+
+	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
 
 	dbp.SQLMock.ExpectPing().WillReturnError(nil)
-	err = b.Init(ctx)
-	require.NoError(t, err)
-
-	dbp.SQLMock.ExpectPing().WillReturnError(nil)
-	res, err := b.IsHealthy(ctx, nil)
+	res, err := b.IsHealthy(ctx, nil) //nolint:staticcheck
 	require.NoError(t, err)
 	require.NotNil(t, res)
 
 	dbp.SQLMock.ExpectPing().WillReturnError(errTest)
-	res, err = b.IsHealthy(ctx, nil)
+	res, err = b.IsHealthy(ctx, nil) //nolint:staticcheck
 	require.Nil(t, res)
 	require.Error(t, err)
 	require.ErrorIs(t, err, errTest)
@@ -261,7 +309,7 @@ func TestBackend_create(t *testing.T) {
 		)
 		b.SQLMock.ExpectCommit()
 		b.SQLMock.ExpectBegin()
-		b.SQLMock.ExpectExec("insert resource").WillReturnError(sqlite.TestErrUniqueConstraintViolation)
+		b.SQLMock.ExpectExec("insert resource").WillReturnError(sqlite.ErrTestUniqueConstraintViolation)
 		b.SQLMock.ExpectRollback()
 
 		// First we insert the resource successfully. This is what the happy path test does as well.
@@ -764,7 +812,7 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 			},
 		}
 
-		var allItems []int64
+		allItems := make([]int64, 0, len(versions)*len(pages))
 		initialRV := rv51
 
 		// Test each page
@@ -874,4 +922,162 @@ func setupHistoryTest(b testBackend, resourceVersions []int64, latestRV int64, e
 	}
 
 	return historyRows
+}
+
+func TestBackend_StorageDisabled(t *testing.T) {
+	t.Parallel()
+
+	t.Run("WriteEvent returns error when storage is disabled", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTestStorageDisabled(t)
+
+		meta, err := utils.MetaAccessor(&unstructured.Unstructured{
+			Object: map[string]any{},
+		})
+		require.NoError(t, err)
+		event := resource.WriteEvent{
+			Type:   resourcepb.WatchEvent_ADDED,
+			Key:    resKey,
+			Object: meta,
+		}
+
+		rv, err := b.WriteEvent(ctx, event)
+		require.Zero(t, rv)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "storage backend is not enabled")
+	})
+
+	t.Run("ProcessBulk returns error when storage is disabled", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTestStorageDisabled(t)
+
+		resp := b.ProcessBulk(ctx, resource.BulkSettings{}, nil)
+		require.NotNil(t, resp)
+		require.NotNil(t, resp.Error)
+		require.Contains(t, resp.Error.Message, "storage backend is not enabled")
+	})
+
+	t.Run("WatchWriteEvents returns error when storage is disabled", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTestStorageDisabled(t)
+
+		ch, err := b.WatchWriteEvents(ctx)
+		require.Nil(t, ch)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "watcher is not enabled")
+	})
+}
+
+// setupBackendTestStorageDisabled creates a test backend with storage disabled (search-only/read-only mode)
+func setupBackendTestStorageDisabled(t *testing.T) (testBackend, context.Context) {
+	t.Helper()
+
+	ctx := testutil.NewDefaultTestContext(t)
+	dbp := test.NewDBProviderMatchWords(t)
+	b, err := NewBackend(BackendOptions{DBProvider: dbp, DisableStorageServices: true})
+	require.NoError(t, err)
+	require.NotNil(t, b)
+	svc, ok := b.(services.Service)
+	require.True(t, ok)
+	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
+
+	bb, ok := b.(*backend)
+	require.True(t, ok)
+	require.NotNil(t, bb)
+
+	return testBackend{
+		backend:        bb,
+		TestDBProvider: dbp,
+	}, ctx
+}
+
+func TestSqlPruneHistoryRequest_Validate(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		req     sqlPruneHistoryRequest
+		wantErr string
+	}{
+		{
+			name: "valid namespaced key",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "apps",
+					Resource:  "deployments",
+					Name:      "my-deploy",
+				},
+				HistoryLimit: 10,
+			},
+		},
+		{
+			name: "valid cluster-scoped key (no namespace)",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "",
+					Group:     "cluster.example.io",
+					Resource:  "clusterresources",
+					Name:      "my-cluster-resource",
+				},
+				HistoryLimit: 10,
+			},
+		},
+		{
+			name: "missing key",
+			req: sqlPruneHistoryRequest{
+				HistoryLimit: 10,
+			},
+			wantErr: "missing key",
+		},
+		{
+			name: "missing group",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Resource:  "deployments",
+					Name:      "my-deploy",
+				},
+				HistoryLimit: 10,
+			},
+			wantErr: "missing group",
+		},
+		{
+			name: "missing resource",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "apps",
+					Name:      "my-deploy",
+				},
+				HistoryLimit: 10,
+			},
+			wantErr: "missing resource",
+		},
+		{
+			name: "invalid history limit",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "apps",
+					Resource:  "deployments",
+					Name:      "my-deploy",
+				},
+				HistoryLimit: 0,
+			},
+			wantErr: "history limit must be greater than zero",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			err := tc.req.Validate()
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }

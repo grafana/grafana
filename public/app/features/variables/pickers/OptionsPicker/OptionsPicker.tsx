@@ -1,12 +1,17 @@
 import { css } from '@emotion/css';
-import { ComponentType, PureComponent } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { type ComponentType, PureComponent } from 'react';
+import { connect, type ConnectedProps } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
-import { LoadingState, VariableOption, VariableWithMultiSupport, VariableWithOptions } from '@grafana/data';
+import {
+  LoadingState,
+  type VariableOption,
+  type VariableWithMultiSupport,
+  type VariableWithOptions,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { ClickOutsideWrapper } from '@grafana/ui';
-import { StoreState, ThunkDispatch } from 'app/types/store';
+import { type StoreState, type ThunkDispatch } from 'app/types/store';
 
 import { VARIABLE_PREFIX } from '../../constants';
 import { isMulti } from '../../guard';
@@ -14,15 +19,15 @@ import { getVariableQueryRunner } from '../../query/VariableQueryRunner';
 import { formatVariableLabel } from '../../shared/formatVariable';
 import { toKeyedAction } from '../../state/keyedVariablesReducer';
 import { getVariablesState } from '../../state/selectors';
-import { KeyedVariableIdentifier } from '../../state/types';
+import { type KeyedVariableIdentifier } from '../../state/types';
 import { toKeyedVariableIdentifier } from '../../utils';
 import { VariableInput } from '../shared/VariableInput';
 import { VariableLink } from '../shared/VariableLink';
-import VariableOptions from '../shared/VariableOptions';
-import { NavigationKey, VariablePickerProps } from '../types';
+import { VariableOptions } from '../shared/VariableOptions';
+import { type NavigationKey, type VariablePickerProps } from '../types';
 
 import { commitChangesToVariable, filterOrSearchOptions, navigateOptions, openOptions } from './actions';
-import { initialOptionPickerState, OptionsPickerState, toggleAllOptions, toggleOption } from './reducer';
+import { initialOptionPickerState, type OptionsPickerState, toggleAllOptions, toggleOption } from './reducer';
 
 export const optionPickerFactory = <Model extends VariableWithOptions | VariableWithMultiSupport>(): ComponentType<
   VariablePickerProps<Model>

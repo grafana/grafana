@@ -34,25 +34,15 @@ jobs:
           path: './pr'
           persist-credentials: false
 
-      - uses: actions/setup-node@v6
+      - name: Setup Node
+        uses: ./pr/.github/actions/setup-node
         with:
-          node-version-file: './pr/.nvmrc'
+          cwd: './pr'
 
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
-
-      - name: Restore yarn cache
-        uses: actions/cache@v4
-        id: yarn-cache
+      - name: Install yarn dependencies
+        uses: ./pr/.github/actions/yarn-install
         with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: yarn-cache-folder-${{ hashFiles('**/yarn.lock', '.yarnrc.yml') }}
-          restore-keys: |
-            yarn-cache-folder-
-
-      - name: Install dependencies
-        run: yarn install --immutable
+          cwd: './pr'
 
       - name: Build packages
         run: yarn packages:build
@@ -80,31 +70,27 @@ jobs:
         working-directory: './base'
 
     steps:
+      # We need to check out the PR's branch to get actions from the same branch, so if they change in a PR this action can pick up those changes
+      - uses: actions/checkout@v5
+        with:
+          path: './pr'
+          persist-credentials: false
+
       - uses: actions/checkout@v5
         with:
           path: './base'
           ref: ${{ github.event.pull_request.base.ref }}
           persist-credentials: false
 
-      - uses: actions/setup-node@v6
+      - name: Setup Node
+        uses: ./pr/.github/actions/setup-node # run the action from the PR, pointing to the base checkout
         with:
-          node-version-file: './base/.nvmrc'
+          cwd: './base'
 
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
-
-      - name: Restore yarn cache
-        uses: actions/cache@v4
-        id: yarn-cache
+      - name: Install yarn dependencies
+        uses: ./pr/.github/actions/yarn-install # run the action from the PR, pointing to the base checkout
         with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: yarn-cache-folder-${{ hashFiles('**/yarn.lock', '.yarnrc.yml') }}
-          restore-keys: |
-            yarn-cache-folder-
-
-      - name: Install dependencies
-        run: yarn install --immutable
+          cwd: './base'
 
       - name: Build packages
         run: yarn packages:build
@@ -136,17 +122,16 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
 
       - name: Get built packages from pr
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: buildPr
 
       - name: Get built packages from base
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: buildBase
 
@@ -225,7 +210,7 @@ jobs:
           persist-credentials: false
 
       - name: 'Download artifact'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: levitate
 
@@ -300,10 +285,10 @@ jobs:
         if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && github.repository == 'grafana/grafana'
         uses: grafana/shared-workflows/actions/send-slack-message@7b628e7352c2dea057c565cc4fcd5564d5f396c0 #v1.0.0
         with:
-          channel-id: "C031SLFH6G0"
+          channel-id: "C08QATP6AE9"
           payload:  |
             {
-              "channel": "C031SLFH6G0",
+              "channel": "C08QATP6AE9",
               "text": ":warning: Possible breaking changes detected in *PR:* <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }} :warning:",
               "icon_emoji": ":grot:",
               "username": "Levitate Bot",
@@ -366,7 +351,7 @@ jobs:
       # Add reviewers
       # This is very weird, the actual request goes through (comes back with a 201), but does not assign the team.
       # Related issue: https://github.com/renovatebot/renovate/issues/1908
-      - name: Add "grafana/plugins-platform-frontend" as a reviewer
+      - name: Add "grafana/grafana-frontend-platform" as a reviewer
         if: steps.levitate-run.outputs.exit_code == 1
         uses: actions/github-script@v8
         env:
@@ -379,11 +364,11 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               reviewers: [],
-              team_reviewers: ['plugins-platform-frontend']
+              team_reviewers: ['grafana-frontend-platform']
             });
 
       # Remove reviewers (no more breaking changes)
-      - name: Remove "grafana/plugins-platform-frontend" from the list of reviewers
+      - name: Remove "grafana/grafana-frontend-platform" from the list of reviewers
         if: steps.levitate-run.outputs.exit_code == 0
         uses: actions/github-script@v8
         env:
@@ -396,7 +381,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               reviewers: [],
-              team_reviewers: ['plugins-platform-frontend']
+              team_reviewers: ['grafana-frontend-platform']
             });
 
       - name: Exit

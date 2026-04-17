@@ -5,15 +5,14 @@ import { reportInteraction } from '@grafana/runtime';
 
 import { PROVISIONING_URL } from '../../constants';
 import { getWorkflows } from '../../utils/data';
-import { Step } from '../Stepper';
-import { RepoType, StepStatusInfo, WizardFormData, WizardStep } from '../types';
+import { type Step } from '../Stepper';
+import { type RepoType, type StepStatusInfo, type WizardFormData, type WizardStep } from '../types';
 
 export interface UseWizardNavigationParams {
-  initialStep: WizardStep;
   steps: Array<Step<WizardStep>>;
   canSkipSync: boolean;
   setStepStatusInfo: (info: StepStatusInfo) => void;
-  createSyncJob: (requiresMigration: boolean) => Promise<unknown>;
+  createSyncJob: (requiresMigration: boolean, options?: { skipStatusUpdates?: boolean }) => Promise<unknown>;
   getValues: () => WizardFormData;
   repoType: RepoType;
   syncTarget: string;
@@ -25,14 +24,14 @@ export interface UseWizardNavigationReturn {
   completedSteps: WizardStep[];
   currentStepIndex: number;
   currentStepConfig: Step<WizardStep> | undefined;
-  visibleSteps: Array<Step<WizardStep>>;
+  steps: Array<Step<WizardStep>>;
   visibleStepIndex: number;
   goToNextStep: () => Promise<void>;
   goToPreviousStep: () => void;
+  goToStep: (stepId: WizardStep) => void;
 }
 
 export function useWizardNavigation({
-  initialStep,
   steps,
   canSkipSync,
   setStepStatusInfo,
@@ -43,17 +42,14 @@ export function useWizardNavigation({
   githubAuthType,
 }: UseWizardNavigationParams): UseWizardNavigationReturn {
   const navigate = useNavigate();
-  const [activeStep, setActiveStep] = useState<WizardStep>(initialStep);
-  const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
-
-  const visibleSteps = useMemo(() => steps.filter((s) => s.id !== 'authType'), [steps]);
+  // local file provisioning has no auth type step
+  const [activeStep, setActiveStep] = useState<WizardStep>(repoType === 'local' ? 'connection' : 'authType');
+  // local file provisioning will always have the first step (authType) step completed since we skipped it
+  const [completedSteps, setCompletedSteps] = useState<WizardStep[]>(() => (repoType === 'local' ? ['authType'] : []));
 
   const currentStepIndex = useMemo(() => steps.findIndex((s) => s.id === activeStep), [steps, activeStep]);
   const currentStepConfig = useMemo(() => steps[currentStepIndex], [steps, currentStepIndex]);
-  const visibleStepIndex = useMemo(
-    () => visibleSteps.findIndex((s) => s.id === activeStep),
-    [visibleSteps, activeStep]
-  );
+  const visibleStepIndex = useMemo(() => steps.findIndex((s) => s.id === activeStep), [steps, activeStep]);
 
   const goToPreviousStep = useCallback(() => {
     if (currentStepIndex > 0) {
@@ -89,17 +85,22 @@ export function useWizardNavigation({
         workflowsEnabled: getWorkflows(formData.repository),
         ...(repoType === 'github' && { githubAuthType }),
       });
-      navigate(PROVISIONING_URL);
+      // Navigate to repository status page instead of listing page
+      const repoName = formData.repositoryName;
+      if (repoName) {
+        navigate(`${PROVISIONING_URL}/${repoName}`);
+      } else {
+        navigate(PROVISIONING_URL);
+      }
     } else {
       let nextStepIndex = currentStepIndex + 1;
 
       if (activeStep === 'bootstrap' && canSkipSync) {
         nextStepIndex = currentStepIndex + 2;
 
-        const job = await createSyncJob(false);
-        if (!job) {
-          return;
-        }
+        // Fire job in background, don't wait for result - the job will be done in the background
+        // and we don't care about it when skipping sync
+        createSyncJob(false, { skipStatusUpdates: true });
       }
 
       if (nextStepIndex >= steps.length) {
@@ -131,14 +132,33 @@ export function useWizardNavigation({
     setStepStatusInfo,
   ]);
 
+  const goToStep = useCallback(
+    (stepId: WizardStep) => {
+      const targetIndex = steps.findIndex((s) => s.id === stepId);
+      if (targetIndex >= 0) {
+        setActiveStep(stepId);
+        // Only keep steps completed before the target
+        setCompletedSteps((prev) =>
+          prev.filter((s) => {
+            const sIndex = steps.findIndex((st) => st.id === s);
+            return sIndex < targetIndex;
+          })
+        );
+        setStepStatusInfo({ status: 'idle' });
+      }
+    },
+    [steps, setStepStatusInfo]
+  );
+
   return {
     activeStep,
     completedSteps,
     currentStepIndex,
     currentStepConfig,
-    visibleSteps,
+    steps,
     visibleStepIndex,
     goToNextStep,
     goToPreviousStep,
+    goToStep,
   };
 }

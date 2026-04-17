@@ -7,6 +7,7 @@ package v0alpha1
 // SyncJobOptionsApplyConfiguration represents a declarative configuration of the SyncJobOptions type for use
 // with apply.
 type SyncJobOptionsApplyConfiguration struct {
+	// Incremental synchronization for versioned repositories
 	Incremental *bool `json:"incremental,omitempty"`
 }
 

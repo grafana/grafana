@@ -6,20 +6,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"slices"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/prometheus/alertmanager/pkg/labels"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -102,7 +101,7 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 		logger.Debug("Deleted alert rule versions", "count", rows)
 
 		if len(versions) > 0 {
-			_, err = sess.Insert(versions)
+			_, err = sess.BulkInsert(alertRuleVersion{}, versions, sqlstore.NativeSettingsForDialect(st.SQLStore.GetDialect()))
 			if err != nil {
 				return fmt.Errorf("failed to persist deleted rule for recovery: %w", err)
 			}
@@ -171,6 +170,69 @@ func (st DBstore) IncreaseVersionForAllRulesInNamespaces(ctx context.Context, or
 		return sess.Table(alertRule{}).Where("org_id = ?", orgID).In("namespace_uid", namespaceUIDs).Find(&keys)
 	})
 	return keys, err
+}
+
+// getFolderFullpaths fetches fullpaths for multiple folders using a background user.
+// Returns a map of folder UID -> fullpath, or nil if FolderService is not configured.
+func (st DBstore) getFolderFullpaths(ctx context.Context, orgID int64, folderUIDs []string) (map[string]string, error) {
+	if st.FolderService == nil {
+		return nil, fmt.Errorf("folder service is not configured")
+	}
+	bgUser := accesscontrol.BackgroundUser("ngalert", orgID, org.RoleAdmin, []accesscontrol.Permission{
+		{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersAll},
+	})
+	folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
+		OrgID:        orgID,
+		UIDs:         folderUIDs,
+		WithFullpath: true,
+		SignedInUser: bgUser,
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]string, len(folders))
+	for _, f := range folders {
+		result[f.UID] = f.Fullpath
+	}
+	return result, nil
+}
+
+// UpdateFolderFullpathsForFolders updates the folder_fullpath column for all alert rules
+// in the specified folders using the K8s folder service.
+func (st DBstore) UpdateFolderFullpathsForFolders(ctx context.Context, orgID int64, folderUIDs []string) error {
+	if len(folderUIDs) == 0 {
+		return nil
+	}
+
+	logger := st.Logger.New("org_id", orgID, "folder_uid_count", len(folderUIDs))
+
+	folderPaths, err := st.getFolderFullpaths(ctx, orgID, folderUIDs)
+	if err != nil {
+		logger.Error("Failed to fetch folders from folder service", "error", err)
+		return err
+	}
+
+	// Update alert rules for each folder
+	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		for _, folderUID := range folderUIDs {
+			fullpath, ok := folderPaths[folderUID]
+			if !ok {
+				logger.Warn("Folder not found, skipping fullpath update", "folder_uid", folderUID)
+				continue
+			}
+
+			// Update all rules in this folder
+			_, err := sess.Table(alertRule{}).
+				Where("org_id = ? AND namespace_uid = ?", orgID, folderUID).
+				MustCols("folder_fullpath").
+				Update(map[string]any{"folder_fullpath": fullpath})
+			if err != nil {
+				logger.Error("Failed to update folder_fullpath for folder", "error", err, "folder_uid", folderUID)
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 // GetAlertRuleByUID is a handler for retrieving an alert rule from that database by its UID and organisation ID.
@@ -358,11 +420,73 @@ func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmode
 	return result, err
 }
 
+// orgNamespaces represents a collection of unique namespace UIDs for a specific organization.
+type orgNamespaces struct {
+	OrgID         int64
+	NamespaceUIDs []string
+}
+
+// collectNamespaceUIDsByOrg extracts unique namespace UIDs grouped by org ID from a slice of alert rules.
+// Returns a slice of orgNamespaces, one per organization.
+func collectNamespaceUIDsByOrg(rules []*ngmodels.AlertRule) []orgNamespaces {
+	// Use map to collect unique namespace UIDs per org
+	namespaceUIDsByOrg := make(map[int64]map[string]struct{})
+	for _, rule := range rules {
+		if rule.NamespaceUID != "" {
+			if namespaceUIDsByOrg[rule.OrgID] == nil {
+				namespaceUIDsByOrg[rule.OrgID] = make(map[string]struct{})
+			}
+			namespaceUIDsByOrg[rule.OrgID][rule.NamespaceUID] = struct{}{}
+		}
+	}
+
+	// Convert to slice of orgNamespaces
+	result := make([]orgNamespaces, 0, len(namespaceUIDsByOrg))
+	for orgID, namespaceUIDs := range namespaceUIDsByOrg {
+		uids := make([]string, 0, len(namespaceUIDs))
+		for uid := range namespaceUIDs {
+			uids = append(uids, uid)
+		}
+		result = append(result, orgNamespaces{
+			OrgID:         orgID,
+			NamespaceUIDs: uids,
+		})
+	}
+	return result
+}
+
+// fetchFolderFullpathsByOrg fetches folder fullpaths for all namespace UIDs grouped by org ID.
+// Returns a map where keys are org IDs and values are maps of namespace UID to folder fullpath.
+// If fetching fails for an org, that org will not be in the result map.
+func (st DBstore) fetchFolderFullpathsByOrg(ctx context.Context, orgNamespaces []orgNamespaces) map[int64]map[string]string {
+	folderFullpathsByOrg := make(map[int64]map[string]string)
+	for _, org := range orgNamespaces {
+		paths, err := st.getFolderFullpaths(ctx, org.OrgID, org.NamespaceUIDs)
+		if err != nil {
+			st.Logger.Warn("Failed to fetch folder fullpaths", "org_id", org.OrgID, "error", err)
+			continue
+		}
+		if paths != nil {
+			folderFullpathsByOrg[org.OrgID] = paths
+		}
+	}
+	return folderFullpathsByOrg
+}
+
 // InsertAlertRules is a handler for creating/updating alert rules.
 // Returns the UID and ID of rules that were created in the same order as the input rules.
 func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, rules []ngmodels.InsertRule) ([]ngmodels.AlertRuleKeyWithId, error) {
 	ids := make([]ngmodels.AlertRuleKeyWithId, 0, len(rules))
 	keys := make([]ngmodels.AlertRuleKey, 0, len(rules))
+
+	alertRules := make([]*ngmodels.AlertRule, len(rules))
+	for i := range rules {
+		alertRules[i] = &rules[i].AlertRule
+	}
+
+	orgNamespaces := collectNamespaceUIDsByOrg(alertRules)
+	folderFullpathsByOrg := st.fetchFolderFullpathsByOrg(ctx, orgNamespaces)
+
 	return ids, st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		newRules := make([]alertRule, 0, len(rules))
 		ruleVersions := make([]alertRuleVersion, 0, len(rules))
@@ -381,6 +505,13 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			}
 			if err := (&r).PreSave(TimeNow, user); err != nil {
 				return err
+			}
+
+			// Populate folder fullpath from pre-fetched map
+			if r.NamespaceUID != "" {
+				if orgPaths, ok := folderFullpathsByOrg[r.OrgID]; ok {
+					r.FolderFullpath = orgPaths[r.NamespaceUID]
+				}
 			}
 
 			converted, err := alertRuleFromModelsAlertRule(r.AlertRule)
@@ -432,6 +563,14 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 
 // UpdateAlertRules is a handler for updating alert rules.
 func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, rules []ngmodels.UpdateRule) error {
+	alertRules := make([]*ngmodels.AlertRule, len(rules))
+	for i := range rules {
+		alertRules[i] = &rules[i].New
+	}
+
+	orgNamespaces := collectNamespaceUIDsByOrg(alertRules)
+	folderFullpathsByOrg := st.fetchFolderFullpathsByOrg(ctx, orgNamespaces)
+
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		err := st.preventIntermediateUniqueConstraintViolations(sess, rules)
 		if err != nil {
@@ -453,6 +592,14 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			if err := (&r.New).PreSave(TimeNow, user); err != nil {
 				return err
 			}
+
+			// Populate folder fullpath from pre-fetched map
+			if r.New.NamespaceUID != "" {
+				if orgPaths, ok := folderFullpathsByOrg[r.New.OrgID]; ok {
+					r.New.FolderFullpath = orgPaths[r.New.NamespaceUID]
+				}
+			}
+
 			converted, err := alertRuleFromModelsAlertRule(r.New)
 			if err != nil {
 				return fmt.Errorf("failed to convert alert rule %s to storage model: %w", r.New.UID, err)
@@ -647,12 +794,12 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 		opts := AlertRuleConvertOptions{}
 		if query.Compact {
 			opts.ExcludeAlertQueries = true
-			opts.ExcludeNotificationSettings = true
+			opts.ExcludeContactPointRouting = true
 			opts.ExcludeMetadata = true
 
 			if query.ReceiverName != "" || query.TimeIntervalName != "" {
-				// Need NotificationSettings for these filters
-				opts.ExcludeNotificationSettings = false
+				// Need ContactPointRouting for these filters
+				opts.ExcludeContactPointRouting = false
 			}
 
 			if query.HasPrometheusRuleDefinition != nil {
@@ -683,6 +830,9 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 			key := ngmodels.GroupCursor{
 				NamespaceUID: converted.NamespaceUID,
 				RuleGroup:    converted.RuleGroup,
+			}
+			if query.SortByFullpath {
+				key.FolderFullpath = converted.FolderFullpath
 			}
 			if key != cursor {
 				// Check if we've reached the group limit
@@ -718,26 +868,45 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 }
 
 func buildGroupCursorCondition(sess *xorm.Session, c ngmodels.GroupCursor) *xorm.Session {
+	// We need to handle this here otherwise we end up checking rule_group > "no_group_for_rule..."
+	// and skipping everything
+	ruleGroup := c.RuleGroup
+	if ngmodels.IsNoGroupRuleGroup(ruleGroup) {
+		ruleGroup = ""
+	}
+
+	if c.FolderFullpath != "" {
+		return sess.And(
+			"((folder_fullpath > ?) OR (folder_fullpath = ? AND namespace_uid > ?) OR (folder_fullpath = ? AND namespace_uid = ? AND rule_group > ?))",
+			c.FolderFullpath,
+			c.FolderFullpath, c.NamespaceUID,
+			c.FolderFullpath, c.NamespaceUID, ruleGroup,
+		)
+	}
+	// fallback to previous cursor condition if folder fullpath is not available, this means that pagination will be less efficient as it cannot take advantage of folder fullpath ordering, but at least it will work and not return duplicate or missing groups.
 	return sess.And(
 		"((namespace_uid > ?) OR (namespace_uid = ? AND rule_group > ?))",
-		c.NamespaceUID, c.NamespaceUID, c.RuleGroup,
+		c.NamespaceUID, c.NamespaceUID, ruleGroup,
 	)
 }
 
 func shouldIncludeRule(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesExtendedQuery, groupsMap map[string]struct{}) bool {
+	settings := rule.ContactPointRouting()
 	if query.ReceiverName != "" {
-		if !slices.ContainsFunc(rule.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
-			return settings.Receiver == query.ReceiverName
-		}) {
+		if settings == nil {
+			return false
+		}
+		if settings.Receiver != query.ReceiverName {
 			return false
 		}
 	}
 
 	if query.TimeIntervalName != "" {
-		if !slices.ContainsFunc(rule.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
-			return slices.Contains(settings.MuteTimeIntervals, query.TimeIntervalName) ||
-				slices.Contains(settings.ActiveTimeIntervals, query.TimeIntervalName)
-		}) {
+		if settings == nil {
+			return false
+		}
+		if !slices.Contains(settings.MuteTimeIntervals, query.TimeIntervalName) &&
+			!slices.Contains(settings.ActiveTimeIntervals, query.TimeIntervalName) {
 			return false
 		}
 	}
@@ -847,35 +1016,13 @@ func matchersMatchLabels(matchers labels.Matchers, lbls map[string]string) bool 
 	return true
 }
 
-// nolint:gocyclo
-func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.ListAlertRulesExtendedQuery) (q *xorm.Session, groupsSet map[string]struct{}, err error) {
-	q = sess.Table("alert_rule")
-	if query.OrgID >= 0 {
-		q = q.Where("org_id = ?", query.OrgID)
-	}
-
-	if query.DashboardUID != "" {
-		q = q.Where("dashboard_uid = ?", query.DashboardUID)
-		if query.PanelID != 0 {
-			q = q.Where("panel_id = ?", query.PanelID)
-		}
-	}
-
-	if len(query.NamespaceUIDs) > 0 {
-		args, in := getINSubQueryArgs(query.NamespaceUIDs)
-		q = q.Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Join(in, ",")), args...)
-	}
-
-	if len(query.RuleUIDs) > 0 {
-		args, in := getINSubQueryArgs(query.RuleUIDs)
-		q = q.Where(fmt.Sprintf("uid IN (%s)", strings.Join(in, ",")), args...)
-	}
-
+// This will generate the appropriate uid filter for any groups with the no group prefix
+func buildRuleGroupFilter(q *xorm.Session, ruleGroups []string) (*xorm.Session, map[string]struct{}, error) {
 	var noGroupRuleGroupRuleUIDs []string
 	var realGroups []string
-	if len(query.RuleGroups) > 0 {
-		groupsSet = make(map[string]struct{})
-		for _, group := range query.RuleGroups {
+	if len(ruleGroups) > 0 {
+		groupsSet := make(map[string]struct{})
+		for _, group := range ruleGroups {
 			if ngmodels.IsNoGroupRuleGroup(group) {
 				noGroupRuleGroup, err := ngmodels.ParseNoRuleGroup(group)
 				if err != nil {
@@ -903,6 +1050,88 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 			q = q.Where(fmt.Sprintf("rule_group IN (%s)", strings.Join(groupIn, ",")), groupArgs...).Or(
 				fmt.Sprintf("uid IN (%s)", strings.Join(ruleUIDIn, ",")), ruleUIDArgs...,
 			)
+		}
+
+		return q, groupsSet, nil
+	}
+
+	return q, nil, nil
+}
+
+// buildRuleGroupExcludeFilter adds NOT IN conditions to exclude the given rule groups.
+// It mirrors the logic of buildRuleGroupFilter but uses NOT IN semantics.
+func buildRuleGroupExcludeFilter(q *xorm.Session, ruleGroups []string) (*xorm.Session, error) {
+	if len(ruleGroups) == 0 {
+		return q, nil
+	}
+	var noGroupRuleUIDs []string
+	var realGroups []string
+	for _, group := range ruleGroups {
+		if ngmodels.IsNoGroupRuleGroup(group) {
+			noGroupRuleGroup, err := ngmodels.ParseNoRuleGroup(group)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse rule group %q: %w", group, err)
+			}
+			noGroupRuleUIDs = append(noGroupRuleUIDs, noGroupRuleGroup.GetRuleUID())
+		} else {
+			realGroups = append(realGroups, group)
+		}
+	}
+	if len(realGroups) > 0 {
+		args, notIn := getINSubQueryArgs(realGroups)
+		q = q.Where(fmt.Sprintf("rule_group NOT IN (%s)", strings.Join(notIn, ",")), args...)
+	}
+	if len(noGroupRuleUIDs) > 0 {
+		args, notIn := getINSubQueryArgs(noGroupRuleUIDs)
+		q = q.Where(fmt.Sprintf("uid NOT IN (%s)", strings.Join(notIn, ",")), args...)
+	}
+	return q, nil
+}
+
+// nolint:gocyclo
+func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.ListAlertRulesExtendedQuery) (q *xorm.Session, groupsSet map[string]struct{}, err error) {
+	q = sess.Table("alert_rule")
+	if query.OrgID >= 0 {
+		q = q.Where("org_id = ?", query.OrgID)
+	}
+
+	if query.DashboardUID != "" {
+		q = q.Where("dashboard_uid = ?", query.DashboardUID)
+		if query.PanelID != 0 {
+			q = q.Where("panel_id = ?", query.PanelID)
+		}
+	}
+
+	if len(query.NamespaceUIDs) > 0 {
+		args, in := getINSubQueryArgs(query.NamespaceUIDs)
+		q = q.Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Join(in, ",")), args...)
+	}
+
+	if len(query.ExcludeNamespaceUIDs) > 0 {
+		args, notIn := getINSubQueryArgs(query.ExcludeNamespaceUIDs)
+		q = q.Where(fmt.Sprintf("namespace_uid NOT IN (%s)", strings.Join(notIn, ",")), args...)
+	}
+
+	if len(query.RuleUIDs) > 0 {
+		args, in := getINSubQueryArgs(query.RuleUIDs)
+		q = q.Where(fmt.Sprintf("uid IN (%s)", strings.Join(in, ",")), args...)
+	}
+
+	q, groupsSet, err = buildRuleGroupFilter(q, query.RuleGroups)
+	if err != nil {
+		return nil, groupsSet, err
+	}
+
+	q, err = buildRuleGroupExcludeFilter(q, query.ExcludeRuleGroups)
+	if err != nil {
+		return nil, groupsSet, err
+	}
+
+	if query.RuleGroupExists != nil {
+		if *query.RuleGroupExists {
+			q = q.Where("rule_group != ''")
+		} else {
+			q = q.Where("rule_group = ''")
 		}
 	}
 
@@ -988,11 +1217,23 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 	case ngmodels.RuleTypeFilterAll:
 		// no additional filter
 	default:
-		return nil, groupsSet, fmt.Errorf("unknown rule type filter %q", query.RuleType)
+		return nil, groupsSet, fmt.Errorf("unknown rule type filter %v", query.RuleType)
 	}
 
-	q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
+	if query.SortByFullpath {
+		q = applyListAlertRulesOrderByFullpath(q)
+	} else {
+		q = applyListAlertRulesOrderByNamespace(q)
+	}
 	return q, groupsSet, nil
+}
+
+func applyListAlertRulesOrderByNamespace(q *xorm.Session) *xorm.Session {
+	return q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
+}
+
+func applyListAlertRulesOrderByFullpath(q *xorm.Session) *xorm.Session {
+	return q.Asc("folder_fullpath", "namespace_uid", "rule_group", "rule_group_idx", "id")
 }
 
 func (st DBstore) handleRuleRow(rows *xorm.Rows, query *ngmodels.ListAlertRulesExtendedQuery, groupsSet map[string]struct{}) (*ngmodels.AlertRule, bool) {
@@ -1007,17 +1248,21 @@ func (st DBstore) handleRuleRow(rows *xorm.Rows, query *ngmodels.ListAlertRulesE
 		st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "ListAlertRules", "error", err)
 		return nil, false
 	}
+	settings := converted.ContactPointRouting()
 	if query.ReceiverName != "" { // remove false-positive hits from the result
-		if !slices.ContainsFunc(converted.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
-			return settings.Receiver == query.ReceiverName
-		}) {
+		if settings == nil {
+			return nil, false
+		}
+		if settings.Receiver != query.ReceiverName {
 			return nil, false
 		}
 	}
 	if query.TimeIntervalName != "" {
-		if !slices.ContainsFunc(converted.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
-			return slices.Contains(settings.MuteTimeIntervals, query.TimeIntervalName) || slices.Contains(settings.ActiveTimeIntervals, query.TimeIntervalName)
-		}) {
+		if settings == nil {
+			return nil, false
+		}
+		if !slices.Contains(settings.MuteTimeIntervals, query.TimeIntervalName) &&
+			!slices.Contains(settings.ActiveTimeIntervals, query.TimeIntervalName) {
 			return nil, false
 		}
 	}
@@ -1068,6 +1313,13 @@ func decodeCursor(token string) (continueCursor, error) {
 }
 
 func buildCursorCondition(sess *xorm.Session, c continueCursor) *xorm.Session {
+	// We need to handle this here otherwise we end up checking rule_group > "no_group_for_rule..."
+	// and skipping everything
+	ruleGroup := c.RuleGroup
+	if ngmodels.IsNoGroupRuleGroup(ruleGroup) {
+		ruleGroup = ""
+	}
+
 	return sess.And(`(
 		(namespace_uid > ?)
 		OR (namespace_uid = ? AND rule_group > ?)
@@ -1075,9 +1327,9 @@ func buildCursorCondition(sess *xorm.Session, c continueCursor) *xorm.Session {
 		OR (namespace_uid = ? AND rule_group = ? AND rule_group_idx = ? AND id > ?)
 	)`,
 		c.NamespaceUID,
-		c.NamespaceUID, c.RuleGroup,
-		c.NamespaceUID, c.RuleGroup, c.RuleGroupIdx,
-		c.NamespaceUID, c.RuleGroup, c.RuleGroupIdx, c.ID,
+		c.NamespaceUID, ruleGroup,
+		c.NamespaceUID, ruleGroup, c.RuleGroupIdx,
+		c.NamespaceUID, ruleGroup, c.RuleGroupIdx, c.ID,
 	)
 }
 
@@ -1124,7 +1376,7 @@ func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodel
 	var result []ngmodels.AlertRuleKeyWithVersion
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		alertRulesSql := sess.Table("alert_rule").Select("org_id, uid, version")
-		var disabledOrgs []int64
+		disabledOrgs := make([]int64, 0, len(st.Cfg.DisabledOrgs))
 
 		for orgID := range st.Cfg.DisabledOrgs {
 			disabledOrgs = append(disabledOrgs, orgID)
@@ -1147,7 +1399,7 @@ func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodel
 func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error {
 	var rules []*ngmodels.AlertRule
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		var disabledOrgs []int64
+		disabledOrgs := make([]int64, 0, len(st.Cfg.DisabledOrgs))
 		for orgID := range st.Cfg.DisabledOrgs {
 			disabledOrgs = append(disabledOrgs, orgID)
 		}
@@ -1157,13 +1409,9 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 			alertRulesSql.NotIn("org_id", disabledOrgs)
 		}
 
-		var groupsMap map[string]struct{}
-		if len(query.RuleGroups) > 0 {
-			alertRulesSql.In("rule_group", query.RuleGroups)
-			groupsMap = make(map[string]struct{}, len(query.RuleGroups))
-			for _, group := range query.RuleGroups {
-				groupsMap[group] = struct{}{}
-			}
+		alertRulesSql, groupsMap, err := buildRuleGroupFilter(alertRulesSql, query.RuleGroups)
+		if err != nil {
+			return err
 		}
 
 		rule := new(alertRule)
@@ -1224,13 +1472,13 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 				schedulerUser := accesscontrol.BackgroundUser("grafana_scheduler", orgID, org.RoleAdmin,
 					[]accesscontrol.Permission{
 						{
-							Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll,
+							Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersAll,
 						},
 					})
 
 				folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
 					OrgID:        orgID,
-					UIDs:         maps.Keys(uids),
+					UIDs:         slices.Collect(maps.Keys(uids)),
 					WithFullpath: true,
 					SignedInUser: schedulerUser,
 				})
@@ -1249,7 +1497,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
 func (st DBstore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
 	for _, folderUID := range folderUIDs {
-		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
+		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
 		canSave, err := st.AccessControl.Evaluate(ctx, user, evaluator)
 		if err != nil {
 			st.Logger.Error("Failed to evaluate access control", "error", err)
@@ -1257,7 +1505,7 @@ func (st DBstore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs [
 		}
 		if !canSave {
 			st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user")
-			return dashboards.ErrFolderAccessDenied
+			return folder.ErrAccessDenied
 		}
 
 		rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
@@ -1324,8 +1572,8 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 	return nil
 }
 
-// ListNotificationSettings fetches all notification settings for given organization
-func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListNotificationSettingsQuery) (map[ngmodels.AlertRuleKey][]ngmodels.NotificationSettings, error) {
+// ListContactPointRoutings fetches all notification settings for given organization
+func (st DBstore) ListContactPointRoutings(ctx context.Context, q ngmodels.ListContactPointRoutingsQuery) (map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting, error) {
 	var rules []alertRule
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		query := sess.Table(alertRule{}).Select("uid, notification_settings").Where("org_id = ?", q.OrgID)
@@ -1354,7 +1602,7 @@ func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListN
 	if err != nil {
 		return nil, err
 	}
-	result := make(map[ngmodels.AlertRuleKey][]ngmodels.NotificationSettings, len(rules))
+	result := make(map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting, len(rules))
 	for _, rule := range rules {
 		if rule.NotificationSettings == "" {
 			continue
@@ -1363,23 +1611,20 @@ func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListN
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert notification settings %s to models: %w", rule.UID, err)
 		}
-		ns := make([]ngmodels.NotificationSettings, 0, len(rule.NotificationSettings))
-		for _, setting := range converted {
-			if q.ReceiverName != "" && q.ReceiverName != setting.Receiver { // currently, there can be only one setting. If in future there are more, we will return all settings of a rule that has a setting with receiver
-				continue
-			}
-			if q.TimeIntervalName != "" && !slices.Contains(setting.MuteTimeIntervals, q.TimeIntervalName) && !slices.Contains(setting.ActiveTimeIntervals, q.TimeIntervalName) {
-				continue
-			}
-			ns = append(ns, setting)
+		if converted == nil {
+			continue
 		}
-		if len(ns) > 0 {
-			key := ngmodels.AlertRuleKey{
-				OrgID: q.OrgID,
-				UID:   rule.UID,
-			}
-			result[key] = ns
+
+		if q.ReceiverName != "" && q.ReceiverName != converted.Receiver {
+			continue
 		}
+		if q.TimeIntervalName != "" && !slices.Contains(converted.MuteTimeIntervals, q.TimeIntervalName) && !slices.Contains(converted.ActiveTimeIntervals, q.TimeIntervalName) {
+			continue
+		}
+		result[ngmodels.AlertRuleKey{
+			OrgID: q.OrgID,
+			UID:   rule.UID,
+		}] = *converted
 	}
 	return result, nil
 }
@@ -1502,10 +1747,13 @@ func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgI
 		}
 
 		r := rule.Copy()
-		for idx := range r.NotificationSettings {
-			if r.NotificationSettings[idx].Receiver == oldReceiver {
-				r.NotificationSettings[idx].Receiver = newReceiver
-			}
+		settings := r.ContactPointRouting()
+		if settings == nil {
+			continue
+		}
+
+		if settings.Receiver == oldReceiver {
+			settings.Receiver = newReceiver
 		}
 
 		updates = append(updates, ngmodels.UpdateRule{
@@ -1577,16 +1825,18 @@ func (st DBstore) RenameTimeIntervalInNotificationSettings(
 		}
 
 		r := rule.Copy()
-		for idx := range r.NotificationSettings {
-			for mtIdx := range r.NotificationSettings[idx].MuteTimeIntervals {
-				if r.NotificationSettings[idx].MuteTimeIntervals[mtIdx] == oldTimeInterval {
-					r.NotificationSettings[idx].MuteTimeIntervals[mtIdx] = newTimeInterval
-				}
+		settings := r.ContactPointRouting()
+		if settings == nil {
+			continue
+		}
+		for mtIdx := range settings.MuteTimeIntervals {
+			if settings.MuteTimeIntervals[mtIdx] == oldTimeInterval {
+				settings.MuteTimeIntervals[mtIdx] = newTimeInterval
 			}
-			for mtIdx := range r.NotificationSettings[idx].ActiveTimeIntervals {
-				if r.NotificationSettings[idx].ActiveTimeIntervals[mtIdx] == oldTimeInterval {
-					r.NotificationSettings[idx].ActiveTimeIntervals[mtIdx] = newTimeInterval
-				}
+		}
+		for mtIdx := range settings.ActiveTimeIntervals {
+			if settings.ActiveTimeIntervals[mtIdx] == oldTimeInterval {
+				settings.ActiveTimeIntervals[mtIdx] = newTimeInterval
 			}
 		}
 

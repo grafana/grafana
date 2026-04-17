@@ -1,32 +1,33 @@
 import { isArray } from 'lodash';
 import moment from 'moment';
-import { Observable, of } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 
 import {
-  AbstractLabelMatcher,
+  type AbstractLabelMatcher,
   AbstractLabelOperator,
   CoreApp,
-  DataQueryRequest,
-  DataQueryResponse,
+  type DataQueryRequest,
+  type DataQueryResponse,
   dateMath,
   dateTime,
+  FieldType,
   getFrameDisplayName,
-  MetricFindValue,
+  type MetricFindValue,
   PluginType,
-  ScopedVars,
+  type ScopedVars,
 } from '@grafana/data';
 import {
-  BackendSrvRequest,
+  type BackendSrvRequest,
   config,
-  FetchResponse,
+  type FetchResponse,
   getTemplateSrv,
-  TemplateSrv,
-  VariableInterpolation,
+  type TemplateSrv,
+  type VariableInterpolation,
 } from '@grafana/runtime';
 
 import { fromString } from './configuration/parseLokiLabelMappings';
 import { GraphiteDatasource } from './datasource';
-import { GraphiteQuery, GraphiteQueryType, GraphiteType } from './types';
+import { type GraphiteQuery, GraphiteQueryType, GraphiteType } from './types';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
 
 const fetchMock = jest.fn();
@@ -225,6 +226,62 @@ describe('graphiteDatasource', () => {
       expect(result.data[0].length).toBe(2);
       expect(result.data[0].refId).toBe('A');
       expect(result.data[1].refId).toBe('B');
+    });
+    it('strips refID suffix and full tagged path from tags.name (Metrictank aliasSub regression)', () => {
+      // Metrictank sets tags['name'] to the full internal series key when aliasSub
+      // is applied (e.g. "BytesReceived;host=web01;cluster=md1b;... A"). The
+      // joinByLabels(value:'name') transformation breaks because every series has a
+      // unique full path. Restore tags['name'] to the base metric name only.
+      const refIDMap = {
+        refIDA: 'A',
+        refIDB: 'B',
+      };
+      const result = ctx.ds.convertResponseToDataFrames(
+        createFetchResponse({
+          series: [
+            {
+              // target has the refID suffix; tags.name has the full Metrictank path without suffix
+              target: 'BytesReceived;host=web01;cluster=md1b refIDA',
+              tags: { name: 'BytesReceived;host=web01;cluster=md1b', host: 'web01', cluster: 'md1b' },
+              datapoints: [[100, 200]],
+            },
+            {
+              target: 'BytesReceived;host=web02;cluster=md1b refIDB',
+              tags: { name: 'BytesReceived;host=web02;cluster=md1b', host: 'web02', cluster: 'md1b' },
+              datapoints: [[200, 300]],
+            },
+          ],
+        }),
+        refIDMap
+      );
+
+      expect(result.data.length).toBe(2);
+      // tags['name'] must be just the base metric name — no semicolons, no refID suffix
+      const frame0Labels = result.data[0].fields[1]?.labels ?? {};
+      expect(frame0Labels['name']).toBe('BytesReceived');
+      const frame1Labels = result.data[1].fields[1]?.labels ?? {};
+      expect(frame1Labels['name']).toBe('BytesReceived');
+    });
+
+    it('leaves tags.name unchanged for standard graphite-web responses', () => {
+      // Standard graphite-web returns tags['name'] as the plain metric name with no
+      // semicolons, so the normalization should be a no-op.
+      const refIDMap = { refIDA: 'A' };
+      const result = ctx.ds.convertResponseToDataFrames(
+        createFetchResponse({
+          series: [
+            {
+              target: 'cpu.usage refIDA',
+              tags: { name: 'cpu.usage', host: 'web01' },
+              datapoints: [[100, 200]],
+            },
+          ],
+        }),
+        refIDMap
+      );
+
+      const frame0Labels = result.data[0].fields[1]?.labels ?? {};
+      expect(frame0Labels['name']).toBe('cpu.usage');
     });
   });
 
@@ -995,6 +1052,7 @@ describe('graphiteDatasource', () => {
         originalTargetMap
       );
       expect(results[2].target).toBe('asPercent(series1,series2)');
+      expect(results[2].targetFull).toBe('asPercent(series1,series2)');
     });
 
     it('should replace target placeholder for hidden series', () => {
@@ -1015,6 +1073,7 @@ describe('graphiteDatasource', () => {
         originalTargetMap
       );
       expect(results[0].target).toBe('asPercent(series1,sumSeries(series1))');
+      expect(results[0].targetFull).toBe('asPercent(series1,sumSeries(series1))');
     });
 
     it('should replace target placeholder when nesting query references', () => {
@@ -1035,6 +1094,7 @@ describe('graphiteDatasource', () => {
         originalTargetMap
       );
       expect(results[2].target).toBe('asPercent(series1,sumSeries(series1))');
+      expect(results[2].targetFull).toBe('asPercent(series1,sumSeries(series1))');
     });
 
     it('should replace target placeholder when nesting query references with template variables', () => {
@@ -1071,6 +1131,7 @@ describe('graphiteDatasource', () => {
         originalTargetMap
       );
       expect(results[2].target).toBe('asPercent(aMetricName,sumSeries(aMetricName))');
+      expect(results[2].targetFull).toBe('asPercent(aMetricName,sumSeries(aMetricName))');
     });
 
     it('should use scoped variables when nesting query references', () => {
@@ -1113,6 +1174,7 @@ describe('graphiteDatasource', () => {
       );
 
       expect(results[1].target).toBe('sumSeries(scopedValue)');
+      expect(results[1].targetFull).toBe('sumSeries(scopedValue)');
     });
 
     it('should apply scoped variables to nested references with hidden targets', () => {
@@ -1155,6 +1217,7 @@ describe('graphiteDatasource', () => {
       );
 
       expect(results[0].target).toBe('avg(web01.cpu)');
+      expect(results[0].targetFull).toBe('avg(web01.cpu)');
     });
 
     it('should not recursively replace queries that reference themselves', () => {
@@ -1169,6 +1232,9 @@ describe('graphiteDatasource', () => {
         originalTargetMap
       );
       expect(results[0].target).toBe(
+        'sumSeries(carbon.test.test-host.cpuUsage, sumSeries(carbon.test.test-host.cpuUsage, #A))'
+      );
+      expect(results[0].targetFull).toBe(
         'sumSeries(carbon.test.test-host.cpuUsage, sumSeries(carbon.test.test-host.cpuUsage, #A))'
       );
     });
@@ -1195,6 +1261,9 @@ describe('graphiteDatasource', () => {
         originalTargetMap
       );
       expect(results[0].target).toBe(
+        'sumSeries(carbon.test.test-host.cpuUsage, sumSeries(carbon.test.test-host.cpuUsage, #A, #B), add(carbon.test.test-host.cpuUsage, 1.5))'
+      );
+      expect(results[0].targetFull).toBe(
         'sumSeries(carbon.test.test-host.cpuUsage, sumSeries(carbon.test.test-host.cpuUsage, #A, #B), add(carbon.test.test-host.cpuUsage, 1.5))'
       );
     });
@@ -1244,6 +1313,7 @@ describe('graphiteDatasource', () => {
           originalTargetMap
         );
         expect(results[0].target).toEqual('my.b.*');
+        expect(results[0].targetFull).toEqual('my.b.*');
       });
 
       it('globs for more than one variable', () => {
@@ -1274,6 +1344,7 @@ describe('graphiteDatasource', () => {
         );
 
         expect(results[0].target).toEqual('my.{a,b}.*');
+        expect(results[0].targetFull).toEqual('my.{a,b}.*');
       });
     });
   });
@@ -1563,6 +1634,52 @@ describe('graphiteDatasource', () => {
       expect(requestOptions.url).toBe('/api/datasources/proxy/1/render');
       expect(data[0].text).toBe('apps.backend.backend_01');
       expect(data[1].text).toBe('apps.backend.backend_02');
+    });
+
+    it('should return metric names when queryType is GraphiteQueryType.MetricName in backend mode', async () => {
+      config.featureToggles.graphiteBackendMode = true;
+
+      const backendResponse: DataQueryResponse = {
+        data: [
+          {
+            fields: [
+              { name: 'time', type: FieldType.time, values: [1, 2], config: {} },
+              {
+                name: 'value',
+                type: FieldType.number,
+                values: [10, 12],
+                config: { displayNameFromDS: 'apps.backend.backend_01' },
+              },
+            ],
+            length: 2,
+          },
+          {
+            fields: [
+              { name: 'time', type: FieldType.time, values: [1, 2], config: {} },
+              {
+                name: 'value',
+                type: FieldType.number,
+                values: [10, 12],
+                config: { displayNameFromDS: 'apps.backend.backend_02' },
+              },
+            ],
+            length: 2,
+          },
+        ],
+      };
+      jest.spyOn(ctx.ds, 'query').mockReturnValue(of(backendResponse));
+
+      const variableQuery: GraphiteQuery = {
+        queryType: GraphiteQueryType.MetricName,
+        target: 'apps.backend.*',
+        refId: 'A',
+        datasource: ctx.ds,
+      };
+      const data = await ctx.ds.metricFindQuery(variableQuery);
+      expect(data[0].text).toBe('apps.backend.backend_01');
+      expect(data[1].text).toBe('apps.backend.backend_02');
+
+      config.featureToggles.graphiteBackendMode = false;
     });
   });
 

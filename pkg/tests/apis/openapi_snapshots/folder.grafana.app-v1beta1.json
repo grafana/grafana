@@ -136,17 +136,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderList"
                 }
               }
             }
@@ -198,12 +198,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
               }
             }
           },
@@ -215,12 +215,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -230,12 +230,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -245,12 +245,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -447,12 +447,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -504,12 +504,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
               }
             }
           },
@@ -521,12 +521,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -536,12 +536,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -721,12 +721,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -736,12 +736,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -799,7 +799,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderAccessInfo"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderAccessInfo"
                 }
               }
             }
@@ -848,7 +848,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderList"
                 }
               }
             }
@@ -897,7 +897,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.DescendantCounts"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.DescendantCounts"
                 }
               }
             }
@@ -946,7 +946,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderInfoList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderInfoList"
                 }
               }
             }
@@ -985,7 +985,7 @@
   },
   "components": {
     "schemas": {
-      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.DescendantCounts": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.DescendantCounts": {
         "type": "object",
         "required": [
           "counts"
@@ -1001,7 +1001,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.ResourceStats"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.ResourceStats"
                 }
               ]
             }
@@ -1015,11 +1015,16 @@
           {
             "group": "folder.grafana.app",
             "kind": "DescendantCounts",
+            "version": "v1"
+          },
+          {
+            "group": "folder.grafana.app",
+            "kind": "DescendantCounts",
             "version": "v1beta1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder": {
         "type": "object",
         "required": [
           "metadata",
@@ -1047,7 +1052,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderSpec"
               }
             ]
           }
@@ -1056,11 +1061,16 @@
           {
             "group": "folder.grafana.app",
             "kind": "Folder",
+            "version": "v1"
+          },
+          {
+            "group": "folder.grafana.app",
+            "kind": "Folder",
             "version": "v1beta1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderAccessInfo": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderAccessInfo": {
         "description": "Access control information for the current user",
         "type": "object",
         "required": [
@@ -1099,11 +1109,16 @@
           {
             "group": "folder.grafana.app",
             "kind": "FolderAccessInfo",
+            "version": "v1"
+          },
+          {
+            "group": "folder.grafana.app",
+            "kind": "FolderAccessInfo",
             "version": "v1beta1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderInfo": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderInfo": {
         "description": "FolderInfo briefly describes a folder -- unlike a folder resource, this is a partial record of the folder metadata used for navigating parents and children",
         "type": "object",
         "required": [
@@ -1135,7 +1150,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderInfoList": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderInfoList": {
         "description": "FolderInfoList returns a list of folder references (parents or children) Unlike FolderList, each item is not a full k8s object",
         "type": "object",
         "required": [
@@ -1152,7 +1167,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderInfo"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderInfo"
                 }
               ]
             },
@@ -1178,11 +1193,16 @@
           {
             "group": "folder.grafana.app",
             "kind": "FolderInfoList",
+            "version": "v1"
+          },
+          {
+            "group": "folder.grafana.app",
+            "kind": "FolderInfoList",
             "version": "v1beta1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderList": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderList": {
         "type": "object",
         "required": [
           "metadata",
@@ -1199,7 +1219,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               ]
             }
@@ -1221,11 +1241,16 @@
           {
             "group": "folder.grafana.app",
             "kind": "FolderList",
+            "version": "v1"
+          },
+          {
+            "group": "folder.grafana.app",
+            "kind": "FolderList",
             "version": "v1beta1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderSpec": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderSpec": {
         "type": "object",
         "required": [
           "title"
@@ -1240,7 +1265,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.ResourceStats": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.ResourceStats": {
         "type": "object",
         "required": [
           "group",
@@ -1419,7 +1444,7 @@
         }
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.FieldsV1": {
-        "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set, or a string representing a sub-field or item. The string will follow one of these four formats: 'f:<name>', where <name> is the name of a field in a struct, or key in a map 'v:<value>', where <value> is the exact json formatted value of a list item 'i:<index>', where <index> is position of a item in a list 'k:<keys>', where <keys> is a map of  a list item's key fields to their unique values If a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff",
+        "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set, or a string representing a sub-field or item. The string will follow one of these four formats: 'f:\u003cname\u003e', where \u003cname\u003e is the name of a field in a struct, or key in a map 'v:\u003cvalue\u003e', where \u003cvalue\u003e is the exact json formatted value of a list item 'i:\u003cindex\u003e', where \u003cindex\u003e is position of a item in a list 'k:\u003ckeys\u003e', where \u003ckeys\u003e is a map of  a list item's key fields to their unique values If a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff",
         "type": "object"
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta": {
@@ -1678,8 +1703,7 @@
               {
                 "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails"
               }
-            ],
-            "x-kubernetes-list-type": "atomic"
+            ]
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",

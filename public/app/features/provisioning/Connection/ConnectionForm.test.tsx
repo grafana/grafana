@@ -1,47 +1,25 @@
-import { QueryStatus } from '@reduxjs/toolkit/query';
+import { HttpResponse, delay, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { Connection } from 'app/api/clients/provisioning/v0alpha1';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
+import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
 
-import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
+import { setupProvisioningMswServer } from '../mocks/server';
 
 import { ConnectionForm } from './ConnectionForm';
 
-jest.mock('../hooks/useCreateOrUpdateConnection', () => ({
-  useCreateOrUpdateConnection: jest.fn(),
-}));
+setupProvisioningMswServer();
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
 }));
 
-const mockSubmitData = jest.fn();
-const mockUseCreateOrUpdateConnection = useCreateOrUpdateConnection as jest.MockedFunction<
-  typeof useCreateOrUpdateConnection
->;
-
-type MockRequestState = {
-  status: QueryStatus;
-  isLoading: boolean;
-  isSuccess: boolean;
-  isError: boolean;
-  error?: unknown;
-  reset: jest.Mock;
-};
-
-const createMockRequestState = (overrides: Partial<MockRequestState> = {}): MockRequestState => ({
-  status: QueryStatus.uninitialized,
-  isLoading: false,
-  isSuccess: false,
-  isError: false,
-  reset: jest.fn(),
-  ...overrides,
-});
-
 const createMockConnection = (overrides: Partial<Connection> = {}): Connection => ({
   metadata: { name: 'test-connection' },
   spec: {
+    title: 'Test Connection',
     type: 'github',
     url: 'https://github.com/settings/installations/12345678',
     github: {
@@ -53,43 +31,40 @@ const createMockConnection = (overrides: Partial<Connection> = {}): Connection =
     privateKey: { name: 'configured' },
   },
   status: {
-    state: 'connected',
     health: { healthy: true },
     observedGeneration: 1,
+    conditions: [
+      {
+        type: 'Ready',
+        status: 'True',
+        reason: 'Available',
+        message: 'Connection is available',
+        lastTransitionTime: new Date().toISOString(),
+        observedGeneration: 1,
+      },
+    ],
   },
   ...overrides,
 });
 
 interface SetupOptions {
   data?: Connection;
-  requestState?: Partial<MockRequestState>;
 }
 
 function setup(options: SetupOptions = {}) {
-  const { data, requestState = {} } = options;
+  const { data } = options;
 
-  mockUseCreateOrUpdateConnection.mockReturnValue([
-    mockSubmitData,
-    createMockRequestState(requestState) as unknown as ReturnType<typeof useCreateOrUpdateConnection>[1],
-  ]);
-
-  return {
-    mockSubmitData,
-    ...render(<ConnectionForm data={data} />),
-  };
+  return render(<ConnectionForm data={data} />);
 }
 
 describe('ConnectionForm', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockSubmitData.mockResolvedValue(undefined);
-  });
-
   describe('Rendering - Create Mode', () => {
     it('should render all form fields', () => {
       setup();
 
       expect(screen.getByLabelText(/^Provider/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Title/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Description/)).toBeInTheDocument();
       expect(screen.getByLabelText(/^GitHub App ID/)).toBeInTheDocument();
       expect(screen.getByLabelText(/^GitHub Installation ID/)).toBeInTheDocument();
       expect(screen.getByLabelText(/^Private Key \(PEM\)/)).toBeInTheDocument();
@@ -137,23 +112,50 @@ describe('ConnectionForm', () => {
 
   describe('Form Validation', () => {
     it('should show required error and not submit when fields are empty', async () => {
-      const { user, mockSubmitData } = setup();
+      const { user } = setup();
 
       const saveButton = screen.getByRole('button', { name: /^save$/i });
       await user.click(saveButton);
 
       await waitFor(() => {
-        expect(screen.getAllByText('This field is required')).toHaveLength(3);
+        // Title, App ID, Installation ID, and Private Key are all required
+        expect(screen.getAllByText('This field is required')).toHaveLength(4);
       });
+    });
 
-      expect(mockSubmitData).not.toHaveBeenCalled();
+    it('should show validation error for private key containing hidden characters', async () => {
+      const { user } = setup();
+
+      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
+      await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
+      await user.click(screen.getByLabelText(/^Private Key \(PEM\)/));
+      await user.paste('-----BEGIN RSA PRIVATE KEY-----\u200B...');
+
+      await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/hidden characters/i)).toBeInTheDocument();
+      });
     });
   });
 
   describe('Form Submission - Create', () => {
-    it('should call submitData with correct data on valid submission', async () => {
-      const { user, mockSubmitData } = setup();
+    it('should send correct request body on valid submission', async () => {
+      let capturedBody: unknown = null;
+      server.use(
+        http.post(`${BASE}/connections`, async ({ request }) => {
+          capturedBody = await request.json();
+          return HttpResponse.json({
+            metadata: { name: 'new-conn' },
+            spec: { type: 'github', title: 'My GitHub App' },
+          });
+        })
+      );
 
+      const { user } = setup();
+
+      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
@@ -162,72 +164,100 @@ describe('ConnectionForm', () => {
       await user.click(saveButton);
 
       await waitFor(() => {
-        expect(mockSubmitData).toHaveBeenCalledWith(
-          {
-            type: 'github',
-            github: {
-              appID: '123456',
-              installationID: '12345678',
-            },
+        expect(capturedBody).not.toBeNull();
+      });
+
+      // The hook sends a Connection object with spec and base64-encoded secure field
+      expect(capturedBody).toMatchObject({
+        spec: {
+          title: 'My GitHub App',
+          type: 'github',
+          github: {
+            appID: '123456',
+            installationID: '12345678',
           },
-          '-----BEGIN RSA PRIVATE KEY-----'
-        );
+        },
       });
     });
   });
 
   describe('Form Submission - Edit', () => {
     it('should allow submission without changing private key', async () => {
-      const { user, mockSubmitData } = setup({ data: createMockConnection() });
+      let capturedBody: unknown = null;
+      server.use(
+        http.put(`${BASE}/connections/:name`, async ({ request }) => {
+          capturedBody = await request.json();
+          return HttpResponse.json({
+            metadata: { name: 'test-connection' },
+            spec: { type: 'github', title: 'Test Connection' },
+          });
+        })
+      );
+
+      const { user } = setup({ data: createMockConnection() });
 
       const saveButton = screen.getByRole('button', { name: /^save$/i });
       await user.click(saveButton);
 
       await waitFor(() => {
-        expect(mockSubmitData).toHaveBeenCalledWith(
-          {
-            type: 'github',
-            github: {
-              appID: '123456',
-              installationID: '12345678',
-            },
+        expect(capturedBody).not.toBeNull();
+      });
+
+      expect(capturedBody).toMatchObject({
+        spec: {
+          title: 'Test Connection',
+          type: 'github',
+          github: {
+            appID: '123456',
+            installationID: '12345678',
           },
-          '' // privateKey is set to empty string by default
-        );
+        },
       });
     });
   });
 
   describe('Loading State', () => {
-    it('should disable Save button while loading', () => {
-      setup({ requestState: { isLoading: true } });
+    it('should show Saving state while request is in flight', async () => {
+      server.use(
+        http.post(`${BASE}/connections`, async () => {
+          await delay('infinite');
+          return HttpResponse.json({});
+        })
+      );
 
-      const saveButton = screen.getByRole('button', { name: /saving/i });
-      expect(saveButton).toBeDisabled();
-    });
+      const { user } = setup();
 
-    it('should show "Saving..." text while loading', () => {
-      setup({ requestState: { isLoading: true } });
+      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
+      await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
+      await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
 
-      expect(screen.getByText('Saving...')).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText('Saving...')).toBeInTheDocument();
+      });
+
+      expect(screen.getByRole('button', { name: /saving/i })).toBeDisabled();
     });
   });
 
   describe('Error Handling', () => {
     it('should map API error for appID to form field', async () => {
-      const { user, mockSubmitData } = setup();
+      server.use(
+        http.post(`${BASE}/connections`, () =>
+          HttpResponse.json({ errors: [{ field: 'appID', detail: 'Invalid App ID' }] }, { status: 400 })
+        )
+      );
 
-      mockSubmitData.mockRejectedValue({
-        status: 400,
-        data: { errors: [{ field: 'appID', detail: 'Invalid App ID' }] },
-      });
+      const { user } = setup();
 
+      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
 
-      const saveButton = screen.getByRole('button', { name: /^save$/i });
-      await user.click(saveButton);
+      await user.click(screen.getByRole('button', { name: /^save$/i }));
 
       await waitFor(() => {
         expect(screen.getByText('Invalid App ID')).toBeInTheDocument();
@@ -235,19 +265,23 @@ describe('ConnectionForm', () => {
     });
 
     it('should map API error for installationID to form field', async () => {
-      const { user, mockSubmitData } = setup();
+      server.use(
+        http.post(`${BASE}/connections`, () =>
+          HttpResponse.json(
+            { errors: [{ field: 'installationID', detail: 'Invalid Installation ID' }] },
+            { status: 400 }
+          )
+        )
+      );
 
-      mockSubmitData.mockRejectedValue({
-        status: 400,
-        data: { errors: [{ field: 'installationID', detail: 'Invalid Installation ID' }] },
-      });
+      const { user } = setup();
 
+      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
 
-      const saveButton = screen.getByRole('button', { name: /^save$/i });
-      await user.click(saveButton);
+      await user.click(screen.getByRole('button', { name: /^save$/i }));
 
       await waitFor(() => {
         expect(screen.getByText('Invalid Installation ID')).toBeInTheDocument();
@@ -255,23 +289,48 @@ describe('ConnectionForm', () => {
     });
 
     it('should map API error for privateKey to form field', async () => {
-      const { user, mockSubmitData } = setup();
+      server.use(
+        http.post(`${BASE}/connections`, () =>
+          HttpResponse.json(
+            { errors: [{ field: 'secure.privateKey', detail: 'Invalid Private Key format' }] },
+            { status: 400 }
+          )
+        )
+      );
 
-      mockSubmitData.mockRejectedValue({
-        status: 400,
-        data: { errors: [{ field: 'secure.privateKey', detail: 'Invalid Private Key format' }] },
-      });
+      const { user } = setup();
 
+      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), 'invalid-key');
 
-      const saveButton = screen.getByRole('button', { name: /^save$/i });
-      await user.click(saveButton);
+      await user.click(screen.getByRole('button', { name: /^save$/i }));
 
       await waitFor(() => {
         expect(screen.getByText('Invalid Private Key format')).toBeInTheDocument();
       });
+    });
+
+    it('should show generic error when a non-fetch error occurs during submission', async () => {
+      const btoaSpy = jest.spyOn(window, 'btoa').mockImplementation(() => {
+        throw new DOMException('The string contains characters outside Latin1 range');
+      });
+
+      const { user } = setup();
+
+      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
+      await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
+      await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), 'some-valid-key');
+
+      await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+      });
+
+      btoaSpy.mockRestore();
     });
   });
 });

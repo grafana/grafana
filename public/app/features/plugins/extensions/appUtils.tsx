@@ -1,4 +1,4 @@
-import { AppPluginConfig, ExtensionInfo, PluginExtensionPoints } from '@grafana/data';
+import { type AppPluginConfig, type ExtensionInfo, PluginExtensionPoints } from '@grafana/data';
 
 /**
  * Returns a list of app plugin configs that match the given plugin ids.
@@ -32,7 +32,8 @@ export function getExtensionPointPluginDependenciesSync(extensionPointId: string
     .filter(
       (app) =>
         app.extensions.addedLinks.some((link) => link.targets.includes(extensionPointId)) ||
-        app.extensions.addedComponents.some((component) => component.targets.includes(extensionPointId))
+        app.extensions.addedComponents.some((component) => component.targets.includes(extensionPointId)) ||
+        app.extensions.addedFunctions.some((fn) => fn.targets.includes(extensionPointId))
     )
     .map((app) => app.id)
     .reduce((acc: string[], id: string) => {
@@ -136,20 +137,6 @@ export function getAppPluginDependenciesSync(
 }
 
 /**
- * Returns a list of app plugins that has to be loaded before core Grafana could finish the initialization.
- * @param apps - The app plugin configs.
- * @returns A list of app plugins that has to be loaded before core Grafana could finish the initialization.
- */
-export function getAppPluginsToAwaitSync(apps: AppPluginConfig[]): AppPluginConfig[] {
-  const pluginIds = [
-    // The "cloud-home-app" is registering banners once it's loaded, and this can cause a rerender in the AppChrome if it's loaded after the Grafana app init.
-    'cloud-home-app',
-  ];
-
-  return apps.filter((app) => pluginIds.includes(app.id));
-}
-
-/**
  * Returns a list of app plugins that has to be preloaded in parallel with the core Grafana initialization.
  * @param apps - The app plugin configs.
  * @returns An array of app plugin configs that has to be preloaded in parallel with the core Grafana initialization.
@@ -160,10 +147,6 @@ export function getAppPluginsToPreloadSync(apps: AppPluginConfig[]): AppPluginCo
     PluginExtensionPoints.DashboardPanelMenu,
     apps
   );
-  const awaitedPluginIds = getAppPluginsToAwaitSync(apps).map((app) => app.id);
-  const isNotAwaited = (app: AppPluginConfig) => !awaitedPluginIds.includes(app.id);
 
-  return apps.filter((app) => {
-    return isNotAwaited(app) && (app.preload || dashboardPanelMenuPluginIds.includes(app.id));
-  });
+  return apps.filter((app) => app.preload || dashboardPanelMenuPluginIds.includes(app.id));
 }

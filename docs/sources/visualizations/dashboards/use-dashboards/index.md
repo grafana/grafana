@@ -67,7 +67,7 @@ image_maps:
         content: |
           **Variables**
 
-          Use [variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/), including ad hoc filters, to create more interactive and dynamic dashboards.
+          Use [variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/), including filters, to create more interactive and dynamic dashboards.
       - x_coord: 45
         y_coord: 23
         content: |
@@ -129,6 +129,12 @@ image_maps:
           **Dashboard insights**
 
           View [dashboard analytics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/assess-dashboard-usage/) including information about users, activity, query counts.
+      - x_coord: 93.5
+        y_coord: 75
+        content: |
+          **Toolbar**
+
+          A dashboard toolbar.
       - x_coord: 11.5
         y_coord: 30
         content: |
@@ -199,6 +205,14 @@ By hovering over a panel with the mouse you can use some shortcuts that will tar
 - `ps`: Open share panel snapshot configuration
 - `pd`: Duplicate panel
 - `pr`: Remove panel
+
+## Kiosk mode
+
+In kiosk mode, the main menu and top navigation bar of a dashboard are hidden.
+This can be useful if you want to display as much information as possible on the screen or use the dashboard to present information to a wider audience.
+
+- **Turn on kiosk mode**: Click your user icon and select **Enable kiosk mode**.
+- **Turn off kiosk mode**: Press `Esc`.
 
 ## Set dashboard time range
 
@@ -273,6 +287,8 @@ Select the relative time range from the **Relative time ranges** list. You can f
 - This week so far
 - This month so far
 
+You can enter a custom relative time range into the search at the top to quickly select, such as `13h` to select a time range for the last 13 hours.
+
 #### Absolute time range
 
 You can set an absolute time range in the following ways:
@@ -342,7 +358,7 @@ Selecting the **Auto** interval schedules a refresh based on the query time rang
 
 ## Filter dashboard data
 
-Once you've [added an ad hoc filter](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-ad-hoc-filters) in the dashboard settings, you can create label/value filter pairs on the dashboard.
+After you've [added a filter](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-ad-hoc-filters) in the dashboard settings, you can create label/value filter pairs on the dashboard.
 These filters are applied to all metric queries that use the specified data source and to all panels on the dashboard.
 
 To filter dashboard data, follow these steps:
@@ -354,7 +370,7 @@ To filter dashboard data, follow these steps:
 
 1. Repeat this process as needed until you have all the filters you need.
 
-   ![Ad hoc filters](/media/docs/grafana/dashboards/screenshot-adhoc-filters-v11.3.png)
+   ![Filters](/media/docs/grafana/dashboards/screenshot-adhoc-filters-v11.3.png)
 
 ### Edit or delete filters
 
@@ -364,7 +380,7 @@ To edit or delete filters, follow these steps:
 1. Do one of the following:
    - To edit the operator or value of a filter, click anywhere on the filter and update it.
 
-     ![Editing an ad hoc filter](/media/docs/grafana/dashboards/screenshot-edit-filters-v11.3.png)
+     ![Editing a filter](/media/docs/grafana/dashboards/screenshot-edit-filters-v11.3.png)
 
    - To change the filter label, you must delete the filter and create a new one.
    - To delete a filter, click the **X** next to it.

@@ -1,34 +1,36 @@
 import { css } from '@emotion/css';
-import { PointerEvent as ReactPointerEvent } from 'react';
+import { type PointerEvent as ReactPointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { logWarning } from '@grafana/runtime';
 import {
   sceneGraph,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
+  type SceneObjectRef,
+  type SceneObjectState,
   VizPanel,
-  SceneGridItemLike,
+  type SceneGridItemLike,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
+import { dashboardEditActions, DashboardStateChangedEvent, ObjectsReorderedOnCanvasEvent } from '../edit-pane/shared';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDefaultVizPanel } from '../utils/utils';
+import { getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
-import { RowItem } from './layout-rows/RowItem';
+import { type DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { type RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 import {
   AUTO_GRID_ITEM_DROP_TARGET_ATTR,
   DASHBOARD_DROP_TARGET_KEY_ATTR,
-  DashboardDropTarget,
+  type DashboardDropTarget,
   isDashboardDropTarget,
 } from './types/DashboardDropTarget';
 
@@ -56,6 +58,15 @@ interface DashboardLayoutOrchestratorState extends SceneObjectState {
     type: 'panel' | 'row';
   };
 }
+
+export type TabDragState = {
+  tab: TabItem;
+  /** Width of the dragged tab header in pixels (for cross-manager placeholder sizing) */
+  width: number;
+  /** Height of the dragged tab header in pixels (for cross-manager placeholder sizing) */
+  height: number;
+  index: number;
+};
 
 export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayoutOrchestratorState> {
   public static Component = DragPreviewRenderer;
@@ -87,12 +98,20 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _currentDropPosition: number | null = null;
   /** Last hovered AutoGrid item key (to prevent flickering) */
   private _lastHoveredAutoGridItemKey: string | null = null;
+  /** Original child index of the dragged item before it was detached from its source layout */
+  private _sourceOriginalIndex: number | null = null;
+  private _tabDragState: TabDragState | undefined;
+  /** Stored pointerup handler for new-panel drag so we can remove it */
+  private _dropNewItemPointerUpHandler: ((evt: PointerEvent) => void) | null = null;
 
   public constructor() {
     super({});
 
     this._onPointerMove = this._onPointerMove.bind(this);
     this._stopDraggingSync = this._stopDraggingSync.bind(this);
+
+    this._onTabDragPointerMove = this._onTabDragPointerMove.bind(this);
+    this._onTabDragPointerUp = this._onTabDragPointerUp.bind(this);
 
     this.addActivationHandler(() => this._activationHandler());
   }
@@ -101,19 +120,14 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     return () => {
       document.body.removeEventListener('pointermove', this._onPointerMove);
       document.body.removeEventListener('pointermove', this._onRowDragPointerMove);
+      document.body.removeEventListener('pointermove', this._onTabDragPointerMove);
       document.body.removeEventListener('pointerup', this._stopDraggingSync, true);
       document.body.removeEventListener('pointerup', this._onRowDragPointerUp, true);
+      document.body.removeEventListener('pointerup', this._onTabDragPointerUp, true);
       this._clearTabActivationTimer();
       this._clearDragPreview();
       this._cleanupDragState();
     };
-  }
-
-  /**
-   * Returns true if any drag operation is in progress (grid item or row)
-   */
-  public isDragging(): boolean {
-    return !!(this.state.draggingGridItem || this.state.draggingRow);
   }
 
   /**
@@ -133,6 +147,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
     this._sourceDropTarget = dropTarget;
     this._lastDropTarget = dropTarget;
+    this._sourceOriginalIndex = this._getGridItemIndex(gridItem);
 
     // Capture the offset from cursor to item's top-left corner
     this._captureDragOffset(evt.clientX, evt.clientY, gridItem);
@@ -146,9 +161,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     this.setState({ draggingGridItem: gridItem.getRef(), sourceTabKey });
   }
 
-  public startDraggingNewPanel(): void {
+  public startDraggingNewPanel(action: 'newPanel' | 'paste'): void {
+    this._dropNewItemPointerUpHandler = (evt: PointerEvent) => this._dropNew(evt, action);
     document.body.addEventListener('pointermove', this._onNewPanelPointerMove, true);
-    document.body.addEventListener('pointerup', this._dropNewPanel, true);
+    document.body.addEventListener('pointerup', this._dropNewItemPointerUpHandler, true);
   }
 
   private _stopDraggingSync(evt: PointerEvent) {
@@ -158,27 +174,49 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     const sourceDropTarget = this._sourceDropTarget;
     const lastDropTarget = this._lastDropTarget;
     const dropPosition = this._currentDropPosition;
+    const sourceOriginalIndex = this._sourceOriginalIndex;
 
-    // Check if there's a valid drop target under the mouse
-    // (tab headers and other non-drop areas return null)
+    // Fresh target under the pointer at drop time takes priority over
+    // lastDropTarget which may be stale if pointermove events were coalesced.
     const validDropTargetUnderMouse = this._getDropTargetUnderMouse(evt);
+    const effectiveDropTarget = validDropTargetUnderMouse ?? lastDropTarget;
 
-    // If item was detached (cross-tab drag started) but there's no valid drop target under mouse,
-    // drop into the current tab if lastDropTarget is a TabItem (e.g., dropped on tab header)
-    const noTargetUnderMouse = wasDetached && !validDropTargetUnderMouse && gridItem;
-    const canDropIntoCurrentTab = noTargetUnderMouse && lastDropTarget instanceof TabItem;
+    // When effectiveDropTarget differs from lastDropTarget (e.g. due to coalesced
+    // pointermove), clear stale visual drop state on the previous target so it
+    // doesn't keep showing a placeholder/highlight after the drop.
+    if (effectiveDropTarget !== lastDropTarget && lastDropTarget) {
+      lastDropTarget.setDropPosition?.(null);
+      lastDropTarget.setIsDropTarget?.(false);
+      this._currentDropPosition = null;
+      this._lastHoveredAutoGridItemKey = null;
+    }
 
-    if (canDropIntoCurrentTab) {
-      // Drop into the current tab's layout
+    // TabsLayoutManager is not a valid panel drop target — it represents the
+    // tab bar area between tab headers. Cancel the drop so the panel either
+    // stays in place or returns to its source layout.
+    if (effectiveDropTarget instanceof TabsLayoutManager) {
+      this._clearDropPosition();
+      this._lastDropTarget?.setIsDropTarget?.(false);
+
+      if (wasDetached && gridItem) {
+        setTimeout(() => {
+          sourceDropTarget?.draggedGridItemInside?.(gridItem, sourceOriginalIndex ?? undefined);
+          if (sourceDropTarget instanceof AutoGridLayoutManager) {
+            sourceDropTarget.state.layout.endExternalDrag();
+          }
+        });
+      }
+    } else if (wasDetached && !validDropTargetUnderMouse && gridItem && effectiveDropTarget instanceof TabItem) {
+      // If item was detached (cross-tab drag started) but there's no valid drop target under mouse,
+      // drop into the current tab if lastDropTarget is a TabItem (e.g., dropped on tab header)
       setTimeout(() => {
-        lastDropTarget.draggedGridItemInside?.(gridItem);
-        // Clean up source grid state
+        effectiveDropTarget.draggedGridItemInside?.(gridItem);
         if (sourceDropTarget instanceof AutoGridLayoutManager) {
           sourceDropTarget.state.layout.endExternalDrag();
         }
       });
     } else {
-      const isCrossLayoutDrop = sourceDropTarget !== lastDropTarget || wasDetached;
+      const isCrossLayoutDrop = sourceDropTarget !== effectiveDropTarget || wasDetached;
 
       // Handle cross-layout or cross-tab drop
       if (isCrossLayoutDrop) {
@@ -192,7 +230,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
             }
             // Pass drop position for precise placement (AutoGrid uses this)
             // Note: draggedGridItemInside also clears isDropTarget and dropPosition
-            lastDropTarget?.draggedGridItemInside?.(gridItem, dropPosition ?? undefined);
+            effectiveDropTarget?.draggedGridItemInside?.(gridItem, dropPosition ?? undefined);
 
             // Clean up source grid's drag state (CSS variables and draggingKey) after item is moved.
             // This is done here (after movement) to prevent flickering where the item
@@ -226,6 +264,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     this._lastDropTarget = null;
     this._sourceDropTarget = null;
     this._itemDetachedFromSource = false;
+    this._sourceOriginalIndex = null;
     this.setState({ draggingGridItem: undefined, sourceTabKey: undefined, hoverTabKey: undefined });
   }
 
@@ -257,6 +296,179 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     // Add pointerup listener to handle drop after cross-tab switch
     // Use capture phase to ensure we receive the event even if something calls stopPropagation
     document.body.addEventListener('pointerup', this._onRowDragPointerUp, true);
+  }
+
+  public startTabDrag(sourceTabsManagerId: string, draggedTabId: string): void {
+    this._sourceDropTarget = this._findDropTargetByKey(sourceTabsManagerId);
+
+    const draggedTab = sceneGraph.findByKeyAndType(this._getDashboard(), draggedTabId, TabItem);
+
+    // Calculate dimensions of the dragged tab header and cache for cross-manager placeholder sizing
+    const draggedHeaderEl = draggedTab?.containerRef?.current ?? undefined;
+    if (draggedHeaderEl) {
+      const rect = draggedHeaderEl.getBoundingClientRect();
+      this._tabDragState = {
+        tab: draggedTab,
+        width: rect.width,
+        height: rect.height,
+        index: 0,
+      };
+    }
+
+    document.body.addEventListener('pointerup', this._onTabDragPointerUp, true);
+    document.body.addEventListener('pointermove', this._onTabDragPointerMove);
+  }
+
+  private _onTabDragPointerMove(evt: PointerEvent) {
+    // Note this will never be the same as source - _getDropTargetUnderMouse prevents it.
+    const dropTarget = this._getDropTargetUnderMouse(evt);
+
+    if (!this._tabDragState) {
+      return;
+    }
+
+    // Tabs can be dropped only to TabsLayoutManager
+    if (dropTarget instanceof TabsLayoutManager) {
+      this._lastDropTarget = dropTarget;
+    } else {
+      this.cleanUpTabDropTarget();
+      return;
+    }
+
+    dropTarget.setIsDropTarget(true);
+    const tabUnderMouse = this._getTabUnderMouse(evt.clientX, evt.clientY, this._tabDragState.tab.state.key);
+    const targetTabIndex = dropTarget?.getTabsIncludingRepeats().findIndex((t) => t.state.key === tabUnderMouse);
+    // move placeholder only when hovering over a tab, if not we may be outside of the drop area or over a placeholder
+    if (targetTabIndex !== -1) {
+      this._tabDragState.index = targetTabIndex === this._tabDragState.index ? targetTabIndex + 1 : targetTabIndex;
+      dropTarget.setPlaceholder(this._tabDragState);
+    }
+  }
+
+  private _onTabDragPointerUp() {
+    document.body.removeEventListener('pointermove', this._onTabDragPointerMove);
+    document.body.removeEventListener('pointerup', this._onTabDragPointerUp, true);
+    // Note: do not handle dropping yet as pangea is still waiting for events to be fired from the dragged tab.
+    // Finishing dropping in here would remove elements from dom causing pangea to think the element is still being
+    // dragged and won't fire onDragEnd until container is re-rendered or removed (e.g. when row is collapsed).
+  }
+
+  /**
+   * Single entry point for handling tab drag end. If the tab was dropped from a different manager we use values
+   * calculated by layout orchestrator.
+   */
+  public stopTabDrag(targetIndex: number | undefined): void {
+    if (this._sourceDropTarget === null || !(this._sourceDropTarget instanceof TabsLayoutManager)) {
+      return;
+    }
+
+    if (!this._tabDragState?.tab) {
+      return;
+    }
+
+    const sourceManager = this._sourceDropTarget;
+    const sourceIndex = sourceManager.getTabsIncludingRepeats().findIndex((t) => t === this._tabDragState?.tab);
+
+    // targetIndex !== undefined => dropped in the same manager, target index provided by hello-pangea
+    if (targetIndex !== undefined) {
+      if (sourceIndex !== targetIndex) {
+        sourceManager.moveTab(sourceIndex, targetIndex);
+      }
+      this.cleanUpTabDrag();
+      return;
+    }
+
+    // dropped in a different manager => handled by the orchestrator
+    if (this._lastDropTarget instanceof TabsLayoutManager) {
+      const destinationManager = this._lastDropTarget;
+      targetIndex = this._tabDragState.index ?? destinationManager.getTabsIncludingRepeats().length;
+
+      const realDestinationIndex = destinationManager.mapTabInsertIndex(targetIndex);
+      // When moving a tab into a new tab group, make it the active tab.
+      this._moveTabBetweenManagers(this._tabDragState.tab, sourceManager, destinationManager, realDestinationIndex);
+      this.cleanUpTabDrag();
+    }
+  }
+
+  private cleanUpTabDropTarget() {
+    if (this._lastDropTarget && this._lastDropTarget instanceof TabsLayoutManager) {
+      this._lastDropTarget.setIsDropTarget?.(false);
+    }
+    this._lastDropTarget = null;
+  }
+
+  private cleanUpTabDrag() {
+    this.cleanUpTabDropTarget();
+    this._tabDragState = undefined;
+  }
+
+  private _moveTabBetweenManagers(
+    tab: TabItem,
+    source: TabsLayoutManager,
+    destination: TabsLayoutManager,
+    destinationIndex: number
+  ) {
+    const prevSourceTabs = [...source.state.tabs];
+    const prevSourceSlug = source.state.currentTabSlug;
+    const prevDestinationTabs = [...destination.state.tabs];
+    const prevDestinationSlug = destination.state.currentTabSlug;
+
+    dashboardEditActions.moveElement({
+      source,
+      movedObject: tab,
+      perform: () => {
+        const sourceTabs = [...prevSourceTabs];
+        const destTabs = [...prevDestinationTabs];
+
+        const fromIndex = sourceTabs.findIndex((t) => t === tab);
+        if (fromIndex < 0) {
+          return;
+        }
+
+        sourceTabs.splice(fromIndex, 1);
+
+        const clampedDestinationIndex = Math.max(0, Math.min(destinationIndex, destTabs.length));
+        destTabs.splice(clampedDestinationIndex, 0, tab);
+
+        // If the moved tab was active in source, pick a sensible new active tab.
+        let nextSourceSlug = prevSourceSlug;
+        if (prevSourceSlug === tab.getSlug()) {
+          const newIndex = fromIndex > 0 ? fromIndex - 1 : 0;
+          nextSourceSlug = sourceTabs[newIndex]?.getSlug();
+        }
+
+        // Important: avoid briefly parenting the same SceneObject in two places.
+        // Remove from source first, then clear parent, then add to destination.
+        source.setState({ tabs: sourceTabs, currentTabSlug: nextSourceSlug });
+        tab.clearParent();
+        destination.setState({
+          tabs: destTabs,
+          currentTabSlug: tab.getSlug(),
+        });
+
+        // Make sure outline is refreshed in DashboardEditPane
+        source.publishEvent(new ObjectsReorderedOnCanvasEvent(source), true);
+        destination.publishEvent(new ObjectsReorderedOnCanvasEvent(destination), true);
+
+        // Make sure repeated rows are refreshed - triggers performRowRepeats in RowItemRepeater
+        source.publishEvent(new DashboardStateChangedEvent({ source }), true);
+        destination.publishEvent(new DashboardStateChangedEvent({ source: destination }), true);
+      },
+      undo: () => {
+        // Reverse order for the same parenting reason as in perform().
+        destination.setState({ tabs: prevDestinationTabs, currentTabSlug: prevDestinationSlug });
+        tab.clearParent();
+        source.setState({ tabs: prevSourceTabs, currentTabSlug: prevSourceSlug });
+
+        // Make sure outline is refreshed in DashboardEditPane
+        source.publishEvent(new ObjectsReorderedOnCanvasEvent(source), true);
+        destination.publishEvent(new ObjectsReorderedOnCanvasEvent(destination), true);
+
+        // Make sure repeated rows are refreshed - triggers performRowRepeats in RowItemRepeater
+        source.publishEvent(new DashboardStateChangedEvent({ source }), true);
+        destination.publishEvent(new DashboardStateChangedEvent({ source: destination }), true);
+      },
+    });
   }
 
   private _onRowDragPointerMove = (evt: PointerEvent): void => {
@@ -299,11 +511,14 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
   private _cleanupDragState() {
     document.body.removeEventListener('pointermove', this._onNewPanelPointerMove, true);
-    document.body.removeEventListener('pointerup', this._dropNewPanel, true);
+    if (this._dropNewItemPointerUpHandler) {
+      document.body.removeEventListener('pointerup', this._dropNewItemPointerUpHandler, true);
+      this._dropNewItemPointerUpHandler = null;
+    }
     this._lastDropTarget = null;
   }
 
-  private _dropNewPanel = (evt: PointerEvent): void => {
+  private _dropNew = (evt: PointerEvent, action: 'newPanel' | 'paste'): void => {
     const lastDropTarget = this._lastDropTarget;
     const elementsUnderPoint = document.elementsFromPoint(evt.clientX, evt.clientY);
 
@@ -314,36 +529,36 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       this._cleanupDragState();
       return;
     }
-
-    const panel = getDefaultVizPanel();
-
-    if (lastDropTarget) {
-      this._addPanelToLayout(lastDropTarget, panel);
-    } else {
-      // if no lastDropTarget and not in Sidebar, treat the dashboard itself as the drop target
-      this._getDashboard().addPanel(panel);
-    }
-
-    this._cleanupDragState();
-
-    DashboardInteractions.trackAddPanelClick(
-      'sidebar',
-      lastDropTarget ? getLayoutType(lastDropTarget) : 'dashboard',
-      'drop'
-    );
+    // defer so the droppable doesn't rerender during dnd drag-end, resulting in a console warning
+    requestAnimationFrame(() => {
+      if (action === 'paste') {
+        this._pastePanelToLayout(lastDropTarget);
+      } else {
+        this._addNewPanelToLayout(lastDropTarget);
+      }
+      this._cleanupDragState();
+    });
+    return;
   };
 
-  private _addPanelToLayout = (dropTarget: DashboardDropTarget, panel: VizPanel) => {
-    const dropTargetRowOrTab = sceneGraph.findObject(
-      dropTarget,
-      (currentSceneObject) => currentSceneObject instanceof RowItem || currentSceneObject instanceof TabItem
-    );
-    if (dropTargetRowOrTab instanceof RowItem || dropTargetRowOrTab instanceof TabItem) {
-      dropTargetRowOrTab.getLayout().addPanel(panel);
-    } else {
-      // if no root row or layout element, add the item into the dashboard directly
-      this._getDashboard().addPanel(panel);
-    }
+  private _getLayoutForDropTarget = (
+    dropTarget: DashboardDropTarget | null
+  ): DashboardScene | AutoGridLayoutManager | DefaultGridLayoutManager => {
+    const dashboard = this._getDashboard();
+    return getLayoutForObject(dropTarget ?? dashboard) ?? dashboard;
+  };
+
+  private _addNewPanelToLayout = (dropTarget: DashboardDropTarget | null) => {
+    const panel = getDefaultVizPanel();
+    this._getLayoutForDropTarget(dropTarget).addPanel(panel);
+    DashboardInteractions.trackAddPanelClick('sidebar', dropTarget ? getLayoutType(dropTarget) : 'dashboard', 'drop');
+  };
+
+  private _pastePanelToLayout = (dropTarget: DashboardDropTarget | null) => {
+    const layout = this._getLayoutForDropTarget(dropTarget);
+    // shouldn't be undefined
+    layout.pastePanel();
+    DashboardInteractions.trackPastePanelClick('sidebar', dropTarget ? getLayoutType(dropTarget) : 'dashboard', 'drop');
   };
 
   /**
@@ -602,6 +817,15 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     }
   }
 
+  private _getGridItemIndex(gridItem: SceneGridItemLike): number | null {
+    if (this._sourceDropTarget instanceof AutoGridLayoutManager) {
+      const children = this._sourceDropTarget.state.layout.state.children;
+      const idx = children.findIndex((child) => child === gridItem);
+      return idx >= 0 ? idx : null;
+    }
+    return null;
+  }
+
   private _getItemLabel(gridItem: SceneGridItemLike): string {
     if ('state' in gridItem && 'body' in gridItem.state && gridItem.state.body instanceof VizPanel) {
       return gridItem.state.body.state.title || 'Panel';
@@ -609,11 +833,15 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     return 'Panel';
   }
 
-  private _getTabUnderMouse(clientX: number, clientY: number): string | null {
+  private _getTabUnderMouse(clientX: number, clientY: number, excludeKey?: string): string | null {
     const elementsUnderPoint = document.elementsFromPoint(clientX, clientY);
 
     const tabKey = elementsUnderPoint
-      ?.find((element) => element.getAttribute('data-tab-activation-key'))
+      ?.find(
+        (element) =>
+          element.getAttribute('data-tab-activation-key') &&
+          (!excludeKey || element.getAttribute('data-tab-activation-key') !== excludeKey)
+      )
       ?.getAttribute('data-tab-activation-key');
 
     return tabKey || null;
@@ -773,6 +1001,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       return null;
     }
 
+    return this._findDropTargetByKey(key);
+  }
+
+  private _findDropTargetByKey(key: string): DashboardDropTarget | null {
     const sceneObject = sceneGraph.findByKey(this._getDashboard(), key);
 
     if (!sceneObject || !isDashboardDropTarget(sceneObject)) {

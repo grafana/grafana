@@ -1,15 +1,22 @@
-import { Field, FieldType, getFieldDisplayName, PanelOptionsEditorBuilder, PanelPlugin } from '@grafana/data';
+import { type Field, FieldType, getFieldDisplayName, type PanelOptionsEditorBuilder, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { GraphFieldConfig } from '@grafana/schema';
+import { type GraphFieldConfig } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
+import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
 
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
 import { CandlestickPanel } from './CandlestickPanel';
-import { CandlestickData, getCandlestickFieldsInfo, FieldPickerInfo, prepareCandlestickFields } from './fields';
+import { defaultOptions } from './defaultOptions';
+import {
+  type CandlestickData,
+  getCandlestickFieldsInfo,
+  type FieldPickerInfo,
+  prepareCandlestickFields,
+} from './fields';
+import { defaultCandlestickColors, type Options, VizDisplayMode, ColorStrategy, CandleStyle } from './panelcfg.gen';
 import { candlestickSuggestionSupplier } from './suggestions';
-import { defaultCandlestickColors, defaultOptions, Options, VizDisplayMode, ColorStrategy, CandleStyle } from './types';
 
 const numericFieldFilter = (f: Field) => f.type === FieldType.number;
 
@@ -144,7 +151,8 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(CandlestickPane
     });
 
     commonOptionsBuilder.addTooltipOptions(builder, false, true);
-    commonOptionsBuilder.addLegendOptions(builder);
+    commonOptionsBuilder.addLegendOptions(builder, true, true);
+    addAnnotationOptions(builder);
   })
   .setDataSupport({ annotations: true, alertStates: true })
   .setSuggestionsSupplier(candlestickSuggestionSupplier);

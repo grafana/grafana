@@ -17,36 +17,37 @@ import { SpanStatusCode } from '@opentelemetry/api';
 import React, { useCallback, useMemo, useRef } from 'react';
 
 import {
-  CoreApp,
-  DataFrame,
+  type CoreApp,
+  type DataFrame,
   dateTimeFormat,
-  GrafanaTheme2,
-  LinkModel,
-  TimeRange,
-  TraceKeyValuePair,
-  TraceLog,
-  PluginExtensionResourceAttributesContext,
+  type GrafanaTheme2,
+  type LinkModel,
+  type TimeRange,
+  type TraceKeyValuePair,
+  type TraceLog,
+  type PluginExtensionResourceAttributesContext,
   PluginExtensionPoints,
-  IconName,
+  type IconName,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
+import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { usePluginLinks } from '@grafana/runtime';
-import { TimeZone } from '@grafana/schema';
+import { type TimeZone } from '@grafana/schema';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
 import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
-import { SpanLinkFunc } from '../../types/links';
-import { TraceProcess, TraceSpan, TraceSpanReference } from '../../types/trace';
+import { type SpanLinkFunc } from '../../types/links';
+import { type TraceProcess, type TraceSpan, type TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../../utils/date';
+import { getServiceDisplayName } from '../../utils/service-name';
 
 import AccordianKeyValues from './AccordianKeyValues';
 import AccordianLogs from './AccordianLogs';
 import AccordianReferences from './AccordianReferences';
-import DetailState from './DetailState';
+import type DetailState from './DetailState';
 import { ShareSpanButton } from './ShareSpanButton';
 import { getSpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
@@ -57,12 +58,18 @@ const useResourceAttributesExtensionLinks = ({
   datasourceType,
   datasourceUid,
   timeRange,
+  traceID,
+  spanID,
+  spanStartTime,
 }: {
   process: TraceProcess;
   spanTags: TraceKeyValuePair[];
   datasourceType: string;
   datasourceUid: string;
   timeRange: TimeRange;
+  traceID: string;
+  spanID: string;
+  spanStartTime: number;
 }) => {
   // Stable context for useMemo inside usePluginLinks
   const context: PluginExtensionResourceAttributesContext = useMemo(() => {
@@ -92,8 +99,11 @@ const useResourceAttributesExtensionLinks = ({
         type: datasourceType,
         uid: datasourceUid,
       },
+      traceID,
+      spanID,
+      spanStartTime,
     };
-  }, [process.tags, spanTags, datasourceType, datasourceUid, timeRange]);
+  }, [process.tags, spanTags, datasourceType, datasourceUid, timeRange, traceID, spanID, spanStartTime]);
 
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.TraceViewResourceAttributes,
@@ -314,7 +324,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     {
       key: 'svc',
       label: t('explore.span-detail.overview-items.label.service', 'Service:'),
-      value: process.serviceName,
+      value: getServiceDisplayName(process),
     },
     {
       key: 'duration',
@@ -392,6 +402,9 @@ export default function SpanDetail(props: SpanDetailProps) {
     datasourceType,
     datasourceUid,
     timeRange,
+    traceID,
+    spanID,
+    spanStartTime: startTime,
   });
 
   const linksComponent = getSpanDetailLinkButtons({
@@ -561,7 +574,7 @@ const CardsContainer = ({
   mainContainerRef,
 }: {
   listOfContentCards: React.ReactNode[];
-  mainContainerRef?: React.RefObject<HTMLDivElement>;
+  mainContainerRef?: React.RefObject<HTMLDivElement | null>;
 }) => {
   const styles = useStyles2(getStyles);
 

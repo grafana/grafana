@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { groupBy, size, upperFirst } from 'lodash';
-import { Fragment, ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 
-import { GrafanaTheme2, dateTime } from '@grafana/data';
+import { type GrafanaTheme2, dateTime } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';
@@ -10,16 +10,16 @@ import { ContactPointHeader } from 'app/features/alerting/unified/components/con
 import { useDeleteContactPointModal } from 'app/features/alerting/unified/components/contact-points/components/Modals';
 import { useDeleteContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { GrafanaNotifierType, NotifierStatus } from 'app/features/alerting/unified/types/alerting';
+import { type GrafanaNotifierType, type NotifierStatus } from 'app/features/alerting/unified/types/alerting';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { MetaText } from '../MetaText';
 import { ReceiverMetadataBadge } from '../receivers/grafanaAppReceivers/ReceiverMetadataBadge';
-import { ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
+import { type ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
 
 import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY, RECEIVER_STATUS_KEY } from './constants';
-import { ContactPointWithMetadata, ReceiverConfigWithMetadata, getReceiverDescription } from './utils';
+import { type ContactPointWithMetadata, type ReceiverConfigWithMetadata, getReceiverDescription } from './utils';
 
 interface ContactPointProps {
   contactPoint: ContactPointWithMetadata;

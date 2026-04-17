@@ -1,11 +1,11 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { config, locationService, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { ScopesService } from '../ScopesService';
+import { type ScopesService } from '../ScopesService';
 
 import {
   applyScopes,
@@ -323,18 +323,24 @@ describe('Tree', () => {
 
     await searchScopes('Applications');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
-    expectScopesHeadline('Results');
+    await waitFor(() => {
+      expectScopesHeadline('Results');
+    });
 
     await searchScopes('unknown');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
-    expectScopesHeadline('No results found for your query');
+    await waitFor(() => {
+      expectScopesHeadline('No results found for your query');
+    });
   });
 
   it('Should only show Recommended when there are no leaf container nodes visible', async () => {
     await openSelector();
     await expandResultApplications();
     await expandResultApplicationsCloud();
-    expectScopesHeadline('Recommended');
+    await waitFor(() => {
+      expectScopesHeadline('Recommended');
+    });
   });
 
   it('Should open to a specific path when scopes and scope_node are applied', async () => {

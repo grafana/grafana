@@ -1,5 +1,5 @@
-import { QueryResultMeta } from '../types/data';
-import { Field, FieldType, DataFrame, TIME_SERIES_VALUE_FIELD_NAME } from '../types/dataFrame';
+import { type QueryResultMeta } from '../types/data';
+import { type Field, FieldType, type DataFrame, TIME_SERIES_VALUE_FIELD_NAME } from '../types/dataFrame';
 
 import { guessFieldTypeForField } from './processDataFrame';
 
@@ -22,6 +22,10 @@ export class ArrayDataFrame implements DataFrame {
 
 /**
  * arrayToDataFrame will convert any array into a DataFrame.
+ *
+ * If the items are objects, it is assumed that all the items have the same fields. If names of fields are not provided,
+ * the fields of the first item will be used, and any fields that are not present in first item will be lost from the
+ * later items.
  * @param source - can be an array of objects or an array of simple values.
  * @param names - will be used for ordering of fields. Source needs to be array of objects if names are provided.
  *

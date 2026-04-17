@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
 import { UserIcon } from './UserIcon';
-import { UserView } from './types';
+import { type UserView } from './types';
 
 export interface UsersIndicatorProps {
   /** An object that contains the user's details and an optional 'lastActiveAt' status */
@@ -62,7 +62,7 @@ const getStyles = (theme: GrafanaTheme2, limit: number) => {
       marginLeft: theme.spacing(1),
       isolation: 'isolate',
 
-      '& > button': {
+      '& > *': {
         marginLeft: theme.spacing(-1), // Overlay the elements a bit on top of each other
 
         // Ensure overlaying user icons are stacked correctly with z-index on each element

@@ -208,7 +208,9 @@ func RunTestGet(ctx context.Context, t *testing.T, store storage.Interface) {
 				return
 			}
 			if tt.expectRVTooLarge {
-				if err == nil || !storage.IsTooLargeResourceVersion(err) {
+				// Our implementation differs from etcd by returning 400 (bad request) instead of 504 with
+				// a retry duration.
+				if err == nil || !apierrors.IsBadRequest(err) || !strings.Contains(err.Error(), "too large resource version") {
 					t.Errorf("expecting resource version too high error, but get: %v", err)
 				}
 				return
@@ -2558,7 +2560,7 @@ func RunTestGuaranteedUpdateWithSuggestionAndConflict(ctx context.Context, t *te
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if updatedPod2.Generation != 3 {
-		t.Errorf("unexpected pod generation: %q", updatedPod2.Generation)
+		t.Errorf("unexpected pod generation: %d", updatedPod2.Generation)
 	}
 
 	// Third, update using a current version as the suggestion.

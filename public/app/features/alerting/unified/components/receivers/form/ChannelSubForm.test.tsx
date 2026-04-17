@@ -6,11 +6,11 @@ import { byRole, byTestId } from 'testing-library-selector';
 
 import { grafanaAlertNotifiers } from 'app/features/alerting/unified/mockGrafanaNotifiers';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { NotifierDTO } from 'app/features/alerting/unified/types/alerting';
+import { type NotifierDTO } from 'app/features/alerting/unified/types/alerting';
 
 import { ChannelSubForm } from './ChannelSubForm';
 import { GrafanaCommonChannelSettings } from './GrafanaCommonChannelSettings';
-import { Notifier } from './notifiers';
+import { type Notifier } from './notifiers';
 
 type TestChannelValues = {
   __id: string;
@@ -269,6 +269,7 @@ describe('ChannelSubForm', () => {
 
     const webhookWithVersions: NotifierDTO = {
       ...grafanaAlertNotifiers.webhook,
+      currentVersion: 'v1',
       versions: [
         {
           version: 'v0mimir1',
@@ -289,7 +290,7 @@ describe('ChannelSubForm', () => {
           label: 'Webhook',
           description: 'Sends HTTP POST request',
           canCreate: true,
-          options: grafanaAlertNotifiers.webhook.options,
+          options: grafanaAlertNotifiers.webhook.options ?? [],
         },
       ],
     };

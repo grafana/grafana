@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useCallback, PropsWithChildren } from 'react';
+import { createContext, type PropsWithChildren, useCallback, useContext, useState } from 'react';
 
-import { StepStatusInfo } from './types';
+import { type StepStatusInfo } from './types';
 
 interface StepStatusContextData {
   // Current status

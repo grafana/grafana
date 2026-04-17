@@ -9,11 +9,11 @@
       "button-add-resource": "Добавить ресурс",
       "button-add-resource-uri": "Добавить URI ресурса",
       "label-namespace": "Пространство имен",
-      "label-region": "Область",
+      "label-region": "Регион",
       "label-resource-group": "Группа ресурсов",
       "label-resource-name": "Имя ресурса",
       "label-resource-number": "Ресурс {{resourceNum}}",
-      "label-resource-uri": "",
+      "label-resource-uri": "URI ресурса",
       "label-subscription": "Подписка",
       "placeholder-resource-name": "имя",
       "tooltip-region": "Область кода ресурса. Необязательно для одного ресурса, но обязательно при выборе нескольких.",
@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "Сертификат клиента",
       "aria-label-client-id": "Идентификатор клиента",
       "aria-label-client-secret": "Секрет клиента",
+      "aria-label-private-key": "Секретный ключ",
+      "aria-label-private-key-password": "Пароль сертификата",
       "aria-label-symbol-client-secret": "Секрет клиента",
       "aria-label-tenant-id": "Идентификатор клиента",
+      "description-certificate-format": "Выберите формат сертификата (PEM-сертификаты должны быть в формате PEM с обычным текстом, а PFX-сертификаты — в формате PFX с кодировкой Base64)",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "Формат",
+      "label-client-certificate": "Сертификат клиента",
       "label-client-id": "Идентификатор приложения (клиента)",
       "label-client-secret": "Секрет клиента",
+      "label-private-key": "Секретный ключ",
       "label-symbol-client-secret": "Секрет клиента",
+      "label-symbol-private-key-password": "Пароль сертификата",
       "label-tenant-id": "Идентификатор каталога (клиента)",
       "placeholder-symbol-client-secret": "установлен",
       "reset-symbol-client-secret": "Сброс"
@@ -63,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Выберите тип аутентификации для служб Azure.",
-      "label-authentication": "Аутентификация",
+      "label-authentication": "Тип аутентификации",
       "title-authentication": "Аутентификация"
     },
     "basic-logs-toggle": {
@@ -226,26 +234,26 @@
       "select-resource": "Выбрать ресурс"
     },
     "resource-picker": {
-      "browse-tab": "",
+      "browse-tab": "Поиск",
       "button-apply": "Применить",
       "button-cancel": "Отмена",
       "header-location": "Расположение",
-      "header-resource-group": "",
-      "header-scope": "Область применения",
+      "header-resource-group": "Группа ресурсов",
+      "header-scope": "Область",
       "header-type": "Тип",
       "heading-selection": "Выбор",
-      "locations-filter": "",
-      "locations-filter-placeholder": "",
-      "recent-tab": "",
+      "locations-filter": "Местоположения",
+      "locations-filter-placeholder": "Выбрать местоположение",
+      "recent-tab": "Последние",
       "result-limit": "Показано первых результатов: {{numResults}}",
-      "subscriptions-filter": "",
-      "subscriptions-filter-placeholder": "",
+      "subscriptions-filter": "Подписки",
+      "subscriptions-filter-placeholder": "Выбрать подписку",
       "text-loading": "Загрузка…",
-      "text-no-recent-resources": "",
+      "text-no-recent-resources": "Последние ресурсы не найдены",
       "text-no-resources": "Ресурсы не найдены",
       "title-error-occurred": "Ошибка при запросе ресурсов из Azure Monitor",
-      "types-filter": "",
-      "types-filter-placeholder": ""
+      "types-filter": "Типы ресурсов",
+      "types-filter-placeholder": "Выбрать тип ресурса"
     },
     "scope-selector": {
       "label": "Область"
@@ -274,7 +282,7 @@
       "label-time-column": "Столбец времени",
       "label-time-range": "Временной диапазон",
       "tooltip-time-column": "<0>Указывает столбец времени, используемый для фильтрации. По умолчанию используется первый столбец таблиц (<1>Временной диапазон</1>), первый найденный столбец (<3>дата и время</3>) или <5>время создания</5>.</0>",
-      "tooltip-time-range": ""
+      "tooltip-time-range": "<0>Указывает временной интервал, используемый для запроса. При выборе параметра <1>Запрос</1> будут использованы только временные интервалы, указанные в запросе. При выборе параметра <3>Дашборд</3> будет использован только временной интервал Grafana.</0>"
     },
     "top-field": {
       "label-top": "Верх"
@@ -305,7 +313,7 @@
       "label-custom-namespace": "Пользовательское пространство имен",
       "label-namespace": "Пространство имен",
       "label-query-type": "Тип запроса",
-      "label-region": "Область",
+      "label-region": "Регион",
       "label-resource": "Ресурс",
       "label-resource-group": "Группа ресурсов",
       "label-resource-type": "Тип ресурса",

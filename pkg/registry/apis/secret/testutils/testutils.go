@@ -3,17 +3,18 @@ package testutils
 import (
 	"context"
 	"fmt"
+	"slices"
 	"testing"
 	"time"
 
-	"github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/types"
 	"github.com/madflojo/testcerts"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	decryptcontracts "github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -35,7 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
-
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 )
@@ -121,6 +121,8 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		usageStats,
 		enc,
 		ossProviders,
+		&manager.NoopDataKeyCache{},
+		cfg,
 	)
 	require.NoError(t, err)
 
@@ -255,6 +257,22 @@ func (s *Sut) CreateSv(ctx context.Context, opts ...func(*CreateSvConfig)) (*sec
 	return createdSv, nil
 }
 
+func (s *Sut) ListSv(ctx context.Context, ns xkube.Namespace) ([]string, error) {
+	all, err := s.SecureValueService.List(ctx, ns)
+	if err != nil {
+		return nil, err
+	}
+	if all == nil {
+		return nil, fmt.Errorf("missing results")
+	}
+	names := make([]string, 0, len(all.Items))
+	for _, v := range all.Items {
+		names = append(names, v.Name)
+	}
+	slices.Sort(names)
+	return names, err
+}
+
 func (s *Sut) UpdateSv(ctx context.Context, sv *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, error) {
 	newSv, _, err := s.SecureValueService.Update(ctx, sv, "actor-uid")
 	return newSv, err
@@ -332,13 +350,18 @@ func CreateUserAuthContext(ctx context.Context, namespace string, permissions ma
 
 func CreateServiceAuthContext(ctx context.Context, serviceIdentity string, namespace string, permissions []string) context.Context {
 	requester := &identity.StaticRequester{
+		Type:      types.TypeAccessPolicy,
 		Namespace: namespace,
 		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
-			Rest: authn.AccessTokenClaims{
-				Permissions:     permissions,
-				ServiceIdentity: serviceIdentity,
-			},
+			Rest: authn.AccessTokenClaims{},
 		},
+	}
+
+	if serviceIdentity != "" {
+		requester.AccessTokenClaims.Rest.ServiceIdentity = serviceIdentity
+	}
+	if len(permissions) > 0 {
+		requester.AccessTokenClaims.Rest.DelegatedPermissions = permissions
 	}
 
 	return types.WithAuthInfo(ctx, requester)

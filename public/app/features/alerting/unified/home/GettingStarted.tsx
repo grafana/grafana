@@ -2,12 +2,14 @@ import { css, cx } from '@emotion/css';
 import * as React from 'react';
 import SVG from 'react-inlinesvg';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Stack, Text, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import atAGlanceDarkSvg from 'img/alerting/at_a_glance_dark.svg';
 import atAGlanceLightSvg from 'img/alerting/at_a_glance_light.svg';
+
+import { TUTORIAL_URL_ALERTING_GET_STARTED } from '../utils/docs';
 
 export default function GettingStarted() {
   const theme = useTheme2();
@@ -78,7 +80,7 @@ export default function GettingStarted() {
           <p>
             <Trans i18nKey="alerting.getting-stared.learn-more">
               For a hands-on introduction, refer to our{' '}
-              <TextLink href="https://grafana.com/tutorials/alerting-get-started/" inline={true} external>
+              <TextLink href={TUTORIAL_URL_ALERTING_GET_STARTED} inline={true} external>
                 tutorial to get started with Grafana Alerting
               </TextLink>
             </Trans>

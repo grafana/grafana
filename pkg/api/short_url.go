@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -87,6 +89,13 @@ func (hs *HTTPServer) redirectFromShortURL(c *contextmodel.ReqContext) {
 	// Failure to update LastSeenAt should still allow to redirect
 	if err := hs.ShortURLService.UpdateLastSeenAt(c.Req.Context(), shortURL); err != nil {
 		hs.log.Error("Failed to update short URL last seen at", "error", err)
+	}
+
+	// Safety net: validate stored path before redirecting to prevent open redirects
+	if err := shorturls.ValidateRelativePath(shortURL.Path); err != nil {
+		hs.log.Error("Short URL has invalid path, refusing to redirect", "path", shortURL.Path, "err", err)
+		c.Redirect(hs.Cfg.AppURL, http.StatusFound)
+		return
 	}
 
 	hs.log.Debug("Redirecting short URL", "path", shortURL.Path)
@@ -183,13 +192,35 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 		return
 	}
 
-	value := &v1beta1.GetGoto{}
+	value := &v1beta1.GetGotoResponse{}
 	if err = json.Unmarshal(body, value); err != nil {
 		c.JsonApiErr(500, "unmarshal", err)
 		return
 	}
 	if value.Url == "" {
 		c.JsonApiErr(500, "invalid", fmt.Errorf("expected url"))
+		return
+	}
+
+	// Safety net: validate the redirect URL is not an open redirect.
+	// The URL from the goto subresource is already an absolute URL (appURL + path),
+	// so we parse it and validate the path component.
+	parsedURL, parseErr := url.Parse(value.Url)
+	if parseErr != nil {
+		c.JsonApiErr(500, "invalid redirect URL", parseErr)
+		return
+	}
+	// Ensure the redirect URL is relative to this server by checking it has no scheme
+	// or its host matches what we expect. Since the goto handler constructs the URL
+	// as appURL + "/" + path, we just need to verify it's not pointing externally.
+	appParsed, appParseErr := url.Parse(sk8s.cfg.AppURL)
+	if appParseErr != nil || appParsed.Host == "" {
+		c.JsonApiErr(500, "invalid app URL configuration", appParseErr)
+		return
+	}
+	if parsedURL.Host != "" && !strings.EqualFold(parsedURL.Host, appParsed.Host) {
+		c.Logger.Error("Short URL redirect points to external host, refusing", "url", value.Url)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusFound)
 		return
 	}
 
@@ -230,6 +261,7 @@ func (sk8s *shortURLK8sHandler) createKubernetesShortURLsHandler(c *contextmodel
 //-----------------------------------------------------------------------------------------
 
 func (sk8s *shortURLK8sHandler) getClient(c *contextmodel.ReqContext) (dynamic.ResourceInterface, bool) {
+	// NOTE! if you are copying this, consider using the hs.clientGenerator to get a typed client!
 	dyn, err := dynamic.NewForConfig(sk8s.clientConfigProvider.GetDirectRestConfig(c))
 	if err != nil {
 		c.JsonApiErr(500, "client", err)

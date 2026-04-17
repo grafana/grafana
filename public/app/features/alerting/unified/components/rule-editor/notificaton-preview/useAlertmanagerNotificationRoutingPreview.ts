@@ -1,25 +1,41 @@
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { useNotificationPolicyRoute } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
+import {
+  NAMED_ROOT_LABEL_NAME,
+  useNotificationPolicyRoute,
+} from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
 
-import { Labels } from '../../../../../../types/unified-alerting-dto';
+import { type Labels } from '../../../../../../types/unified-alerting-dto';
 import { useRouteGroupsMatcher } from '../../../useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { normalizeRoute } from '../../../utils/notification-policies';
 
-export const useAlertmanagerNotificationRoutingPreview = (alertmanager: string, instances: Labels[]) => {
+export const useAlertmanagerNotificationRoutingPreview = (
+  alertmanager: string,
+  instances: Labels[],
+  policyName?: string
+) => {
+  // if a policyName is provided (new named-policy routing), use it directly;
+  // otherwise fall back to extracting NAMED_ROOT_LABEL_NAME from instance labels (legacy path).
+  const routeName = useMemo(() => {
+    if (policyName) {
+      return policyName;
+    }
+    const routeNameLabel = instances.find((instance) => instance[NAMED_ROOT_LABEL_NAME]);
+    return routeNameLabel?.[NAMED_ROOT_LABEL_NAME];
+  }, [policyName, instances]);
+
   const {
-    data: currentData,
+    data: defaultPolicy,
     isLoading: isPoliciesLoading,
     error: policiesError,
-  } = useNotificationPolicyRoute({ alertmanager });
+  } = useNotificationPolicyRoute({ alertmanager }, routeName);
 
   // this function will use a web worker to compute matching routes
   const { matchInstancesToRoutes } = useRouteGroupsMatcher();
 
-  const [defaultPolicy] = currentData ?? [];
   const rootRoute = useMemo(() => {
     if (!defaultPolicy) {
       return;

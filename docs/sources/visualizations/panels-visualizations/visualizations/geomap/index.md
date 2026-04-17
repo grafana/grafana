@@ -189,6 +189,20 @@ You might need to reload the dashboard for this feature to work.
 
 The **No map repeating** option prevents the base map tiles from repeating horizontally when you pan across the world. This constrains the view to a single instance of the world map and avoids visual confusion when displaying global datasets. Enabling this option requires the map to reinitialize.
 
+#### Sync view to dashboard variable
+
+Stores the current map's view extents in a dashboard variable of your choosing.
+This is particularly useful for dynamically querying data based on the map's current extents.
+
+To use the option, follow these steps:
+
+1. Create a **Custom** type dashboard variable.
+2. Return to panel configuration and toggle on this switch.
+3. Select the newly created variable from the **Variable name** drop-down list.
+4. Use the variable in your queries.
+
+The variable contains comma-separated coordinates (EPSG:4326): `minLon,minLat,maxLon,maxLat`
+
 ### Map layers options
 
 Geomaps support showing multiple layers. Each layer determines how you visualize geospatial data on top of the base map.
@@ -512,6 +526,8 @@ The XYZ Tile layer is a map from a generic tile layer.
 
 - **URL template** - Set a valid tile server url, with {z}/{x}/{y} for example: https://tile.openstreetmap.org/{z}/{x}/{y}.png
 - **Attribution** sets the reference string for the layer if displayed in [map controls](#show-attribution)
+- **Min zoom** - Minimum zoom level. Tiles aren't loaded below this level.
+- **Max zoom** - Maximum zoom level provided by the server. Beyond this level, the map is rendered by scaling up existing tiles.
 - **Opacity** from 0 (transparent) to 1 (opaque)
 - **Dashboard variables** - You can use dashboard variables in both the **URL template** and **Attribution** fields. This allows you to dynamically switch map sources or versions. Example: `https://example.com/maps/${version}/{z}/{x}/{y}.png`.
 

@@ -14,6 +14,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	k8srest "k8s.io/client-go/rest"
@@ -34,15 +36,13 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 	ctx := context.Background()
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableDataMigrations: true,
-		AppModeProduction:     true,
-		DisableAnonymous:      true,
-		APIServerStorageType:  "unified",
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
 			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
 		},
-		UnifiedStorageEnableSearch: true,
 	})
 	defer helper.Shutdown()
 
@@ -94,7 +94,7 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 		return nil
 	})
 	require.NoError(t, err)
-	require.Equal(t, 16, fileCount, "file count from %s", devenv)
+	require.Equal(t, 17, fileCount, "file count from %s", devenv)
 
 	// Helper to call search
 	callSearch := func(user apis.User, params map[string]string) dashboardV0.SearchResults {
@@ -220,11 +220,207 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 	}
 }
 
+func TestIntegrationSearchOwnerReferences(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	ctx := context.Background()
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
+			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
+		},
+	})
+	defer helper.Shutdown()
+
+	ns := helper.Org1.Admin.Identity.GetNamespace()
+	gvr := schema.GroupVersionResource{
+		Group:    dashboardV0.GROUP,
+		Version:  dashboardV0.VERSION,
+		Resource: "dashboards",
+	}
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	// Create a dashboard with multiple owner references
+	dashboardUID := "owner-ref-test-dash"
+	ownerRefs := []metav1.OwnerReference{
+		{
+			APIVersion: "iam.grafana.app/v0alpha1",
+			Kind:       "Team",
+			Name:       "test-team",
+			UID:        "test-team-uid",
+		},
+		{
+			APIVersion: "iam.grafana.app/v0alpha1",
+			Kind:       "User",
+			Name:       "test-user",
+			UID:        "test-user-uid",
+		},
+	}
+
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"spec": map[string]any{
+				"title":         "Dashboard with owner references",
+				"schemaVersion": 42,
+			},
+		},
+	}
+	obj.SetName(dashboardUID)
+	obj.SetAPIVersion(gvr.GroupVersion().String())
+	obj.SetKind("Dashboard")
+	obj.SetOwnerReferences(ownerRefs)
+
+	_, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// Search for the dashboard by one of the owner references and verify all refs are returned
+	cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+	cfg.GroupVersion = &dashboardV0.GroupVersion
+	restClient, err := k8srest.RESTClientFor(cfg)
+	require.NoError(t, err)
+
+	var statusCode int
+	req := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
+		Param("limit", "1000").
+		Param("type", "dashboard").
+		Param("ownerReference", "iam.grafana.app/Team/test-team") // Search by one owner reference
+
+	res := req.Do(ctx).StatusCode(&statusCode)
+	require.NoError(t, res.Error())
+	require.Equal(t, http.StatusOK, statusCode)
+
+	var sr dashboardV0.SearchResults
+	raw, err := res.Raw()
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(raw, &sr))
+
+	// Find our dashboard in the results
+	var foundHit *dashboardV0.DashboardHit
+	for i := range sr.Hits {
+		if sr.Hits[i].Name == dashboardUID {
+			foundHit = &sr.Hits[i]
+			break
+		}
+	}
+
+	require.NotNil(t, foundHit, "Dashboard should be found in search results when filtering by owner reference")
+	require.Len(t, foundHit.OwnerReferences, 2, "Dashboard should have two owner references")
+	// Owner references are stored in format {Group}/{Kind}/{Name}
+	assert.Contains(t, foundHit.OwnerReferences, "iam.grafana.app/Team/test-team")
+	assert.Contains(t, foundHit.OwnerReferences, "iam.grafana.app/User/test-user")
+}
+
+func TestIntegrationSearchCreatedBy(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	ctx := context.Background()
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
+			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
+		},
+	})
+	defer helper.Shutdown()
+
+	ns := helper.Org1.Admin.Identity.GetNamespace()
+	gvr := schema.GroupVersionResource{
+		Group:    dashboardV0.GROUP,
+		Version:  dashboardV0.VERSION,
+		Resource: "dashboards",
+	}
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	// Create a dashboard as admin user
+	dashboardUID := "created-by-test-dash"
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"spec": map[string]any{
+				"title":         "Dashboard created by admin",
+				"schemaVersion": 42,
+			},
+		},
+	}
+	obj.SetName(dashboardUID)
+	obj.SetAPIVersion(gvr.GroupVersion().String())
+	obj.SetKind("Dashboard")
+
+	_, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// The createdBy annotation is set automatically by the apistore (prepare.go)
+	// to the identity UID of the user who created the resource.
+	createdByUID := helper.Org1.Admin.Identity.GetUID()
+
+	// Search for dashboards filtered by createdBy
+	cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+	cfg.GroupVersion = &dashboardV0.GroupVersion
+	restClient, err := k8srest.RESTClientFor(cfg)
+	require.NoError(t, err)
+
+	var statusCode int
+	req := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
+		Param("limit", "1000").
+		Param("type", "dashboard").
+		Param("createdBy", createdByUID)
+
+	res := req.Do(ctx).StatusCode(&statusCode)
+	require.NoError(t, res.Error())
+	require.Equal(t, http.StatusOK, statusCode)
+
+	var sr dashboardV0.SearchResults
+	raw, err := res.Raw()
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(raw, &sr))
+
+	// Find our dashboard in the results
+	var foundHit *dashboardV0.DashboardHit
+	for i := range sr.Hits {
+		if sr.Hits[i].Name == dashboardUID {
+			foundHit = &sr.Hits[i]
+			break
+		}
+	}
+	require.NotNil(t, foundHit, "Dashboard should be found when filtering by createdBy")
+	assert.Equal(t, "Dashboard created by admin", foundHit.Title)
+
+	// Verify that searching with a non-matching createdBy returns no match for this dashboard
+	req2 := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
+		Param("limit", "1000").
+		Param("type", "dashboard").
+		Param("createdBy", "user:nonexistent-uid")
+
+	res2 := req2.Do(ctx).StatusCode(&statusCode)
+	require.NoError(t, res2.Error())
+	require.Equal(t, http.StatusOK, statusCode)
+
+	var sr2 dashboardV0.SearchResults
+	raw2, err := res2.Raw()
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(raw2, &sr2))
+
+	// The dashboard should not appear with a different createdBy filter
+	for _, hit := range sr2.Hits {
+		assert.NotEqual(t, dashboardUID, hit.Name, "Dashboard should not be found when filtering by a different createdBy")
+	}
+}
+
 func TestIntegrationSearchPermissionFiltering(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	// Only run for Unified Storage modes that support search (Mode3+)
-	modes := []rest.DualWriterMode{rest.Mode3, rest.Mode4, rest.Mode5}
+	// Only run for Unified Storage modes that support search (Mode4+)
+	modes := []rest.DualWriterMode{rest.Mode5}
 	for _, mode := range modes {
 		runSearchPermissionTest(t, mode)
 	}
@@ -235,15 +431,13 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 		ctx := context.Background()
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			DisableDataMigrations: true,
-			AppModeProduction:     true,
-			DisableAnonymous:      true,
-			APIServerStorageType:  "unified",
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 				"folders.folder.grafana.app":       {DualWriterMode: mode},
 			},
-			UnifiedStorageEnableSearch: true,
 		})
 		defer helper.Shutdown()
 

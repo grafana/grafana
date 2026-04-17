@@ -1,132 +1,76 @@
-import { memo, useState } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Combobox, Field, Input, SecretInput, Stack } from '@grafana/ui';
+import { Combobox, Field, Input, Stack } from '@grafana/ui';
+import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
-import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
-import { useBranchOptions } from '../hooks/useBranchOptions';
-import { getHasTokenInstructions } from '../utils/git';
+import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
+import { useGetRepositoryFolders } from '../hooks/useGetRepositoryFolders';
+import { useGetRepositoryRefs } from '../hooks/useGetRepositoryRefs';
 import { isGitProvider } from '../utils/repositoryTypes';
 
 import { getGitProviderFields, getLocalProviderFields } from './fields';
-import { WizardFormData } from './types';
+import { type WizardFormData } from './types';
 
 export const ConnectStep = memo(function ConnectStep() {
   const {
     register,
     control,
-    setValue,
     formState: { errors },
     getValues,
     watch,
+    setValue,
   } = useFormContext<WizardFormData>();
 
-  const [tokenConfigured, setTokenConfigured] = useState(false);
-
+  const { data: frontendSettings } = useGetFrontendSettingsQuery();
   // We don't need to dynamically react on repo type changes, so we use getValues for it
   const type = getValues('repository.type');
-  const [repositoryUrl = '', repositoryToken = '', repositoryTokenUser = '', githubAuthType] = watch([
-    'repository.url',
-    'repository.token',
-    'repository.tokenUser',
-    'githubAuthType',
-  ]);
+  const [repositoryName = '', branch = ''] = watch(['repositoryName', 'repository.branch']);
   const isGitBased = isGitProvider(type);
-  const isGitHubAppAuth = type === 'github' && githubAuthType === 'github-app';
 
   const {
-    options: branchOptions,
-    loading: branchesLoading,
-    error: branchesError,
-  } = useBranchOptions({
+    options: repositoryRefsOptions,
+    loading: isRefsLoading,
+    error: refsError,
+    defaultBranch,
+  } = useGetRepositoryRefs({
     repositoryType: type,
-    repositoryUrl,
-    repositoryToken,
-    repositoryTokenUser,
+    repositoryName: repositoryName,
+  });
+
+  const {
+    options: folderOptions,
+    loading: isFoldersLoading,
+    error: foldersError,
+    hint: foldersHint,
+  } = useGetRepositoryFolders({
+    repositoryName: repositoryName || undefined,
+    ref: branch || undefined,
   });
 
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const localFields = !isGitBased ? getLocalProviderFields(type) : null;
-  const hasTokenInstructions = getHasTokenInstructions(type);
+
+  const hasAutoSelectedRef = useRef(false);
+
+  useEffect(() => {
+    if (!hasAutoSelectedRef.current && defaultBranch && !getValues('repository.branch')) {
+      setValue('repository.branch', defaultBranch);
+      hasAutoSelectedRef.current = true;
+    }
+  }, [defaultBranch, getValues, setValue]);
 
   return (
     <Stack direction="column" gap={2}>
-      {hasTokenInstructions && !isGitHubAppAuth && <TokenPermissionsInfo type={type} />}
-
       {gitFields && (
         <>
-          {!isGitHubAppAuth && (
-            <>
-              <Field
-                noMargin
-                label={gitFields.tokenConfig.label}
-                required={gitFields.tokenConfig.required}
-                description={gitFields.tokenConfig.description}
-                error={errors?.repository?.token?.message}
-                invalid={!!errors?.repository?.token?.message}
-              >
-                <Controller
-                  name="repository.token"
-                  control={control}
-                  rules={gitFields.tokenConfig.validation}
-                  render={({ field: { ref, ...field } }) => (
-                    <SecretInput
-                      {...field}
-                      id="token"
-                      placeholder={gitFields.tokenConfig.placeholder}
-                      isConfigured={tokenConfigured}
-                      invalid={!!errors?.repository?.token?.message}
-                      onReset={() => {
-                        setValue('repository.token', '');
-                        setTokenConfigured(false);
-                      }}
-                    />
-                  )}
-                />
-              </Field>
-
-              {gitFields.tokenUserConfig && (
-                <Field
-                  noMargin
-                  label={gitFields.tokenUserConfig.label}
-                  required={gitFields.tokenUserConfig.required}
-                  description={gitFields.tokenUserConfig.description}
-                  error={errors?.repository?.tokenUser?.message}
-                  invalid={!!errors?.repository?.tokenUser?.message}
-                >
-                  <Input
-                    {...register('repository.tokenUser', gitFields.tokenUserConfig.validation)}
-                    id="tokenUser"
-                    placeholder={gitFields.tokenUserConfig.placeholder}
-                  />
-                </Field>
-              )}
-            </>
-          )}
-
-          <Field
-            noMargin
-            label={gitFields.urlConfig.label}
-            description={gitFields.urlConfig.description}
-            error={errors?.repository?.url?.message}
-            invalid={Boolean(errors?.repository?.url?.message)}
-            required={gitFields.urlConfig.required}
-          >
-            <Input
-              {...register('repository.url', gitFields.urlConfig.validation)}
-              id="repository-url"
-              placeholder={gitFields.urlConfig.placeholder}
-            />
-          </Field>
-
           <Field
             noMargin
             label={gitFields.branchConfig.label}
             description={gitFields.branchConfig.description}
-            error={errors?.repository?.branch?.message}
+            error={errors?.repository?.branch?.message || refsError}
             required={gitFields.branchConfig.required}
-            invalid={Boolean(errors?.repository?.branch?.message || branchesError)}
+            invalid={Boolean(errors?.repository?.branch?.message || refsError)}
           >
             <Controller
               name="repository.branch"
@@ -134,11 +78,11 @@ export const ConnectStep = memo(function ConnectStep() {
               rules={gitFields.branchConfig.validation}
               render={({ field: { ref, onChange, ...field } }) => (
                 <Combobox
-                  invalid={Boolean(errors?.repository?.branch?.message || branchesError)}
+                  invalid={Boolean(errors?.repository?.branch?.message || refsError)}
                   onChange={(option) => onChange(option?.value || '')}
                   placeholder={gitFields.branchConfig.placeholder}
-                  options={branchOptions}
-                  loading={branchesLoading}
+                  options={repositoryRefsOptions || []}
+                  loading={isRefsLoading}
                   createCustomValue
                   isClearable
                   {...field}
@@ -150,15 +94,27 @@ export const ConnectStep = memo(function ConnectStep() {
           <Field
             noMargin
             label={gitFields.pathConfig.label}
-            description={gitFields.pathConfig.description}
-            error={errors?.repository?.path?.message}
-            invalid={!!errors?.repository?.path?.message}
+            description={foldersHint || gitFields.pathConfig.description}
+            error={errors?.repository?.path?.message || foldersError}
+            invalid={Boolean(errors?.repository?.path?.message || foldersError)}
             required={gitFields.pathConfig.required}
           >
-            <Input
-              {...register('repository.path', gitFields.pathConfig.validation)}
-              id="git-path"
-              placeholder={gitFields.pathConfig.placeholder}
+            <Controller
+              name="repository.path"
+              control={control}
+              rules={gitFields.pathConfig.validation}
+              render={({ field: { ref, onChange, ...field } }) => (
+                <Combobox
+                  invalid={!!errors?.repository?.path?.message}
+                  onChange={(option) => onChange(option?.value || '')}
+                  placeholder={gitFields.pathConfig.placeholder}
+                  options={folderOptions}
+                  loading={isFoldersLoading}
+                  createCustomValue
+                  isClearable
+                  {...field}
+                />
+              )}
             />
           </Field>
         </>
@@ -181,7 +137,7 @@ export const ConnectStep = memo(function ConnectStep() {
         </Field>
       )}
 
-      <FreeTierLimitNote limitType="connection" />
+      <QuotaLimitNote maxRepositories={frontendSettings?.maxRepositories} />
     </Stack>
   );
 });

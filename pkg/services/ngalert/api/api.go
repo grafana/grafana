@@ -20,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/inhibition_rules"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -52,35 +54,39 @@ type RuleAccessControlService interface {
 
 // API handlers.
 type API struct {
-	Cfg                  *setting.Cfg
-	DatasourceCache      datasources.CacheService
-	DatasourceService    datasources.DataSourceService
-	RouteRegister        routing.RouteRegister
-	QuotaService         quota.Service
-	TransactionManager   provisioning.TransactionManager
-	ProvenanceStore      provisioning.ProvisioningStore
-	RuleStore            RuleStore
-	AlertingStore        store.AlertingStore
-	AdminConfigStore     store.AdminConfigurationStore
-	DataProxy            *datasourceproxy.DataSourceProxyService
-	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
-	StateManager         state.AlertInstanceManager
-	RuleStatusReader     apiprometheus.StatusReader
-	AccessControl        ac.AccessControl
-	Policies             *provisioning.NotificationPolicyService
-	ReceiverService      *notifier.ReceiverService
-	ContactPointService  *provisioning.ContactPointService
-	Templates            *provisioning.TemplateService
-	MuteTimings          *provisioning.MuteTimingService
-	AlertRules           *provisioning.AlertRuleService
-	AlertsRouter         *sender.AlertsRouter
-	EvaluatorFactory     eval.EvaluatorFactory
-	ConditionValidator   *eval.ConditionValidator
-	FeatureManager       featuremgmt.FeatureToggles
-	Historian            Historian
-	Tracer               tracing.Tracer
-	AppUrl               *url.URL
-	UserService          user.Service
+	Cfg                   *setting.Cfg
+	DatasourceCache       datasources.CacheService
+	DatasourceService     datasources.DataSourceService
+	RouteRegister         routing.RouteRegister
+	QuotaService          quota.Service
+	TransactionManager    provisioning.TransactionManager
+	ProvenanceStore       provisioning.ProvisioningStore
+	RuleStore             RuleStore
+	AlertingStore         store.AlertingStore
+	AdminConfigStore      store.AdminConfigurationStore
+	DataProxy             *datasourceproxy.DataSourceProxyService
+	MultiOrgAlertmanager  *notifier.MultiOrgAlertmanager
+	StateManager          state.AlertInstanceManager
+	RuleStatusReader      apiprometheus.StatusReader
+	AccessControl         ac.AccessControl
+	ReceiverService       *notifier.ReceiverService
+	ReceiverTestService   *notifier.ReceiverTestingService
+	RouteService          *routes.Service
+	Policies              *provisioning.NotificationPolicyService
+	ContactPointService   *provisioning.ContactPointService
+	Templates             *provisioning.TemplateService
+	MuteTimings           *provisioning.MuteTimingService
+	InhibitionRules       *inhibition_rules.Service
+	AlertRules            *provisioning.AlertRuleService
+	AlertsRouter          *sender.AlertsRouter
+	EvaluatorFactory      eval.EvaluatorFactory
+	ConditionValidator    *eval.ConditionValidator
+	FeatureManager        featuremgmt.FeatureToggles
+	Historian             Historian
+	Tracer                tracing.Tracer
+	AppUrl                *url.URL
+	UserService           user.Service
+	SilenceLimitsProvider notifier.LimitsProvider
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks
@@ -106,28 +112,23 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	)
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.
-	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(
-		api.DatasourceCache,
-		NewLotexAM(proxy, logger),
-		&AlertmanagerSrv{
-			crypto:         api.MultiOrgAlertmanager.Crypto,
-			log:            logger,
-			ac:             api.AccessControl,
-			mam:            api.MultiOrgAlertmanager,
-			featureManager: api.FeatureManager,
-			silenceSvc: notifier.NewSilenceService(
-				accesscontrol.NewSilenceService(api.AccessControl, api.RuleStore),
-				api.TransactionManager,
-				logger,
-				api.MultiOrgAlertmanager,
-				api.RuleStore,
-				ruleAuthzService,
-			),
-			receiverAuthz: accesscontrol.NewReceiverAccess[ReceiverStatus](api.AccessControl, false),
-		},
-		convertSrv,
-		api.FeatureManager,
-	), m)
+	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(api.DatasourceCache, NewLotexAM(proxy, logger), &AlertmanagerSrv{
+		crypto:         api.MultiOrgAlertmanager.Crypto,
+		log:            logger,
+		ac:             api.AccessControl,
+		mam:            api.MultiOrgAlertmanager,
+		featureManager: api.FeatureManager,
+		silenceSvc: notifier.NewSilenceService(
+			accesscontrol.NewSilenceService(api.AccessControl, api.RuleStore),
+			api.TransactionManager,
+			logger,
+			api.MultiOrgAlertmanager,
+			api.RuleStore,
+			ruleAuthzService,
+			api.SilenceLimitsProvider,
+		),
+		receiverAuthz: accesscontrol.NewReceiverAccess[ReceiverStatus](api.AccessControl, false),
+	}), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,

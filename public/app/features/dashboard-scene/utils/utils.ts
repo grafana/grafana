@@ -1,34 +1,39 @@
-import { DataSourceRef, getDataSourceRef, IntervalVariableModel } from '@grafana/data';
+import { getDataSourceRef, type IntervalVariableModel, type ScopedVars } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
-  CancelActivationHandler,
-  CustomVariable,
-  MultiValueVariable,
+  type CancelActivationHandler,
+  type CustomVariable,
+  LocalValueVariable,
+  type MultiValueVariable,
   SceneDataTransformer,
   sceneGraph,
-  SceneObject,
-  SceneObjectState,
+  type SceneObject,
+  type SceneObjectState,
   SceneQueryRunner,
+  SceneVariableSet,
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
-import { Dashboard, Panel, RowPanel } from '@grafana/schema';
+import { type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
 import { createLogger } from '@grafana/ui';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
-import { DashboardLayoutOrchestrator } from '../scene/DashboardLayoutOrchestrator';
-import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { type DashboardLayoutOrchestrator } from '../scene/DashboardLayoutOrchestrator';
+import { DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
-import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
+import { type DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
-import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { type DashboardDropTarget } from '../scene/types/DashboardDropTarget';
+import { type DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
@@ -237,26 +242,6 @@ export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQu
   return undefined;
 }
 
-/**
- * Gets the datasource from a query runner.
- * When no panel-level datasource is set, it means all queries use the same datasource,
- * so we extract the datasource from the first query.
- */
-export function getDatasourceFromQueryRunner(queryRunner: SceneQueryRunner): DataSourceRef | null | undefined {
-  // Panel-level datasource is set for mixed datasource panels
-  if (queryRunner.state.datasource) {
-    return queryRunner.state.datasource;
-  }
-
-  // No panel-level datasource means all queries share the same datasource
-  const firstQuery = queryRunner.state.queries?.[0];
-  if (firstQuery?.datasource) {
-    return firstQuery.datasource;
-  }
-
-  return undefined;
-}
-
 export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
   const root = sceneObject.getRoot();
 
@@ -288,10 +273,7 @@ export function getDefaultPluginId(): string {
 export function getDefaultVizPanel(): VizPanel {
   const defaultPluginId = getDefaultPluginId();
 
-  const newPanelTitle =
-    config.featureToggles.newVizSuggestions && defaultPluginId === UNCONFIGURED_PANEL_PLUGIN_ID
-      ? ''
-      : t('dashboard.new-panel-title', 'New panel');
+  const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
 
   const datasourceSettings = getDataSourceSrv().getInstanceSettings(null);
 
@@ -310,7 +292,8 @@ export function getDefaultVizPanel(): VizPanel {
       $behaviors: [panelMenuBehavior],
     }),
     headerActions: new VizPanelHeaderActions({
-      hideGroupByAction: !config.featureToggles.panelGroupBy,
+      hideGroupByAction:
+        !config.featureToggles.panelGroupBy && !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
     $data: datasourceSettings
       ? new SceneDataTransformer({
@@ -443,9 +426,66 @@ export function useInterpolatedTitle<T extends SceneObjectState & { title?: stri
   return sceneGraph.interpolate(scene, title, undefined, 'text');
 }
 
+type RepeatableSectionState = SceneObjectState & {
+  repeatByVariable?: string;
+  repeatSourceKey?: string;
+};
+
+export function interpolateSectionTitle<T extends RepeatableSectionState>(
+  scene: SceneObject<T>,
+  value: string | undefined | null
+): string {
+  if (value === '' || value == null) {
+    return '';
+  }
+
+  // Section titles/slugs should resolve in local scene scope so they can
+  // use ancestor section variables (including repeat-local variables).
+  if (scene.state.repeatByVariable || scene.state.repeatSourceKey) {
+    return sceneGraph.interpolate(scene, value, getRepeatLocalScopedVars(scene), 'text');
+  }
+  return sceneGraph.interpolate(scene, value, undefined, 'text');
+}
+
+function getRepeatLocalScopedVars<T extends RepeatableSectionState>(scene: SceneObject<T>): ScopedVars | undefined {
+  const variableSet = scene.state.$variables;
+  if (!(variableSet instanceof SceneVariableSet)) {
+    return undefined;
+  }
+
+  const repeatLocalVariable = variableSet.state.variables.find((variable) => variable instanceof LocalValueVariable);
+  if (!(repeatLocalVariable instanceof LocalValueVariable)) {
+    return undefined;
+  }
+
+  return {
+    [repeatLocalVariable.state.name]: {
+      value: repeatLocalVariable.getValue(),
+      text: repeatLocalVariable.state.text,
+    },
+  };
+}
+
 export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrchestrator | undefined {
   return getDashboardSceneFor(scene).state.layoutOrchestrator;
 }
+
+export const getLayoutForObject = (
+  object: DashboardDropTarget | SceneObject<SceneObjectState> | DashboardScene
+): AutoGridLayoutManager | DefaultGridLayoutManager | null => {
+  const gridManagerForObject = sceneGraph.findObject(
+    object,
+    (currentSceneObject) =>
+      currentSceneObject instanceof AutoGridLayoutManager || currentSceneObject instanceof DefaultGridLayoutManager
+  );
+  if (
+    gridManagerForObject instanceof AutoGridLayoutManager ||
+    gridManagerForObject instanceof DefaultGridLayoutManager
+  ) {
+    return gridManagerForObject;
+  }
+  return null;
+};
 
 // @returns true if the panel is a valid library panel reference
 // a valid library panel reference is a panel with this

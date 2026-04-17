@@ -13,25 +13,25 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import { PureComponent, RefObject } from 'react';
+import { PureComponent, type RefObject } from 'react';
 
-import { CoreApp, GrafanaTheme2, LinkModel, TimeRange, TraceLog } from '@grafana/data';
-import { SpanBarOptions, TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
+import { type CoreApp, type GrafanaTheme2, type LinkModel, type TimeRange, type TraceLog } from '@grafana/data';
+import { type SpanBarOptions, type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, reportInteraction } from '@grafana/runtime';
-import { TimeZone } from '@grafana/schema';
+import { type TimeZone } from '@grafana/schema';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
-import TNil from '../types/TNil';
-import TTraceTimeline from '../types/TTraceTimeline';
-import { SpanLinkFunc } from '../types/links';
-import { TraceSpan, Trace, TraceSpanReference, CriticalPathSection } from '../types/trace';
+import type TNil from '../types/TNil';
+import type TTraceTimeline from '../types/TTraceTimeline';
+import { type SpanLinkFunc } from '../types/links';
+import { type TraceSpan, type Trace, type TraceSpanReference, type CriticalPathSection } from '../types/trace';
 
-import { TraceFlameGraphs } from './SpanDetail';
+import { type TraceFlameGraphs } from './SpanDetail';
 import TimelineHeaderRow from './TimelineHeaderRow/TimelineHeaderRow';
 import VirtualizedTraceView from './VirtualizedTraceView';
-import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
+import { type TUpdateViewRangeTimeFunction, type ViewRange, type ViewRangeTimeUpdate } from './types';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   TraceTimelineViewer: css({
@@ -104,7 +104,7 @@ export type TProps = {
   focusedSpanIdForSearch: string;
   showSpanFilterMatchesOnly: boolean;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
-  topOfViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRef?: RefObject<HTMLDivElement | null>;
   headerHeight: number;
   criticalPath: CriticalPathSection[];
   traceFlameGraphs: TraceFlameGraphs;
@@ -197,8 +197,10 @@ export class UnthemedTraceTimelineViewer extends PureComponent<TProps, State> {
     return (
       <div
         className={styles.TraceTimelineViewer}
-        ref={(ref: HTMLDivElement | null) => {
-          ref && this.setState({ height: ref.getBoundingClientRect().height });
+        ref={(ref) => {
+          if (ref) {
+            this.setState({ height: ref.getBoundingClientRect().height });
+          }
         }}
       >
         <TimelineHeaderRow

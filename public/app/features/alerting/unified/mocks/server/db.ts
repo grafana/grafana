@@ -1,24 +1,27 @@
 import { Factory } from 'fishery';
 import { uniqueId } from 'lodash';
 
-import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
+import { type DataSourceInstanceSettings, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { GrafanaManagedContactPoint, GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
-import { FolderDTO } from 'app/types/folders';
+import {
+  type GrafanaManagedContactPoint,
+  type GrafanaManagedReceiverConfig,
+} from 'app/plugins/datasource/alertmanager/types';
+import { type FolderDTO } from 'app/types/folders';
 import {
   GrafanaAlertStateDecision,
-  GrafanaAlertingRuleDefinition,
-  GrafanaRecordingRuleDefinition,
-  PromAlertingRuleDTO,
+  type GrafanaAlertingRuleDefinition,
+  type GrafanaRecordingRuleDefinition,
+  type PromAlertingRuleDTO,
   PromAlertingRuleState,
-  PromRuleGroupDTO,
+  type PromRuleGroupDTO,
   PromRuleType,
-  RulerAlertingRuleDTO,
-  RulerCloudRuleDTO,
-  RulerGrafanaRuleDTO,
-  RulerGrafanaRuleGroupDTO,
-  RulerRecordingRuleDTO,
-  RulerRuleGroupDTO,
+  type RulerAlertingRuleDTO,
+  type RulerCloudRuleDTO,
+  type RulerGrafanaRuleDTO,
+  type RulerGrafanaRuleGroupDTO,
+  type RulerRecordingRuleDTO,
+  type RulerRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { setupDataSources } from '../../testSetup/datasources';
@@ -230,6 +233,7 @@ const grafanaContactPointFactory = GrafanaContactPointFactory.define(({ sequence
       'grafana.com/access/canDelete': 'true',
       'grafana.com/access/canReadSecrets': 'true',
       'grafana.com/access/canWrite': 'true',
+      'grafana.com/access/canTest': 'true',
       'grafana.com/inUse/routes': '0',
       'grafana.com/inUse/rules': '1',
       'grafana.com/provenance': 'none',

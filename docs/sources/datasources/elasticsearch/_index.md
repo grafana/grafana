@@ -16,33 +16,15 @@ labels:
 menuTitle: Elasticsearch
 title: Elasticsearch data source
 weight: 325
-refs:
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-  build-dashboards:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
 ---
 
 # Elasticsearch data source
 
-Elasticsearch is a search and analytics engine used for a variety of use cases.
-You can create many types of queries to visualize logs or metrics stored in Elasticsearch, and annotate graphs with log events stored in Elasticsearch.
+[Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/current/elasticsearch-intro.html) is a search and analytics engine used for a variety of use cases. The built-in Elasticsearch data source lets you query and visualize logs or metrics stored in Elasticsearch, and annotate graphs with log events.
 
-The following resources will help you get started with Elasticsearch and Grafana:
-
-- [What is Elasticsearch?](https://www.elastic.co/guide/en/elasticsearch/reference/current/elasticsearch-intro.html)
-- [Configure the Elasticsearch data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/configure/)
-- [Elasticsearch query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/query-editor/)
-- [Elasticsearch template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/template-variables/)
-- [Elasticsearch annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/annotations/)
-- [Elasticsearch alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/alerting/)
-- [Troubleshooting issues with the Elasticsearch data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/troubleshooting/)
+{{< admonition type="note" >}}
+If you use Amazon OpenSearch Service (the successor to Amazon Elasticsearch Service), use the [OpenSearch data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opensearch/) instead.
+{{< /admonition >}}
 
 ## Key capabilities
 
@@ -52,6 +34,7 @@ The Elasticsearch data source supports:
 - **Log queries:** Search, filter, and explore log data with Lucene query syntax.
 - **Annotations:** Overlay Elasticsearch events on your dashboard graphs.
 - **Alerting:** Create alerts based on Elasticsearch query results.
+- **ES|QL queries (experimental):** Query data using Elasticsearch's pipe-based query language.
 
 ## Before you begin
 
@@ -61,32 +44,45 @@ Before you configure the Elasticsearch data source, you need:
 - Network access from Grafana to your Elasticsearch server
 - Appropriate user credentials or API keys with read access
 
-{{< admonition type="note" >}}
-If you use Amazon OpenSearch Service (the successor to Amazon Elasticsearch Service), use the [OpenSearch data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opensearch/) instead.
-{{< /admonition >}}
-
 ## Supported Elasticsearch versions
-
-{{< admonition type="warning" >}}
-The Elasticsearch data source plugin currently does not support Elastic Cloud Serverless, or any other serverless variant of Elasticsearch.
-{{< /admonition >}}
 
 This data source supports these versions of Elasticsearch:
 
 - ≥ v7.17
 - v8.x
 - v9.x
+- Elastic Cloud Serverless
 
 The Grafana maintenance policy for the Elasticsearch data source aligns with [Elastic Product End of Life Dates](https://www.elastic.co/support/eol). Grafana ensures proper functionality for supported versions only. If you use an EOL version of Elasticsearch, you can still run queries, but the query builder displays a warning. Grafana doesn't guarantee functionality or provide fixes for EOL versions.
+
+## Get started
+
+The following documentation helps you set up and use the Elasticsearch data source:
+
+- [Configure the data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/configure/)
+- [Query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/query-editor/)
+- [Template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/template-variables/)
+- [Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/annotations/)
+- [Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/alerting/)
+- [Troubleshooting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/troubleshooting/)
+
+## Plugin updates
+
+Starting with Grafana v13.0, the Elasticsearch data source is a standalone plugin, pre-installed in both Grafana OSS and Enterprise. This enables more frequent updates independent of Grafana releases. Grafana automatically checks the plugin catalog and installs the latest version on each server restart.
+
+To adjust this behavior:
+
+- **Opt out of auto-updates:** Set `preinstall_auto_update` to `false` in your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/).
+- **Update manually:** Update at any time from the **Administration > Plugins** page without restarting Grafana.
 
 ## Additional resources
 
 Once you have configured the Elasticsearch data source, you can:
 
-- Use [Explore](ref:explore) to run ad-hoc queries against your Elasticsearch data.
+- Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to run ad hoc queries against your Elasticsearch data.
 - Configure and use [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/template-variables/) for dynamic dashboards.
 - Add [Transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to process query results.
-- [Build dashboards](ref:build-dashboards) to visualize your Elasticsearch data.
+- [Build dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/) to visualize your Elasticsearch data.
 
 ## Related data sources
 

@@ -2,10 +2,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
-import { Field, FieldType, LinkModel } from '@grafana/data';
+import { type Field, FieldType, type LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { VizTooltipFooter, AdHocFilterModel } from './VizTooltipFooter';
+import { VizTooltipFooter, type AdHocFilterModel } from './VizTooltipFooter';
 
 describe('VizTooltipFooter', () => {
   it('should fire onclick', async () => {
@@ -24,6 +24,8 @@ describe('VizTooltipFooter', () => {
       origin: field,
       target: undefined,
     };
+    //Adding this due to React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7.
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     render(
       <MemoryRouter>
@@ -32,6 +34,7 @@ describe('VizTooltipFooter', () => {
     );
     await userEvent.click(screen.getByRole('link'));
     expect(onClick).toHaveBeenCalled();
+    jest.spyOn(console, 'warn').mockRestore();
   });
 
   it('should render ad hoc filter button and fire onclick', async () => {

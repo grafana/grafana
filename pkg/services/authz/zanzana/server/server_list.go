@@ -14,7 +14,9 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"google.golang.org/grpc"
 
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
@@ -24,7 +26,7 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 	span.SetAttributes(attribute.String("namespace", r.GetNamespace()))
 
 	defer func(t time.Time) {
-		s.metrics.requestDurationSeconds.WithLabelValues("server.List", r.GetNamespace()).Observe(time.Since(t).Seconds())
+		s.metrics.requestDurationSeconds.WithLabelValues("List").Observe(time.Since(t).Seconds())
 	}(time.Now())
 
 	res, err := s.list(ctx, r)
@@ -72,7 +74,7 @@ func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 	return s.listTyped(ctx, r.GetSubject(), relation, resource, contextuals, store)
 }
 
-func (s *Server) listTyped(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *storeInfo) (*authzv1.ListResponse, error) {
+func (s *Server) listTyped(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *zanzana.StoreInfo) (*authzv1.ListResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "server.listTyped")
 	defer span.End()
 
@@ -98,7 +100,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			Type:                 resource.Type(),
-			Relation:             subresourceRelation,
+			Relation:             common.SubresourcePermissionRelation(subresourceRelation),
 			User:                 subject,
 			Context:              resourceCtx,
 			ContextualTuples:     contextuals,
@@ -130,7 +132,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 	}, nil
 }
 
-func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *storeInfo) (*authzv1.ListResponse, error) {
+func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *zanzana.StoreInfo) (*authzv1.ListResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "server.listGeneric")
 	defer span.End()
 
@@ -147,7 +149,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			Type:                 common.TypeFolder,
-			Relation:             folderRelation,
+			Relation:             common.SubresourcePermissionRelation(folderRelation),
 			User:                 subject,
 			Context:              resourceCtx,
 			ContextualTuples:     contextuals,
@@ -205,10 +207,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 }
 
 func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
-	fn := s.openfga.ListObjects
-	if s.cfg.UseStreamedListObjects {
-		fn = s.streamedListObjects
-	}
+	fn := s.streamedListObjects
 
 	if s.cfg.CacheSettings.CheckQueryCacheEnabled {
 		return s.listObjectCached(ctx, req, fn)
@@ -223,7 +222,7 @@ func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequ
 	return res, nil
 }
 
-type listFn func(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error)
+type listFn func(ctx context.Context, req *openfgav1.ListObjectsRequest, opts ...grpc.CallOption) (*openfgav1.ListObjectsResponse, error)
 
 func (s *Server) listObjectCached(ctx context.Context, req *openfgav1.ListObjectsRequest, fn listFn) (*openfgav1.ListObjectsResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "server.listObjectCached")
@@ -247,9 +246,17 @@ func (s *Server) listObjectCached(ctx context.Context, req *openfgav1.ListObject
 	return res, nil
 }
 
-func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObjectsRequest, opts ...grpc.CallOption) (*openfgav1.ListObjectsResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "server.streamedListObjects")
 	defer span.End()
+
+	deadline := s.cfg.ListObjectsDeadline
+	if deadline <= 0 {
+		deadline = 3 * time.Second
+	}
+	var cancel context.CancelFunc
+	ctx, cancel = context.WithTimeout(ctx, deadline-time.Second)
+	defer cancel()
 
 	r := &openfgav1.StreamedListObjectsRequest{
 		StoreId:              req.GetStoreId(),
@@ -261,7 +268,7 @@ func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObj
 		ContextualTuples:     req.ContextualTuples,
 	}
 
-	stream, err := s.openfgaClient.StreamedListObjects(ctx, r)
+	stream, err := s.openFGAClient.StreamedListObjects(ctx, r, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -276,6 +283,10 @@ func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObj
 			return nil, err
 		}
 		objects = append(objects, res.GetObject())
+	}
+
+	if ctx.Err() != nil {
+		return nil, fmt.Errorf("streamed list objects interrupted: %w", ctx.Err())
 	}
 
 	return &openfgav1.ListObjectsResponse{

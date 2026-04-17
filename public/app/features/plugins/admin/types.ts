@@ -1,16 +1,16 @@
-import { EntityState } from '@reduxjs/toolkit';
+import { type EntityState } from '@reduxjs/toolkit';
 
 import {
-  PluginType,
-  PluginSignatureStatus,
-  PluginSignatureType,
-  PluginDependencies,
-  PluginErrorCode,
-  WithAccessControlMetadata,
+  type PluginType,
+  type PluginSignatureStatus,
+  type PluginSignatureType,
+  type PluginDependencies,
+  type PluginErrorCode,
+  type WithAccessControlMetadata,
 } from '@grafana/data';
-import { IconName } from '@grafana/ui';
-import { PluginsState } from 'app/types/plugins';
-import { StoreState } from 'app/types/store';
+import { type IconName } from '@grafana/ui';
+import { type PluginsState } from 'app/types/plugins';
+import { type StoreState } from 'app/types/store';
 
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
 
@@ -39,7 +39,6 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   isInstalled: boolean;
   isDisabled: boolean;
   isDeprecated: boolean;
-  isManaged: boolean; // Indicates that the plugin version is managed by Grafana
   isPreinstalled: { found: boolean; withVersion: boolean }; // Indicates that the plugin is pre-installed
   // `isPublished` is TRUE if the plugin is published to grafana.com
   isPublished: boolean;
@@ -66,6 +65,11 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   iam?: IdentityAccessManagement;
   isProvisioned?: boolean;
   url?: string;
+  managed: {
+    enabled: boolean;
+    strategy?: PluginUpdateStrategy;
+  };
+  distributionType?: string;
 }
 export interface Screenshots {
   path: string;
@@ -190,7 +194,17 @@ export type RemotePlugin = {
   sponsorshipUrl?: string;
   repositoryUrl?: string;
   raiseAnIssueUrl?: string;
+  managed: {
+    enabled: boolean;
+    strategy?: PluginUpdateStrategy;
+  };
+  versionDistributionType?: string;
 };
+
+export enum PluginUpdateStrategy {
+  MajorAligned = 'major-aligned',
+  Assigned = 'assigned',
+}
 
 // The available status codes on GCOM are available here:
 // https://github.com/grafana/grafana-com/blob/main/packages/grafana-com-plugins-api/src/plugins/plugin.model.js#L74
@@ -261,6 +275,7 @@ export interface Version {
   isCompatible: boolean;
   grafanaDependency: string | null;
   angularDetected?: boolean;
+  status?: string; // Status of the version: 'active', 'deprecated'
 }
 
 export interface PluginDetails {

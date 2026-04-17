@@ -67,13 +67,10 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 			}
 
 			// 4) Validate notification settings receiver if provided
-			if r.Spec.NotificationSettings != nil && r.Spec.NotificationSettings.Receiver != "" && cfg.NotificationSettingsValidator != nil {
-				ok, nerr := cfg.NotificationSettingsValidator(ctx, r.Spec.NotificationSettings.Receiver)
-				if nerr != nil {
-					return fmt.Errorf("failed to validate notification settings: %w", nerr)
-				}
-				if !ok {
-					return fmt.Errorf("invalid notification receiver: %s", r.Spec.NotificationSettings.Receiver)
+			if r.Spec.NotificationSettings != nil && cfg.NotificationSettingsValidator != nil {
+				err := cfg.NotificationSettingsValidator(ctx, *r.Spec.NotificationSettings)
+				if err != nil {
+					return fmt.Errorf("notification settings validation error: %w", err)
 				}
 			}
 
@@ -115,7 +112,14 @@ func NewValidator(cfg config.RuntimeConfig) *simple.Validator {
 					return fmt.Errorf("'keepFiringFor' cannot be less than 0")
 				}
 			}
-
+			// 9) Validate the expressions
+			expressions := make([]util.Expression, 0, len(r.Spec.Expressions))
+			for _, expression := range r.Spec.Expressions {
+				expressions = append(expressions, &expression)
+			}
+			if err := util.ValidateExpressions(expressions); err != nil {
+				return err
+			}
 			return nil
 		},
 	}

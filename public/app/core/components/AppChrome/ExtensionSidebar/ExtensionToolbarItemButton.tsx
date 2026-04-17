@@ -17,6 +17,8 @@ function getPluginIcon(pluginId?: string): string {
     case 'grafana-grafanadocsplugin-app':
     case 'grafana-pathfinder-app':
       return 'book';
+    case 'grafana-grotfood-app':
+      return 'gf-grotfood';
     default:
       return 'ai-sparkle';
   }
@@ -44,8 +46,10 @@ function ExtensionToolbarItemButtonComponent(
       iconOnly
       data-testid={`extension-toolbar-button-${isOpen ? 'close' : 'open'}`}
       variant={isOpen ? 'active' : 'default'}
+      aria-expanded={isOpen}
       onClick={onClick}
       tooltip={tooltip}
+      aria-pressed={isOpen}
     />
   );
 }

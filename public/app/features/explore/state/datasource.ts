@@ -1,13 +1,13 @@
 // Libraries
-import { AnyAction, createAction } from '@reduxjs/toolkit';
+import { type AnyAction, createAction } from '@reduxjs/toolkit';
 
-import { DataSourceApi, HistoryItem } from '@grafana/data';
+import { type DataSourceApi, type HistoryItem } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
 import { stopQueryState } from 'app/core/utils/explore';
-import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
-import { ExploreItemState } from 'app/types/explore';
+import { getCorrelationsFromStorage } from 'app/features/correlations/utils';
+import { type ExploreItemState } from 'app/types/explore';
 import { createAsyncThunk } from 'app/types/store';
 
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
@@ -15,7 +15,7 @@ import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 import { saveCorrelationsAction } from './explorePane';
 import { importQueries, runQueries } from './query';
 import { changeRefreshInterval } from './time';
-import { createEmptyQueryResponse, getDatasourceUIDs, loadAndInitDatasource } from './utils';
+import { createEmptyQueryResponse, loadAndInitDatasource } from './utils';
 
 //
 // Actions and Payloads
@@ -68,8 +68,7 @@ export const changeDatasource = createAsyncThunk(
 
     const queries = getState().explore.panes[exploreId]!.queries;
 
-    const datasourceUIDs = getDatasourceUIDs(instance.uid, queries);
-    const correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);
+    const correlations = await getCorrelationsFromStorage(dispatch, queries, instance.uid);
     dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
 
     if (options?.importQueries) {

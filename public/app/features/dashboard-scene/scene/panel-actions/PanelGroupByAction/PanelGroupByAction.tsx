@@ -1,63 +1,69 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { lastValueFrom } from 'rxjs';
 
-import { fuzzySearch } from '@grafana/data';
+import { fuzzySearch, type MetricFindValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { GroupByVariable, SceneDataQuery, VariableValueOption, VariableValueSingle } from '@grafana/scenes';
+import { getDataSourceSrv } from '@grafana/runtime';
+import {
+  type AdHocFiltersVariable,
+  GroupByVariable,
+  type SceneDataQuery,
+  type VariableValueOption,
+  type VariableValueSingle,
+} from '@grafana/scenes';
 import { Button, Icon, Popover } from '@grafana/ui';
 
 import { PanelGroupByActionPopover } from './PanelGroupByActionPopover';
 
 interface Props {
-  groupByVariable: GroupByVariable;
+  groupByVariable?: GroupByVariable;
+  adhocGroupByVariable?: AdHocFiltersVariable;
   queries: SceneDataQuery[];
 }
 
-export function PanelGroupByAction({ groupByVariable, queries }: Props) {
-  const { options: groupByOptions } = groupByVariable.useState();
-
+export function PanelGroupByAction({ groupByVariable, adhocGroupByVariable, queries }: Props) {
   const [options, setOptions] = useState<VariableValueOption[]>([]);
   const [selectedValues, setSelectedValues] = useState<VariableValueSingle[]>([]);
   const [searchValue, setSearchValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [reloadOptions, setReloadOptions] = useState(false);
   const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
 
   const ref = useRef<HTMLButtonElement>(null);
 
+  const activeVariable = groupByVariable ?? adhocGroupByVariable;
+
   const fetchOptions = useCallback(async () => {
-    if (!groupByVariable || !reloadOptions) {
+    if (!activeVariable) {
       return;
     }
 
     setIsLoading(true);
     try {
-      if (groupByOptions.length === 0) {
-        await lastValueFrom(groupByVariable.validateAndUpdate());
-        const options = await getApplicableGroupByOptions(groupByVariable, groupByVariable.state.options, queries);
+      let fetchedOptions: VariableValueOption[];
 
-        setSelectedValues(getGroupByValue(groupByVariable));
-        setOptions(options);
-        return;
+      if (groupByVariable) {
+        const ds = await getDataSourceSrv().get(groupByVariable.state.datasource);
+        const keys = await groupByVariable._getKeys(ds, queries);
+        fetchedOptions = metricFindValuesToOptions(Array.isArray(keys) ? keys : (keys.data ?? []));
+      } else if (adhocGroupByVariable) {
+        const selectableValues = await adhocGroupByVariable._getGroupByKeys(null, queries);
+        fetchedOptions = selectableValues.map((sv) => ({
+          label: sv.label ?? String(sv.value ?? ''),
+          value: sv.value ?? '',
+        }));
+      } else {
+        fetchedOptions = [];
       }
 
-      const options = await getApplicableGroupByOptions(groupByVariable, groupByOptions, queries);
-
-      setSelectedValues(getGroupByValue(groupByVariable));
-      setOptions(options);
+      setSelectedValues(getGroupByValue(activeVariable));
+      setOptions(fetchedOptions);
     } catch (error) {
       setSelectedValues([]);
       setOptions([]);
     } finally {
       setIsLoading(false);
-      setReloadOptions(false);
     }
-  }, [groupByOptions, groupByVariable, queries, reloadOptions]);
-
-  useEffect(() => {
-    setReloadOptions(true);
-  }, [groupByOptions, queries]);
+  }, [activeVariable, groupByVariable, adhocGroupByVariable, queries]);
 
   useEffect(() => {
     if (isPopoverVisible) {
@@ -81,10 +87,15 @@ export function PanelGroupByAction({ groupByVariable, queries }: Props) {
   };
 
   const openPopover = () => {
-    // Reset checked state to match current variable value when opening
-    setSelectedValues(getGroupByValue(groupByVariable));
+    if (activeVariable) {
+      setSelectedValues(getGroupByValue(activeVariable));
+    }
     setPopoverVisible(true);
   };
+
+  if (!activeVariable) {
+    return null;
+  }
 
   return (
     <Button
@@ -97,6 +108,8 @@ export function PanelGroupByAction({ groupByVariable, queries }: Props) {
         openPopover();
         ev.stopPropagation();
       }}
+      onPointerDown={(ev) => ev.stopPropagation()}
+      onPointerUp={(ev) => ev.stopPropagation()}
     >
       <Trans i18nKey="panel-group-by.button">Group by</Trans>
       <Icon name="angle-down" />
@@ -104,7 +117,7 @@ export function PanelGroupByAction({ groupByVariable, queries }: Props) {
         <Popover
           content={
             <PanelGroupByActionPopover
-              groupByVariable={groupByVariable}
+              groupByVariable={activeVariable}
               onCancel={onCancel}
               isLoading={isLoading}
               searchValue={searchValue}
@@ -128,23 +141,27 @@ export function PanelGroupByAction({ groupByVariable, queries }: Props) {
   );
 }
 
-function getGroupByValue(groupByVariable: GroupByVariable) {
-  return Array.isArray(groupByVariable.state.value)
-    ? groupByVariable.state.value
-    : groupByVariable.state.value
-      ? [groupByVariable.state.value]
-      : [];
+function metricFindValuesToOptions(values: MetricFindValue[]): VariableValueOption[] {
+  return values.map((v) => ({
+    label: v.text,
+    value: v.value ? String(v.value) : v.text,
+    group: v.group,
+  }));
 }
 
-async function getApplicableGroupByOptions(
-  groupByVariable: GroupByVariable,
-  options: VariableValueOption[],
-  queries: SceneDataQuery[]
-) {
-  const values = options.map((option) => option.value);
-  const applicability = await groupByVariable.getGroupByApplicabilityForQueries(values, queries);
+function getGroupByValue(variable: GroupByVariable | AdHocFiltersVariable): VariableValueSingle[] {
+  if (variable instanceof GroupByVariable) {
+    return Array.isArray(variable.state.value)
+      ? variable.state.value
+      : variable.state.value
+        ? [variable.state.value]
+        : [];
+  }
 
-  return applicability
-    ? applicability.filter((item) => item.applicable).map((item) => ({ label: item.key, value: item.key }))
-    : options;
+  const userGroupBys = variable.state.filters.filter((f) => f.operator === 'groupBy').map((f) => f.key);
+  const originGroupBys = (variable.state.originFilters ?? [])
+    .filter((f) => f.operator === 'groupBy' && !f.dismissedGroupBy)
+    .map((f) => f.key);
+
+  return [...originGroupBys, ...userGroupBys];
 }

@@ -2,10 +2,10 @@
   "name": "@grafana/plugin-configs",
   "description": "Shared dependencies and files for core plugins",
   "private": true,
-  "version": "12.4.0-pre",
+  "version": "13.1.0-pre",
   "dependencies": {
     "react": "18.3.1",
-    "terser-webpack-plugin": "5.3.14",
+    "terser-webpack-plugin": "^5.4.0",
     "tslib": "2.8.1"
   },
   "type": "module",
@@ -17,7 +17,7 @@
     "@types/eslint": "9.6.1",
     "@types/react": "18.3.18",
     "@types/webpack-bundle-analyzer": "^4.7.0",
-    "copy-webpack-plugin": "13.0.0",
+    "copy-webpack-plugin": "^14.0.0",
     "eslint": "9.32.0",
     "eslint-webpack-plugin": "5.0.2",
     "fork-ts-checker-webpack-plugin": "9.1.0",
@@ -28,8 +28,8 @@
     "jest-environment-jsdom": "29.7.0",
     "replace-in-file-webpack-plugin": "1.0.6",
     "swc-loader": "0.2.6",
-    "typescript": "5.9.2",
-    "webpack": "5.101.0",
+    "typescript": "6.0.2",
+    "webpack": "^5.105.0",
     "webpack-bundle-analyzer": "^4.10.2",
     "webpack-virtual-modules": "^0.6.2"
   },

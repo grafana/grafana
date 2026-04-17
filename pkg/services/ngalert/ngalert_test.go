@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,81 +11,25 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/loki/pkg/push"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/loki/pkg/push"
 )
-
-func Test_subscribeToFolderChanges(t *testing.T) {
-	getRecordedCommand := func(ruleStore *fakes.RuleStore) []fakes.GenericRecordedQuery {
-		results := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
-			c, ok := cmd.(fakes.GenericRecordedQuery)
-			if !ok || c.Name != "IncreaseVersionForAllRulesInNamespaces" {
-				return nil, false
-			}
-			return c, ok
-		})
-		var result []fakes.GenericRecordedQuery
-		for _, cmd := range results {
-			result = append(result, cmd.(fakes.GenericRecordedQuery))
-		}
-		return result
-	}
-
-	orgID := rand.Int63()
-	folder1 := &folder.Folder{
-		UID:   util.GenerateShortUID(),
-		Title: "Folder" + util.GenerateShortUID(),
-	}
-	folder2 := &folder.Folder{
-		UID:   util.GenerateShortUID(),
-		Title: "Folder" + util.GenerateShortUID(),
-	}
-	gen := models.RuleGen
-	rules := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder1.ToFolderReference())).GenerateManyRef(5)
-
-	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
-	db := fakes.NewRuleStore(t)
-	db.Folders[orgID] = append(db.Folders[orgID], folder1)
-	db.PutRule(context.Background(), rules...)
-
-	subscribeToFolderChanges(log.New("test"), bus, db)
-
-	err := bus.Publish(context.Background(), &events.FolderFullPathUpdated{
-		Timestamp: time.Now(),
-		UIDs:      []string{folder1.UID, folder2.UID},
-		OrgID:     orgID,
-	})
-	require.NoError(t, err)
-
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		recordedCommands := getRecordedCommand(db)
-		require.Len(c, recordedCommands, 1)
-		require.Equal(c, recordedCommands[0].Params[0].(int64), orgID)
-		require.ElementsMatch(c, recordedCommands[0].Params[1].([]string), []string{folder1.UID, folder2.UID})
-	}, time.Second, 10*time.Millisecond, "expected to call db store method but nothing was called")
-}
 
 func TestConfigureHistorianBackend(t *testing.T) {
 	t.Run("fail initialization if invalid backend", func(t *testing.T) {
@@ -99,7 +42,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+		_, err := configureHistorianBackend(context.Background(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.ErrorContains(t, err, "unrecognized")
 	})
@@ -115,7 +58,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+		_, err := configureHistorianBackend(context.Background(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.ErrorContains(t, err, "multi-backend target")
 		require.ErrorContains(t, err, "unrecognized")
@@ -133,7 +76,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+		_, err := configureHistorianBackend(context.Background(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.ErrorContains(t, err, "multi-backend target")
 		require.ErrorContains(t, err, "unrecognized")
@@ -154,7 +97,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+		h, err := configureHistorianBackend(context.Background(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -188,7 +131,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+		h, err := configureHistorianBackend(context.Background(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, h)
 
@@ -245,7 +188,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+		_, err := configureHistorianBackend(context.Background(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.Error(t, err)
 		require.ErrorContains(t, err, "datasource UID must not be empty")
@@ -263,7 +206,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+		h, err := configureHistorianBackend(context.Background(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -280,7 +223,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+		h, err := configureHistorianBackend(context.Background(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -303,7 +246,7 @@ grafana_alerting_state_history_info{backend="annotations"} 1
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+		h, err := configureHistorianBackend(context.Background(), cfg, 500, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -470,7 +413,7 @@ func TestInitStatePersister(t *testing.T) {
 				featuremgmt.FlagAlertingSaveStateCompressed,
 				featuremgmt.FlagAlertingSaveStatePeriodic,
 			),
-			expectedStatePersisterType: &state.SyncRuleStatePersister{},
+			expectedStatePersisterType: &state.AsyncRuleStatePersister{},
 		},
 	}
 
@@ -480,50 +423,4 @@ func TestInitStatePersister(t *testing.T) {
 			assert.IsType(t, tt.expectedStatePersisterType, statePersister)
 		})
 	}
-}
-
-func TestInitAPIStateReaders(t *testing.T) {
-	logger := log.NewNopLogger()
-	stateManager := &state.Manager{}
-	mockScheduler := &mockStatusReader{}
-	mockInstanceStore := &mockInstanceReader{}
-
-	t.Run("returns in-memory readers when HA single node evaluation disabled", func(t *testing.T) {
-		apiStateManager, apiStatusReader := initAPIStateReaders(
-			false,
-			stateManager,
-			mockScheduler,
-			mockInstanceStore,
-			logger,
-		)
-
-		assert.Equal(t, stateManager, apiStateManager, "should return the in-memory state manager")
-		assert.Equal(t, mockScheduler, apiStatusReader, "should return the scheduler as status reader")
-	})
-
-	t.Run("returns StoreStateReader when HA single node evaluation enabled", func(t *testing.T) {
-		apiStateManager, apiStatusReader := initAPIStateReaders(
-			true,
-			stateManager,
-			mockScheduler,
-			mockInstanceStore,
-			logger,
-		)
-
-		assert.IsType(t, &state.StoreStateReader{}, apiStateManager, "should return StoreStateReader as state manager")
-		assert.IsType(t, &state.StoreStateReader{}, apiStatusReader, "should return StoreStateReader as status reader")
-		assert.Equal(t, apiStateManager, apiStatusReader, "both should be the same StoreStateReader instance")
-	})
-}
-
-type mockStatusReader struct{}
-
-func (m *mockStatusReader) Status(_ context.Context, _ models.AlertRuleKey) (models.RuleStatus, bool) {
-	return models.RuleStatus{}, false
-}
-
-type mockInstanceReader struct{}
-
-func (m *mockInstanceReader) ListAlertInstances(_ context.Context, _ *models.ListAlertInstancesQuery) ([]*models.AlertInstance, error) {
-	return nil, nil
 }

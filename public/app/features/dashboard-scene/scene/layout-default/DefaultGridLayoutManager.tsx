@@ -1,24 +1,24 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { AppEvents, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, getAppEvents } from '@grafana/runtime';
 import {
-  SceneObjectState,
+  type SceneObjectState,
   SceneGridLayout,
   SceneObjectBase,
   SceneGridRow,
   VizPanel,
   sceneGraph,
   sceneUtils,
-  SceneComponentProps,
-  SceneGridItemLike,
+  type SceneComponentProps,
+  type SceneGridItemLike,
   useSceneObjectState,
   SceneGridLayoutDragStartEvent,
-  SceneObject,
+  type SceneObject,
 } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
@@ -31,7 +31,7 @@ import {
 } from '../../edit-pane/shared';
 import { serializeDefaultGridLayout } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getTestIdForLayout } from '../../utils/test-utils';
 import {
   forceRenderChildren,
@@ -49,9 +49,9 @@ import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
-import { DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
-import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
-import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
+import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
+import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
@@ -83,8 +83,8 @@ export class DefaultGridLayoutManager
     icon: 'window-grid',
   };
 
-  public serialize(): DashboardV2Spec['layout'] {
-    return serializeDefaultGridLayout(this);
+  public serialize(isSnapshot?: boolean): DashboardV2Spec['layout'] {
+    return serializeDefaultGridLayout(this, isSnapshot);
   }
 
   public readonly descriptor = DefaultGridLayoutManager.descriptor;
@@ -93,6 +93,10 @@ export class DefaultGridLayoutManager
     super(state);
 
     this.addActivationHandler(() => this._activationHandler());
+  }
+
+  public getAllGridTypes(): string[] {
+    return [DefaultGridLayoutManager.descriptor.id];
   }
 
   public mergeGrid(other: DashboardLayoutGrid) {
@@ -187,7 +191,17 @@ export class DefaultGridLayoutManager
 
   public pastePanel() {
     const emptySpace = findSpaceForNewPanel(this.state.grid);
-    const newGridItem = getDashboardGridItemFromClipboard(getDashboardSceneFor(this), emptySpace);
+    let newGridItem;
+
+    try {
+      newGridItem = getDashboardGridItemFromClipboard(getDashboardSceneFor(this), emptySpace);
+    } catch (error) {
+      getAppEvents().publish({
+        type: AppEvents.alertError.name,
+        payload: error instanceof Error ? [error.message, String(error.cause)] : [String(error)],
+      });
+      return;
+    }
 
     if (config.featureToggles.dashboardNewLayouts) {
       dashboardEditActions.edit({
@@ -325,25 +339,26 @@ export class DefaultGridLayoutManager
     });
   }
 
-  public duplicate(): DashboardLayoutManager {
+  // panelIdGenerator is a shared counter to ensure unique panel IDs across siblings.
+  public duplicate(panelIdGenerator?: PanelIdGenerator): DashboardLayoutManager {
     const children = this.state.grid.state.children;
     const hasGridItem = children.find((child) => child instanceof DashboardGridItem);
     const clonedChildren: SceneGridItemLike[] = [];
 
     if (children.length) {
-      let panelId = hasGridItem ? dashboardSceneGraph.getNextPanelId(hasGridItem.state.body) : 1;
+      const nextId =
+        panelIdGenerator ?? dashboardSceneGraph.getPanelIdGenerator(hasGridItem ? hasGridItem.state.body : this);
 
       children.forEach((child) => {
         if (child instanceof DashboardGridItem) {
           const clone = child.clone({
             key: undefined,
             body: child.state.body.clone({
-              key: getVizPanelKeyForPanelId(panelId),
+              key: getVizPanelKeyForPanelId(nextId()),
             }),
           });
 
           clonedChildren.push(clone);
-          panelId++;
         } else {
           clonedChildren.push(child.clone({ key: undefined }));
         }
@@ -569,6 +584,16 @@ export class DefaultGridLayoutManager
     return DefaultGridLayoutManager.fromVizPanels(panels);
   }
 
+  public static createEmpty(): DefaultGridLayoutManager {
+    return new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        children: [],
+        isDraggable: true,
+        isResizable: true,
+      }),
+    });
+  }
+
   public static fromVizPanels(panels: VizPanel[] = []): DefaultGridLayoutManager {
     const children: DashboardGridItem[] = [];
     const panelHeight = 10;
@@ -691,6 +716,10 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
     }),
     containerEditing: css({
+      '&:hover .dashboard-canvas-controls': {
+        opacity: 1,
+      },
+
       // In editing the add actions should live at the bottom of the grid so we have to
       // disable flex grow on the SceneGridLayouts first div
       '> div:first-child': {

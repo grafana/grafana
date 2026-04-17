@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { autoUpdate, useFloating } from '@floating-ui/react';
-import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
+import { type GrafanaTheme2, type VariableSuggestion } from '@grafana/data';
 import {
   FieldValidationMessage,
   floatingUtils,
@@ -34,6 +34,7 @@ interface SuggestionsInputProps {
   type?: HTMLElementType;
   style?: React.CSSProperties;
   autoFocus?: boolean;
+  id?: string;
 }
 
 const getStyles = (theme: GrafanaTheme2, inputHeight: number) => {
@@ -63,6 +64,7 @@ export const SuggestionsInput = ({
   invalid,
   type = HTMLElementType.InputElement,
   style,
+  id,
   autoFocus = false,
 }: SuggestionsInputProps) => {
   const [showingSuggestions, setShowingSuggestions] = useState(false);
@@ -77,7 +79,7 @@ export const SuggestionsInput = ({
   const theme = useTheme2();
   const styles = getStyles(theme, inputHeight);
 
-  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>();
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | undefined>(undefined);
 
   useEffect(() => {
     scrollRef.current?.scrollTo(0, scrollTop);
@@ -187,6 +189,7 @@ export const SuggestionsInput = ({
     onChange: onValueChanged,
     onBlur: onBlur,
     onKeyDown: onKeyDown,
+    id,
   };
 
   return (

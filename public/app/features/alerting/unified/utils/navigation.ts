@@ -1,10 +1,69 @@
-import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
-import { RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
+import { urlUtil } from '@grafana/data';
+import { locationService, logInfo } from '@grafana/runtime';
+import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
+import { type RuleGroupIdentifierV2, type RuleIdentifier } from 'app/types/unified-alerting';
 
 import { createReturnTo } from '../hooks/useReturnTo';
+import { type RuleFormValues } from '../types/rule-form';
 
+import { ROOT_ROUTE_NAME } from './k8s/constants';
 import { stringifyIdentifier } from './rule-id';
-import { createRelativeUrl } from './url';
+import { type RelativeUrl, createRelativeUrl } from './url';
+
+/**
+ * Tab values for contact points page - duplicated here to avoid circular dependency
+ * with ContactPoints.tsx which has a heavy import chain
+ */
+const ContactPointsTab = {
+  NotificationTemplates: 'templates',
+} as const;
+
+/**
+ * Navigation IDs used for Alerting pages
+ */
+export const NAV_IDS = {
+  ALERT_ACTIVITY: 'alert-activity',
+  NOTIFICATION_CONFIG: 'notification-config',
+  RECEIVERS: 'receivers',
+  ROUTES: 'am-routes',
+} as const;
+
+/**
+ * Alerting page paths
+ */
+export const ALERTING_PATHS: Record<string, RelativeUrl> = {
+  ALERTS: '/alerting/alerts',
+  ALERT_GROUPS: '/alerting/groups',
+  NOTIFICATIONS: '/alerting/notifications',
+  TEMPLATES: '/alerting/notifications/templates',
+  TIME_INTERVALS: '/alerting/routes/mute-timing',
+  ROUTES: '/alerting/routes',
+  ALERTS_ACTIVITY: '/alerting/alerts',
+};
+
+/**
+ * Returns the parent URL for template pages based on navigation mode.
+ * V2 nav uses the dedicated templates page, legacy nav uses contact points with tab parameter.
+ */
+export function getTemplateParentUrl(useV2Nav: boolean | undefined): string {
+  return useV2Nav
+    ? ALERTING_PATHS.TEMPLATES
+    : createRelativeUrl(ALERTING_PATHS.NOTIFICATIONS, {
+        tab: ContactPointsTab.NotificationTemplates,
+      });
+}
+
+/**
+ * Returns the parent URL for time interval pages based on navigation mode.
+ * V2 nav uses the dedicated time intervals page, legacy nav uses routes with tab parameter.
+ */
+export function getTimeIntervalParentUrl(useV2Nav: boolean | undefined): string {
+  return useV2Nav
+    ? ALERTING_PATHS.TIME_INTERVALS
+    : createRelativeUrl(ALERTING_PATHS.ROUTES, {
+        tab: 'time_intervals',
+      });
+}
 
 type QueryParams = ConstructorParameters<typeof URLSearchParams>[0];
 
@@ -98,4 +157,42 @@ export const notificationPolicies = {
       alertmanager: alertmanagerSourceName ?? 'grafana',
     });
   },
+  policyLink: (policyName = ROOT_ROUTE_NAME, alertmanagerSourceName = 'grafana') => {
+    return createRelativeUrl('/alerting/routes', {
+      includeTree: policyName,
+      alertmanager: alertmanagerSourceName,
+    });
+  },
+};
+
+export const createPanelAlertRuleNavigation = (
+  getFormValues: () => Promise<Partial<RuleFormValues> | undefined>,
+  location: { pathname: string; search: string }
+) => {
+  const navigateToAlerting = async (currentValues?: RuleFormValues) => {
+    logInfo('creating alert rule from panel');
+
+    const updateToDateFormValues = currentValues ?? (await getFormValues());
+
+    const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
+      defaults: JSON.stringify(updateToDateFormValues),
+      returnTo: location.pathname + location.search,
+    });
+
+    locationService.push(ruleFormUrl);
+  };
+
+  const onContinueInAlertingFromDrawer = (values: RuleFormValues) => {
+    void navigateToAlerting(values);
+  };
+
+  const onButtonClick = () => {
+    void navigateToAlerting(undefined);
+  };
+
+  return {
+    navigateToAlerting,
+    onContinueInAlertingFromDrawer,
+    onButtonClick,
+  };
 };

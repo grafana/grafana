@@ -3,9 +3,11 @@ package resource
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -101,6 +103,10 @@ type IndexableDocument struct {
 	// metadata, annotations, or external data linked at index time
 	Fields map[string]any `json:"fields,omitempty"`
 
+	// Selectable fields used for field-based filtering when listing.
+	// Standard document builder automatically adds all selectable fields from document here.
+	SelectableFields map[string]string `json:"selectableFields,omitempty"`
+
 	// The list of owner references,
 	// each value is of the form {group}/{kind}/{name}
 	// ex: iam.grafana.app/Team/abc-engineering
@@ -179,18 +185,21 @@ func (m ResourceReferences) Less(i, j int) bool {
 	return strings.Compare(a, b) > 0
 }
 
-// Create a new indexable document based on a generic k8s resource
-func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.GrafanaMetaAccessor) *IndexableDocument {
-	title := obj.FindTitle(key.Name)
-	if title == key.Name {
-		// TODO: something wrong with FindTitle
-		spec, err := obj.GetSpec()
-		if err == nil {
-			specValue, ok := spec.(map[string]any)
-			if ok {
-				specTitle, ok := specValue["title"].(string)
+// NewIndexableDocument creates a new indexable document based on a generic k8s resource
+// If title is empty, resolve it by calling obj.FindTitle and obj.GetSpec (in that order)
+func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.GrafanaMetaAccessor, title string) *IndexableDocument {
+	if title == "" {
+		title = obj.FindTitle(key.Name)
+		if title == key.Name {
+			// TODO: something wrong with FindTitle
+			spec, err := obj.GetSpec()
+			if err == nil {
+				specValue, ok := spec.(map[string]any)
 				if ok {
-					title = specTitle
+					specTitle, ok := specValue["title"].(string)
+					if ok {
+						title = specTitle
+					}
 				}
 			}
 		}
@@ -231,11 +240,14 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 	return doc.UpdateCopyFields()
 }
 
-func StandardDocumentBuilder() DocumentBuilder {
-	return &standardDocumentBuilder{}
+func StandardDocumentBuilder(manifests []app.Manifest) DocumentBuilder {
+	return &standardDocumentBuilder{selectableFields: SelectableFieldsForManifests(manifests)}
 }
 
-type standardDocumentBuilder struct{}
+type standardDocumentBuilder struct {
+	// Maps "group/resource" (in lowercase) to list of selectable fields.
+	selectableFields map[string][]string
+}
 
 func (s *standardDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*IndexableDocument, error) {
 	tmp := &unstructured.Unstructured{}
@@ -249,8 +261,36 @@ func (s *standardDocumentBuilder) BuildDocument(ctx context.Context, key *resour
 		return nil, err
 	}
 
-	doc := NewIndexableDocument(key, rv, obj)
+	doc := NewIndexableDocument(key, rv, obj, "")
+
+	sfKey := strings.ToLower(key.GetGroup() + "/" + key.GetResource())
+	doc.SelectableFields = getSelectableFieldsFromObject(tmp, s.selectableFields[sfKey])
+
 	return doc, nil
+}
+
+func getSelectableFieldsFromObject(tmp *unstructured.Unstructured, fields []string) map[string]string {
+	result := map[string]string{}
+
+	for _, field := range fields {
+		path := strings.Split(field, ".")
+		val, ok, err := unstructured.NestedFieldNoCopy(tmp.Object, path...)
+		if err != nil || !ok {
+			continue
+		}
+
+		switch v := val.(type) {
+		case string:
+			result[field] = v
+		case bool:
+			result[field] = strconv.FormatBool(v)
+		default:
+			// In practice there should only be strings, bools and int/float selectable fields.
+			result[field] = fmt.Sprintf("%v", v)
+		}
+	}
+
+	return result
 }
 
 type searchableDocumentFields struct {
@@ -292,36 +332,38 @@ func (x *searchableDocumentFields) Field(name string) *resourcepb.ResourceTableC
 	return nil
 }
 
-const SEARCH_FIELD_PREFIX = "fields."
-const SEARCH_FIELD_ID = "_id" // {namespace}/{group}/{resource}/{name}
-const SEARCH_FIELD_LEGACY_ID = utils.LabelKeyDeprecatedInternalID
-const SEARCH_FIELD_KIND = "kind"         // resource ( for federated index filtering )
-const SEARCH_FIELD_GROUP_RESOURCE = "gr" // group/resource
-const SEARCH_FIELD_NAMESPACE = "namespace"
-const SEARCH_FIELD_NAME = "name"
-const SEARCH_FIELD_RV = "rv"
-const SEARCH_FIELD_TITLE = "title"
-const SEARCH_FIELD_TITLE_PHRASE = "title_phrase" // filtering/sorting on title by full phrase
-const SEARCH_FIELD_DESCRIPTION = "description"
-const SEARCH_FIELD_TAGS = "tags"
-const SEARCH_FIELD_LABELS = "labels" // All labels, not a specific one
-const SEARCH_FIELD_OWNER_REFERENCES = "ownerReferences"
-
-const SEARCH_FIELD_FOLDER = "folder"
-const SEARCH_FIELD_CREATED = "created"
-const SEARCH_FIELD_CREATED_BY = "createdBy"
-const SEARCH_FIELD_UPDATED = "updated"
-const SEARCH_FIELD_UPDATED_BY = "updatedBy"
-
-const SEARCH_FIELD_MANAGED_BY = "managedBy" // {kind}:{id}
-const SEARCH_FIELD_MANAGER_KIND = "manager.kind"
-const SEARCH_FIELD_MANAGER_ID = "manager.id"
-const SEARCH_FIELD_SOURCE_PATH = "source.path"
-const SEARCH_FIELD_SOURCE_CHECKSUM = "source.checksum"
-const SEARCH_FIELD_SOURCE_TIME = "source.timestampMillis"
-
-const SEARCH_FIELD_SCORE = "_score"     // the match score
-const SEARCH_FIELD_EXPLAIN = "_explain" // score explanation as JSON object
+const (
+	SEARCH_FIELD_PREFIX             = "fields."
+	SEARCH_FIELD_ID                 = "_id" // {namespace}/{group}/{resource}/{name}
+	SEARCH_FIELD_LEGACY_ID          = utils.LabelKeyDeprecatedInternalID
+	SEARCH_FIELD_KIND               = "kind" // resource ( for federated index filtering )
+	SEARCH_FIELD_GROUP_RESOURCE     = "gr"   // group/resource
+	SEARCH_FIELD_NAMESPACE          = "namespace"
+	SEARCH_FIELD_NAME               = "name"
+	SEARCH_FIELD_RV                 = "rv"
+	SEARCH_FIELD_TITLE              = "title"
+	SEARCH_FIELD_TITLE_PHRASE       = "title_phrase" // filtering/sorting on title by full phrase
+	SEARCH_FIELD_TITLE_NGRAM        = "title_ngram"  // ngram analysis for partial/prefix matching on title
+	SEARCH_FIELD_DESCRIPTION        = "description"
+	SEARCH_FIELD_TAGS               = "tags"
+	SEARCH_FIELD_LABELS             = "labels" // All labels, not a specific one
+	SEARCH_FIELD_OWNER_REFERENCES   = "ownerReferences"
+	SEARCH_FIELD_FOLDER             = "folder"
+	SEARCH_FIELD_CREATED            = "created"
+	SEARCH_FIELD_CREATED_BY         = "createdBy"
+	SEARCH_FIELD_UPDATED            = "updated"
+	SEARCH_FIELD_UPDATED_BY         = "updatedBy"
+	SEARCH_FIELD_MANAGED_BY         = "managedBy" // {kind}:{id}
+	SEARCH_FIELD_MANAGER_KIND       = "manager.kind"
+	SEARCH_FIELD_MANAGER_ID         = "manager.id"
+	SEARCH_FIELD_SOURCE_PATH        = "source.path"
+	SEARCH_FIELD_SOURCE_CHECKSUM    = "source.checksum"
+	SEARCH_FIELD_SOURCE_TIME        = "source.timestampMillis"
+	SEARCH_FIELD_SCORE              = "_score"            // the match score
+	SEARCH_FIELD_EXPLAIN            = "_explain"          // score explanation as JSON object
+	SEARCH_FIELD_ALL_FIELDS         = "_all_columns"      // sentinel: return all known columns in search results (deliberately distinct from bleve's "_all" composite field)
+	SEARCH_SELECTABLE_FIELDS_PREFIX = "selectableFields." // Prefix for searching selectable fields.
+)
 
 var standardSearchFieldsInit sync.Once
 var standardSearchFields SearchableDocumentFields
@@ -400,6 +442,11 @@ func StandardSearchFields() SearchableDocumentFields {
 				Description: "created timestamp", // date?
 			},
 			{
+				Name:        SEARCH_FIELD_CREATED_BY,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
+				Description: "Who created the resource (format: user:<uid>)",
+			},
+			{
 				Name:        SEARCH_FIELD_EXPLAIN,
 				Type:        resourcepb.ResourceTableColumnDefinition_OBJECT,
 				Description: "Explain why this result matches (depends on the engine)",
@@ -435,6 +482,12 @@ func StandardSearchFields() SearchableDocumentFields {
 			{
 				Name: SEARCH_FIELD_SOURCE_CHECKSUM,
 				Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			},
+			{
+				Name:        SEARCH_FIELD_OWNER_REFERENCES,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
+				IsArray:     true,
+				Description: "Owner references in format {Group}/{Kind}/{Name}",
 			},
 		})
 

@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	claims "github.com/grafana/authlib/types"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -31,7 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/seeding"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
@@ -46,8 +47,8 @@ const (
 )
 
 var SharedWithMeFolderPermission = accesscontrol.Permission{
-	Action: dashboards.ActionFoldersRead,
-	Scope:  dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.SharedWithMeFolderUID),
+	Action: folder.ActionFoldersRead,
+	Scope:  folder.ScopeFoldersProvider.GetResourceScopeUID(folder.SharedWithMeFolderUID),
 }
 
 var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
@@ -56,7 +57,7 @@ func ProvideService(
 	cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, userService user.Service, actionResolver accesscontrol.ActionResolver,
 	features featuremgmt.FeatureToggles, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry,
-	lock *serverlock.ServerLockService,
+	lock *serverlock.ServerLockService, zanzanaClient zanzana.Client,
 ) (*Service, error) {
 	service := ProvideOSSService(
 		cfg,
@@ -70,7 +71,7 @@ func ProvideService(
 		lock,
 	)
 
-	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
+	api.NewAccessControlAPI(routeRegister, accessControl, service, userService, features, zanzanaClient).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
 		return nil, err
 	}
@@ -78,6 +79,13 @@ func ProvideService(
 	// Migrating to remove deprecated permissions from the database
 	if err := migrator.MigrateRemoveDeprecatedPermissions(db, service.log); err != nil {
 		return nil, err
+	}
+
+	// Clean up plugin RBAC data for configured plugins
+	if len(cfg.RBAC.PluginsCleanup) > 0 {
+		if err := service.CleanupPluginRBAC(context.Background(), cfg.RBAC.PluginsCleanup...); err != nil {
+			return nil, err
+		}
 	}
 
 	return service, nil
@@ -124,6 +132,7 @@ type Service struct {
 	isInitialized  bool
 	sql            db.DB
 	serverLock     *serverlock.ServerLockService
+	singleFlight   singleflight.Group
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -165,12 +174,16 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 	// permission assigned to user will be returned, only for org role.
 	userID, _ := identity.UserIdentifier(user.GetID())
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions)
+
 	dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-		OrgID:        user.GetOrgID(),
-		UserID:       userID,
-		Roles:        accesscontrol.GetOrgRoles(user),
-		TeamIDs:      user.GetTeams(),
-		RolePrefixes: OSSRolesPrefixes,
+		OrgID:                              user.GetOrgID(),
+		UserID:                             userID,
+		Roles:                              accesscontrol.GetOrgRoles(user),
+		TeamIDs:                            user.GetTeams(),
+		RolePrefixes:                       OSSRolesPrefixes,
+		ExcludeRedundantManagedPermissions: excludeRedundant,
 	})
 	if err != nil {
 		return nil, err
@@ -191,11 +204,15 @@ func (s *Service) getBasicRolePermissions(ctx context.Context, role string, orgI
 	}
 	s.rolesMu.RUnlock()
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions)
+
 	// Fetch managed role permissions assigned to basic roles
 	dbPermissions, err := s.store.GetBasicRolesPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-		Roles:        []string{role},
-		OrgID:        orgID,
-		RolePrefixes: OSSRolesPrefixes,
+		Roles:                              []string{role},
+		OrgID:                              orgID,
+		RolePrefixes:                       OSSRolesPrefixes,
+		ExcludeRedundantManagedPermissions: excludeRedundant,
 	})
 
 	dbPermissions = s.actionResolver.ExpandActionSets(dbPermissions)
@@ -206,10 +223,14 @@ func (s *Service) getTeamsPermissions(ctx context.Context, teamIDs []int64, orgI
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getTeamsPermissions")
 	defer span.End()
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions)
+
 	teamPermissions, err := s.store.GetTeamsPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-		TeamIDs:      teamIDs,
-		OrgID:        orgID,
-		RolePrefixes: OSSRolesPrefixes,
+		TeamIDs:                            teamIDs,
+		OrgID:                              orgID,
+		RolePrefixes:                       OSSRolesPrefixes,
+		ExcludeRedundantManagedPermissions: excludeRedundant,
 	})
 
 	for teamID, permissions := range teamPermissions {
@@ -233,10 +254,14 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 		}
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	excludeRedundant := s.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions)
+
 	permissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-		OrgID:        user.GetOrgID(),
-		UserID:       userID,
-		RolePrefixes: OSSRolesPrefixes,
+		OrgID:                              user.GetOrgID(),
+		UserID:                             userID,
+		RolePrefixes:                       OSSRolesPrefixes,
+		ExcludeRedundantManagedPermissions: excludeRedundant,
 	})
 	if err != nil {
 		return nil, err
@@ -252,23 +277,52 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getCachedUserPermissions")
 	defer span.End()
 
-	permissions, err := s.getCachedBasicRolesPermissions(ctx, user, options)
+	assemble := func() ([]accesscontrol.Permission, error) {
+		basicPermissions, err := s.getCachedBasicRolesPermissions(ctx, user, options)
+		if err != nil {
+			return nil, err
+		}
+
+		teamsPermissions, err := s.getCachedTeamsPermissions(ctx, user, options)
+		if err != nil {
+			return nil, err
+		}
+
+		userManagedPermissions, err := s.getCachedUserDirectPermissions(ctx, user, options)
+		if err != nil {
+			return nil, err
+		}
+
+		// Single allocation and copy to avoid repeated realloc when appending large slices
+		n := len(basicPermissions) + len(teamsPermissions) + len(userManagedPermissions)
+		permissions := make([]accesscontrol.Permission, 0, n)
+		permissions = append(permissions, basicPermissions...)
+		permissions = append(permissions, teamsPermissions...)
+		permissions = append(permissions, userManagedPermissions...)
+		span.SetAttributes(attribute.Int("num_permissions", len(permissions)))
+
+		return permissions, nil
+	}
+
+	// Skip deduplication when the caller explicitly wants a fresh load.
+	if options.ReloadCache {
+		return assemble()
+	}
+
+	// Deduplicate concurrent permission assemblies for the same user.
+	// Without this, concurrent requests for the same user each independently
+	// re-assemble from sub-caches on cache expiry, amplifying DB load.
+	res, err, _ := s.singleFlight.Do(user.GetCacheKey(), func() (any, error) {
+		return assemble()
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	teamsPermissions, err := s.getCachedTeamsPermissions(ctx, user, options)
-	if err != nil {
-		return nil, err
+	permissions, ok := res.([]accesscontrol.Permission)
+	if !ok {
+		return nil, fmt.Errorf("unexpected type returned from singleFlight: %T", res)
 	}
-	permissions = append(permissions, teamsPermissions...)
-
-	userManagedPermissions, err := s.getCachedUserDirectPermissions(ctx, user, options)
-	if err != nil {
-		return nil, err
-	}
-	permissions = append(permissions, userManagedPermissions...)
-	span.SetAttributes(attribute.Int("num_permissions", len(permissions)))
 
 	return permissions, nil
 }
@@ -332,13 +386,23 @@ func (s *Service) getCachedPermissions(ctx context.Context, key string, getPermi
 
 	span.AddEvent("cache miss")
 	metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()
-	permissions, err := getPermissionsFn(ctx)
-	span.SetAttributes(attribute.Int("num_permissions_fetched", len(permissions)))
-	if err != nil {
+
+	var permissions []accesscontrol.Permission
+	getValue := func() (any, error) {
+		var err error
+		permissions, err = getPermissionsFn(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		span.SetAttributes(attribute.Int("num_permissions_fetched", len(permissions)))
+		return permissions, nil
+	}
+
+	if err := s.cache.ExclusiveSet(key, getValue, cacheTTL); err != nil {
 		return nil, err
 	}
 
-	s.cache.Set(key, permissions, cacheTTL)
 	return permissions, nil
 }
 
@@ -392,7 +456,7 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 }
 
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {
-	s.cache.Delete(accesscontrol.GetUserDirectPermissionCacheKey(user))
+	s.cache.ExclusiveDelete(accesscontrol.GetUserDirectPermissionCacheKey(user))
 }
 
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
@@ -831,6 +895,11 @@ func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalService
 
 func (s *Service) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRolesCommand) error {
 	return nil
+}
+
+// CleanupPluginRBAC removes all RBAC data (roles, permissions, assignments) for the given plugin IDs.
+func (s *Service) CleanupPluginRBAC(ctx context.Context, pluginIDs ...string) error {
+	return s.store.CleanupPluginRBAC(ctx, pluginIDs)
 }
 
 func (s *Service) GetStaticRoles(ctx context.Context) map[string]*accesscontrol.RoleDTO {

@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 import { OpenQueryLibraryExposedComponent } from './OpenQueryLibraryExposedComponent';
-import { QueryLibraryContextType, useQueryLibraryContext } from './QueryLibraryContext';
+import { type QueryLibraryContextType, useQueryLibraryContext } from './QueryLibraryContext';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -90,6 +90,30 @@ describe('OpenQueryLibraryExposedComponent', () => {
     await userEvent.click(screen.getByRole('button'));
 
     expect(mockOpenDrawer).toHaveBeenCalledWith({
+      datasourceFilters: mockDatasourceFilters,
+      onSelectQuery: mockOnSelectQuery,
+      query: undefined,
+    });
+  });
+
+  it('calls openDrawer to load a query with for a given context', async () => {
+    const mockDatasourceFilters = ['loki'];
+    const mockOnSelectQuery = jest.fn();
+
+    render(
+      <OpenQueryLibraryExposedComponent
+        context="test"
+        datasourceFilters={mockDatasourceFilters}
+        onSelectQuery={mockOnSelectQuery}
+      />
+    );
+
+    await userEvent.click(screen.getByRole('button'));
+
+    expect(mockOpenDrawer).toHaveBeenCalledWith({
+      options: {
+        context: 'test',
+      },
       datasourceFilters: mockDatasourceFilters,
       onSelectQuery: mockOnSelectQuery,
       query: undefined,

@@ -30,17 +30,18 @@ type PluginInstaller struct {
 	installing      sync.Map
 	log             log.Logger
 	serviceRegistry auth.ExternalServiceRegistry
+	rbacCleaner     auth.RBACCleaner
 }
 
 func ProvideInstaller(cfg *config.PluginManagementCfg, pluginRegistry registry.Service, pluginLoader loader.Service,
-	pluginRepo repo.Service, serviceRegistry auth.ExternalServiceRegistry) *PluginInstaller {
+	pluginRepo repo.Service, serviceRegistry auth.ExternalServiceRegistry, rbacCleaner auth.RBACCleaner) *PluginInstaller {
 	return New(cfg, pluginRegistry, pluginLoader, pluginRepo,
-		storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath), storage.SimpleDirNameGeneratorFunc, serviceRegistry)
+		storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPaths[0]), storage.SimpleDirNameGeneratorFunc, serviceRegistry, rbacCleaner)
 }
 
 func New(cfg *config.PluginManagementCfg, pluginRegistry registry.Service, pluginLoader loader.Service,
 	pluginRepo repo.Service, pluginStorage storage.ZipExtractor, pluginStorageDirFunc storage.DirNameGeneratorFunc,
-	serviceRegistry auth.ExternalServiceRegistry) *PluginInstaller {
+	serviceRegistry auth.ExternalServiceRegistry, rbacCleaner auth.RBACCleaner) *PluginInstaller {
 	return &PluginInstaller{
 		pluginLoader:         pluginLoader,
 		pluginRegistry:       pluginRegistry,
@@ -51,6 +52,7 @@ func New(cfg *config.PluginManagementCfg, pluginRegistry registry.Service, plugi
 		installing:           sync.Map{},
 		log:                  log.New("plugin.installer"),
 		serviceRegistry:      serviceRegistry,
+		rbacCleaner:          rbacCleaner,
 	}
 }
 
@@ -210,6 +212,10 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID, version string) 
 		if err = remover.Remove(); err != nil {
 			return err
 		}
+	}
+
+	if err := m.rbacCleaner.CleanupPluginRBAC(ctx, pluginID); err != nil {
+		m.log.Error("Failed to cleanup plugin RBAC. Stale RBAC data can be cleaned up on next startup by setting the cfg.RBAC.PluginsCleanup config option", "pluginId", pluginID, "error", err)
 	}
 
 	has, err := m.serviceRegistry.HasExternalService(ctx, pluginID)

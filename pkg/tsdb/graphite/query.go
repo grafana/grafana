@@ -13,12 +13,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/net/html"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 type queryModel struct {
@@ -30,8 +31,6 @@ type queryModel struct {
 func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo) (*backend.QueryDataResponse, error) {
 	emptyQueries := []string{}
 	graphiteQueries := map[string]queryModel{}
-	// FromAlert header is defined in pkg/services/ngalert/models/constants.go
-	fromAlert := req.Headers["FromAlert"] == "true"
 	result := backend.NewQueryDataResponse()
 
 	for _, query := range req.Queries {
@@ -80,7 +79,7 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 			attribute.String("from", graphiteReq.formData["from"][0]),
 			attribute.String("until", graphiteReq.formData["until"][0]),
 			attribute.Int64("datasource_id", dsInfo.Id),
-			attribute.Int64("org_id", req.PluginContext.OrgID),
+			attribute.Int64("org_id", req.PluginContext.OrgID), // nolint:staticcheck
 		)
 		res, err := dsInfo.HTTPClient.Do(graphiteReq.req)
 		if res != nil {
@@ -100,7 +99,7 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 			}
 		}()
 
-		queryFrames, err := s.toDataFrames(res, refId, fromAlert, graphiteReq.rawTarget)
+		queryFrames, err := s.toDataFrames(res, refId)
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
@@ -112,11 +111,11 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 	}
 
 	for _, f := range frames {
-		if resp, ok := result.Responses[f.Name]; ok {
+		if resp, ok := result.Responses[f.RefID]; ok {
 			resp.Frames = append(resp.Frames, f)
-			result.Responses[f.Name] = resp
+			result.Responses[f.RefID] = resp
 		} else {
-			result.Responses[f.Name] = backend.DataResponse{
+			result.Responses[f.RefID] = backend.DataResponse{
 				Frames: data.Frames{f},
 			}
 		}
@@ -195,9 +194,7 @@ func (s *Service) createGraphiteRequest(ctx context.Context, query backend.DataQ
 	return graphiteReq, formData, emptyQuery, target, nil
 }
 
-var aliasRegex = regexp.MustCompile(`(alias|aliasByMetric|aliasByNode|aliasByTags|aliasQuery|aliasSub)\(`)
-
-func (s *Service) toDataFrames(response *http.Response, refId string, fromAlert bool, rawTarget string) (frames data.Frames, error error) {
+func (s *Service) toDataFrames(response *http.Response, refId string) (frames data.Frames, error error) {
 	responseData, err := s.parseResponse(response)
 	if err != nil {
 		return nil, err
@@ -205,7 +202,6 @@ func (s *Service) toDataFrames(response *http.Response, refId string, fromAlert 
 
 	frames = data.Frames{}
 	for _, series := range responseData {
-		aliasMatch := aliasRegex.MatchString(rawTarget)
 		timeVector := make([]time.Time, 0, len(series.DataPoints))
 		values := make([]*float64, 0, len(series.DataPoints))
 
@@ -221,11 +217,15 @@ func (s *Service) toDataFrames(response *http.Response, refId string, fromAlert 
 		tags := make(map[string]string)
 		for name, value := range series.Tags {
 			if name == "name" {
-				// Queries with aliases should use the target as the name
-				// to ensure multi-dimensional queries are distinguishable from each other
-				if fromAlert || aliasMatch {
-					value = series.Target
+				// Metrictank sets tags["name"] to the full internal series key
+				// (e.g. "cpu.usage;env=prod;host=web01") rather than just the
+				// base metric name. Strip everything from the first ';' so that
+				// transformations like joinByLabels(value:'name') work correctly.
+				target := series.Target
+				if idx := strings.IndexByte(target, ';'); idx != -1 {
+					target = target[:idx]
 				}
+				value = target
 			}
 			switch value := value.(type) {
 			case string:
@@ -235,10 +235,12 @@ func (s *Service) toDataFrames(response *http.Response, refId string, fromAlert 
 			}
 		}
 
-		frames = append(frames, data.NewFrame(refId,
+		frame := data.NewFrame("",
 			data.NewField("time", nil, timeVector),
 			data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: series.Target})).SetMeta(
-			&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}))
+			&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+		frame.RefID = refId
+		frames = append(frames, frame)
 
 		s.logger.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
 	}
