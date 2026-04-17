@@ -8275,6 +8275,9 @@
       "label-state-name": "Název stavu"
     }
   },
+  "diff-viewer": {
+    "loading": ""
+  },
   "dimensions": {
     "background-size-editor": {
       "options": {
