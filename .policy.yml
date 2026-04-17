@@ -44,7 +44,6 @@ policy:
             - Workflow .github/workflows/shellcheck.yml succeeded or skipped
             - Workflow .github/workflows/storybook-a11y.yml succeeded or skipped
             - Workflow .github/workflows/swagger-gen.yml succeeded or skipped
-            - Workflow .github/workflows/trigger-dashboard-search-e2e.yml succeeded or skipped
             - Workflow .github/workflows/trivy-scan.yml succeeded or skipped
             - Workflow .github/workflows/trufflehog.yml succeeded or skipped
             - default to approval
@@ -627,26 +626,6 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/swagger-gen.yml
-  - name: Workflow .github/workflows/trigger-dashboard-search-e2e.yml succeeded or skipped
-    if:
-      changed_files:
-        paths:
-          - ^public\/app\/features\/search\/(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.ts$
-          - ^public\/app\/features\/search\/(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.tsx$
-          - ^pkg\/storage\/(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.go$
-      file_not_deleted:
-        paths:
-          - ^\.github\/workflows\/trigger-dashboard-search-e2e\.yml$
-      targets_branch:
-        pattern: (^main$)
-    requires:
-      conditions:
-        has_workflow_result:
-          conclusions:
-            - skipped
-            - success
-          workflows:
-            - .github/workflows/trigger-dashboard-search-e2e.yml
   - name: Workflow .github/workflows/trivy-scan.yml succeeded or skipped
     if:
       changed_files:
