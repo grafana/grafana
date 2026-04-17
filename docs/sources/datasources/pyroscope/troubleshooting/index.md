@@ -15,42 +15,12 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot Pyroscope data source issues
 weight: 500
-refs:
-  configure-pyroscope:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure-pyroscope-data-source/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure-pyroscope-data-source/
-  query-profile-data:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/query-profile-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/query-profile-data/
-  explore-profiles:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/profiles/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/simplified-exploration/profiles/
-  configure-traces-to-profiles:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure-traces-to-profiles/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure-traces-to-profiles/
-  flame-graph:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/flame-graph/
-  private-data-source-connect:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
+review_date: 2026-04-17
 ---
 
 # Troubleshoot Pyroscope data source issues
 
-This document provides solutions to common issues you may encounter when configuring or using the Pyroscope data source. For configuration instructions, refer to [Configure the Grafana Pyroscope data source](ref:configure-pyroscope).
+This document provides solutions to common issues you may encounter when configuring or using the Pyroscope data source. For configuration instructions, refer to [Configure the Grafana Pyroscope data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure-pyroscope-data-source/).
 
 ## Connection and configuration errors
 
@@ -201,7 +171,7 @@ These errors occur when executing queries against the Pyroscope data source.
 1. Use the correct label selector syntax. Pyroscope uses a syntax similar to Prometheus.
 1. Enclose label values in double quotes: `{service_name="my-service"}`.
 1. Use valid operators: `=`, `!=`, `=~`, `!~`.
-1. Escape special characters in regex patterns when using `=~` or `!~`.
+1. Escape special characters in regular expression patterns when using `=~` or `!~`.
 
 Example valid queries:
 
@@ -262,7 +232,7 @@ These errors are specific to the flame graph visualization.
 
 ## Profiles Drilldown issues
 
-These errors are specific to the [Profiles Drilldown](ref:explore-profiles) application.
+These errors are specific to the [Profiles Drilldown](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/profiles/) application.
 
 ### Profiles Drilldown not available
 
@@ -310,7 +280,7 @@ These errors occur when linking tracing and profiling data.
 1. Check that the Pyroscope data source is selected in the Tempo data source configuration.
 1. Verify profile data exists for the time range of the trace.
 
-For more information, refer to [Configure Traces to profiles](ref:configure-traces-to-profiles).
+For more information, refer to [Configure Traces to profiles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure-traces-to-profiles/).
 
 ### Profile doesn't match the trace span
 
@@ -377,7 +347,7 @@ These errors indicate problems with network connectivity between Grafana and Pyr
 1. Verify network connectivity from the Grafana server to the Pyroscope endpoint.
 1. Check firewall rules allow outbound connections on the required port (default: 4040).
 1. For Kubernetes deployments, verify the service is exposed correctly.
-1. For Grafana Cloud connecting to private resources, configure [Private data source connect](ref:private-data-source-connect).
+1. For Grafana Cloud connecting to private resources, configure [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/).
 1. Check if a proxy is required and configure it in the data source settings.
 
 ### SSL/TLS certificate errors
