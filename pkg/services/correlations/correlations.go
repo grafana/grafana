@@ -182,7 +182,7 @@ func (s *CorrelationsK8sService) CreateCorrelation(ctx context.Context, cmd Crea
 	return *legacyCorr, nil
 }
 
-// TODO this is an annoying one to convert. the legacy version uses XORM to get a correlation record without an UID but we can't do this here. Figure this out with a app platform person prob. It's used for provisioning, to try to preserve records, maybe not relevant for app platform?
+// This will be removed in https://github.com/grafana/grafana/pull/122977 and does not need to be converted
 func (s *CorrelationsK8sService) CreateOrUpdateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) error {
 	return nil
 }
