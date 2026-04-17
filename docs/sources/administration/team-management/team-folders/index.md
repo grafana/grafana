@@ -17,13 +17,13 @@ weight: 350
 
 # Manage team folders
 
-Team folders help you associate folders with teams so admins and team members can find the right dashboards faster. A team folder is still a regular folder. The team association adds ownership metadata and team-aware navigation, but it doesn't replace folder permissions.
+Team folders help you associate folders with teams so admins and team members can find the right dashboards, library panels and alert rules faster. A team folder is still a regular folder. The team association adds ownership metadata and team-aware navigation, but it doesn't replace folder permissions.
 
 Team folders is in public preview.
 
 Before you begin, ensure you have the following:
 
-- The `teamFolders` feature toggle enabled.
+- The `teamFolders` and `foldersAppPlatformAPI` feature toggle enabled.
 - Permission to create root-level folders, or permission to create subfolders in the parent folder you want to use.
 - Permission to manage folder permissions and read teams if you want to assign or change a folder owner in the UI.
 
@@ -53,7 +53,7 @@ For more information about creating teams, refer to [Configure Grafana Teams](/d
 
 ## Create or assign a team folder from Dashboards
 
-You can create a new folder for a team, or assign ownership to an existing folder from the dashboards UI.
+You can create a new folder for a team, or assign ownership to an existing folder from the browse dashboards page.
 
 ### Create a new team folder
 
@@ -63,7 +63,7 @@ To create a new team folder, complete the following steps:
 1. Click **New** and select **New folder**.
 1. Enter a unique folder name.
 1. Select **Assign an owner to the folder**.
-1. In **Team**, select the team that should own the folder.
+1. In **Team** dropdown, select the team that should own the folder.
 1. Click **Create**.
 
 Grafana creates a regular folder and stores the selected team as the folder owner.
@@ -96,7 +96,7 @@ The **Dashboards** page displays a **My team folders** section near the top when
 
 ### Save or move dashboards
 
-When you are saving or moving dashboard the folder picker shows a **Team folders** section at the top of the folder tree. Your first teams folder will be preselect preselcted by default.
+When you are saving or moving dashboard the folder picker shows a **Team folders** section at the top of the folder tree. Your first teams folder will be preselected by default.
 
 <!-- Screenshot placeholder: Folder picker in a save or move flow with Team folders shown at the top of the tree and one team folder selected. -->
 
