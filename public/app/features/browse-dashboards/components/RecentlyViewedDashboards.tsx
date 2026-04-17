@@ -62,10 +62,16 @@ export function RecentlyViewedDashboards() {
           <Text variant="h5" element="h3">
             <Trans i18nKey="browse-dashboards.recently-viewed.title">Recently viewed</Trans>
           </Text>
-          <Button icon="times" size="xs" variant="secondary" fill="text" onClick={(e) => {
-            e.stopPropagation();
-            handleClearHistory();
-          }}>
+          <Button
+            icon="times"
+            size="xs"
+            variant="secondary"
+            fill="text"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClearHistory();
+            }}
+          >
             {t('browse-dashboards.recently-viewed.clear', 'Clear history')}
           </Button>
         </Stack>
