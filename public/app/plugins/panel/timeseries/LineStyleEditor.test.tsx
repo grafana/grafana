@@ -65,7 +65,7 @@ describe('LineStyleEditor', () => {
 
       beforeEach(() => {
         originalEnableColorblindSafePanelOptions = 
-          .featureToggles.enableColorblindSafePanelOptions;
+          config.featureToggles.enableColorblindSafePanelOptions;
       });
 
       afterEach(() => {
