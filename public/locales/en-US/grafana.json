@@ -4406,7 +4406,7 @@
       "search-placeholder": "Search folders",
       "shared-with-me": "Shared with me",
       "team-folders": "Team folders",
-      "teamfolderserror-title": "Error loading team folders",
+      "team-folders-error-title": "Error loading team folders",
       "unknown-error": "Unknown error"
     },
     "manage-folder-nav": {
