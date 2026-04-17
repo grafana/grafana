@@ -1,7 +1,7 @@
 import { type Property } from 'csstype';
 import memoize from 'micro-memoize';
-// import WKT from 'ol/format/WKT';
-// import Geometry from 'ol/geom/Geometry';
+import WKT from 'ol/format/WKT';
+import Geometry from 'ol/geom/Geometry';
 import { type CSSProperties } from 'react';
 import { type SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
@@ -1112,15 +1112,13 @@ export function buildInspectValue(value: unknown, field: Field): [string, TableC
   let inspectValue: string;
   let mode = TableCellInspectorMode.text;
 
-  // if (field.type === FieldType.geo && value instanceof Geometry) {
-  //   inspectValue = new WKT().writeGeometry(value, {
-  //     featureProjection: 'EPSG:3857',
-  //     dataProjection: 'EPSG:4326',
-  //   });
-  //   mode = TableCellInspectorMode.code;
-  // }
-
-  if (
+  if (field.type === FieldType.geo && value instanceof Geometry) {
+    inspectValue = new WKT().writeGeometry(value, {
+      featureProjection: 'EPSG:3857',
+      dataProjection: 'EPSG:4326',
+    });
+    mode = TableCellInspectorMode.code;
+  } else if (
     cellOptions.type === TableCellDisplayMode.Sparkline ||
     getAutoRendererDisplayMode(field) === TableCellDisplayMode.Sparkline
   ) {
