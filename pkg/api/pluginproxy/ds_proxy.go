@@ -387,7 +387,8 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	case datasources.DS_PROMETHEUS,
 		datasources.DS_AMAZON_PROMETHEUS,
 		datasources.DS_AZURE_PROMETHEUS,
-		datasources.DS_LOKI:
+		datasources.DS_LOKI,
+		datasources.DS_VICTORIA_METRICS:
 		switch proxy.ctx.Req.Method {
 		case "DELETE", "PUT", "POST":
 			return fmt.Errorf("non allow-listed %ss not allowed on proxied %s datasource", proxy.ctx.Req.Method, proxy.dataSource.PluginType())
