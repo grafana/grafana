@@ -236,8 +236,7 @@ func filterVariablesInScope(list *unstructured.UnstructuredList, folderUID strin
 // the same result, so exactly one object survives.
 func pickVariableWinner(items []unstructured.Unstructured) unstructured.Unstructured {
 	winner := items[0]
-	for i := 1; i < len(items); i++ {
-		candidate := items[i]
+	for _, candidate := range items[1:] {
 		if lessVariable(candidate, winner) {
 			winner = candidate
 		}
