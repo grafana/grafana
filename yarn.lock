@@ -3733,9 +3733,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/prometheus@npm:13.1.0":
-  version: 13.1.0
-  resolution: "@grafana/prometheus@npm:13.1.0"
+"@grafana/prometheus@npm:13.1.1":
+  version: 13.1.1
+  resolution: "@grafana/prometheus@npm:13.1.1"
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@floating-ui/react": "npm:0.27.19"
@@ -3780,7 +3780,7 @@ __metadata:
   peerDependenciesMeta:
     "@grafana/assistant":
       optional: true
-  checksum: 10/f5baa125ea8dc71d3711152fe4056c0be5d487da68fc3825f241f93c164a4941b76a22c627799d0aeb7fcef141d0aa06a70864092ce9682b2692494874f2b1e8
+  checksum: 10/49655aa7e41faf04995b5d38def0ded48edc7e354551a13da1d8324963c6f52b0f4d844d9b03c8a4f3fa103d83473973a4e63fc74e42532dc26c864739f689a3
   languageName: node
   linkType: hard
 
@@ -20165,7 +20165,7 @@ __metadata:
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:^3.4.12"
     "@grafana/plugin-ui": "npm:^0.13.1"
-    "@grafana/prometheus": "npm:13.1.0"
+    "@grafana/prometheus": "npm:13.1.1"
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": "npm:7.3.11"
     "@grafana/scenes-react": "npm:7.3.11"
