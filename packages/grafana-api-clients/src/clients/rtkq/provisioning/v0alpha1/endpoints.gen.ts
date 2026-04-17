@@ -1821,6 +1821,8 @@ export type GitHubRepositoryConfig = {
     
     When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
   path?: string;
+  /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
+  tokenUser?: string;
   /** The repository URL (e.g. `https://github.com/example/test`). */
   url?: string;
 };

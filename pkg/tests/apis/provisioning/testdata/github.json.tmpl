@@ -12,14 +12,18 @@
             "url": "{{ or .URL "https://github.com/grafana/grafana-git-sync-demo" }}",
             "branch": "{{ or .Branch "integration-test" }}",
             "generateDashboardPreviews": {{ if .GenerateDashboardPreviews }} true {{ else }} false {{ end }},
-            "path": "{{ or .Path "" }}"
+            "path": "{{ or .Path "" }}"{{ if .TokenUser }},
+            "tokenUser": "{{ .TokenUser }}"{{ end }}
         },
         "sync": {
             "enabled": {{ if .SyncEnabled }} true {{ else }} false {{ end }},
             "target": "{{ or .SyncTarget "folder" }}",
             "intervalSeconds": {{ or .SyncIntervalSeconds 60 }}
         },
-        "workflows": {{ .WorkflowsJSON }}
+        "workflows": {{ .WorkflowsJSON }}{{ if .WebhookBaseURL }},
+        "webhook": {
+            "baseUrl": "{{ .WebhookBaseURL }}"
+        }{{ end }}
     },
     "secure": {
         "token": { "create": "{{ or .Token "" }}" },

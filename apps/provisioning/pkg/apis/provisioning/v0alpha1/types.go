@@ -70,6 +70,9 @@ type GitHubRepositoryConfig struct {
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
 
+	// TokenUser is the user that will be used to access the repository if it's a personal access token.
+	TokenUser string `json:"tokenUser,omitempty"`
+
 	// Whether we should show dashboard previews for pull requests.
 	// By default, this is false (i.e. we will not create previews).
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`

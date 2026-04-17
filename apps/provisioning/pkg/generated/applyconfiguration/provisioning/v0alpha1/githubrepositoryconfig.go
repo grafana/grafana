@@ -11,6 +11,8 @@ type GitHubRepositoryConfigApplyConfiguration struct {
 	URL *string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch *string `json:"branch,omitempty"`
+	// TokenUser is the user that will be used to access the repository if it's a personal access token.
+	TokenUser *string `json:"tokenUser,omitempty"`
 	// Whether we should show dashboard previews for pull requests.
 	// By default, this is false (i.e. we will not create previews).
 	GenerateDashboardPreviews *bool `json:"generateDashboardPreviews,omitempty"`
@@ -41,6 +43,14 @@ func (b *GitHubRepositoryConfigApplyConfiguration) WithURL(value string) *GitHub
 // If called multiple times, the Branch field is set to the value of the last call.
 func (b *GitHubRepositoryConfigApplyConfiguration) WithBranch(value string) *GitHubRepositoryConfigApplyConfiguration {
 	b.Branch = &value
+	return b
+}
+
+// WithTokenUser sets the TokenUser field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the TokenUser field is set to the value of the last call.
+func (b *GitHubRepositoryConfigApplyConfiguration) WithTokenUser(value string) *GitHubRepositoryConfigApplyConfiguration {
+	b.TokenUser = &value
 	return b
 }
 

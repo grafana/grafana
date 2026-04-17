@@ -2550,6 +2550,75 @@ func (h *GitTestHelper) CreateFolderTargetGitRepo(t *testing.T, repoName string,
 	return h.createGitRepo(t, repoName, "folder", initialFiles, workflows...)
 }
 
+// CreateGithubRepo creates a github-type repository backed by the gittest server.
+// workflows is optional; defaults to ["write"].
+// webhookBaseURL is optional; pass it to enable webhook creation on the repo.
+func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialFiles map[string][]byte, webhookBaseURL string, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	t.Helper()
+
+	ctx := context.Background()
+
+	user, err := h.gitServer.CreateUser(ctx)
+	require.NoError(t, err, "failed to create user")
+
+	remote, err := h.gitServer.CreateRepo(ctx, repoName, user)
+	require.NoError(t, err, "failed to create remote repository")
+
+	local, err := gittest.NewLocalRepo(ctx)
+	require.NoError(t, err, "failed to create local repository")
+	t.Cleanup(func() {
+		if err := local.Cleanup(); err != nil {
+			t.Logf("failed to cleanup local repo: %v", err)
+		}
+	})
+
+	_, err = local.InitWithRemote(user, remote)
+	require.NoError(t, err, "failed to initialize local repo with remote")
+
+	for filePath, content := range initialFiles {
+		err = local.CreateFile(filePath, string(content))
+		require.NoError(t, err, "failed to create file %s", filePath)
+	}
+
+	if len(initialFiles) > 0 {
+		_, err = local.Git("add", ".")
+		require.NoError(t, err, "failed to add files")
+		_, err = local.Git("commit", "-m", "Add initial files")
+		require.NoError(t, err, "failed to commit files")
+		_, err = local.Git("push")
+		require.NoError(t, err, "failed to push files")
+	}
+
+	if len(workflows) == 0 {
+		workflows = []string{"write"}
+	}
+	workflowsJSON, err := json.Marshal(workflows)
+	require.NoError(t, err)
+
+	templateValues := map[string]any{
+		"Name":          repoName,
+		"Title":         fmt.Sprintf("Test Repository %s", repoName),
+		"URL":           remote.URL,
+		"Branch":        "main",
+		"TokenUser":     user.Username,
+		"SyncTarget":    "instance",
+		"Token":         user.Password,
+		"WorkflowsJSON": string(workflowsJSON),
+	}
+	if webhookBaseURL != "" {
+		templateValues["WebhookBaseURL"] = webhookBaseURL
+	}
+
+	repoObj := h.RenderObject(t, TestdataPath("github.json.tmpl"), templateValues)
+
+	_, err = h.Repositories.Resource.Create(ctx, repoObj, metav1.CreateOptions{})
+	require.NoError(t, err, "failed to create repository")
+
+	h.waitForReadyRepository(t, repoName)
+
+	return remote, local
+}
+
 func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
 	t.Helper()
 
