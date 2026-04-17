@@ -2,14 +2,14 @@
   "examples": [
     {
       "name": "simple random walk",
-      "queryType": "",
+      "queryType": "default",
       "saveModel": {
         "scenarioId": "random_walk"
       }
     },
     {
       "name": "pulse wave example",
-      "queryType": "",
+      "queryType": "default",
       "saveModel": {
         "pulseWave": {
           "offCount": 20,
@@ -23,7 +23,7 @@
     },
     {
       "name": "multiple series",
-      "queryType": "",
+      "queryType": "default",
       "saveModel": {
         "scenarioId": "random_walk",
         "seriesCount": 10,

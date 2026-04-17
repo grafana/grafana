@@ -8,7 +8,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema/builder"
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 )
@@ -36,20 +36,20 @@ func AddQueriesToOpenAPI(options OASQueryOptions) error {
 	examples := options.QueryExamples
 	resourceName := dsV0.QueryTypeDefinitionResourceInfo.GroupResource().Resource
 
-	builder := schemabuilder.QuerySchemaOptions{
+	schema := builder.QuerySchemaOptions{
 		PluginID:   []string{""},
 		QueryTypes: []data.QueryTypeDefinition{},
 	}
 	if options.PluginJSON != nil {
-		builder.PluginID = []string{options.PluginJSON.ID}
+		schema.PluginID = []string{options.PluginJSON.ID}
 		if options.PluginJSON.AliasIDs != nil {
-			builder.PluginID = append(builder.PluginID, options.PluginJSON.AliasIDs...)
+			schema.PluginID = append(schema.PluginID, options.PluginJSON.AliasIDs...)
 		}
 	}
 	if options.QueryTypes != nil {
 		// The SDK type and api type are not the same so we just recreate it here
 		for _, qt := range options.QueryTypes.Items {
-			builder.QueryTypes = append(builder.QueryTypes, data.QueryTypeDefinition{
+			schema.QueryTypes = append(schema.QueryTypes, data.QueryTypeDefinition{
 				ObjectMeta: data.ObjectMeta{
 					Name: qt.Name,
 				},
@@ -109,8 +109,8 @@ func AddQueriesToOpenAPI(options OASQueryOptions) error {
 	}
 
 	// Query Request
-	builder.Mode = schemabuilder.SchemaTypeQueryRequest
-	s, err := schemabuilder.GetQuerySchema(builder)
+	schema.Mode = builder.SchemaTypeQueryRequest
+	s, err := builder.GetQuerySchema(schema)
 	if err != nil {
 		return err
 	}

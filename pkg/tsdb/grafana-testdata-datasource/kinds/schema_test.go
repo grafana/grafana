@@ -1,25 +1,82 @@
 package kinds
 
 import (
+	"path/filepath"
+	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	sdkapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema/builder"
 )
 
-const pluginDirectory = "../../../../public/app/plugins/datasource/grafana-testdata-datasource/"
+func TestQueryTypeDefinitions(t *testing.T) {
+	const pluginDirectory = "../../../../public/app/plugins/datasource/grafana-testdata-datasource/"
 
-func TestUpdateSchema(t *testing.T) {
-	schema := &pluginschema.PluginSchema{
-		APIVersion:       "v0alpha1",
-		SettingsSchema:   Settings(),
-		SettingsExamples: SettingsExamples(),
-		Routes:           Routes(),
-	}
+	schema, err := builder.NewSchemaBuilder(
+		builder.BuilderOptions{
+			PluginID: []string{"grafana-testdata-datasource", "testdata"},
+			ScanCode: []builder.CodePaths{{
+				BasePackage: "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds",
+				CodePath:    "./",
+			}},
+			Enums: []reflect.Type{
+				reflect.TypeFor[NodesQueryType](),
+				reflect.TypeFor[StreamingQueryType](),
+				reflect.TypeFor[ErrorType](),
+				reflect.TypeFor[ErrorSource](),
+				reflect.TypeFor[TestDataQueryType](),
+			},
+		})
+	require.NoError(t, err)
+	err = schema.AddQueries([]builder.QueryTypeInfo{{
+		Name:   "default",
+		GoType: reflect.TypeFor[*TestDataQuery](),
+		Examples: []sdkapi.QueryExample{{
+			Name: "simple random walk",
+			SaveModel: sdkapi.AsUnstructured(
+				TestDataQuery{
+					ScenarioId: TestDataQueryTypeRandomWalk,
+				},
+			),
+		}, {
+			Name: "pulse wave example",
+			SaveModel: sdkapi.AsUnstructured(
+				TestDataQuery{
+					ScenarioId: TestDataQueryTypePredictablePulse,
+					PulseWave: &PulseWaveQuery{
+						TimeStep: int64(1000),
+						OnCount:  10,
+						OffCount: 20,
+						OffValue: 1.23, // should be any (rather json any)
+						OnValue:  4.56, // should be any
+					},
+				},
+			),
+		}, {
+			Name: "multiple series",
+			SaveModel: sdkapi.AsUnstructured(
+				TestDataQuery{
+					ScenarioId:  TestDataQueryTypeRandomWalk,
+					SeriesCount: 10,
+					Spread:      0.2,
+				},
+			),
+		}},
+	}})
+	require.NoError(t, err)
 
-	pluginschema.UpdateSchema(t, schema, pluginDirectory+"schema")
+	err = schema.ConfigureSettings(Settings(), SettingsExamples())
+	require.NoError(t, err)
+
+	err = schema.SetRoutes(Routes())
+	require.NoError(t, err)
+
+	schema.UpdateProviderFiles(t, "v0alpha1", filepath.Join(pluginDirectory, "schema"))
 }
 
 func Settings() *pluginschema.Settings {
@@ -78,203 +135,4 @@ func SettingsExamples() *pluginschema.SettingsExamples {
 			},
 		},
 	}
-}
-
-func Routes() *pluginschema.Routes {
-	// Resource routes
-	// https://github.com/grafana/grafana/blob/main/pkg/tsdb/grafana-testdata-datasource/resource_handler.go#L20
-	unstructured := spec.MapProperty(nil)
-	unstructuredResponse := &spec3.Responses{
-		ResponsesProps: spec3.ResponsesProps{
-			Default: &spec3.Response{
-				ResponseProps: spec3.ResponseProps{
-					Content: map[string]*spec3.MediaType{
-						"application/json": {
-							MediaTypeProps: spec3.MediaTypeProps{
-								Schema: unstructured,
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	unstructuredRequest := &spec3.RequestBody{
-		RequestBodyProps: spec3.RequestBodyProps{
-			Content: map[string]*spec3.MediaType{
-				"application/json": {
-					MediaTypeProps: spec3.MediaTypeProps{
-						Schema: unstructured,
-					},
-				},
-			},
-		},
-	}
-
-	routes := &pluginschema.Routes{}
-	routes.Register("/resources", spec3.PathProps{
-		Summary: "hello world",
-		Get: &spec3.Operation{
-			OperationProps: spec3.OperationProps{
-				Responses: &spec3.Responses{
-					ResponsesProps: spec3.ResponsesProps{
-						Default: &spec3.Response{
-							ResponseProps: spec3.ResponseProps{
-								Content: map[string]*spec3.MediaType{
-									"text/plain": {
-										MediaTypeProps: spec3.MediaTypeProps{
-											Schema: spec.StringProperty(),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		}})
-
-	routes.Register("/resources/scenarios", spec3.PathProps{
-		Summary: "hello world",
-		Get: &spec3.Operation{
-			OperationProps: spec3.OperationProps{
-				Responses: unstructuredResponse,
-			},
-		},
-	})
-
-	routes.Register("/resources/stream", spec3.PathProps{
-		Summary: "Get streaming response",
-		Get: &spec3.Operation{
-			OperationProps: spec3.OperationProps{
-				Parameters: []*spec3.Parameter{
-					{
-						ParameterProps: spec3.ParameterProps{
-							Name:        "count",
-							In:          "query",
-							Schema:      spec.Int64Property(),
-							Description: "number of points that will be returned",
-							Example:     10,
-						},
-					},
-					{
-						ParameterProps: spec3.ParameterProps{
-							Name:        "start",
-							In:          "query",
-							Schema:      spec.Int64Property(),
-							Description: "the start value",
-						},
-					},
-					{
-						ParameterProps: spec3.ParameterProps{
-							Name:        "flush",
-							In:          "query",
-							Schema:      spec.Int64Property(),
-							Description: "How often the result is flushed (1-100%)",
-							Example:     100,
-						},
-					},
-					{
-						ParameterProps: spec3.ParameterProps{
-							Name:        "speed",
-							In:          "query",
-							Schema:      spec.StringProperty(),
-							Description: "the clock cycle",
-							Example:     "100ms",
-						},
-					},
-					{
-						ParameterProps: spec3.ParameterProps{
-							Name:        "format",
-							In:          "query",
-							Schema:      spec.StringProperty().WithEnum("json", "influx"),
-							Description: "the response format",
-						},
-					},
-				},
-				Responses: unstructuredResponse,
-			},
-		},
-	})
-
-	routes.Register("/resources/boom", spec3.PathProps{
-		Summary: "force a panic",
-		Get: &spec3.Operation{
-			OperationProps: spec3.OperationProps{
-				Responses: unstructuredResponse,
-			},
-		},
-		Post: &spec3.Operation{
-			OperationProps: spec3.OperationProps{
-				Responses: unstructuredResponse,
-			},
-		},
-	})
-
-	routes.Register("/resources/test", spec3.PathProps{
-		Summary: "Echo any request",
-		Post: &spec3.Operation{
-			OperationProps: spec3.OperationProps{
-				RequestBody: unstructuredRequest,
-				Responses:   unstructuredResponse,
-			},
-		},
-	})
-
-	routes.Register("/resources/test/json", spec3.PathProps{
-		Summary: "Echo json request",
-		Post: &spec3.Operation{
-			OperationProps: spec3.OperationProps{
-				RequestBody: unstructuredRequest,
-				Responses:   unstructuredResponse,
-			},
-		},
-	})
-
-	routes.Register("/resources/sims", spec3.PathProps{
-		Description: "Get list of simulations",
-		Get: &spec3.Operation{
-			OperationProps: spec3.OperationProps{
-				Responses: unstructuredResponse,
-			},
-		},
-	})
-
-	routes.Register("/resources/sim/{key}", spec3.PathProps{
-		Description: "Get list of simulations",
-		Get: &spec3.Operation{
-			OperationProps: spec3.OperationProps{
-				Responses: unstructuredResponse,
-			},
-		},
-		Post: &spec3.Operation{
-			OperationProps: spec3.OperationProps{
-				RequestBody: unstructuredRequest,
-				Responses:   unstructuredResponse,
-			},
-		},
-		Parameters: []*spec3.Parameter{
-			{
-				ParameterProps: spec3.ParameterProps{
-					Name:        "key",
-					In:          "path",
-					Description: "simulation key (should include hz)",
-					Required:    true,
-					Examples: map[string]*spec3.Example{
-						"1hz": {
-							ExampleProps: spec3.ExampleProps{
-								Value: "1hz",
-							},
-						},
-						"10hz": {
-							ExampleProps: spec3.ExampleProps{
-								Value: "10hz",
-							},
-						},
-					},
-				},
-			},
-		},
-	})
-	return routes
 }
