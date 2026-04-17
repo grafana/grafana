@@ -121,7 +121,8 @@ export type HomeDashboardDTO = DashboardDTO & {
  */
 export type HomeDashboardFetchResult =
   | HomeDashboardDTO
-  | DashboardWithAccessInfo<DashboardV2Spec | DashboardDataDTO>;
+  | DashboardWithAccessInfo<DashboardV2Spec>
+  | DashboardWithAccessInfo<DashboardDataDTO>;
 
 interface DashboardScenePageStateManagerLike<T> {
   fetchDashboard(options: LoadDashboardOptions): Promise<T | null>;
@@ -195,9 +196,7 @@ abstract class DashboardScenePageStateManagerBase<T>
    *      injected `access` block.
    */
   protected async fetchHomeDashboard(): Promise<HomeDashboardFetchResult | null> {
-    const rsp = await getBackendSrv().get<
-      HomeDashboardDTO | DashboardWithAccessInfo<DashboardV2Spec | DashboardDataDTO> | HomeDashboardRedirectDTO
-    >('/api/dashboards/home');
+    const rsp = await getBackendSrv().get<HomeDashboardFetchResult | HomeDashboardRedirectDTO>('/api/dashboards/home');
 
     if (isRedirectResponse(rsp)) {
       const newUrl = locationUtil.processRedirectUri(rsp.redirectUri, locationService.getLocation());
@@ -211,13 +210,12 @@ abstract class DashboardScenePageStateManagerBase<T>
       return rsp;
     }
 
-    const classicRsp = rsp as HomeDashboardDTO;
-    if (classicRsp.meta) {
-      classicRsp.meta.canSave = false;
-      classicRsp.meta.canShare = false;
-      classicRsp.meta.canStar = false;
+    if (rsp.meta) {
+      rsp.meta.canSave = false;
+      rsp.meta.canShare = false;
+      rsp.meta.canStar = false;
     }
-    return classicRsp;
+    return rsp;
   }
 
   private async loadHomeDashboard(): Promise<DashboardScene | null> {
@@ -255,7 +253,7 @@ abstract class DashboardScenePageStateManagerBase<T>
     }
 
     // Neither v1 nor v2 k8s resource - must be the classic DashboardDTO shape.
-    return transformSaveModelToScene(rsp as HomeDashboardDTO, undefined, getSceneCreationOptions());
+    return transformSaveModelToScene(rsp, undefined, getSceneCreationOptions());
   }
 
   public async loadSnapshot(slug: string) {
@@ -821,7 +819,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
               },
             };
           } else {
-            rsp = homeDashboard as HomeDashboardDTO;
+            rsp = homeDashboard;
           }
           break;
         }
