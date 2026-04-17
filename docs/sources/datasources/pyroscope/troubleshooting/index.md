@@ -36,13 +36,13 @@ These errors occur when setting up the data source or when connecting to the Pyr
 
 **Possible causes and solutions:**
 
-| Cause                              | Solution                                                                                                                                                                                           |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Incorrect URL                      | Verify the URL points to your Pyroscope instance. For self-managed deployments, the default port is `4040` (for example, `http://localhost:4040`).                                                |
-| Pyroscope service not running      | Check that the Pyroscope backend is running and accessible. Use `curl` or a browser to test connectivity to the Pyroscope URL.                                                                    |
-| Network connectivity issues        | Verify network connectivity from the Grafana server to the Pyroscope endpoint. Check firewall rules allow outbound connections on the required port.                                              |
-| Microservices mode routing         | If running Pyroscope in microservices mode, ensure the URL points to a gateway or proxy that routes requests correctly. Refer to the Helm ingress configuration for routing requirements.         |
-| TLS/SSL certificate issues         | If using HTTPS, verify the certificate is valid and trusted by the Grafana server. Configure TLS settings in the data source if using self-signed certificates.                                   |
+| Cause                         | Solution                                                                                                                                                                                  |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Incorrect URL                 | Verify the URL points to your Pyroscope instance. For self-managed deployments, the default port is `4040` (for example, `http://localhost:4040`).                                        |
+| Pyroscope service not running | Check that the Pyroscope backend is running and accessible. Use `curl` or a browser to test connectivity to the Pyroscope URL.                                                            |
+| Network connectivity issues   | Verify network connectivity from the Grafana server to the Pyroscope endpoint. Check firewall rules allow outbound connections on the required port.                                      |
+| Microservices mode routing    | If running Pyroscope in microservices mode, ensure the URL points to a gateway or proxy that routes requests correctly. Refer to the Helm ingress configuration for routing requirements. |
+| TLS/SSL certificate issues    | If using HTTPS, verify the certificate is valid and trusted by the Grafana server. Configure TLS settings in the data source if using self-signed certificates.                           |
 
 ### URL format issues
 
@@ -72,12 +72,12 @@ These errors occur when the data source cannot authenticate with the Pyroscope b
 
 **Possible causes and solutions:**
 
-| Cause                               | Solution                                                                                                                                           |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Invalid credentials                 | Verify the username and password or API key are correct.                                                                                           |
-| Expired credentials                 | Generate new credentials and update the data source configuration.                                                                                 |
-| Incorrect authentication type       | Ensure you've selected the correct authentication method for your Pyroscope deployment (Basic auth, API key, or no authentication for local setups). |
-| Missing authentication headers      | For custom authentication, verify the required headers are configured correctly in the data source settings.                                       |
+| Cause                          | Solution                                                                                                                                             |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Invalid credentials            | Verify the username and password or API key are correct.                                                                                             |
+| Expired credentials            | Generate new credentials and update the data source configuration.                                                                                   |
+| Incorrect authentication type  | Ensure you've selected the correct authentication method for your Pyroscope deployment (Basic auth, API key, or no authentication for local setups). |
+| Missing authentication headers | For custom authentication, verify the required headers are configured correctly in the data source settings.                                         |
 
 ### Basic authentication not working
 
@@ -121,14 +121,14 @@ These errors occur when executing queries against the Pyroscope data source.
 
 **Possible causes and solutions:**
 
-| Cause                                 | Solution                                                                                                                                           |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Time range doesn't contain data       | Expand the dashboard time range. Profiling data may not exist for the selected period.                                                             |
-| Application not sending profiles      | Verify your application is configured to send profiles to Pyroscope. Check the Pyroscope agent or SDK configuration.                              |
-| Incorrect profile type selected       | Select a different profile type from the drop-down menu. Not all profile types are available for all applications.                                 |
-| Label selector too restrictive        | Remove or modify label filters to broaden the query. Start without filters to verify data exists.                                                  |
-| Wrong service or application selected | Verify the `service_name` label matches your application's configuration.                                                                          |
-| Profile type or app not selected      | Ensure you've selected a profile type or app in the query editor. The query returns no data if neither is selected.                               |
+| Cause                                 | Solution                                                                                                             |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Time range doesn't contain data       | Expand the dashboard time range. Profiling data may not exist for the selected period.                               |
+| Application not sending profiles      | Verify your application is configured to send profiles to Pyroscope. Check the Pyroscope agent or SDK configuration. |
+| Incorrect profile type selected       | Select a different profile type from the drop-down menu. Not all profile types are available for all applications.   |
+| Label selector too restrictive        | Remove or modify label filters to broaden the query. Start without filters to verify data exists.                    |
+| Wrong service or application selected | Verify the `service_name` label matches your application's configuration.                                            |
+| Profile type or app not selected      | Ensure you've selected a profile type or app in the query editor. The query returns no data if neither is selected.  |
 
 ### "Profile type not found" or empty profile type selector
 
