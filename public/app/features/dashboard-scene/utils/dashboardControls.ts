@@ -1,26 +1,10 @@
-import { nanoid } from 'nanoid';
 import { filter, Observable, scan, share, type Subscriber } from 'rxjs';
 
 import { type DataSourceApi } from '@grafana/data';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { type SceneVariable } from '@grafana/scenes';
 import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-
-type LoadDefaultControlsPhase = 'default_variables' | 'default_links';
-type InvokeAndTrackOptions = { traceId: string; phase: LoadDefaultControlsPhase; datasourceType?: string };
-
-async function invokeAndTrack<T>(action: () => Promise<T>, options: InvokeAndTrackOptions): Promise<T> {
-  const start = performance.now();
-  const result = await action();
-
-  reportInteraction('dashboards_load_default_controls', {
-    ...options,
-    duration_ms: Math.round(performance.now() - start),
-  });
-
-  return result;
-}
 
 export type DefaultControlEvent =
   | { type: 'variables'; data: VariableKind[] }
@@ -33,8 +17,7 @@ function loadDefaultControlsRaw$(refs: DataSourceRef[]): Observable<DefaultContr
       return;
     }
 
-    const traceId = nanoid(8);
-    const promises = refs.map((ref) => loadControlsFromRef(ref, traceId, subscriber));
+    const promises = refs.map((ref) => loadControlsFromRef(ref, subscriber));
 
     Promise.all(promises).then(() => subscriber.complete());
   });
@@ -79,7 +62,7 @@ function sortLinks(a: DashboardLink, b: DashboardLink): number {
   return groupCmp !== 0 ? groupCmp : collator.compare(a.title ?? '', b.title ?? '');
 }
 
-async function loadControlsFromRef(ref: DataSourceRef, traceId: string, subscriber: Subscriber<DefaultControlEvent>) {
+async function loadControlsFromRef(ref: DataSourceRef, subscriber: Subscriber<DefaultControlEvent>) {
   let ds: DataSourceApi;
 
   try {
@@ -89,20 +72,16 @@ async function loadControlsFromRef(ref: DataSourceRef, traceId: string, subscrib
     return;
   }
 
-  await Promise.all([emitDefaultVariables(ds, traceId, subscriber), emitDefaultLinks(ds, traceId, subscriber)]);
+  await Promise.all([emitDefaultVariables(ds, subscriber), emitDefaultLinks(ds, subscriber)]);
 }
 
-async function emitDefaultVariables(ds: DataSourceApi, traceId: string, subscriber: Subscriber<DefaultControlEvent>) {
+async function emitDefaultVariables(ds: DataSourceApi, subscriber: Subscriber<DefaultControlEvent>) {
   if (typeof ds.getDefaultVariables !== 'function') {
     return;
   }
 
   try {
-    const variables = await invokeAndTrack(ds.getDefaultVariables.bind(ds), {
-      traceId,
-      phase: 'default_variables',
-      datasourceType: ds.type,
-    });
+    const variables = await ds.getDefaultVariables();
 
     if (variables?.length) {
       const sanitizedType = ds.type.replace(/\W/g, '_');
@@ -123,17 +102,13 @@ async function emitDefaultVariables(ds: DataSourceApi, traceId: string, subscrib
   }
 }
 
-async function emitDefaultLinks(ds: DataSourceApi, traceId: string, subscriber: Subscriber<DefaultControlEvent>) {
+async function emitDefaultLinks(ds: DataSourceApi, subscriber: Subscriber<DefaultControlEvent>) {
   if (typeof ds.getDefaultLinks !== 'function') {
     return;
   }
 
   try {
-    const links = await invokeAndTrack(ds.getDefaultLinks.bind(ds), {
-      traceId,
-      phase: 'default_links',
-      datasourceType: ds.type,
-    });
+    const links = await ds.getDefaultLinks();
 
     if (links?.length) {
       subscriber.next({
