@@ -7,6 +7,7 @@ import { mockTransformationsRegistry } from '../utils/tests/mockTransformationsR
 
 import { ReducerID } from './fieldReducer';
 import { FrameMatcherID } from './matchers/ids';
+import { standardTransformersRegistry } from './standardTransformersRegistry';
 import { transformDataFrame } from './transformDataFrame';
 import { filterFieldsByNameTransformer } from './transformers/filterByName';
 import { DataTransformerID } from './transformers/ids';
@@ -240,6 +241,74 @@ describe('transformDataFrame', () => {
         expect(processed[0].fields.length).toEqual(1);
         expect(processed[0].fields[0].values[0]).toEqual(0.06);
       });
+    });
+  });
+
+  describe('transformation caching', () => {
+    it('calls the transformation factory only once for repeated pipeline runs', async () => {
+      // Use a unique ID so the module-level resolvedTransformations Map starts cold.
+      const CACHE_TEST_ID = '__transformDataFrame_cache_test_unique__';
+      const transformationFactory = jest.fn().mockResolvedValue(reduceTransformer);
+
+      // register() works even after initialization; the registry guard is on setInit()
+      standardTransformersRegistry.register({
+        id: CACHE_TEST_ID,
+        transformation: transformationFactory,
+        name: 'Cache test',
+        description: '',
+        editor: () => null,
+        imageDark: '',
+        imageLight: '',
+      });
+
+      const cfg = [{ id: CACHE_TEST_ID, options: { reducers: [ReducerID.first] } }];
+      const data = [getSeriesAWithSingleField()];
+
+      await expect(transformDataFrame(cfg, data)).toEmitValuesWith(() => {});
+      await expect(transformDataFrame(cfg, data)).toEmitValuesWith(() => {});
+
+      expect(transformationFactory).toHaveBeenCalledTimes(1);
+
+      // Clean up registry entry (resolvedTransformations entry is harmless since ID is unique)
+      const reg = standardTransformersRegistry as unknown as { byId: Map<string, unknown>; ordered: unknown[] };
+      reg.byId.delete(CACHE_TEST_ID);
+      const idx = reg.ordered.findIndex((i: unknown) => (i as { id: string }).id === CACHE_TEST_ID);
+      if (idx >= 0) {
+        reg.ordered.splice(idx, 1);
+      }
+    });
+  });
+
+  describe('Scenes context', () => {
+    let prevContext: unknown;
+
+    beforeEach(() => {
+      prevContext = window.__grafanaSceneContext;
+      window.__grafanaSceneContext = {};
+    });
+
+    afterEach(() => {
+      window.__grafanaSceneContext = prevContext;
+    });
+
+    it('calls ctx.interpolate for string options when not running in Scenes', async () => {
+      delete window.__grafanaSceneContext;
+
+      const interpolate = jest.fn((v: string) => v);
+      const cfg = [{ id: DataTransformerID.reduce, options: { reducers: [ReducerID.first] } }];
+
+      await expect(transformDataFrame(cfg, [getSeriesAWithSingleField()], { interpolate })).toEmitValuesWith(() => {});
+
+      expect(interpolate).toHaveBeenCalled();
+    });
+
+    it('skips ctx.interpolate entirely when window.__grafanaSceneContext is set', async () => {
+      const interpolate = jest.fn((v: string) => v);
+      const cfg = [{ id: DataTransformerID.reduce, options: { reducers: [ReducerID.first] } }];
+
+      await expect(transformDataFrame(cfg, [getSeriesAWithSingleField()], { interpolate })).toEmitValuesWith(() => {});
+
+      expect(interpolate).not.toHaveBeenCalled();
     });
   });
 });
