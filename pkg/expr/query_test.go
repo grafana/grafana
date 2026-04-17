@@ -8,16 +8,16 @@ import (
 	"github.com/stretchr/testify/require"
 
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema/builder"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
 func TestQueryTypeDefinitions(t *testing.T) {
-	schema, err := builder.NewSchemaBuilder(
-		builder.BuilderOptions{
+	builder, err := schemabuilder.NewSchemaBuilder(
+		schemabuilder.BuilderOptions{
 			PluginID: []string{DatasourceType},
-			ScanCode: []builder.CodePaths{{
+			ScanCode: []schemabuilder.CodePaths{{
 				BasePackage: "github.com/grafana/grafana/pkg/expr",
 				CodePath:    "./",
 			}},
@@ -30,7 +30,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			},
 		})
 	require.NoError(t, err)
-	err = schema.AddQueries([]builder.QueryTypeInfo{{
+	err = builder.AddQueries([]schemabuilder.QueryTypeInfo{{
 		Discriminators: data.NewDiscriminators("type", QueryTypeMath),
 		GoType:         reflect.TypeFor[*MathQuery](),
 		Examples: []data.QueryExample{
@@ -159,7 +159,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 	require.NoError(t, err)
 
 	apiVersion := "expr" // hack to keep writing in the same folder -- could write to datasource.grafana.app
-	schema.UpdateProviderFiles(t, apiVersion, "../")
+	builder.UpdateProviderFiles(t, apiVersion, "../")
 }
 
 func toUnstructured(ex string) data.Unstructured {

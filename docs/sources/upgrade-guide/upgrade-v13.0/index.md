@@ -22,15 +22,15 @@ weight: 495
 ## Technical notes
 
 {{< admonition type="warning" >}}
-**GitSync early adopters:** if you enabled GitSync in Grafana v12.x.x, **do not upgrade to Grafana v13.0.0**. A migration bug can cause dashboards and folders to be lost or reverted during the upgrade.
+**GitSync early adopters:** If you upgraded to Grafana v13.0.0 with GitSync enabled from Grafana v12.x.x, a migration bug might have caused dashboards and folders to be lost or reverted during the upgrade. This issue is fixed in Grafana v13.0.1.
 
 This bug only affects self-managed instances that enabled the GitSync feature flags (`provisioning`, `kubernetesClientDashboardsFolders`, `kubernetesDashboards`, and `grafanaAPIServerEnsureKubectlAccess`) before GitSync reached general availability.
 
-Grafana v13.0.0 was removed from distribution and a fix is being prepared for Grafana v13.0.1.
+Grafana v13.0.0 was removed from distribution and a fix is included in Grafana v13.0.1.
 
-If you already upgraded and are affected, recovery might require restoring from backup or resyncing from Git, depending on whether your instance used mixed local/GitSync content or full-instance sync.
+If you are affected, recovery might require restoring from backup or resyncing from Git, depending on whether your instance used mixed local and GitSync content or full-instance sync.
 
-We recommend using your database backup to restore and then upgrading to 13.0.1.
+We recommend using your database backup to restore and then upgrading to v13.0.1.
 {{< /admonition >}}
 
 ### React 19 related updates

@@ -11,16 +11,16 @@ import (
 
 	sdkapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema/builder"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
 )
 
 func TestPluginSchema(t *testing.T) {
 	const pluginDirectory = "../../../../public/app/plugins/datasource/grafana-testdata-datasource/"
 
-	schema, err := builder.NewSchemaBuilder(
-		builder.BuilderOptions{
+	builder, err := schemabuilder.NewSchemaBuilder(
+		schemabuilder.BuilderOptions{
 			PluginID: []string{"grafana-testdata-datasource", "testdata"},
-			ScanCode: []builder.CodePaths{{
+			ScanCode: []schemabuilder.CodePaths{{
 				BasePackage: "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds",
 				CodePath:    "./",
 			}},
@@ -33,7 +33,7 @@ func TestPluginSchema(t *testing.T) {
 			},
 		})
 	require.NoError(t, err)
-	err = schema.AddQueries([]builder.QueryTypeInfo{{
+	err = builder.AddQueries([]schemabuilder.QueryTypeInfo{{
 		Name:   "default",
 		GoType: reflect.TypeFor[*TestDataQuery](),
 		Examples: []sdkapi.QueryExample{{
@@ -70,13 +70,13 @@ func TestPluginSchema(t *testing.T) {
 	}})
 	require.NoError(t, err)
 
-	err = schema.ConfigureSettings(Settings(), SettingsExamples())
+	err = builder.ConfigureSettings(Settings(), SettingsExamples())
 	require.NoError(t, err)
 
-	err = schema.SetRoutes(Routes())
+	err = builder.SetRoutes(Routes())
 	require.NoError(t, err)
 
-	schema.UpdateProviderFiles(t, "v0alpha1", filepath.Join(pluginDirectory, "schema"))
+	builder.UpdateProviderFiles(t, "v0alpha1", filepath.Join(pluginDirectory, "schema"))
 }
 
 func Settings() *pluginschema.Settings {

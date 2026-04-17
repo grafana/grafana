@@ -7969,6 +7969,9 @@
     },
     "empty-state": {
       "message": "No data sources found"
+    },
+    "list": {
+      "label": "Data sources"
     }
   },
   "datasources": {

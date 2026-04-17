@@ -8,7 +8,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema/builder"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 )
@@ -36,7 +36,7 @@ func AddQueriesToOpenAPI(options OASQueryOptions) error {
 	examples := options.QueryExamples
 	resourceName := dsV0.QueryTypeDefinitionResourceInfo.GroupResource().Resource
 
-	schema := builder.QuerySchemaOptions{
+	schema := schemabuilder.QuerySchemaOptions{
 		PluginID:   []string{""},
 		QueryTypes: []data.QueryTypeDefinition{},
 	}
@@ -109,8 +109,8 @@ func AddQueriesToOpenAPI(options OASQueryOptions) error {
 	}
 
 	// Query Request
-	schema.Mode = builder.SchemaTypeQueryRequest
-	s, err := builder.GetQuerySchema(schema)
+	schema.Mode = schemabuilder.SchemaTypeQueryRequest
+	s, err := schemabuilder.GetQuerySchema(schema)
 	if err != nil {
 		return err
 	}
