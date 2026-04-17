@@ -260,12 +260,12 @@ func (sk8s *shortURLK8sHandler) createKubernetesShortURLsHandler(c *contextmodel
 //-----------------------------------------------------------------------------------------
 
 func (sk8s *shortURLK8sHandler) getClient(c *contextmodel.ReqContext) (dynamic.ResourceInterface, bool) {
-	dyn, err := dynamic.NewForConfig(sk8s.clientConfigProvider.GetDirectRestConfig(c))
+	dyn, err := sk8s.clientProvider.GetDynamicClient(c.Req.Context(), sk8s.gvr, sk8s.namespacer(c.OrgID))
 	if err != nil {
 		c.JsonApiErr(500, "client", err)
 		return nil, false
 	}
-	return dyn.Resource(sk8s.gvr).Namespace(sk8s.namespacer(c.OrgID)), true
+	return dyn, true
 }
 
 func (sk8s *shortURLK8sHandler) writeError(c *contextmodel.ReqContext, err error) {
