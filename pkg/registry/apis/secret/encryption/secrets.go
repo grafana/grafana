@@ -52,7 +52,8 @@ func ValidateDataKeyCacheEntryNamespace(methodNamespace string, entry DataKeyCac
 }
 
 // DataKeyCache is a multi-tenant cache used by the EncryptionManager to avoid expensive database lookups during repeated secret decryption operations.
-// Implementers are responsible for ensuring data keys are encrypted at-rest, and that the namespace of the entry is validated during setting and retrieval.
+// Data keys stored in the cache must be encrypted at-rest.
+// Implementers are responsible for ensuring that the namespace of the entry is validated during setting and retrieval.
 type DataKeyCache interface {
 	// The implementation of Set must ensure the key is retrievable by both key and label
 	Set(ctx context.Context, namespace string, entry DataKeyCacheEntry) error
