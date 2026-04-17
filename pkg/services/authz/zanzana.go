@@ -256,7 +256,7 @@ type ZanzanaService interface {
 var _ ZanzanaService = (*Zanzana)(nil)
 
 // ProvideZanzanaService is used to register zanzana as a module so we can run it separately from grafana.
-func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg prometheus.Registerer, storeProvider zStore.StoreProvider) (*Zanzana, error) {
+func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg prometheus.Registerer, storeProvider zStore.StoreProvider, reconcileCRDs []schema.GroupVersionResource) (*Zanzana, error) {
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to provide config: %w", err)
@@ -280,6 +280,7 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 		reg:           reg,
 		tracer:        tracer,
 		storeProvider: storeProvider,
+		reconcileCRDs: reconcileCRDs,
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stopping).WithName("zanzana")
@@ -298,6 +299,7 @@ type Zanzana struct {
 	features      featuremgmt.FeatureToggles
 	reg           prometheus.Registerer
 	storeProvider zStore.StoreProvider
+	reconcileCRDs []schema.GroupVersionResource
 }
 
 func (z *Zanzana) start(ctx context.Context) error {
@@ -306,7 +308,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return fmt.Errorf("failed to create zanzana store: %w", err)
 	}
 
-	zanzanaServer, err := zServer.NewZanzanaServer(z.cfg, store, z.logger, z.tracer, z.reg)
+	zanzanaServer, err := zServer.NewZanzanaServer(z.cfg, store, z.logger, z.tracer, z.reg, z.reconcileCRDs)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}

@@ -213,6 +213,8 @@ var wireExtsModuleServerSet = wire.NewSet(
 	sql.ProvideStorageBackend,
 	// Zanzana store provider
 	zStore.ProvideDefaultStoreProvider,
+	// Zanzana MT reconciler CRD list
+	authz.ProvideReconcileCRDs,
 )
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(

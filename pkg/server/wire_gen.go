@@ -1868,7 +1868,8 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 		return nil, err
 	}
 	storeProvider := store2.ProvideDefaultStoreProvider()
-	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer, storageBackend, hooksService, storeProvider)
+	v := authz.ProvideReconcileCRDs()
+	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer, storageBackend, hooksService, storeProvider, v)
 	if err != nil {
 		return nil, err
 	}

@@ -76,13 +76,13 @@ func NewEmbeddedZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, 
 	return newServer(cfg, openfga, store, logger, tracer, reg, restConfig, reconcileCRDs)
 }
 
-func NewZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) (*Server, error) {
+func NewZanzanaServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, reconcileCRDs []schema.GroupVersionResource) (*Server, error) {
 	openfgaServer, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	return newServer(cfg, openfgaServer, store, logger, tracer, reg, nil, nil)
+	return newServer(cfg, openfgaServer, store, logger, tracer, reg, nil, reconcileCRDs)
 }
 
 func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADatastore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer, restConfig apiserver.RestConfigProvider, reconcileCRDs []schema.GroupVersionResource) (*Server, error) {
