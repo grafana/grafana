@@ -945,4 +945,8 @@ const (
 	// FlagDatasourceUseNewCRUDAPIs
 	// Use the new datasource API groups for datasource CRUD requests, backend flag
 	FlagDatasourceUseNewCRUDAPIs = "datasource.useNewCRUDAPIs"
+
+	// FlagGrafanaCorrelationsSkipLegacy
+	// Route any calls to legacy correlations endpoints to call through to app platform
+	FlagGrafanaCorrelationsSkipLegacy = "grafana.correlationsSkipLegacy"
 )
