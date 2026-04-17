@@ -1675,6 +1675,19 @@
     },
     {
       "metadata": {
+        "name": "datasource.useNewCRUDAPIs",
+        "resourceVersion": "1776199197997",
+        "creationTimestamp": "2026-04-14T20:39:57Z"
+      },
+      "spec": {
+        "description": "Use the new datasource API groups for datasource CRUD requests, backend flag",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourceAPIServers",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-09-19T08:28:27Z"
@@ -2591,7 +2604,8 @@
       "metadata": {
         "name": "grpcServer",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2022-09-26T20:25:34Z"
+        "creationTimestamp": "2022-09-26T20:25:34Z",
+        "deletionTimestamp": "2026-04-16T20:17:36Z"
       },
       "spec": {
         "description": "Run the GRPC server",
@@ -3454,7 +3468,8 @@
       "metadata": {
         "name": "kubernetesUnifiedStorageQuotas",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-12-09T15:40:34Z"
+        "creationTimestamp": "2025-12-09T15:40:34Z",
+        "deletionTimestamp": "2026-04-16T18:07:54Z"
       },
       "spec": {
         "description": "Adds support for Kubernetes unified storage quotas",
