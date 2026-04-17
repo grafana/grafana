@@ -15,11 +15,11 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -35,9 +35,9 @@ var (
 )
 
 type APIBuilder struct {
-	authorizer     authorizer.Authorizer
-	clientProvider apiserver.ClientProvider
-	legacyPrefs    rest.Storage
+	authorizer      authorizer.Authorizer
+	clientGenerator resource.ClientGenerator
+	legacyPrefs     rest.Storage
 
 	merger *merger // joins all preferences
 }
@@ -49,12 +49,12 @@ func RegisterAPIService(
 	prefs pref.Service,
 	users user.Service,
 	apiregistration builder.APIRegistrar,
-	clientProvider apiserver.ClientProvider,
+	clientGenerator resource.ClientGenerator,
 ) *APIBuilder {
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
-		clientProvider: clientProvider,
-		merger:         newMerger(cfg, sql),
+		clientGenerator: clientGenerator,
+		merger:          newMerger(cfg, sql),
 		authorizer: &utils.AuthorizeFromName{
 			OKNames: []string{"merged"},
 			Teams:   sql, // should be from the IAM service

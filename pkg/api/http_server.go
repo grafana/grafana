@@ -23,6 +23,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/resource"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/youmark/pkcs8"
@@ -217,7 +219,7 @@ type HTTPServer struct {
 	promRegister                    prometheus.Registerer
 	promGatherer                    prometheus.Gatherer
 	clientConfigProvider            grafanaapiserver.DirectRestConfigProvider
-	clientProvider                  grafanaapiserver.ClientProvider
+	clientGenerator                 resource.ClientGenerator
 	namespacer                      request.NamespaceMapper
 	anonService                     anonymous.Service
 	userVerifier                    user.Verifier
@@ -276,7 +278,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationRepo annotations.Repository, tagService tag.Service, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
 	starApi *starApi.API, promRegister prometheus.Registerer, anonService anonymous.Service,
-	clientConfigProvider grafanaapiserver.DirectRestConfigProvider, clientProvider grafanaapiserver.ClientProvider,
+	clientConfigProvider grafanaapiserver.DirectRestConfigProvider, clientGenerator resource.ClientGenerator,
 	userVerifier user.Verifier, pluginPreinstall pluginchecker.Preinstall, publicDashboardsService publicdashboards.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
@@ -376,7 +378,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		promRegister:                 promRegister,
 		promGatherer:                 promGatherer,
 		clientConfigProvider:         clientConfigProvider,
-		clientProvider:               clientProvider,
+		clientGenerator:              clientGenerator,
 		namespacer:                   request.GetNamespaceMapper(cfg),
 		anonService:                  anonService,
 		userVerifier:                 userVerifier,

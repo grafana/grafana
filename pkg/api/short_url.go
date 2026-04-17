@@ -11,6 +11,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -120,18 +121,18 @@ func (hs *HTTPServer) getShortURL(c *contextmodel.ReqContext) response.Response 
 }
 
 type shortURLK8sHandler struct {
-	namespacer     request.NamespaceMapper
-	gvr            schema.GroupVersionResource
-	clientProvider grafanaapiserver.ClientProvider
-	cfg            *setting.Cfg
+	namespacer           request.NamespaceMapper
+	gvr                  schema.GroupVersionResource
+	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
+	cfg                  *setting.Cfg
 }
 
 func newShortURLK8sHandler(hs *HTTPServer) *shortURLK8sHandler {
 	return &shortURLK8sHandler{
-		gvr:            v1beta1.ShortURLKind().GroupVersionResource(),
-		namespacer:     request.GetNamespaceMapper(hs.Cfg),
-		clientProvider: hs.clientProvider,
-		cfg:            hs.Cfg,
+		gvr:                  v1beta1.ShortURLKind().GroupVersionResource(),
+		namespacer:           request.GetNamespaceMapper(hs.Cfg),
+		clientConfigProvider: hs.clientConfigProvider,
+		cfg:                  hs.Cfg,
 	}
 }
 
@@ -165,13 +166,13 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 		return
 	}
 
-	client, err := sk8s.clientProvider.GetRestClient(c.Req.Context())
+	client, err := kubernetes.NewForConfig(sk8s.clientConfigProvider.GetDirectRestConfig(c))
 	if err != nil {
 		c.JsonApiErr(500, "client", err)
 		return
 	}
 
-	result := client.Get().
+	result := client.RESTClient().Get().
 		Prefix("apis", v1beta1.APIGroup, v1beta1.APIVersion).
 		Namespace(sk8s.namespacer(c.OrgID)).
 		Resource(v1beta1.ShortURLKind().Plural()).
@@ -260,12 +261,13 @@ func (sk8s *shortURLK8sHandler) createKubernetesShortURLsHandler(c *contextmodel
 //-----------------------------------------------------------------------------------------
 
 func (sk8s *shortURLK8sHandler) getClient(c *contextmodel.ReqContext) (dynamic.ResourceInterface, bool) {
-	dyn, err := sk8s.clientProvider.GetDynamicClient(c.Req.Context(), sk8s.gvr, sk8s.namespacer(c.OrgID))
+	// NOTE! if you are copying this, consider using the hs.clientGenerator to get a typed client!
+	dyn, err := dynamic.NewForConfig(sk8s.clientConfigProvider.GetDirectRestConfig(c))
 	if err != nil {
 		c.JsonApiErr(500, "client", err)
 		return nil, false
 	}
-	return dyn, true
+	return dyn.Resource(sk8s.gvr).Namespace(sk8s.namespacer(c.OrgID)), true
 }
 
 func (sk8s *shortURLK8sHandler) writeError(c *contextmodel.ReqContext, err error) {

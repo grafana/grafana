@@ -133,9 +133,9 @@ type CreatePlaylistResponse struct {
 }
 
 type playlistK8sHandler struct {
-	namespacer     request.NamespaceMapper
-	gvr            schema.GroupVersionResource
-	clientProvider grafanaapiserver.ClientProvider
+	namespacer           request.NamespaceMapper
+	gvr                  schema.GroupVersionResource
+	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
 }
 
 //-----------------------------------------------------------------------------------------
@@ -144,9 +144,9 @@ type playlistK8sHandler struct {
 
 func newPlaylistK8sHandler(hs *HTTPServer) *playlistK8sHandler {
 	return &playlistK8sHandler{
-		gvr:            playlistv1.PlaylistKind().GroupVersionResource(),
-		namespacer:     request.GetNamespaceMapper(hs.Cfg),
-		clientProvider: hs.clientProvider,
+		gvr:                  playlistv1.PlaylistKind().GroupVersionResource(),
+		namespacer:           request.GetNamespaceMapper(hs.Cfg),
+		clientConfigProvider: hs.clientConfigProvider,
 	}
 }
 
@@ -350,12 +350,13 @@ func (pk8s *playlistK8sHandler) createPlaylist(c *contextmodel.ReqContext) {
 //-----------------------------------------------------------------------------------------
 
 func (pk8s *playlistK8sHandler) getClient(c *contextmodel.ReqContext) (dynamic.ResourceInterface, bool) {
-	client, err := pk8s.clientProvider.GetDynamicClient(c.Req.Context(), pk8s.gvr, pk8s.namespacer(c.OrgID))
+	// NOTE! if you are copying this, consider using the hs.clientclientGenerator to get a typed client!
+	dyn, err := dynamic.NewForConfig(pk8s.clientConfigProvider.GetDirectRestConfig(c))
 	if err != nil {
 		c.JsonApiErr(500, "client", err)
 		return nil, false
 	}
-	return client, true
+	return dyn.Resource(pk8s.gvr).Namespace(pk8s.namespacer(c.OrgID)), true
 }
 
 func (pk8s *playlistK8sHandler) writeError(c *contextmodel.ReqContext, err error) {
