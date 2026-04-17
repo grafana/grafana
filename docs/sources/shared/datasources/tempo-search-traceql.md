@@ -85,7 +85,7 @@ For example, if you select **Span Name** with the `=` operator and choose both `
 { name="get" || name="log_results_cache" }
 ```
 
-If you select the regular expression operator `=~` instead, the values are combined into a single regex pattern:
+If you select the regular expression operator `=~` instead, the values are combined into a single regular expression pattern:
 
 ```traceql
 { name=~"get|log_results_cache" }
