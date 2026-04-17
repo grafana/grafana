@@ -350,7 +350,7 @@ export function NestedFolderPicker({
             severity="warning"
             title={
               teamFoldersError
-                ? t('browse-dashboards.folder-picker.teamfolderserror-title', 'Error loading team folders')
+                ? t('browse-dashboards.folder-picker.team-folders-error-title', 'Error loading team folders')
                 : t('browse-dashboards.folder-picker.error-title', 'Error loading some folders')
             }
           >
@@ -450,7 +450,7 @@ function useTeamFolders(
   return {
     teamFolderTreeItems,
     teamFolderOwnersByUid,
-    error: error,
+    error,
   };
 }
 
