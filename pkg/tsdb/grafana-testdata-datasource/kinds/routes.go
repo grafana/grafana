@@ -187,6 +187,7 @@ func Routes() *pluginschema.Routes {
 					In:          "path",
 					Description: "simulation key (should include hz)",
 					Required:    true,
+					Schema:      spec.StringProperty().WithMaxLength(10),
 					Examples: map[string]*spec3.Example{
 						"1hz": {
 							ExampleProps: spec3.ExampleProps{

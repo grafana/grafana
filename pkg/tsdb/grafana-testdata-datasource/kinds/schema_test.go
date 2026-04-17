@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema/builder"
 )
 
-func TestQueryTypeDefinitions(t *testing.T) {
+func TestPluginSchema(t *testing.T) {
 	const pluginDirectory = "../../../../public/app/plugins/datasource/grafana-testdata-datasource/"
 
 	schema, err := builder.NewSchemaBuilder(
