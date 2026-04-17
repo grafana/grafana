@@ -220,7 +220,7 @@ func NewTarball(
 
 func (t *Tarball) Builder(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
 	container := opts.Client.Container().
-		From("alpine:3.23.3").
+		From("alpine:3.23.4").
 		WithExec([]string{"apk", "add", "--update", "tar"})
 
 	return container, nil

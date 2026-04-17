@@ -1,0 +1,76 @@
+import { test, expect } from '@grafana/plugin-e2e';
+
+const DASHBOARD_UID = 'panel-tests-candlestick';
+
+test.use({
+  viewport: { width: 1280, height: 2000 },
+});
+
+test.describe('Panels test: Candlestick tooltips', { tag: ['@panels', '@candlestick'] }, () => {
+  test('tooltip interactions', async ({ gotoDashboardPage, page, selectors }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '1' }),
+    });
+
+    const candlestickUplot = page.locator('.uplot').first();
+    await expect(candlestickUplot, 'uplot is rendered').toBeVisible();
+
+    // compute positions from the data overlay area
+    const uOver = candlestickUplot.locator('.u-over');
+    const box = await uOver.boundingBox();
+    if (!box) {
+      throw new Error('u-over bounding box not found');
+    }
+    const center = { x: Math.round(box.width / 2), y: Math.round(box.height / 2) };
+    const alt = { x: Math.round(box.width / 4), y: center.y };
+
+    const tooltip = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Tooltip.Wrapper);
+
+    // hover to trigger tooltip — force bypasses any overlay elements
+    await candlestickUplot.hover({ position: center, force: true });
+    await expect(tooltip, 'tooltip appears on hover').toBeVisible();
+
+    // click to pin, hover away to verify pinning
+    await candlestickUplot.click({ position: center, force: true });
+    await candlestickUplot.hover({ position: alt, force: true });
+    await expect(tooltip, 'tooltip pinned on click').toBeVisible();
+
+    // unpin by clicking elsewhere
+    await candlestickUplot.click({ position: alt, force: true });
+    await candlestickUplot.blur();
+    await expect(tooltip, 'tooltip closed after unpinning').toBeHidden();
+
+    // close via X button
+    await candlestickUplot.click({ position: center, force: true });
+    await expect(tooltip, 'tooltip appears on click').toBeVisible();
+    await dashboardPage.getByGrafanaSelector(selectors.components.Portal.container).getByLabel('Close').click();
+    await expect(tooltip, 'tooltip closed on X click').toBeHidden();
+
+    // CMD/CTRL+C does not dismiss
+    await candlestickUplot.click({ position: center, force: true });
+    await expect(tooltip, 'tooltip appears on click').toBeVisible();
+    await page.keyboard.press('Meta+C');
+    await expect(tooltip, 'tooltip persists after CMD/CTRL+C').toBeVisible();
+
+    // Escape key dismisses
+    await page.keyboard.press('Escape');
+    await expect(tooltip, 'tooltip closed on Escape').toBeHidden();
+
+    // switch to All mode — tooltip should still appear
+    const tooltipModeOption = dashboardPage.getByGrafanaSelector(
+      selectors.components.PanelEditor.OptionsPane.fieldLabel('Tooltip Tooltip mode')
+    );
+    await tooltipModeOption.getByLabel('All').click();
+    await candlestickUplot.hover({ position: center, force: true });
+    await expect(tooltip, 'tooltip appears in All mode').toBeVisible();
+
+    // dismiss tooltip before switching mode
+    await page.keyboard.press('Escape');
+
+    // switch to Hidden — tooltip should not appear
+    await tooltipModeOption.getByLabel('Hidden').click();
+    await candlestickUplot.hover({ position: center, force: true });
+    await expect(tooltip, 'tooltip not shown when disabled').toBeHidden();
+  });
+});
