@@ -1,14 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type ReactNode, useMemo } from 'react';
+import { type ReactNode } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { CustomVariable, SceneTimeRange, SceneVariableSet, useSceneObjectState } from '@grafana/scenes';
+import { CustomVariable, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 import { Sidebar, useSidebar } from '@grafana/ui';
 
-import { ElementEditPane } from '../../edit-pane/ElementEditPane';
-import { getEditableElementForSelection } from '../../edit-pane/shared';
+import { DashboardEditPaneRenderer } from '../../edit-pane/DashboardEditPaneRenderer';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
@@ -16,7 +15,7 @@ import { DashboardInteractions } from '../../utils/interactions';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { shouldHideControlsMenuOption, VariableEditableElement } from './VariableEditableElement';
-import { VariableTypeChange } from './VariableTypeSelectionPane';
+import { VariableTypeChangePane } from './VariableTypeSelectionPane';
 
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
@@ -146,35 +145,10 @@ describe('VariableEditableElement', () => {
     renderVariableEditPane(dashboard);
 
     await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
-    expect(dashboard.state.editPane.getSelectedObject()).toBeInstanceOf(VariableTypeChange);
+    expect(dashboard.state.editPane.state.openPane).toBeInstanceOf(VariableTypeChangePane);
     expect(screen.getByText('Choose variable type')).toBeInTheDocument();
   });
 });
-
-function VariableEditPaneHarness({ dashboard }: { dashboard: DashboardScene }) {
-  const editPane = dashboard.state.editPane;
-  const { selectionContext, isNewElement } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
-  const selectedObject = editPane.getSelectedObject();
-  const editableElement = useMemo(
-    () => getEditableElementForSelection(editPane, selectionContext.selected),
-    [editPane, selectionContext.selected]
-  );
-
-  if (!editableElement) {
-    return null;
-  }
-
-  return (
-    <Sidebar.OpenPane>
-      <ElementEditPane
-        key={selectedObject?.state.key}
-        editPane={editPane}
-        element={editableElement}
-        isNewElement={isNewElement}
-      />
-    </Sidebar.OpenPane>
-  );
-}
 
 function WrapSidebar({ children }: { children: ReactNode }) {
   const sidebarContext = useSidebar({});
@@ -183,10 +157,12 @@ function WrapSidebar({ children }: { children: ReactNode }) {
 }
 
 function renderVariableEditPane(dashboard: DashboardScene) {
+  const editPane = dashboard.state.editPane;
+
   render(
     <TestProvider>
       <WrapSidebar>
-        <VariableEditPaneHarness dashboard={dashboard} />
+        <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
       </WrapSidebar>
     </TestProvider>
   );

@@ -34,6 +34,8 @@ const getPreferencesHandler = () =>
         homeTab: '',
       },
       language: '',
+      regionalFormat: '',
+      navbar: { bookmarkUrls: [] },
     });
   });
 

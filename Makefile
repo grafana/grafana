@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.25.8
+GO_VERSION = 1.25.9
 GO_HOST_OS := $(shell $(GO) env GOHOSTOS)
 GO_HOST_ARCH := $(shell $(GO) env GOHOSTARCH)
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
@@ -44,7 +44,7 @@ GO_BUILD_ARGS = \
 	$(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) \
 	$(if $(GO_BUILD_GCFLAGS_EFFECTIVE),-gcflags "$(GO_BUILD_GCFLAGS_EFFECTIVE)") \
 	-ldflags "$(GO_LDFLAGS)" \
-	-o ./bin/$(OS)/$(ARCH)/grafana \
+	-o ./bin/$(OS)/$(ARCH)/grafana$(if $(filter windows,$(OS)),.exe) \
 	./pkg/cmd/grafana
 ifeq ($(filter undefined environment environment\ override,$(origin OS)),)
 else
@@ -150,12 +150,8 @@ swagger-validate: $(MERGED_SPEC_TARGET) # Validate API spec
 swagger-clean:
 	rm -f $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
-.PHONY: cleanup-old-git-hooks
-cleanup-old-git-hooks:
-	./scripts/cleanup-husky.sh
-
 .PHONY: lefthook-install
-lefthook-install: cleanup-old-git-hooks # install lefthook for pre-commit hooks
+lefthook-install: # install lefthook for pre-commit hooks
 	$(lefthook) install -f
 
 .PHONY: lefthook-uninstall
@@ -263,12 +259,13 @@ gen-feature-toggles:
 ## First go test run fails because it will re-generate the feature toggles.
 ## Second go test run will compare the generated files and pass.
 	@echo "generate feature toggles"
-	go test -v ./pkg/services/featuremgmt/... > /dev/null 2>&1; \
+	go test ./pkg/services/featuremgmt/... > /dev/null 2>&1; \
 	if [ $$? -eq 0 ]; then \
 		echo "feature toggles already up-to-date"; \
 	else \
-		go test -v ./pkg/services/featuremgmt/...; \
+		go test ./pkg/services/featuremgmt/...; \
 	fi
+
 
 .PHONY: gen-go gen-enterprise-go
 ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled

@@ -20,6 +20,7 @@ import {
   mockActions,
   mockQueryOptionsState,
   mockTransformToggles,
+  mockTypeConfig,
   renderWithQueryEditorProvider,
 } from './testUtils';
 
@@ -129,8 +130,12 @@ describe('QueryEditorRenderer', () => {
             showVersionBanner: false,
             selectedQueryRefIds: [],
             selectedTransformationIds: [],
+            toggleQuerySelection: jest.fn(),
+            toggleTransformationSelection: jest.fn(),
+            clearSelection: jest.fn(),
           }}
           actions={mockActions}
+          typeConfig={mockTypeConfig}
         >
           <QueryEditorRenderer />
         </QueryEditorProvider>

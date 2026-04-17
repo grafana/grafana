@@ -10,7 +10,7 @@
         "label-text": "Texto",
         "label-title": "Título",
         "placeholder-auto": "auto",
-        "tooltip-either-pattern-example-instance-replaced-label": "Utilice el nombre o un patrón. Por ejemplo, {{labelTemplate}} se reemplaza con el valor de etiqueta para la etiqueta {{labelName}}.",
+        "tooltip-either-pattern-example-instance-replaced-label": "Utiliza el nombre o un patrón. Por ejemplo, {{labelTemplate}} se reemplaza con el valor de etiqueta para la etiqueta {{labelName}}.",
         "tooltip-min-step": "Un límite inferior adicional para el parámetro de paso de la consulta de Prometheus y para las variables <2>{{intervalVar}}</2> y <4>{{rateIntervalVar}}</4>.",
         "tooltip-timestamp-milliseconds-series-value-seconds-multiply": "La unidad de la marca de tiempo es milisegundos. Si la unidad del valor de la serie es segundos, multiplica su vector de rango por 1000."
       },
@@ -61,7 +61,7 @@
         "tooltip-units-builtin-variables-example-interval-rateinterval": "Aquí se pueden utilizar unidades de tiempo y variables integradas, por ejemplo: {{example1}}, {{example2}}, {{example3}}, {{example4}} {{example5}}, {{example6}}, {{example7}} (valor predeterminado si no se especifica ninguna unidad: {{default}})"
       },
       "prom-query-field": {
-        "placeholder-enter-a-prom-ql-query": "Introduzca una consulta de PromQL..."
+        "placeholder-enter-a-prom-ql-query": "Introduce una consulta de PromQL..."
       },
       "prom-variable-query-editor": {
         "aria-label-classic-query": "Consulta clásica",
@@ -82,7 +82,7 @@
         "placeholder-select-query-type": "Seleccionar tipo de consulta",
         "placeholder-series-query": "Consulta de series",
         "returns-metrics-matching-specified-metric-regex": "Devuelve una lista de métricas que coinciden con la expresión regular de métrica especificada.",
-        "tooltip-classic-query": "La implementación original del editor de consultas de variables de Prometheus. Introduzca una cadena con el tipo de consulta y los parámetros correctos como se describe en estos documentos. Por ejemplo, {{exampleQuery}}.",
+        "tooltip-classic-query": "La implementación original del editor de consultas de variables de Prometheus. Introduce una cadena con el tipo de consulta y los parámetros correctos como se describe en estos documentos. Por ejemplo, {{exampleQuery}}.",
         "tooltip-label": "Devuelve una lista de valores de etiqueta para el nombre de etiqueta en todas las métricas, a menos que se especifique la métrica.",
         "tooltip-metric-regex": "Devuelve una lista de nombres de etiquetas, filtrando opcionalmente por la expresión regular de métrica especificada.",
         "tooltip-query": "Devuelve una lista de resultados de la consulta de Prometheus para la consulta. Esto puede incluir funciones de Prometheus, es decir, {{exampleQuery}}.",
@@ -104,8 +104,8 @@
       "value-selector": {
         "aria-label-filter-expression-for-label-values": "Expresión de filtro para valores de etiqueta",
         "aria-label-values-for": "Valores para {{labelKey}}",
-        "description-search-field-values-across-selected-labels": "Utilice el campo de búsqueda para encontrar valores en las etiquetas seleccionadas.",
-        "select-multiple-values-for-your-labels": "3. Seleccione (varios) valores para sus etiquetas"
+        "description-search-field-values-across-selected-labels": "Utiliza el campo de búsqueda para encontrar valores en las etiquetas seleccionadas.",
+        "select-multiple-values-for-your-labels": "3. Selecciona (varios) valores para sus etiquetas"
       }
     },
     "configuration": {
@@ -113,22 +113,22 @@
         "label-allow-as-recording-rules-target": "Permitir como objetivo de las reglas de grabación",
         "label-manage-alerts-via-alerting-ui": "Gestionar alertas a través de la interfaz de usuario de Alerting",
         "title-alerting": "Alertas",
-        "tooltip-allow-as-recording-rules-target": "Permita que esta fuente de datos se seleccione como objetivo para escribir reglas de log.",
+        "tooltip-allow-as-recording-rules-target": "Permite que esta fuente de datos se seleccione como objetivo para escribir reglas de log.",
         "tooltip-manage-alerts-via-alerting-ui": "Gestiona las reglas de alerta para esta fuente de datos. Para gestionar otros recursos de alerta, añade una fuente de datos de Alertmanager."
       },
       "config-editor": {
         "browser-access-mode-error": "El modo de acceso a través del navegador en la fuente de datos de Prometheus ya no está disponible. Cambia al modo de acceso al servidor.",
-        "description-advanced-settings": "Los ajustes adicionales son ajustes opcionales que se pueden configurar para tener un mayor control sobre su fuente de datos.",
+        "description-advanced-settings": "Los ajustes adicionales son ajustes opcionales que se pueden configurar para tener un mayor control sobre tu fuente de datos.",
         "title-advanced-settings": "Ajustes avanzados",
         "title-error": "Error"
       },
       "data-source-http-settings-overhaul": {
         "tooltip-browser-access-mode": "Tu método de acceso es <1>Navegador</1>, esto significa que la URL debe ser accesible desde el navegador.",
-        "tooltip-http-url": "Especifique una URL HTTP completa (por ejemplo, {{exampleURL}})",
+        "tooltip-http-url": "Especifica una URL HTTP completa (por ejemplo, {{exampleURL}})",
         "tooltip-server-access-mode": "Tu método de acceso es <1>Servidor</1>, esto significa que la URL debe ser accesible desde el «backend» o servidor de Grafana."
       },
       "docs-tip": {
-        "visit-docs-for-more-details-here": "Consulte los documentos aquí para obtener más información."
+        "visit-docs-for-more-details-here": "Consulta los documentos aquí para obtener más información."
       },
       "exemplar-setting": {
         "label-data-source": "Fuente de datos",
@@ -142,7 +142,7 @@
         "placeholder-trace-id": "traceID",
         "title-remove-exemplar-link": "Eliminar enlace de ejemplo",
         "tooltip-data-source": "La fuente de datos a la que se dirigirá el ejemplo.",
-        "tooltip-internal-link": "Habilite esta opción si tiene un enlace interno. Cuando está habilitado, indica el selector de fuente de datos. Seleccione el almacén de datos de trazas de backend para sus datos de ejemplo.",
+        "tooltip-internal-link": "Habilita esta opción si tiene un enlace interno. Cuando está habilitado, indica el selector de fuente de datos. Selecciona el almacén de datos de trazas de backend para tus datos de ejemplo.",
         "tooltip-label-name": "El nombre del campo en el objeto de etiquetas que debe utilizarse para obtener el traceID.",
         "tooltip-url": "La URL del backend de traza al que el usuario iría para ver su traza",
         "tooltip-url-label": "Utilícelo para anular la etiqueta del botón en el campo traceID del ejemplo."
@@ -186,14 +186,14 @@
         "tooltip-default-editor": "Establece la opción de editor predeterminada para todos los usuarios de esta fuente de datos.",
         "tooltip-disable-metrics-lookup": "Al marcar esta opción, se desactivará el selector de métricas y la compatibilidad con métricas/etiquetas en el autocompletado del campo de consulta. Esto es útil si tienes problemas de rendimiento con instancias de Prometheus de mayor tamaño. ",
         "tooltip-disable-recording-rules-beta": "Esta función deshabilitará las reglas de registro. Actívelo para mejorar el rendimiento del dashboard",
-        "tooltip-http-method": "Puede utilizar el método HTTP POST o GET para consultar su fuente de datos de Prometheus. POST es el método recomendado, ya que permite consultas de mayor tamaño. Cámbielo a GET si tiene una versión de Prometheus anterior a la 2.1 o si las solicitudes POST están restringidas en su red.",
-        "tooltip-incremental-querying-beta": "Esta función cambiará el comportamiento predeterminado de las consultas relativas para solicitar siempre datos nuevos de la instancia de Prometheus, en lugar de almacenar en caché los resultados de las consultas y solo se solicitarán nuevos registros. Actívelo para disminuir la carga de la base de datos y de la red.",
-        "tooltip-prom-type-version": "Utilice esta opción para establecer la versión de su instancia {{promType}} si no se configura automáticamente.",
-        "tooltip-prometheus-type": "Defina este valor en el tipo de su base de datos de Prometheus, por ejemplo, Prometheus, Cortex, Mimir o Thanos. Si cambia este campo, se guardarán sus ajustes actuales. Ciertos tipos de Prometheus admiten o no admiten varias API. Por ejemplo, algunos tipos admiten la coincidencia de expresiones regulares para consultas de etiquetas para mejorar el rendimiento. Algunos tipos tienen una API para metadatos. Si configuraseste valor incorrectamente, puede experimentar un comportamiento extraño al consultar métricas y etiquetas. Consulte la documentación de Prometheus para asegurarse de introducir el tipo correcto.",
-        "tooltip-query-overlap-window": "Establezca una duración como {{example1}}, {{example2}} o {{example3}}. El valor predeterminado es {{default}}. Esta duración se añadirá a la duración de cada solicitud incremental.",
-        "tooltip-query-timeout": "Establezca el tiempo de espera de la consulta de Prometheus.",
-        "tooltip-scrape-interval": "Este intervalo es la frecuencia con la que Prometheus recupera datos de los objetivos. Establezca este valor en el intervalo típico de recuperación de datos y evaluación definido en su archivo de configuración de Prometheus. Si establece un valor mayor que el intervalo de su archivo de configuración de Prometheus, Grafana evaluará los datos de acuerdo con este intervalo y verá menos puntos de datos. El valor predeterminado es {{default}}.",
-        "tooltip-series-limit": "El límite se aplica a todos los recursos (métricas, etiquetas y valores) para ambos puntos finales (series y etiquetas). Deje el campo vacío para usar el límite predeterminado (40 000). Establezca el valor en 0 para desactivar el límite y obtenerlo todo (esto puede causar problemas de rendimiento). El límite predeterminado es 40 000.",
+        "tooltip-http-method": "Puedes utilizar el método HTTP POST o GET para consultar tu fuente de datos de Prometheus. POST es el método recomendado, ya que permite consultas de mayor tamaño. Cámbialo a GET si tienes una versión de Prometheus anterior a la 2.1 o si las solicitudes POST están restringidas en tu red.",
+        "tooltip-incremental-querying-beta": "Esta función cambiará el comportamiento predeterminado de las consultas relativas para solicitar siempre datos nuevos de la instancia de Prometheus, en lugar de almacenar en caché los resultados de las consultas y solo se solicitarán nuevos registros. Actívalo para disminuir la carga de la base de datos y de la red.",
+        "tooltip-prom-type-version": "Utiliza esta opción para establecer la versión de tu instancia {{promType}} si no se configura automáticamente.",
+        "tooltip-prometheus-type": "Define este valor en el tipo de tu base de datos de Prometheus, por ejemplo, Prometheus, Cortex, Mimir o Thanos. Si cambias este campo, se guardarán tus ajustes actuales. Ciertos tipos de Prometheus admiten o no admiten varias API. Por ejemplo, algunos tipos admiten la coincidencia de expresiones regulares para consultas de etiquetas para mejorar el rendimiento. Algunos tipos tienen una API para metadatos. Si configuraste valor incorrectamente, puedes experimentar un comportamiento extraño al consultar métricas y etiquetas. Consulta la documentación de Prometheus para asegurarte de introducir el tipo correcto.",
+        "tooltip-query-overlap-window": "Establece una duración como {{example1}}, {{example2}} o {{example3}}. El valor predeterminado es {{default}}. Esta duración se añadirá a la duración de cada solicitud incremental.",
+        "tooltip-query-timeout": "Establece el tiempo de espera de la consulta de Prometheus.",
+        "tooltip-scrape-interval": "Este intervalo es la frecuencia con la que Prometheus recupera datos de los objetivos. Establece este valor en el intervalo típico de recuperación de datos y evaluación definido en tu archivo de configuración de Prometheus. Si estableces un valor mayor que el intervalo de tu archivo de configuración de Prometheus, Grafana evaluará los datos de acuerdo con este intervalo y verás menos puntos de datos. El valor predeterminado es {{default}}.",
+        "tooltip-series-limit": "El límite se aplica a todos los recursos (métricas, etiquetas y valores) para ambos puntos finales (series y etiquetas). Deja el campo vacío para usar el límite predeterminado (40 000). Establece el valor en 0 para desactivar el límite y obtenerlo todo (esto puede causar problemas de rendimiento). El límite predeterminado es 40 000.",
         "tooltip-use-series-endpoint": "Al marcar esta opción, se favorecerá el punto de conexión de la serie con el parámetro {{exampleParameter}} sobre el punto final de los valores de la etiqueta con el parámetro {{exampleParameter}}. Aunque el punto de conexión de los valores de etiqueta se considera más eficiente, algunos usuarios pueden preferir la serie porque tiene un método POST, mientras que el punto de los valores de etiqueta solo tiene un método GET."
       }
     },
@@ -389,11 +389,11 @@
       },
       "operation-header": {
         "placeholder-replace-with": "Reemplazar con",
-        "title-click-to-view-alternative-operations": "Haga clic para ver operaciones alternativas",
+        "title-click-to-view-alternative-operations": "Haz clic para ver operaciones alternativas",
         "title-remove-operation": "Eliminar operación"
       },
       "operation-info-button": {
-        "title-click-to-show-description": "Haga clic para mostrar la descripción",
+        "title-click-to-show-description": "Haz clic para mostrar la descripción",
         "title-remove-operation": "Eliminar operación"
       },
       "operation-list": {
@@ -467,11 +467,11 @@
         "use-this-query": "Utilizar esta consulta"
       },
       "query-patterns-modal": {
-        "aria-label-close-kick-start-your-query-modal": "cerrar iniciar su modo de consulta",
+        "aria-label-close-kick-start-your-query-modal": "cerrar iniciar tu modo de consulta",
         "aria-label-kick-start-your-query-modal": "Inicie su modal de consulta",
         "aria-label-toggle-query-starter": "abrir y cerrar tarjeta de iniciador de consultas {{patternType}}",
         "close": "Cerrar",
-        "description-kick-start-your-query": "Inicie su consulta seleccionando una de estas consultas. A continuación, puede continuar para completar su consulta.",
+        "description-kick-start-your-query": "Inicia tu consulta seleccionando una de estas consultas. A continuación, puedes continuar para completar tu consulta.",
         "label-toggle-query-starter": "iniciadores de consultas {{patternType}}",
         "title-kick-start-your-query": "Inicie su consulta"
       },

@@ -19,6 +19,8 @@ type Props = {
   logOptionsStorageKey: string;
   sortOrder: LogsSortOrder;
   downloadLogs: (format: DownloadFormat) => void;
+  onWrapTextClick: () => void;
+  wrapText: boolean;
 };
 
 export const LogTableControls = ({
@@ -28,6 +30,8 @@ export const LogTableControls = ({
   setSortOrder,
   sortOrder,
   downloadLogs,
+  onWrapTextClick,
+  wrapText,
 }: Props) => {
   const styles = useStyles2(getStyles, controlsExpanded);
 
@@ -81,24 +85,23 @@ export const LogTableControls = ({
 
   return (
     <div className={styles.navContainer}>
-      <>
-        <LogListControlsOption
-          expanded={controlsExpanded}
-          name="arrow-from-right"
-          className={cx(styles.controlButton, styles.controlsExpandedButton)}
-          variant="secondary"
-          onClick={onExpandControlsClick}
-          label={
-            controlsExpanded
-              ? t('logs.logs-controls.label.collapse', 'Expanded')
-              : t('logs.logs-controls.label.expand', 'Collapsed')
-          }
-          tooltip={
-            controlsExpanded ? t('logs.logs-controls.collapse', 'Collapse') : t('logs.logs-controls.expand', 'Expand')
-          }
-          size="lg"
-        />
-      </>
+      <LogListControlsOption
+        expanded={controlsExpanded}
+        name="arrow-from-right"
+        className={cx(styles.controlButton, styles.controlsExpandedButton)}
+        variant="secondary"
+        onClick={onExpandControlsClick}
+        label={
+          controlsExpanded
+            ? t('logs.logs-controls.label.collapse', 'Expanded')
+            : t('logs.logs-controls.label.expand', 'Collapsed')
+        }
+        tooltip={
+          controlsExpanded ? t('logs.logs-controls.collapse', 'Collapse') : t('logs.logs-controls.expand', 'Expand')
+        }
+        size="lg"
+      />
+
       <LogListControlsOption
         expanded={controlsExpanded}
         name={sortOrder === LogsSortOrder.Descending ? 'sort-amount-up' : 'sort-amount-down'}
@@ -115,6 +118,24 @@ export const LogTableControls = ({
             : t('logs.logs-controls.oldest-first', 'Sorted by oldest logs first - Click to show newest first')
         }
         size="lg"
+      />
+
+      <LogListControlsOption
+        expanded={controlsExpanded}
+        name="wrap-text"
+        className={wrapText ? styles.controlButtonActive : styles.controlButton}
+        aria-pressed={wrapText}
+        onClick={onWrapTextClick}
+        tooltip={
+          wrapText
+            ? t('logs.logs-controls.table-wrap-text.disable', 'Disable text wrapping')
+            : t('logs.logs-controls.table-wrap-text.enable', 'Enable text wrapping')
+        }
+        label={
+          wrapText
+            ? t('logs.logs-controls.table-wrap-text.enabled', 'Wrapping enabled')
+            : t('logs.logs-controls.table-wrap-text.disabled', 'Wrapping disabled')
+        }
       />
 
       {!config.exploreHideLogsDownload && (
@@ -159,6 +180,22 @@ const getStyles = (theme: GrafanaTheme2, controlsExpanded: boolean) => {
       margin: 0,
       color: theme.colors.text.secondary,
       height: theme.spacing(2),
+    }),
+    controlButtonActive: css({
+      margin: 0,
+      color: theme.colors.text.secondary,
+      height: theme.spacing(2),
+      '&:after': {
+        display: 'block',
+        content: '" "',
+        position: 'absolute',
+        height: 2,
+        borderRadius: theme.shape.radius.default,
+        bottom: theme.spacing(-1),
+        backgroundImage: theme.colors.gradients.brandHorizontal,
+        width: theme.spacing(2.25),
+        opacity: 1,
+      },
     }),
     divider: css({
       borderTop: `solid 1px ${theme.colors.border.medium}`,

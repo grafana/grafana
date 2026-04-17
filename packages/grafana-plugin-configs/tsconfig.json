@@ -4,6 +4,7 @@
     "alwaysStrict": true,
     "customConditions": ["@grafana-app/source"],
     "declaration": false,
+    "ignoreDeprecations": "6.0",
     "jsx": "react-jsx",
     "moduleResolution": "bundler",
     "noEmit": true,
