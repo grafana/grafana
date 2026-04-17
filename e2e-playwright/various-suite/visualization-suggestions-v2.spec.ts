@@ -19,7 +19,6 @@ test.describe(
   },
   () => {
     test('Should be shown and clickable for existing panel without auto-selection', async ({
-      page,
       selectors,
       gotoPanelEditPage,
     }) => {
@@ -29,11 +28,6 @@ test.describe(
           uid: 'aBXrJ0R7z',
         },
         id: '9',
-      });
-
-      // Wait for panel data to finish loading before asserting visualization
-      await expect(page.getByLabel('Panel loading bar'), 'panel to finish loading').toHaveCount(0, {
-        timeout: 30000,
       });
 
       await expect(
@@ -82,11 +76,6 @@ test.describe(
           uid: 'aBXrJ0R7z',
         },
         id: '9',
-      });
-
-      // Wait for panel data to finish loading before asserting visualization
-      await expect(page.getByLabel('Panel loading bar'), 'panel to finish loading').toHaveCount(0, {
-        timeout: 30000,
       });
 
       // Try visualization suggestions
