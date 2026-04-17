@@ -130,6 +130,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
 
   const showInstanceTimeline =
     config.featureToggles.alertingNotificationHistoryTriage && config.featureToggles.kubernetesAlertingHistorian;
+  const enableDeclareIncidentDrilldown = Boolean(config.featureToggles.enableDeclareIncidentDrilldown);
 
   const showDrawerTimeRangeBanner = useMemo(() => {
     if (!rule?.grafana_alert) {
@@ -231,9 +232,16 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
       commonLabels,
       alertState: instanceState,
       onOpenSilence: handleOpenSilence,
-      onOpenDeclareIncident: handleOpenDeclareIncident,
+      onOpenDeclareIncident: enableDeclareIncidentDrilldown ? handleOpenDeclareIncident : undefined,
     }),
-    [instanceLabels, commonLabels, instanceState, handleOpenSilence, handleOpenDeclareIncident]
+    [
+      instanceLabels,
+      commonLabels,
+      instanceState,
+      handleOpenSilence,
+      handleOpenDeclareIncident,
+      enableDeclareIncidentDrilldown,
+    ]
   );
 
   const getDrawerTitle = () => <InstanceDetailsDrawerTitle {...sharedTitleProps} rule={rule?.grafana_alert} />;
