@@ -3,6 +3,7 @@ package tempo
 import (
 	"encoding/hex"
 	"encoding/json"
+	"math"
 	"os"
 	"testing"
 
@@ -194,6 +195,66 @@ func TestScopeAttributesAddedToTags(t *testing.T) {
 
 	assert.True(t, foundSpanAttr, "Span attribute should be present in tags")
 	assert.True(t, foundScopeAttr, "Scope attribute should be present in tags")
+}
+
+func makeSpanWithDoubleAttr(key string, val float64) (*v1.Span, *resourcev1.Resource) {
+	span := &v1.Span{
+		TraceId:           []byte{0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7},
+		SpanId:            []byte{0, 1, 2, 3, 4, 5, 6, 7},
+		ParentSpanId:      []byte{0, 0, 0, 0, 0, 0, 0, 0},
+		Name:              "test-span",
+		StartTimeUnixNano: 1616072924070497000,
+		EndTimeUnixNano:   1616072924078918000,
+		Attributes: []*commonv11.KeyValue{
+			{
+				Key:   key,
+				Value: &commonv11.AnyValue{Value: &commonv11.AnyValue_DoubleValue{DoubleValue: val}},
+			},
+		},
+		Status: &v1.Status{},
+	}
+	resource := &resourcev1.Resource{
+		Attributes: []*commonv11.KeyValue{
+			{
+				Key:   "service.name",
+				Value: &commonv11.AnyValue{Value: &commonv11.AnyValue_StringValue{StringValue: "test-service"}},
+			},
+		},
+	}
+	return span, resource
+}
+
+func TestTraceToFrame_SpecialFloatDoubleValue(t *testing.T) {
+	// OTel spec explicitly allows NaN, Infinity, -Infinity as floating point values.
+	// https://opentelemetry.io/docs/specs/otel/common/#floating-point-numbers
+	// json.Marshal rejects these — must be serialized as strings.
+	tests := []struct {
+		name     string
+		val      float64
+		expected string
+	}{
+		{"NaN", math.NaN(), "NaN"},
+		{"Inf", math.Inf(1), "Inf"},
+		{"-Inf", math.Inf(-1), "-Inf"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			span, resource := makeSpanWithDoubleAttr("span.app.payment.amount", tc.val)
+
+			row, err := spanToSpanRow(span, &commonv11.InstrumentationScope{}, resource)
+			require.NoError(t, err)
+
+			tagsJson, ok := row[17].(json.RawMessage)
+			require.True(t, ok)
+
+			var tags []*KeyValue
+			require.NoError(t, json.Unmarshal(tagsJson, &tags))
+
+			require.Len(t, tags, 1)
+			assert.Equal(t, tc.expected, tags[0].Value)
+		})
+	}
 }
 
 type Row map[string]any

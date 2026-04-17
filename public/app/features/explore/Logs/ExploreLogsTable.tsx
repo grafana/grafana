@@ -33,7 +33,7 @@ export function ExploreLogsTable(props: {
   width: number;
   height: number;
   onOptionsChange: (options: Options) => void;
-  onFieldConfigChange: (config: FieldConfigSource) => void;
+  onFieldConfigChange?: (config: FieldConfigSource) => void;
   onChangeTimeRange: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel: ((key: string, value: string, frame?: DataFrame) => void) | undefined;
   onClickFilterOutLabel: ((key: string, value: string, frame?: DataFrame) => void) | undefined;
@@ -46,6 +46,7 @@ export function ExploreLogsTable(props: {
   const frames = useMemo(() => props?.data.series ?? [], [props.data.series]);
   const frame = useMemo(() => frames[props.externalOptions.frameIndex], [frames, props.externalOptions.frameIndex]);
   const [wrapText, setWrapText] = useState(store.getBool(`${SETTING_KEY_ROOT}.wrapText`, false));
+  const [columnWidths, setColumnWidths] = useState<ColumnWidth[]>(getColumnWidthsFromStorage());
 
   const onCellFilterAdded = useCallback(
     (filter: AdHocFilterItem) => {
@@ -105,6 +106,26 @@ export function ExploreLogsTable(props: {
     [props.buildLinkToLogLine, props.externalOptions, selectedLogInfo?.id, wrapText]
   );
 
+  const handleFieldConfigChange = useCallback((config: FieldConfigSource) => {
+    const widthOverrides = config.overrides
+      .filter((override) => override.matcher.id === 'byName')
+      .filter((override) =>
+        override.properties.some((property) => property.id === 'custom.width' && property.value > 0)
+      )
+      .map((override) => {
+        const field = override.matcher.options;
+        const width = override.properties.find(
+          (property) => property.id === 'custom.width' && property.value > 0
+        )?.value;
+        return {
+          field,
+          width,
+        };
+      });
+    store.set(`${SETTING_KEY_ROOT}.explore.columnWidths`, JSON.stringify(widthOverrides));
+    setColumnWidths(getColumnWidthsFromStorage());
+  }, []);
+
   const fieldConfig = useMemo(
     () => ({
       defaults: {
@@ -112,9 +133,20 @@ export function ExploreLogsTable(props: {
           filterable: true,
         },
       },
-      overrides: [],
+      overrides: columnWidths.map((columnWidth) => ({
+        matcher: {
+          id: 'byName',
+          options: columnWidth.field,
+        },
+        properties: [
+          {
+            id: 'custom.width',
+            value: columnWidth.width,
+          },
+        ],
+      })),
     }),
-    []
+    [columnWidths]
   );
 
   return (
@@ -139,10 +171,30 @@ export function ExploreLogsTable(props: {
         title={''}
         eventBus={props.eventBus}
         onOptionsChange={onOptionsChange}
-        onFieldConfigChange={props.onFieldConfigChange}
+        onFieldConfigChange={handleFieldConfigChange}
         replaceVariables={getTemplateSrv().replace}
         onChangeTimeRange={props.onChangeTimeRange}
       />
     </PanelContextProvider>
   );
+}
+
+type ColumnWidth = { field: string; width: number };
+
+function getColumnWidthsFromStorage() {
+  const stored = store.getObject(`${SETTING_KEY_ROOT}.explore.columnWidths`);
+
+  let columnWidths = Array.isArray(stored)
+    ? stored.filter(
+        (columnWidth: unknown): columnWidth is ColumnWidth =>
+          typeof columnWidth === 'object' &&
+          columnWidth !== null &&
+          'field' in columnWidth &&
+          'width' in columnWidth &&
+          typeof columnWidth.width === 'number' &&
+          typeof columnWidth.field === 'string'
+      )
+    : [];
+
+  return columnWidths;
 }

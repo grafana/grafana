@@ -4,6 +4,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	commonv11 "github.com/grafana/tempo/pkg/tempopb/common/v1"
@@ -231,7 +233,17 @@ func getAttributeVal(attr *commonv11.AnyValue) (any, error) {
 	case *commonv11.AnyValue_BoolValue:
 		return attr.GetBoolValue(), nil
 	case *commonv11.AnyValue_DoubleValue:
-		return attr.GetDoubleValue(), nil
+		f := attr.GetDoubleValue()
+		switch {
+		case math.IsNaN(f):
+			return "NaN", nil
+		case math.IsInf(f, 1):
+			return "Inf", nil
+		case math.IsInf(f, -1):
+			return "-Inf", nil
+		default:
+			return f, nil
+		}
 	case *commonv11.AnyValue_KvlistValue:
 		return kvListAsString(attr.GetKvlistValue())
 	case *commonv11.AnyValue_ArrayValue:

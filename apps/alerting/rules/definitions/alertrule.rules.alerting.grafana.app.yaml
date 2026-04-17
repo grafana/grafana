@@ -85,6 +85,21 @@ spec:
               notificationSettings:
                 description: 'TODO(@moustafab): this should be imported from the notifications
                   package'
+                oneOf:
+                - not:
+                    anyOf:
+                    - required:
+                      - routingTree
+                  required:
+                  - type
+                  - receiver
+                - not:
+                    anyOf:
+                    - required:
+                      - receiver
+                  required:
+                  - type
+                  - routingTree
                 properties:
                   activeTimeIntervals:
                     items:
@@ -113,8 +128,13 @@ spec:
                   repeatInterval:
                     pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
                     type: string
-                required:
-                - receiver
+                  routingTree:
+                    type: string
+                  type:
+                    enum:
+                    - SimplifiedRouting
+                    - NamedRoutingTree
+                    type: string
                 type: object
               panelRef:
                 properties:
@@ -196,7 +216,6 @@ spec:
     - jsonPath: .spec.paused
     - jsonPath: .spec.panelRef.dashboardUID
     - jsonPath: .spec.panelRef.panelID
-    - jsonPath: .spec.notificationSettings.receiver
     served: true
     storage: true
     subresources:
