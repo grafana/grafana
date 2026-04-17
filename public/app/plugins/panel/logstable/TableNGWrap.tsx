@@ -10,7 +10,6 @@ import {
   store,
 } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { type TableOptions } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { getDefaultControlsExpandedMode } from 'app/features/logs/components/panel/LogListContext';

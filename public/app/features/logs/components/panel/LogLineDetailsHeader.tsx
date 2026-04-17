@@ -15,19 +15,25 @@ import { useLogIsPinned, useLogListContext } from './LogListContext';
 import { type LogListModel } from './processing';
 
 interface Props {
+  closeDetails: () => void;
+  detailsMode: LogLineDetailsMode;
   focusLogLine?: (log: LogListModel) => void;
   inlineNoScroll?: boolean;
   log: LogListModel;
   search: string;
   setInlineNoScroll?(inlineNoScroll: boolean): void;
+  setDetailsMode?(mode: LogLineDetailsMode): void;
   onSearch(newSearch: string): void;
 }
 
 export const LogLineDetailsHeader = ({
+  closeDetails,
+  detailsMode,
   focusLogLine,
   inlineNoScroll,
   log,
   search,
+  setDetailsMode,
   setInlineNoScroll,
   onSearch,
 }: Props) => {
@@ -47,7 +53,7 @@ export const LogLineDetailsHeader = ({
     isAssistantAvailable,
     openAssistantByLog,
   } = useLogListContext();
-  const { closeDetails, detailsMode, setDetailsMode, toggleDetails } = useLogDetailsContext();
+  const { toggleDetails } = useLogDetailsContext();
   const pinned = useLogIsPinned(log);
   const styles = useStyles2(getStyles, detailsMode, wrapLogMessage);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -110,7 +116,7 @@ export const LogLineDetailsHeader = ({
       store.set(`${logOptionsStorageKey}.detailsMode`, newMode);
     }
 
-    setDetailsMode(newMode);
+    setDetailsMode?.(newMode);
 
     reportInteractionWrapper('logs_log_line_details_header_toggle_details_mode', {
       newMode,
@@ -277,15 +283,17 @@ export const LogLineDetailsHeader = ({
             onClick={toggleDetailsScroll}
           />
         )}
-        <IconButton
-          name={detailsMode === 'inline' ? 'web-section' : 'gf-layout-simple'}
-          tooltip={
-            detailsMode === 'inline'
-              ? t('logs.log-line-details.sidebar-mode', 'Anchor to the right')
-              : t('logs.log-line-details.inline-mode', 'Display inline')
-          }
-          onClick={toggleDetailsMode}
-        />
+        {setDetailsMode && (
+          <IconButton
+            name={detailsMode === 'inline' ? 'web-section' : 'gf-layout-simple'}
+            tooltip={
+              detailsMode === 'inline'
+                ? t('logs.log-line-details.sidebar-mode', 'Anchor to the right')
+                : t('logs.log-line-details.inline-mode', 'Display inline')
+            }
+            onClick={toggleDetailsMode}
+          />
+        )}
         <div className={styles.divider} />
         {detailsMode === 'sidebar' ? (
           <IconButton

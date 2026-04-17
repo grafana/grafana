@@ -321,7 +321,12 @@ export const LogsTable = ({
             logOptionsStorageKey={SETTING_KEY_ROOT}
           />
 
-          <LogsTableDetails onOptionsChange={handleTableOptionsChange} timeRange={data.timeRange} timeZone={timeZone} />
+          <LogsTableDetails
+            options={tableOptions}
+            onOptionsChange={handleTableOptionsChange}
+            timeRange={data.timeRange}
+            timeZone={timeZone}
+          />
         </LogDetailsContextProvider>
       )}
     </div>

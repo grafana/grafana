@@ -18,7 +18,8 @@ interface Props extends Pick<PanelProps<Options>, 'onOptionsChange'> {
 }
 
 export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone }: Props) => {
-  const { currentLog, enableLogDetails, logs, setCurrentLog, showDetails, toggleDetails } = useLogDetailsContext();
+  const { currentLog, closeDetails, enableLogDetails, logs, setCurrentLog, showDetails, toggleDetails } =
+    useLogDetailsContext();
   const [search, setSearch] = useState('');
   const [detailsWidth, setDetailsWidth] = useState(window.innerWidth * 0.4);
   const inputRef = useRef('');
@@ -86,7 +87,13 @@ export const LogsTableDetails = ({ options, onOptionsChange, timeRange, timeZone
               })}
             </TabsBar>
           )}
-          <LogLineDetailsHeader log={currentLog} search={search} onSearch={handleSearch} />
+          <LogLineDetailsHeader
+            closeDetails={closeDetails}
+            detailsMode="sidebar"
+            log={currentLog}
+            search={search}
+            onSearch={handleSearch}
+          />
           <ScrollContainer>
             <LogLineDetailsComponent
               log={currentLog}
