@@ -1,0 +1,146 @@
+{
+  "examples": [
+    {
+      "name": "constant addition",
+      "queryType": "math",
+      "saveModel": {
+        "expression": "$A + 10"
+      }
+    },
+    {
+      "name": "math with two queries",
+      "queryType": "math",
+      "saveModel": {
+        "expression": "$A - $B"
+      }
+    },
+    {
+      "name": "get max value",
+      "queryType": "reduce",
+      "saveModel": {
+        "expression": "$A",
+        "reducer": "max",
+        "settings": {
+          "mode": "dropNN"
+        }
+      }
+    },
+    {
+      "name": "resample at a every day",
+      "queryType": "resample",
+      "saveModel": {
+        "downsampler": "last",
+        "expression": "$A",
+        "upsampler": "pad",
+        "window": "1d"
+      }
+    },
+    {
+      "name": "Select the first row from A",
+      "queryType": "sql",
+      "saveModel": {
+        "expression": "SELECT * FROM A limit 1",
+        "format": ""
+      }
+    },
+    {
+      "name": "Where query A \u003e 5",
+      "queryType": "classic_conditions",
+      "saveModel": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                5
+              ],
+              "type": "gt"
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": [
+                "A"
+              ]
+            },
+            "reducer": {
+              "type": "max"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Where query A \u003e 5",
+      "queryType": "threshold",
+      "saveModel": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                5
+              ],
+              "type": "gt"
+            }
+          }
+        ],
+        "expression": "A"
+      }
+    },
+    {
+      "name": "With loaded+unloaded evaluators",
+      "queryType": "threshold",
+      "saveModel": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                100
+              ],
+              "type": "gt"
+            },
+            "loadedDimensions": {
+              "data": {
+                "values": [
+                  [
+                    18446744073709552000,
+                    2,
+                    3,
+                    4,
+                    5
+                  ]
+                ]
+              },
+              "schema": {
+                "fields": [
+                  {
+                    "name": "fingerprints",
+                    "type": "number",
+                    "typeInfo": {
+                      "frame": "uint64"
+                    }
+                  }
+                ],
+                "meta": {
+                  "type": "fingerprints",
+                  "typeVersion": [
+                    1,
+                    0
+                  ]
+                },
+                "name": "test"
+              }
+            },
+            "unloadEvaluator": {
+              "params": [
+                31
+              ],
+              "type": "lt"
+            }
+          }
+        ],
+        "expression": "B"
+      }
+    }
+  ]
+}
