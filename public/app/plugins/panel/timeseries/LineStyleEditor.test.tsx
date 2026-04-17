@@ -59,13 +59,12 @@ describe('LineStyleEditor', () => {
 
       expect(onChange).toHaveBeenCalledWith({ fill: 'solid', dash: undefined });
     });
-    
+
     describe('Accessible fill', () => {
       let originalEnableColorblindSafePanelOptions: boolean | undefined;
 
       beforeEach(() => {
-        originalEnableColorblindSafePanelOptions = 
-          config.featureToggles.enableColorblindSafePanelOptions;
+        originalEnableColorblindSafePanelOptions = config.featureToggles.enableColorblindSafePanelOptions;
       });
 
       afterEach(() => {
@@ -77,7 +76,9 @@ describe('LineStyleEditor', () => {
         (flagValue) => {
           config.featureToggles.enableColorblindSafePanelOptions = flagValue;
 
-          render(<LineStyleEditor value={{ fill: 'solid' }} onChange={jest.fn()} context={mockContext} item={mockItem} />);
+          render(
+            <LineStyleEditor value={{ fill: 'solid' }} onChange={jest.fn()} context={mockContext} item={mockItem} />
+          );
 
           expect(screen.queryByRole('radio', { name: 'Accessible' })).not.toBeInTheDocument();
           expect(screen.getAllByRole('radio')).toHaveLength(3);
@@ -87,7 +88,9 @@ describe('LineStyleEditor', () => {
       it('shows the Accessible line fill option when enableColorblindSafePanelOptions is true', () => {
         config.featureToggles.enableColorblindSafePanelOptions = true;
 
-        render(<LineStyleEditor value={{ fill: 'solid' }} onChange={jest.fn()} context={mockContext} item={mockItem} />);
+        render(
+          <LineStyleEditor value={{ fill: 'solid' }} onChange={jest.fn()} context={mockContext} item={mockItem} />
+        );
 
         expect(screen.getByRole('radio', { name: 'Accessible' })).toBeInTheDocument();
         expect(screen.getAllByRole('radio')).toHaveLength(4);
