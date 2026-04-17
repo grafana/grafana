@@ -68,14 +68,11 @@ func waitForWebhook(t *testing.T, helper *common.GitTestHelper, repoName string,
 	ctx := context.Background()
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		obj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
-		if !assert.NoError(collect, err) {
-			return
-		}
+		require.NoError(collect, err)
 		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
-		if !assert.NotNil(collect, repo.Status.Webhook, "webhook should be set") {
-			return
-		}
-		assert.Equal(collect, expectedID, repo.Status.Webhook.ID)
+		require.NotNil(collect, repo.Status.Webhook, "webhook should be set")
+		require.NotEmpty(collect, repo.Secure.WebhookSecret.Name, "webhook secret should be created")
+		require.Equal(collect, expectedID, repo.Status.Webhook.ID)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "webhook should be created")
 }
 
