@@ -138,7 +138,6 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			"rule_uid", httpreq.Header.Get("X-Rule-Uid"),
 			"caller", getCaller(ctx),
 		)
-		connectLogger.Debug("received query-service request")
 		responderOnObjectFn := func(statusCode *int, obj runtime.Object) {
 			if *statusCode/100 == 4 {
 				span.SetStatus(codes.Error, strconv.Itoa(*statusCode))
