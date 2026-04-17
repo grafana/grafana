@@ -22,16 +22,18 @@ weight: 495
 ## Technical notes
 
 {{< admonition type="warning" >}}
-**GitSync early adopters:** If you upgraded to Grafana v13.0.0 with GitSync enabled from Grafana v12.x.x, a migration bug might have caused dashboards and folders to be lost or reverted during the upgrade. This issue is fixed in Grafana v13.0.1.
+**Git Sync early adopters:** A migration bug in Grafana v13.0.0 might cause dashboards and folders to be lost or reverted when upgrading from Grafana v12.x.x with Git Sync enabled. Upgrading from v13.0.0 to v13.0.1 does **not** recover lost data, and if you already upgraded, you must restore your database first, then upgrade to v13.0.1.
 
-This bug only affects self-managed instances that enabled the GitSync feature flags (`provisioning`, `kubernetesClientDashboardsFolders`, `kubernetesDashboards`, and `grafanaAPIServerEnsureKubectlAccess`) before GitSync reached general availability.
+The bug only affects self-managed instances with Git Sync feature flags (`provisioning`, `kubernetesClientDashboardsFolders`, `kubernetesDashboards`, and `grafanaAPIServerEnsureKubectlAccess`) enabled on Grafana v12.x.x.
 
-Grafana v13.0.0 was removed from distribution and a fix is included in Grafana v13.0.1.
+Grafana v13.0.0 has been removed from distribution and the fix has shipped in Grafana v13.0.1.
 
-If you are affected, recovery might require restoring from backup or resyncing from Git, depending on whether your instance used mixed local and GitSync content or full-instance sync.
+If you're affected, use the following recovery paths:
 
-We recommend using your database backup to restore and then upgrading to v13.0.1.
-{{< /admonition >}}
+- **If your instance used mixed local and Git Sync content:** restore from the database backup you took before upgrading, then upgrade to Grafana v13.0.1.
+- **If your instance used full-instance Git Sync:** upgrade to Grafana v13.0.1 and resync from your Git repository.
+- **If unsure:** restore from your database backup before upgrading to v13.0.1.
+  {{< /admonition >}}
 
 ### React 19 related updates
 
