@@ -112,6 +112,11 @@ In this example, you configure trace to logs by service name and a trace identif
      {service_name="$serviceName"} | trace_id=`$traceID` |= ``
      ```
 
+     In this query, `service_name` is the only [stream label](https://grafana.com/docs/loki/latest/get-started/labels/) used inside `{}`. Stream labels should be low-cardinality values that describe the source of your logs.
+     The `trace_id` field appears after the `|` pipe as a [pipeline filter](https://grafana.com/docs/loki/latest/query/log_queries/#line-filter-expression), which searches log content or [structured metadata](https://grafana.com/docs/loki/latest/get-started/labels/structured-metadata/) without creating additional streams.
+     Don't use trace IDs or other high-cardinality values as stream labels because each unique value creates a separate stream, which degrades Loki performance.
+     For more information, refer to [Label best practices](https://grafana.com/docs/loki/latest/get-started/labels/bp-labels/) and [Cardinality](https://grafana.com/docs/loki/latest/get-started/labels/cardinality/).
+
      {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-correlations-example-1-step-2.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
 
 1. On step 3, configure the correlation source:
@@ -161,6 +166,13 @@ In this example, you configure trace correlations with a custom URL.
 
 - **Name clearly:** Use descriptive names indicating source and target. For example: **Trace to errors in logs**.
 
-- **Limit scope**: For high-cardinality fields (like `traceID`), ensure your target system can handle frequent queries.
+- **Use low-cardinality stream labels:** When targeting Loki, use only low-cardinality values like `service_name`, `namespace`, or `cluster` inside the stream selector `{}`. Place high-cardinality values like trace IDs in [pipeline filters](https://grafana.com/docs/loki/latest/query/log_queries/#line-filter-expression) (after `|`) or store them as [structured metadata](https://grafana.com/docs/loki/latest/get-started/labels/structured-metadata/). Using trace IDs as stream labels creates excessive streams and degrades Loki performance. For more information, refer to [Cardinality](https://grafana.com/docs/loki/latest/get-started/labels/cardinality/) and [Label best practices](https://grafana.com/docs/loki/latest/get-started/labels/bp-labels/). For detailed guidance on mapping span attributes to Loki labels, refer to [Configure trace to logs correlation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-logs/).
 
 - **Template wisely:** Use multiple `$variable` tokens if you need to inject more than one field.
+
+## Next steps
+
+- [Configure trace to logs correlation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-logs/): Link spans to log queries in Loki with tag mapping and cardinality guidance.
+- [Configure trace to metrics correlation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-metrics/): Link spans to metrics queries in Prometheus.
+- [Configure trace to profiles correlation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-profiles/): Link spans to profiling data in Grafana Pyroscope.
+- [Configure the Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/): Return to connection, authentication, and streaming settings.

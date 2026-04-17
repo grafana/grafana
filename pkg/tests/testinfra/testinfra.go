@@ -151,7 +151,7 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 	var grpcService *grpcserver.DSKitService
 	if runstore {
 		tracer := otel.Tracer("test-grpc-server")
-		grpcService, err = grpcserver.ProvideDSKitService(env.Cfg, env.FeatureToggles, tracer, prometheus.NewPedanticRegistry(), "test-grpc-server")
+		grpcService, err = grpcserver.ProvideDSKitService(env.Cfg, tracer, prometheus.NewPedanticRegistry(), "test-grpc-server")
 		require.NoError(t, err)
 
 		registerer := prometheus.NewPedanticRegistry()

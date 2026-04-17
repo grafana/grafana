@@ -8146,6 +8146,9 @@
       "label-state-name": "Nama status"
     }
   },
+  "diff-viewer": {
+    "loading": ""
+  },
   "dimensions": {
     "background-size-editor": {
       "options": {

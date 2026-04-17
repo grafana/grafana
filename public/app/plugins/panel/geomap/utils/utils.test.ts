@@ -34,7 +34,7 @@ jest.mock('app/plugins/datasource/grafana/datasource', () => ({
   getGrafanaDatasource: jest.fn(),
 }));
 
-import { hasVariableDependencies, hasLayerData, isUrl, isSegmentVisible } from './utils';
+import { hasVariableDependencies, hasLayerData, isSegmentVisible } from './utils';
 
 // Test fixtures
 const createTestFeature = () => new Feature(new Point([0, 0]));
@@ -184,17 +184,6 @@ describe('hasLayerData', () => {
     },
   ])('$name', ({ createLayer, expected }) => {
     expect(hasLayerData(createLayer())).toBe(expected);
-  });
-});
-
-describe('isUrl', () => {
-  it.each([
-    { url: 'https://example.com/path', expected: true },
-    { url: 'http://localhost:3000', expected: true },
-    { url: 'ftp://files.example.com', expected: false },
-    { url: 'not a url', expected: false },
-  ])('isUrl($url) returns $expected', ({ url, expected }) => {
-    expect(isUrl(url)).toBe(expected);
   });
 });
 

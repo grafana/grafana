@@ -38,7 +38,7 @@ ScaleDirection: 1 | 1 | -1 | -1 @cuetsy(kind="enum",memberNames="Up|Right|Down|L
 
 // TODO docs
 LineStyle: {
-	fill?: "solid" | "dash" | "dot" | "square"
+	fill?: "solid" | "dash" | "dot" | "square" | "accessible"
 	dash?: [...number]
 } @cuetsy(kind="interface")
 
