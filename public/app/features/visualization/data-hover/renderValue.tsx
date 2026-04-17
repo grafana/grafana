@@ -1,4 +1,3 @@
-import { cx } from '@emotion/css';
 import * as React from 'react';
 
 import { textUtil } from '@grafana/data';
@@ -18,7 +17,7 @@ export const renderValue = (value: string): string | React.ReactNode => {
   }
 
   return (
-    <a href={textUtil.sanitizeUrl(value)} target={'_blank'} className={cx('external-link')} rel="noreferrer">
+    <a href={textUtil.sanitizeUrl(value)} target={'_blank'} className="external-link" rel="noreferrer">
       {value}
     </a>
   );
