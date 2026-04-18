@@ -25,6 +25,18 @@ interface SidebarCardProps {
   variant?: 'default' | 'ghost';
 }
 
+const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+  if (e.shiftKey) {
+    // Shift+Click is used for range-selection of cards, not text.
+    e.preventDefault();
+  }
+  // @hello-pangea/dnd's capture-phase mousedown listener calls preventDefault, so browser focus
+  // transfer never fires and Monaco never sees a natural blur. Force it imperatively.
+  if (document.activeElement instanceof HTMLElement && document.activeElement !== e.currentTarget) {
+    document.activeElement.blur();
+  }
+};
+
 export const SidebarCard = ({
   children,
   id,
@@ -60,6 +72,10 @@ export const SidebarCard = ({
     setHasFocusWithin(false);
   }, []);
 
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    onSelect({ multi: e.metaKey || e.ctrlKey, range: e.shiftKey });
+  };
+
   // Using a div with role="button" instead of a native button for @hello-pangea/dnd compatibility,
   // so we manually handle Enter and Space key activation.
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -93,14 +109,8 @@ export const SidebarCard = ({
     <div className={styles.wrapper}>
       <div
         className={styles.card}
-        onClick={(e) => onSelect({ multi: e.metaKey || e.ctrlKey, range: e.shiftKey })}
-        onMouseDown={(e) => {
-          // Prevent the browser's native text-selection behaviour when Shift is held
-          // (Shift+Click is used for range-selection of cards, not text).
-          if (e.shiftKey) {
-            e.preventDefault();
-          }
-        }}
+        onClick={handleClick}
+        onMouseDown={handleMouseDown}
         onKeyDown={handleKeyDown}
         onFocus={handleFocus}
         onBlur={handleBlur}

@@ -244,6 +244,35 @@ describe('SidebarCard', () => {
 
       expect(onSelect).toHaveBeenCalledWith({});
     });
+
+    it('fires a DOM blur on the focused editor even when mousedown preventDefault blocks focus transfer', async () => {
+      // @hello-pangea/dnd installs a capture-phase mousedown listener that preventDefaults, so the
+      // browser's native focus transfer never fires a blur on the previously focused element.
+      // Without the force-blur in handleMouseDown, Monaco-like editors never see a DOM blur and
+      // their pending value is never flushed through onChange before the editor unmounts.
+      const onSelect = jest.fn();
+      const onEditorBlur = jest.fn();
+      const user = userEvent.setup();
+      renderSidebarCard({ id: 'A', onSelect });
+
+      const suppressFocusTransfer = (e: Event) => e.preventDefault();
+      window.addEventListener('mousedown', suppressFocusTransfer, true);
+
+      const editorLike = document.createElement('input');
+      editorLike.addEventListener('blur', onEditorBlur, true);
+      document.body.appendChild(editorLike);
+      editorLike.focus();
+
+      try {
+        await user.click(screen.getByRole('button', { name: /select card A/i }));
+
+        expect(onEditorBlur).toHaveBeenCalled();
+        expect(onSelect).toHaveBeenCalled();
+      } finally {
+        window.removeEventListener('mousedown', suppressFocusTransfer, true);
+        document.body.removeChild(editorLike);
+      }
+    });
   });
 
   describe('hover actions and hidden icon', () => {
