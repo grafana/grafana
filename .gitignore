@@ -69,7 +69,18 @@ public/css/*.min.css
 .vscode/
 !.vscode/launch.json
 .vs/
-.cursor/
+.cursor/*
+!.cursor/skills/
+.cursor/skills/*
+!.cursor/skills/git-sync-shared/
+!.cursor/skills/test-git-sync-pat/
+!.cursor/skills/test-git-sync-github-app/
+!.cursor/skills/test-git-sync-all/
+!.cursor/skills/test-git-sync-resource-ops/
+!.cursor/skills/test-git-sync-gitlab/
+!.cursor/skills/test-git-sync-bitbucket/
+!.cursor/skills/test-git-sync-none-role/
+!.cursor/skills/.env.example
 .devcontainer/
 .claude/
 
@@ -276,3 +287,8 @@ devenv/docker/blocks/auth/signer/keys/ec_private_key.pem
 .specs
 .playwright-mcp/
 overrides.yaml
+
+
+# Git Sync provisioning test credentials
+.env
+*.pem
