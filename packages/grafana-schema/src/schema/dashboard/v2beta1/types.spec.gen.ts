@@ -788,6 +788,7 @@ export interface RowsLayoutRowSpec {
 	conditionalRendering?: ConditionalRenderingGroupKind;
 	repeat?: RowRepeatOptions;
 	layout: GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind;
+	variables?: VariableKind[];
 }
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
@@ -807,7 +808,7 @@ export const defaultConditionalRenderingGroupKind = (): ConditionalRenderingGrou
 export interface ConditionalRenderingGroupSpec {
 	visibility: "show" | "hide";
 	condition: "and" | "or";
-	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind | ConditionalRenderingUserTeamKind)[];
+	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind)[];
 }
 
 export const defaultConditionalRenderingGroupSpec = (): ConditionalRenderingGroupSpec => ({
@@ -872,30 +873,6 @@ export interface ConditionalRenderingTimeRangeSizeSpec {
 
 export const defaultConditionalRenderingTimeRangeSizeSpec = (): ConditionalRenderingTimeRangeSizeSpec => ({
 	value: "",
-});
-
-// Checks whether the current user belongs to (or does not belong to) the specified team(s).
-export interface ConditionalRenderingUserTeamKind {
-	kind: "ConditionalRenderingUserTeam";
-	spec: ConditionalRenderingUserTeamSpec;
-}
-
-export const defaultConditionalRenderingUserTeamKind = (): ConditionalRenderingUserTeamKind => ({
-	kind: "ConditionalRenderingUserTeam",
-	spec: defaultConditionalRenderingUserTeamSpec(),
-});
-
-export interface ConditionalRenderingUserTeamSpec {
-	// How to match: "is_member" means the user must belong to at least one team,
-	// "is_not_member" means the user must not belong to any of the teams.
-	operator: "is_member" | "is_not_member";
-	// Team UIDs to evaluate against.
-	teamUids: string[];
-}
-
-export const defaultConditionalRenderingUserTeamSpec = (): ConditionalRenderingUserTeamSpec => ({
-	operator: "is_member",
-	teamUids: [],
 });
 
 export interface RowRepeatOptions {
@@ -1002,6 +979,7 @@ export interface TabsLayoutTabSpec {
 	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
 	conditionalRendering?: ConditionalRenderingGroupKind;
 	repeat?: TabRepeatOptions;
+	variables?: VariableKind[];
 }
 
 export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({
@@ -1507,6 +1485,8 @@ export interface DashboardLink {
 	keepTime: boolean;
 	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
 	placement?: "inControlsMenu";
+	// The source that registered the link (if any)
+	origin?: ControlSourceRef;
 }
 
 export const defaultDashboardLink = (): DashboardLink => ({
@@ -1596,440 +1576,6 @@ export const defaultTimeRangeOption = (): TimeRangeOption => ({
 	to: "now",
 });
 
-export type VariableKind = QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind | SwitchVariableKind;
-
-export const defaultVariableKind = (): VariableKind => (defaultQueryVariableKind());
-
-// Query variable kind
-export interface QueryVariableKind {
-	kind: "QueryVariable";
-	spec: QueryVariableSpec;
-}
-
-export const defaultQueryVariableKind = (): QueryVariableKind => ({
-	kind: "QueryVariable",
-	spec: defaultQueryVariableSpec(),
-});
-
-// Query variable specification
-export interface QueryVariableSpec {
-	name: string;
-	current: VariableOption;
-	label?: string;
-	hide: VariableHide;
-	refresh: VariableRefresh;
-	skipUrlSync: boolean;
-	description?: string;
-	query: DataQueryKind;
-	regex: string;
-	regexApplyTo?: VariableRegexApplyTo;
-	sort: VariableSort;
-	definition?: string;
-	options: VariableOption[];
-	multi: boolean;
-	includeAll: boolean;
-	allValue?: string;
-	placeholder?: string;
-	allowCustomValue: boolean;
-	staticOptions?: VariableOption[];
-	staticOptionsOrder?: "before" | "after" | "sorted";
-}
-
-export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
-	name: "",
-	current: { text: "", value: "", },
-	hide: "dontHide",
-	refresh: "never",
-	skipUrlSync: false,
-	query: defaultDataQueryKind(),
-	regex: "",
-	regexApplyTo: "value",
-	sort: "disabled",
-	options: [],
-	multi: false,
-	includeAll: false,
-	allowCustomValue: true,
-});
-
-// Variable option specification
-export interface VariableOption {
-	// Whether the option is selected or not
-	selected?: boolean;
-	// Text to be displayed for the option
-	text: string | string[];
-	// Value of the option
-	value: string | string[];
-	// Additional properties for multi-props variables
-	properties?: Record<string, string>;
-}
-
-export const defaultVariableOption = (): VariableOption => ({
-	text: "",
-	value: "",
-});
-
-// Determine if the variable shows on dashboard
-// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
-export type VariableHide = "dontHide" | "hideLabel" | "hideVariable" | "inControlsMenu";
-
-export const defaultVariableHide = (): VariableHide => ("dontHide");
-
-// Options to config when to refresh a variable
-// `never`: Never refresh the variable
-// `onDashboardLoad`: Queries the data source every time the dashboard loads.
-// `onTimeRangeChanged`: Queries the data source when the dashboard time range changes.
-export type VariableRefresh = "never" | "onDashboardLoad" | "onTimeRangeChanged";
-
-export const defaultVariableRefresh = (): VariableRefresh => ("never");
-
-// Determine whether regex applies to variable value or display text
-// Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
-export type VariableRegexApplyTo = "value" | "text";
-
-export const defaultVariableRegexApplyTo = (): VariableRegexApplyTo => ("value");
-
-// Sort variable options
-// Accepted values are:
-// `disabled`: No sorting
-// `alphabeticalAsc`: Alphabetical ASC
-// `alphabeticalDesc`: Alphabetical DESC
-// `numericalAsc`: Numerical ASC
-// `numericalDesc`: Numerical DESC
-// `alphabeticalCaseInsensitiveAsc`: Alphabetical Case Insensitive ASC
-// `alphabeticalCaseInsensitiveDesc`: Alphabetical Case Insensitive DESC
-// `naturalAsc`: Natural ASC
-// `naturalDesc`: Natural DESC
-// VariableSort enum with default value
-export type VariableSort = "disabled" | "alphabeticalAsc" | "alphabeticalDesc" | "numericalAsc" | "numericalDesc" | "alphabeticalCaseInsensitiveAsc" | "alphabeticalCaseInsensitiveDesc" | "naturalAsc" | "naturalDesc";
-
-export const defaultVariableSort = (): VariableSort => ("disabled");
-
-// Text variable kind
-export interface TextVariableKind {
-	kind: "TextVariable";
-	spec: TextVariableSpec;
-}
-
-export const defaultTextVariableKind = (): TextVariableKind => ({
-	kind: "TextVariable",
-	spec: defaultTextVariableSpec(),
-});
-
-// Text variable specification
-export interface TextVariableSpec {
-	name: string;
-	current: VariableOption;
-	query: string;
-	label?: string;
-	hide: VariableHide;
-	skipUrlSync: boolean;
-	description?: string;
-}
-
-export const defaultTextVariableSpec = (): TextVariableSpec => ({
-	name: "",
-	current: { text: "", value: "", },
-	query: "",
-	hide: "dontHide",
-	skipUrlSync: false,
-});
-
-// Constant variable kind
-export interface ConstantVariableKind {
-	kind: "ConstantVariable";
-	spec: ConstantVariableSpec;
-}
-
-export const defaultConstantVariableKind = (): ConstantVariableKind => ({
-	kind: "ConstantVariable",
-	spec: defaultConstantVariableSpec(),
-});
-
-// Constant variable specification
-export interface ConstantVariableSpec {
-	name: string;
-	query: string;
-	current: VariableOption;
-	label?: string;
-	hide: VariableHide;
-	skipUrlSync: boolean;
-	description?: string;
-}
-
-export const defaultConstantVariableSpec = (): ConstantVariableSpec => ({
-	name: "",
-	query: "",
-	current: { text: "", value: "", },
-	hide: "dontHide",
-	skipUrlSync: false,
-});
-
-// Datasource variable kind
-export interface DatasourceVariableKind {
-	kind: "DatasourceVariable";
-	spec: DatasourceVariableSpec;
-}
-
-export const defaultDatasourceVariableKind = (): DatasourceVariableKind => ({
-	kind: "DatasourceVariable",
-	spec: defaultDatasourceVariableSpec(),
-});
-
-// Datasource variable specification
-export interface DatasourceVariableSpec {
-	name: string;
-	pluginId: string;
-	refresh: VariableRefresh;
-	regex: string;
-	current: VariableOption;
-	options: VariableOption[];
-	multi: boolean;
-	includeAll: boolean;
-	allValue?: string;
-	label?: string;
-	hide: VariableHide;
-	skipUrlSync: boolean;
-	description?: string;
-	allowCustomValue: boolean;
-}
-
-export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
-	name: "",
-	pluginId: "",
-	refresh: "never",
-	regex: "",
-	current: { text: "", value: "", },
-	options: [],
-	multi: false,
-	includeAll: false,
-	hide: "dontHide",
-	skipUrlSync: false,
-	allowCustomValue: true,
-});
-
-// Interval variable kind
-export interface IntervalVariableKind {
-	kind: "IntervalVariable";
-	spec: IntervalVariableSpec;
-}
-
-export const defaultIntervalVariableKind = (): IntervalVariableKind => ({
-	kind: "IntervalVariable",
-	spec: defaultIntervalVariableSpec(),
-});
-
-// Interval variable specification
-export interface IntervalVariableSpec {
-	name: string;
-	query: string;
-	current: VariableOption;
-	options: VariableOption[];
-	auto: boolean;
-	auto_min: string;
-	auto_count: number;
-	refresh: "onTimeRangeChanged";
-	label?: string;
-	hide: VariableHide;
-	skipUrlSync: boolean;
-	description?: string;
-}
-
-export const defaultIntervalVariableSpec = (): IntervalVariableSpec => ({
-	name: "",
-	query: "",
-	current: { text: "", value: "", },
-	options: [],
-	auto: false,
-	auto_min: "",
-	auto_count: 0,
-	refresh: "onTimeRangeChanged",
-	hide: "dontHide",
-	skipUrlSync: false,
-});
-
-// Custom variable kind
-export interface CustomVariableKind {
-	kind: "CustomVariable";
-	spec: CustomVariableSpec;
-}
-
-export const defaultCustomVariableKind = (): CustomVariableKind => ({
-	kind: "CustomVariable",
-	spec: defaultCustomVariableSpec(),
-});
-
-// Custom variable specification
-export interface CustomVariableSpec {
-	name: string;
-	query: string;
-	current: VariableOption;
-	options: VariableOption[];
-	multi: boolean;
-	includeAll: boolean;
-	allValue?: string;
-	label?: string;
-	hide: VariableHide;
-	skipUrlSync: boolean;
-	description?: string;
-	allowCustomValue: boolean;
-	valuesFormat?: "csv" | "json";
-}
-
-export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
-	name: "",
-	query: "",
-	current: defaultVariableOption(),
-	options: [],
-	multi: false,
-	includeAll: false,
-	hide: "dontHide",
-	skipUrlSync: false,
-	allowCustomValue: true,
-});
-
-// Group variable kind
-export interface GroupByVariableKind {
-	kind: "GroupByVariable";
-	group: string;
-	datasource?: {
-		name?: string;
-	};
-	spec: GroupByVariableSpec;
-}
-
-export const defaultGroupByVariableKind = (): GroupByVariableKind => ({
-	kind: "GroupByVariable",
-	group: "",
-	spec: defaultGroupByVariableSpec(),
-});
-
-// GroupBy variable specification
-export interface GroupByVariableSpec {
-	name: string;
-	defaultValue?: VariableOption;
-	current: VariableOption;
-	options: VariableOption[];
-	multi: boolean;
-	label?: string;
-	hide: VariableHide;
-	skipUrlSync: boolean;
-	description?: string;
-}
-
-export const defaultGroupByVariableSpec = (): GroupByVariableSpec => ({
-	name: "",
-	current: { text: "", value: "", },
-	options: [],
-	multi: false,
-	hide: "dontHide",
-	skipUrlSync: false,
-});
-
-// Adhoc variable kind
-export interface AdhocVariableKind {
-	kind: "AdhocVariable";
-	group: string;
-	datasource?: {
-		name?: string;
-	};
-	spec: AdhocVariableSpec;
-}
-
-export const defaultAdhocVariableKind = (): AdhocVariableKind => ({
-	kind: "AdhocVariable",
-	group: "",
-	spec: defaultAdhocVariableSpec(),
-});
-
-// Adhoc variable specification
-export interface AdhocVariableSpec {
-	name: string;
-	baseFilters: AdHocFilterWithLabels[];
-	filters: AdHocFilterWithLabels[];
-	defaultKeys: MetricFindValue[];
-	label?: string;
-	hide: VariableHide;
-	skipUrlSync: boolean;
-	description?: string;
-	allowCustomValue: boolean;
-}
-
-export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
-	name: "",
-	baseFilters: [],
-	filters: [],
-	defaultKeys: [],
-	hide: "dontHide",
-	skipUrlSync: false,
-	allowCustomValue: true,
-});
-
-// Define the AdHocFilterWithLabels type
-export interface AdHocFilterWithLabels {
-	key: string;
-	operator: string;
-	value: string;
-	values?: string[];
-	keyLabel?: string;
-	valueLabels?: string[];
-	forceEdit?: boolean;
-	origin?: "dashboard";
-	// @deprecated
-	condition?: string;
-}
-
-export const defaultAdHocFilterWithLabels = (): AdHocFilterWithLabels => ({
-	key: "",
-	operator: "",
-	value: "",
-	origin: FilterOrigin,
-});
-
-// Determine the origin of the adhoc variable filter
-export const FilterOrigin = "dashboard";
-
-// Define the MetricFindValue type
-export interface MetricFindValue {
-	text: string;
-	value?: string | number;
-	group?: string;
-	expandable?: boolean;
-}
-
-export const defaultMetricFindValue = (): MetricFindValue => ({
-	text: "",
-});
-
-export interface SwitchVariableKind {
-	kind: "SwitchVariable";
-	spec: SwitchVariableSpec;
-}
-
-export const defaultSwitchVariableKind = (): SwitchVariableKind => ({
-	kind: "SwitchVariable",
-	spec: defaultSwitchVariableSpec(),
-});
-
-export interface SwitchVariableSpec {
-	name: string;
-	current: string;
-	enabledValue: string;
-	disabledValue: string;
-	label?: string;
-	hide: VariableHide;
-	skipUrlSync: boolean;
-	description?: string;
-}
-
-export const defaultSwitchVariableSpec = (): SwitchVariableSpec => ({
-	name: "",
-	current: "false",
-	enabledValue: "true",
-	disabledValue: "false",
-	hide: "dontHide",
-	skipUrlSync: false,
-});
-
 // A rule defines a set of conditions and outcomes that apply to a target element
 // or layout item. Rules enable dynamic dashboard behavior such as conditional
 // visibility, visualization switching, and query overrides.
@@ -2081,6 +1627,30 @@ export interface DashboardRuleConditionsSpec {
 export const defaultDashboardRuleConditionsSpec = (): DashboardRuleConditionsSpec => ({
 	match: "and",
 	items: [],
+});
+
+// Checks whether the current user belongs to (or does not belong to) the specified team(s).
+export interface ConditionalRenderingUserTeamKind {
+	kind: "ConditionalRenderingUserTeam";
+	spec: ConditionalRenderingUserTeamSpec;
+}
+
+export const defaultConditionalRenderingUserTeamKind = (): ConditionalRenderingUserTeamKind => ({
+	kind: "ConditionalRenderingUserTeam",
+	spec: defaultConditionalRenderingUserTeamSpec(),
+});
+
+export interface ConditionalRenderingUserTeamSpec {
+	// How to match: "is_member" means the user must belong to at least one team,
+	// "is_not_member" means the user must not belong to any of the teams.
+	operator: "is_member" | "is_not_member";
+	// Team UIDs to evaluate against.
+	teamUids: string[];
+}
+
+export const defaultConditionalRenderingUserTeamSpec = (): ConditionalRenderingUserTeamSpec => ({
+	operator: "is_member",
+	teamUids: [],
 });
 
 // Visibility outcome: show or hide the target element/layout item.
