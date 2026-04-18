@@ -27,11 +27,11 @@ func cmdLink() *cli.Command {
 					_, _ = fmt.Fprintf(w, "OSS:         %s\n", p.OSS)
 					_, _ = fmt.Fprintf(w, "Enterprise:  %s\n", p.Enterprise)
 					_, _ = fmt.Fprintf(w, "Dev script:  %s\n", filepath.Join(p.Enterprise, "start-dev.sh"))
-					lock := p.EnterpriseDevLock()
-					if _, err := os.Stat(lock); err == nil {
-						_, _ = fmt.Fprintf(w, ".devlock:    present (%s) — watcher likely running or stale\n", lock)
-					} else {
-						_, _ = fmt.Fprintf(w, ".devlock:    absent\n")
+					kind, lockPath := devLockClassify(p)
+					line1, line2 := devLockLinkSummary(kind, lockPath)
+					_, _ = fmt.Fprintln(w, line1)
+					if line2 != "" {
+						_, _ = fmt.Fprintln(w, line2)
 					}
 					if data, err := os.ReadFile(p.LocalMakefile()); err == nil {
 						if strings.Contains(string(data), "enterprise-dev:") {

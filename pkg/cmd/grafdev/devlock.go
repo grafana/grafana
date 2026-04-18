@@ -3,10 +3,69 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 )
+
+type devLockKind int
+
+const (
+	devLockAbsent devLockKind = iota
+	devLockActive
+	devLockStale
+	devLockUncertain
+)
+
+// devLockClassify implements the same .devlock + ps heuristic used by doctor and link status.
+func devLockClassify(p RepoPaths) (kind devLockKind, lockPath string) {
+	lockPath = p.EnterpriseDevLock()
+	if _, err := os.Stat(lockPath); err != nil {
+		return devLockAbsent, lockPath
+	}
+	active, certain := enterpriseDevLockStatus(p.OSS, p.Enterprise)
+	switch {
+	case active:
+		return devLockActive, lockPath
+	case certain && !active:
+		return devLockStale, lockPath
+	default:
+		return devLockUncertain, lockPath
+	}
+}
+
+// devLockDoctorMessage returns printCheck inputs (ok, full sentence).
+func devLockDoctorMessage(kind devLockKind, lockPath string) (ok bool, msg string) {
+	switch kind {
+	case devLockAbsent:
+		return true, "no enterprise .devlock (nothing holding the file watcher lock)"
+	case devLockActive:
+		return true, fmt.Sprintf(".devlock at %s (enterprise-dev watcher process detected — expected while make enterprise-dev is running)", lockPath)
+	case devLockStale:
+		return false, fmt.Sprintf(".devlock at %s but no matching watcher process — likely stale (grafdev link unlock or make enterprise-unlock)", lockPath)
+	default:
+		return true, fmt.Sprintf(".devlock at %s (could not confirm watcher via ps; if enterprise-dev is not running, remove stale lock: grafdev link unlock)", lockPath)
+	}
+}
+
+// devLockLinkSummary returns two lines: status label and indented lock path (path empty for absent).
+func devLockLinkSummary(kind devLockKind, lockPath string) (line1, line2 string) {
+	switch kind {
+	case devLockAbsent:
+		return ".devlock:    absent", ""
+	case devLockActive:
+		return ".devlock:    present — watcher process detected (expected while make enterprise-dev is running)",
+			"             " + lockPath
+	case devLockStale:
+		return ".devlock:    present — likely stale (no matching watcher); try: grafdev link unlock",
+			"             " + lockPath
+	default:
+		return ".devlock:    present — could not confirm via ps; try: grafdev link unlock if nothing is running",
+			"             " + lockPath
+	}
+}
 
 // enterpriseDevLockStatus interprets ../grafana-enterprise/.devlock together with running processes.
 // certain is false if we could not run ps or got no output (caller should not treat as stale proof).

@@ -49,7 +49,7 @@ go run ./pkg/cmd/grafdev doctor
 go run ./pkg/cmd/grafdev doctor --strict   # non-zero exit if any [warn]
 go run ./pkg/cmd/grafdev verify            # exits non-zero if layout is wrong; good for scripts
 go run ./pkg/cmd/grafdev smoke             # verify + dry-run: make -n enterprise-dev
-go run ./pkg/cmd/grafdev link status
+go run ./pkg/cmd/grafdev link status   # .devlock line uses same ps-based classification as doctor
 go run ./pkg/cmd/grafdev imports explain
 go run ./pkg/cmd/grafdev wire patterns
 ```
