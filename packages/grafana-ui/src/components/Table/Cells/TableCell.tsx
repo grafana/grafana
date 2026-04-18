@@ -102,19 +102,17 @@ export const TableCell = ({
     }
   }
 
-  const enhancedCellProps = {
-    ...cellProps,
-    ...(onCellMouseDown && { onMouseDown: onCellMouseDown }),
-    ...(onCellMouseEnter && { onMouseEnter: onCellMouseEnter }),
-  };
-
   return (
     <>
       {cell.render('Cell', {
         field,
         tableStyles,
         onCellFilterAdded,
-        cellProps: enhancedCellProps,
+        cellProps: {
+          ...cellProps,
+          ...(onCellMouseDown && { onMouseDown: onCellMouseDown }),
+          ...(onCellMouseEnter && { onMouseEnter: onCellMouseEnter }),
+        },
         innerWidth,
         timeRange,
         userProps,
